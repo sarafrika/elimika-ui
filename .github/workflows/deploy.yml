@@ -6,7 +6,8 @@ on:
       - main
 
 jobs:
-  deploy:
+  build_and_push:
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
 
     steps:
@@ -25,28 +26,37 @@ jobs:
           KEYCLOAK_CLIENT_SECRET=${{ secrets.KEYCLOAK_CLIENT_SECRET }}
           EOF
 
-      - name: Login to GitHub Container Registry (ghcr.io)
+      - name: Login to GitHub Container Registry (GHCR)
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build and Push Docker Image to ghcr.io
+      - name: Build and Push Docker Image
         run: |
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/elimika-ui
           docker build -t $IMAGE_NAME:latest -f docker/Dockerfile .
           docker push $IMAGE_NAME:latest
 
-      - name: Deploy to Server
+  setup_server:
+    name: Setup Server
+    runs-on: ubuntu-latest
+    needs: build_and_push
+
+    steps:
+      - name: Setup SSH Connection
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
           chmod 600 private_key
-          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            export IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/elimika-ui
+          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} <<EOF
+            set -e  # Exit script on any error
 
-            # Ensure deployment directory exists
-            mkdir -p /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui/docker
+            echo "🚀 Connecting to the server..."
+
+            # Ensure deployment directory exists with correct permissions
+            sudo mkdir -p /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui/docker
+            sudo chown -R $USER:$USER /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui
             cd /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui
-          
-            # Create docker-compose file
-            cat << 'EOC' > docker/compose.yaml
+
+            echo "📄 Creating docker-compose.yaml..."
+            cat > docker/compose.yaml <<EOC
             version: "3.8"
 
             services:
@@ -58,27 +68,33 @@ jobs:
                   - ../.env.local
                 restart: always
             EOC
-          
-            # Create .env.local file on server for runtime
-            cat << 'EOV' > .env.local
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_KEYCLOAK_REALM=${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}
-            NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
-            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-            KEYCLOAK_ISSUER=${{ secrets.KEYCLOAK_ISSUER }}
-            KEYCLOAK_CLIENT_ID=${{ secrets.KEYCLOAK_CLIENT_ID }}
-            KEYCLOAK_CLIENT_SECRET=${{ secrets.KEYCLOAK_CLIENT_SECRET }}
-            EOV
+          EOF
 
-            # Secure the .env.local file
-            chmod 600 .env.local
+  deploy:
+    name: Deploy to Self-Hosted Server
+    runs-on: ubuntu-latest
+    needs: setup_server
 
-            # Log in to GHCR
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+    steps:
+      - name: Setup SSH Connection
+        run: |
+          echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
+          chmod 600 private_key
+          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} <<EOF
+            set -e  # Exit script on any error
 
-            # Deploy with Docker Compose
+            echo "🔑 Logging in to GitHub Container Registry..."
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+            echo "🚀 Pulling latest Docker image..."
             cd /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui/docker
             docker compose -f compose.yaml pull
+
+            echo "🚀 Starting the application..."
             docker compose -f compose.yaml up -d --no-deps --build
+
+            echo "🧹 Cleaning up old Docker images..."
             docker system prune -af
+
+            echo "✅ Deployment complete!"
           EOF
