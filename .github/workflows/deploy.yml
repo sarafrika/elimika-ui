@@ -10,19 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout code
+      - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Login to Github Container Registry (ghcr.io)
+      - name: Login to GitHub Container Registry (ghcr.io)
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build and push Docker image to ghcr.io
+      - name: Build and Push Docker Image to ghcr.io
         run: |
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/elimika-ui
           docker build -t $IMAGE_NAME:latest -f docker/Dockerfile .
           docker push $IMAGE_NAME:latest
 
-      - name: Deploy
+      - name: Deploy to DigitalOcean Server
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
           chmod 600 private_key
@@ -30,9 +30,11 @@ jobs:
             export IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/elimika-ui
             export GITHUB_USERNAME=${{ github.repository_owner }}
 
+            # Ensure the deployment directory exists
             mkdir -p /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui/docker
             cd /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui
           
+            # Create or overwrite docker/compose.yaml
             cat << 'EOC' > docker/compose.yaml
             version: "3.8"
 
@@ -42,10 +44,11 @@ jobs:
                 ports:
                   - "3000:3000"
                 env_file:
-                  - .env.local
+                  - ../.env.local  # <-- Fixed Path
                 restart: always
             EOC
           
+            # Create or overwrite .env.local file
             cat << 'EOV' > .env.local
             NODE_ENV=production
             PORT=3000
@@ -56,13 +59,19 @@ jobs:
             NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_KEYCLOAK_REALM=${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}
-          
             EOV
 
+            # Secure .env.local file
+            chmod 600 .env.local
+
+            # Log in to GitHub Container Registry on the server
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+            # Deploy using Docker Compose
             cd /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui/docker
             docker compose -f compose.yaml pull
             docker compose -f compose.yaml up -d --no-deps --build
+
+            # Clean up unused Docker images
             docker system prune -af
           EOF
