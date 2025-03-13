@@ -70,7 +70,7 @@ jobs:
                 restart: always
             EOC
           
-                    echo "✅ Server setup complete!"
+            echo "✅ Server setup complete!"
             EOF
 
   deploy:
