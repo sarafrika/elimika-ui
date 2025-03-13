@@ -2,14 +2,14 @@ export type ApiResponse<T> = {
     success: boolean
     data: T
     message: string
-    error?: Record<string, any>
+    error?: Record<string, unknown>
 }
 
 export type ApiResponseWithPagination<T> = {
     success: boolean
     data: ApiPagination<T>
     message: string
-    error?: Record<string, any>
+    error?: Record<string, unknown>
 }
 
 export type ApiPagination<T> = {

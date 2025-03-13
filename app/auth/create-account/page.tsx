@@ -239,7 +239,7 @@ export default function CreateAccountPage() {
                         Account Created Successfully
                     </DialogTitle>
                     <DialogDescription>
-                        We've sent a verification email to <span className="font-medium">{userEmail}</span>
+                        We&apos;ve sent a verification email to <span className="font-medium">{userEmail}</span>
                     </DialogDescription>
                 </DialogHeader>
 
@@ -260,7 +260,7 @@ export default function CreateAccountPage() {
                             </ol>
                         </CardContent>
                         <CardFooter className="text-xs text-gray-600">
-                            Please check your spam folder if you don't see the email within a few minutes.
+                            Please check your spam folder if you don&apos;t see the email within a few minutes.
                         </CardFooter>
                     </Card>
                 </div>
