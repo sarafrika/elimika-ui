@@ -46,7 +46,7 @@ jobs:
           echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
           chmod 600 private_key
           
-          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} <<EOF
+          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             set -e  # Exit script on any error
           
             echo "🚀 Connecting to the server..."
@@ -56,9 +56,9 @@ jobs:
             cd /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui
           
             echo "📄 Creating docker-compose.yaml..."
-            cat > docker/compose.yaml <<EOC
+            cat > docker/compose.yaml <<'EOC'
             version: "3.8"
-          
+
             services:
               app:
                 container_name: elimika-ui
@@ -70,8 +70,8 @@ jobs:
                 restart: always
             EOC
           
-            echo "✅ Server setup complete!"
-          EOF
+                    echo "✅ Server setup complete!"
+            EOF
 
   deploy:
     name: Deploy to Self-Hosted Server
