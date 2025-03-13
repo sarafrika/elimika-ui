@@ -45,19 +45,39 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
+      - name: Create & Transfer .env.local to Server
+        run: |
+          echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
+          chmod 600 private_key
+
+          echo "🔑 Creating .env.local file..."
+          cat <<EOF > .env.local
+          NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
+          NEXT_PUBLIC_KEYCLOAK_REALM="${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}"
+          NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
+          NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
+          KEYCLOAK_ISSUER="${{ secrets.KEYCLOAK_ISSUER }}"
+          KEYCLOAK_CLIENT_ID="${{ secrets.KEYCLOAK_CLIENT_ID }}"
+          KEYCLOAK_CLIENT_SECRET="${{ secrets.KEYCLOAK_CLIENT_SECRET }}"
+          EOF
+
+          echo "📤 Transferring .env.local to server..."
+          scp -i private_key -o StrictHostKeyChecking=no .env.local "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}":~/products/elimika-ui/.env.local
+          echo "✅ .env.local file transferred!"
+
       - name: Setup SSH Connection & Configure Server
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
           chmod 600 private_key
 
-          ssh -i private_key -o StrictHostKeyChecking=no "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}" <<-EOF
+          ssh -i private_key -o StrictHostKeyChecking=no "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}" <<'EOF'
             set -e  # Exit on error
 
             echo "📂 Ensuring deployment directory exists..."
             mkdir -p ~/products/elimika-ui/docker
 
             echo "📄 Creating docker-compose.yaml..."
-            cat > ~/products/elimika-ui/docker/compose.yaml <<- EOF
+            cat <<-EOC > ~/products/elimika-ui/docker/compose.yaml
             version: "3.8"
 
             services:
@@ -66,7 +86,12 @@ jobs:
                 image: ghcr.io/${{ github.repository_owner }}/elimika-ui:latest
                 ports:
                   - "3000:3000"
+                env_file:
+                  - ../.env.local
                 restart: always
+            EOC
+
+            echo "✅ Server setup complete!"
           EOF
 
   deploy:
@@ -90,8 +115,8 @@ jobs:
             cd ~/products/elimika-ui/docker
             docker compose -f compose.yaml pull
 
-            echo "🚀 Restarting the application..."
-            docker compose -f compose.yaml up -d --no-deps --build
+            echo "🚀 Restarting the application with .env.local..."
+            docker compose -f compose.yaml up -d --env-file ../.env.local --no-deps --build
 
             echo "🧹 Cleaning up old Docker images..."
             docker system prune -af
