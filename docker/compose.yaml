@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: elimika-ui
+    image: ghcr.io/${GITHUB_USERNAME}/elimika-ui:latest
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env.local
+    ports:
+      - "3000:3000"
+    restart: always
