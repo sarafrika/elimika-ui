@@ -71,7 +71,7 @@ jobs:
             EOC
           
             echo "✅ Server setup complete!"
-            EOF
+          EOF
 
   deploy:
     name: Deploy to Self-Hosted Server
