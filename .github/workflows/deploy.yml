@@ -89,10 +89,6 @@ jobs:
                 env_file:
                   - ../.env.local
                 restart: always
-            EOC
-
-            echo "✅ Server setup complete!"
-          EOF
 
   deploy:
     name: Deploy to Self-Hosted Server
