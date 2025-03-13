@@ -83,7 +83,8 @@ jobs:
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
           chmod 600 private_key
-          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} <<EOF
+
+          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             set -e  # Exit script on any error
 
             echo "🔑 Logging in to GitHub Container Registry..."
