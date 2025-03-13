@@ -112,7 +112,7 @@ jobs:
             docker compose -f compose.yaml pull
 
             echo "🚀 Restarting the application with .env.local..."
-            docker compose -f compose.yaml up -d --env-file ../.env.local --no-deps --build
+            docker compose -f compose.yaml up -d --no-deps --build
 
             echo "🧹 Cleaning up old Docker images..."
             docker system prune -af
