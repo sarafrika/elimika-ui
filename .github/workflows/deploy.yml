@@ -19,7 +19,7 @@ jobs:
       - name: Build and push Docker image to ghcr.io
         run: |
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/elimika-ui
-          docker build -t $IMAGE_NAME:latest -f docker/Dockerfile
+          docker build -t $IMAGE_NAME:latest -f docker/Dockerfile .
           docker push $IMAGE_NAME:latest
 
       - name: Deploy
