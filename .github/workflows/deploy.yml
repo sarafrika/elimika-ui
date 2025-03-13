@@ -66,8 +66,6 @@ jobs:
                 image: ghcr.io/${{ github.repository_owner }}/elimika-ui:latest
                 ports:
                   - "3000:3000"
-                env_file:
-                  - ../.env.local
                 restart: always
           EOF
 
