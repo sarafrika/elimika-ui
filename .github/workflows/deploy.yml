@@ -54,10 +54,10 @@ jobs:
             set -e  # Exit on error
 
             echo "📂 Ensuring deployment directory exists..."
-            mkdir -p ~/elimika-ui/docker
+            mkdir -p ~/products/elimika-ui/docker
 
             echo "📄 Creating docker-compose.yaml..."
-            cat > ~/elimika-ui/docker/compose.yaml <<EOC
+            cat > ~/products/elimika-ui/docker/compose.yaml <<EOC
             version: "3.8"
 
             services:
@@ -92,7 +92,7 @@ jobs:
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
             echo "🚀 Pulling latest Docker image..."
-            cd ~/elimika-ui/docker
+            cd ~/products/elimika-ui/docker
             docker compose -f compose.yaml pull
 
             echo "🚀 Restarting the application..."
