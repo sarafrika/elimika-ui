@@ -57,7 +57,7 @@ jobs:
             mkdir -p ~/products/elimika-ui/docker
 
             echo "📄 Creating docker-compose.yaml..."
-            cat > ~/products/elimika-ui/docker/compose.yaml <<- EOC
+            cat > ~/products/elimika-ui/docker/compose.yaml <<- EOF
             version: "3.8"
 
             services:
@@ -69,7 +69,7 @@ jobs:
                 env_file:
                   - ../.env.local
                 restart: always
-            EOC
+            EOF
 
             echo "✅ Server setup complete!"
           EOF
