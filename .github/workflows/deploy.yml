@@ -39,6 +39,9 @@ jobs:
     needs: build_and_push
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
       - name: Setup SSH Connection & Configure Server
         run: scripts/setup-server.sh
         env:
@@ -52,6 +55,9 @@ jobs:
     needs: setup_server
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
       - name: Deploy to Server
         run: scripts/deploy.sh
         env:
