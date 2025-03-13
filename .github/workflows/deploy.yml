@@ -45,22 +45,23 @@ jobs:
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
           chmod 600 private_key
+          
           ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }} <<EOF
             set -e  # Exit script on any error
-
+          
             echo "🚀 Connecting to the server..."
-
-            # Ensure deployment directory exists with correct permissions
-            sudo mkdir -p /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui/docker
-            sudo chown -R $USER:$USER /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui
+          
+            # Ensure deployment directory exists
+            mkdir -p /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui/docker
             cd /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui
-
+          
             echo "📄 Creating docker-compose.yaml..."
             cat > docker/compose.yaml <<EOC
             version: "3.8"
-
+          
             services:
-              nextjs-app:
+              app:
+                container_name: elimika-ui
                 image: ghcr.io/${{ github.repository_owner }}/elimika-ui:latest
                 ports:
                   - "3000:3000"
@@ -68,6 +69,8 @@ jobs:
                   - ../.env.local
                 restart: always
             EOC
+          
+            echo "✅ Server setup complete!"
           EOF
 
   deploy:
