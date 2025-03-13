@@ -69,9 +69,6 @@ jobs:
                 env_file:
                   - ../.env.local
                 restart: always
-            EOF
-
-            echo "✅ Server setup complete!"
           EOF
 
   deploy:
