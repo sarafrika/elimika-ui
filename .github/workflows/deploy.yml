@@ -17,13 +17,13 @@ jobs:
       - name: Create .env.local file for Build
         run: |
           cat <<EOF > .env.local
-          NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-          NEXT_PUBLIC_KEYCLOAK_REALM=${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}
-          NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
-          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-          KEYCLOAK_ISSUER=${{ secrets.KEYCLOAK_ISSUER }}
-          KEYCLOAK_CLIENT_ID=${{ secrets.KEYCLOAK_CLIENT_ID }}
-          KEYCLOAK_CLIENT_SECRET=${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+          NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
+          NEXT_PUBLIC_KEYCLOAK_REALM="${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}"
+          NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
+          NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
+          KEYCLOAK_ISSUER="${{ secrets.KEYCLOAK_ISSUER }}"
+          KEYCLOAK_CLIENT_ID="${{ secrets.KEYCLOAK_CLIENT_ID }}"
+          KEYCLOAK_CLIENT_SECRET="${{ secrets.KEYCLOAK_CLIENT_SECRET }}"
           EOF
 
       - name: Login to GitHub Container Registry (GHCR)
@@ -56,6 +56,7 @@ jobs:
             cd /home/${{ secrets.SERVER_SSH_USER }}/products/elimika-ui
           
             echo "📄 Creating docker-compose.yaml..."
+            
             cat > docker/compose.yaml <<'EOC'
             version: "3.8"
 
