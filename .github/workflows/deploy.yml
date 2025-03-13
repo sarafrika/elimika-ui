@@ -50,14 +50,14 @@ jobs:
           echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
           chmod 600 private_key
 
-          ssh -i private_key -o StrictHostKeyChecking=no "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}" <<'EOF'
+          ssh -i private_key -o StrictHostKeyChecking=no "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}" <<EOF
             set -e  # Exit on error
 
             echo "📂 Ensuring deployment directory exists..."
             mkdir -p ~/products/elimika-ui/docker
 
             echo "📄 Creating docker-compose.yaml..."
-            cat > ~/products/elimika-ui/docker/compose.yaml <<EOC
+            cat > ~/products/elimika-ui/docker/compose.yaml <<- EOC
             version: "3.8"
 
             services:
