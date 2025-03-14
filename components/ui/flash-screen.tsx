@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
-import { Library } from "lucide-react"
+import { Hand } from "lucide-react"
 import React from "react"
 
 export function FlashScreen({ className }: { className?: string }) {
@@ -14,7 +14,7 @@ export function FlashScreen({ className }: { className?: string }) {
             <div className="absolute inset-0 animate-ping rounded-lg bg-sidebar-primary opacity-75"></div>
             <div
               className="flex aspect-square size-12 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <Library className="size-6" />
+              <Hand className="size-6 animate-wave" />
             </div>
           </div>
         </CardContent>
