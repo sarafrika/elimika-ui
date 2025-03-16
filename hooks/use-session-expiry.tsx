@@ -1,15 +1,15 @@
 "use client"
 
-import { signOut, useSession } from "next-auth/react"
+import { signOut } from "next-auth/react"
 import { useEffect } from "react"
 import { toast } from "sonner"
-import { KeycloakSession } from "@/app/api/auth/[...nextauth]/_utils"
+import { useSessionContext } from "@/context/session-provider-wrapper"
 
 export function useSessionExpiry() {
-  const { data: session } = useSession()
+  const { session } = useSessionContext()
 
   useEffect(() => {
-    if ((session as KeycloakSession)?.error === "refresh_token_expired") {
+    if (session?.error === "refresh_token_expired") {
       const handleExpiredSession = async () => {
         try {
           await fetch("/api/auth/logout")
@@ -24,5 +24,5 @@ export function useSessionExpiry() {
 
       handleExpiredSession()
     }
-  }, [session])
+  }, [session?.error])
 }

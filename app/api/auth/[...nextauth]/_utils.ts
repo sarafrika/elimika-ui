@@ -4,10 +4,12 @@ import { decrypt, encrypt, EncryptedData, getEnvironmentVariable } from "@/lib/u
 import KeycloakProvider from "next-auth/providers/keycloak"
 import { jwtDecode } from "jwt-decode"
 import { JWT } from "next-auth/jwt"
+import { UserRole } from "@/context/user-role-provider"
 
 const REDIRECT_URL = "/auth/create-account"
 
 type KeycloakDecodedToken = {
+  user_domain: UserRole[]
   organization: string[]
   resource_access: {
     [resource: string]: {

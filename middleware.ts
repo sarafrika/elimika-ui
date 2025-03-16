@@ -10,14 +10,31 @@ export async function middleware(request: NextRequest) {
   const token = (await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET
-  })) as KeycloakJWT
+  })) as KeycloakJWT | null
 
   if (!token && !isPublicPath) {
     return NextResponse.redirect(new URL("/auth/create-account", request.url))
   }
 
   if (token && isPublicPath) {
-    return NextResponse.redirect(new URL("/dashboard", request.url))
+    const userDomain = token?.decoded?.user_domain || []
+
+    let dashboardPath = "/"
+    let baseDashboardPath = "/dashboard"
+
+    if (Array.isArray(userDomain)) {
+      if (userDomain.includes("instructor")) {
+        baseDashboardPath = "/dashboard/instructor"
+        dashboardPath = "/dashboard/instructor/overview"
+      } else if (userDomain.includes("student")) {
+        baseDashboardPath = "/dashboard/student"
+        dashboardPath = "/dashboard/student/overview"
+      }
+
+      if (path !== dashboardPath && !path.startsWith(baseDashboardPath)) {
+        return NextResponse.redirect(new URL(dashboardPath, request.url))
+      }
+    }
   }
 
   return NextResponse.next()

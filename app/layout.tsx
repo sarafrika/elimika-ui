@@ -2,9 +2,10 @@ import type { Metadata } from "next"
 import { Nunito_Sans } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
-import { AuthProvider } from "@/components/providers/auth-provider"
+import { AuthProvider } from "@/context/auth-provider"
 
 const nunitoSans = Nunito_Sans({
+  variable: "--font-sans",
   subsets: ["latin"]
 })
 

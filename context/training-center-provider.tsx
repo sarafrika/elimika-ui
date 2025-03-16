@@ -1,17 +1,16 @@
 "use client"
 
-import { TrainingCenter } from "@/app/auth/create-account/form"
-import { useSession } from "next-auth/react"
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { fetchTrainingCenters } from "@/app/auth/create-account/actions"
 import { toast } from "sonner"
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react"
-import { KeycloakSession } from "@/app/api/auth/[...nextauth]/_utils"
+import { TrainingCenter } from "@/app/auth/create-account/form"
+import { useSessionContext } from "@/context/session-provider-wrapper"
 
-interface UseTrainingCenterReturn {
-  trainingCenter: TrainingCenter | null
-  loading: boolean
-  error: Error | null
-  refetchTrainingCenter: () => Promise<void>
+export interface UseTrainingCenterReturn {
+  trainingCenter: TrainingCenter | null;
+  loading: boolean;
+  error: Error | null;
+  refetchTrainingCenter: () => Promise<void>;
 }
 
 const initialState: Omit<UseTrainingCenterReturn, "refetchTrainingCenter"> = {
@@ -22,9 +21,9 @@ const initialState: Omit<UseTrainingCenterReturn, "refetchTrainingCenter"> = {
 
 export function useTrainingCenter(): UseTrainingCenterReturn {
   const [state, setState] = useState(initialState)
-  const { data: session } = useSession() as { data: KeycloakSession | null }
+  const { session } = useSessionContext()
 
-  const trainingCenterSlug = useMemo(() => session?.decoded?.organization?.[0] ?? null, [session])
+  const trainingCenterSlug = useMemo(() => session?.decoded?.organization?.[0] ?? null, [session?.decoded?.organization])
 
   const fetchTrainingCenter = useCallback(async () => {
     if (!trainingCenterSlug) {
@@ -45,8 +44,7 @@ export function useTrainingCenter(): UseTrainingCenterReturn {
       const [trainingCenter] = response.data.content
       setState({ trainingCenter, loading: false, error: null })
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Something went wrong while fetching training center. Please try again."
-
+      const errorMessage = error instanceof Error ? error.message : "Something went wrong while fetching training center."
       setState({ trainingCenter: null, loading: false, error: new Error(errorMessage) })
       toast.error(errorMessage)
     }
@@ -54,13 +52,9 @@ export function useTrainingCenter(): UseTrainingCenterReturn {
 
   useEffect(() => {
     fetchTrainingCenter()
-    console.log(session)
   }, [fetchTrainingCenter])
 
-  return {
-    ...state,
-    refetchTrainingCenter: fetchTrainingCenter
-  }
+  return { ...state, refetchTrainingCenter: fetchTrainingCenter }
 }
 
 const TrainingCenterContext = createContext<UseTrainingCenterReturn | null>(null)
