@@ -5,6 +5,7 @@ import { UserRoleProvider } from "@/context/user-role-provider"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { TrainingCenterProvider } from "@/context/training-center-provider"
 import { SessionProviderWrapper } from "@/context/session-provider-wrapper"
+import { BreadcrumbProvider } from "@/context/breadcrumb-provider"
 
 export default function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -16,10 +17,12 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
               <div className="flex min-h-screen w-full">
                 <AppSidebar />
                 <SidebarInset>
-                  <DashboardHeader />
-                  <div className="flex flex-1 flex-col gap-4 px-6 pt-0">
-                    {children}
-                  </div>
+                  <BreadcrumbProvider>
+                    <DashboardHeader />
+                    <div className="flex flex-1 flex-col gap-4 px-6 pt-0 space-y-4">
+                      {children}
+                    </div>
+                  </BreadcrumbProvider>
                 </SidebarInset>
               </div>
             </SidebarProvider>

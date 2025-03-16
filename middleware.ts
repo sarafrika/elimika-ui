@@ -1,11 +1,64 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { KeycloakJWT } from "@/app/api/auth/[...nextauth]/_utils"
+import menu, { MenuItem } from "@/lib/menu"
+
+function isAuthorizedPath(path: string, userRoles: string[]): boolean {
+  for (const role of userRoles) {
+    if (path === `/dashboard/${role}/overview`) {
+      return true
+    }
+  }
+
+  function searchMenuItems(items: MenuItem[], role: string): boolean {
+    for (const item of items) {
+      const itemRole = item.role || null
+      if (itemRole !== null && itemRole !== role) {
+        continue
+      }
+      if (item.url === path) {
+        return true
+      }
+      if (item.items && item.items.length > 0) {
+        if (searchMenuItems(item.items, role)) {
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  for (const role of userRoles) {
+    if (menu.main && searchMenuItems(menu.main, role)) {
+      return true
+    }
+    if (menu.secondary && searchMenuItems(menu.secondary, role)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function getDashboardPath(userRoles: string[]): string {
+  if (userRoles.length > 0) {
+    return `/dashboard/${userRoles[0]}/overview`
+  }
+  return "/dashboard/overview"
+}
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
-  const publicPaths = ["/", "/auth/create-account"]
-  const isPublicPath = publicPaths.includes(path)
+
+  const publicPaths = [
+    "/",
+    "/auth/create-account",
+    "/auth/login",
+    "/auth/forgot-password",
+    "/unauthorized"
+  ]
+
+  const isPublicPath = publicPaths.includes(path) || path.startsWith("/public/")
 
   const token = (await getToken({
     req: request,
@@ -16,22 +69,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/create-account", request.url))
   }
 
-  if (token && isPublicPath) {
-    const userDomain = token?.decoded?.user_domain || []
+  if (token) {
+    const userDomain = token?.decoded?.user_domain
 
-    let dashboardPath = "/"
-    let baseDashboardPath = "/dashboard"
+    if (Array.isArray(userDomain) && userDomain.length > 0) {
+      const dashboardPath = getDashboardPath(userDomain)
 
-    if (Array.isArray(userDomain)) {
-      if (userDomain.includes("instructor")) {
-        baseDashboardPath = "/dashboard/instructor"
-        dashboardPath = "/dashboard/instructor/overview"
-      } else if (userDomain.includes("student")) {
-        baseDashboardPath = "/dashboard/student"
-        dashboardPath = "/dashboard/student/overview"
+      if (isPublicPath) {
+        return NextResponse.redirect(new URL(dashboardPath, request.url))
       }
 
-      if (path !== dashboardPath && !path.startsWith(baseDashboardPath)) {
+      if (!isPublicPath && !isAuthorizedPath(path, userDomain)) {
+        if (path === dashboardPath) {
+          return NextResponse.next()
+        }
+
         return NextResponse.redirect(new URL(dashboardPath, request.url))
       }
     }
@@ -47,7 +99,6 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public files (public folder)
      */
     "/((?!api/auth|_next/static|_next/image|favicon.ico).*)"
   ]

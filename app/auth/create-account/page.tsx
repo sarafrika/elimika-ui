@@ -11,8 +11,9 @@ import {
   Check,
   GraduationCap,
   Lightbulb,
+  Loader2,
   MailCheck,
-  Loader2, RefreshCw
+  RefreshCw
 } from "lucide-react"
 import { signIn } from "next-auth/react"
 import { toast } from "sonner"
@@ -21,7 +22,7 @@ import {
   createOrUpdateUser,
   fetchTrainingCenters
 } from "@/app/auth/create-account/actions"
-import { TrainingCenter, TrainingCenterForm, User, UserAccountForm } from "@/app/auth/create-account/form"
+import { User, UserAccountForm } from "@/app/auth/create-account/_components/user-account-form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -33,6 +34,7 @@ import {
   DialogTitle
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { TrainingCenter, TrainingCenterForm } from "@/app/auth/create-account/_components/training-center-form"
 
 const USER_TYPE = {
   STUDENT: "STUDENT",
