@@ -26,7 +26,7 @@ import {
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrainingCenter, TrainingCenterForm } from "@/app/auth/create-account/_components/training-center-form"
 import { UserRole } from "@/context/user-role-provider"
-import { getEnvironmentVariable } from "@/lib/utils"
+import { useAuthRealm } from "@/hooks/use-auth-realm"
 
 type AccountCreationStatus =
   | "idle"
@@ -35,7 +35,7 @@ type AccountCreationStatus =
   | "error";
 
 export default function CreateAccountPage() {
-  const authRealm = getEnvironmentVariable("NEXT_PUBLIC_KEYCLOAK_REALM")
+  const authRealm = useAuthRealm()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [userRole, setUserRole] = useState<UserRole>("student")
