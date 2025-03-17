@@ -4,17 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Image from "next/image"
 import illustration from "@/assets/illustration.jpg"
-import {
-  AlertCircle,
-  ArrowRight,
-  Building2,
-  Check,
-  GraduationCap,
-  Lightbulb,
-  Loader2,
-  MailCheck,
-  RefreshCw
-} from "lucide-react"
+import { AlertCircle, ArrowRight, Building2, Check, GraduationCap, Lightbulb, Loader2, MailCheck } from "lucide-react"
 import { signIn } from "next-auth/react"
 import { toast } from "sonner"
 import {
@@ -294,9 +284,9 @@ export default function CreateAccountPage() {
                 <AlertCircle className="h-3 w-3 mr-2" />
                 <span>Please check your spam folder if you don&apos;t see the email.</span>
               </div>
-              <Button className="text-xs text-primary flex items-center mt-1 hover:underline">
+              {/*<Button className="text-xs text-primary flex items-center mt-1 hover:underline">
                 <RefreshCw className="h-3 w-3 mr-1" /> Didn&apos;t receive an email? Resend in 2:00
-              </Button>
+              </Button>*/}
             </CardFooter>
           </Card>
         </div>

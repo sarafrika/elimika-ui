@@ -3,8 +3,8 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { fetchTrainingCenters } from "@/app/auth/create-account/actions"
 import { toast } from "sonner"
-import { TrainingCenter } from "@/app/auth/create-account/_components/form"
 import { useSessionContext } from "@/context/session-provider-wrapper"
+import { TrainingCenter } from "@/app/auth/create-account/_components/training-center-form"
 
 export interface UseTrainingCenterReturn {
   trainingCenter: TrainingCenter | null;
