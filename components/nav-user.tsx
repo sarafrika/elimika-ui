@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { useSessionContext } from "@/context/session-provider-wrapper"
 import { UserRole, useUserRole } from "@/context/user-role-provider"
 import { Badge } from "@/components/ui/badge"
+import { useMemo } from "react"
 
 export async function logout() {
   try {
@@ -42,6 +43,7 @@ export function NavUser() {
       ?.join("") || ""
 
   const hasMultipleRoles = roles.length > 1
+  const formatRole = useMemo(() => (role: UserRole) => role.replace(/_/g, " "), [])
 
   return (
     <SidebarMenu>
@@ -138,7 +140,7 @@ export function NavUser() {
                             <div className="w-2 h-2 rounded-full border border-muted-foreground"></div>
                           )}
                         </div>
-                        <span className="capitalize flex-1">{role}</span>
+                        <span className="capitalize flex-1">{formatRole(role)}</span>
                         {role === activeRole && (
                           <Badge
                             variant="outline"

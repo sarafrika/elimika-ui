@@ -1,4 +1,4 @@
-export default function InstructorOverviewPage() {
+export default function StudentOverviewPage() {
   return (
     <div>
     </div>

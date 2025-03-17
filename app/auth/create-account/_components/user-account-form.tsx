@@ -10,17 +10,8 @@ import { ArrowRight } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 
-const USER_TYPE = {
-  STUDENT: "STUDENT",
-  INSTRUCTOR: "INSTRUCTOR",
-  PARTNER: "PARTNER"
-} as const
-
-type UserType = keyof typeof USER_TYPE;
-
 const UserFormSchema = z.object({
   uuid: z.string().optional(),
-  type: z.nativeEnum(USER_TYPE),
   active: z.boolean().default(true),
   created_date: z.string().optional(),
   modified_date: z.string().optional(),
@@ -37,7 +28,6 @@ export type User = z.infer<typeof UserFormSchema>;
 
 interface UserAccountFormProps {
   title?: string;
-  userType: UserType;
   description?: string;
   isSubmitting: boolean;
   organisationUuid: string | null;
@@ -46,7 +36,6 @@ interface UserAccountFormProps {
 }
 
 export function UserAccountForm({
-                                  userType,
                                   onSubmit,
                                   isSubmitting,
                                   organisationUuid,
@@ -63,8 +52,7 @@ export function UserAccountForm({
       middle_name: "",
       accept_terms: false,
       phone_number: "",
-      organisation_uuid: organisationUuid || "",
-      type: userType
+      organisation_uuid: organisationUuid || ""
     }
   })
 
@@ -204,8 +192,7 @@ export function UserAccountForm({
 
     const userData = {
       ...data,
-      organisation_uuid: organisationUuid,
-      type: userType
+      organisation_uuid: organisationUuid
     }
 
     await onSubmit(userData)

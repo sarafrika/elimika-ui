@@ -35,14 +35,7 @@ import {
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrainingCenter, TrainingCenterForm } from "@/app/auth/create-account/_components/training-center-form"
-
-const USER_TYPE = {
-  STUDENT: "STUDENT",
-  INSTRUCTOR: "INSTRUCTOR",
-  PARTNER: "PARTNER"
-} as const
-
-type UserType = keyof typeof USER_TYPE;
+import { UserRole } from "@/context/user-role-provider"
 
 type AccountCreationStatus =
   | "idle"
@@ -54,7 +47,7 @@ export default function CreateAccountPage() {
   const authRealm = "sarafrika"
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [userType, setUserType] = useState<UserType>(USER_TYPE.STUDENT)
+  const [userRole, setUserRole] = useState<UserRole>("student")
   const [step, setStep] = useState<"training_center" | "user">("training_center")
   const [trainingCenterUuid, setTrainingCenterUuid] = useState<string | null>(null)
 
@@ -105,10 +98,10 @@ export default function CreateAccountPage() {
   }, [])
 
   useEffect(() => {
-    if (userType !== USER_TYPE.PARTNER) {
+    if (userRole !== "organisation_user") {
       fetchTrainingCenter()
     }
-  }, [fetchTrainingCenter, userType])
+  }, [fetchTrainingCenter, userRole])
 
   const onSubmitUser = async (data: User) => {
     if (!trainingCenterUuid) {
@@ -123,13 +116,12 @@ export default function CreateAccountPage() {
     try {
       const userData = {
         ...data,
-        organisation_uuid: trainingCenterUuid,
-        type: userType
+        organisation_uuid: trainingCenterUuid
       }
 
       setUserEmail(data.email)
 
-      const response = await createOrUpdateUser(userData)
+      const response = await createOrUpdateUser(userData, userRole)
 
       if (response.success) {
         setAccountCreationStatus("success")
@@ -180,34 +172,34 @@ export default function CreateAccountPage() {
   }
 
   const UserTypeIcon = () => {
-    switch (userType) {
-      case USER_TYPE.STUDENT:
+    switch (userRole) {
+      case "student":
         return <GraduationCap className="h-6 w-6 text-slate-800" />
-      case USER_TYPE.INSTRUCTOR:
+      case "instructor":
         return <Lightbulb className="h-6 w-6 text-slate-800" />
-      case USER_TYPE.PARTNER:
+      case "organisation_user":
         return <Building2 className="h-6 w-6 text-slate-800" />
     }
   }
 
   const UserTypeTitle = () => {
-    switch (userType) {
-      case USER_TYPE.STUDENT:
+    switch (userRole) {
+      case "student":
         return "Join as a Student"
-      case USER_TYPE.INSTRUCTOR:
+      case "instructor":
         return "Join as an Instructor"
-      case USER_TYPE.PARTNER:
+      case "organisation_user":
         return "Register Your Training Center"
     }
   }
 
   const UserTypeDescription = () => {
-    switch (userType) {
-      case USER_TYPE.STUDENT:
+    switch (userRole) {
+      case "student":
         return "Access courses, track your progress, and connect with instructors"
-      case USER_TYPE.INSTRUCTOR:
+      case "instructor":
         return "Create courses, manage students, and share your expertise"
-      case USER_TYPE.PARTNER:
+      case "organisation_user":
         return "Register your institution and manage your instructors and courses"
     }
   }
@@ -224,7 +216,6 @@ export default function CreateAccountPage() {
     } else {
       return (
         <UserAccountForm
-          userType={USER_TYPE.PARTNER}
           organisationUuid={trainingCenterUuid}
           isSubmitting={isSubmitting}
           onSubmit={onSubmitUser}
@@ -317,7 +308,7 @@ export default function CreateAccountPage() {
               setShowSuccessDialog(false)
 
               setAccountCreationStatus("idle")
-              if (userType === USER_TYPE.PARTNER) {
+              if (userRole === "organisation_user") {
                 setStep("training_center")
               }
             }}
@@ -376,12 +367,12 @@ export default function CreateAccountPage() {
               <ErrorAlert />
 
               <Tabs
-                value={userType}
+                value={userRole}
                 onValueChange={(value) => {
-                  const newUserType = value as UserType
-                  setUserType(newUserType)
+                  const newUserRole = value as UserRole
+                  setUserRole(newUserRole)
 
-                  if (newUserType === USER_TYPE.PARTNER) {
+                  if (newUserRole === "organisation_user") {
                     setStep("training_center")
                     setTrainingCenterUuid(null)
                   } else {
@@ -395,21 +386,21 @@ export default function CreateAccountPage() {
               >
                 <TabsList className="grid w-full grid-cols-3 mb-4 rounded-lg">
                   <TabsTrigger
-                    value={USER_TYPE.STUDENT}
+                    value="student"
                     className="data-[state=active]:bg-primary/10 rounded-lg data-[state=active]:text-primary"
                   >
                     <GraduationCap className="h-4 w-4 mr-2" />
                     Student
                   </TabsTrigger>
                   <TabsTrigger
-                    value={USER_TYPE.INSTRUCTOR}
+                    value="instructor"
                     className="data-[state=active]:bg-primary/10 rounded-lg data-[state=active]:text-primary"
                   >
                     <Lightbulb className="h-4 w-4 mr-2" />
                     Instructor
                   </TabsTrigger>
                   <TabsTrigger
-                    value={USER_TYPE.PARTNER}
+                    value="organisation_user"
                     className="data-[state=active]:bg-primary/10 rounded-lg data-[state=active]:text-primary"
                   >
                     <Building2 className="h-4 w-4 mr-2" />
@@ -417,9 +408,8 @@ export default function CreateAccountPage() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value={USER_TYPE.STUDENT} key="student-tab">
+                <TabsContent value="student" key="student-tab">
                   <UserAccountForm
-                    userType={USER_TYPE.STUDENT}
                     organisationUuid={trainingCenterUuid}
                     isSubmitting={isSubmitting}
                     onSubmit={onSubmitUser}
@@ -427,9 +417,8 @@ export default function CreateAccountPage() {
                   />
                 </TabsContent>
 
-                <TabsContent value={USER_TYPE.INSTRUCTOR} key="instructor-tab">
+                <TabsContent value="instructor" key="instructor-tab">
                   <UserAccountForm
-                    userType={USER_TYPE.INSTRUCTOR}
                     organisationUuid={trainingCenterUuid}
                     isSubmitting={isSubmitting}
                     onSubmit={onSubmitUser}
@@ -437,7 +426,7 @@ export default function CreateAccountPage() {
                   />
                 </TabsContent>
 
-                <TabsContent value={USER_TYPE.PARTNER} key="partner-tab">
+                <TabsContent value="organisation_user" key="organisation_user-tab">
                   {renderPartnerContent()}
                 </TabsContent>
               </Tabs>

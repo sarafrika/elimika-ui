@@ -1,10 +1,10 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useMemo, useState } from "react"
 import { useSessionContext } from "@/context/session-provider-wrapper"
 import { useRouter } from "next/navigation"
 
-export type UserRole = "instructor" | "student"
+export type UserRole = "instructor" | "student" | "organisation_user" | "admin"
 
 interface UserRoleContextType {
   roles: UserRole[];
@@ -30,14 +30,16 @@ export const UserRoleProvider = ({ children }: { children: React.ReactNode }) =>
   const [roles, setRoles] = useState<UserRole[]>([])
   const [activeRole, setActiveRole] = useState<UserRole | null>(null)
 
+  const formatRole = useMemo(() => (role: UserRole) => role.replace(/_/g, "-"), [])
+
   useEffect(() => {
     if (status === "authenticated" && session?.decoded?.user_domain) {
       const userDomain = session.decoded.user_domain
 
       let userRoles: UserRole[] = []
+      const addRole = (role: UserRole) => userDomain.includes(role) && userRoles.push(role)
       if (Array.isArray(userDomain)) {
-        if (userDomain.includes("instructor")) userRoles.push("instructor")
-        if (userDomain.includes("student")) userRoles.push("student")
+        userDomain.forEach(domain => addRole(domain as UserRole))
       }
 
       setRoles(userRoles)
@@ -49,17 +51,11 @@ export const UserRoleProvider = ({ children }: { children: React.ReactNode }) =>
   }, [session?.decoded?.user_domain, status])
 
   useEffect(() => {
-    switch (activeRole) {
-      case "instructor":
-        router.push("/dashboard/instructor/overview")
-        break
-      case "student":
-        router.push("/dashboard/student/overview")
-        break
-      default:
-        router.push("/dashboard")
+    if (activeRole) {
+      router.push(`/dashboard/${formatRole(activeRole)}/overview`)
+    } else {
+      router.push("/dashboard")
     }
-
   }, [activeRole, router])
 
   return (

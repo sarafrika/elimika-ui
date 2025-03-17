@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { KeycloakJWT } from "@/app/api/auth/[...nextauth]/_utils"
 import menu, { MenuItem } from "@/lib/menu"
+import { UserRole } from "@/context/user-role-provider"
 
-function isAuthorizedPath(path: string, userRoles: string[]): boolean {
+
+function formatRole(role: UserRole): string {
+  return role.replace(/_/g, "-")
+}
+
+function isAuthorizedPath(path: string, userRoles: UserRole[]): boolean {
   for (const role of userRoles) {
-    if (path === `/dashboard/${role}/overview`) {
+    if (path === `/dashboard/${formatRole(role)}/overview`) {
       return true
     }
   }
@@ -80,7 +86,9 @@ export async function middleware(request: NextRequest) {
       }
 
       if (!isPublicPath && !isAuthorizedPath(path, userDomain)) {
+        console.log("called")
         if (path === dashboardPath) {
+          console.log("authorized")
           return NextResponse.next()
         }
 
