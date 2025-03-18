@@ -13,9 +13,9 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/c
 import { signOut } from "next-auth/react"
 import { toast } from "sonner"
 import { useSessionContext } from "@/context/session-provider-wrapper"
-import { UserRole, useUserRole } from "@/context/user-role-provider"
 import { Badge } from "@/components/ui/badge"
 import { useMemo } from "react"
+import { useAuth, UserDomain } from "@/context/auth-provider"
 
 export async function logout() {
   try {
@@ -33,7 +33,7 @@ export async function logout() {
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { session } = useSessionContext()
-  const { roles, activeRole, setActiveRole } = useUserRole()
+  const { domains, activeDomain, setActiveDomain } = useAuth()
 
   const userInitials =
     session?.user?.name
@@ -42,8 +42,8 @@ export function NavUser() {
       ?.map((name) => name?.[0])
       ?.join("") || ""
 
-  const hasMultipleRoles = roles.length > 1
-  const formatRole = useMemo(() => (role: UserRole) => role.replace(/_/g, " "), [])
+  const hasMultipleDomains = domains.length > 1
+  const formatDomain = useMemo(() => (domain: UserDomain) => domain.replace(/_/g, " "), [])
 
   return (
     <SidebarMenu>
@@ -72,7 +72,7 @@ export function NavUser() {
                     variant="outline"
                     className="h-5 py-0 px-1.5 text-[10px] font-normal border-primary/20 text-primary capitalize"
                   >
-                    {activeRole}
+                    {activeDomain}
                   </Badge>
                 </div>
                 <span className="truncate text-xs text-muted-foreground">
@@ -114,34 +114,34 @@ export function NavUser() {
 
               <div className="px-1">
                 <div className="text-xs font-medium text-muted-foreground mb-2">
-                  {hasMultipleRoles ? "Switch Role" : "Current Role"}
+                  {hasMultipleDomains ? "Switch Domain" : "Current Domain"}
                 </div>
-                {hasMultipleRoles ? (
+                {hasMultipleDomains ? (
                   <DropdownMenuRadioGroup
-                    value={activeRole || ""}
-                    onValueChange={(value) => setActiveRole(value as UserRole)}
+                    value={activeDomain || ""}
+                    onValueChange={(value) => setActiveDomain(value as UserDomain)}
                     className="flex flex-col gap-1"
                   >
-                    {roles.map((role) => (
+                    {domains.map((domain) => (
                       <div
-                        key={role}
+                        key={domain}
                         className={`
                           flex items-center px-2 py-1.5 rounded-md text-sm
-                          ${role === activeRole
+                          ${domain === activeDomain
                           ? "bg-primary/10 text-primary font-medium"
                           : "hover:bg-muted cursor-pointer"}
                         `}
-                        onClick={() => setActiveRole(role)}
+                        onClick={() => setActiveDomain(domain)}
                       >
                         <div className="w-4 h-4 mr-2 flex items-center justify-center">
-                          {role === activeRole ? (
+                          {domain === activeDomain ? (
                             <div className="w-2 h-2 rounded-full bg-primary"></div>
                           ) : (
                             <div className="w-2 h-2 rounded-full border border-muted-foreground"></div>
                           )}
                         </div>
-                        <span className="capitalize flex-1">{formatRole(role)}</span>
-                        {role === activeRole && (
+                        <span className="capitalize flex-1">{formatDomain(domain)}</span>
+                        {domain === activeDomain && (
                           <Badge
                             variant="outline"
                             className="ml-auto py-0.5 px-2 text-xs font-normal border-primary/20 text-primary"
@@ -157,7 +157,7 @@ export function NavUser() {
                     <div className="w-4 h-4 mr-2 flex items-center justify-center">
                       <div className="w-2 h-2 rounded-full bg-primary"></div>
                     </div>
-                    <span className="capitalize flex-1 text-primary font-medium">{activeRole}</span>
+                    <span className="capitalize flex-1 text-primary font-medium">{activeDomain}</span>
                     <Badge
                       variant="outline"
                       className="ml-auto py-0.5 px-2 text-xs font-normal border-primary/20 text-primary"

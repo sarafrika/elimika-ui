@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useUserRole } from "@/context/user-role-provider"
+import { useAuth } from "@/context/auth-provider"
 
 interface NavSecondaryProps {
   items: MenuItem[]
@@ -17,9 +17,9 @@ interface NavSecondaryProps {
 
 export function NavSecondary({ items, ...props }: NavSecondaryProps & ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const pathname = usePathname()
-  const { activeRole } = useUserRole()
+  const { activeDomain } = useAuth()
 
-  const filteredItems = items.filter((item) => !item.role || item.role === activeRole)
+  const filteredItems = items.filter((item) => !item.domain || item.domain === activeDomain)
 
   const menuWithActivePath = getMenuWithActivePath(filteredItems, pathname)
 

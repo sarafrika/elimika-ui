@@ -9,7 +9,7 @@ import {
 } from "./breadcrumb"
 import Link from "next/link"
 import { Fragment } from "react"
-import { useUserRole } from "@/context/user-role-provider"
+import { useAuth } from "@/context/auth-provider"
 
 interface AppBreadcrumbProps {
   className?: string
@@ -18,7 +18,7 @@ interface AppBreadcrumbProps {
 
 export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps) {
   const { breadcrumbs } = useBreadcrumb()
-  const { activeRole } = useUserRole()
+  const { activeDomain } = useAuth()
 
   if (breadcrumbs.length === 0 && !showHome) return null
 
@@ -28,7 +28,7 @@ export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps
         {showHome && (
           <>
             <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href={`/dashboard/${activeRole}/overview`}>
+              <BreadcrumbLink href={`/dashboard/${activeDomain}/overview`}>
                 Dashboard
               </BreadcrumbLink>
             </BreadcrumbItem>

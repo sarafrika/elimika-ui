@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Nunito_Sans } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
-import { AuthProvider } from "@/context/auth-provider"
+import { RootProviders } from "@/context/root-providers"
 
 const nunitoSans = Nunito_Sans({
   variable: "--font-sans",
@@ -20,15 +20,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <AuthProvider>
-      <html lang="en">
-      <body
-        className={`${nunitoSans.className}  antialiased`}
-      >
+    <html lang="en">
+    <body
+      className={`${nunitoSans.className}  antialiased`}
+    >
+    <RootProviders>
       {children}
-      <Toaster />
-      </body>
-      </html>
-    </AuthProvider>
+    </RootProviders>
+    <Toaster />
+    </body>
+    </html>
   )
 }

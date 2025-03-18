@@ -25,8 +25,8 @@ import {
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrainingCenter, TrainingCenterForm } from "@/app/auth/create-account/_components/training-center-form"
-import { UserRole } from "@/context/user-role-provider"
 import { useAuthRealm } from "@/hooks/use-auth-realm"
+import { UserDomain } from "@/context/auth-provider"
 
 type AccountCreationStatus =
   | "idle"
@@ -38,7 +38,7 @@ export default function CreateAccountPage() {
   const authRealm = useAuthRealm()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [userRole, setUserRole] = useState<UserRole>("student")
+  const [userDomain, setUserDomain] = useState<UserDomain>("student")
   const [step, setStep] = useState<"training_center" | "user">("training_center")
   const [trainingCenterUuid, setTrainingCenterUuid] = useState<string | null>(null)
 
@@ -89,10 +89,10 @@ export default function CreateAccountPage() {
   }, [])
 
   useEffect(() => {
-    if (userRole !== "organisation_user") {
+    if (userDomain !== "organisation_user") {
       fetchTrainingCenter()
     }
-  }, [fetchTrainingCenter, userRole])
+  }, [fetchTrainingCenter, userDomain])
 
   const onSubmitUser = async (data: User) => {
     if (!trainingCenterUuid) {
@@ -112,7 +112,7 @@ export default function CreateAccountPage() {
 
       setUserEmail(data.email)
 
-      const response = await createOrUpdateUser(userData, userRole)
+      const response = await createOrUpdateUser(userData, userDomain)
 
       if (response.success) {
         setAccountCreationStatus("success")
@@ -163,7 +163,7 @@ export default function CreateAccountPage() {
   }
 
   const UserTypeIcon = () => {
-    switch (userRole) {
+    switch (userDomain) {
       case "student":
         return <GraduationCap className="h-6 w-6 text-slate-800" />
       case "instructor":
@@ -174,7 +174,7 @@ export default function CreateAccountPage() {
   }
 
   const UserTypeTitle = () => {
-    switch (userRole) {
+    switch (userDomain) {
       case "student":
         return "Join as a Student"
       case "instructor":
@@ -185,7 +185,7 @@ export default function CreateAccountPage() {
   }
 
   const UserTypeDescription = () => {
-    switch (userRole) {
+    switch (userDomain) {
       case "student":
         return "Access courses, track your progress, and connect with instructors"
       case "instructor":
@@ -299,7 +299,7 @@ export default function CreateAccountPage() {
               setShowSuccessDialog(false)
 
               setAccountCreationStatus("idle")
-              if (userRole === "organisation_user") {
+              if (userDomain === "organisation_user") {
                 setStep("training_center")
               }
             }}
@@ -358,12 +358,12 @@ export default function CreateAccountPage() {
               <ErrorAlert />
 
               <Tabs
-                value={userRole}
+                value={userDomain}
                 onValueChange={(value) => {
-                  const newUserRole = value as UserRole
-                  setUserRole(newUserRole)
+                  const newUserDomain = value as UserDomain
+                  setUserDomain(newUserDomain)
 
-                  if (newUserRole === "organisation_user") {
+                  if (newUserDomain === "organisation_user") {
                     setStep("training_center")
                     setTrainingCenterUuid(null)
                   } else {

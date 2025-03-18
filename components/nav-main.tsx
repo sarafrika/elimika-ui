@@ -14,21 +14,21 @@ import {
   SidebarMenuSubItem
 } from "@/components/ui/sidebar"
 import { getMenuWithActivePath, MenuItem } from "@/lib/menu"
-import { useUserRole } from "@/context/user-role-provider"
 import Link from "next/link"
 import * as React from "react"
-import { usePathname } from "next/navigation"
 import { useState } from "react"
+import { usePathname } from "next/navigation"
+import { useAuth } from "@/context/auth-provider"
 
 export function NavMain({ items }: { items: MenuItem[] }) {
   const pathname = usePathname()
-  const { activeRole } = useUserRole()
+  const { activeDomain } = useAuth()
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
 
-  const OVERVIEW_PATH = `/dashboard/${activeRole}/overview`
+  const OVERVIEW_PATH = `/dashboard/${activeDomain}/overview`
 
   let menuLabel
-  switch (activeRole) {
+  switch (activeDomain) {
     case "instructor":
       menuLabel = "Workspace"
       break
@@ -39,7 +39,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
       menuLabel = "Dashboard"
   }
 
-  const filteredItems = items.filter((item) => !item.role || item.role === activeRole)
+  const filteredItems = items.filter((item) => !item.domain || item.domain === activeDomain)
 
   const menuWithActivePath = getMenuWithActivePath(filteredItems, pathname)
 

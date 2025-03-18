@@ -1,13 +1,13 @@
 import { ComponentType } from "react"
-import { UserRole } from "@/context/user-role-provider"
 import { FileText, LibraryIcon } from "lucide-react"
+import { UserDomain } from "@/context/auth-provider"
 
 export type MenuItem = {
   title: string
   url?: string
   items?: MenuItem[]
   isActive?: boolean
-  role?: UserRole | null
+  domain?: UserDomain | null
   launchInNewTab?: boolean
   icon?: ComponentType<{ className?: string }>
 }
@@ -44,7 +44,7 @@ export default {
     {
       title: "Course Management",
       icon: LibraryIcon,
-      role: "instructor",
+      domain: "instructor",
       items: [
         {
           title: "Create New Course",

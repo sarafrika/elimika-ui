@@ -4,18 +4,18 @@ import { getEnvironmentVariable } from "@/lib/utils"
 import { ApiResponse, ApiResponseWithPagination } from "@/lib/types"
 import { User } from "@/app/auth/create-account/_components/user-account-form"
 import { TrainingCenter } from "@/app/auth/create-account/_components/training-center-form"
-import { UserRole } from "@/context/user-role-provider"
+import { UserDomain } from "@/context/auth-provider"
 
 const DEFAULT_PAGE_SIZE = 10
 const EVERY_THIRTY_MINUTES = 60 * 30 // 1,800 seconds
 const BASE_URL = getEnvironmentVariable("NEXT_PUBLIC_API_URL")
 
-export async function createOrUpdateUser(user: User, userRole: UserRole) {
+export async function createOrUpdateUser(user: User, userDomain: UserDomain) {
   try {
     const headers = new Headers()
     headers.set("Content-Type", "application/json")
 
-    const url = `${BASE_URL}/users${user.uuid ? "/" + user.uuid : ""}?user_domain=${userRole}`
+    const url = `${BASE_URL}/users${user.uuid ? "/" + user.uuid : ""}?user_domain=${userDomain}`
 
     const response = await fetch(url, {
       method: user.uuid ? "PUT" : "POST",
