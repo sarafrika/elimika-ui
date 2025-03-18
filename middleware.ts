@@ -86,9 +86,7 @@ export async function middleware(request: NextRequest) {
       }
 
       if (!isPublicPath && !isAuthorizedPath(path, userDomain)) {
-        console.log("called")
         if (path === dashboardPath) {
-          console.log("authorized")
           return NextResponse.next()
         }
 

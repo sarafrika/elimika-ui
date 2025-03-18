@@ -1,8 +1,8 @@
 "use client"
-
-import { createContext, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useContext, useEffect, useMemo } from "react"
 import { useSessionContext } from "@/context/session-provider-wrapper"
 import { useRouter } from "next/navigation"
+import { useRoleStore } from "@/store/use-role-store"
 
 export type UserRole = "instructor" | "student" | "organisation_user" | "admin"
 
@@ -27,45 +27,53 @@ const UserRoleContext = createContext<UserRoleContextType>({
 export const UserRoleProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter()
   const { session, status } = useSessionContext()
-  const [roles, setRoles] = useState<UserRole[]>([])
-  const [activeRole, setActiveRole] = useState<UserRole | null>(null)
+
+  const roles = useRoleStore((state) => state.roles)
+  const activeRole = useRoleStore((state) => state.activeRole)
+  const setRoles = useRoleStore((state) => state.setRoles)
+  const setActiveRole = useRoleStore((state) => state.setActiveRole)
+  const resetRoles = useRoleStore((state) => state.resetRoles)
 
   const formatRole = useMemo(() => (role: UserRole) => role.replace(/_/g, "-"), [])
 
   useEffect(() => {
     if (status === "authenticated" && session?.decoded?.user_domain) {
       const userDomain = session.decoded.user_domain
-
       let userRoles: UserRole[] = []
-      const addRole = (role: UserRole) => userDomain.includes(role) && userRoles.push(role)
+
       if (Array.isArray(userDomain)) {
-        userDomain.forEach(domain => addRole(domain as UserRole))
+        userDomain.forEach(domain => {
+          const role = domain as UserRole
+          if (["instructor", "student", "organisation_user", "admin"].includes(role)) {
+            userRoles.push(role)
+          }
+        })
       }
 
       setRoles(userRoles)
-      setActiveRole(userRoles[0] || null)
-    } else {
-      setRoles([])
-      setActiveRole(null)
+    } else if (status === "unauthenticated") {
+      resetRoles()
     }
-  }, [session?.decoded?.user_domain, status])
+  }, [session?.decoded?.user_domain, status, setRoles, resetRoles])
 
   useEffect(() => {
-    if (activeRole) {
+    if (activeRole && status === "authenticated") {
       router.push(`/dashboard/${formatRole(activeRole)}/overview`)
-    } else {
+    } else if (status === "authenticated") {
       router.push("/dashboard")
     }
-  }, [activeRole, router])
+  }, [activeRole, router, status, formatRole])
+
+  const value = {
+    roles,
+    activeRole,
+    setActiveRole,
+    isLoading: status === "loading",
+    isLoggedIn: status === "authenticated"
+  }
 
   return (
-    <UserRoleContext.Provider value={{
-      roles,
-      activeRole,
-      setActiveRole,
-      isLoading: status === "loading",
-      isLoggedIn: status === "authenticated"
-    }}>
+    <UserRoleContext.Provider value={value}>
       {children}
     </UserRoleContext.Provider>
   )
