@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 import { KeycloakJWT } from "@/app/api/auth/[...nextauth]/_utils"
 import { getEnvironmentVariable } from "./lib/utils"
-import { signIn } from "next-auth/react"
 
 const publicPaths = ["/", "/auth/create-account"]
 
@@ -21,7 +20,7 @@ export async function middleware(request: NextRequest) {
   })) as KeycloakJWT | null
 
   if (!token && !isPublicPath) {
-    return signIn("keycloak")
+    return NextResponse.redirect(new URL("/auth/create-account", request.url))
   }
 
   if (token && isPublicPath) {
