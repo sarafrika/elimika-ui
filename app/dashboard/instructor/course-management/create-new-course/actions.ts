@@ -5,6 +5,9 @@ import { PagedResponseTemplate, ResponseTemplate } from "@/lib/types"
 import {
   Category, Course
 } from "@/app/dashboard/instructor/course-management/create-new-course/_components/course-creation-form"
+import {
+  Lesson
+} from "@/app/dashboard/instructor/course-management/create-new-course/_components/lesson-management-form"
 
 const BASE_URL = getEnvironmentVariable("NEXT_PUBLIC_API_URL")
 
@@ -50,5 +53,44 @@ export async function createCourse(course: Course) {
     throw new Error(
       "Something went wrong while creating or updating course. Please contact support."
     )
+  }
+}
+
+export async function createLesson(courseId: number, lesson: Lesson, files: { [key: number]: File }) {
+  try {
+    const formData = new FormData()
+
+    formData.append(
+      "lesson",
+      new Blob(
+        [
+          JSON.stringify({
+            ...lesson,
+            content: lesson.content.map((content, index) => ({
+              ...content,
+              contentText:
+                content.contentType === "Text"
+                  ? content.contentText
+                  : undefined,
+              contentUrl: files[index] ? undefined : content.contentUrl
+            }))
+          })
+        ],
+        {
+          type: "application/json"
+        }
+      )
+    )
+
+    Object.entries(files).forEach(([_, file]) => {
+      formData.append("files", file)
+    })
+
+    const response = await fetch(`${BASE_URL}/courses/${courseId}/lessons`, { method: "POST", body: formData })
+
+    return (await response.json()) as ResponseTemplate<Lesson>
+  } catch (error) {
+    console.error("Error creating lesson:", error)
+    throw new Error("Something went wrong while creating lesson. Please contact support.")
   }
 }
