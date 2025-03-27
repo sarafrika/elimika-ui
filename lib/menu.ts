@@ -49,6 +49,10 @@ export default {
         {
           title: "Create New Course",
           url: "/dashboard/instructor/course-management/create-new-course"
+        },
+        {
+          title: "Drafts",
+          url: "/dashboard/instructor/course-management/drafts"
         }
       ]
     }

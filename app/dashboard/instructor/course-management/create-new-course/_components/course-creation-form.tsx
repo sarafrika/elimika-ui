@@ -71,9 +71,9 @@ const CourseCreationFormSchema = z.object({
   code: z.string().nullish(),
   name: z.string().trim().min(1, "Course name is required"),
   description: z.string().trim().min(1, "Course description is required"),
-  durationHours: z.coerce.number().min(1, "Course duration is required"),
   difficultyLevel: z.nativeEnum(DIFFICULTY_LEVELS, { message: "Difficulty level is required" }),
   pricing: CoursePricingSchema,
+  classLimit: z.coerce.number().min(1, "Class limit is required"),
   thumbnail: z
     .any()
     .refine((file) => file instanceof File, "Thumbnail is required")
@@ -136,7 +136,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
     defaultValues: {
       name: "",
       description: "",
-      durationHours: 0,
       difficultyLevel: DIFFICULTY_LEVELS.BEGINNER,
       pricing: {
         originalPrice: 0,
@@ -556,52 +555,58 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
 
         {/* Duration & Level */}
         <FormSection
-          title="Course Details"
-          description="Set the duration and difficulty level"
+          title="Difficulty Level"
+          description="Set the difficulty level of your course"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="durationHours"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Duration (hours)</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="0" {...field} />
+          <FormField
+            control={form.control}
+            name="difficultyLevel"
+            render={({ field }) => (
+              <FormItem>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl className="w-full">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select difficulty level" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <SelectContent>
+                    {Object.values(DIFFICULTY_LEVELS).map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level.charAt(0).toUpperCase() + level.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormSection>
 
-            <FormField
-              control={form.control}
-              name="difficultyLevel"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Difficulty Level</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select difficulty level" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Object.values(DIFFICULTY_LEVELS).map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {level.charAt(0).toUpperCase() + level.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+        <FormSection
+          title="Class Limit"
+          description="Set the maximum number of students allowed to enroll"
+        >
+          <FormField
+            control={form.control}
+            name="classLimit"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="Maximum number of students"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </FormSection>
 
         {showSubmitButton && (

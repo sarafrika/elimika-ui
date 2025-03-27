@@ -183,7 +183,6 @@ export default function CourseCreationPage() {
                   <div className="space-y-2">
                     <p><span className="font-medium">Name:</span> {course.name}</p>
                     <p><span className="font-medium">Description:</span> {course.description}</p>
-                    <p><span className="font-medium">Duration:</span> {course.durationHours} hours</p>
                     <p><span className="font-medium">Difficulty:</span> {course.difficultyLevel}</p>
                   </div>
                 </div>
