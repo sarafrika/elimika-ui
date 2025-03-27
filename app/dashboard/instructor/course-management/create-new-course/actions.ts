@@ -94,3 +94,17 @@ export async function createLesson(courseId: number, lesson: Lesson, files: { [k
     throw new Error("Something went wrong while creating lesson. Please contact support.")
   }
 }
+
+export async function fetchCourses(params?: string) {
+  try{
+    const headers = new Headers()
+    headers.set("Accept", "application/json")
+
+    const response = await fetch(`${BASE_URL}/courses${params ? `?${params}` : ""}`, { headers })
+
+    return (await response.json()) as PagedResponseTemplate<Course>
+  } catch (error) {
+    console.error("Error fetching courses:", error)
+    throw new Error("Something went wrong while fetching courses. Please contact support.")
+  }
+}
