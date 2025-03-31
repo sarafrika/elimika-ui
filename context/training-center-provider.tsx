@@ -1,33 +1,48 @@
 "use client"
 
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 import { fetchTrainingCenters } from "@/app/auth/create-account/actions"
 import { toast } from "sonner"
 import { useSessionContext } from "@/context/session-provider-wrapper"
 import { TrainingCenter } from "@/app/auth/create-account/_components/training-center-form"
 
 export interface UseTrainingCenterReturn {
-  trainingCenter: TrainingCenter | null;
-  loading: boolean;
-  error: Error | null;
-  refetchTrainingCenter: () => Promise<void>;
+  trainingCenter: TrainingCenter | null
+  loading: boolean
+  error: Error | null
+  refetchTrainingCenter: () => Promise<void>
 }
 
 const initialState: Omit<UseTrainingCenterReturn, "refetchTrainingCenter"> = {
   trainingCenter: null,
   loading: true,
-  error: null
+  error: null,
 }
 
 export function useTrainingCenter(): UseTrainingCenterReturn {
   const [state, setState] = useState(initialState)
   const { session } = useSessionContext()
 
-  const trainingCenterSlug = useMemo(() => session?.decoded?.organization?.[0] ?? null, [session?.decoded?.organization])
+  const trainingCenterSlug = useMemo(
+    () => session?.decoded?.organization?.[0] ?? null,
+    [session?.decoded?.organization],
+  )
 
   const fetchTrainingCenter = useCallback(async () => {
     if (!trainingCenterSlug) {
-      setState((prev) => ({ ...prev, loading: false, error: new Error("No training center slug found") }))
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: new Error("No training center slug found"),
+      }))
       return
     }
 
@@ -44,8 +59,15 @@ export function useTrainingCenter(): UseTrainingCenterReturn {
       const [trainingCenter] = response.data.content
       setState({ trainingCenter, loading: false, error: null })
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Something went wrong while fetching training center."
-      setState({ trainingCenter: null, loading: false, error: new Error(errorMessage) })
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while fetching training center."
+      setState({
+        trainingCenter: null,
+        loading: false,
+        error: new Error(errorMessage),
+      })
       toast.error(errorMessage)
     }
   }, [trainingCenterSlug])
@@ -57,7 +79,9 @@ export function useTrainingCenter(): UseTrainingCenterReturn {
   return { ...state, refetchTrainingCenter: fetchTrainingCenter }
 }
 
-const TrainingCenterContext = createContext<UseTrainingCenterReturn | null>(null)
+const TrainingCenterContext = createContext<UseTrainingCenterReturn | null>(
+  null,
+)
 
 export function TrainingCenterProvider({ children }: { children: ReactNode }) {
   const trainingCenterData = useTrainingCenter()
@@ -74,10 +98,9 @@ export function useTrainingCenterContext() {
 
   if (!context) {
     throw new Error(
-      "useTrainingCenterContext must be used within a TrainingCenterProvider"
+      "useTrainingCenterContext must be used within a TrainingCenterProvider",
     )
   }
 
   return context
 }
-

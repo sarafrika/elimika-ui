@@ -1,7 +1,15 @@
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -18,7 +26,7 @@ const TrainingCenterFormSchema = z.object({
   modified_date: z.string().optional(),
   name: z.string().min(1, "Training Center name is required"),
   domain: z.string().min(1, "Training Center domain is required"),
-  description: z.string().min(1, "Training Center description is required")
+  description: z.string().min(1, "Training Center description is required"),
 })
 
 export type TrainingCenter = z.infer<typeof TrainingCenterFormSchema>
@@ -30,7 +38,11 @@ interface TrainingCenterFormProps {
   onSubmit(data: TrainingCenter): void
 }
 
-export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: TrainingCenterFormProps) {
+export function TrainingCenterForm({
+  authRealm,
+  isSubmitting,
+  onSubmit,
+}: TrainingCenterFormProps) {
   const trainingCenterForm = useForm<TrainingCenter>({
     resolver: zodResolver(TrainingCenterFormSchema),
     defaultValues: {
@@ -39,8 +51,8 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
       domain: "",
       address: "",
       description: "",
-      auth_realm: authRealm
-    }
+      auth_realm: authRealm,
+    },
   })
 
   return (
@@ -49,11 +61,9 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
         onSubmit={trainingCenterForm.handleSubmit(onSubmit)}
         className="space-y-6"
       >
-        <div className="bg-white rounded-md border p-6">
-          <h2 className="text-lg font-medium mb-1">
-            Training Center Details
-          </h2>
-          <p className="text-gray-500 text-sm mb-4">
+        <div className="rounded-md border bg-white p-6">
+          <h2 className="mb-1 text-lg font-medium">Training Center Details</h2>
+          <p className="mb-4 text-sm text-gray-500">
             Tell us about your organization
           </p>
           <div className="space-y-4">
@@ -134,7 +144,7 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
         </div>
 
         <div className="pt-4">
-          <div className="flex items-center justify-end mt-6 space-x-4">
+          <div className="mt-6 flex items-center justify-end space-x-4">
             <Button
               type="submit"
               disabled={isSubmitting}

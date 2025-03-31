@@ -14,7 +14,7 @@ export function useSessionExpiry() {
         try {
           await fetch("/api/auth/logout")
           await signOut({ callbackUrl: "/" }).then(() =>
-            toast.success("Session expired. Please log in again.")
+            toast.success("Session expired. Please log in again."),
           )
         } catch (error) {
           console.error("Error logging out:", error)

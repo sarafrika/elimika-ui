@@ -18,9 +18,15 @@ import {
   Trash,
   VideoIcon,
   X,
-  Youtube
+  Youtube,
 } from "lucide-react"
-import { ChangeEvent, Dispatch, ReactNode, SetStateAction, useState } from "react"
+import {
+  ChangeEvent,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useState,
+} from "react"
 import { z } from "zod"
 import { useFieldArray, useForm, UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
@@ -30,15 +36,35 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { createLesson } from "@/app/dashboard/instructor/course-management/create-new-course/actions"
 
@@ -48,7 +74,7 @@ const CONTENT_TYPES = {
   TEXT: "Text",
   LINK: "Link",
   PDF: "PDF",
-  YOUTUBE: "YouTube"
+  YOUTUBE: "YouTube",
 } as const
 
 type ContentType = keyof typeof CONTENT_TYPES
@@ -57,7 +83,7 @@ const ResourceFormSchema = z.object({
   id: z.number().optional(),
   title: z.string().min(1, "Title is required"),
   resourceUrl: z.string().url("Please enter a valid URL"),
-  displayOrder: z.coerce.number().min(0)
+  displayOrder: z.coerce.number().min(0),
 })
 
 export type LessonResource = z.infer<typeof ResourceFormSchema>
@@ -69,7 +95,7 @@ const ContentFormSchema = z.object({
   contentType: z.nativeEnum(CONTENT_TYPES),
   title: z.string().min(1, "Title is required"),
   duration: z.coerce.number().positive("Duration must be a positive number"),
-  displayOrder: z.coerce.number().min(0)
+  displayOrder: z.coerce.number().min(0),
 })
 
 export type LessonContent = z.infer<typeof ContentFormSchema>
@@ -84,7 +110,7 @@ const LessonCreationFormSchema = z.object({
     .array(ContentFormSchema)
     .min(1, "At least one content item is required"),
   resources: z.array(ResourceFormSchema),
-  hasAssessment: z.boolean().default(false)
+  hasAssessment: z.boolean().default(false),
 })
 
 export type Lesson = z.infer<typeof LessonCreationFormSchema>
@@ -116,22 +142,25 @@ type LessonListProps = {
 }
 
 function LessonList({
-                      courseTitle,
-                      lessons,
-                      onAddLesson,
-                      onEditLesson,
-                      onDeleteLesson,
-                      onReorderLessons,
-                      onAddAssessment,
-                      onEditAssessment
-                    }: LessonListProps) {
+  courseTitle,
+  lessons,
+  onAddLesson,
+  onEditLesson,
+  onDeleteLesson,
+  onReorderLessons,
+  onAddAssessment,
+  onEditAssessment,
+}: LessonListProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index)
   }
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+  const handleDragOver = (
+    e: React.DragEvent<HTMLDivElement>,
+    index: number,
+  ) => {
     e.preventDefault()
     if (draggedIndex === null) return
 
@@ -153,12 +182,12 @@ function LessonList({
       <div className="flex flex-row items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">{courseTitle}</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
           </p>
         </div>
         <Button onClick={onAddLesson}>
-          <PlusCircle className="h-4 w-4 mr-2" />
+          <PlusCircle className="mr-2 h-4 w-4" />
           Add Lesson
         </Button>
       </div>
@@ -167,18 +196,17 @@ function LessonList({
         {lessons.map((lesson, index) => (
           <div
             key={lesson?.id || index}
-            className="group relative flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-all"
+            className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
             draggable
             onDragStart={() => handleDragStart(index)}
             onDragOver={(e) => handleDragOver(e, index)}
           >
-            <Grip
-              className="h-5 w-5 text-muted-foreground mt-1 cursor-move opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100" />
 
             <div className="flex-1 space-y-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-medium text-lg">{lesson.title}</h3>
+                  <h3 className="text-lg font-medium">{lesson.title}</h3>
                 </div>
                 {/*<div>
                   <div className="flex items-center gap-2">
@@ -201,24 +229,24 @@ function LessonList({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="opacity-0 transition-opacity group-hover:opacity-100"
                     >
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-                      <PenLine className="h-4 w-4 mr-2" />
+                      <PenLine className="mr-2 h-4 w-4" />
                       Edit Lesson
                     </DropdownMenuItem>
                     {lesson.hasAssessment ? (
                       <DropdownMenuItem onClick={() => onEditAssessment()}>
-                        <ClipboardCheck className="h-4 w-4 mr-2" />
+                        <ClipboardCheck className="mr-2 h-4 w-4" />
                         Edit Assessment
                       </DropdownMenuItem>
                     ) : (
                       <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
-                        <ClipboardCheck className="h-4 w-4 mr-2" />
+                        <ClipboardCheck className="mr-2 h-4 w-4" />
                         Add Assessment
                       </DropdownMenuItem>
                     )}
@@ -227,7 +255,7 @@ function LessonList({
                       className="text-red-600"
                       onClick={() => lesson.id && onDeleteLesson(lesson.id)}
                     >
-                      <Trash className="h-4 w-4 mr-2" />
+                      <Trash className="mr-2 h-4 w-4" />
                       Delete Lesson
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -247,7 +275,7 @@ function LessonList({
                 ))}
               </div>
 
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-4 w-4" />
                   <span>{getTotalDuration(lesson)} minutes</span>
@@ -307,7 +335,7 @@ interface ContentItemFormProps {
 const ACCEPTED_FILE_TYPES = {
   [CONTENT_TYPES.AUDIO]: ".mp3,.wav,audio/*",
   [CONTENT_TYPES.VIDEO]: ".mp4,.webm,video/!*",
-  [CONTENT_TYPES.PDF]: ".pdf"
+  [CONTENT_TYPES.PDF]: ".pdf",
 }
 
 const ContentTypeIcons = {
@@ -316,7 +344,7 @@ const ContentTypeIcons = {
   [CONTENT_TYPES.TEXT]: FileText,
   [CONTENT_TYPES.LINK]: LinkIcon,
   [CONTENT_TYPES.PDF]: FileIcon,
-  [CONTENT_TYPES.YOUTUBE]: Youtube
+  [CONTENT_TYPES.YOUTUBE]: Youtube,
 }
 
 const ContentTypeLabels = {
@@ -325,9 +353,8 @@ const ContentTypeLabels = {
   [CONTENT_TYPES.TEXT]: "Text",
   [CONTENT_TYPES.LINK]: "Link",
   [CONTENT_TYPES.PDF]: "PDF",
-  [CONTENT_TYPES.YOUTUBE]: "YouTube"
+  [CONTENT_TYPES.YOUTUBE]: "YouTube",
 }
-
 
 function getContentPlaceholder(contentType: ContentType) {
   switch (contentType) {
@@ -342,12 +369,18 @@ function getContentPlaceholder(contentType: ContentType) {
   }
 }
 
-function ContentItemForm({ index, files, setFiles, form, onRemove, isOnly }: ContentItemFormProps) {
+function ContentItemForm({
+  index,
+  files,
+  setFiles,
+  form,
+  onRemove,
+  isOnly,
+}: ContentItemFormProps) {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
       setFiles((prev: { [key: number]: File }) => ({ ...prev, [index]: file }))
-
 
       form.setValue(`content.${index}.contentUrl`, undefined)
     }
@@ -356,7 +389,7 @@ function ContentItemForm({ index, files, setFiles, form, onRemove, isOnly }: Con
   const contentType = form.watch(`content.${index}.contentType`)
 
   return (
-    <div className="p-4 border rounded-lg space-y-4">
+    <div className="space-y-4 rounded-lg border p-4">
       <div className="flex items-center justify-between">
         <h4 className="font-medium">Content Item {index + 1}</h4>
         {!isOnly && (
@@ -366,7 +399,7 @@ function ContentItemForm({ index, files, setFiles, form, onRemove, isOnly }: Con
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormField
           control={form.control}
           name={`content.${index}.contentType`}
@@ -442,7 +475,9 @@ function ContentItemForm({ index, files, setFiles, form, onRemove, isOnly }: Con
         />
       ) : (
         <>
-          {(contentType === CONTENT_TYPES.VIDEO || contentType === CONTENT_TYPES.AUDIO || contentType === CONTENT_TYPES.PDF) && (
+          {(contentType === CONTENT_TYPES.VIDEO ||
+            contentType === CONTENT_TYPES.AUDIO ||
+            contentType === CONTENT_TYPES.PDF) && (
             <FormItem>
               <FormLabel>File Upload</FormLabel>
               <FormControl>
@@ -464,7 +499,9 @@ function ContentItemForm({ index, files, setFiles, form, onRemove, isOnly }: Con
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {contentType === CONTENT_TYPES.VIDEO || contentType === CONTENT_TYPES.AUDIO || contentType === CONTENT_TYPES.PDF
+                  {contentType === CONTENT_TYPES.VIDEO ||
+                  contentType === CONTENT_TYPES.AUDIO ||
+                  contentType === CONTENT_TYPES.PDF
                     ? "Or External URL"
                     : "URL"}
                 </FormLabel>
@@ -472,7 +509,9 @@ function ContentItemForm({ index, files, setFiles, form, onRemove, isOnly }: Con
                   <Input
                     {...field}
                     type="url"
-                    placeholder={getContentPlaceholder(contentType as ContentType)}
+                    placeholder={getContentPlaceholder(
+                      contentType as ContentType,
+                    )}
                     disabled={!!files[index]}
                   />
                 </FormControl>
@@ -508,7 +547,13 @@ interface AppLessonCreationFormProps {
   className?: string
 }
 
-function LessonCreationForm({ courseId, initialData, onSuccess, onCancel, className }: AppLessonCreationFormProps) {
+function LessonCreationForm({
+  courseId,
+  initialData,
+  onSuccess,
+  onCancel,
+  className,
+}: AppLessonCreationFormProps) {
   const [files, setFiles] = useState<{ [key: number]: File }>({})
   const [isLoading, setIsLoading] = useState(false)
 
@@ -526,10 +571,10 @@ function LessonCreationForm({ courseId, initialData, onSuccess, onCancel, classN
           displayOrder: 0,
           duration: 0,
           contentType: "Text",
-          contentText: ""
-        }
-      ]
-    }
+          contentText: "",
+        },
+      ],
+    },
   })
 
   const { control, handleSubmit, trigger, formState, getValues } = form
@@ -537,19 +582,19 @@ function LessonCreationForm({ courseId, initialData, onSuccess, onCancel, classN
   const {
     fields: contentFields,
     append: appendContent,
-    remove: removeContent
+    remove: removeContent,
   } = useFieldArray({
     control,
-    name: "content"
+    name: "content",
   })
 
   const {
     fields: resourceFields,
     append: appendResource,
-    remove: removeResource
+    remove: removeResource,
   } = useFieldArray({
     control: form.control,
-    name: "resources"
+    name: "resources",
   })
 
   const onSubmit = async () => {
@@ -558,7 +603,7 @@ function LessonCreationForm({ courseId, initialData, onSuccess, onCancel, classN
     if (!isValid) {
       const errors = formState.errors
       throw new Error(
-        `Form invalid: ${Object.keys(errors).length} field(s) need attention.`
+        `Form invalid: ${Object.keys(errors).length} field(s) need attention.`,
       )
     }
 
@@ -645,11 +690,11 @@ function LessonCreationForm({ courseId, initialData, onSuccess, onCancel, classN
                 displayOrder: contentFields.length,
                 duration: 0,
                 contentType: "Text",
-                contentText: ""
+                contentText: "",
               })
             }
           >
-            <PlusCircle className="h-4 w-4 mr-2" />
+            <PlusCircle className="mr-2 h-4 w-4" />
             Add Content Item
           </Button>
         </div>
@@ -657,7 +702,7 @@ function LessonCreationForm({ courseId, initialData, onSuccess, onCancel, classN
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Resources</h3>
           {resourceFields.map((field, index) => (
-            <div key={field.id} className="p-4 border rounded-lg space-y-4">
+            <div key={field.id} className="space-y-4 rounded-lg border p-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Resource {index + 1}</h4>
                 <Button
@@ -711,11 +756,11 @@ function LessonCreationForm({ courseId, initialData, onSuccess, onCancel, classN
               appendResource({
                 title: "",
                 resourceUrl: "",
-                displayOrder: resourceFields.length
+                displayOrder: resourceFields.length,
               })
             }
           >
-            <PlusCircle className="h-4 w-4 mr-2" />
+            <PlusCircle className="mr-2 h-4 w-4" />
             Add Resource
           </Button>
         </div>
@@ -726,7 +771,7 @@ function LessonCreationForm({ courseId, initialData, onSuccess, onCancel, classN
           </Button>
           <Button type="submit">
             {isLoading ? (
-              <Loader className="w-4 h-4 animate-spin" />
+              <Loader className="h-4 w-4 animate-spin" />
             ) : initialData ? (
               "Update Lesson"
             ) : (
@@ -747,15 +792,21 @@ interface AppLessonDialogProps {
   onSuccess: (lesson: Lesson) => void
 }
 
-function LessonDialog({ courseId, isOpen, onOpenChange, selectedLesson, onSuccess }: AppLessonDialogProps) {
+function LessonDialog({
+  courseId,
+  isOpen,
+  onOpenChange,
+  selectedLesson,
+  onSuccess,
+}: AppLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b">
+      <DialogContent className="flex max-w-6xl flex-col p-0">
+        <DialogHeader className="border-b px-6 py-4">
           <DialogTitle className="text-xl">
             {selectedLesson ? "Edit Lesson" : "Create New Lesson"}
           </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
+          <DialogDescription className="text-muted-foreground text-sm">
             Fill in the lesson details below. You&apos;ll be able to add a quiz
             after you&apos;ve created the lesson.
           </DialogDescription>
@@ -773,7 +824,7 @@ function LessonDialog({ courseId, isOpen, onOpenChange, selectedLesson, onSucces
 
         {/* Optional loading state overlay */}
         {false && ( // Replace with actual loading state
-          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+          <div className="bg-background/80 absolute inset-0 flex items-center justify-center">
             <div className="flex items-center gap-2">
               {/*<Spinner className="h-4 w-4" />*/}
               <span>Saving lesson...</span>
@@ -785,7 +836,4 @@ function LessonDialog({ courseId, isOpen, onOpenChange, selectedLesson, onSucces
   )
 }
 
-export {
-  LessonDialog,
-  LessonList
-}
+export { LessonDialog, LessonList }

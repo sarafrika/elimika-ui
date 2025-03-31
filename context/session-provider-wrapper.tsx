@@ -13,7 +13,7 @@ const SessionContext = createContext<SessionContextType | null>(null)
 
 export function SessionProviderWrapper({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession() as {
-    data: KeycloakSession | null;
+    data: KeycloakSession | null
     status: "loading" | "authenticated" | "unauthenticated"
   }
 
@@ -28,7 +28,7 @@ export function useSessionContext() {
   const context = useContext(SessionContext)
   if (!context) {
     throw new Error(
-      "useSessionContext must be used within a SessionProviderWrapper"
+      "useSessionContext must be used within a SessionProviderWrapper",
     )
   }
   return context

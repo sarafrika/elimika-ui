@@ -11,10 +11,9 @@ export function FlashScreen({ className }: { className?: string }) {
       <Card className="border-none shadow-none">
         <CardContent className="flex flex-col items-center space-y-4 p-8">
           <div className="relative">
-            <div className="absolute inset-0 animate-ping rounded-lg bg-sidebar-primary opacity-75"></div>
-            <div
-              className="flex aspect-square size-12 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <Hand className="size-6 animate-wave" />
+            <div className="bg-sidebar-primary absolute inset-0 animate-ping rounded-lg opacity-75"></div>
+            <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-12 items-center justify-center rounded-lg">
+              <Hand className="animate-wave size-6" />
             </div>
           </div>
         </CardContent>

@@ -1,6 +1,11 @@
 import { AuthOptions, getServerSession, Session } from "next-auth"
 import crypto from "crypto"
-import { decrypt, encrypt, EncryptedData, getEnvironmentVariable } from "@/lib/utils"
+import {
+  decrypt,
+  encrypt,
+  EncryptedData,
+  getEnvironmentVariable,
+} from "@/lib/utils"
 import KeycloakProvider from "next-auth/providers/keycloak"
 import { jwtDecode } from "jwt-decode"
 import { JWT } from "next-auth/jwt"
@@ -9,6 +14,7 @@ import { UserDomain } from "@/context/auth-provider"
 const REDIRECT_URL = "/auth/create-account"
 
 type KeycloakDecodedToken = {
+  user: {}
   user_domain: UserDomain[]
   organization: string[]
   resource_access: {
@@ -34,13 +40,17 @@ export type KeycloakJWT = JWT & {
   error?: string
 }
 
-async function refreshAccessToken(token: KeycloakJWT): Promise<KeycloakJWT | undefined> {
+async function refreshAccessToken(
+  token: KeycloakJWT,
+): Promise<KeycloakJWT | undefined> {
   const keycloakIssuer = getEnvironmentVariable("KEYCLOAK_ISSUER")
   const keycloakClientId = getEnvironmentVariable("KEYCLOAK_CLIENT_ID")
   const keycloakClientSecret = getEnvironmentVariable("KEYCLOAK_CLIENT_SECRET")
 
   if (!keycloakIssuer || !keycloakClientId || !keycloakClientSecret) {
-    console.error("Missing required environment variables for refreshing access token.")
+    console.error(
+      "Missing required environment variables for refreshing access token.",
+    )
     return
   }
 
@@ -52,7 +62,7 @@ async function refreshAccessToken(token: KeycloakJWT): Promise<KeycloakJWT | und
       grant_type: "refresh_token",
       refresh_token: token.refresh_token,
       client_id: keycloakClientId,
-      client_secret: keycloakClientSecret
+      client_secret: keycloakClientSecret,
     })
 
     const response = await fetch(
@@ -60,8 +70,8 @@ async function refreshAccessToken(token: KeycloakJWT): Promise<KeycloakJWT | und
       {
         method: "POST",
         headers,
-        body
-      }
+        body,
+      },
     )
 
     const refreshedToken = await response.json()
@@ -74,7 +84,7 @@ async function refreshAccessToken(token: KeycloakJWT): Promise<KeycloakJWT | und
       decoded: jwtDecode(refreshedToken.access_token),
       id_token: refreshedToken.id_token,
       expires_at: Math.floor(Date.now() / 1000) + refreshedToken.expires_in,
-      refresh_token: refreshedToken.refresh_token
+      refresh_token: refreshedToken.refresh_token,
     }
   }
 }
@@ -87,13 +97,13 @@ export const authOptions: AuthOptions = {
       clientSecret: getEnvironmentVariable("KEYCLOAK_CLIENT_SECRET"),
       client: {
         id_token_signed_response_alg: "EdDSA",
-        authorization_signed_response_alg: "EdDSA"
-      }
-    })
+        authorization_signed_response_alg: "EdDSA",
+      },
+    }),
   ],
 
   pages: {
-    signIn: REDIRECT_URL
+    signIn: REDIRECT_URL,
   },
 
   callbacks: {
@@ -121,9 +131,9 @@ export const authOptions: AuthOptions = {
     },
 
     async session({
-                    session,
-                    token
-                  }: {
+      session,
+      token,
+    }: {
       session: KeycloakSession
       token: KeycloakJWT
     }) {
@@ -143,13 +153,15 @@ export const authOptions: AuthOptions = {
       session.error = token.error
 
       return session
-    }
-  }
+    },
+  },
 }
 
 export const SessionUtils = {
   getAccessToken: async (secret: string) => {
-    const session = (await getServerSession(authOptions)) as KeycloakSession | null
+    const session = (await getServerSession(
+      authOptions,
+    )) as KeycloakSession | null
     const key = crypto.createHash("sha256").update(secret).digest()
 
     if (!session || !session.access_token) return null
@@ -158,7 +170,9 @@ export const SessionUtils = {
   },
 
   getRefreshToken: async (secret: string) => {
-    const session = (await getServerSession(authOptions)) as KeycloakSession | null
+    const session = (await getServerSession(
+      authOptions,
+    )) as KeycloakSession | null
     const key = crypto.createHash("sha256").update(secret).digest()
 
     if (!session || !session.refresh_token) return null
@@ -167,11 +181,13 @@ export const SessionUtils = {
   },
 
   getIdToken: async (secret: string) => {
-    const session = (await getServerSession(authOptions)) as KeycloakSession | null
+    const session = (await getServerSession(
+      authOptions,
+    )) as KeycloakSession | null
     const key = crypto.createHash("sha256").update(secret).digest()
 
     if (!session || !session.id_token) return null
 
     return decrypt(session.id_token, key)
-  }
+  },
 }

@@ -1,6 +1,3 @@
 export default function AdminOverviewPage() {
-  return (
-    <div>
-    </div>
-  )
+  return <div></div>
 }

@@ -1,9 +1,23 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from "lucide-react"
+import {
+  EyeIcon,
+  FilePenIcon,
+  PenIcon,
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from "next/navigation"
@@ -12,7 +26,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
@@ -22,7 +36,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { fetchCourses } from "@/app/dashboard/instructor/course-management/create-new-course/actions"
@@ -30,7 +44,8 @@ import { PagedResponseTemplate } from "@/lib/types"
 import { Course } from "@/app/dashboard/instructor/course-management/create-new-course/_components/course-creation-form"
 
 export default function CourseDraftsPage() {
-  const [draftCourses, setDraftCourses] = useState<PagedResponseTemplate<Course>>()
+  const [draftCourses, setDraftCourses] =
+    useState<PagedResponseTemplate<Course>>()
   const [isLoading, setIsLoading] = useState(true)
   const [courseToDelete, setCourseToDelete] = useState<number | null>(null)
   const router = useRouter()
@@ -52,7 +67,9 @@ export default function CourseDraftsPage() {
   }, [])
 
   const handleEdit = (courseId: number) => {
-    router.push(`/dashboard/instructor/course-management/create-new-course?id=${courseId}`)
+    router.push(
+      `/dashboard/instructor/course-management/create-new-course?id=${courseId}`,
+    )
   }
 
   const handleView = (courseId: number) => {
@@ -76,7 +93,7 @@ export default function CourseDraftsPage() {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
-      day: "numeric"
+      day: "numeric",
     })
   }
 
@@ -85,15 +102,20 @@ export default function CourseDraftsPage() {
       <div className="space-y-4">
         <h1 className="text-2xl font-medium">Draft Courses</h1>
         <div className="space-y-2">
-          {Array(3).fill(0).map((_, i) => (
-            <div key={i} className="flex items-center space-x-4 p-4 border rounded-md">
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
+          {Array(3)
+            .fill(0)
+            .map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center space-x-4 rounded-md border p-4"
+              >
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+                <Skeleton className="h-10 w-20" />
               </div>
-              <Skeleton className="h-10 w-20" />
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     )
@@ -101,34 +123,44 @@ export default function CourseDraftsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end mb-6">
+      <div className="mb-6 flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Your Draft Courses</h1>
-          <p className="text-muted-foreground text-base mt-1">
-            You have {draftCourses?.data.length} course{draftCourses?.data.length ?? 0 > 1 ? "s" : ""} waiting to be
+          <p className="text-muted-foreground mt-1 text-base">
+            You have {draftCourses?.data.length} course
+            {(draftCourses?.data.length ?? 0 > 1) ? "s" : ""} waiting to be
             published.
           </p>
         </div>
         <Button
           type="button"
-          className="text-sm px-4 py-2 cursor-pointer"
-          onClick={() => router.push("/dashboard/instructor/course-management/create-new-course")}>
+          className="cursor-pointer px-4 py-2 text-sm"
+          onClick={() =>
+            router.push(
+              "/dashboard/instructor/course-management/create-new-course",
+            )
+          }
+        >
           <PlusIcon className="h-4 w-4" />
           New Course
         </Button>
       </div>
 
-
       {draftCourses?.data?.length === 0 ? (
-        <div className="text-center py-12 border rounded-md bg-muted/20">
-          <FilePenIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+        <div className="bg-muted/20 rounded-md border py-12 text-center">
+          <FilePenIcon className="text-muted-foreground mx-auto h-12 w-12" />
           <h3 className="mt-4 text-lg font-medium">No draft courses</h3>
-          <p className="mt-2 text-muted-foreground">
-            You don't have any draft courses yet. Start creating a new course to get started.
+          <p className="text-muted-foreground mt-2">
+            You don't have any draft courses yet. Start creating a new course to
+            get started.
           </p>
           <Button
             className="mt-4"
-            onClick={() => router.push("/dashboard/instructor/course-management/create-new-course")}
+            onClick={() =>
+              router.push(
+                "/dashboard/instructor/course-management/create-new-course",
+              )
+            }
           >
             Create Your First Course
           </Button>
@@ -151,7 +183,7 @@ export default function CourseDraftsPage() {
                 <TableCell className="font-medium">
                   <div>
                     <div>{course.name}</div>
-                    <div className="text-sm text-muted-foreground truncate max-w-[250px]">
+                    <div className="text-muted-foreground max-w-[250px] truncate text-sm">
                       {course.description}
                     </div>
                   </div>
@@ -191,11 +223,11 @@ export default function CourseDraftsPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEdit(course.id!)}>
-                        <PenIcon className="mr-2 h-4 w-4 focus:text-primary-foreground" />
+                        <PenIcon className="focus:text-primary-foreground mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleView(course.id!)}>
-                        <EyeIcon className="mr-2 h-4 w-4 focus:text-primary-foreground" />
+                        <EyeIcon className="focus:text-primary-foreground mr-2 h-4 w-4" />
                         Preview
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -215,17 +247,24 @@ export default function CourseDraftsPage() {
         </Table>
       )}
 
-      <AlertDialog open={courseToDelete !== null} onOpenChange={(open) => !open && setCourseToDelete(null)}>
+      <AlertDialog
+        open={courseToDelete !== null}
+        onOpenChange={(open) => !open && setCourseToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this draft course. This action cannot be undone.
+              This will permanently delete this draft course. This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

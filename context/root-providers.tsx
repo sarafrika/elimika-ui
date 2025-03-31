@@ -9,9 +9,7 @@ export function RootProviders({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <SessionProviderWrapper>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </SessionProviderWrapper>
     </SessionProvider>
   )

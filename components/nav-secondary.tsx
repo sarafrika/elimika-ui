@@ -5,7 +5,7 @@ import {
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
@@ -15,11 +15,16 @@ interface NavSecondaryProps {
   items: MenuItem[]
 }
 
-export function NavSecondary({ items, ...props }: NavSecondaryProps & ComponentPropsWithoutRef<typeof SidebarGroup>) {
+export function NavSecondary({
+  items,
+  ...props
+}: NavSecondaryProps & ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const pathname = usePathname()
   const { activeDomain } = useAuth()
 
-  const filteredItems = items.filter((item) => !item.domain || item.domain === activeDomain)
+  const filteredItems = items.filter(
+    (item) => !item.domain || item.domain === activeDomain,
+  )
 
   const menuWithActivePath = getMenuWithActivePath(filteredItems, pathname)
 

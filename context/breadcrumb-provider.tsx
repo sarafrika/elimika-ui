@@ -1,6 +1,12 @@
 "use client"
 
-import { createContext, ReactNode, useContext, useEffect, useState } from "react"
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react"
 import { usePathname } from "next/navigation"
 import menu, { MenuItem } from "@/lib/menu"
 
@@ -20,15 +26,21 @@ type BreadcrumbContextType = {
   replaceBreadcrumbs: (newBreadcrumbs: BreadcrumbItem[]) => void
 }
 
-const BreadcrumbContext = createContext<BreadcrumbContextType | undefined>(undefined)
+const BreadcrumbContext = createContext<BreadcrumbContextType | undefined>(
+  undefined,
+)
 
 export function BreadcrumbProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([])
 
-  const generateId = () => `breadcrumb-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+  const generateId = () =>
+    `breadcrumb-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 
-  const findMenuPathByUrlInSources = (sources: Record<string, MenuItem[]>, url: string): MenuItem[] | null => {
+  const findMenuPathByUrlInSources = (
+    sources: Record<string, MenuItem[]>,
+    url: string,
+  ): MenuItem[] | null => {
     for (const sourceKey in sources) {
       const result = findMenuPathByUrl(sources[sourceKey], url)
       if (result) return result
@@ -37,7 +49,11 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
     return null
   }
 
-  const findMenuPathByUrl = (menuItems: MenuItem[], url: string, path: MenuItem[] = []): MenuItem[] | null => {
+  const findMenuPathByUrl = (
+    menuItems: MenuItem[],
+    url: string,
+    path: MenuItem[] = [],
+  ): MenuItem[] | null => {
     for (const item of menuItems) {
       const currentPath = [...path, item]
 
@@ -54,12 +70,14 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
     return null
   }
 
-  const convertMenuToBreadcrumbs = (menuItems: MenuItem[]): BreadcrumbItem[] => {
+  const convertMenuToBreadcrumbs = (
+    menuItems: MenuItem[],
+  ): BreadcrumbItem[] => {
     return menuItems.map((item, index) => ({
       id: generateId(),
       title: item.title,
       url: item.url || null,
-      isLast: index === menuItems.length - 1
+      isLast: index === menuItems.length - 1,
     }))
   }
 
@@ -78,8 +96,8 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
           id: generateId(),
           title: "Overview",
           url: "/dashboard/overview",
-          isLast: true
-        }
+          isLast: true,
+        },
       ])
     }
   }, [pathname])
@@ -87,7 +105,7 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
   const addBreadcrumb = (title: string, url?: string | null) => {
     const updatedBreadcrumbs = breadcrumbs.map((breadcrumb) => ({
       ...breadcrumb,
-      isLast: false
+      isLast: false,
     }))
 
     setBreadcrumbs([
@@ -96,19 +114,23 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
         id: generateId(),
         title,
         url: url || null,
-        isLast: true
-      }
+        isLast: true,
+      },
     ])
   }
 
   const removeBreadcrumb = (id: string) => {
-    const filteredBreadcrumbs = breadcrumbs.filter((breadcrumb) => breadcrumb.id !== id)
+    const filteredBreadcrumbs = breadcrumbs.filter(
+      (breadcrumb) => breadcrumb.id !== id,
+    )
 
     if (filteredBreadcrumbs.length > 0) {
-      const updatedBreadcrumbs = filteredBreadcrumbs.map((breadcrumb, index) => ({
-        ...breadcrumb,
-        isLast: index === filteredBreadcrumbs.length - 1
-      }))
+      const updatedBreadcrumbs = filteredBreadcrumbs.map(
+        (breadcrumb, index) => ({
+          ...breadcrumb,
+          isLast: index === filteredBreadcrumbs.length - 1,
+        }),
+      )
       setBreadcrumbs(updatedBreadcrumbs)
       return
     }
@@ -124,7 +146,7 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
         const lastIndex = newBreadcrumbs.length - 1
         newBreadcrumbs[lastIndex] = {
           ...newBreadcrumbs[lastIndex],
-          isLast: true
+          isLast: true,
         }
       }
 
@@ -146,7 +168,7 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
     removeBreadcrumb,
     removeLastBreadcrumb,
     clearBreadcrumbs,
-    replaceBreadcrumbs
+    replaceBreadcrumbs,
   }
 
   return (
@@ -163,4 +185,3 @@ export function useBreadcrumb() {
   }
   return context
 }
-
