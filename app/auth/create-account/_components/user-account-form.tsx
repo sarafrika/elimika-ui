@@ -18,7 +18,7 @@ import { ArrowRight } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 
-const UserFormSchema = z.object({
+export const UserFormSchema = z.object({
   uuid: z.string().optional(),
   active: z.boolean().default(true),
   created_date: z.string().optional(),
@@ -28,11 +28,9 @@ const UserFormSchema = z.object({
   last_name: z.string().min(1, "Last name is required"),
   first_name: z.string().min(1, "First name is required"),
   email: z.string().email("Please enter a valid email address"),
-  accept_terms: z
-    .boolean()
-    .refine((val) => val, {
-      message: "You must accept the terms and conditions",
-    }),
+  accept_terms: z.boolean().refine((val) => val, {
+    message: "You must accept the terms and conditions",
+  }),
   phone_number: z
     .string()
     .min(10, "Phone number must be at least 10 digits")

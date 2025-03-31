@@ -23,7 +23,7 @@ export async function createOrUpdateUser(user: User, userDomain: UserDomain) {
       body: JSON.stringify(user),
     })
 
-    return response.json()
+    return (await response.json()) as ApiResponse<User>
   } catch (error) {
     console.error("Error occured while creating or updating user", error)
     throw new Error("Something went wrong while creating or updating user")

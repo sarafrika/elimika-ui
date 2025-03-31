@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 
-const TrainingCenterFormSchema = z.object({
+export const TrainingCenterFormSchema = z.object({
   active: z.boolean().default(true),
   uuid: z.string().optional(),
   code: z.string().optional(),
