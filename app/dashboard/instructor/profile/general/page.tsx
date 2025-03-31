@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -26,14 +26,23 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Loader2Icon } from "lucide-react"
+import {
+  createInstructorProfile,
+  fetchInstructorProfile,
+} from "@/app/dashboard/instructor/profile/actions"
+import { useUserStore } from "@/store/use-user-store"
+import { useSessionContext } from "@/context/session-provider-wrapper"
 
 const InstructorFormSchema = z.object({
-  fullName: z.string().min(2, {
+  full_name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
+  email: z
+    .string()
+    .email({
+      message: "Please enter a valid email address.",
+    })
+    .optional(),
   bio: z
     .string()
     .max(500, {
@@ -54,26 +63,88 @@ const InstructorFormSchema = z.object({
     .optional()
     .or(z.literal("")),
   location: z.string().max(100).optional(),
+  user_uuid: z.string(),
 })
 
-type Instructor = z.infer<typeof InstructorFormSchema>
+export type Instructor = z.infer<typeof InstructorFormSchema>
 
 export default function GeneralProfileSettings() {
+  const { session } = useSessionContext()
+  const { user, isLoading, fetchCurrentUser } = useUserStore()
+
+  useEffect(() => {
+    if (session?.user?.email && !user && !isLoading) {
+      fetchCurrentUser(session.user.email)
+    }
+  }, [session?.user?.email, fetchCurrentUser])
+
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        ...form.getValues(),
+        user_uuid: user.uuid,
+      })
+    }
+  }, [])
+
   const [isAvatarUploading, setIsAvatarUploading] = useState(false)
 
   const form = useForm<Instructor>({
     resolver: zodResolver(InstructorFormSchema),
     defaultValues: {
-      fullName: "Tonny Ocholla",
-      email: "tonnyocholla@email.com",
+      full_name: `${user?.first_name}${user?.middle_name ? ` ${user.middle_name}` : ""} ${user?.last_name}`,
+      email: `${user?.email}`,
+      user_uuid: `${user?.uuid}`,
     },
   })
 
   const onSubmit = async (data: Instructor) => {
-    /** TODO: Send POST request to API to update instructor profile */
+    console.log("clicked")
+    try {
+      const response = await createInstructorProfile(data)
 
-    toast.success("Instructor profile updated successfully.")
+      if (response.success) {
+        form.reset(response.data)
+
+        toast.success(response.message)
+      } else {
+        toast.error(response.message)
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while updating instructor profile.",
+      )
+    }
   }
+
+  const loadInstructorProfile = useCallback(async () => {
+    if (!user?.uuid) return
+
+    try {
+      const response = await fetchInstructorProfile(
+        0,
+        `user_uuid_eq=${user?.uuid}`,
+      )
+
+      if (response.success) {
+        form.reset(response.data.content[0])
+      } else {
+        toast.error(response.message)
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while loading instructor profile.",
+      )
+    }
+  }, [form])
+
+  useEffect(() => {
+    loadInstructorProfile()
+  }, [loadInstructorProfile])
 
   const handleAvatarUpload = () => {
     setIsAvatarUploading(true)
@@ -105,8 +176,8 @@ export default function GeneralProfileSettings() {
                   <Avatar className="bg-primary-50 h-24 w-24">
                     <AvatarImage src="" alt="Avatar" />
                     <AvatarFallback className="bg-blue-50 text-xl text-blue-600">
-                      {form.watch("fullName").split(" ")[0]?.[0]}
-                      {form.watch("fullName").split(" ")[1]?.[0]}
+                      {form.watch("full_name").split(" ")[0]?.[0]}
+                      {form.watch("full_name").split(" ")[1]?.[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-2">
@@ -142,7 +213,7 @@ export default function GeneralProfileSettings() {
                 <div className="flex w-full flex-col items-start gap-8 sm:flex-row">
                   <FormField
                     control={form.control}
-                    name="fullName"
+                    name="full_name"
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormLabel>Full Name</FormLabel>
@@ -165,7 +236,11 @@ export default function GeneralProfileSettings() {
                       <FormItem className="flex-1">
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="name@example.com" {...field} />
+                          <Input
+                            placeholder="name@example.com"
+                            {...field}
+                            disabled
+                          />
                         </FormControl>
                         <FormDescription>
                           Contact support to change your email address
@@ -268,7 +343,9 @@ export default function GeneralProfileSettings() {
               <div className="flex justify-end pt-2">
                 <Button
                   className="cursor-pointer px-6"
-                  disabled={form.formState.isSubmitting}
+                  disabled={
+                    !form.formState.isValid || form.formState.isSubmitting
+                  }
                 >
                   {form.formState.isSubmitting ? (
                     <span>

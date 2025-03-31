@@ -20,7 +20,7 @@ export async function createOrUpdateUser(user: User, userDomain: UserDomain) {
     const response = await fetch(url, {
       method: user.uuid ? "PUT" : "POST",
       headers,
-      body: JSON.stringify(user)
+      body: JSON.stringify(user),
     })
 
     return response.json()
@@ -30,13 +30,37 @@ export async function createOrUpdateUser(user: User, userDomain: UserDomain) {
   }
 }
 
+export async function fetchUsers(page: number = 0, searchParams?: string) {
+  try {
+    const headers = new Headers()
+    headers.set("Content-Type", "application/json")
+
+    const paginationParams = new URLSearchParams({
+      page: page.toString(),
+      size: DEFAULT_PAGE_SIZE.toString(),
+    })
+
+    const endpoint = searchParams ? `/search?${searchParams}&` : `?`
+    const url = `${BASE_URL}/users${endpoint}${paginationParams}`
+
+    const response = await fetch(url, { headers })
+
+    return (await response.json()) as ApiResponseWithPagination<User>
+  } catch (error) {
+    console.error("Error fetching users:", error)
+    throw new Error(
+      "Something went wrong while fetching users. Please contact support.",
+    )
+  }
+}
+
 export async function fetchTrainingCenters(page: number, params?: string) {
   try {
     const headers = new Headers()
 
     const paginationParams = new URLSearchParams({
       page: page.toString(),
-      size: DEFAULT_PAGE_SIZE.toString()
+      size: DEFAULT_PAGE_SIZE.toString(),
     })
 
     const endpoint = params ? `/search?${params}&` : `?`
@@ -48,7 +72,7 @@ export async function fetchTrainingCenters(page: number, params?: string) {
   } catch (error) {
     console.error("Error fetching training centers:", error)
     throw new Error(
-      "Something went wrong while fetching training centers. Please contact support."
+      "Something went wrong while fetching training centers. Please contact support.",
     )
   }
 }
@@ -57,21 +81,26 @@ export async function fetchTrainingCenter(trainingCenterId: string) {
   try {
     const headers = new Headers()
 
-    const response = await fetch(`${BASE_URL}/organisations/${trainingCenterId}`, {
-      headers,
-      next: { revalidate: EVERY_THIRTY_MINUTES }
-    })
+    const response = await fetch(
+      `${BASE_URL}/organisations/${trainingCenterId}`,
+      {
+        headers,
+        next: { revalidate: EVERY_THIRTY_MINUTES },
+      },
+    )
 
     return (await response.json()) as ApiResponse<TrainingCenter>
   } catch (error) {
     console.error("Error fetching training centers:", error)
     throw new Error(
-      "Something went wrong while fetching training centers. Please contact support."
+      "Something went wrong while fetching training centers. Please contact support.",
     )
   }
 }
 
-export async function createOrUpdateTrainingCenter(trainingCenter: TrainingCenter) {
+export async function createOrUpdateTrainingCenter(
+  trainingCenter: TrainingCenter,
+) {
   try {
     const headers = new Headers()
     headers.set("Content-Type", "application/json")
@@ -81,15 +110,15 @@ export async function createOrUpdateTrainingCenter(trainingCenter: TrainingCente
       {
         method: trainingCenter.uuid ? "PUT" : "POST",
         headers,
-        body: JSON.stringify(trainingCenter)
-      }
+        body: JSON.stringify(trainingCenter),
+      },
     )
 
     return (await response.json()) as ApiResponse<TrainingCenter>
   } catch (error) {
     console.error("Error creating or updating training center:", error)
     throw new Error(
-      "Something went wrong while persisting training center. Please contact support."
+      "Something went wrong while persisting training center. Please contact support.",
     )
   }
 }
