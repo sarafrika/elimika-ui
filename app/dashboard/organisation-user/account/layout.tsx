@@ -14,10 +14,10 @@ import {
 import { ReactNode } from "react"
 
 const sections = [
-  {
+  /*{
     name: "Training Center",
     href: "/dashboard/organisation-user/account/training-center",
-  },
+  }*/
   { name: "Admin Profile", href: "/dashboard/organisation-user/account/admin" },
 ]
 
