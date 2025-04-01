@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -12,8 +12,7 @@ import { Form, FormDescription, FormLabel } from "@/components/ui/form"
 import { Grip, PlusCircle, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
-// Define a schema for a single experience entry
-const experienceSchema = z.object({
+const ExperienceSchema = z.object({
   id: z.string(),
   company: z.string().min(1, "Organization name is required"),
   position: z.string().min(1, "Position is required"),
@@ -23,61 +22,39 @@ const experienceSchema = z.object({
   description: z.string().optional(),
 })
 
-// Define a schema for the entire form
-const experienceFormSchema = z.object({
-  experiences: z.array(experienceSchema).min(1, "Add at least one experience"),
+const ExperienceFormSchema = z.object({
+  experiences: z.array(ExperienceSchema).min(1, "Add at least one experience"),
 })
 
-type ExperienceValues = z.infer<typeof experienceSchema>
-type ExperienceFormValues = z.infer<typeof experienceFormSchema>
+type Experience = z.infer<typeof ExperienceSchema>
+type ExperienceFormValues = z.infer<typeof ExperienceFormSchema>
 
 export default function ProfessionalExperienceSettings() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
-  // Initialize with sample experiences
-  const [experiences, setExperiences] = useState<ExperienceValues[]>([
-    {
-      id: "1",
-      company: "Sarafrika University",
-      position: "Mathematics Professor",
-      startDate: "2020-01",
-      endDate: "",
-      current: true,
-      description:
-        "Teaching advanced mathematics courses and conducting research in applied mathematics.",
-    },
-    {
-      id: "2",
-      company: "Kenya Institute of Technology",
-      position: "Assistant Professor",
-      startDate: "2015-09",
-      endDate: "2019-12",
-      current: false,
-      description:
-        "Taught undergraduate mathematics courses and supervised student projects.",
-    },
-  ])
-
   const form = useForm<ExperienceFormValues>({
-    resolver: zodResolver(experienceFormSchema),
+    resolver: zodResolver(ExperienceFormSchema),
     defaultValues: {
-      experiences: experiences,
+      experiences: [
+        {
+          company: "",
+          position: "",
+          startDate: "",
+          current: false,
+          description: "",
+        },
+      ],
     },
-    mode: "onChange",
   })
 
-  // Update form when experiences change
-  useEffect(() => {
-    form.setValue("experiences", experiences)
-  }, [experiences, form])
+  const experiences = form.watch("experiences")
 
   function onSubmit(data: ExperienceFormValues) {
     toast.success("Experience updated successfully.")
     console.log(data)
-    // Here you would save data to your API
+    /**TODO: Implement saving experiences to API */
   }
 
-  // Add a new empty experience entry
   const addExperience = () => {
     const newId = (
       experiences.length > 0
@@ -85,7 +62,7 @@ export default function ProfessionalExperienceSettings() {
         : 1
     ).toString()
 
-    const newExperience: ExperienceValues = {
+    const newExperience: Experience = {
       id: newId,
       company: "",
       position: "",
@@ -95,26 +72,26 @@ export default function ProfessionalExperienceSettings() {
       description: "",
     }
 
-    setExperiences([...experiences, newExperience])
+    form.setValue("experiences", [
+      ...form.getValues("experiences"),
+      newExperience,
+    ])
   }
 
-  // Remove an experience entry by ID
   const removeExperience = (id: string) => {
-    if (experiences.length <= 1) {
+    if (form.getValues("experiences").length <= 1) {
       toast.error("You must have at least one experience entry.")
       return
     }
 
     const filteredExperiences = experiences.filter((exp) => exp.id !== id)
-    setExperiences(filteredExperiences)
+    form.setValue("experiences", filteredExperiences)
   }
 
-  // Handle drag start
   const handleDragStart = (index: number) => {
     setDraggedIndex(index)
   }
 
-  // Handle drag over
   const handleDragOver = (
     e: React.DragEvent<HTMLDivElement>,
     index: number,
@@ -125,37 +102,33 @@ export default function ProfessionalExperienceSettings() {
     const newExperiences = [...experiences]
     const draggedExperience = newExperiences[draggedIndex]
 
-    // Remove from old position and insert at new position
     newExperiences.splice(draggedIndex, 1)
     newExperiences.splice(index, 0, draggedExperience)
 
-    setExperiences(newExperiences)
+    form.setValue("experiences", newExperiences)
     setDraggedIndex(index)
   }
 
-  // Handle drag end
   const handleDragEnd = () => {
     setDraggedIndex(null)
   }
 
-  // Update an experience field
   const updateExperienceField = (
     id: string,
-    field: keyof ExperienceValues,
+    field: keyof Experience,
     value: any,
   ) => {
     const updatedExperiences = experiences.map((exp) =>
       exp.id === id ? { ...exp, [field]: value } : exp,
     )
 
-    setExperiences(updatedExperiences)
+    form.setValue("experiences", updatedExperiences)
 
-    // If "current" is set to true, clear the end date
     if (field === "current" && value === true) {
       const updatedWithEndDate = updatedExperiences.map((exp) =>
         exp.id === id ? { ...exp, endDate: "" } : exp,
       )
-      setExperiences(updatedWithEndDate)
+      form.setValue("experiences", updatedWithEndDate)
     }
   }
 
@@ -174,7 +147,7 @@ export default function ProfessionalExperienceSettings() {
             <div className="space-y-4">
               {experiences.map((experience, index) => (
                 <div
-                  key={experience.id}
+                  key={experience.id || index}
                   className="bg-card group hover:bg-accent/5 relative rounded-md border transition-all"
                   draggable
                   onDragStart={() => handleDragStart(index)}
