@@ -113,6 +113,8 @@ const CourseCreationFormSchema = z.object({
   categories: z
     .array(CategorySchema)
     .min(1, "At least one category is required"),
+  updated_date: z.coerce.string().optional(),
+  created_date: z.coerce.string(),
 })
 
 export type Course = z.infer<typeof CourseCreationFormSchema>

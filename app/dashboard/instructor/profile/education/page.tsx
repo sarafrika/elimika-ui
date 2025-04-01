@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, DragEvent } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -116,10 +116,7 @@ export default function EducationSettings() {
     setDraggedIndex(index)
   }
 
-  const handleDragOver = (
-    e: React.DragEvent<HTMLDivElement>,
-    index: number,
-  ) => {
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault()
     if (draggedIndex === null) return
 
@@ -140,7 +137,7 @@ export default function EducationSettings() {
   const updateEducationField = (
     index: number,
     field: keyof Education,
-    value: any,
+    value: unknown,
   ) => {
     const updatedEducations = [...educations]
     updatedEducations[index] = {

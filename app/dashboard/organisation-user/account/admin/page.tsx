@@ -43,7 +43,7 @@ export default function AdminProfile() {
     if (!user && !isLoading && session?.user?.email) {
       fetchCurrentUser(session?.user?.email)
     }
-  }, [session?.user?.email, fetchCurrentUser])
+  }, [session?.user?.email, fetchCurrentUser, isLoading, user])
 
   const form = useForm<User>({
     resolver: zodResolver(UserFormSchema),

@@ -14,7 +14,9 @@ import { UserDomain } from "@/context/auth-provider"
 const REDIRECT_URL = "/auth/create-account"
 
 type KeycloakDecodedToken = {
-  user: {}
+  user: {
+    email: string
+  }
   user_domain: UserDomain[]
   organization: string[]
   resource_access: {

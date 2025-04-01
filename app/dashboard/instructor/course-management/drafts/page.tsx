@@ -41,7 +41,10 @@ import {
 import { toast } from "sonner"
 import { fetchCourses } from "@/app/dashboard/instructor/course-management/create-new-course/actions"
 import { PagedResponseTemplate } from "@/lib/types"
-import { Course } from "@/app/dashboard/instructor/course-management/create-new-course/_components/course-creation-form"
+import {
+  Category,
+  Course,
+} from "@/app/dashboard/instructor/course-management/create-new-course/_components/course-creation-form"
 
 export default function CourseDraftsPage() {
   const [draftCourses, setDraftCourses] =
@@ -151,8 +154,8 @@ export default function CourseDraftsPage() {
           <FilePenIcon className="text-muted-foreground mx-auto h-12 w-12" />
           <h3 className="mt-4 text-lg font-medium">No draft courses</h3>
           <p className="text-muted-foreground mt-2">
-            You don't have any draft courses yet. Start creating a new course to
-            get started.
+            You don&lsquo;t have any draft courses. Start by creating a new
+            course to get started.
           </p>
           <Button
             className="mt-4"
@@ -190,7 +193,7 @@ export default function CourseDraftsPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {course.categories.map((category: any, i: number) => (
+                    {course.categories.map((category: Category, i: number) => (
                       <Badge key={i} variant="outline" className="capitalize">
                         {category.name}
                       </Badge>
@@ -198,7 +201,11 @@ export default function CourseDraftsPage() {
                   </div>
                 </TableCell>
                 <TableCell>{course.classLimit || "Unlimited"}</TableCell>
-                <TableCell>{formatDate(course.updated_date)}</TableCell>
+                <TableCell>
+                  {course.updated_date
+                    ? formatDate(course.updated_date)
+                    : course.created_date}
+                </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

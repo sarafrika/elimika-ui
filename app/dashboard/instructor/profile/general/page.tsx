@@ -76,16 +76,7 @@ export default function GeneralProfileSettings() {
     if (session?.user?.email && !user && !isLoading) {
       fetchCurrentUser(session.user.email)
     }
-  }, [session?.user?.email, fetchCurrentUser])
-
-  useEffect(() => {
-    if (user) {
-      form.reset({
-        ...form.getValues(),
-        user_uuid: user.uuid,
-      })
-    }
-  }, [])
+  }, [session?.user?.email, fetchCurrentUser, isLoading, user])
 
   const [isAvatarUploading, setIsAvatarUploading] = useState(false)
 
@@ -97,6 +88,15 @@ export default function GeneralProfileSettings() {
       user_uuid: `${user?.uuid}`,
     },
   })
+
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        ...form.getValues(),
+        user_uuid: user.uuid,
+      })
+    }
+  }, [form, user])
 
   const onSubmit = async (data: Instructor) => {
     console.log("clicked")
@@ -140,7 +140,7 @@ export default function GeneralProfileSettings() {
           : "Something went wrong while loading instructor profile.",
       )
     }
-  }, [form])
+  }, [form, user?.uuid])
 
   useEffect(() => {
     loadInstructorProfile()

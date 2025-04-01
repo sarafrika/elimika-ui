@@ -28,7 +28,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Grip, PlusCircle, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
-// Define a schema for a single guardian
 const guardianSchema = z.object({
   id: z.string(),
   firstName: z
@@ -45,9 +44,7 @@ const guardianSchema = z.object({
   isPrimary: z.boolean().default(false),
 })
 
-// Conditional schema for student profile
 const createStudentProfileSchema = (isMinor: boolean) => {
-  // Base schema for all students
   const baseSchema = {
     firstName: z
       .string()
@@ -213,17 +210,15 @@ export default function StudentProfileGeneral() {
     setGuardians(filteredGuardians)
   }
 
-  // Update a guardian field
   const updateGuardianField = (
     id: string,
     field: keyof GuardianValues,
-    value: any,
+    value: unknown,
   ) => {
     const updatedGuardians = guardians.map((guardian) =>
       guardian.id === id ? { ...guardian, [field]: value } : guardian,
     )
 
-    // Handle primary contact selection
     if (field === "isPrimary" && value === true) {
       const guardianWithPrimaryUpdated = updatedGuardians.map((guardian) => ({
         ...guardian,
@@ -236,12 +231,10 @@ export default function StudentProfileGeneral() {
     setGuardians(updatedGuardians)
   }
 
-  // Handle drag start
   const handleDragStart = (index: number) => {
     setDraggedIndex(index)
   }
 
-  // Handle drag over
   const handleDragOver = (
     e: React.DragEvent<HTMLDivElement>,
     index: number,
@@ -252,7 +245,6 @@ export default function StudentProfileGeneral() {
     const newGuardians = [...guardians]
     const draggedGuardian = newGuardians[draggedIndex]
 
-    // Remove from old position and insert at new position
     newGuardians.splice(draggedIndex, 1)
     newGuardians.splice(index, 0, draggedGuardian)
 
@@ -260,7 +252,6 @@ export default function StudentProfileGeneral() {
     setDraggedIndex(index)
   }
 
-  // Handle drag end
   const handleDragEnd = () => {
     setDraggedIndex(null)
   }

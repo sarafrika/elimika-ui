@@ -116,7 +116,7 @@ export default function ProfessionalExperienceSettings() {
   const updateExperienceField = (
     id: string,
     field: keyof Experience,
-    value: any,
+    value: unknown,
   ) => {
     const updatedExperiences = experiences.map((exp) =>
       exp.id === id ? { ...exp, [field]: value } : exp,

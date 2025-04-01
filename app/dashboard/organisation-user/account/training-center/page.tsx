@@ -44,7 +44,7 @@ export default function TrainingCenterProfile() {
   const [isLoading, setIsLoading] = useState(false)
 
   // Default values
-  const defaultValues: Partial<Tra> = {
+  const defaultValues: Partial<TrainingCenter> = {
     centerName: "",
     centerEmail: "",
     centerPhone: "",
@@ -98,7 +98,7 @@ export default function TrainingCenterProfile() {
           Training Center Information
         </h1>
         <p className="text-muted-foreground">
-          Manage your training center's details and location information
+          Manage your training center&apos;s basic information
         </p>
       </div>
 
@@ -291,7 +291,7 @@ export default function TrainingCenterProfile() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Comma-separated list of your center's specialties
+                      Comma-separated list of your center&apos;s specialties
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

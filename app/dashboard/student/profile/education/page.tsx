@@ -132,7 +132,7 @@ export default function EducationSettings() {
   const updateEducationField = (
     index: number,
     field: keyof Education,
-    value: any,
+    value: unknown,
   ) => {
     const updatedEducations = [...educations]
     updatedEducations[index] = {
