@@ -3,16 +3,21 @@
 import { BookOpen, Check, List } from "lucide-react"
 import { toast } from "sonner"
 import { useState } from "react"
-import { StepperContent, StepperList, StepperRoot, StepperTrigger } from "@/components/ui/stepper"
+import {
+  StepperContent,
+  StepperList,
+  StepperRoot,
+  StepperTrigger,
+} from "@/components/ui/stepper"
 import {
   Course,
   CourseCreationForm,
-  useCourseCreationForm
+  useCourseCreationForm,
 } from "@/app/dashboard/instructor/course-management/create-new-course/_components/course-creation-form"
 import {
   Lesson,
   LessonDialog,
-  LessonList
+  LessonList,
 } from "@/app/dashboard/instructor/course-management/create-new-course/_components/lesson-management-form"
 
 export default function CourseCreationPage() {
@@ -32,7 +37,11 @@ export default function CourseCreationPage() {
       try {
         await submitForm()
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "An unexpected error occurred")
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+        )
         throw error
       } finally {
         setIsSubmitting(false)
@@ -67,15 +76,15 @@ export default function CourseCreationPage() {
     if (selectedLesson) {
       setLessons(
         lessons.map((l) =>
-          l.id === selectedLesson.id ? { ...lesson, id: l.id } : l
-        )
+          l.id === selectedLesson.id ? { ...lesson, id: l.id } : l,
+        ),
       )
 
       toast.success(`"${lesson.title}" has been successfully updated`)
     } else {
       const newLesson = {
         ...lesson,
-        id: Math.max(0, ...lessons.map((l) => l.id || 0)) + 1
+        id: Math.max(0, ...lessons.map((l) => l.id || 0)) + 1,
       }
       setLessons([...lessons, newLesson])
 
@@ -157,8 +166,8 @@ export default function CourseCreationPage() {
                 onSuccess={handleLessonSave}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center h-48 text-center">
-                <p className="text-gray-500 mb-4">
+              <div className="flex h-48 flex-col items-center justify-center text-center">
+                <p className="mb-4 text-gray-500">
                   Please complete the course details first
                 </p>
               </div>
@@ -177,28 +186,43 @@ export default function CourseCreationPage() {
         >
           {course ? (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <h3 className="text-lg font-medium mb-2">Course Information</h3>
+                  <h3 className="mb-2 text-lg font-medium">
+                    Course Information
+                  </h3>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Name:</span> {course.name}</p>
-                    <p><span className="font-medium">Description:</span> {course.description}</p>
-                    <p><span className="font-medium">Duration:</span> {course.durationHours} hours</p>
-                    <p><span className="font-medium">Difficulty:</span> {course.difficultyLevel}</p>
+                    <p>
+                      <span className="font-medium">Name:</span> {course.name}
+                    </p>
+                    <p>
+                      <span className="font-medium">Description:</span>{" "}
+                      {course.description}
+                    </p>
+                    <p>
+                      <span className="font-medium">Difficulty:</span>{" "}
+                      {course.difficultyLevel}
+                    </p>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-medium mb-2">Pricing</h3>
+                  <h3 className="mb-2 text-lg font-medium">Pricing</h3>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Free Course:</span> {course.pricing?.free ? "Yes" : "No"}</p>
+                    <p>
+                      <span className="font-medium">Free Course:</span>{" "}
+                      {course.pricing?.free ? "Yes" : "No"}
+                    </p>
                     {!course.pricing?.free && (
                       <>
-                        <p><span
-                          className="font-medium">Original Price:</span> {course.pricing?.originalPrice} {course.pricing?.currency}
+                        <p>
+                          <span className="font-medium">Original Price:</span>{" "}
+                          {course.pricing?.originalPrice}{" "}
+                          {course.pricing?.currency}
                         </p>
-                        <p><span
-                          className="font-medium">Sale Price:</span> {course.pricing?.salePrice} {course.pricing?.currency}
+                        <p>
+                          <span className="font-medium">Sale Price:</span>{" "}
+                          {course.pricing?.salePrice} {course.pricing?.currency}
                         </p>
                       </>
                     )}
@@ -207,8 +231,10 @@ export default function CourseCreationPage() {
               </div>
 
               <div>
-                <h3 className="text-lg font-medium mb-2">Learning Objectives</h3>
-                <ul className="list-disc list-inside space-y-1">
+                <h3 className="mb-2 text-lg font-medium">
+                  Learning Objectives
+                </h3>
+                <ul className="list-inside list-disc space-y-1">
                   {course.learningObjectives.map((obj, index) => (
                     <li key={index}>{obj.objective}</li>
                   ))}
@@ -216,10 +242,13 @@ export default function CourseCreationPage() {
               </div>
 
               <div>
-                <h3 className="text-lg font-medium mb-2">Categories</h3>
+                <h3 className="mb-2 text-lg font-medium">Categories</h3>
                 <div className="flex flex-wrap gap-2">
                   {course.categories.map((category, index) => (
-                    <span key={index} className="px-3 py-1 bg-gray-100 rounded-full text-sm">
+                    <span
+                      key={index}
+                      className="rounded-full bg-gray-100 px-3 py-1 text-sm"
+                    >
                       {category.name}
                     </span>
                   ))}
@@ -227,8 +256,8 @@ export default function CourseCreationPage() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-48 text-center">
-              <p className="text-gray-500 mb-4">
+            <div className="flex h-48 flex-col items-center justify-center text-center">
+              <p className="mb-4 text-gray-500">
                 Please complete the course details first
               </p>
             </div>

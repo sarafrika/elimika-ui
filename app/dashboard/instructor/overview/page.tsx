@@ -1,6 +1,3 @@
 export default function InstructorOverviewPage() {
-  return (
-    <div>
-    </div>
-  )
+  return <div></div>
 }

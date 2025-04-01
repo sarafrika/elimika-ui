@@ -5,7 +5,9 @@ import { DashboardHeader } from "@/components/dashboard-header"
 import { TrainingCenterProvider } from "@/context/training-center-provider"
 import { BreadcrumbProvider } from "@/context/breadcrumb-provider"
 
-export default function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function DashboardLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <ProtectedRoute>
       <TrainingCenterProvider>
@@ -15,7 +17,7 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
             <SidebarInset>
               <BreadcrumbProvider>
                 <DashboardHeader />
-                <div className="flex flex-1 flex-col gap-4 px-6 pt-0 space-y-4">
+                <div className="flex flex-1 flex-col gap-4 space-y-4 px-6 pt-0">
                   {children}
                 </div>
               </BreadcrumbProvider>

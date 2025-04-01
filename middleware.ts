@@ -16,20 +16,11 @@ export async function middleware(request: NextRequest) {
 
   const token = (await getToken({
     req: request,
-    secret: getEnvironmentVariable("NEXTAUTH_SECRET")
+    secret: getEnvironmentVariable("NEXTAUTH_SECRET"),
   })) as KeycloakJWT | null
 
   if (!token && !isPublicPath) {
     return NextResponse.redirect(new URL("/auth/create-account", request.url))
-  }
-
-  if (token && isPublicPath) {
-    const userDomain = token?.decoded?.user_domain
-
-    if (Array.isArray(userDomain) && userDomain.length > 0) {
-      const firstRole = userDomain[0]
-      return NextResponse.redirect(new URL(`/dashboard/${formatRole(firstRole)}/overview`, request.url))
-    }
   }
 
   return NextResponse.next()
@@ -42,6 +33,6 @@ export const config = {
      * - API routes
      * - Next.js internal files
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)"
-  ]
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  ],
 }

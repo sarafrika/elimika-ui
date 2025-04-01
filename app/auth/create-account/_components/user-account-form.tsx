@@ -3,14 +3,22 @@
 import { z } from "zod"
 import { useForm, UseFormReturn } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 
-const UserFormSchema = z.object({
+export const UserFormSchema = z.object({
   uuid: z.string().optional(),
   active: z.boolean().default(true),
   created_date: z.string().optional(),
@@ -20,28 +28,33 @@ const UserFormSchema = z.object({
   last_name: z.string().min(1, "Last name is required"),
   first_name: z.string().min(1, "First name is required"),
   email: z.string().email("Please enter a valid email address"),
-  accept_terms: z.boolean().refine((val) => val, { message: "You must accept the terms and conditions" }),
-  phone_number: z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number must be at most 15 digits")
+  accept_terms: z.boolean().refine((val) => val, {
+    message: "You must accept the terms and conditions",
+  }),
+  phone_number: z
+    .string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must be at most 15 digits"),
 })
 
-export type User = z.infer<typeof UserFormSchema>;
+export type User = z.infer<typeof UserFormSchema>
 
 interface UserAccountFormProps {
-  title?: string;
-  description?: string;
-  isSubmitting: boolean;
-  organisationUuid: string | null;
+  title?: string
+  description?: string
+  isSubmitting: boolean
+  organisationUuid: string | null
 
-  onSubmit(data: User): Promise<void>;
+  onSubmit(data: User): Promise<void>
 }
 
 export function UserAccountForm({
-                                  onSubmit,
-                                  isSubmitting,
-                                  organisationUuid,
-                                  title = "Personal Information",
-                                  description = "Enter your details to create your account"
-                                }: UserAccountFormProps) {
+  onSubmit,
+  isSubmitting,
+  organisationUuid,
+  title = "Personal Information",
+  description = "Enter your details to create your account",
+}: UserAccountFormProps) {
   const userAccountForm = useForm<User>({
     resolver: zodResolver(UserFormSchema),
     defaultValues: {
@@ -52,14 +65,14 @@ export function UserAccountForm({
       middle_name: "",
       accept_terms: false,
       phone_number: "",
-      organisation_uuid: organisationUuid || ""
-    }
+      organisation_uuid: organisationUuid || "",
+    },
   })
 
   const renderBaseAccountFormFields = (form: UseFormReturn<User>) => {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
             name="first_name"
@@ -159,7 +172,7 @@ export function UserAccountForm({
         control={form.control}
         name="accept_terms"
         render={({ field }) => (
-          <FormItem className="flex items-start space-x-2 space-y-0">
+          <FormItem className="flex items-start space-y-0 space-x-2">
             <FormControl>
               <Checkbox
                 checked={field.value}
@@ -192,7 +205,7 @@ export function UserAccountForm({
 
     const userData = {
       ...data,
-      organisation_uuid: organisationUuid
+      organisation_uuid: organisationUuid,
     }
 
     await onSubmit(userData)
@@ -204,19 +217,15 @@ export function UserAccountForm({
         onSubmit={userAccountForm.handleSubmit(handleSubmit)}
         className="space-y-6"
       >
-        <div className="bg-white rounded-md border p-6">
-          <h2 className="text-lg font-medium mb-1">
-            {title}
-          </h2>
-          <p className="text-gray-500 text-sm mb-4">
-            {description}
-          </p>
+        <div className="rounded-md border bg-white p-6">
+          <h2 className="mb-1 text-lg font-medium">{title}</h2>
+          <p className="mb-4 text-sm text-gray-500">{description}</p>
           {renderBaseAccountFormFields(userAccountForm)}
         </div>
 
         <div className="pt-4">
           {renderAcceptTermsFormField(userAccountForm)}
-          <div className="flex items-center justify-end mt-6 space-x-4">
+          <div className="mt-6 flex items-center justify-end space-x-4">
             <Button
               type="submit"
               disabled={isSubmitting}

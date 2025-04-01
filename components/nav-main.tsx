@@ -2,7 +2,11 @@
 
 import { ChevronRight, LayoutDashboard } from "lucide-react"
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -11,7 +15,7 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 import { getMenuWithActivePath, MenuItem } from "@/lib/menu"
 import Link from "next/link"
@@ -39,7 +43,9 @@ export function NavMain({ items }: { items: MenuItem[] }) {
       menuLabel = "Dashboard"
   }
 
-  const filteredItems = items.filter((item) => !item.domain || item.domain === activeDomain)
+  const filteredItems = items.filter(
+    (item) => !item.domain || item.domain === activeDomain,
+  )
 
   const menuWithActivePath = getMenuWithActivePath(filteredItems, pathname)
 
@@ -56,7 +62,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
   const toggleCollapsible = (key: string) => {
     setOpenStates((prev) => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: !prev[key],
     }))
   }
 
@@ -75,60 +81,66 @@ export function NavMain({ items }: { items: MenuItem[] }) {
       <SidebarGroupLabel>{menuLabel}</SidebarGroupLabel>
       <SidebarMenu>
         {menuWithActivePath.map((item, index) => {
-            const key = `${item.title}-${index}`
-            const isOpen = openStates[key] ?? item.isActive
+          const key = `${item.title}-${index}`
+          const isOpen = openStates[key] ?? item.isActive
 
-            return (
-              <Collapsible
-                key={key}
-                asChild
-                open={isOpen}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild onClick={() => toggleCollapsible(key)}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={(hasActiveChild(item.items) && !openStates[key]) || (!item.items && item.isActive)}
-                    >
-                      <Link href={item.url || "#"}>
-                        {item?.icon && <item.icon />}
-                        <span>{item.title}</span>
-                        {item.items?.length && (
-                          <>
-                            <ChevronRight
-                              className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                            <span className="sr-only">Toggle</span>
-                          </>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
+          return (
+            <Collapsible
+              key={key}
+              asChild
+              open={isOpen}
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger
+                  asChild
+                  onClick={() => toggleCollapsible(key)}
+                >
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    isActive={
+                      (hasActiveChild(item.items) && !openStates[key]) ||
+                      (!item.items && item.isActive)
+                    }
+                  >
+                    <Link href={item.url || "#"}>
+                      {item?.icon && <item.icon />}
+                      <span>{item.title}</span>
+                      {item.items?.length && (
+                        <>
+                          <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                          <span className="sr-only">Toggle</span>
+                        </>
+                      )}
+                    </Link>
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
 
-                  {item.items?.length ? (
-                    <>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.items?.map((subItem, index) => (
-                            <SidebarMenuSubItem key={`${subItem.title}-${index}`}>
-                              <SidebarMenuSubButton asChild isActive={subItem.isActive}>
-                                <Link href={subItem.url || "#"}>
-                                  <span>{subItem.title}</span>
-                                </Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </>
-                  ) : null}
-                </SidebarMenuItem>
-              </Collapsible>
-            )
-          }
-        )
-        }
+                {item.items?.length ? (
+                  <>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.items?.map((subItem, index) => (
+                          <SidebarMenuSubItem key={`${subItem.title}-${index}`}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={subItem.isActive}
+                            >
+                              <Link href={subItem.url || "#"}>
+                                <span>{subItem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </>
+                ) : null}
+              </SidebarMenuItem>
+            </Collapsible>
+          )
+        })}
       </SidebarMenu>
     </SidebarGroup>
   )

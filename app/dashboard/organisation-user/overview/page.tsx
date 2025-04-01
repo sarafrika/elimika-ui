@@ -1,6 +1,3 @@
 export default function OrganisationUserPage() {
-  return (
-    <div>
-    </div>
-  )
+  return <div></div>
 }

@@ -1,10 +1,24 @@
 "use client"
 
 import { Check, Loader } from "lucide-react"
-import { Children, ComponentType, createContext, isValidElement, ReactNode, useContext, useState } from "react"
+import {
+  Children,
+  ComponentType,
+  createContext,
+  isValidElement,
+  ReactNode,
+  useContext,
+  useState,
+} from "react"
 import { toast } from "sonner"
 import { Button } from "./button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs"
 
 interface StepperProviderProps {
@@ -37,7 +51,7 @@ export function StepperRoot({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false)
 
   const steps = Children.toArray(children).filter(
-    (child) => isValidElement(child) && child.type === StepperContent
+    (child) => isValidElement(child) && child.type === StepperContent,
   ).length
 
   const isLastStep = activeStep === steps - 1
@@ -52,7 +66,7 @@ export function StepperRoot({ children }: { children: ReactNode }) {
         await event()
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "An error occurred"
+          error instanceof Error ? error.message : "An error occurred",
         )
         return
       } finally {
@@ -77,7 +91,7 @@ export function StepperRoot({ children }: { children: ReactNode }) {
         isFirstStep,
         nextStep,
         prevStep,
-        isLoading
+        isLoading,
       }}
     >
       <Tabs
@@ -115,11 +129,11 @@ export function StepperTrigger(props: TriggerProps) {
       data-state={isCurrent ? "active" : "inactive"}
     >
       {isCompleted ? (
-        <Check className="w-4 h-4" />
+        <Check className="h-4 w-4" />
       ) : (
         props.icon && (
           <props.icon
-            className={`w-4 h-4 ${props.icon.propTypes?.className}`}
+            className={`h-4 w-4 ${props.icon.propTypes?.className}`}
           />
         )
       )}
@@ -144,29 +158,30 @@ interface ContentProps {
 }
 
 export function StepperContent({
-                                 step,
-                                 title,
-                                 description,
-                                 children,
-                                 showNavigation,
-                                 onNext,
-                                 disableNext,
-                                 disablePrevious,
-                                 nextButtonText = "Next",
-                                 previousButtonText = "Previous",
-                                 hideNextButton,
-                                 hidePreviousButton
-                               }: ContentProps) {
-  const { nextStep, prevStep, isLastStep, isFirstStep, isLoading } = useStepper()
+  step,
+  title,
+  description,
+  children,
+  showNavigation,
+  onNext,
+  disableNext,
+  disablePrevious,
+  nextButtonText = "Next",
+  previousButtonText = "Previous",
+  hideNextButton,
+  hidePreviousButton,
+}: ContentProps) {
+  const { nextStep, prevStep, isLastStep, isFirstStep, isLoading } =
+    useStepper()
 
   return (
     <TabsContent value={step.toString()}>
-      <Card className="min-h-[300px] rounded-lg flex flex-col">
+      <Card className="flex min-h-[300px] flex-col rounded-lg">
         <CardHeader>
           <CardTitle className="text-xl font-medium">{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
-        <CardContent className="flex flex-col grow gap-10">
+        <CardContent className="flex grow flex-col gap-10">
           <div className="grow">{children}</div>
           {showNavigation && (
             <div className="inline-flex gap-2 self-end">
@@ -188,7 +203,7 @@ export function StepperContent({
                   disabled={isLastStep || isLoading || disableNext}
                 >
                   {isLoading ? (
-                    <Loader className="w-4 h-4 animate-spin" />
+                    <Loader className="h-4 w-4 animate-spin" />
                   ) : (
                     nextButtonText
                   )}

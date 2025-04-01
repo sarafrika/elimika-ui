@@ -6,15 +6,19 @@ import { usePathname, useRouter } from "next/navigation"
 import menu, { MenuItem } from "@/lib/menu"
 import { useDomainStore } from "@/store/use-domain-store"
 
-export type UserDomain = "instructor" | "student" | "organisation_user" | "admin"
+export type UserDomain =
+  | "instructor"
+  | "student"
+  | "organisation_user"
+  | "admin"
 
 interface AuthContextType {
-  domains: UserDomain[];
-  activeDomain: UserDomain | null;
-  isLoading: boolean;
-  isLoggedIn: boolean;
+  domains: UserDomain[]
+  activeDomain: UserDomain | null
+  isLoading: boolean
+  isLoggedIn: boolean
 
-  setActiveDomain(domain: UserDomain): void;
+  setActiveDomain(domain: UserDomain): void
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,8 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   activeDomain: null,
   isLoading: true,
   isLoggedIn: false,
-  setActiveDomain: () => {
-  }
+  setActiveDomain: () => {},
 })
 
 const publicPaths = ["/", "/auth/create-account"]
@@ -39,10 +42,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const resetDomains = useDomainStore((state) => state.resetDomains)
   const [isAuthenticating, setIsAuthenticating] = useState(true)
 
-  const formatDomain = useMemo(() => (domain: UserDomain) => domain.replace(/_/g, "-"), [])
+  const formatDomain = useMemo(
+    () => (domain: UserDomain) => domain.replace(/_/g, "-"),
+    [],
+  )
 
   const isAuthorizedPath = useMemo(() => {
-    return (path: string, userDomains: UserDomain[], currentActiveDomain: UserDomain | null): boolean => {
+    return (
+      path: string,
+      userDomains: UserDomain[],
+      currentActiveDomain: UserDomain | null,
+    ): boolean => {
       for (const domain of userDomains) {
         if (path === `/dashboard/${formatDomain(domain)}/overview`) {
           return true
@@ -55,15 +65,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (itemDomain !== null && itemDomain !== domain) {
             continue
           }
-          if (item.url === path) {
+
+          if (item.url && path.startsWith(item.url)) {
             return true
           }
+
           if (item.items && item.items.length > 0) {
             if (searchMenuItems(item.items, domain)) {
               return true
             }
           }
         }
+
         return false
       }
 
@@ -71,7 +84,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (menu.main && searchMenuItems(menu.main, currentActiveDomain)) {
           return true
         }
-        return !!(menu.secondary && searchMenuItems(menu.secondary, currentActiveDomain))
+
+        if (
+          menu.secondary &&
+          searchMenuItems(menu.secondary, currentActiveDomain)
+        ) {
+          return true
+        }
+
+        return !!(menu.user && searchMenuItems(menu.user, currentActiveDomain))
       }
 
       for (const domain of userDomains) {
@@ -93,8 +114,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       let userDomains: UserDomain[] = []
       if (Array.isArray(userDomain)) {
-        userDomain.forEach(domain => {
-          if (["instructor", "student", "organisation_user", "admin"].includes(domain)) {
+        userDomain.forEach((domain) => {
+          if (
+            ["instructor", "student", "organisation_user", "admin"].includes(
+              domain,
+            )
+          ) {
             userDomains.push(domain)
           }
         })
@@ -120,7 +145,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const dashboardPath = activeDomain
           ? `/dashboard/${formatDomain(activeDomain)}/overview`
           : `/dashboard/${formatDomain(domains[0])}/overview`
-        router.push(dashboardPath)
+
+        if (pathname !== dashboardPath) {
+          router.push(dashboardPath)
+        }
       }
     }
   }, [
@@ -131,29 +159,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     activeDomain,
     formatDomain,
     isAuthorizedPath,
-    isAuthenticating
+    isAuthenticating,
   ])
 
   useEffect(() => {
-    if (activeDomain && status === "authenticated" && !isAuthenticating) {
+    if (
+      activeDomain &&
+      status === "authenticated" &&
+      !isAuthenticating &&
+      !pathname.startsWith(`/dashboard/${formatDomain(activeDomain)}`)
+    ) {
       router.push(`/dashboard/${formatDomain(activeDomain)}/overview`)
     }
-  }, [activeDomain, router, status, formatDomain, isAuthenticating])
+  }, [activeDomain, router, status, pathname, formatDomain, isAuthenticating])
 
   const value = {
     domains,
     activeDomain,
     setActiveDomain,
     isLoading: status === "loading" || isAuthenticating,
-    isLoggedIn: status === "authenticated"
+    isLoggedIn: status === "authenticated",
   }
 
   if (status === "loading" || isAuthenticating) {
     return (
       <AuthContext.Provider value={value}>
         <div className="flex h-screen w-screen items-center justify-center">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 mb-3"></div>
+          <div className="flex animate-pulse flex-col items-center">
+            <div className="mb-3 h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
             <div className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700"></div>
           </div>
         </div>
@@ -161,11 +194,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     )
   }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)

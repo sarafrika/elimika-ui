@@ -9,7 +9,7 @@ export async function GET() {
     if (!session) {
       return new Response(JSON.stringify({ error: "Not authenticated" }), {
         status: 401,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
@@ -21,7 +21,7 @@ export async function GET() {
       console.error("Missing required environment variables for logout.")
       return new Response(
         JSON.stringify({ error: "Server misconfiguration. Contact support." }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        { status: 500, headers: { "Content-Type": "application/json" } },
       )
     }
 
@@ -30,37 +30,42 @@ export async function GET() {
       console.warn("User session exists but ID token is missing.")
       return new Response(JSON.stringify({ error: "Invalid session" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       })
     }
 
     const logoutUrl = `${keycloakIssuer}/protocol/openid-connect/logout`
     const logoutParams = new URLSearchParams({
       id_token_hint: idToken,
-      post_logout_redirect_uri: nextAuthUrl
+      post_logout_redirect_uri: nextAuthUrl,
     })
 
-    const response = await fetch(`${logoutUrl}?${logoutParams.toString()}`, { method: "GET" })
+    const response = await fetch(`${logoutUrl}?${logoutParams.toString()}`, {
+      method: "GET",
+    })
 
     if (!response.ok) {
       console.error("Keycloak logout failed:", response.statusText)
-      return new Response(JSON.stringify({ error: "Logout failed. Try again later." }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      })
+      return new Response(
+        JSON.stringify({ error: "Logout failed. Try again later." }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      )
     }
 
     return new Response(null, {
       status: 302,
       headers: {
-        Location: nextAuthUrl
-      }
+        Location: nextAuthUrl,
+      },
     })
   } catch (error) {
     console.error("Unexpected error during logout:", error)
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     })
   }
 }

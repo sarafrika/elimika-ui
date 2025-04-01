@@ -5,7 +5,7 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator
+  BreadcrumbSeparator,
 } from "./breadcrumb"
 import Link from "next/link"
 import { Fragment } from "react"
@@ -16,7 +16,10 @@ interface AppBreadcrumbProps {
   showHome?: boolean
 }
 
-export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps) {
+export function AppBreadcrumb({
+  className,
+  showHome = true,
+}: AppBreadcrumbProps) {
   const { breadcrumbs } = useBreadcrumb()
   const { activeDomain } = useAuth()
 
@@ -43,14 +46,12 @@ export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps
             <BreadcrumbItem className="hidden md:block">
               {crumb.isLast ? (
                 <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
+              ) : crumb.url ? (
+                <BreadcrumbLink href={crumb.url} asChild>
+                  <Link href={crumb.url}>{crumb.title}</Link>
+                </BreadcrumbLink>
               ) : (
-                crumb.url ? (
-                  <BreadcrumbLink href={crumb.url} asChild>
-                    <Link href={crumb.url}>{crumb.title}</Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
-                )
+                <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
               )}
             </BreadcrumbItem>
             {!crumb.isLast && (

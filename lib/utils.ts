@@ -35,16 +35,19 @@ export function encrypt(text: string, key: Buffer, iv: Buffer): EncryptedData {
   return {
     encrypted,
     iv: iv.toString("hex"),
-    authTag: authTag.toString("hex")
+    authTag: authTag.toString("hex"),
   }
 }
 
 export function decrypt(data: EncryptedData, key: Buffer) {
-  const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(data.iv, "hex"))
+  const decipher = crypto.createDecipheriv(
+    "aes-256-gcm",
+    key,
+    Buffer.from(data.iv, "hex"),
+  )
   decipher.setAuthTag(Buffer.from(data.authTag, "hex"))
 
   let decrypted = decipher.update(data.encrypted, "hex", "utf8")
   decrypted += decipher.final("utf8")
   return decrypted
 }
-

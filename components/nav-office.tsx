@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
   SidebarGroup,
@@ -16,7 +16,7 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { getMenuWithActivePath, MenuItem } from "@/lib/menu"
 import { usePathname } from "next/navigation"
@@ -26,7 +26,10 @@ interface NavOfficeProps {
   items: MenuItem[]
 }
 
-export function NavOffice({ items, ...props }: NavOfficeProps & ComponentPropsWithoutRef<typeof SidebarGroup>) {
+export function NavOffice({
+  items,
+  ...props
+}: NavOfficeProps & ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const { isMobile } = useSidebar()
   const pathname = usePathname()
 
@@ -34,7 +37,7 @@ export function NavOffice({ items, ...props }: NavOfficeProps & ComponentPropsWi
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden" {...props}>
-      <SidebarGroupLabel className="mb-2 px-2 text-xs font-medium text-muted-foreground">
+      <SidebarGroupLabel className="text-muted-foreground mb-2 px-2 text-xs font-medium">
         Office
       </SidebarGroupLabel>
       <SidebarMenu className="gap-0.5">
@@ -59,16 +62,16 @@ export function NavOffice({ items, ...props }: NavOfficeProps & ComponentPropsWi
                 align={isMobile ? "end" : "start"}
               >
                 <DropdownMenuItem>
-                  <Folder className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <Folder className="text-muted-foreground mr-2 h-4 w-4" />
                   <span>View Project</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Share className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <Share className="text-muted-foreground mr-2 h-4 w-4" />
                   <span>Share Project</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Trash2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <Trash2 className="text-muted-foreground mr-2 h-4 w-4" />
                   <span>Delete Project</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
