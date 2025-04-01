@@ -2,8 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   Card,
   CardContent,
@@ -27,8 +26,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Grip, PlusCircle, Trash2 } from "lucide-react"
 import { toast } from "sonner"
+import { useSessionContext } from "@/context/session-provider-wrapper"
+import { useUserStore } from "@/store/use-user-store"
+import { z } from "zod"
+import { createStudentProfile } from "@/app/dashboard/student/profile/actions"
 
-const guardianSchema = z.object({
+const GuardianSchema = z.object({
   id: z.string(),
   firstName: z
     .string()
@@ -44,52 +47,53 @@ const guardianSchema = z.object({
   isPrimary: z.boolean().default(false),
 })
 
-const createStudentProfileSchema = (isMinor: boolean) => {
-  const baseSchema = {
-    firstName: z
-      .string()
-      .min(2, { message: "First name must be at least 2 characters." }),
-    lastName: z
-      .string()
-      .min(2, { message: "Last name must be at least 2 characters." }),
-    email: z.string().email({ message: "Please enter a valid email address." }),
-    dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-      message: "Please enter a valid date in YYYY-MM-DD format.",
-    }),
-    location: z.string().optional(),
-    bio: z
-      .string()
-      .max(500, { message: "Bio must not exceed 500 characters." })
-      .optional(),
-  }
+export type Guardian = z.infer<typeof GuardianSchema>
 
-  // For minors, require at least one guardian
-  if (isMinor) {
-    return z.object({
-      ...baseSchema,
-      guardians: z
-        .array(guardianSchema)
-        .min(1, { message: "At least one guardian is required for minors." }),
-    })
-  }
-
-  // For adults, guardians are optional
-  return z.object({
-    ...baseSchema,
-    guardians: z.array(guardianSchema).optional(),
-  })
+const baseStudentSchema = {
+  full_name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+    message: "Please enter a valid date in YYYY-MM-DD format.",
+  }),
+  location: z.string().optional(),
+  bio: z
+    .string()
+    .max(500, { message: "Bio must not exceed 500 characters." })
+    .optional(),
+  user_uuid: z.string(),
 }
 
-type GuardianValues = z.infer<typeof guardianSchema>
+const MinorStudentSchema = z.object({
+  ...baseStudentSchema,
+  guardians: z
+    .array(GuardianSchema)
+    .min(1, { message: "At least one guardian is required for minors." }),
+})
+
+const AdultStudentSchema = z.object({
+  ...baseStudentSchema,
+  guardians: z.array(GuardianSchema).optional(),
+})
+
+const CreateStudentSchema = (isMinor: boolean) => {
+  return isMinor ? MinorStudentSchema : AdultStudentSchema
+}
+
+export type Student =
+  | z.infer<typeof MinorStudentSchema>
+  | z.infer<typeof AdultStudentSchema>
 
 export default function StudentProfileGeneral() {
-  const [isLoading, setIsLoading] = useState(false)
+  const { session } = useSessionContext()
+  const { user, isLoading: isUserLoading, fetchCurrentUser } = useUserStore()
+
   const [dateOfBirth, setDateOfBirth] = useState("")
   const [isMinor, setIsMinor] = useState(true)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
-  // State for guardians
-  const [guardians, setGuardians] = useState<GuardianValues[]>([
+  const [guardians, setGuardians] = useState<Guardian[]>([
     {
       id: "1",
       firstName: "",
@@ -101,73 +105,68 @@ export default function StudentProfileGeneral() {
     },
   ])
 
-  // Dynamically create schema based on minor status
-  const studentProfileSchema = createStudentProfileSchema(isMinor)
-  type StudentProfileValues = z.infer<typeof studentProfileSchema>
+  // Use the CreateStudentSchema function from our types file
+  const StudentSchema = CreateStudentSchema(isMinor)
 
-  // Default form values
-  const defaultValues: Partial<StudentProfileValues> = {
-    firstName: "",
-    lastName: "",
-    email: "",
-    dateOfBirth: "",
-    location: "",
-    bio: "",
-    guardians: guardians,
-  }
-
-  const form = useForm<StudentProfileValues>({
-    resolver: zodResolver(studentProfileSchema),
-    defaultValues,
+  const form = useForm<Student>({
+    resolver: zodResolver(StudentSchema),
+    defaultValues: {
+      full_name: user
+        ? `${user.first_name}${user.middle_name ? ` ${user.middle_name}` : ""} ${user.last_name}`
+        : "",
+      email: user?.email || "",
+      user_uuid: user?.uuid || "",
+      date_of_birth: "",
+      location: "",
+      bio: "",
+    },
   })
 
-  // Check if student is a minor when date of birth changes
+  // Fetch current user if needed
   useEffect(() => {
-    if (dateOfBirth) {
-      const birthDate = new Date(dateOfBirth)
-      const today = new Date()
-      const age = today.getFullYear() - birthDate.getFullYear()
-
-      // Account for birth month and day
-      const isBeforeBirthday =
-        today.getMonth() < birthDate.getMonth() ||
-        (today.getMonth() === birthDate.getMonth() &&
-          today.getDate() < birthDate.getDate())
-
-      const calculatedAge = isBeforeBirthday ? age - 1 : age
-      const calculatedIsMinor = calculatedAge < 18
-
-      console.log(calculatedIsMinor)
-
-      setIsMinor(calculatedIsMinor)
+    if (session?.user?.email && !user && !isUserLoading) {
+      fetchCurrentUser(session.user.email)
     }
-  }, [dateOfBirth])
+  }, [session?.user?.email, fetchCurrentUser, isUserLoading, user])
 
-  // Update form when guardians change
+  // Update form values when user data changes
   useEffect(() => {
-    form.setValue("guardians", guardians)
-  }, [guardians, form])
+    if (user) {
+      form.setValue(
+        "full_name",
+        `${user.first_name}${user.middle_name ? ` ${user.middle_name}` : ""} ${user.last_name}`,
+      )
+      form.setValue("email", user.email)
+      form.setValue("user_uuid", user.uuid || "")
+    }
+  }, [user, form])
 
-  async function onSubmit(data: StudentProfileValues) {
-    setIsLoading(true)
+  useEffect(() => {
+    if (isMinor || guardians.length > 0) {
+      form.setValue("guardians", guardians)
+    }
+  }, [guardians, form, isMinor])
 
+  async function onSubmit(data: Student) {
     try {
-      // Here you would call your API to update the student profile
-      console.log(data)
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      toast.success("Profile updated successfully")
+      const response = await createStudentProfile(data)
+
+      if (response.success) {
+        form.reset(response.data)
+        toast.success(response.message)
+      } else {
+        toast.error(response.message)
+      }
     } catch (error) {
-      // Handle error
-      console.error("Failed to update profile:", error)
-      toast.error("Failed to update profile")
-    } finally {
-      setIsLoading(false)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while updating instructor profile.",
+      )
     }
   }
 
-  // Add a new guardian
-  const addGuardian = () => {
+  const addGuardian = useCallback(() => {
     if (guardians.length >= 2) {
       toast.error("Maximum of 2 guardians allowed")
       return
@@ -179,20 +178,19 @@ export default function StudentProfileGeneral() {
         : 1
     ).toString()
 
-    const newGuardian: GuardianValues = {
+    const newGuardian: Guardian = {
       id: newId,
       firstName: "",
       lastName: "",
       email: "",
       phone: "",
       relationship: "",
-      isPrimary: false,
+      isPrimary: guardians.length === 0,
     }
 
     setGuardians([...guardians, newGuardian])
-  }
+  }, [guardians])
 
-  // Remove a guardian by ID
   const removeGuardian = (id: string) => {
     if (isMinor && guardians.length <= 1) {
       toast.error("At least one guardian is required for minors")
@@ -201,7 +199,6 @@ export default function StudentProfileGeneral() {
 
     const filteredGuardians = guardians.filter((guardian) => guardian.id !== id)
 
-    // If the primary guardian was removed, make the first remaining guardian primary
     const hasPrimary = filteredGuardians.some((g) => g.isPrimary)
     if (!hasPrimary && filteredGuardians.length > 0) {
       filteredGuardians[0].isPrimary = true
@@ -212,7 +209,7 @@ export default function StudentProfileGeneral() {
 
   const updateGuardianField = (
     id: string,
-    field: keyof GuardianValues,
+    field: keyof Guardian,
     value: unknown,
   ) => {
     const updatedGuardians = guardians.map((guardian) =>
@@ -230,6 +227,32 @@ export default function StudentProfileGeneral() {
 
     setGuardians(updatedGuardians)
   }
+
+  useEffect(() => {
+    if (dateOfBirth) {
+      const birthDate = new Date(dateOfBirth)
+      const today = new Date()
+      const age = today.getFullYear() - birthDate.getFullYear()
+
+      const isBeforeBirthday =
+        today.getMonth() < birthDate.getMonth() ||
+        (today.getMonth() === birthDate.getMonth() &&
+          today.getDate() < birthDate.getDate())
+
+      const calculatedAge = isBeforeBirthday ? age - 1 : age
+      const calculatedIsMinor = calculatedAge < 18
+
+      setIsMinor(calculatedIsMinor)
+
+      if (!calculatedIsMinor && isMinor) {
+        setGuardians([])
+      }
+
+      if (calculatedIsMinor && !isMinor && guardians.length === 0) {
+        addGuardian()
+      }
+    }
+  }, [addGuardian, dateOfBirth, isMinor, guardians.length])
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index)
@@ -280,8 +303,8 @@ export default function StudentProfileGeneral() {
                 <Avatar className="h-24 w-24">
                   <AvatarImage src="" alt="Avatar" />
                   <AvatarFallback className="text-2xl">
-                    {form.watch("firstName")?.[0]}
-                    {form.watch("lastName")?.[0]}
+                    {form.watch("full_name")?.split(" ")[0]?.[0] || ""}
+                    {form.watch("full_name")?.split(" ")[1]?.[0] || ""}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
@@ -306,15 +329,19 @@ export default function StudentProfileGeneral() {
                 </div>
               </div>
 
-              <div className="grid gap-6 sm:grid-cols-2">
+              <div className="flex w-full flex-col items-start gap-8 sm:flex-row">
                 <FormField
                   control={form.control}
-                  name="firstName"
+                  name="full_name"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
+                    <FormItem className="flex-1">
+                      <FormLabel>Full Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John" {...field} />
+                        <Input
+                          placeholder="e.g. Tonny Ocholla"
+                          {...field}
+                          className="h-10"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -323,13 +350,20 @@ export default function StudentProfileGeneral() {
 
                 <FormField
                   control={form.control}
-                  name="lastName"
+                  name="email"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
+                    <FormItem className="flex-1">
+                      <FormLabel>Email Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="Doe" {...field} />
+                        <Input
+                          placeholder="name@example.com"
+                          {...field}
+                          disabled
+                        />
                       </FormControl>
+                      <FormDescription>
+                        Contact support to change your email address
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -338,24 +372,7 @@ export default function StudentProfileGeneral() {
 
               <FormField
                 control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="name@example.com" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Contact support to change your email address
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="dateOfBirth"
+                name="date_of_birth"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Date of Birth</FormLabel>
@@ -386,7 +403,7 @@ export default function StudentProfileGeneral() {
                   <FormItem>
                     <FormLabel>Location</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. New York, USA" {...field} />
+                      <Input placeholder="e.g. Nairobi, Kenya" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -404,6 +421,7 @@ export default function StudentProfileGeneral() {
                         placeholder="Tell us about yourself..."
                         className="h-32 resize-none"
                         {...field}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormDescription>
@@ -416,8 +434,14 @@ export default function StudentProfileGeneral() {
             </CardContent>
           </Card>
 
-          {/* Guardian Information Card - Shown conditionally */}
-          <Card className={!isMinor && guardians.length === 0 ? "hidden" : ""}>
+          {/* Guardian Information Card - Only shown when there are guardians or student is a minor */}
+          <Card
+            className={`transition-opacity duration-500 ${
+              guardians.length > 0 || isMinor
+                ? "opacity-100"
+                : "hidden opacity-0"
+            }`}
+          >
             <CardHeader>
               <CardTitle>Guardian Information</CardTitle>
               <CardDescription>
@@ -527,7 +551,7 @@ export default function StudentProfileGeneral() {
                             Phone
                           </FormLabel>
                           <Input
-                            placeholder="+1 (555) 000-0000"
+                            placeholder="+254 123 456 789"
                             value={guardian.phone}
                             onChange={(e) =>
                               updateGuardianField(
@@ -592,13 +616,12 @@ export default function StudentProfileGeneral() {
                   className="flex w-full items-center justify-center gap-2"
                 >
                   <PlusCircle className="h-4 w-4" />
-                  Add Guardian
+                  Add {guardians.length === 0 ? "Guardian" : "Another Guardian"}
                 </Button>
               )}
             </CardContent>
           </Card>
 
-          {/* Add Guardian Button (shown only for adults with no guardians) */}
           {!isMinor && guardians.length === 0 && (
             <Button
               type="button"
@@ -612,8 +635,11 @@ export default function StudentProfileGeneral() {
           )}
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
+            <Button
+              type="submit"
+              disabled={isUserLoading || form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>

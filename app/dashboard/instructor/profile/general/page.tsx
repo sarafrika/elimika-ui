@@ -99,7 +99,6 @@ export default function GeneralProfileSettings() {
   }, [form, user])
 
   const onSubmit = async (data: Instructor) => {
-    console.log("clicked")
     try {
       const response = await createInstructorProfile(data)
 
