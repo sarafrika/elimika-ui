@@ -12,8 +12,7 @@ import { Award, Grip, PlusCircle, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 
-// Define a schema for a single membership entry
-const membershipSchema = z.object({
+const MembershipSchema = z.object({
   id: z.string(),
   organization: z.string().min(1, "Organization name is required"),
   role: z.string().optional(),
@@ -28,58 +27,41 @@ const membershipSchema = z.object({
   description: z.string().optional(),
 })
 
-// Define a schema for the entire form
-const membershipFormSchema = z.object({
-  memberships: z.array(membershipSchema),
+const MembershipFormSchema = z.object({
+  memberships: z.array(MembershipSchema),
 })
 
-type MembershipValues = z.infer<typeof membershipSchema>
-type MembershipFormValues = z.infer<typeof membershipFormSchema>
+type Membership = z.infer<typeof MembershipSchema>
+type MembershipFormValues = z.infer<typeof MembershipFormSchema>
 
 export default function ProfessionalMembershipsSettings() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
-  // Initialize with sample memberships
-  const [memberships, setMemberships] = useState<MembershipValues[]>([
-    {
-      id: "1",
-      organization: "International Mathematical Union",
-      role: "Member",
-      memberSince: "2015",
-      current: true,
-      description:
-        "Participating in annual conferences and contributing to research publications.",
-    },
-    {
-      id: "2",
-      organization: "African Mathematical Society",
-      role: "Board Member",
-      memberSince: "2018",
-      current: true,
-      description: "Helping to promote mathematics education across Africa.",
-    },
-  ])
-
   const form = useForm<MembershipFormValues>({
-    resolver: zodResolver(membershipFormSchema),
+    resolver: zodResolver(MembershipFormSchema),
     defaultValues: {
-      memberships: memberships,
+      memberships: [
+        {
+          organization: "IEEE",
+          role: "Member",
+          memberSince: "2000",
+          current: true,
+          endYear: "",
+          certificateUrl: "",
+          description: "",
+        },
+      ],
     },
-    mode: "onChange",
   })
 
-  // Update form when memberships change
-  useEffect(() => {
-    form.setValue("memberships", memberships)
-  }, [memberships, form])
+  const memberships = form.watch("memberships")
 
   function onSubmit(data: MembershipFormValues) {
+    /** TODO: Save memberships to API */
     toast.success("Memberships updated successfully.")
     console.log(data)
-    // Here you would save data to your API
   }
 
-  // Add a new empty membership entry
   const addMembership = () => {
     const newId = (
       memberships.length > 0
@@ -87,7 +69,7 @@ export default function ProfessionalMembershipsSettings() {
         : 1
     ).toString()
 
-    const newMembership: MembershipValues = {
+    const newMembership: Membership = {
       id: newId,
       organization: "",
       role: "",
@@ -98,12 +80,13 @@ export default function ProfessionalMembershipsSettings() {
       description: "",
     }
 
-    setMemberships([...memberships, newMembership])
+    form.setValue("memberships", [...memberships, newMembership])
   }
 
   const removeMembership = (id: string) => {
+    /** TODO: Remove membership from API */
     const filteredMemberships = memberships.filter((mem) => mem.id !== id)
-    setMemberships(filteredMemberships)
+    form.setValue("memberships", filteredMemberships)
   }
 
   const handleDragStart = (index: number) => {
@@ -120,11 +103,10 @@ export default function ProfessionalMembershipsSettings() {
     const newMemberships = [...memberships]
     const draggedMembership = newMemberships[draggedIndex]
 
-    // Remove from old position and insert at new position
     newMemberships.splice(draggedIndex, 1)
     newMemberships.splice(index, 0, draggedMembership)
 
-    setMemberships(newMemberships)
+    form.setValue("memberships", newMemberships)
     setDraggedIndex(index)
   }
 
@@ -134,24 +116,24 @@ export default function ProfessionalMembershipsSettings() {
 
   const updateMembershipField = (
     id: string,
-    field: keyof MembershipValues,
+    field: keyof Membership,
     value: unknown,
   ) => {
     const updatedMemberships = memberships.map((mem) =>
       mem.id === id ? { ...mem, [field]: value } : mem,
     )
 
-    setMemberships(updatedMemberships)
+    form.setValue("memberships", updatedMemberships)
 
     if (field === "current" && value === true) {
       const updatedWithEndYear = updatedMemberships.map((mem) =>
         mem.id === id ? { ...mem, endYear: "" } : mem,
       )
-      setMemberships(updatedWithEndYear)
+      form.setValue("memberships", updatedWithEndYear)
     }
   }
 
-  const getMembershipPeriod = (membership: MembershipValues) => {
+  const getMembershipPeriod = (membership: Membership) => {
     if (!membership.memberSince) return ""
 
     if (membership.current) {
@@ -198,7 +180,7 @@ export default function ProfessionalMembershipsSettings() {
               ) : (
                 memberships.map((membership, index) => (
                   <div
-                    key={membership.id}
+                    key={membership.id || index}
                     className="bg-card group hover:bg-accent/5 relative rounded-md border transition-all"
                     draggable
                     onDragStart={() => handleDragStart(index)}
