@@ -1,6 +1,5 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import crypto from "crypto"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -23,31 +22,75 @@ export function getEnvironmentVariable(key: string): string {
 export type EncryptedData = {
   encrypted: string
   iv: string
-  authTag: string
 }
 
-export function encrypt(text: string, key: Buffer, iv: Buffer): EncryptedData {
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv)
-  let encrypted = cipher.update(text, "utf8", "hex")
-  encrypted += cipher.final("hex")
-  const authTag = cipher.getAuthTag()
+export async function encrypt(
+  text: string,
+  key: string,
+): Promise<EncryptedData> {
+  // Convert the key to a proper format
+  const keyBuffer = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(key),
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt"],
+  )
+
+  // Generate random IV
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+
+  // Encrypt the data
+  const encodedText = new TextEncoder().encode(text)
+  const encryptedBuffer = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv: iv,
+    },
+    keyBuffer,
+    encodedText,
+  )
+
+  // Convert to base64 for storage/transmission
+  const encrypted = btoa(
+    String.fromCharCode(...new Uint8Array(encryptedBuffer)),
+  )
+  const ivString = btoa(String.fromCharCode(...iv))
 
   return {
     encrypted,
-    iv: iv.toString("hex"),
-    authTag: authTag.toString("hex"),
+    iv: ivString,
   }
 }
 
-export function decrypt(data: EncryptedData, key: Buffer) {
-  const decipher = crypto.createDecipheriv(
-    "aes-256-gcm",
-    key,
-    Buffer.from(data.iv, "hex"),
+export async function decrypt(
+  data: EncryptedData,
+  key: string,
+): Promise<string> {
+  // Convert the key to a proper format
+  const keyBuffer = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(key),
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"],
   )
-  decipher.setAuthTag(Buffer.from(data.authTag, "hex"))
 
-  let decrypted = decipher.update(data.encrypted, "hex", "utf8")
-  decrypted += decipher.final("utf8")
-  return decrypted
+  // Convert base64 back to buffers
+  const encryptedData = Uint8Array.from(atob(data.encrypted), (c) =>
+    c.charCodeAt(0),
+  )
+  const iv = Uint8Array.from(atob(data.iv), (c) => c.charCodeAt(0))
+
+  // Decrypt the data
+  const decryptedBuffer = await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: iv,
+    },
+    keyBuffer,
+    encryptedData,
+  )
+
+  return new TextDecoder().decode(decryptedBuffer)
 }
