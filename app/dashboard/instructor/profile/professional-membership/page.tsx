@@ -88,7 +88,7 @@ export default function ProfessionalBodySettings() {
             ],
       })
     }
-  }, [user])
+  }, [user, form])
 
   const onSubmit = async (data: ProfessionalBodyFormValues) => {
     if (data.bodies.length === 0) {
