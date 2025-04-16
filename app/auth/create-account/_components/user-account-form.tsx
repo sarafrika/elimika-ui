@@ -14,18 +14,21 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, CalendarIcon } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
-import { ProfessionalBodySchema } from "@/app/dashboard/instructor/profile/professional-membership/page"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
+
+export const ProfessionalBodySchema = z.object({
+  id: z.string().nullish(),
+  body_name: z.string().min(1, "Professional body name is required"),
+  membership_no: z.string().min(1, "Membership number is required"),
+  member_since: z.date(),
+  current: z.boolean().default(true),
+  end_year: z.date().nullish(),
+  certificate_url: z.string().url("Please enter a valid URL").nullish(),
+  description: z.string().nullish(),
+})
 
 export const UserFormSchema = z.object({
   uuid: z.string().optional(),

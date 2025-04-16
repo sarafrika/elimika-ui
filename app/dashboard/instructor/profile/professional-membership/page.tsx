@@ -29,7 +29,10 @@ import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
 import { useUserStore } from "@/store/use-user-store"
 import { updateUser } from "@/app/auth/create-account/actions"
-import { User } from "@/app/auth/create-account/_components/user-account-form"
+import {
+  ProfessionalBodySchema,
+  User,
+} from "@/app/auth/create-account/_components/user-account-form"
 import {
   Popover,
   PopoverContent,
@@ -38,17 +41,6 @@ import {
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
-
-export const ProfessionalBodySchema = z.object({
-  id: z.string().nullish(),
-  body_name: z.string().min(1, "Professional body name is required"),
-  membership_no: z.string().min(1, "Membership number is required"),
-  member_since: z.date(),
-  current: z.boolean().default(true),
-  end_year: z.date().nullish(),
-  certificate_url: z.string().url("Please enter a valid URL").nullish(),
-  description: z.string().nullish(),
-})
 
 const ProfessionalBodyFormSchema = z.object({
   bodies: z.array(ProfessionalBodySchema),
