@@ -1,5 +1,4 @@
 import { AuthOptions, getServerSession, Session } from "next-auth"
-import crypto from "crypto"
 import {
   decrypt,
   encrypt,
@@ -145,12 +144,9 @@ export const authOptions: AuthOptions = {
         throw new Error("NEXTAUTH_SECRET must be set")
       }
 
-      const key = crypto.createHash("sha256").update(secret).digest()
-      const iv = crypto.randomBytes(12)
-
-      session.access_token = encrypt(token.access_token ?? "", key, iv)
-      session.id_token = encrypt(token.id_token ?? "", key, iv)
-      session.refresh_token = encrypt(token.refresh_token ?? "", key, iv)
+      session.access_token = await encrypt(token.access_token ?? "", secret)
+      session.id_token = await encrypt(token.id_token ?? "", secret)
+      session.refresh_token = await encrypt(token.refresh_token ?? "", secret)
       session.decoded = token.decoded
       session.error = token.error
 
@@ -164,32 +160,29 @@ export const SessionUtils = {
     const session = (await getServerSession(
       authOptions,
     )) as KeycloakSession | null
-    const key = crypto.createHash("sha256").update(secret).digest()
 
     if (!session || !session.access_token) return null
 
-    return decrypt(session.access_token, key)
+    return await decrypt(session.access_token, secret)
   },
 
   getRefreshToken: async (secret: string) => {
     const session = (await getServerSession(
       authOptions,
     )) as KeycloakSession | null
-    const key = crypto.createHash("sha256").update(secret).digest()
 
     if (!session || !session.refresh_token) return null
 
-    return decrypt(session.refresh_token, key)
+    return await decrypt(session.refresh_token, secret)
   },
 
   getIdToken: async (secret: string) => {
     const session = (await getServerSession(
       authOptions,
     )) as KeycloakSession | null
-    const key = crypto.createHash("sha256").update(secret).digest()
 
     if (!session || !session.id_token) return null
 
-    return decrypt(session.id_token, key)
+    return await decrypt(session.id_token, secret)
   },
 }
