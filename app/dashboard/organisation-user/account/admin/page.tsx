@@ -32,7 +32,7 @@ import { useTrainingCenter } from "@/context/training-center-provider"
 import { useUserStore } from "@/store/use-user-store"
 import { useEffect } from "react"
 import { useSessionContext } from "@/context/session-provider-wrapper"
-import { createOrUpdateUser } from "@/app/auth/create-account/actions"
+import { updateUser } from "@/app/auth/create-account/actions"
 
 export default function AdminProfile() {
   const { session } = useSessionContext()
@@ -67,7 +67,7 @@ export default function AdminProfile() {
 
   async function onSubmit(data: User) {
     try {
-      const response = await createOrUpdateUser(data, "organisation_user")
+      const response = await updateUser(data)
 
       if (response.success) {
         form.reset(response.data)

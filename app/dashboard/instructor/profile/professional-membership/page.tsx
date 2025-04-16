@@ -1,112 +1,142 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { DragEvent, useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Form, FormDescription, FormLabel } from "@/components/ui/form"
-import { Award, Grip, PlusCircle, Trash2 } from "lucide-react"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Award,
+  CalendarIcon,
+  Grip,
+  Loader,
+  PlusCircle,
+  Trash2,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { Textarea } from "@/components/ui/textarea"
+import { useUserStore } from "@/store/use-user-store"
+import { updateUser } from "@/app/auth/create-account/actions"
+import { User } from "@/app/auth/create-account/_components/user-account-form"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
+import { Calendar } from "@/components/ui/calendar"
 
-const MembershipSchema = z.object({
-  id: z.string(),
-  organization: z.string().min(1, "Organization name is required"),
-  role: z.string().optional(),
-  memberSince: z.string().optional(),
+export const ProfessionalBodySchema = z.object({
+  id: z.string().nullish(),
+  body_name: z.string().min(1, "Professional body name is required"),
+  membership_no: z.string().min(1, "Membership number is required"),
+  member_since: z.date(),
   current: z.boolean().default(true),
-  endYear: z.string().optional(),
-  certificateUrl: z
-    .string()
-    .url("Please enter a valid URL")
-    .optional()
-    .or(z.literal("")),
-  description: z.string().optional(),
+  end_year: z.date().nullish(),
+  certificate_url: z.string().url("Please enter a valid URL").nullish(),
+  description: z.string().nullish(),
 })
 
-const MembershipFormSchema = z.object({
-  memberships: z.array(MembershipSchema),
+const ProfessionalBodyFormSchema = z.object({
+  bodies: z.array(ProfessionalBodySchema),
 })
 
-type Membership = z.infer<typeof MembershipSchema>
-type MembershipFormValues = z.infer<typeof MembershipFormSchema>
+type ProfessionalBody = z.infer<typeof ProfessionalBodySchema>
+type ProfessionalBodyFormValues = z.infer<typeof ProfessionalBodyFormSchema>
 
-export default function ProfessionalMembershipsSettings() {
+export default function ProfessionalBodySettings() {
+  const { user, setUser, fetchCurrentUser } = useUserStore()
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
-  const form = useForm<MembershipFormValues>({
-    resolver: zodResolver(MembershipFormSchema),
+  const form = useForm<ProfessionalBodyFormValues>({
+    resolver: zodResolver(ProfessionalBodyFormSchema),
     defaultValues: {
-      memberships: [
+      bodies: [
         {
-          organization: "IEEE",
-          role: "Member",
-          memberSince: "2000",
+          body_name: "",
+          membership_no: "",
+          member_since: undefined,
           current: true,
-          endYear: "",
-          certificateUrl: "",
-          description: "",
         },
       ],
     },
   })
 
-  const memberships = form.watch("memberships")
+  const {
+    fields: bodies,
+    append,
+    remove,
+  } = useFieldArray({ name: "bodies", control: form.control })
 
-  function onSubmit(data: MembershipFormValues) {
-    /** TODO: Save memberships to API */
-    toast.success("Memberships updated successfully.")
-    console.log(data)
-  }
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        bodies: user.professional_bodies
+          ? [user.professional_bodies]
+          : [
+              {
+                body_name: "",
+                membership_no: "",
+                member_since: undefined,
+                current: true,
+              },
+            ],
+      })
+    }
+  }, [user])
 
-  const addMembership = () => {
-    const newId = (
-      memberships.length > 0
-        ? Math.max(...memberships.map((m) => parseInt(m.id))) + 1
-        : 1
-    ).toString()
-
-    const newMembership: Membership = {
-      id: newId,
-      organization: "",
-      role: "",
-      memberSince: "",
-      current: true,
-      endYear: "",
-      certificateUrl: "",
-      description: "",
+  const onSubmit = async (data: ProfessionalBodyFormValues) => {
+    if (data.bodies.length === 0) {
+      toast.error("Please add at least one professional body")
+      return
     }
 
-    form.setValue("memberships", [...memberships, newMembership])
-  }
+    console.log({
+      ...user,
+      professional_bodies: data.bodies[0],
+    })
 
-  const removeMembership = (id: string) => {
-    /** TODO: Remove membership from API */
-    const filteredMemberships = memberships.filter((mem) => mem.id !== id)
-    form.setValue("memberships", filteredMemberships)
+    const response = await updateUser({
+      ...user,
+      professional_bodies: data.bodies[0],
+    } as User)
+
+    if (response.success) {
+      toast.success(response.message)
+      await fetchCurrentUser(response.data.email)
+    } else {
+      toast.error(response.message)
+    }
   }
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index)
   }
 
-  const handleDragOver = (
-    e: React.DragEvent<HTMLDivElement>,
-    index: number,
-  ) => {
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault()
     if (draggedIndex === null) return
 
-    const newMemberships = [...memberships]
-    const draggedMembership = newMemberships[draggedIndex]
+    const newBodies = [...bodies]
+    const draggedBody = newBodies[draggedIndex]
 
-    newMemberships.splice(draggedIndex, 1)
-    newMemberships.splice(index, 0, draggedMembership)
+    newBodies.splice(draggedIndex, 1)
+    newBodies.splice(index, 0, draggedBody)
 
-    form.setValue("memberships", newMemberships)
+    form.setValue("bodies", newBodies)
     setDraggedIndex(index)
   }
 
@@ -114,37 +144,17 @@ export default function ProfessionalMembershipsSettings() {
     setDraggedIndex(null)
   }
 
-  const updateMembershipField = (
-    id: string,
-    field: keyof Membership,
-    value: unknown,
-  ) => {
-    const updatedMemberships = memberships.map((mem) =>
-      mem.id === id ? { ...mem, [field]: value } : mem,
-    )
+  const getBodyMembershipPeriod = (body: ProfessionalBody) => {
+    if (!body.member_since) return ""
 
-    form.setValue("memberships", updatedMemberships)
+    const from = format(body.member_since, "yyyy")
+    const to = body.current
+      ? "Present"
+      : body.end_year
+        ? format(body.end_year, "yyyy")
+        : ""
 
-    if (field === "current" && value === true) {
-      const updatedWithEndYear = updatedMemberships.map((mem) =>
-        mem.id === id ? { ...mem, endYear: "" } : mem,
-      )
-      form.setValue("memberships", updatedWithEndYear)
-    }
-  }
-
-  const getMembershipPeriod = (membership: Membership) => {
-    if (!membership.memberSince) return ""
-
-    if (membership.current) {
-      return `${membership.memberSince} - Present`
-    }
-
-    if (membership.endYear) {
-      return `${membership.memberSince} - ${membership.endYear}`
-    }
-
-    return membership.memberSince
+    return `${from} - ${to}`.trim()
   }
 
   return (
@@ -160,7 +170,7 @@ export default function ProfessionalMembershipsSettings() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
-              {memberships.length === 0 ? (
+              {bodies.length === 0 ? (
                 <div className="rounded-md border border-dashed p-6 text-center">
                   <Award className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
                   <h3 className="mb-1 font-medium">No memberships added</h3>
@@ -170,18 +180,25 @@ export default function ProfessionalMembershipsSettings() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={addMembership}
+                    onClick={() =>
+                      append({
+                        body_name: "",
+                        membership_no: "",
+                        member_since: new Date(),
+                        current: true,
+                      })
+                    }
                     className="inline-flex items-center justify-center gap-2"
                   >
                     <PlusCircle className="h-4 w-4" />
-                    Add Membership
+                    Add Body
                   </Button>
                 </div>
               ) : (
-                memberships.map((membership, index) => (
+                bodies.map((body, index) => (
                   <div
-                    key={membership.id || index}
-                    className="bg-card group hover:bg-accent/5 relative rounded-md border transition-all"
+                    key={body.id || index}
+                    className="bg-card group relative rounded-md border transition-all"
                     draggable
                     onDragStart={() => handleDragStart(index)}
                     onDragOver={(e) => handleDragOver(e, index)}
@@ -195,9 +212,9 @@ export default function ProfessionalMembershipsSettings() {
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="text-base font-medium">
-                                {membership.organization || "New Membership"}
+                                {body.body_name || "New Membership"}
                               </h3>
-                              {membership.current && (
+                              {body.current && (
                                 <Badge
                                   variant="outline"
                                   className="border-green-200 bg-green-50 text-xs font-normal text-green-600"
@@ -207,14 +224,9 @@ export default function ProfessionalMembershipsSettings() {
                               )}
                             </div>
                             <div className="flex items-center gap-2">
-                              {membership.role && (
-                                <p className="text-muted-foreground text-sm">
-                                  {membership.role}
-                                </p>
-                              )}
-                              {membership.memberSince && (
+                              {body.member_since && (
                                 <span className="text-muted-foreground text-xs">
-                                  • {getMembershipPeriod(membership)}
+                                  • {getBodyMembershipPeriod(body)}
                                 </span>
                               )}
                             </div>
@@ -226,46 +238,55 @@ export default function ProfessionalMembershipsSettings() {
                           variant="ghost"
                           size="icon"
                           className="hover:bg-destructive-foreground h-8 w-8 cursor-pointer transition-colors"
-                          onClick={() => removeMembership(membership.id)}
+                          onClick={() => remove(index)}
                         >
                           <Trash2 className="text-destructive h-4 w-4" />
                         </Button>
                       </div>
 
-                      {/* Organization and Role */}
+                      {/* Institution */}
                       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Organization
-                          </FormLabel>
-                          <Input
-                            placeholder="e.g. IEEE, ACM, Mathematical Society"
-                            value={membership.organization}
-                            onChange={(e) =>
-                              updateMembershipField(
-                                membership.id,
-                                "organization",
-                                e.target.value,
-                              )
-                            }
-                            className="h-10"
+                          <FormField
+                            control={form.control}
+                            name={`bodies.${index}.body_name`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Institution{" "}
+                                  <span className="text-red-500">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="e.g. Kenya National Union of Teachers"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
                         </div>
+
                         <div className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Role/Membership Type
-                          </FormLabel>
-                          <Input
-                            placeholder="e.g. Member, Board Member, Fellow"
-                            value={membership.role || ""}
-                            onChange={(e) =>
-                              updateMembershipField(
-                                membership.id,
-                                "role",
-                                e.target.value,
-                              )
-                            }
-                            className="h-10"
+                          <FormField
+                            control={form.control}
+                            name={`bodies.${index}.membership_no`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Membership Number
+                                  <span className="text-red-500">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="e.g. 123456789"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
                         </div>
                       </div>
@@ -273,109 +294,170 @@ export default function ProfessionalMembershipsSettings() {
                       {/* Year Range */}
                       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Member Since
-                          </FormLabel>
-                          <Input
-                            type="number"
-                            placeholder="YYYY"
-                            min="1900"
-                            max={new Date().getFullYear()}
-                            value={membership.memberSince || ""}
-                            onChange={(e) =>
-                              updateMembershipField(
-                                membership.id,
-                                "memberSince",
-                                e.target.value,
-                              )
-                            }
-                            className="h-10"
+                          <FormField
+                            control={form.control}
+                            name={`bodies.${index}.member_since`}
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>Member Since</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                          "w-full pl-3 text-left font-normal",
+                                          !field.value &&
+                                            "text-muted-foreground",
+                                        )}
+                                      >
+                                        {field.value ? (
+                                          format(field.value, "PPP")
+                                        ) : (
+                                          <span>Pick a date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent
+                                    className="w-auto p-0"
+                                    align="start"
+                                  >
+                                    <Calendar
+                                      mode="single"
+                                      onSelect={field.onChange}
+                                      disabled={(date) =>
+                                        date > new Date() ||
+                                        date < new Date("1900-01-01")
+                                      }
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
                         </div>
+
                         <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <FormLabel className="text-sm font-medium">
-                              End Year
-                            </FormLabel>
-                          </div>
-                          <Input
-                            type="number"
-                            placeholder="YYYY"
-                            min="1900"
-                            max={new Date().getFullYear()}
-                            value={membership.endYear || ""}
-                            onChange={(e) =>
-                              updateMembershipField(
-                                membership.id,
-                                "endYear",
-                                e.target.value,
-                              )
-                            }
-                            disabled={membership.current}
-                            className="h-10"
+                          <FormField
+                            control={form.control}
+                            name={`bodies.${index}.end_year`}
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>End Year</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                          "w-full pl-3 text-left font-normal",
+                                          !field.value &&
+                                            "text-muted-foreground",
+                                        )}
+                                      >
+                                        {field.value ? (
+                                          format(field.value, "PPP")
+                                        ) : (
+                                          <span>Pick a date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent
+                                    className="w-auto p-0"
+                                    align="start"
+                                  >
+                                    <Calendar
+                                      mode="single"
+                                      onSelect={field.onChange}
+                                      disabled={(date) =>
+                                        date > new Date() ||
+                                        date < new Date("1900-01-01")
+                                      }
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
+
                           <div className="mt-2 flex items-center space-x-2">
-                            <Checkbox
-                              id={`current-membership-${membership.id}`}
-                              checked={membership.current}
-                              onCheckedChange={(checked) =>
-                                updateMembershipField(
-                                  membership.id,
-                                  "current",
-                                  checked === true,
-                                )
-                              }
+                            <FormField
+                              control={form.control}
+                              name={`bodies.${index}.current`}
+                              render={({ field }) => (
+                                <FormItem className="flex items-center space-x-2">
+                                  <FormControl>
+                                    <Checkbox
+                                      id={`current-membership-${index}`}
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                  <FormLabel
+                                    htmlFor={`current-membership-${index}`}
+                                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    Current member
+                                  </FormLabel>
+                                </FormItem>
+                              )}
                             />
-                            <label
-                              htmlFor={`current-membership-${membership.id}`}
-                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              Current member
-                            </label>
                           </div>
                         </div>
                       </div>
 
                       {/* Certificate URL */}
                       <div className="space-y-2">
-                        <FormLabel className="text-sm font-medium">
-                          Certificate URL (Optional)
-                        </FormLabel>
-                        <Input
-                          type="url"
-                          placeholder="https://organization.com/my-certificate"
-                          value={membership.certificateUrl || ""}
-                          onChange={(e) =>
-                            updateMembershipField(
-                              membership.id,
-                              "certificateUrl",
-                              e.target.value,
-                            )
-                          }
-                          className="h-10"
+                        <FormField
+                          control={form.control}
+                          name={`bodies.${index}.certificate_url`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Certificate URL (Optional)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="url"
+                                  placeholder="https://organization.com/my-certificate"
+                                  value={field.value || undefined}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Link to any certificate, credential, or
+                                membership profile
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                        <FormDescription className="text-xs">
-                          Link to any certificate, credential, or membership
-                          profile
-                        </FormDescription>
                       </div>
 
                       {/* Description */}
                       <div className="space-y-2">
-                        <FormLabel className="text-sm font-medium">
-                          Description (Optional)
-                        </FormLabel>
-                        <Input
-                          placeholder="Briefly describe your involvement or achievements"
-                          value={membership.description || ""}
-                          onChange={(e) =>
-                            updateMembershipField(
-                              membership.id,
-                              "description",
-                              e.target.value,
-                            )
-                          }
-                          className="h-10"
+                        <FormField
+                          control={form.control}
+                          name={`bodies.${index}.description`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description (Optional)</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  {...field}
+                                  placeholder="Briefly describe your involvement or achievements"
+                                  value={field.value || undefined}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
                       </div>
                     </div>
@@ -385,11 +467,18 @@ export default function ProfessionalMembershipsSettings() {
             </div>
 
             {/* Add Membership Button */}
-            {memberships.length > 0 && (
+            {bodies.length > 0 && (
               <Button
                 type="button"
                 variant="outline"
-                onClick={addMembership}
+                onClick={() =>
+                  append({
+                    body_name: "",
+                    membership_no: "",
+                    member_since: new Date(),
+                    current: true,
+                  })
+                }
                 className="flex w-full items-center justify-center gap-2"
               >
                 <PlusCircle className="h-4 w-4" />
@@ -397,10 +486,16 @@ export default function ProfessionalMembershipsSettings() {
               </Button>
             )}
 
-            {/* Submit Button */}
             <div className="flex justify-end pt-2">
               <Button type="submit" className="px-6">
-                Save Changes
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>Save Changes</>
+                )}
               </Button>
             </div>
           </form>

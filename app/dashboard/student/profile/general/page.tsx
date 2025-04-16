@@ -29,7 +29,10 @@ import { toast } from "sonner"
 import { useSessionContext } from "@/context/session-provider-wrapper"
 import { useUserStore } from "@/store/use-user-store"
 import { z } from "zod"
-import { createStudentProfile } from "@/app/dashboard/student/profile/actions"
+import {
+  createStudentProfile,
+  fetchStudents,
+} from "@/app/dashboard/student/profile/actions"
 
 const GuardianSchema = z.object({
   id: z.string(),
@@ -105,7 +108,6 @@ export default function StudentProfileGeneral() {
     },
   ])
 
-  // Use the CreateStudentSchema function from our types file
   const StudentSchema = CreateStudentSchema(isMinor)
 
   const form = useForm<Student>({
@@ -122,14 +124,13 @@ export default function StudentProfileGeneral() {
     },
   })
 
-  // Fetch current user if needed
   useEffect(() => {
     if (session?.user?.email && !user && !isUserLoading) {
+      console.log("fetchCurrentUser")
       fetchCurrentUser(session.user.email)
     }
   }, [session?.user?.email, fetchCurrentUser, isUserLoading, user])
 
-  // Update form values when user data changes
   useEffect(() => {
     if (user) {
       form.setValue(
@@ -227,6 +228,30 @@ export default function StudentProfileGeneral() {
 
     setGuardians(updatedGuardians)
   }
+
+  const loadStudentProfile = useCallback(async () => {
+    if (!user?.uuid) return
+
+    try {
+      const response = await fetchStudents(0, `user_uuid_eq=${user?.uuid}`)
+
+      if (response.success) {
+        form.reset(response.data.content[0])
+      } else {
+        toast.error(response.message)
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while loading student profile.",
+      )
+    }
+  }, [form, user?.uuid])
+
+  useEffect(() => {
+    loadStudentProfile()
+  }, [loadStudentProfile])
 
   useEffect(() => {
     if (dateOfBirth) {
@@ -338,7 +363,7 @@ export default function StudentProfileGeneral() {
                       <FormLabel>Full Name</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g. Tonny Ocholla"
+                          placeholder="e.g. John Doe"
                           {...field}
                           className="h-10"
                         />

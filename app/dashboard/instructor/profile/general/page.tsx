@@ -25,18 +25,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Loader2Icon } from "lucide-react"
+import { CalendarIcon, Loader2Icon } from "lucide-react"
 import {
-  createInstructorProfile,
   fetchInstructorProfile,
+  updateInstructorProfile,
 } from "@/app/dashboard/instructor/profile/actions"
 import { useUserStore } from "@/store/use-user-store"
 import { useSessionContext } from "@/context/session-provider-wrapper"
+import { updateUser } from "@/app/auth/create-account/actions"
+import { User } from "@/app/auth/create-account/_components/user-account-form"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar"
 
 const InstructorFormSchema = z.object({
+  uuid: z.string().nullish(),
   full_name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
+  phone_number: z
+    .string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must be at most 15 digits"),
+  dob: z.date({ required_error: "Date of birth is required" }),
   email: z
     .string()
     .email({
@@ -85,6 +101,8 @@ export default function GeneralProfileSettings() {
     defaultValues: {
       full_name: `${user?.first_name}${user?.middle_name ? ` ${user.middle_name}` : ""} ${user?.last_name}`,
       email: `${user?.email}`,
+      phone_number: `${user?.phone_number}`,
+      dob: user?.dob,
       user_uuid: `${user?.uuid}`,
     },
   })
@@ -99,21 +117,42 @@ export default function GeneralProfileSettings() {
   }, [form, user])
 
   const onSubmit = async (data: Instructor) => {
+    const { phone_number, dob, ...instructorProfile } = data
+
     try {
-      const response = await createInstructorProfile(data)
+      console.log({
+        ...user,
+        phone_number,
+        dob,
+      })
+      const userResponse = await updateUser({
+        ...user,
+        phone_number,
+        dob,
+      } as User)
 
-      if (response.success) {
-        form.reset(response.data)
+      if (!userResponse.success) {
+        toast.error("Failed to update user info: " + userResponse.message)
+        return
+      }
 
-        toast.success(response.message)
+      // 2. Update instructor profile
+      const instructorResponse = await updateInstructorProfile(
+        instructorProfile as Instructor,
+      )
+
+      if (instructorResponse.success) {
+        form.reset(instructorResponse.data)
+        toast.success(instructorResponse.message)
+        fetchCurrentUser(instructorResponse.data.email as string)
       } else {
-        toast.error(response.message)
+        toast.error(instructorResponse.message)
       }
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Something went wrong while updating instructor profile.",
+          : "Something went wrong while updating your profile.",
       )
     }
   }
@@ -244,6 +283,69 @@ export default function GeneralProfileSettings() {
                         <FormDescription>
                           Contact support to change your email address
                         </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="flex w-full flex-col items-start gap-8 sm:flex-row">
+                  <FormField
+                    control={form.control}
+                    name="phone_number"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="tel"
+                            placeholder="e.g. +254712345678"
+                            {...field}
+                            className="h-10"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="dob"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-1 flex-col">
+                        <FormLabel>Date of Birth</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() ||
+                                date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}

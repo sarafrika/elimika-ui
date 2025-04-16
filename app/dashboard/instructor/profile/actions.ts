@@ -7,13 +7,13 @@ import { ApiResponse, ApiResponseWithPagination } from "@/lib/types"
 const BASE_URL = getEnvironmentVariable("NEXT_PUBLIC_API_URL")
 const DEFAULT_PAGE_SIZE = "10"
 
-export async function createInstructorProfile(instructor: Instructor) {
+export async function updateInstructorProfile(instructor: Instructor) {
   try {
     const headers = new Headers()
     headers.set("Content-Type", "application/json")
 
-    const response = await fetch(`${BASE_URL}/instructors`, {
-      method: "POST",
+    const response = await fetch(`${BASE_URL}/instructors/${instructor.uuid}`, {
+      method: "PUT",
       headers,
       body: JSON.stringify(instructor),
     })

@@ -10,23 +10,53 @@ const DEFAULT_PAGE_SIZE = 10
 const EVERY_THIRTY_MINUTES = 60 * 30 // 1,800 seconds
 const BASE_URL = getEnvironmentVariable("NEXT_PUBLIC_API_URL")
 
-export async function createOrUpdateUser(user: User, userDomain: UserDomain) {
+export async function createUser(
+  user: User,
+  userDomain: UserDomain,
+  profileImage?: File,
+) {
+  try {
+    const formData = new FormData()
+
+    formData.append(
+      "user",
+      new Blob([JSON.stringify(user)], { type: "application/json" }),
+    )
+
+    if (profileImage) {
+      formData.append("profile_image", profileImage)
+    }
+
+    formData.append("user_domain", userDomain)
+
+    const url = `${BASE_URL}/users`
+
+    const response = await fetch(url, { method: "POST", body: formData })
+
+    return (await response.json()) as ApiResponse<User>
+  } catch (error) {
+    console.error("Error occurred while creating user", error)
+    throw new Error("Something went wrong while creating user")
+  }
+}
+
+export async function updateUser(user: User) {
   try {
     const headers = new Headers()
     headers.set("Content-Type", "application/json")
 
-    const url = `${BASE_URL}/users${user.uuid ? "/" + user.uuid : ""}?user_domain=${userDomain}`
+    const url = `${BASE_URL}/users/${user.uuid}`
 
     const response = await fetch(url, {
-      method: user.uuid ? "PUT" : "POST",
+      method: "PUT",
       headers,
       body: JSON.stringify(user),
     })
 
     return (await response.json()) as ApiResponse<User>
   } catch (error) {
-    console.error("Error occured while creating or updating user", error)
-    throw new Error("Something went wrong while creating or updating user")
+    console.error("Error occurred while updating user", error)
+    throw new Error("Something went wrong while updating user")
   }
 }
 
