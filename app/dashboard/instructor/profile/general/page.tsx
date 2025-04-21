@@ -1,9 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -26,13 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { CalendarIcon, Loader2Icon } from "lucide-react"
-import {
-  fetchInstructorProfile,
-  updateInstructorProfile,
-} from "@/app/dashboard/instructor/profile/actions"
-import { useUserStore } from "@/store/use-user-store"
 import { useSessionContext } from "@/context/session-provider-wrapper"
-import { updateUser } from "@/app/auth/create-account/actions"
 import { User } from "@/app/auth/create-account/_components/user-account-form"
 import {
   Popover,
@@ -42,147 +35,94 @@ import {
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
+import { useUserProfileQuery } from "@/services/user/queries"
+import { useInstructorProfileQuery } from "@/services/instructor/queries"
+import { useUpdateInstructorProfile } from "@/services/instructor/mutations"
+import { Instructor, InstructorFormSchema } from "@/lib/types/instructor"
 
-const InstructorFormSchema = z.object({
-  uuid: z.string().nullish(),
-  full_name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  phone_number: z
-    .string()
-    .min(10, "Phone number must be at least 10 digits")
-    .max(15, "Phone number must be at most 15 digits"),
-  dob: z.date({ required_error: "Date of birth is required" }),
-  email: z
-    .string()
-    .email({
-      message: "Please enter a valid email address.",
-    })
-    .optional(),
-  bio: z
-    .string()
-    .max(500, {
-      message: "Bio cannot exceed 500 characters.",
-    })
-    .optional(),
-  headline: z
-    .string()
-    .max(100, {
-      message: "Headline cannot exceed 100 characters.",
-    })
-    .optional(),
-  website: z
-    .string()
-    .url({
-      message: "Please enter a valid URL.",
-    })
-    .optional()
-    .or(z.literal("")),
-  location: z.string().max(100).optional(),
-  user_uuid: z.string(),
-})
+const getInitialValues = (user: User | null | undefined) => {
+  const sanitize = (value: unknown): string | undefined => {
+    return typeof value === "string" ? value : undefined
+  }
 
-export type Instructor = z.infer<typeof InstructorFormSchema>
+  if (!user) {
+    return {
+      full_name: "",
+      email: "",
+      phone_number: "",
+      dob: undefined,
+      user_uuid: "",
+      professional_headline: "",
+      website: "",
+      location: "",
+      bio: "",
+    }
+  }
+
+  return {
+    full_name: `${user.first_name}${user.middle_name ? ` ${user.middle_name}` : ""} ${user.last_name}`,
+    email: sanitize(user.email),
+    phone_number: sanitize(user.phone_number),
+    dob: user.dob ? new Date(user.dob) : undefined,
+    user_uuid: sanitize(user.uuid),
+    professional_headline: "",
+    website: "",
+    location: "",
+    bio: "",
+  }
+}
 
 export default function GeneralProfileSettings() {
   const { session } = useSessionContext()
-  const { user, isLoading, fetchCurrentUser } = useUserStore()
+  const email = session?.user?.email
+  const {
+    data: user,
+    isLoading,
+    isSuccess,
+    refetch,
+  } = useUserProfileQuery(email)
 
-  useEffect(() => {
-    if (session?.user?.email && !user && !isLoading) {
-      fetchCurrentUser(session.user.email)
-    }
-  }, [session?.user?.email, fetchCurrentUser, isLoading, user])
+  const userUuid = user?.uuid
+  const {
+    data: instructor,
+    isSuccess: isInstructorSuccess,
+    isLoading: isInstructorLoading,
+    refetch: refetchInstructor,
+  } = useInstructorProfileQuery(userUuid)
 
   const [isAvatarUploading, setIsAvatarUploading] = useState(false)
 
   const form = useForm<Instructor>({
     resolver: zodResolver(InstructorFormSchema),
-    defaultValues: {
-      full_name: `${user?.first_name}${user?.middle_name ? ` ${user.middle_name}` : ""} ${user?.last_name}`,
-      email: `${user?.email}`,
-      phone_number: `${user?.phone_number}`,
-      dob: user?.dob,
-      user_uuid: `${user?.uuid}`,
-    },
+    defaultValues: getInitialValues(undefined),
   })
 
   useEffect(() => {
-    if (user) {
-      form.reset({
-        ...form.getValues(),
-        user_uuid: user.uuid,
-      })
+    if (isSuccess && user) {
+      form.reset(getInitialValues(user))
     }
-  }, [form, user])
-
-  const onSubmit = async (data: Instructor) => {
-    const { phone_number, dob, ...instructorProfile } = data
-
-    try {
-      console.log({
-        ...user,
-        phone_number,
-        dob,
-      })
-      const userResponse = await updateUser({
-        ...user,
-        phone_number,
-        dob,
-      } as User)
-
-      if (!userResponse.success) {
-        toast.error("Failed to update user info: " + userResponse.message)
-        return
-      }
-
-      // 2. Update instructor profile
-      const instructorResponse = await updateInstructorProfile(
-        instructorProfile as Instructor,
-      )
-
-      if (instructorResponse.success) {
-        form.reset(instructorResponse.data)
-        toast.success(instructorResponse.message)
-        fetchCurrentUser(instructorResponse.data.email as string)
-      } else {
-        toast.error(instructorResponse.message)
-      }
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong while updating your profile.",
-      )
-    }
-  }
-
-  const loadInstructorProfile = useCallback(async () => {
-    if (!user?.uuid) return
-
-    try {
-      const response = await fetchInstructorProfile(
-        0,
-        `user_uuid_eq=${user?.uuid}`,
-      )
-
-      if (response.success) {
-        form.reset(response.data.content[0])
-      } else {
-        toast.error(response.message)
-      }
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong while loading instructor profile.",
-      )
-    }
-  }, [form, user?.uuid])
+  }, [form, isSuccess, user])
 
   useEffect(() => {
-    loadInstructorProfile()
-  }, [loadInstructorProfile])
+    if (isInstructorSuccess && instructor) {
+      form.reset({
+        ...form.getValues(),
+        ...instructor,
+      })
+    }
+  }, [form, isInstructorSuccess, instructor])
+
+  const updateInstructor = useUpdateInstructorProfile()
+
+  const onSubmit = async (data: Instructor) => {
+    try {
+      console.log(data)
+      const response = await updateInstructor.mutateAsync(data)
+      toast.success(response.message)
+    } catch (err) {
+      toast.error("Error updating instructor profile")
+    }
+  }
 
   const handleAvatarUpload = () => {
     setIsAvatarUploading(true)
@@ -277,6 +217,7 @@ export default function GeneralProfileSettings() {
                           <Input
                             placeholder="name@example.com"
                             {...field}
+                            value={field.value ?? ""}
                             disabled
                           />
                         </FormControl>
@@ -301,6 +242,7 @@ export default function GeneralProfileSettings() {
                             type="tel"
                             placeholder="e.g. +254712345678"
                             {...field}
+                            value={field.value ?? ""}
                             className="h-10"
                           />
                         </FormControl>
@@ -354,7 +296,7 @@ export default function GeneralProfileSettings() {
 
                 <FormField
                   control={form.control}
-                  name="headline"
+                  name="professional_headline"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium">
@@ -364,6 +306,7 @@ export default function GeneralProfileSettings() {
                         <Input
                           placeholder="e.g. Mathematics Professor with 10+ years experience"
                           {...field}
+                          value={field.value ?? ""}
                           className="h-10"
                         />
                       </FormControl>
@@ -388,6 +331,7 @@ export default function GeneralProfileSettings() {
                           <Input
                             placeholder="https://yourwebsite.com"
                             {...field}
+                            value={field.value ?? ""}
                             className="h-10"
                           />
                         </FormControl>
@@ -395,6 +339,7 @@ export default function GeneralProfileSettings() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="location"
@@ -407,6 +352,7 @@ export default function GeneralProfileSettings() {
                           <Input
                             placeholder="e.g. Nairobi, Kenya"
                             {...field}
+                            value={field.value ?? ""}
                             className="h-10"
                           />
                         </FormControl>
@@ -429,6 +375,7 @@ export default function GeneralProfileSettings() {
                           placeholder="Tell us about yourself..."
                           className="min-h-32 resize-y"
                           {...field}
+                          value={field.value ?? ""}
                         />
                       </FormControl>
                       <FormDescription className="text-xs">
