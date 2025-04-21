@@ -1,8 +1,8 @@
 "use server"
 
 import { getEnvironmentVariable } from "@/lib/utils"
-import { Instructor } from "@/app/dashboard/instructor/profile/general/page"
 import { ApiResponse, ApiResponseWithPagination } from "@/lib/types"
+import { Instructor } from "@/lib/types/instructor"
 
 const BASE_URL = getEnvironmentVariable("NEXT_PUBLIC_API_URL")
 const DEFAULT_PAGE_SIZE = "10"
