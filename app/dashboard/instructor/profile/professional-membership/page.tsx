@@ -102,7 +102,7 @@ export default function ProfessionalBodySettings() {
     }
   }
 
-  const getPeriod = (body: ProfessionalBody) => {
+  const getPeriod = (body: ProfessionalBody & { current: boolean }) => {
     const from = body.member_since ? format(body.member_since, "yyyy") : ""
     const to = body.current
       ? "Present"

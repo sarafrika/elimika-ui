@@ -32,7 +32,6 @@ export const ProfessionalBodySchema = z.object({
       return val
     }, z.date().nullable())
     .optional(),
-  current: z.boolean().optional().default(true),
   certificate_url: z.string().url().optional().nullable(),
   description: z.string().optional().nullable(),
   user_uuid: z.string(),
