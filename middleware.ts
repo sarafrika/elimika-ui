@@ -3,7 +3,7 @@ import { getToken } from "next-auth/jwt"
 import { KeycloakJWT } from "@/app/api/auth/[...nextauth]/_utils"
 import { getEnvironmentVariable } from "./lib/utils"
 
-const publicPaths = ["/", "/auth/create-account"]
+const publicPaths = ["/", "/auth/create-account", "/auth/login"]
 
 function formatRole(role: string): string {
   return role.replace(/_/g, "-")
