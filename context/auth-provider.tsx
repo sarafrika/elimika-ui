@@ -29,7 +29,13 @@ const AuthContext = createContext<AuthContextType>({
   setActiveDomain: () => {},
 })
 
-const publicPaths = ["/", "/auth/create-account"]
+const publicPaths = ["/", "/auth/create-account", "/auth/login"]
+const onboardingPaths = [
+  "/onboarding",
+  "/onboarding/student",
+  "/onboarding/instructor",
+  "/onboarding/institution",
+]
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter()
@@ -139,9 +145,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     if (status === "authenticated" && domains.length > 0) {
-      const isPublicPath = publicPaths.includes(pathname)
+      const isPublic = publicPaths.includes(pathname)
+      const isOnboarding = onboardingPaths.includes(pathname)
 
-      if (!isPublicPath && !isAuthorizedPath(pathname, domains, activeDomain)) {
+      if (isOnboarding) {
+        return
+      }
+
+      if (
+        isPublic &&
+        (pathname.startsWith("/auth/login") ||
+          pathname.startsWith("/auth/create-account"))
+      ) {
+        const dashboardPath = activeDomain
+          ? `/dashboard/${formatDomain(activeDomain)}/overview`
+          : `/dashboard/${formatDomain(domains[0])}/overview`
+        router.push(dashboardPath)
+        return
+      }
+
+      if (
+        !isPublic &&
+        !isOnboarding &&
+        !isAuthorizedPath(pathname, domains, activeDomain)
+      ) {
         const dashboardPath = activeDomain
           ? `/dashboard/${formatDomain(activeDomain)}/overview`
           : `/dashboard/${formatDomain(domains[0])}/overview`
@@ -167,11 +194,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       activeDomain &&
       status === "authenticated" &&
       !isAuthenticating &&
-      !pathname.startsWith(`/dashboard/${formatDomain(activeDomain)}`)
+      !pathname.startsWith(`/dashboard/${formatDomain(activeDomain)}`) &&
+      !onboardingPaths.includes(pathname)
     ) {
-      router.push(`/dashboard/${formatDomain(activeDomain)}/overview`)
+      const isOnAnyDashboard = domains.some((d) =>
+        pathname.startsWith(`/dashboard/${formatDomain(d)}`),
+      )
+      if (
+        isOnAnyDashboard &&
+        !pathname.startsWith(`/dashboard/${formatDomain(activeDomain)}`)
+      ) {
+      } else if (!isOnAnyDashboard) {
+        router.push(`/dashboard/${formatDomain(activeDomain)}/overview`)
+      }
     }
-  }, [activeDomain, router, status, pathname, formatDomain, isAuthenticating])
+  }, [
+    activeDomain,
+    router,
+    status,
+    pathname,
+    formatDomain,
+    isAuthenticating,
+    domains,
+  ])
 
   const value = {
     domains,
