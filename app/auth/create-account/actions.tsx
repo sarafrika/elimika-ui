@@ -10,7 +10,6 @@ const DEFAULT_PAGE_SIZE = 10
 const EVERY_THIRTY_MINUTES = 60 * 30 // 1,800 seconds
 const BASE_URL = getEnvironmentVariable("NEXT_PUBLIC_API_URL")
 
-
 export async function createOrUpdateUser(user: User, userDomain: UserDomain) {
   try {
     const headers = new Headers()
@@ -30,7 +29,6 @@ export async function createOrUpdateUser(user: User, userDomain: UserDomain) {
     throw new Error("Something went wrong while creating or updating user")
   }
 }
-
 
 export async function fetchUsers(page: number = 0, searchParams?: string) {
   try {
