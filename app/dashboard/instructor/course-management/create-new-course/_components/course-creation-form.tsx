@@ -41,6 +41,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { PlusIcon, XIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
 
 const DIFFICULTY_LEVELS = {
   BEGINNER: "beginner",
@@ -339,10 +340,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       />
                       {thumbnailPreview && (
                         <div className="relative h-24 w-24">
-                          <img
+                          <Image
                             src={thumbnailPreview}
                             alt="Thumbnail preview"
-                            className="h-full w-full rounded object-cover"
+                            className="rounded object-cover"
+                            fill
+                            sizes="96px"
                           />
                         </div>
                       )}

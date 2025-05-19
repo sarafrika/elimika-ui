@@ -18,7 +18,7 @@ import { signIn } from "next-auth/react"
 import { toast } from "sonner"
 import {
   createOrUpdateTrainingCenter,
-  createOrUpdateUser,
+  createUser,
   fetchTrainingCenters,
 } from "@/app/auth/create-account/actions"
 import {
@@ -134,7 +134,7 @@ export default function CreateAccountPage() {
 
       setUserEmail(data.email)
 
-      const response = await createOrUpdateUser(userData, userDomain)
+      const response = await createUser(userData, userDomain)
 
       if (response.success) {
         setAccountCreationStatus("success")

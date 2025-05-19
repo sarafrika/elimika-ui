@@ -14,16 +14,17 @@ import {
 import { ReactNode } from "react"
 
 const sections = [
-  /*{
+  { name: "Admin", href: "/dashboard/organisation-user/account/admin" },
+  {
     name: "Training Center",
     href: "/dashboard/organisation-user/account/training-center",
-  }*/
-  { name: "Admin Profile", href: "/dashboard/organisation-user/account/admin" },
+  },
+  { name: "Branches", href: "/dashboard/organisation-user/account/branches" },
+  { name: "Users", href: "/dashboard/organisation-user/account/users" },
 ]
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-
   return (
     <div className="relative flex min-h-screen p-0">
       <Sidebar
@@ -54,7 +55,6 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-
       <main className="flex-1 overflow-auto px-6 py-3">
         <div>{children}</div>
       </main>

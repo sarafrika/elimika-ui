@@ -2,167 +2,114 @@
 
 import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Form, FormDescription, FormLabel } from "@/components/ui/form"
-import { Award, Grip, PlusCircle, Trash2 } from "lucide-react"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { CalendarIcon, Grip, Loader, PlusCircle, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar"
+import { useSessionContext } from "@/context/session-provider-wrapper"
+import { useUserProfileQuery } from "@/services/user/queries"
+import { useInstructorProfileQuery } from "@/services/instructor/queries"
+import { useUpdateInstructorProfile } from "@/services/instructor/mutations"
+import {
+  ProfessionalBody,
+  ProfessionalBodySchema,
+} from "@/lib/types/instructor"
 
-// Define a schema for a single membership entry
-const membershipSchema = z.object({
-  id: z.string(),
-  organization: z.string().min(1, "Organization name is required"),
-  role: z.string().optional(),
-  memberSince: z.string().optional(),
-  current: z.boolean().default(true),
-  endYear: z.string().optional(),
-  certificateUrl: z
-    .string()
-    .url("Please enter a valid URL")
-    .optional()
-    .or(z.literal("")),
-  description: z.string().optional(),
+const FormSchema = z.object({
+  professional_bodies: z.array(
+    ProfessionalBodySchema.extend({
+      id: z.string().optional(),
+      current: z.boolean().optional().default(true),
+    }),
+  ),
 })
 
-// Define a schema for the entire form
-const membershipFormSchema = z.object({
-  memberships: z.array(membershipSchema),
-})
-
-type MembershipValues = z.infer<typeof membershipSchema>
-type MembershipFormValues = z.infer<typeof membershipFormSchema>
-
-export default function ProfessionalMembershipsSettings() {
+export default function ProfessionalBodySettings() {
+  const { session } = useSessionContext()
+  const email = session?.user?.email
+  const { data: user } = useUserProfileQuery(email)
+  const { data: instructor } = useInstructorProfileQuery(user?.uuid)
+  const updateInstructor = useUpdateInstructorProfile()
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
-  // Initialize with sample memberships
-  const [memberships, setMemberships] = useState<MembershipValues[]>([
-    {
-      id: "1",
-      organization: "International Mathematical Union",
-      role: "Member",
-      memberSince: "2015",
-      current: true,
-      description:
-        "Participating in annual conferences and contributing to research publications.",
-    },
-    {
-      id: "2",
-      organization: "African Mathematical Society",
-      role: "Board Member",
-      memberSince: "2018",
-      current: true,
-      description: "Helping to promote mathematics education across Africa.",
-    },
-  ])
-
-  const form = useForm<MembershipFormValues>({
-    resolver: zodResolver(membershipFormSchema),
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
     defaultValues: {
-      memberships: memberships,
+      professional_bodies: [],
     },
-    mode: "onChange",
   })
 
-  // Update form when memberships change
+  const { fields, append, remove, replace } = useFieldArray({
+    name: "professional_bodies",
+    control: form.control,
+  })
+
   useEffect(() => {
-    form.setValue("memberships", memberships)
-  }, [memberships, form])
-
-  function onSubmit(data: MembershipFormValues) {
-    toast.success("Memberships updated successfully.")
-    console.log(data)
-    // Here you would save data to your API
-  }
-
-  // Add a new empty membership entry
-  const addMembership = () => {
-    const newId = (
-      memberships.length > 0
-        ? Math.max(...memberships.map((m) => parseInt(m.id))) + 1
-        : 1
-    ).toString()
-
-    const newMembership: MembershipValues = {
-      id: newId,
-      organization: "",
-      role: "",
-      memberSince: "",
-      current: true,
-      endYear: "",
-      certificateUrl: "",
-      description: "",
-    }
-
-    setMemberships([...memberships, newMembership])
-  }
-
-  const removeMembership = (id: string) => {
-    const filteredMemberships = memberships.filter((mem) => mem.id !== id)
-    setMemberships(filteredMemberships)
-  }
-
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index)
-  }
-
-  const handleDragOver = (
-    e: React.DragEvent<HTMLDivElement>,
-    index: number,
-  ) => {
-    e.preventDefault()
-    if (draggedIndex === null) return
-
-    const newMemberships = [...memberships]
-    const draggedMembership = newMemberships[draggedIndex]
-
-    // Remove from old position and insert at new position
-    newMemberships.splice(draggedIndex, 1)
-    newMemberships.splice(index, 0, draggedMembership)
-
-    setMemberships(newMemberships)
-    setDraggedIndex(index)
-  }
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null)
-  }
-
-  const updateMembershipField = (
-    id: string,
-    field: keyof MembershipValues,
-    value: unknown,
-  ) => {
-    const updatedMemberships = memberships.map((mem) =>
-      mem.id === id ? { ...mem, [field]: value } : mem,
-    )
-
-    setMemberships(updatedMemberships)
-
-    if (field === "current" && value === true) {
-      const updatedWithEndYear = updatedMemberships.map((mem) =>
-        mem.id === id ? { ...mem, endYear: "" } : mem,
+    if (instructor?.professional_bodies) {
+      replace(
+        instructor.professional_bodies.map(
+          (professionalBody: ProfessionalBody) => ({
+            ...professionalBody,
+            member_since: new Date(professionalBody.member_since),
+            end_year: professionalBody.end_year
+              ? new Date(professionalBody.end_year)
+              : undefined,
+            current: !professionalBody.end_year,
+          }),
+        ),
       )
-      setMemberships(updatedWithEndYear)
+    }
+  }, [instructor, replace])
+
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    if (!instructor) return
+
+    try {
+      await updateInstructor.mutateAsync({
+        ...instructor,
+        professional_bodies: data.professional_bodies.map(
+          ({ current, end_year, ...rest }) => ({
+            ...rest,
+            end_year: current ? null : end_year,
+          }),
+        ),
+      })
+
+      toast.success("Memberships updated successfully.")
+    } catch {
+      toast.error("Something went wrong while saving.")
     }
   }
 
-  const getMembershipPeriod = (membership: MembershipValues) => {
-    if (!membership.memberSince) return ""
-
-    if (membership.current) {
-      return `${membership.memberSince} - Present`
-    }
-
-    if (membership.endYear) {
-      return `${membership.memberSince} - ${membership.endYear}`
-    }
-
-    return membership.memberSince
+  const getPeriod = (body: ProfessionalBody & { current: boolean }) => {
+    const from = body.member_since ? format(body.member_since, "yyyy") : ""
+    const to = body.current
+      ? "Present"
+      : body.end_year
+        ? format(body.end_year, "yyyy")
+        : ""
+    return `${from} - ${to}`
   }
 
   return (
@@ -170,255 +117,234 @@ export default function ProfessionalMembershipsSettings() {
       <div>
         <h1 className="text-xl font-semibold">Professional Memberships</h1>
         <p className="text-muted-foreground text-sm">
-          Add organizations, associations and professional bodies you belong to
+          Add organizations and associations you belong to
         </p>
       </div>
 
       <div className="rounded-lg border bg-white p-6 shadow-sm">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="space-y-4">
-              {memberships.length === 0 ? (
-                <div className="rounded-md border border-dashed p-6 text-center">
-                  <Award className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
-                  <h3 className="mb-1 font-medium">No memberships added</h3>
-                  <p className="text-muted-foreground mb-4 text-sm">
-                    Add your professional memberships and associations
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={addMembership}
-                    className="inline-flex items-center justify-center gap-2"
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                    Add Membership
-                  </Button>
-                </div>
-              ) : (
-                memberships.map((membership, index) => (
-                  <div
-                    key={membership.id}
-                    className="bg-card group hover:bg-accent/5 relative rounded-md border transition-all"
-                    draggable
-                    onDragStart={() => handleDragStart(index)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <div className="space-y-5 p-5">
-                      {/* Header with organization and role */}
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-2">
-                          <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-grabbing opacity-0 transition-opacity group-hover:opacity-100" />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-base font-medium">
-                                {membership.organization || "New Membership"}
-                              </h3>
-                              {membership.current && (
-                                <Badge
-                                  variant="outline"
-                                  className="border-green-200 bg-green-50 text-xs font-normal text-green-600"
-                                >
-                                  Active
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {membership.role && (
-                                <p className="text-muted-foreground text-sm">
-                                  {membership.role}
-                                </p>
-                              )}
-                              {membership.memberSince && (
-                                <span className="text-muted-foreground text-xs">
-                                  • {getMembershipPeriod(membership)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="hover:bg-destructive-foreground h-8 w-8 cursor-pointer transition-colors"
-                          onClick={() => removeMembership(membership.id)}
-                        >
-                          <Trash2 className="text-destructive h-4 w-4" />
-                        </Button>
+            {fields.map((field, index) => (
+              <div
+                key={field.id}
+                className="group relative space-y-4 rounded-md border p-5"
+                draggable
+                onDragStart={() => setDraggedIndex(index)}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  if (draggedIndex === null) return
+                  const copy = [...fields]
+                  const dragged = copy.splice(draggedIndex, 1)[0]
+                  copy.splice(index, 0, dragged)
+                  form.setValue("professional_bodies", copy)
+                  setDraggedIndex(index)
+                }}
+                onDragEnd={() => setDraggedIndex(null)}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-2">
+                    <Grip className="text-muted-foreground mt-1 h-5 w-5" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-medium">
+                          {field.body_name || "New Membership"}
+                        </h3>
+                        {field.current && (
+                          <Badge className="border-green-200 bg-green-100 text-xs text-green-700">
+                            Active
+                          </Badge>
+                        )}
                       </div>
-
-                      {/* Organization and Role */}
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Organization
-                          </FormLabel>
-                          <Input
-                            placeholder="e.g. IEEE, ACM, Mathematical Society"
-                            value={membership.organization}
-                            onChange={(e) =>
-                              updateMembershipField(
-                                membership.id,
-                                "organization",
-                                e.target.value,
-                              )
-                            }
-                            className="h-10"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Role/Membership Type
-                          </FormLabel>
-                          <Input
-                            placeholder="e.g. Member, Board Member, Fellow"
-                            value={membership.role || ""}
-                            onChange={(e) =>
-                              updateMembershipField(
-                                membership.id,
-                                "role",
-                                e.target.value,
-                              )
-                            }
-                            className="h-10"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Year Range */}
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Member Since
-                          </FormLabel>
-                          <Input
-                            type="number"
-                            placeholder="YYYY"
-                            min="1900"
-                            max={new Date().getFullYear()}
-                            value={membership.memberSince || ""}
-                            onChange={(e) =>
-                              updateMembershipField(
-                                membership.id,
-                                "memberSince",
-                                e.target.value,
-                              )
-                            }
-                            className="h-10"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <FormLabel className="text-sm font-medium">
-                              End Year
-                            </FormLabel>
-                          </div>
-                          <Input
-                            type="number"
-                            placeholder="YYYY"
-                            min="1900"
-                            max={new Date().getFullYear()}
-                            value={membership.endYear || ""}
-                            onChange={(e) =>
-                              updateMembershipField(
-                                membership.id,
-                                "endYear",
-                                e.target.value,
-                              )
-                            }
-                            disabled={membership.current}
-                            className="h-10"
-                          />
-                          <div className="mt-2 flex items-center space-x-2">
-                            <Checkbox
-                              id={`current-membership-${membership.id}`}
-                              checked={membership.current}
-                              onCheckedChange={(checked) =>
-                                updateMembershipField(
-                                  membership.id,
-                                  "current",
-                                  checked === true,
-                                )
-                              }
-                            />
-                            <label
-                              htmlFor={`current-membership-${membership.id}`}
-                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              Current member
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Certificate URL */}
-                      <div className="space-y-2">
-                        <FormLabel className="text-sm font-medium">
-                          Certificate URL (Optional)
-                        </FormLabel>
-                        <Input
-                          type="url"
-                          placeholder="https://organization.com/my-certificate"
-                          value={membership.certificateUrl || ""}
-                          onChange={(e) =>
-                            updateMembershipField(
-                              membership.id,
-                              "certificateUrl",
-                              e.target.value,
-                            )
-                          }
-                          className="h-10"
-                        />
-                        <FormDescription className="text-xs">
-                          Link to any certificate, credential, or membership
-                          profile
-                        </FormDescription>
-                      </div>
-
-                      {/* Description */}
-                      <div className="space-y-2">
-                        <FormLabel className="text-sm font-medium">
-                          Description (Optional)
-                        </FormLabel>
-                        <Input
-                          placeholder="Briefly describe your involvement or achievements"
-                          value={membership.description || ""}
-                          onChange={(e) =>
-                            updateMembershipField(
-                              membership.id,
-                              "description",
-                              e.target.value,
-                            )
-                          }
-                          className="h-10"
-                        />
-                      </div>
+                      <p className="text-muted-foreground text-xs">
+                        {getPeriod(field)}
+                      </p>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
 
-            {/* Add Membership Button */}
-            {memberships.length > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addMembership}
-                className="flex w-full items-center justify-center gap-2"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Add Another Membership
-              </Button>
-            )}
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => remove(index)}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 className="text-destructive h-4 w-4" />
+                  </Button>
+                </div>
 
-            {/* Submit Button */}
+                <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name={`professional_bodies.${index}.body_name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Institution *</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`professional_bodies.${index}.membership_no`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Membership Number *</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name={`professional_bodies.${index}.member_since`}
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Member Since</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button variant="outline" className="text-left">
+                                {field.value
+                                  ? format(field.value, "PPP")
+                                  : "Pick a date"}
+                                <CalendarIcon className="ml-auto h-4 w-4" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`professional_bodies.${index}.end_year`}
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>End Year</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button variant="outline" className="text-left">
+                                {field.value
+                                  ? format(field.value, "PPP")
+                                  : "Pick a date"}
+                                <CalendarIcon className="ml-auto h-4 w-4" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value ?? undefined}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`professional_bodies.${index}.current`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>Current Member</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name={`professional_bodies.${index}.certificate_url`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Certificate URL</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          type="url"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Link to membership certificate or online profile
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name={`professional_bodies.${index}.description`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} value={field.value ?? ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                append({
+                  body_name: "",
+                  membership_no: "",
+                  member_since: new Date(),
+                  current: true,
+                  user_uuid: user?.uuid || "",
+                })
+              }
+              className="flex w-full items-center justify-center gap-2"
+            >
+              <PlusCircle className="h-4 w-4" /> Add Another Membership
+            </Button>
+
             <div className="flex justify-end pt-2">
               <Button type="submit" className="px-6">
-                Save Changes
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  <>Save Changes</>
+                )}
               </Button>
             </div>
           </form>

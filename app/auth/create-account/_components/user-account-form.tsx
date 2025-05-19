@@ -17,6 +17,18 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
+import { format } from "date-fns"
+
+export const ProfessionalBodySchema = z.object({
+  id: z.string().nullish(),
+  body_name: z.string().min(1, "Professional body name is required"),
+  membership_no: z.string().min(1, "Membership number is required"),
+  member_since: z.date(),
+  current: z.boolean().default(true),
+  end_year: z.date().nullish(),
+  certificate_url: z.string().url("Please enter a valid URL").nullish(),
+  description: z.string().nullish(),
+})
 
 export const UserFormSchema = z.object({
   uuid: z.string().optional(),
@@ -28,13 +40,25 @@ export const UserFormSchema = z.object({
   last_name: z.string().min(1, "Last name is required"),
   first_name: z.string().min(1, "First name is required"),
   email: z.string().email("Please enter a valid email address"),
+  username: z.string().min(3, "Username must be at least 3 characters long"),
   accept_terms: z.boolean().refine((val) => val, {
     message: "You must accept the terms and conditions",
   }),
+  dob: z.preprocess(
+    (arg) => {
+      if (typeof arg === "string" || arg instanceof Date) {
+        return new Date(arg)
+      }
+      return arg
+    },
+    z.date({ required_error: "Date of birth is required" }),
+  ),
+
   phone_number: z
     .string()
     .min(10, "Phone number must be at least 10 digits")
     .max(15, "Phone number must be at most 15 digits"),
+  professional_bodies: ProfessionalBodySchema.nullish(),
 })
 
 export type User = z.infer<typeof UserFormSchema>
@@ -60,12 +84,14 @@ export function UserAccountForm({
     defaultValues: {
       email: "",
       active: true,
+      username: "",
       last_name: "",
       first_name: "",
       middle_name: "",
       accept_terms: false,
       phone_number: "",
       organisation_uuid: organisationUuid || "",
+      dob: undefined,
     },
   })
 
@@ -126,6 +152,25 @@ export function UserAccountForm({
 
         <FormField
           control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Username <span className="text-red-500">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="johndoe" {...field} />
+              </FormControl>
+              <FormDescription className="text-xs">
+                Username must be at least 3 characters long
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -157,6 +202,28 @@ export function UserAccountForm({
               </FormLabel>
               <FormControl>
                 <Input placeholder="+1234567890" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="dob"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date of Birth</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value ? new Date(e.target.value) : undefined,
+                    )
+                  }
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

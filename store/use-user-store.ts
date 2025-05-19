@@ -2,6 +2,7 @@ import { User } from "@/app/auth/create-account/_components/user-account-form"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { fetchUsers } from "@/app/auth/create-account/actions"
+import { useQuery } from "@tanstack/react-query"
 
 type UserState = {
   user: User | null
@@ -16,6 +17,22 @@ type UserActions = {
 }
 
 type UserStore = UserState & UserActions
+
+function useUserByEmail(email: string | undefined) {
+  return useQuery<User | undefined>({
+    queryKey: ["user", email],
+    queryFn: async () => {
+      if (!email) return undefined
+
+      const response = await fetchUsers(0, `email_eq=${email}`)
+
+      if (!response.success) throw new Error(response.message)
+
+      return response.data.content[0]
+    },
+    enabled: !!email,
+  })
+}
 
 export const useUserStore = create<UserStore>()(
   persist(
