@@ -102,11 +102,11 @@ const StudentOnboardingPage = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = {
-      studentDetails,
-      guardian1Details,
-      guardian2Details,
-      selectedSkills,
-      availability,
+      id: "",
+      name: studentDetails.fullName,
+      email: studentDetails.emailAddress,
+      phone: studentDetails.mobileNumber,
+      address: "",
     }
     console.log("Student Onboarding Data:", formData)
     // Redirect to the student dashboard or a relevant page
