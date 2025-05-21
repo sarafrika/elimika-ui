@@ -1,9 +1,9 @@
 import { AuthOptions, getServerSession, Session } from "next-auth"
 import crypto from "crypto"
 import {
-  decrypt,
-  encrypt,
-  EncryptedData,
+  // decrypt,
+  // encrypt,
+  // EncryptedData,
   getEnvironmentVariable,
 } from "@/lib/utils"
 import KeycloakProvider from "next-auth/providers/keycloak"
@@ -26,10 +26,17 @@ type KeycloakDecodedToken = {
   }
 }
 
+// export type KeycloakSession = Session & {
+//   access_token?: EncryptedData
+//   id_token?: EncryptedData
+//   refresh_token?: EncryptedData
+//   decoded?: KeycloakDecodedToken
+//   error?: string
+// }
 export type KeycloakSession = Session & {
-  access_token?: EncryptedData
-  id_token?: EncryptedData
-  refresh_token?: EncryptedData
+  access_token?: string
+  id_token?: string
+  refresh_token?: string
   decoded?: KeycloakDecodedToken
   error?: string
 }
@@ -145,12 +152,14 @@ export const authOptions: AuthOptions = {
         throw new Error("NEXTAUTH_SECRET must be set")
       }
 
-      const key = crypto.createHash("sha256").update(secret).digest()
-      const iv = crypto.randomBytes(12)
-
-      session.access_token = encrypt(token.access_token ?? "", key, iv)
-      session.id_token = encrypt(token.id_token ?? "", key, iv)
-      session.refresh_token = encrypt(token.refresh_token ?? "", key, iv)
+      // const key = crypto.createHash("sha256").update(secret).digest()
+      // const iv = crypto.randomBytes(12)
+      // session.access_token = encrypt(token.access_token ?? "", key, iv)
+      // session.id_token = encrypt(token.id_token ?? "", key, iv)
+      // session.refresh_token = encrypt(token.refresh_token ?? "", key, iv)
+      session.access_token = token.access_token
+      session.id_token = token.id_token
+      session.refresh_token = token.refresh_token
       session.decoded = token.decoded
       session.error = token.error
 
@@ -164,32 +173,33 @@ export const SessionUtils = {
     const session = (await getServerSession(
       authOptions,
     )) as KeycloakSession | null
-    const key = crypto.createHash("sha256").update(secret).digest()
+    // const key = crypto.createHash("sha256").update(secret).digest()
 
     if (!session || !session.access_token) return null
-
-    return decrypt(session.access_token, key)
+    return session.access_token
+    // return decrypt(session.access_token, key)
   },
 
   getRefreshToken: async (secret: string) => {
     const session = (await getServerSession(
       authOptions,
     )) as KeycloakSession | null
-    const key = crypto.createHash("sha256").update(secret).digest()
+    // const key = crypto.createHash("sha256").update(secret).digest()
 
     if (!session || !session.refresh_token) return null
-
-    return decrypt(session.refresh_token, key)
+    return session.refresh_token
+    // return decrypt(session.refresh_token, key)
   },
 
   getIdToken: async (secret: string) => {
     const session = (await getServerSession(
       authOptions,
     )) as KeycloakSession | null
-    const key = crypto.createHash("sha256").update(secret).digest()
+    // const key = crypto.createHash("sha256").update(secret).digest()
 
     if (!session || !session.id_token) return null
+    return session.id_token
 
-    return decrypt(session.id_token, key)
+    // return decrypt(session.id_token, key)
   },
 }

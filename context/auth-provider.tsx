@@ -26,7 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   activeDomain: null,
   isLoading: true,
   isLoggedIn: false,
-  setActiveDomain: () => {},
+  setActiveDomain: () => { },
 })
 
 const publicPaths = ["/", "/auth/create-account", "/auth/login"]
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (status === "authenticated" && session?.decoded?.user_domain) {
       const userDomain = session.decoded.user_domain
 
-      let userDomains: UserDomain[] = []
+      const userDomains: UserDomain[] = []
       if (Array.isArray(userDomain)) {
         userDomain.forEach((domain) => {
           if (
@@ -135,6 +135,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsAuthenticating(false)
     } else if (status === "unauthenticated") {
       resetDomains()
+      setIsAuthenticating(false)
+    }
+    else {
       setIsAuthenticating(false)
     }
   }, [session?.decoded?.user_domain, status, setDomains, resetDomains])

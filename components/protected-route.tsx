@@ -7,9 +7,9 @@ import { useSessionContext } from "@/context/session-provider-wrapper"
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
   useSessionExpiry()
-  const { status } = useSessionContext()
+  const { session, status } = useSessionContext()
   const content = useMemo(() => children, [children])
-
+  console.log('session', session)
   if (status === "loading") return <FlashScreen />
 
   return <>{content}</>

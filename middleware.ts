@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
+import { signIn } from "next-auth/react"
 import { KeycloakJWT } from "@/app/api/auth/[...nextauth]/_utils"
 import { getEnvironmentVariable } from "./lib/utils"
 
@@ -18,9 +19,8 @@ export async function middleware(request: NextRequest) {
     req: request,
     secret: getEnvironmentVariable("NEXTAUTH_SECRET"),
   })) as KeycloakJWT | null
-
   if (!token && !isPublicPath) {
-    return NextResponse.redirect(new URL("/auth/create-account", request.url))
+    await signIn("keycloak")
   }
 
   return NextResponse.next()
