@@ -93,7 +93,7 @@ export class UsersApiService {
         userDomain: 'student' | 'instructor' | 'admin' | 'organisation_user',
         requestBody?: {
             user: UserDTO;
-            profile_image?: ;
+            profile_image?: Blob;
         },
     ): CancelablePromise<ApiResponseUserDTO> {
         return __request(OpenAPI, {
@@ -143,7 +143,7 @@ export class UsersApiService {
      */
     public static getProfileImage(
         fileName: string,
-    ): CancelablePromise<> {
+    ): CancelablePromise<Blob> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/users/profile-image/{fileName}',

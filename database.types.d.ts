@@ -1,5 +1,4 @@
-import * as components from "@/types/main"
-import * as ApiTypes from "@/types"
+import * as ApiTypes from "@/api-client"
 
 // Create global ambient declarations
 declare global {

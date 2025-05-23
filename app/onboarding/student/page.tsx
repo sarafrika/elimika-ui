@@ -102,7 +102,6 @@ const StudentOnboardingPage = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = {
-      id: "",
       name: studentDetails.fullName,
       email: studentDetails.emailAddress,
       phone: studentDetails.mobileNumber,

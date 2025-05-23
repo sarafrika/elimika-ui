@@ -2,32 +2,29 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { CreateLessonRequestDTO } from '../models/CreateLessonRequestDTO';
+import type { CourseRequestDTO } from '../models/CourseRequestDTO';
+import type { CreateCourseRequestDTO } from '../models/CreateCourseRequestDTO';
 import type { Pageable } from '../models/Pageable';
-import type { ResponseDTOLessonResponseDTO } from '../models/ResponseDTOLessonResponseDTO';
-import type { ResponseDTOVoid } from '../models/ResponseDTOVoid';
-import type { ResponsePageableDTOLessonResponseDTO } from '../models/ResponsePageableDTOLessonResponseDTO';
-import type { UpdateLessonRequestDTO } from '../models/UpdateLessonRequestDTO';
+import type { ResponseDTOCourseResponseDTO } from '../models/ResponseDTOCourseResponseDTO';
+import type { ResponsePageableDTOCourseResponseDTO } from '../models/ResponsePageableDTOCourseResponseDTO';
+import type { UpdateCourseRequestDTO } from '../models/UpdateCourseRequestDTO';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
-export class LessonControllerService {
+export class CourseControllerService {
     /**
      * @param courseId
-     * @param lessonId
-     * @returns ResponseDTOLessonResponseDTO OK
+     * @returns ResponseDTOCourseResponseDTO OK
      * @throws ApiError
      */
-    public static getLesson(
+    public static getCourse(
         courseId: number,
-        lessonId: number,
-    ): CancelablePromise<ResponseDTOLessonResponseDTO> {
+    ): CancelablePromise<ResponseDTOCourseResponseDTO> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/courses/{courseId}/lessons/{lessonId}',
+            url: '/api/v1/courses/{courseId}',
             path: {
                 'courseId': courseId,
-                'lessonId': lessonId,
             },
             errors: {
                 404: `Not Found`,
@@ -38,22 +35,19 @@ export class LessonControllerService {
     }
     /**
      * @param courseId
-     * @param lessonId
      * @param requestBody
-     * @returns ResponseDTOVoid OK
+     * @returns ResponseDTOCourseResponseDTO OK
      * @throws ApiError
      */
-    public static updateLesson(
+    public static updateCourse(
         courseId: number,
-        lessonId: number,
-        requestBody: UpdateLessonRequestDTO,
-    ): CancelablePromise<ResponseDTOVoid> {
+        requestBody: UpdateCourseRequestDTO,
+    ): CancelablePromise<ResponseDTOCourseResponseDTO> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/courses/{courseId}/lessons/{lessonId}',
+            url: '/api/v1/courses/{courseId}',
             path: {
                 'courseId': courseId,
-                'lessonId': lessonId,
             },
             body: requestBody,
             mediaType: 'application/json',
@@ -66,20 +60,17 @@ export class LessonControllerService {
     }
     /**
      * @param courseId
-     * @param lessonId
      * @returns void
      * @throws ApiError
      */
-    public static deleteLesson(
+    public static deleteCourse(
         courseId: number,
-        lessonId: number,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/courses/{courseId}/lessons/{lessonId}',
+            url: '/api/v1/courses/{courseId}',
             path: {
                 'courseId': courseId,
-                'lessonId': lessonId,
             },
             errors: {
                 404: `Not Found`,
@@ -89,22 +80,20 @@ export class LessonControllerService {
         });
     }
     /**
+     * @param courseRequestDto
      * @param pageable
-     * @param courseId
-     * @returns ResponsePageableDTOLessonResponseDTO OK
+     * @returns ResponsePageableDTOCourseResponseDTO OK
      * @throws ApiError
      */
-    public static getLessons(
+    public static getCourses(
+        courseRequestDto: CourseRequestDTO,
         pageable: Pageable,
-        courseId: number,
-    ): CancelablePromise<ResponsePageableDTOLessonResponseDTO> {
+    ): CancelablePromise<ResponsePageableDTOCourseResponseDTO> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/courses/{courseId}/lessons',
-            path: {
-                'courseId': courseId,
-            },
+            url: '/api/v1/courses',
             query: {
+                'courseRequestDTO': courseRequestDto,
                 'pageable': pageable,
             },
             errors: {
@@ -115,26 +104,42 @@ export class LessonControllerService {
         });
     }
     /**
-     * @param courseId
      * @param formData
-     * @returns ResponseDTOLessonResponseDTO Created
+     * @returns ResponseDTOCourseResponseDTO Created
      * @throws ApiError
      */
-    public static createLesson(
-        courseId: number,
+    public static createCourse(
         formData?: {
-            lesson: CreateLessonRequestDTO;
-            files?: Array<>;
+            course: CreateCourseRequestDTO;
+            thumbnail: Blob;
         },
-    ): CancelablePromise<ResponseDTOLessonResponseDTO> {
+    ): CancelablePromise<ResponseDTOCourseResponseDTO> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/courses/{courseId}/lessons',
-            path: {
-                'courseId': courseId,
-            },
+            url: '/api/v1/courses',
             formData: formData,
             mediaType: 'multipart/form-data',
+            errors: {
+                404: `Not Found`,
+                422: `Unprocessable Entity`,
+                500: `Internal Server Error`,
+            },
+        });
+    }
+    /**
+     * @param fileName
+     * @returns binary OK
+     * @throws ApiError
+     */
+    public static getCourseThumbnail(
+        fileName: string,
+    ): CancelablePromise<Blob> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/courses/thumbnail/{fileName}',
+            path: {
+                'fileName': fileName,
+            },
             errors: {
                 404: `Not Found`,
                 422: `Unprocessable Entity`,
