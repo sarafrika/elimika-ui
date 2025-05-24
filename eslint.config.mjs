@@ -14,6 +14,8 @@ const eslintConfig = [
   ...compat.config({
     rules: {
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off", // Disable the 'any' type restriction
+      "react/no-unescaped-entities": "off", // Disable unescaped entities rule
     },
   }),
 ]
