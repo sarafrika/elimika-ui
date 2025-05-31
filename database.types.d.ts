@@ -8,20 +8,19 @@ declare global {
   type ApiResponseListPermissionDTO = ApiTypes.ApiResponseListPermissionDTO
   type ApiResponseListRoleDTO = ApiTypes.ApiResponseListRoleDTO
   type ApiResponseOrganisationDTO = ApiTypes.ApiResponseOrganisationDTO
-  type ApiResponsePagedDTOInstructorDTO =
-    ApiTypes.ApiResponsePagedDTOInstructorDTO
+  type ApiResponsePagedDTOInstructor = ApiTypes.ApiResponsePagedDTOInstructor
   type ApiResponsePagedDTOOrganisationDTO =
     ApiTypes.ApiResponsePagedDTOOrganisationDTO
   type ApiResponsePagedDTORoleDTO = ApiTypes.ApiResponsePagedDTORoleDTO
-  type ApiResponsePagedDTOStudentDTO = ApiTypes.ApiResponsePagedDTOStudentDTO
+  type ApiResponsePagedDTOStudent = ApiTypes.ApiResponsePagedDTOStudent
   type ApiResponsePagedDTOTrainingSessionDTO =
     ApiTypes.ApiResponsePagedDTOTrainingSessionDTO
-  type ApiResponsePagedDTOUserDTO = ApiTypes.ApiResponsePagedDTOUserDTO
+  type ApiResponsePagedDTOUser = ApiTypes.ApiResponsePagedDTOUser
   type ApiResponsePagedDTOUserGroupDTO =
     ApiTypes.ApiResponsePagedDTOUserGroupDTO
   type ApiResponseRoleDTO = ApiTypes.ApiResponseRoleDTO
   type ApiResponseTrainingSessionDTO = ApiTypes.ApiResponseTrainingSessionDTO
-  type ApiResponseUserDTO = ApiTypes.ApiResponseUserDTO
+  type ApiResponseUser = ApiTypes.ApiResponseUser
   type ApiResponseUserGroupDTO = ApiTypes.ApiResponseUserGroupDTO
   type ApiResponseVoid = ApiTypes.ApiResponseVoid
   type AssessmentResponseDTO = ApiTypes.AssessmentResponseDTO
@@ -31,9 +30,6 @@ declare global {
     ApiTypes.CourseLearningObjectiveResponseDTO
   type CourseRequestDTO = ApiTypes.CourseRequestDTO
   type CourseResponseDTO = ApiTypes.CourseResponseDTO
-  type InstructorDTO = ApiTypes.InstructorDTO
-  type StudentDTO = ApiTypes.StudentDTO
-  // Include all other types from index.ts
   type CreateAnswerOptionRequestDTO = ApiTypes.CreateAnswerOptionRequestDTO
   type CreateAssessmentRequestDTO = ApiTypes.CreateAssessmentRequestDTO
   type CreateCategoryRequestDTO = ApiTypes.CreateCategoryRequestDTO
@@ -49,6 +45,7 @@ declare global {
   type CreatePrerequisiteTypeRequestDTO =
     ApiTypes.CreatePrerequisiteTypeRequestDTO
   type CreateQuestionRequestDTO = ApiTypes.CreateQuestionRequestDTO
+  type Instructor = ApiTypes.Instructor
   type LessonContentResponseDTO = ApiTypes.LessonContentResponseDTO
   type LessonResourceResponseDTO = ApiTypes.LessonResourceResponseDTO
   type LessonResponseDTO = ApiTypes.LessonResponseDTO
@@ -56,12 +53,12 @@ declare global {
   type Page = ApiTypes.Page
   type Pageable = ApiTypes.Pageable
   type PageableObject = ApiTypes.PageableObject
-  type PagedDTOInstructorDTO = ApiTypes.PagedDTOInstructorDTO
+  type PagedDTOInstructor = ApiTypes.PagedDTOInstructor
   type PagedDTOOrganisationDTO = ApiTypes.PagedDTOOrganisationDTO
   type PagedDTORoleDTO = ApiTypes.PagedDTORoleDTO
-  type PagedDTOStudentDTO = ApiTypes.PagedDTOStudentDTO
+  type PagedDTOStudent = ApiTypes.PagedDTOStudent
   type PagedDTOTrainingSessionDTO = ApiTypes.PagedDTOTrainingSessionDTO
-  type PagedDTOUserDTO = ApiTypes.PagedDTOUserDTO
+  type PagedDTOUser = ApiTypes.PagedDTOUser
   type PagedDTOUserGroupDTO = ApiTypes.PagedDTOUserGroupDTO
   type PageLinks = ApiTypes.PageLinks
   type PageMetadata = ApiTypes.PageMetadata
@@ -96,6 +93,7 @@ declare global {
     ApiTypes.ResponsePageableDTOQuestionResponseDTO
   type RoleDTO = ApiTypes.RoleDTO
   type SortObject = ApiTypes.SortObject
+  type Student = ApiTypes.Student
   type TrainingExperienceDTO = ApiTypes.TrainingExperienceDTO
   type TrainingSessionDTO = ApiTypes.TrainingSessionDTO
   type UpdateAnswerOptionRequestDTO = ApiTypes.UpdateAnswerOptionRequestDTO
@@ -110,11 +108,21 @@ declare global {
     ApiTypes.UpdatePrerequisiteGroupRequestDTO
   type UpdatePrerequisiteRequestDTO = ApiTypes.UpdatePrerequisiteRequestDTO
   type UpdateQuestionRequestDTO = ApiTypes.UpdateQuestionRequestDTO
+  type User = ApiTypes.User
   type UserCertificationDTO = ApiTypes.UserCertificationDTO
-  type UserDTO = ApiTypes.UserDTO
   type UserGroupDTO = ApiTypes.UserGroupDTO
 
-  // Add custom types as needed
+  // Backward compatibility aliases for renamed types
+  type InstructorDTO = Instructor
+  type StudentDTO = Student
+  type UserDTO = User
+  type ApiResponseUserDTO = ApiResponseUser
+  type ApiResponsePagedDTOInstructorDTO = ApiResponsePagedDTOInstructor
+  type ApiResponsePagedDTOStudentDTO = ApiResponsePagedDTOStudent
+  type ApiResponsePagedDTOUserDTO = ApiResponsePagedDTOUser
+  type PagedDTOInstructorDTO = PagedDTOInstructor
+  type PagedDTOStudentDTO = PagedDTOStudent
+  type PagedDTOUserDTO = PagedDTOUser
 }
 
 // This export is needed to make TypeScript treat this as a module

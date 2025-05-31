@@ -2,10 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ApiResponsePagedDTOStudentDTO } from '../models/ApiResponsePagedDTOStudentDTO';
+import type { ApiResponsePagedDTOStudent } from '../models/ApiResponsePagedDTOStudent';
 import type { Page } from '../models/Page';
 import type { Pageable } from '../models/Pageable';
-import type { StudentDTO } from '../models/StudentDTO';
+import type { Student } from '../models/Student';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -14,12 +14,12 @@ export class StudentManagementService {
      * Get student by ID
      * Fetches a student by their UUID.
      * @param uuid
-     * @returns StudentDTO Student found
+     * @returns Student Student found
      * @throws ApiError
      */
     public static getStudentById(
         uuid: string,
-    ): CancelablePromise<StudentDTO> {
+    ): CancelablePromise<Student> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/students/{uuid}',
@@ -38,13 +38,13 @@ export class StudentManagementService {
      * Updates an existing student record.
      * @param uuid
      * @param requestBody
-     * @returns StudentDTO Student updated successfully
+     * @returns Student Student updated successfully
      * @throws ApiError
      */
     public static updateStudent(
         uuid: string,
-        requestBody: StudentDTO,
-    ): CancelablePromise<StudentDTO> {
+        requestBody: Student,
+    ): CancelablePromise<Student> {
         return __request(OpenAPI, {
             method: 'PUT',
             url: '/api/v1/students/{uuid}',
@@ -87,12 +87,12 @@ export class StudentManagementService {
      * Get all students
      * Fetches a paginated list of students.
      * @param pageable
-     * @returns ApiResponsePagedDTOStudentDTO OK
+     * @returns ApiResponsePagedDTOStudent OK
      * @throws ApiError
      */
     public static getAllStudents(
         pageable: Pageable,
-    ): CancelablePromise<ApiResponsePagedDTOStudentDTO> {
+    ): CancelablePromise<ApiResponsePagedDTOStudent> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/students',

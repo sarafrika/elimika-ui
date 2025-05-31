@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ApiResponsePagedDTOInstructorDTO } from '../models/ApiResponsePagedDTOInstructorDTO';
-import type { InstructorDTO } from '../models/InstructorDTO';
+import type { ApiResponsePagedDTOInstructor } from '../models/ApiResponsePagedDTOInstructor';
+import type { Instructor } from '../models/Instructor';
 import type { Page } from '../models/Page';
 import type { Pageable } from '../models/Pageable';
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -14,12 +14,12 @@ export class InstructorManagementService {
      * Get instructor by UUID
      * Fetches an instructor by their UUID.
      * @param uuid
-     * @returns InstructorDTO Instructor found
+     * @returns Instructor Instructor found
      * @throws ApiError
      */
     public static getInstructorByUuid(
         uuid: string,
-    ): CancelablePromise<InstructorDTO> {
+    ): CancelablePromise<Instructor> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/instructors/{uuid}',
@@ -38,13 +38,13 @@ export class InstructorManagementService {
      * Updates an existing instructor record.
      * @param uuid
      * @param requestBody
-     * @returns InstructorDTO Instructor updated successfully
+     * @returns Instructor Instructor updated successfully
      * @throws ApiError
      */
     public static updateInstructor(
         uuid: string,
-        requestBody: InstructorDTO,
-    ): CancelablePromise<InstructorDTO> {
+        requestBody: Instructor,
+    ): CancelablePromise<Instructor> {
         return __request(OpenAPI, {
             method: 'PUT',
             url: '/api/v1/instructors/{uuid}',
@@ -87,12 +87,12 @@ export class InstructorManagementService {
      * Get all instructors
      * Fetches a paginated list of instructors.
      * @param pageable
-     * @returns ApiResponsePagedDTOInstructorDTO OK
+     * @returns ApiResponsePagedDTOInstructor OK
      * @throws ApiError
      */
     public static getAllInstructors(
         pageable: Pageable,
-    ): CancelablePromise<ApiResponsePagedDTOInstructorDTO> {
+    ): CancelablePromise<ApiResponsePagedDTOInstructor> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/instructors',

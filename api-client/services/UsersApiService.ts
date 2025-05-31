@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ApiResponsePagedDTOUserDTO } from '../models/ApiResponsePagedDTOUserDTO';
-import type { ApiResponseUserDTO } from '../models/ApiResponseUserDTO';
+import type { ApiResponsePagedDTOUser } from '../models/ApiResponsePagedDTOUser';
+import type { ApiResponseUser } from '../models/ApiResponseUser';
 import type { ApiResponseVoid } from '../models/ApiResponseVoid';
 import type { Pageable } from '../models/Pageable';
-import type { UserDTO } from '../models/UserDTO';
+import type { User } from '../models/User';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -14,12 +14,12 @@ export class UsersApiService {
     /**
      * Get a user by UUID
      * @param uuid
-     * @returns ApiResponseUserDTO User retrieved successfully
+     * @returns ApiResponseUser User retrieved successfully
      * @throws ApiError
      */
     public static getUserByUuid(
         uuid: string,
-    ): CancelablePromise<ApiResponseUserDTO> {
+    ): CancelablePromise<ApiResponseUser> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/users/{uuid}',
@@ -37,13 +37,13 @@ export class UsersApiService {
      * Update a user by UUID
      * @param uuid
      * @param requestBody
-     * @returns ApiResponseUserDTO User updated successfully
+     * @returns ApiResponseUser User updated successfully
      * @throws ApiError
      */
     public static updateUser(
         uuid: string,
-        requestBody: UserDTO,
-    ): CancelablePromise<ApiResponseUserDTO> {
+        requestBody: User,
+    ): CancelablePromise<ApiResponseUser> {
         return __request(OpenAPI, {
             method: 'PUT',
             url: '/api/v1/users/{uuid}',
@@ -86,16 +86,16 @@ export class UsersApiService {
      * Create a new user
      * @param userDomain Domain of the user
      * @param requestBody
-     * @returns ApiResponseUserDTO User created successfully
+     * @returns ApiResponseUser User created successfully
      * @throws ApiError
      */
     public static createUser(
         userDomain: 'student' | 'instructor' | 'admin' | 'organisation_user',
         requestBody?: {
-            user: UserDTO;
+            user: User;
             profile_image?: Blob;
         },
-    ): CancelablePromise<ApiResponseUserDTO> {
+    ): CancelablePromise<ApiResponseUser> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/users',
@@ -116,12 +116,12 @@ export class UsersApiService {
      * Search users
      * Fetches a paginated list of users based on optional filters. Supports pagination and sorting.
      * @param pageable
-     * @returns ApiResponsePagedDTOUserDTO Paginated list of users matching the search criteria
+     * @returns ApiResponsePagedDTOUser Paginated list of users matching the search criteria
      * @throws ApiError
      */
     public static search(
         pageable: Pageable,
-    ): CancelablePromise<ApiResponsePagedDTOUserDTO> {
+    ): CancelablePromise<ApiResponsePagedDTOUser> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/users/search',
@@ -161,13 +161,13 @@ export class UsersApiService {
      * Get users by organisation ID
      * @param organisationId
      * @param pageable
-     * @returns ApiResponsePagedDTOUserDTO Users retrieved successfully
+     * @returns ApiResponsePagedDTOUser Users retrieved successfully
      * @throws ApiError
      */
     public static getUsersByOrganisation(
         organisationId: string,
         pageable: Pageable,
-    ): CancelablePromise<ApiResponsePagedDTOUserDTO> {
+    ): CancelablePromise<ApiResponsePagedDTOUser> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/users/organisation/{organisationId}',

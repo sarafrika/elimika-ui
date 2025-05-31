@@ -1,9 +1,5 @@
-"use client"
-
-import { Button } from "@/components/ui/button"
-import { signIn } from "auth"
-import Link from "next/link"
-import { BookOpen, Users, Award, ArrowRight } from "lucide-react"
+import LoginButton from "@/components/LoginButton"
+import { BookOpen, Users, Award, } from "lucide-react"
 
 export default function Home() {
   return (
@@ -13,12 +9,7 @@ export default function Home() {
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <div className="text-primary text-2xl font-bold">Elimika</div>
           <div className="flex items-center gap-4">
-            <Button
-              onClick={() => signIn("keycloak")}
-              className="hover:bg-primary/10"
-            >
-              Sign In
-            </Button>
+            <LoginButton />
           </div>
         </div>
       </nav>
@@ -35,12 +26,7 @@ export default function Home() {
             career with our comprehensive courses.
           </p>
           <div className="flex justify-center gap-4">
-            <Button
-              size="lg"
-              onClick={() => signIn("keycloak")}
-            >
-              Sign In
-            </Button>
+            <LoginButton />
           </div>
         </div>
       </section>

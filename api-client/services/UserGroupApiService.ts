@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { ApiResponsePagedDTORoleDTO } from '../models/ApiResponsePagedDTORoleDTO';
-import type { ApiResponsePagedDTOUserDTO } from '../models/ApiResponsePagedDTOUserDTO';
+import type { ApiResponsePagedDTOUser } from '../models/ApiResponsePagedDTOUser';
 import type { ApiResponsePagedDTOUserGroupDTO } from '../models/ApiResponsePagedDTOUserGroupDTO';
 import type { ApiResponseUserGroupDTO } from '../models/ApiResponseUserGroupDTO';
 import type { ApiResponseVoid } from '../models/ApiResponseVoid';
@@ -108,13 +108,13 @@ export class UserGroupApiService {
      * Get users for a user group
      * @param uuid
      * @param pageable
-     * @returns ApiResponsePagedDTOUserDTO Users retrieved successfully
+     * @returns ApiResponsePagedDTOUser Users retrieved successfully
      * @throws ApiError
      */
     public static getUsersForUserGroup(
         uuid: string,
         pageable: Pageable,
-    ): CancelablePromise<ApiResponsePagedDTOUserDTO> {
+    ): CancelablePromise<ApiResponsePagedDTOUser> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/user-groups/{uuid}/users',

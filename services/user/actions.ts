@@ -5,6 +5,7 @@ import { ApiResponse, ApiResponseWithPagination } from "@/lib/types"
 import { User } from "@/app/auth/create-account/_components/user-account-form"
 import { TrainingCenter } from "@/app/auth/create-account/_components/training-center-form"
 import { UserDomain } from "@/context/auth-provider"
+import apiClient from "../api/client"
 
 const DEFAULT_PAGE_SIZE = 10
 const EVERY_THIRTY_MINUTES = 60 * 30 // 1,800 seconds
@@ -151,4 +152,15 @@ export async function createOrUpdateTrainingCenter(
       "Something went wrong while persisting training center. Please contact support.",
     )
   }
+}
+export const checkOnboardingStatus = async (email: string) => {
+  apiClient.get({
+    url: "",
+  })
+}
+
+export const getUserRole = async () => {
+  apiClient.get({
+    url: "",
+  })
 }

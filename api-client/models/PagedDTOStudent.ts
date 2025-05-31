@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { InstructorDTO } from './InstructorDTO';
 import type { PageLinks } from './PageLinks';
 import type { PageMetadata } from './PageMetadata';
-export type PagedDTOInstructorDTO = {
-    content?: Array<InstructorDTO>;
+import type { Student } from './Student';
+export type PagedDTOStudent = {
+    content?: Array<Student>;
     metadata?: PageMetadata;
     links?: PageLinks;
 };

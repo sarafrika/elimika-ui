@@ -1,21 +1,17 @@
 "use client"
-
-import { KeycloakSession } from "@/app/api/auth/[...nextauth]/_utils"
 import { createContext, ReactNode, useContext } from "react"
 import { useSession } from "next-auth/react"
+import { Session } from "next-auth"
 
 interface SessionContextType {
-  session: KeycloakSession | null
+  session: Session | null
   status: "loading" | "authenticated" | "unauthenticated"
 }
 
 const SessionContext = createContext<SessionContextType | null>(null)
 
 export function SessionProviderWrapper({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession() as {
-    data: KeycloakSession | null
-    status: "loading" | "authenticated" | "unauthenticated"
-  }
+  const { data: session, status } = useSession()
 
   return (
     <SessionContext.Provider value={{ session, status }}>

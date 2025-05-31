@@ -2,10 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { PagedDTOUserDTO } from './PagedDTOUserDTO';
-export type ApiResponsePagedDTOUserDTO = {
+import type { PagedDTOStudent } from './PagedDTOStudent';
+export type ApiResponsePagedDTOStudent = {
     success?: boolean;
-    data?: PagedDTOUserDTO;
+    data?: PagedDTOStudent;
     message?: string;
     error?: Record<string, any>;
 };

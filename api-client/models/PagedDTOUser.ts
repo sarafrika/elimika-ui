@@ -4,9 +4,9 @@
 /* eslint-disable */
 import type { PageLinks } from './PageLinks';
 import type { PageMetadata } from './PageMetadata';
-import type { StudentDTO } from './StudentDTO';
-export type PagedDTOStudentDTO = {
-    content?: Array<StudentDTO>;
+import type { User } from './User';
+export type PagedDTOUser = {
+    content?: Array<User>;
     metadata?: PageMetadata;
     links?: PageLinks;
 };
