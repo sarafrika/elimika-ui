@@ -16,7 +16,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { signOut } from "next-auth/react"
+import { signOut } from "auth"
 import { toast } from "sonner"
 import { useSessionContext } from "@/context/session-provider-wrapper"
 import { Badge } from "@/components/ui/badge"
@@ -25,22 +25,7 @@ import { useAuth, UserDomain } from "@/context/auth-provider"
 import { useRouter } from "next/navigation"
 import { MenuItem } from "@/lib/menu"
 
-export async function logout() {
-  try {
-    await fetch("/api/auth/logout").then(() => {
-      signOut({ callbackUrl: "/" }).then(() => {
-        toast.success("You have been logged out successfully.")
-      })
-    })
-  } catch (error) {
-    console.error("Error logging out:", error)
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : "Something went wrong while logging out. Please try again.",
-    )
-  }
-}
+
 
 type NavUserProps = {
   items: MenuItem[]
@@ -156,11 +141,10 @@ export function NavUser({ items }: NavUserProps) {
                     {domains.map((domain) => (
                       <div
                         key={domain}
-                        className={`flex items-center rounded-md px-2 py-1.5 text-sm ${
-                          domain === activeDomain
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "hover:bg-muted cursor-pointer"
-                        }`}
+                        className={`flex items-center rounded-md px-2 py-1.5 text-sm ${domain === activeDomain
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "hover:bg-muted cursor-pointer"
+                          }`}
                         onClick={() => setActiveDomain(domain)}
                       >
                         <div className="mr-2 flex h-4 w-4 items-center justify-center">
@@ -218,7 +202,7 @@ export function NavUser({ items }: NavUserProps) {
 
                 <div
                   className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
-                  onClick={async () => await logout()}
+                  onClick={async () => await signOut()}
                 >
                   <LogOut className="size-4" />
                   <span>Log out</span>

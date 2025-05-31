@@ -4,10 +4,20 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { TrainingCenterProvider } from "@/context/training-center-provider"
 import { BreadcrumbProvider } from "@/context/breadcrumb-provider"
-
-export default function DashboardLayout({
+import { UsersApiService } from "@/api-client"
+type Props = {
+  instructor: React.ReactNode
+  student: React.ReactNode
+  admin: React.ReactNode
+  children: React.ReactNode
+}
+export default async function DashboardLayout({
+  instructor,
+  student,
+  admin,
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Props) {
+
   return (
     <ProtectedRoute>
       <TrainingCenterProvider>
