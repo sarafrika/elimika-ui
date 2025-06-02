@@ -6,6 +6,8 @@ import { User } from "@/app/auth/create-account/_components/user-account-form"
 import { TrainingCenter } from "@/app/auth/create-account/_components/training-center-form"
 import { UserDomain } from "@/context/auth-provider"
 import apiClient from "../api/client"
+import { RolesApiService, UsersApiService } from "@/api-client"
+import { auth } from "../auth"
 
 const DEFAULT_PAGE_SIZE = 10
 const EVERY_THIRTY_MINUTES = 60 * 30 // 1,800 seconds
@@ -159,8 +161,18 @@ export const checkOnboardingStatus = async (email: string) => {
   })
 }
 
-export const getUserRole = async () => {
-  apiClient.get({
-    url: "",
-  })
+export const getUser = async () => {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return {
+      error: "User not found",
+      data: null,
+    }
+  }
+  try {
+    const resp = await UsersApiService.getUserByUuid(session?.user?.id)
+    return resp
+  } catch (error) {
+    return { error: error, data: null }
+  }
 }

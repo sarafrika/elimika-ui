@@ -3,8 +3,8 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { TrainingCenterProvider } from "@/context/training-center-provider"
 import { BreadcrumbProvider } from "@/context/breadcrumb-provider"
-import { UsersApiService } from "@/api-client"
-import { getUserRole } from "@/services/user/actions"
+import { getUser } from "@/services/user/actions"
+import { redirect } from "next/navigation"
 type Props = {
   instructor: React.ReactNode
   student: React.ReactNode
@@ -17,7 +17,16 @@ export default async function DashboardLayout({
   admin,
   children,
 }: Props) {
-  const userRole = await getUserRole()
+  const userResponse = await getUser()
+  if (
+    userResponse.error &&
+    userResponse.error.toString().includes("User not found")
+  ) {
+    redirect("/onboarding")
+  }
+
+  const user = userResponse.data
+  console.log(user)
 
   return (
     <TrainingCenterProvider>
@@ -28,7 +37,7 @@ export default async function DashboardLayout({
             <BreadcrumbProvider>
               <DashboardHeader />
               <div className="flex flex-1 flex-col gap-4 space-y-4 px-6 pt-0">
-                {children}
+                {student}
               </div>
             </BreadcrumbProvider>
           </SidebarInset>

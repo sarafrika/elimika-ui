@@ -14,7 +14,8 @@ export function RootProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         <SessionProviderWrapper>
-          <AuthProvider>{children}</AuthProvider>
+          {/* <AuthProvider>{children}</AuthProvider> */}
+          {children}
         </SessionProviderWrapper>
       </SessionProvider>
       <ReactQueryDevtools initialIsOpen={false} />

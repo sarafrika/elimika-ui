@@ -16,7 +16,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { signOut } from "auth"
+import { signOut } from "next-auth/react"
 import { toast } from "sonner"
 import { useSessionContext } from "@/context/session-provider-wrapper"
 import { Badge } from "@/components/ui/badge"

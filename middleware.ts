@@ -1,10 +1,4 @@
-import { auth, signIn } from "auth"
-export default auth(async (request) => {
-  const isAuthenticated = request.auth
-  if (!isAuthenticated) {
-    await signIn()
-  }
-})
+export { auth as middleware } from "auth"
 
 export const config = {
   matcher: [
