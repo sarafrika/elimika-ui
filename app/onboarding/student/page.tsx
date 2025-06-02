@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { StudentOnboardingForm, type StudentOnboardingFormData } from "./_components/student-onboarding-form"
-import { UsersApiService } from "@/api-client"
+import { StudentManagementService, UsersApiService } from "@/api-client"
 
 export default function StudentOnboardingPage() {
   const router = useRouter()
@@ -38,12 +38,21 @@ export default function StudentOnboardingPage() {
 
       },
     )
+
+
     if (resp.error) {
       toast.error(resp.error.message)
       setIsSubmitting(false)
       return
     }
-    if (resp.success) {
+    if (resp.success && resp.data?.uuid) {
+      await StudentManagementService.updateStudent(resp.data.uuid, {
+        user_uuid: resp.data.uuid,
+        first_guardian_name: data.first_guardian_name,
+        first_guardian_mobile: data.first_guardian_mobile,
+        second_guardian_name: data.second_guardian_name,
+        second_guardian_mobile: data.second_guardian_mobile,
+      })
       setIsSubmitting(false)
       router.replace('/dashboard/overview')
     }
