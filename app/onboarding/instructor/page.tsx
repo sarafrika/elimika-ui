@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import { useRouter } from "next/navigation"
-import { PlusCircle, Trash2, CalendarDays } from "lucide-react"
+import { PlusCircle, Trash2 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -16,21 +16,6 @@ const proficiencyLevels = [
   "Native",
 ]
 
-const classTypes = [
-  {
-    type: "Private Classes",
-    description:
-      "Personalized one-on-one instruction tailored to individual needs, available at home, schools, or organizations.",
-    methods: ["In-Person", "Virtual"],
-  },
-  {
-    type: "Group Classes",
-    description:
-      "Engaging sessions for vocational training, workshops, masterclasses, camps, and collaborative project groups.",
-    methods: ["In-Person", "Virtual"],
-  },
-]
-
 const InstructorOnboardingPage = () => {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("contact-education")
@@ -39,7 +24,6 @@ const InstructorOnboardingPage = () => {
     "contact-education",
     "skills-experience",
     "memberships-training",
-    "availability-rates",
   ]
 
   // Contact
@@ -56,34 +40,24 @@ const InstructorOnboardingPage = () => {
   ])
   const [skills, setSkills] = useState([{ skill: "", level: "" }])
   const [experience, setExperience] = useState([
-    { position: "", organisation: "", responsibilities: "", years: "" },
+    {
+      organisation_name: "",
+      job_title: "",
+      work_description: "",
+      start_date: "",
+      end_date: "",
+      user_uuid: "",
+    },
   ])
   const [membership, setMembership] = useState([
-    { organisation: "", membershipNo: "" },
+    {
+      body_name: "",
+      membership_no: "",
+      member_since: "",
+      user_uuid: "",
+    },
   ])
   const [training, setTraining] = useState([{ course: "" }])
-  const [rateCard, setRateCard] = useState([
-    {
-      classType: "Private Classes",
-      method: "In-Person",
-      rate: "",
-    },
-    {
-      classType: "Private Classes",
-      method: "Virtual",
-      rate: "",
-    },
-    {
-      classType: "Group Classes",
-      method: "In-Person",
-      rate: "",
-    },
-    {
-      classType: "Group Classes",
-      method: "Virtual",
-      rate: "",
-    },
-  ])
 
   // Handlers
   const handleContactChange = (
@@ -119,20 +93,6 @@ const InstructorOnboardingPage = () => {
     )
   }
 
-  const handleRateCardChange = (
-    classType: string,
-    method: string,
-    value: string,
-  ) => {
-    setRateCard((prev) =>
-      prev.map((r) =>
-        r.classType === classType && r.method === method
-          ? { ...r, rate: value }
-          : r,
-      ),
-    )
-  }
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = {
@@ -142,7 +102,6 @@ const InstructorOnboardingPage = () => {
       experience,
       membership,
       training,
-      rateCard,
     }
     console.log("Form Data:", formData)
     router.push("/dashboard/instructor?onboarding=success")
@@ -193,7 +152,7 @@ const InstructorOnboardingPage = () => {
               defaultValue="contact-education"
               className="flex w-full flex-1 flex-col"
             >
-              <TabsList className="mb-6 grid w-full grid-cols-2 md:grid-cols-4">
+              <TabsList className="mb-6 grid w-full grid-cols-3">
                 <TabsTrigger value="contact-education">
                   Contact & Education
                 </TabsTrigger>
@@ -202,9 +161,6 @@ const InstructorOnboardingPage = () => {
                 </TabsTrigger>
                 <TabsTrigger value="memberships-training">
                   Memberships & Training
-                </TabsTrigger>
-                <TabsTrigger value="availability-rates">
-                  Availability & Rates
                 </TabsTrigger>
               </TabsList>
 
@@ -588,10 +544,12 @@ const InstructorOnboardingPage = () => {
                           type="button"
                           onClick={() =>
                             handleAddRow(setExperience, {
-                              position: "",
-                              organisation: "",
-                              responsibilities: "",
-                              years: "",
+                              organisation_name: "",
+                              job_title: "",
+                              work_description: "",
+                              start_date: "",
+                              end_date: "",
+                              user_uuid: "",
                             })
                           }
                           className={addMoreButtonClasses}
@@ -623,18 +581,18 @@ const InstructorOnboardingPage = () => {
                                   htmlFor={`exp_position_${i}`}
                                   className={labelClasses}
                                 >
-                                  Position/Title
+                                  Job Title
                                 </label>
                                 <input
                                   id={`exp_position_${i}`}
                                   type="text"
                                   placeholder="e.g., Senior Developer"
-                                  value={exp.position}
+                                  value={exp.job_title}
                                   onChange={(e) =>
                                     handleDynamicChange(
                                       setExperience,
                                       i,
-                                      "position",
+                                      "job_title",
                                       e.target.value,
                                     )
                                   }
@@ -652,12 +610,12 @@ const InstructorOnboardingPage = () => {
                                   id={`exp_organisation_${i}`}
                                   type="text"
                                   placeholder="e.g., Tech Solutions Inc."
-                                  value={exp.organisation}
+                                  value={exp.organisation_name}
                                   onChange={(e) =>
                                     handleDynamicChange(
                                       setExperience,
                                       i,
-                                      "organisation",
+                                      "organisation_name",
                                       e.target.value,
                                     )
                                   }
@@ -669,16 +627,16 @@ const InstructorOnboardingPage = () => {
                                   htmlFor={`exp_responsibilities_${i}`}
                                   className={labelClasses}
                                 >
-                                  Key Responsibilities
+                                  Work Description
                                 </label>
                                 <textarea
                                   id={`exp_responsibilities_${i}`}
-                                  value={exp.responsibilities}
+                                  value={exp.work_description}
                                   onChange={(e) =>
                                     handleDynamicChange(
                                       setExperience,
                                       i,
-                                      "responsibilities",
+                                      "work_description",
                                       e.target.value,
                                     )
                                   }
@@ -688,22 +646,42 @@ const InstructorOnboardingPage = () => {
                               </div>
                               <div>
                                 <label
-                                  htmlFor={`exp_years_${i}`}
+                                  htmlFor={`exp_start_date_${i}`}
                                   className={labelClasses}
                                 >
-                                  Years of Experience
+                                  Start Date
                                 </label>
                                 <input
-                                  id={`exp_years_${i}`}
-                                  type="number"
-                                  min="0"
-                                  placeholder="e.g., 5"
-                                  value={exp.years}
+                                  id={`exp_start_date_${i}`}
+                                  type="date"
+                                  value={exp.start_date}
                                   onChange={(e) =>
                                     handleDynamicChange(
                                       setExperience,
                                       i,
-                                      "years",
+                                      "start_date",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className={inputClasses}
+                                />
+                              </div>
+                              <div>
+                                <label
+                                  htmlFor={`exp_end_date_${i}`}
+                                  className={labelClasses}
+                                >
+                                  End Date
+                                </label>
+                                <input
+                                  id={`exp_end_date_${i}`}
+                                  type="date"
+                                  value={exp.end_date}
+                                  onChange={(e) =>
+                                    handleDynamicChange(
+                                      setExperience,
+                                      i,
+                                      "end_date",
                                       e.target.value,
                                     )
                                   }
@@ -739,8 +717,10 @@ const InstructorOnboardingPage = () => {
                           type="button"
                           onClick={() =>
                             handleAddRow(setMembership, {
-                              organisation: "",
-                              membershipNo: "",
+                              body_name: "",
+                              membership_no: "",
+                              member_since: "",
+                              user_uuid: "",
                             })
                           }
                           className={addMoreButtonClasses}
@@ -772,18 +752,18 @@ const InstructorOnboardingPage = () => {
                                   htmlFor={`mem_organisation_${i}`}
                                   className={labelClasses}
                                 >
-                                  Organisation
+                                  Professional Body Name
                                 </label>
                                 <input
                                   id={`mem_organisation_${i}`}
                                   type="text"
                                   placeholder="e.g., IEEE"
-                                  value={mem.organisation}
+                                  value={mem.body_name}
                                   onChange={(e) =>
                                     handleDynamicChange(
                                       setMembership,
                                       i,
-                                      "organisation",
+                                      "body_name",
                                       e.target.value,
                                     )
                                   }
@@ -795,18 +775,40 @@ const InstructorOnboardingPage = () => {
                                   htmlFor={`mem_membershipNo_${i}`}
                                   className={labelClasses}
                                 >
-                                  Membership No. (Optional)
+                                  Membership Number
                                 </label>
                                 <input
                                   id={`mem_membershipNo_${i}`}
                                   type="text"
                                   placeholder="e.g., MSHIP123"
-                                  value={mem.membershipNo}
+                                  value={mem.membership_no}
                                   onChange={(e) =>
                                     handleDynamicChange(
                                       setMembership,
                                       i,
-                                      "membershipNo",
+                                      "membership_no",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className={inputClasses}
+                                />
+                              </div>
+                              <div>
+                                <label
+                                  htmlFor={`mem_since_${i}`}
+                                  className={labelClasses}
+                                >
+                                  Member Since
+                                </label>
+                                <input
+                                  id={`mem_since_${i}`}
+                                  type="date"
+                                  value={mem.member_since}
+                                  onChange={(e) =>
+                                    handleDynamicChange(
+                                      setMembership,
+                                      i,
+                                      "member_since",
                                       e.target.value,
                                     )
                                   }
@@ -884,126 +886,6 @@ const InstructorOnboardingPage = () => {
                                 <Trash2 className="mx-auto h-4 w-4" />
                               </button>
                             )}
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent
-                value="availability-rates"
-                className="flex-1 overflow-y-auto"
-              >
-                <div className="space-y-8 px-1 py-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className={sectionTitleClasses}>
-                        Availability & Scheduling
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="mb-4 text-gray-600">
-                        To manage your teaching schedule and availability,
-                        please connect with Cal.com. You can set up your
-                        calendar by clicking the button below.
-                      </p>
-                      <a
-                        href="https://cal.com/signup"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`${buttonPrimaryClasses} mb-6 w-full sm:w-auto`}
-                      >
-                        <CalendarDays className="mr-2 h-5 w-5" />
-                        Set Up Your Availability on Cal.com
-                      </a>
-                      <p className="mb-2 text-sm text-gray-600">
-                        Once configured, you can embed your Cal.com scheduling
-                        page link here (optional):
-                      </p>
-                      <input
-                        type="url"
-                        id="calComLink"
-                        placeholder="https://cal.com/your-username"
-                        className={`${inputClasses} mb-4`}
-                      />
-                      <div className="text-sm text-gray-500">
-                        (Example: Embedding your Cal.com page directly for
-                        students to book)
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className={sectionTitleClasses}>
-                        Class Types & Hourly Rates
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-8">
-                        {classTypes.map((ct) => (
-                          <div
-                            key={ct.type}
-                            className="rounded-lg border border-gray-200 bg-slate-50 p-4 shadow-sm"
-                          >
-                            <h3 className="mb-1 text-xl font-semibold text-sky-700">
-                              {ct.type}
-                            </h3>
-                            <p className="mb-4 text-sm text-gray-600">
-                              {ct.description}
-                            </p>
-                            <div className="space-y-4">
-                              {ct.methods.map((method) => {
-                                const currentRateItem = rateCard.find(
-                                  (r) =>
-                                    r.classType === ct.type &&
-                                    r.method === method,
-                                )
-                                const currentRate = currentRateItem
-                                  ? currentRateItem.rate
-                                  : ""
-                                return (
-                                  <div
-                                    key={method}
-                                    className="flex flex-col gap-2 rounded-md border bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
-                                  >
-                                    <span className="font-medium text-gray-700">
-                                      {method === "In-Person" ? "🏢" : "💻"}{" "}
-                                      {method}
-                                    </span>
-                                    <div className="flex items-center gap-x-2">
-                                      <label
-                                        htmlFor={`${ct.type}-${method}-rate`}
-                                        className="text-sm whitespace-nowrap text-gray-600"
-                                      >
-                                        Rate (per hr):
-                                      </label>
-                                      <input
-                                        type="number"
-                                        id={`${ct.type}-${method}-rate`}
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="e.g., 50.00"
-                                        value={currentRate}
-                                        onChange={(e) =>
-                                          handleRateCardChange(
-                                            ct.type,
-                                            method,
-                                            e.target.value,
-                                          )
-                                        }
-                                        className={`${inputClasses} w-28 text-right sm:w-32`}
-                                      />
-                                      <span className="text-sm text-gray-500">
-                                        USD
-                                      </span>{" "}
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
                           </div>
                         ))}
                       </div>
