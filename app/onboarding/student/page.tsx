@@ -34,8 +34,13 @@ export default function StudentOnboardingPage() {
       const resp = await UsersApiService.createUser("student", {
         user: {
           email: session.user.email,
-          first_name: session.user.name,
-          last_name: session.user.name,
+          // split the name into first and last name
+          first_name: session.user.name.includes(" ")
+            ? session.user.name.split(" ")[0]
+            : session.user.name,
+          last_name: session.user.name.includes(" ")
+            ? session.user.name.split(" ").slice(1).join(" ")
+            : "",
           phone_number:
             data.age >= 18 && data.phone_number ? data.phone_number : "",
           dob: "",
