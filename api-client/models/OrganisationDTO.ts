@@ -9,7 +9,6 @@ export type OrganisationDTO = {
     active?: boolean;
     code?: string;
     readonly updated_date?: string;
-    auth_realm: string;
     domain: string;
     readonly slug?: string;
     readonly created_date?: string;

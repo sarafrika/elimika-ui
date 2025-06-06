@@ -1,6 +1,13 @@
 import { ComponentType } from "react"
-import { BoltIcon, FileText, LibraryIcon, UserIcon } from "lucide-react"
-import { UserDomain } from "@/context/auth-provider"
+import {
+  BoltIcon,
+  FileText,
+  LibraryIcon,
+  UserIcon,
+  Users,
+  Building2,
+  Clock,
+} from "lucide-react"
 
 export type MenuItem = {
   title: string
@@ -44,6 +51,7 @@ type Menu = {
   main: MenuItem[]
   secondary?: MenuItem[]
   user?: MenuItem[]
+  admin?: MenuItem[]
 }
 
 export default {
@@ -92,6 +100,25 @@ export default {
       url: "/dashboard/organisation-user/account",
       icon: BoltIcon,
       domain: "organisation_user",
+    },
+  ],
+  admin: [
+    {
+      title: "Users",
+      url: "/dashboard/instructors",
+      icon: Users,
+      items: [
+        {
+          title: "Instructors",
+          url: "/dashboard/instructors",
+          icon: Users,
+        },
+        {
+          title: "Organizations",
+          url: "/dashboard/organizations",
+          icon: Building2,
+        },
+      ],
     },
   ],
 } as Menu

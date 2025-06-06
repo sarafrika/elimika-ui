@@ -161,7 +161,7 @@ export const checkOnboardingStatus = async (email: string) => {
   })
 }
 
-export const getUser = async () => {
+export const getUserProfile = async () => {
   const session = await auth()
   if (!session?.user?.id) {
     return {

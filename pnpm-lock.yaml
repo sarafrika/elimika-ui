@@ -26,6 +26,7 @@ specifiers:
   '@tailwindcss/postcss': ^4
   '@tanstack/react-query': ^5.74.4
   '@tanstack/react-query-devtools': ^5.74.4
+  '@tanstack/react-table': ^8.21.3
   '@types/node': ^20
   '@types/react': ^19
   '@types/react-dom': ^19
@@ -74,6 +75,7 @@ dependencies:
   '@radix-ui/react-tooltip': 1.2.0_5j5q5giq4a6q5rwe55huzqxn5e
   '@tanstack/react-query': 5.76.1_react@19.1.0
   '@tanstack/react-query-devtools': 5.76.1_6u3ov5xvra6fkico52nx6l2quq
+  '@tanstack/react-table': 8.21.3_j6k6oay3ugsr56slyfvma2drry
   class-variance-authority: 0.7.1
   clsx: 2.1.1
   date-fns: 4.1.0
@@ -1837,6 +1839,23 @@ packages:
     dependencies:
       '@tanstack/query-core': 5.76.0
       react: 19.1.0
+    dev: false
+
+  /@tanstack/react-table/8.21.3_j6k6oay3ugsr56slyfvma2drry:
+    resolution: {integrity: sha512-5nNMTSETP4ykGegmVkhjcS8tTLW6Vl4axfEGQN3v0zdHYbK4UfoqfPChclTrJ4EoK9QynqAu9oUf8VEmrpZ5Ww==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      react: '>=16.8'
+      react-dom: '>=16.8'
+    dependencies:
+      '@tanstack/table-core': 8.21.3
+      react: 19.1.0
+      react-dom: 19.1.0_react@19.1.0
+    dev: false
+
+  /@tanstack/table-core/8.21.3:
+    resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
+    engines: {node: '>=12'}
     dev: false
 
   /@tybys/wasm-util/0.9.0:

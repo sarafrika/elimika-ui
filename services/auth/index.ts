@@ -24,6 +24,7 @@ const config = {
       return session
     },
     async jwt({ token, account }) {
+      console.log("jwt", token)
       if (account?.providerAccountId) {
         token.id = account.providerAccountId
       }

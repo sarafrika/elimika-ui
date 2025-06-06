@@ -1,6 +1,5 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { UserDomain } from "@/context/auth-provider"
 
 type DomainState = {
   domains: UserDomain[]
@@ -20,7 +19,6 @@ export const useDomainStore = create<DomainStore>()(
     (set) => ({
       domains: [],
       activeDomain: null,
-
       setDomains: (domains: UserDomain[]) =>
         set((state) => {
           const newActiveDomain =

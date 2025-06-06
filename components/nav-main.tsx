@@ -39,6 +39,9 @@ export function NavMain({ items }: { items: MenuItem[] }) {
     case "student":
       menuLabel = "Learning Hub"
       break
+    case "admin":
+      menuLabel = "Admin Panel"
+      break
     default:
       menuLabel = "Dashboard"
   }

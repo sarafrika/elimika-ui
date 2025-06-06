@@ -51,6 +51,7 @@ export type User = {
      * **[OPTIONAL]** Set of roles assigned to this user. Determines user permissions and access levels within the system. Can be empty for users with no specific roles.
      */
     roles?: Array<RoleDTO>;
+    gender?: 'Male' | 'Female' | 'Prefer not to say';
     displayName?: string;
     fullName?: string;
     /**

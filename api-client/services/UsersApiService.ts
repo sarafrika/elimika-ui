@@ -42,7 +42,10 @@ export class UsersApiService {
      */
     public static updateUser(
         uuid: string,
-        requestBody: User,
+        requestBody?: {
+            user: User;
+            profile_image?: Blob;
+        },
     ): CancelablePromise<ApiResponseUser> {
         return __request(OpenAPI, {
             method: 'PUT',
@@ -77,36 +80,6 @@ export class UsersApiService {
             },
             errors: {
                 404: `User not found`,
-                422: `Unprocessable Entity`,
-                500: `Internal Server Error`,
-            },
-        });
-    }
-    /**
-     * Create a new user
-     * @param userDomain Domain of the user
-     * @param requestBody
-     * @returns ApiResponseUser User created successfully
-     * @throws ApiError
-     */
-    public static createUser(
-        userDomain: 'student' | 'instructor' | 'admin' | 'organisation_user',
-        requestBody?: {
-            user: User;
-            profile_image?: Blob;
-        },
-    ): CancelablePromise<ApiResponseUser> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/users',
-            query: {
-                'user_domain': userDomain,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-            errors: {
-                400: `Invalid input data`,
-                404: `Not Found`,
                 422: `Unprocessable Entity`,
                 500: `Internal Server Error`,
             },

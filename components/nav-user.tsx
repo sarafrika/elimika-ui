@@ -21,7 +21,7 @@ import { toast } from "sonner"
 import { useSessionContext } from "@/context/session-provider-wrapper"
 import { Badge } from "@/components/ui/badge"
 import { useMemo } from "react"
-import { useAuth, UserDomain } from "@/context/auth-provider"
+import { useAuth } from "@/context/auth-provider"
 import { useRouter } from "next/navigation"
 import { MenuItem } from "@/lib/menu"
 

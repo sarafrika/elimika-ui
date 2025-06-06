@@ -123,6 +123,7 @@ declare global {
   type PagedDTOInstructorDTO = PagedDTOInstructor
   type PagedDTOStudentDTO = PagedDTOStudent
   type PagedDTOUserDTO = PagedDTOUser
+  type UserDomain = "admin" | "instructor" | "student" | "organisation_user"
 }
 
 // This export is needed to make TypeScript treat this as a module
