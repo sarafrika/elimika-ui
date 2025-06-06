@@ -43,11 +43,11 @@ const OnboardingPage = () => {
           </Link>
 
           {/* Institution Card */}
-          <Link href="/onboarding/institution" className="block">
+          <Link href="/onboarding/organisation" className="block">
             <div className="flex h-full transform cursor-pointer flex-col justify-between rounded-lg bg-purple-500 p-6 text-white shadow-md transition-transform hover:scale-105 hover:bg-purple-600">
               <div>
                 <h2 className="mb-3 text-2xl font-semibold">
-                  I represent an Institution
+                  I represent an Organisation
                 </h2>
                 <p className="text-sm">
                   Manage your organization, oversee instructors, and monitor
