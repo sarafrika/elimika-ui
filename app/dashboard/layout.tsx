@@ -18,12 +18,12 @@ export default async function DashboardLayout({
   children,
 }: Props) {
   const userResponse = await getUserProfile()
-  // if (
-  //   userResponse.error &&
-  //   userResponse.error.toString().includes("User not found")
-  // ) {
-  //   redirect("/onboarding")
-  // }
+  if (
+    userResponse.error &&
+    userResponse.error.toString().includes("User not found")
+  ) {
+    redirect("/onboarding")
+  }
 
   const user = userResponse.data
   console.log(user)

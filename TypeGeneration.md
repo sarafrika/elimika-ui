@@ -10,7 +10,49 @@ npx openapi-typescript-codegen --input https://api.elimika.sarafrika.com/v3/api-
 
 This will create TypeScript interfaces and types in the `api-client` directory based on your API schema.
 
-### 2. Update Global Types with AI Assistance
+### 2. Customize Generated API Client
+
+After generating the API client, you need to make the following customizations:
+
+#### 2.1. Update API Base URL
+
+Update the `api-client/core/OpenAPI.ts` file to use the correct API URL:
+
+```typescript
+export const OpenAPI: OpenAPIConfig = {
+  BASE: "https://api.elimika.sarafrika.com", // Update this to your actual API URL
+  VERSION: "1.0",
+  WITH_CREDENTIALS: false,
+  CREDENTIALS: "include",
+  TOKEN: undefined,
+  USERNAME: undefined,
+  PASSWORD: undefined,
+  HEADERS: undefined,
+  ENCODE_PATH: undefined,
+}
+```
+
+#### 2.2. Add Authentication Headers
+
+Update the `api-client/core/request.ts` file to automatically include auth headers from cookies. Add the following import at the top:
+
+```typescript
+import { headers as nextHeaders } from "next/headers"
+```
+
+Then modify the `request` function to include auth token extraction and header setting. Look for the section where headers are being set and add:
+
+```typescript
+const headerList = await nextHeaders()
+const token = headerList.get("cookie")?.split("=")[1]
+const body = getRequestBody(options)
+const headers = await getHeaders(config, options)
+if (!headers.get("Authorization")) {
+  headers.set("Authorization", `Bearer ${token}`)
+}
+```
+
+### 3. Update Global Types with AI Assistance
 
 After generating new API types, use AI to automatically update the `database.types.d.ts` file:
 
@@ -28,7 +70,7 @@ After generating new API types, use AI to automatically update the `database.typ
 The api-client has been regenerated. Please update the database.types.d.ts file with any new types added or modified. Compare the current database.types.d.ts with the types exported from api-client/index.ts and make the necessary updates.
 ```
 
-### 3. Manual Type Management (Alternative)
+### 4. Manual Type Management (Alternative)
 
 If you prefer manual updates, after generating the types, they are maintained in the `database.types.d.ts` file to make them globally available without requiring imports in your components:
 
@@ -48,7 +90,7 @@ declare global {
 }
 ```
 
-### 4. Using Global Types
+### 5. Using Global Types
 
 You can use these types directly in your components without importing them:
 
@@ -57,10 +99,13 @@ You can use these types directly in your components without importing them:
 const studentData: StudentDTO = { ... }
 ```
 
-### 5. Regenerating Types After API Changes
+### 6. Regenerating Types After API Changes
 
 When the API changes:
 
 1. Re-run the OpenAPI TypeScript codegen command
-2. Use AI assistance to update `database.types.d.ts` (recommended) or manually check for new types
-3. Test your application to ensure all type references still work correctly
+2. **IMPORTANT**: Reapply the customizations from step 2 (API base URL and auth headers)
+3. Use AI assistance to update `database.types.d.ts` (recommended) or manually check for new types
+4. Test your application to ensure all type references still work correctly
+
+**Note**: The customizations in step 2 will be overwritten each time you regenerate the types, so make sure to reapply them after each regeneration.
