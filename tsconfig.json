@@ -28,7 +28,8 @@
     "database.types.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "post-generation-fix.mjs"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "hey-client/**/*"]
 }

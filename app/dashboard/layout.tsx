@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   const userResponse = await getUserProfile()
   if (
     userResponse.error &&
-    userResponse.error.toString().includes("User not found")
+    userResponse.error[404]
   ) {
     redirect("/onboarding")
   }
