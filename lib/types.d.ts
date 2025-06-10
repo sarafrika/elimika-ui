@@ -1,1 +1,1 @@
-type UserDomain = "student" | "instructor" | "admin" | "organization-user"
+type UserDomain = "student" | "instructor" | "admin" | "organization_user"
