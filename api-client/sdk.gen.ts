@@ -5,7 +5,7 @@ import {
   type TDataShape,
   type Client,
   formDataBodySerializer,
-} from "@hey-api/client-next"
+} from "@hey-api/client-fetch"
 import type {
   DeleteUserData,
   DeleteUserResponses,

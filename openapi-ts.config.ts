@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [
     "zod",
     {
-      name: "@hey-api/client-next",
+      name: "@hey-api/client-fetch",
       runtimeConfigPath: "./hey-api-client.config.ts",
     },
     {
