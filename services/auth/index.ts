@@ -21,11 +21,17 @@ const config = {
       if (token.id) {
         session.user.id = token.id as string
       }
+      if (token.accessToken) {
+        session.user.accessToken = token.accessToken as string
+      }
       return session
     },
     async jwt({ token, account }) {
       if (account?.providerAccountId) {
         token.id = account.providerAccountId
+      }
+      if (account?.access_token) {
+        token.accessToken = account.access_token
       }
       return token
     },

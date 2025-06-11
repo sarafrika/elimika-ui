@@ -1,7 +1,8 @@
 "use server"
-import { cookies } from "next/headers"
+
+import { auth } from "."
+
 export const getAuthToken = async () => {
-  const cookieStore = await cookies()
-  const tokenCookie = cookieStore.get("authjs.session-token")
-  return tokenCookie?.value
+  const session = await auth()
+  return session?.user?.accessToken
 }
