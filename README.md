@@ -10,7 +10,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-To generate the api-client types when the api is modified
+To generate the api types when the api is modified
 
 ```bash
 pnpm generate-types

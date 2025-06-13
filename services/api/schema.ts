@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/v1/users/{uuid}": {
+    [path: `/api/v1/users/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -23,7 +23,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/user-groups/{uuid}": {
+    [path: `/api/v1/user-groups/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -42,7 +42,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/training-sessions/{uuid}": {
+    [path: `/api/v1/training-sessions/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -70,7 +70,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/students/{uuid}": {
+    [path: `/api/v1/students/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -98,7 +98,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/roles/{uuid}": {
+    [path: `/api/v1/roles/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -117,7 +117,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/prerequisite/{prerequisiteId}": {
+    [path: `/api/v1/prerequisite/${number}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -133,7 +133,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/prerequisite/group/{prerequisiteGroupId}": {
+    [path: `/api/v1/prerequisite/group/${number}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -149,7 +149,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/organisations/{uuid}": {
+    [path: `/api/v1/organisations/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -168,7 +168,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/instructors/{uuid}": {
+    [path: `/api/v1/instructors/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -196,7 +196,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/courses/{courseId}": {
+    [path: `/api/v1/courses/${number}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -212,7 +212,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/courses/{courseId}/lessons/{lessonId}": {
+    [path: `/api/v1/courses/${number}/lessons/${number}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -228,7 +228,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/categories/{categoryId}": {
+    [path: `/api/v1/categories/${number}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -244,7 +244,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/assessments/{id}": {
+    [path: `/api/v1/assessments/${number}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -260,7 +260,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/assessments/{assessmentId}/questions/{id}": {
+    [path: `/api/v1/assessments/${number}/questions/${number}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -293,7 +293,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/user-groups/{uuid}/users": {
+    [path: `/api/v1/user-groups/${string}/users`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -312,7 +312,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/user-groups/{uuid}/roles": {
+    [path: `/api/v1/user-groups/${string}/roles`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -502,7 +502,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/courses/{courseId}/lessons": {
+    [path: `/api/v1/courses/${number}/lessons`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -550,7 +550,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/assessments/{assessmentId}/questions": {
+    [path: `/api/v1/assessments/${number}/questions`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -586,7 +586,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/users/profile-image/{fileName}": {
+    [path: `/api/v1/users/profile-image/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -603,7 +603,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/users/organisation/{organisationId}": {
+    [path: `/api/v1/users/organisation/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -640,7 +640,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/user-groups/organisation/{organisationUuid}": {
+    [path: `/api/v1/user-groups/organisation/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -697,7 +697,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/roles/users/{userUuid}/roles": {
+    [path: `/api/v1/roles/users/${string}/roles`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -757,7 +757,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/roles/organisation/{organisationUid}": {
+    [path: `/api/v1/roles/organisation/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -814,7 +814,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/courses/thumbnail/{fileName}": {
+    [path: `/api/v1/courses/thumbnail/${string}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -830,7 +830,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/assessments/lesson/{lessonId}": {
+    [path: `/api/v1/assessments/lesson/${number}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -846,7 +846,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/assessments/course/{courseId}": {
+    [path: `/api/v1/assessments/course/${number}`]: {
         parameters: {
             query?: never;
             header?: never;
@@ -2073,6 +2073,98 @@ export interface components {
     headers: never;
     pathItems: never;
 }
+export type ResponseDtoVoid = components['schemas']['ResponseDTOVoid'];
+export type PermissionDto = components['schemas']['PermissionDTO'];
+export type RoleDto = components['schemas']['RoleDTO'];
+export type User = components['schemas']['User'];
+export type ApiResponseUser = components['schemas']['ApiResponseUser'];
+export type UserGroupDto = components['schemas']['UserGroupDTO'];
+export type ApiResponseUserGroupDto = components['schemas']['ApiResponseUserGroupDTO'];
+export type TrainingSessionDto = components['schemas']['TrainingSessionDTO'];
+export type Student = components['schemas']['Student'];
+export type ApiResponseRoleDto = components['schemas']['ApiResponseRoleDTO'];
+export type UpdatePrerequisiteRequestDto = components['schemas']['UpdatePrerequisiteRequestDTO'];
+export type UpdatePrerequisiteGroupRequestDto = components['schemas']['UpdatePrerequisiteGroupRequestDTO'];
+export type OrganisationDto = components['schemas']['OrganisationDTO'];
+export type ApiResponseOrganisationDto = components['schemas']['ApiResponseOrganisationDTO'];
+export type Instructor = components['schemas']['Instructor'];
+export type ProfessionalBodyDto = components['schemas']['ProfessionalBodyDTO'];
+export type TrainingExperienceDto = components['schemas']['TrainingExperienceDTO'];
+export type UserCertificationDto = components['schemas']['UserCertificationDTO'];
+export type PricingRequestDto = components['schemas']['PricingRequestDTO'];
+export type UpdateCourseCategoryRequestDto = components['schemas']['UpdateCourseCategoryRequestDTO'];
+export type UpdateCourseLearningObjectiveRequestDto = components['schemas']['UpdateCourseLearningObjectiveRequestDTO'];
+export type UpdateCourseRequestDto = components['schemas']['UpdateCourseRequestDTO'];
+export type CategoryResponseDto = components['schemas']['CategoryResponseDTO'];
+export type CourseLearningObjectiveResponseDto = components['schemas']['CourseLearningObjectiveResponseDTO'];
+export type CourseResponseDto = components['schemas']['CourseResponseDTO'];
+export type PricingResponseDto = components['schemas']['PricingResponseDTO'];
+export type ResponseDtoCourseResponseDto = components['schemas']['ResponseDTOCourseResponseDTO'];
+export type UpdateLessonRequestDto = components['schemas']['UpdateLessonRequestDTO'];
+export type UpdateCategoryRequestDto = components['schemas']['UpdateCategoryRequestDTO'];
+export type ResponseDtoCategoryResponseDto = components['schemas']['ResponseDTOCategoryResponseDTO'];
+export type UpdateAssessmentRequestDto = components['schemas']['UpdateAssessmentRequestDTO'];
+export type UpdateAnswerOptionRequestDto = components['schemas']['UpdateAnswerOptionRequestDTO'];
+export type UpdateQuestionRequestDto = components['schemas']['UpdateQuestionRequestDTO'];
+export type ApiResponseVoid = components['schemas']['ApiResponseVoid'];
+export type ApiResponseTrainingSessionDto = components['schemas']['ApiResponseTrainingSessionDTO'];
+export type ApiResponseStudent = components['schemas']['ApiResponseStudent'];
+export type CreatePrerequisiteRequestDto = components['schemas']['CreatePrerequisiteRequestDTO'];
+export type CreatePrerequisiteGroupRequestDto = components['schemas']['CreatePrerequisiteGroupRequestDTO'];
+export type CreatePrerequisiteTypeRequestDto = components['schemas']['CreatePrerequisiteTypeRequestDTO'];
+export type ApiResponseInstructor = components['schemas']['ApiResponseInstructor'];
+export type CreateCourseLearningObjectiveRequestDto = components['schemas']['CreateCourseLearningObjectiveRequestDTO'];
+export type CreateCourseRequestDto = components['schemas']['CreateCourseRequestDTO'];
+export type CreateLessonContentDto = components['schemas']['CreateLessonContentDTO'];
+export type CreateLessonRequestDto = components['schemas']['CreateLessonRequestDTO'];
+export type CreateLessonResourceRequestDto = components['schemas']['CreateLessonResourceRequestDTO'];
+export type LessonContentResponseDto = components['schemas']['LessonContentResponseDTO'];
+export type LessonResourceResponseDto = components['schemas']['LessonResourceResponseDTO'];
+export type LessonResponseDto = components['schemas']['LessonResponseDTO'];
+export type ResponseDtoLessonResponseDto = components['schemas']['ResponseDTOLessonResponseDTO'];
+export type CreateCategoryRequestDto = components['schemas']['CreateCategoryRequestDTO'];
+export type CreateAssessmentRequestDto = components['schemas']['CreateAssessmentRequestDTO'];
+export type CreateAnswerOptionRequestDto = components['schemas']['CreateAnswerOptionRequestDTO'];
+export type CreateQuestionRequestDto = components['schemas']['CreateQuestionRequestDTO'];
+export type Pageable = components['schemas']['Pageable'];
+export type ApiResponsePagedDtoUser = components['schemas']['ApiResponsePagedDTOUser'];
+export type PageLinks = components['schemas']['PageLinks'];
+export type PageMetadata = components['schemas']['PageMetadata'];
+export type PagedDtoUser = components['schemas']['PagedDTOUser'];
+export type ApiResponsePagedDtoRoleDto = components['schemas']['ApiResponsePagedDTORoleDTO'];
+export type PagedDtoRoleDto = components['schemas']['PagedDTORoleDTO'];
+export type ApiResponsePagedDtoUserGroupDto = components['schemas']['ApiResponsePagedDTOUserGroupDTO'];
+export type PagedDtoUserGroupDto = components['schemas']['PagedDTOUserGroupDTO'];
+export type ApiResponsePagedDtoTrainingSessionDto = components['schemas']['ApiResponsePagedDTOTrainingSessionDTO'];
+export type PagedDtoTrainingSessionDto = components['schemas']['PagedDTOTrainingSessionDTO'];
+export type Page = components['schemas']['Page'];
+export type PageableObject = components['schemas']['PageableObject'];
+export type SortObject = components['schemas']['SortObject'];
+export type ApiResponsePagedDtoStudent = components['schemas']['ApiResponsePagedDTOStudent'];
+export type PagedDtoStudent = components['schemas']['PagedDTOStudent'];
+export type ApiResponseListRoleDto = components['schemas']['ApiResponseListRoleDTO'];
+export type ApiResponseListPermissionDto = components['schemas']['ApiResponseListPermissionDTO'];
+export type PrerequisiteRequestDto = components['schemas']['PrerequisiteRequestDTO'];
+export type PrerequisiteResponseDto = components['schemas']['PrerequisiteResponseDTO'];
+export type PrerequisiteTypeResponseDto = components['schemas']['PrerequisiteTypeResponseDTO'];
+export type ResponsePageableDtoPrerequisiteResponseDto = components['schemas']['ResponsePageableDTOPrerequisiteResponseDTO'];
+export type ResponsePageableDtoPrerequisiteTypeResponseDto = components['schemas']['ResponsePageableDTOPrerequisiteTypeResponseDTO'];
+export type ApiResponsePagedDtoOrganisationDto = components['schemas']['ApiResponsePagedDTOOrganisationDTO'];
+export type PagedDtoOrganisationDto = components['schemas']['PagedDTOOrganisationDTO'];
+export type ApiResponsePagedDtoInstructor = components['schemas']['ApiResponsePagedDTOInstructor'];
+export type PagedDtoInstructor = components['schemas']['PagedDTOInstructor'];
+export type CourseRequestDto = components['schemas']['CourseRequestDTO'];
+export type ResponsePageableDtoCourseResponseDto = components['schemas']['ResponsePageableDTOCourseResponseDTO'];
+export type ResponsePageableDtoLessonResponseDto = components['schemas']['ResponsePageableDTOLessonResponseDTO'];
+export type CategoryRequestDto = components['schemas']['CategoryRequestDTO'];
+export type ResponsePageableDtoCategoryResponseDto = components['schemas']['ResponsePageableDTOCategoryResponseDTO'];
+export type AssessmentResponseDto = components['schemas']['AssessmentResponseDTO'];
+export type ResponseDtoAssessmentResponseDto = components['schemas']['ResponseDTOAssessmentResponseDTO'];
+export type AnswerOptionResponseDto = components['schemas']['AnswerOptionResponseDTO'];
+export type QuestionResponseDto = components['schemas']['QuestionResponseDTO'];
+export type ResponsePageableDtoQuestionResponseDto = components['schemas']['ResponsePageableDTOQuestionResponseDTO'];
+export type ResponseDtoQuestionResponseDto = components['schemas']['ResponseDTOQuestionResponseDTO'];
+export type ResponsePageableDtoAssessmentResponseDto = components['schemas']['ResponsePageableDTOAssessmentResponseDTO'];
 export type $defs = Record<string, never>;
 export interface operations {
     getUserByUuid: {

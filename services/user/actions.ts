@@ -1,7 +1,7 @@
 "use server"
 
-import { fetchClient } from "@/api/fetch-client"
-import { auth } from "../auth"
+import { fetchClient } from "@/services/api/fetch-client"
+import { auth } from "@/services/auth"
 
 export const getUserProfile = async () => {
   const session = await auth()

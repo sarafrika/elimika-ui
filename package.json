@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "generate-types": "npx openapi-typescript  ./api/docs.json -o ./api/schema.ts",
+    "generate-types": "npx openapi-typescript https://api.elimika.sarafrika.com/v3/api-docs --root-types-no-schema-prefix --root-types --path-params-as-types -o ./services/api/schema.ts",
     "start": "next start",
     "lint": "next lint"
   },
