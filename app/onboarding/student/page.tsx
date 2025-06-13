@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useTransition } from "react"
+import React, { useCallback, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
@@ -9,16 +9,15 @@ import {
   type StudentOnboardingFormData,
 } from "./_components/student-onboarding-form"
 import Loading from "@/components/Loading"
-import { useUser } from "@/context/auth-provider"
 import { fetchClient } from "@/services/api/fetch-client"
+import { useUserStore } from "@/store/use-user-store"
 
 export default function StudentOnboardingPage() {
   const router = useRouter()
-  const { user, isLoading } = useUser()
+  const { user, isLoading } = useUserStore()
   const { data: session, status } = useSession()
   const [isPending, startTransition] = useTransition()
   const handleSubmit = useCallback(async (data: StudentOnboardingFormData) => {
-
     if (typeof data.age !== "number" || data.age < 1) {
       toast.error("Please enter a valid age")
       return

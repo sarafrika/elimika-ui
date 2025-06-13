@@ -18,9 +18,9 @@ import {
 import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
 import { Badge } from "@/components/ui/badge"
-import { useUser } from "@/context/auth-provider"
 import { useRouter } from "next/navigation"
 import { MenuItem } from "@/lib/menu"
+import { useUserStore } from "@/store/use-user-store"
 
 
 
@@ -32,7 +32,7 @@ export function NavUser({ items }: NavUserProps) {
   const router = useRouter()
   const { isMobile } = useSidebar()
   const { data: session } = useSession()
-  const { activeDomain } = useUser()
+  const activeDomain = useUserStore(state => state.activeDomain)
 
   const userInitials =
     session?.user?.name

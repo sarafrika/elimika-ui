@@ -42,7 +42,7 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
     url: string,
   ): MenuItem[] | null => {
     for (const sourceKey in sources) {
-      const result = findMenuPathByUrl(sources[sourceKey], url)
+      const result = findMenuPathByUrl(sources[sourceKey] || [], url)
       if (result) return result
     }
 
