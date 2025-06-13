@@ -1,7 +1,7 @@
 "use server"
-import { client } from "@/api-client/client.gen"
+
+import { fetchClient } from "@/api/fetch-client"
 import { auth } from "../auth"
-import { getUserByUuid } from "@/api-client"
 
 export const getUserProfile = async () => {
   const session = await auth()
@@ -11,6 +11,14 @@ export const getUserProfile = async () => {
       data: null,
     }
   }
-  const resp = await getUserByUuid({ path: { uuid: session.user.id } })
+  const resp = await fetchClient.GET("/api/v1/users/search", {
+    params: {
+      query: {
+        page: 0,
+        size: 1,
+        email: session.user.email,
+      },
+    },
+  })
   return resp
 }

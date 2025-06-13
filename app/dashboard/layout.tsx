@@ -19,8 +19,7 @@ export default async function DashboardLayout({
 }: Props) {
   const userResponse = await getUserProfile()
   if (
-    userResponse.error &&
-    userResponse.error[404]
+    userResponse.error
   ) {
     redirect("/onboarding")
   }
