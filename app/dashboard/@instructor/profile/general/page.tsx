@@ -25,7 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { CalendarIcon, Loader2Icon } from "lucide-react"
-import { useSessionContext } from "@/context/session-provider-wrapper"
+import { useSession } from "next-auth/react"
 import { User } from "@/app/auth/create-account/_components/user-account-form"
 import {
   Popover,
@@ -73,7 +73,7 @@ const getInitialValues = (user: User | null | undefined) => {
 }
 
 export default function GeneralProfileSettings() {
-  const { session } = useSessionContext()
+  const { data: session } = useSession()
   const email = session?.user?.email
   const {
     data: user,

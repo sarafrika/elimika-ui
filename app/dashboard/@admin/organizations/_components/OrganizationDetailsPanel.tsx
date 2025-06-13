@@ -1,30 +1,30 @@
 import React from 'react'
-import { Edit, Trash2, User } from 'lucide-react'
-import { Instructor } from '@/services/api/schema'
+import { Edit, Trash2, Building2 } from 'lucide-react'
+import { OrganisationDto } from '@/services/api/schema'
 import { Button } from '@/components/ui/button'
-import InstructorDetails from './InstructorDetails'
+import OrganizationDetails from './OrganizationDetails'
 
-interface InstructorDetailsPanelProps {
-    instructor: Instructor | null
-    onApprove: (instructor: Instructor) => void
-    onReject: (instructor: Instructor) => void
-    getStatusBadgeComponent: (instructorId: string) => React.ReactElement
+interface OrganizationDetailsPanelProps {
+    organization: OrganisationDto | null
+    onApprove: (organization: OrganisationDto) => void
+    onReject: (organization: OrganisationDto) => void
+    getStatusBadgeComponent: (organizationId: string) => React.ReactElement
 }
 
-export default function InstructorDetailsPanel({
-    instructor,
+export default function OrganizationDetailsPanel({
+    organization,
     onApprove,
     onReject,
     getStatusBadgeComponent,
-}: InstructorDetailsPanelProps) {
-    if (!instructor) {
+}: OrganizationDetailsPanelProps) {
+    if (!organization) {
         return (
             <div className="hidden lg:flex flex-1 flex-col">
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
-                        <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <h2 className="text-lg font-medium mb-2">No Instructor Selected</h2>
-                        <p className="text-muted-foreground">Select an instructor from the list to view details</p>
+                        <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h2 className="text-lg font-medium mb-2">No Organization Selected</h2>
+                        <p className="text-muted-foreground">Select an organization from the list to view details</p>
                     </div>
                 </div>
             </div>
@@ -36,7 +36,7 @@ export default function InstructorDetailsPanel({
             {/* Header */}
             <div className="p-6 border-b bg-background">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold">Instructor Details</h1>
+                    <h1 className="text-2xl font-semibold">Organization Details</h1>
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
@@ -51,8 +51,8 @@ export default function InstructorDetailsPanel({
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
                 <div className="max-w-2xl">
-                    <InstructorDetails
-                        instructor={instructor}
+                    <OrganizationDetails
+                        organization={organization}
                         getStatusBadgeComponent={getStatusBadgeComponent}
                     />
                 </div>
@@ -62,7 +62,7 @@ export default function InstructorDetailsPanel({
             <div className="p-6 border-t bg-background">
                 <div className="flex gap-3">
                     <Button
-                        onClick={() => onApprove(instructor)}
+                        onClick={() => onApprove(organization)}
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                         <Edit className="h-4 w-4 mr-2" />
@@ -70,7 +70,7 @@ export default function InstructorDetailsPanel({
                     </Button>
                     <Button
                         variant="destructive"
-                        onClick={() => onReject(instructor)}
+                        onClick={() => onReject(organization)}
                     >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Reject

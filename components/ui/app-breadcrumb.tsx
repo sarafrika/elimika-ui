@@ -9,7 +9,7 @@ import {
 } from "./breadcrumb"
 import Link from "next/link"
 import { Fragment } from "react"
-import { useAuth } from "@/context/auth-provider"
+import { useUser } from "@/context/auth-provider"
 
 interface AppBreadcrumbProps {
   className?: string
@@ -21,7 +21,7 @@ export function AppBreadcrumb({
   showHome = true,
 }: AppBreadcrumbProps) {
   const { breadcrumbs } = useBreadcrumb()
-  const { activeDomain } = useAuth()
+  const { activeDomain } = useUser()
 
   if (breadcrumbs.length === 0 && !showHome) return null
 

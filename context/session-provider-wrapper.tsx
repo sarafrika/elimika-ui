@@ -20,7 +20,7 @@ export function SessionProviderWrapper({ children }: { children: ReactNode }) {
   )
 }
 
-export function useSessionContext() {
+export function useSessionWrapper() {
   const context = useContext(SessionContext)
   if (!context) {
     throw new Error(

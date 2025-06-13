@@ -16,7 +16,7 @@ import {
   TrainingExperienceSchema,
 } from "@/lib/types/instructor"
 import { useUpdateInstructorProfile } from "@/services/instructor/mutations"
-import { useSessionContext } from "@/context/session-provider-wrapper"
+import { useSession } from "next-auth/react"
 import { useInstructorProfileQuery } from "@/services/instructor/queries"
 import { useUserProfileQuery } from "@/services/user/queries"
 
@@ -34,7 +34,7 @@ const ExperienceFormSchema = z.object({
 type ExperienceFormValues = z.infer<typeof ExperienceFormSchema>
 
 export default function ProfessionalExperienceSettings() {
-  const { session } = useSessionContext()
+  const { data: session } = useSession()
   const email = session?.user?.email
   const { data: user } = useUserProfileQuery(email)
   const userUuid = user?.uuid
@@ -60,16 +60,16 @@ export default function ProfessionalExperienceSettings() {
     ).toString()
 
     const newExperience: TrainingExperience & { id: string; current: boolean } =
-      {
-        id: newId,
-        organisation_name: "",
-        job_title: "",
-        work_description: "",
-        start_date: new Date(),
-        end_date: null,
-        user_uuid: userUuid ?? "",
-        current: false,
-      }
+    {
+      id: newId,
+      organisation_name: "",
+      job_title: "",
+      work_description: "",
+      start_date: new Date(),
+      end_date: null,
+      user_uuid: userUuid ?? "",
+      current: false,
+    }
 
     console.log(newExperience)
 

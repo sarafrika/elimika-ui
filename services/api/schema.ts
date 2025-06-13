@@ -4,11 +4,13 @@
  */
 
 export interface paths {
-    [path: `/api/v1/users/${string}`]: {
+    "/api/v1/users/{uuid}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                uuid: string;
+            };
             cookie?: never;
         };
         /** Get a user by UUID */
@@ -23,11 +25,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/user-groups/${string}`]: {
+    "/api/v1/user-groups/{uuid}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                uuid: string;
+            };
             cookie?: never;
         };
         /** Get a user group by UUID */
@@ -42,11 +46,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/training-sessions/${string}`]: {
+    "/api/v1/training-sessions/{uuid}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                uuid: string;
+            };
             cookie?: never;
         };
         /**
@@ -70,11 +76,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/students/${string}`]: {
+    "/api/v1/students/{uuid}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                uuid: string;
+            };
             cookie?: never;
         };
         /**
@@ -98,11 +106,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/roles/${string}`]: {
+    "/api/v1/roles/{uuid}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                uuid: string;
+            };
             cookie?: never;
         };
         /** Get a role by UUID */
@@ -117,11 +127,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/prerequisite/${number}`]: {
+    "/api/v1/prerequisite/{prerequisiteId}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                prerequisiteId: string;
+            };
             cookie?: never;
         };
         get?: never;
@@ -133,11 +145,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/prerequisite/group/${number}`]: {
+    "/api/v1/prerequisite/group/{prerequisiteGroupId}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                prerequisiteGroupId: string;
+            };
             cookie?: never;
         };
         get?: never;
@@ -149,11 +163,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/organisations/${string}`]: {
+    "/api/v1/organisations/{uuid}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                uuid: string;
+            };
             cookie?: never;
         };
         /** Get an organisation by UUID */
@@ -168,11 +184,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/instructors/${string}`]: {
+    "/api/v1/instructors/{uuid}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                uuid: string;
+            };
             cookie?: never;
         };
         /**
@@ -196,11 +214,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/courses/${number}`]: {
+    "/api/v1/courses/{courseId}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                courseId: string;
+            };
             cookie?: never;
         };
         get: operations["getCourse"];
@@ -212,11 +232,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/courses/${number}/lessons/${number}`]: {
+    "/api/v1/courses/{courseId}/lessons/{lessonId}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                courseId: string;
+                lessonId: string;
+            };
             cookie?: never;
         };
         get: operations["getLesson"];
@@ -228,11 +251,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/categories/${number}`]: {
+    "/api/v1/categories/{categoryId}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                categoryId: string;
+            };
             cookie?: never;
         };
         get: operations["getCategory"];
@@ -244,11 +269,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/assessments/${number}`]: {
+    "/api/v1/assessments/{id}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: string;
+            };
             cookie?: never;
         };
         get: operations["getAssessment"];
@@ -260,11 +287,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/assessments/${number}/questions/${number}`]: {
+    "/api/v1/assessments/{assessmentId}/questions/{id}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                assessmentId: string;
+                id: string;
+            };
             cookie?: never;
         };
         get: operations["getQuestion"];
@@ -293,11 +323,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/user-groups/${string}/users`]: {
+    "/api/v1/user-groups/{uuid}/users": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                uuid: string;
+            };
             cookie?: never;
         };
         /** Get users for a user group */
@@ -312,11 +344,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/user-groups/${string}/roles`]: {
+    "/api/v1/user-groups/{uuid}/roles": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                uuid: string;
+            };
             cookie?: never;
         };
         /** Get roles for a user group */
@@ -502,11 +536,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/courses/${number}/lessons`]: {
+    "/api/v1/courses/{courseId}/lessons": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                courseId: string;
+            };
             cookie?: never;
         };
         get: operations["getLessons"];
@@ -550,11 +586,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/assessments/${number}/questions`]: {
+    "/api/v1/assessments/{assessmentId}/questions": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                assessmentId: string;
+            };
             cookie?: never;
         };
         get: operations["getQuestions"];
@@ -586,11 +624,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/users/profile-image/${string}`]: {
+    "/api/v1/users/profile-image/{fileName}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                fileName: string;
+            };
             cookie?: never;
         };
         /** Get user profile image by file name */
@@ -603,11 +643,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/users/organisation/${string}`]: {
+    "/api/v1/users/organisation/{organisationId}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                organisationId: string;
+            };
             cookie?: never;
         };
         /** Get users by organisation ID */
@@ -640,11 +682,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/user-groups/organisation/${string}`]: {
+    "/api/v1/user-groups/organisation/{organisationUuid}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                organisationUuid: string;
+            };
             cookie?: never;
         };
         /** Get all user groups for an organisation */
@@ -697,11 +741,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/roles/users/${string}/roles`]: {
+    "/api/v1/roles/users/{userUuid}/roles": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                userUuid: string;
+            };
             cookie?: never;
         };
         /**
@@ -757,11 +803,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/roles/organisation/${string}`]: {
+    "/api/v1/roles/organisation/{organisationUid}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                organisationUid: string;
+            };
             cookie?: never;
         };
         /** Get all roles for a specific organisation */
@@ -814,11 +862,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/courses/thumbnail/${string}`]: {
+    "/api/v1/courses/thumbnail/{fileName}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                fileName: string;
+            };
             cookie?: never;
         };
         get: operations["getCourseThumbnail"];
@@ -830,11 +880,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/assessments/lesson/${number}`]: {
+    "/api/v1/assessments/lesson/{lessonId}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                lessonId: string;
+            };
             cookie?: never;
         };
         get: operations["getAssessmentsByLesson"];
@@ -846,11 +898,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/api/v1/assessments/course/${number}`]: {
+    "/api/v1/assessments/course/{courseId}": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                courseId: string;
+            };
             cookie?: never;
         };
         get: operations["getAssessmentsByCourse"];
@@ -1131,9 +1185,9 @@ export interface components {
              * @example +254787654321
              */
             second_guardian_mobile?: string;
-            allGuardianContacts?: string[];
             primaryGuardianContact?: string;
             secondaryGuardianContact?: string;
+            allGuardianContacts?: string[];
             /**
              * Format: date-time
              * @description **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
@@ -3742,7 +3796,9 @@ export interface operations {
                 categoryId: number;
             };
             header?: never;
-            path?: never;
+            path: {
+                categoryId: string;
+            };
             cookie?: never;
         };
         requestBody?: never;

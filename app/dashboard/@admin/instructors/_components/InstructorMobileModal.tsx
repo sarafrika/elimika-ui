@@ -1,6 +1,6 @@
 import React from 'react'
 import { Edit, Trash2 } from 'lucide-react'
-import { Instructor } from '@/api-client/models/Instructor'
+import { Instructor } from '@/services/api/schema'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import InstructorDetails from './InstructorDetails'

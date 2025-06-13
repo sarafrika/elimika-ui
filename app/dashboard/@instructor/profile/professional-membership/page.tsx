@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
-import { useSessionContext } from "@/context/session-provider-wrapper"
+import { useSession } from "next-auth/react"
 import { useUserProfileQuery } from "@/services/user/queries"
 import { useInstructorProfileQuery } from "@/services/instructor/queries"
 import { useUpdateInstructorProfile } from "@/services/instructor/mutations"
@@ -46,7 +46,7 @@ const FormSchema = z.object({
 })
 
 export default function ProfessionalBodySettings() {
-  const { session } = useSessionContext()
+  const { data: session } = useSession()
   const email = session?.user?.email
   const { data: user } = useUserProfileQuery(email)
   const { data: instructor } = useInstructorProfileQuery(user?.uuid)

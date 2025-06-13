@@ -26,7 +26,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Grip, PlusCircle, Trash2 } from "lucide-react"
 import { toast } from "sonner"
-import { useSessionContext } from "@/context/session-provider-wrapper"
 import { useUserStore } from "@/store/use-user-store"
 import { z } from "zod"
 import {
@@ -89,7 +88,6 @@ export type Student =
   | z.infer<typeof AdultStudentSchema>
 
 export default function StudentProfileGeneral() {
-  const { session } = useSessionContext()
   const { user, isLoading: isUserLoading, fetchCurrentUser } = useUserStore()
 
   const [dateOfBirth, setDateOfBirth] = useState("")
@@ -125,11 +123,8 @@ export default function StudentProfileGeneral() {
   })
 
   useEffect(() => {
-    if (session?.user?.email && !user && !isUserLoading) {
-      console.log("fetchCurrentUser")
-      fetchCurrentUser(session.user.email)
-    }
-  }, [session?.user?.email, fetchCurrentUser, isUserLoading, user])
+    fetchCurrentUser()
+  }, [fetchCurrentUser])
 
   useEffect(() => {
     if (user) {
@@ -461,11 +456,10 @@ export default function StudentProfileGeneral() {
 
           {/* Guardian Information Card - Only shown when there are guardians or student is a minor */}
           <Card
-            className={`transition-opacity duration-500 ${
-              guardians.length > 0 || isMinor
-                ? "opacity-100"
-                : "hidden opacity-0"
-            }`}
+            className={`transition-opacity duration-500 ${guardians.length > 0 || isMinor
+              ? "opacity-100"
+              : "hidden opacity-0"
+              }`}
           >
             <CardHeader>
               <CardTitle>Guardian Information</CardTitle>

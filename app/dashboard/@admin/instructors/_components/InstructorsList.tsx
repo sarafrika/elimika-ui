@@ -1,5 +1,5 @@
 import React from 'react'
-import { Instructor } from '@/api-client/models/Instructor'
+import { Instructor } from '@/services/api/schema'
 import InstructorFilters from './InstructorFilters'
 import InstructorCard from './InstructorCard'
 

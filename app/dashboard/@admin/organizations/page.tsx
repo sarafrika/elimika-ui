@@ -1,28 +1,24 @@
 import React from 'react'
-import { OrganisationDtoReadable } from '@/api-client/types.gen'
-import { getAllOrganisations } from '@/api-client/sdk.gen'
 import OrganizationsPage from './_components/OrganizationsPage'
+import { fetchClient } from '@/services/api/fetch-client'
+import ErrorPage from '@/components/ErrorPage'
 
 export default async function Page() {
-    let organizations: OrganisationDtoReadable[] = []
-    try {
-        const response = await getAllOrganisations({
+    const response = await fetchClient.GET("/api/v1/organisations", {
+        params: {
             query: {
-                pageable: {
-                    page: 0,
-                    size: 100,
-                    sort: ['created_date,desc']
-                }
+                //@ts-ignore
+                page: 0,
+                size: 100,
+
             }
-        })
-
-        if (response.data?.data?.content) {
-            organizations = response.data.data.content
         }
-    } catch (error) {
-        console.error('Error fetching organizations:', error)
-        // Handle error appropriately - maybe show error state
+    })
+    if (response.error) {
+        console.error(response.error)
+        return <ErrorPage message={response.error.message || "Something went wrong while fetching organizations"} />
     }
+    const organizations = response.data?.data?.content
 
-    return <OrganizationsPage organizations={organizations} />
+    return <OrganizationsPage organizations={organizations || []} />
 }

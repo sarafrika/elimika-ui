@@ -1,5 +1,4 @@
 "use client"
-
 import * as React from "react"
 import { LibraryBigIcon } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
@@ -17,10 +16,8 @@ import { NavMain } from "@/components/nav-main"
 import { useTrainingCenter } from "@/context/training-center-provider"
 import menu from "@/lib/menu"
 import { NavSecondary } from "@/components/nav-secondary"
-import { useAuth } from "@/context/auth-provider"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { activeDomain } = useAuth()
   const { trainingCenter } = useTrainingCenter()
   const domain = "admin"
   const menuItems = menu[domain]

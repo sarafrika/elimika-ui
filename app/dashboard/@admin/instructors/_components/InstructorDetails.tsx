@@ -1,6 +1,6 @@
 import React from 'react'
 import { Phone, Mail, MapPin, Building2, User } from 'lucide-react'
-import { Instructor } from '@/api-client/models/Instructor'
+import { Instructor } from '@/services/api/schema'
 import { Badge } from '@/components/ui/badge'
 
 interface InstructorDetailsProps {

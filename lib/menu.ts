@@ -6,7 +6,7 @@ import {
   UserIcon,
   Users,
   Building2,
-  Clock,
+  BookOpen,
 } from "lucide-react"
 
 export type MenuItem = {
@@ -59,15 +59,14 @@ export default {
     {
       title: "Course Management",
       icon: LibraryIcon,
-      domain: "instructor",
       items: [
         {
           title: "Create New Course",
-          url: "/dashboard/instructor/course-management/create-new-course",
+          url: "/dashboard/course-management/create-new-course",
         },
         {
           title: "Drafts",
-          url: "/dashboard/instructor/course-management/drafts",
+          url: "/dashboard/course-management/drafts",
         },
       ],
     },
@@ -83,23 +82,28 @@ export default {
   user: [
     {
       title: "Profile",
-      url: "/dashboard/instructor/profile",
+      url: "/dashboard/profile",
       icon: UserIcon,
-      domain: "instructor",
-    },
-
-    {
-      title: "Profile",
-      url: "/dashboard/student/profile",
-      icon: UserIcon,
-      domain: "student",
     },
 
     {
       title: "Account",
-      url: "/dashboard/organisation-user/account",
+      url: "/dashboard/account",
       icon: BoltIcon,
-      domain: "organisation_user",
+    },
+  ],
+  student: [
+    {
+      title: "Courses",
+      url: "/dashboard/courses",
+      icon: BookOpen,
+    },
+  ],
+  instructor: [
+    {
+      title: "Courses",
+      url: "/dashboard/courses",
+      icon: BookOpen,
     },
   ],
   admin: [

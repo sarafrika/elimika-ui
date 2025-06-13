@@ -15,18 +15,19 @@ export default async function DashboardLayout({
   instructor,
   student,
   admin,
-  children,
+  children
 }: Props) {
+
   const userResponse = await getUserProfile()
-  if (
-    userResponse.error
-  ) {
-    redirect("/onboarding")
-  }
+  const userData = userResponse?.data?.content?.[0]
+  // if (
+  //   !userData || (userData && !userData?.user_domain)
 
-  const user = userResponse.data
-  console.log(user)
-
+  // ) {
+  //   redirect("/onboarding")
+  // }
+  // const domain = userData.user_domain
+  // const activeChild = domain === "instructor" ? instructor : domain === "student" ? student : domain == 'organisation_user' ? admin : children
   return (
     <TrainingCenterProvider>
       <SidebarProvider>

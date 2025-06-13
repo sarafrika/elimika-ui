@@ -22,11 +22,11 @@ import Link from "next/link"
 import * as React from "react"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { useAuth } from "@/context/auth-provider"
+import { useUser } from "@/context/auth-provider"
 
 export function NavMain({ items }: { items: MenuItem[] }) {
   const pathname = usePathname()
-  const { activeDomain } = useAuth()
+  const { activeDomain } = useUser()
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
 
   const OVERVIEW_PATH = `/dashboard/${activeDomain}/overview`

@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Card,
   CardContent,
@@ -301,50 +300,6 @@ export function StudentOnboardingForm({
                               />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  {/* Consent */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                        Guardian Consent
-                      </CardTitle>
-                      <CardDescription>
-                        Please confirm your consent for student enrollment
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <FormField
-                        control={form.control}
-                        name="guardian_consent"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel className="text-sm font-medium">
-                                I confirm guardian consent{" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormDescription>
-                                I confirm that I am the legal guardian of this
-                                student and consent to their enrollment in
-                                courses and activities. I understand that the
-                                emergency contact information provided will be
-                                used only for safety and communication purposes
-                                related to the student&apos;s education.
-                              </FormDescription>
-                              <FormMessage />
-                            </div>
                           </FormItem>
                         )}
                       />

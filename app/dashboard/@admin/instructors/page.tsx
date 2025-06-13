@@ -1,25 +1,27 @@
 import React from 'react'
-import { Instructor } from '@/api-client/models/Instructor'
-import { InstructorManagementService } from '@/api-client/services/InstructorManagementService'
+import { Instructor } from '@/services/api/schema'
+import { fetchClient } from '@/services/api/fetch-client'
 import InstructorsPage from './_components/InstructorsPage'
+import ErrorPage from '@/components/ErrorPage'
 
 export default async function Page() {
-    let instructors: Instructor[] = []
-
-    try {
-        const response = await InstructorManagementService.getAllInstructors({
-            page: 0,
-            size: 100,
-            sort: ['created_date,desc']
-        })
-
-        if (response.data?.content) {
-            instructors = response.data.content
+    const response = await fetchClient.GET("/api/v1/instructors", {
+        params: {
+            query: {
+                //@ts-ignore
+                page: 0,
+                size: 20,
+                sort: ['desc']
+            }
         }
-    } catch (error) {
-        console.error('Error fetching instructors:', error)
-        // Handle error appropriately - maybe show error state
+    })
+
+    if (response.error) {
+        console.error(response)
+        return <ErrorPage message={response.error.message || "Something went wrong while fetching instructors"} />
     }
 
-    return <InstructorsPage instructors={instructors} />
+    const instructors = response.data?.data?.content
+    console.log(instructors)
+    return <InstructorsPage instructors={instructors || []} />
 } 

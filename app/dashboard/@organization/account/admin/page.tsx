@@ -31,19 +31,13 @@ import {
 import { useTrainingCenter } from "@/context/training-center-provider"
 import { useUserStore } from "@/store/use-user-store"
 import { useEffect } from "react"
-import { useSessionContext } from "@/context/session-provider-wrapper"
 import { updateUser } from "@/app/auth/create-account/actions"
 
 export default function AdminProfile() {
-  const { session } = useSessionContext()
   const { trainingCenter } = useTrainingCenter()
-  const { user, isLoading, fetchCurrentUser } = useUserStore()
+  const { user, } = useUserStore()
 
-  useEffect(() => {
-    if (!user && !isLoading && session?.user?.email) {
-      fetchCurrentUser(session?.user?.email)
-    }
-  }, [session?.user?.email, fetchCurrentUser, isLoading, user])
+
 
   const form = useForm<User>({
     resolver: zodResolver(UserFormSchema),

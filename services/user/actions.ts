@@ -14,11 +14,12 @@ export const getUserProfile = async () => {
   const resp = await fetchClient.GET("/api/v1/users/search", {
     params: {
       query: {
+        //@ts-ignore
         page: 0,
         size: 1,
-        email: session.user.email,
+        email_eq: session.user.email,
       },
     },
   })
-  return resp
+  return resp.data
 }

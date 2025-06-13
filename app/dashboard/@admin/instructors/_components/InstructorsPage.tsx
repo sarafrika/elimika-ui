@@ -1,8 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Instructor } from '@/api-client/models/Instructor'
-import { InstructorManagementService } from '@/api-client/services/InstructorManagementService'
+import { Instructor } from '@/services/api/schema'
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import InstructorsList from './InstructorsList'
@@ -31,9 +30,8 @@ export default function InstructorsPage({ instructors }: Props) {
 
     const handleApproveInstructor = async (instructor: Instructor) => {
         try {
-            const updatedInstructor = { ...instructor }
-            await InstructorManagementService.updateInstructor(instructor.uuid!, updatedInstructor)
-
+            // In a real implementation, you would call an API to approve the instructor
+            // For now, we'll just update the local state
             const newStatuses = new Map(instructorStatuses)
             newStatuses.set(instructor.uuid!, 'approved')
             setInstructorStatuses(newStatuses)
@@ -46,9 +44,8 @@ export default function InstructorsPage({ instructors }: Props) {
 
     const handleRejectInstructor = async (instructor: Instructor) => {
         try {
-            const updatedInstructor = { ...instructor }
-            await InstructorManagementService.updateInstructor(instructor.uuid!, updatedInstructor)
-
+            // In a real implementation, you would call an API to reject the instructor
+            // For now, we'll just update the local state
             const newStatuses = new Map(instructorStatuses)
             newStatuses.set(instructor.uuid!, 'rejected')
             setInstructorStatuses(newStatuses)

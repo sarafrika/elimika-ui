@@ -1,89 +1,44 @@
 "use client"
-
-import { createContext, useContext, useEffect, useState } from "react"
-import { useSessionContext } from "@/context/session-provider-wrapper"
-import { usePathname, useRouter } from "next/navigation"
-import { useDomainStore } from "@/store/use-domain-store"
-import { useQuery } from "@tanstack/react-query"
-import { getUserProfile } from "@/services/user/actions"
+import { createContext, useContext, useEffect } from "react"
+import { useUserStore } from "@/store/use-user-store"
+import { User } from "@/services/api/schema"
+import ErrorPage from "@/components/ErrorPage"
 
 interface AuthContextType {
-  domains: UserDomain[]
-  activeDomain: UserDomain | null
+  user: User | null
   isLoading: boolean
-  setActiveDomain: (domain: UserDomain) => void
-  isLoggedIn: boolean
+  activeDomain: UserDomain | null
+
 }
 
 const AuthContext = createContext<AuthContextType>({
-  domains: [],
-  activeDomain: null,
-  setActiveDomain: () => { },
+  user: null,
   isLoading: true,
-  isLoggedIn: false,
+  activeDomain: null,
 })
 
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { session, status } = useSessionContext()
-  const domains = useDomainStore((state) => state.domains)
-  const activeDomain = useDomainStore((state) => state.activeDomain)
-  const setDomains = useDomainStore((state) => state.setDomains)
-  const setActiveDomain = useDomainStore((state) => state.setActiveDomain)
-  const resetDomains = useDomainStore((state) => state.resetDomains)
-  const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: () => getUserProfile(),
-    enabled: status === "authenticated",
-  })
-
-
-
-  // useEffect(() => {
-  //   if (status === "authenticated" && user?.data) {
-  //     const userDomains = user.data.roles
-  //     if (userDomains) {
-  //       if (userDomains.includes("admin")) {
-  //         setActiveDomain("admin")
-  //       } else if (userDomains.includes("instructor")) {
-  //         setActiveDomain("instructor")
-  //       } else if (userDomains.includes("student")) {
-  //         setActiveDomain("student")
-  //       }
-  //       setDomains(userDomains)
-  //     }
-  //   }
-  //   else {
-  //     resetDomains()
-  //   }
-  // }, [user?.data, status, setDomains, resetDomains])
-
-
-
-  const value = {
-    domains,
-    activeDomain,
-    setActiveDomain,
-    isLoading: status === "loading",
-    isLoggedIn: status === "authenticated",
-  }
-
-  if (status === "loading") {
+  const { user, isLoading, error, activeDomain, fetchCurrentUser } = useUserStore()
+  useEffect(() => {
+    fetchCurrentUser()
+  }, [fetchCurrentUser])
+  if (isLoading) {
     return (
-      <AuthContext.Provider value={value}>
-        <div className="flex h-screen w-screen items-center justify-center">
-          <div className="flex animate-pulse flex-col items-center">
-            <div className="mb-3 h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-            <div className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700"></div>
-          </div>
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="flex animate-pulse flex-col items-center">
+          <div className="mb-3 h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+          <div className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700"></div>
         </div>
-      </AuthContext.Provider>
+      </div>
     )
   }
+  if (error) {
+    console.log(error)
+    return <ErrorPage message={error || "An unknown error occurred."} />
+  }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, isLoading, activeDomain }}>{children}</AuthContext.Provider>
 }
 
-export const useAuth = () => useContext(AuthContext)
+export const useUser = () => useContext(AuthContext)
