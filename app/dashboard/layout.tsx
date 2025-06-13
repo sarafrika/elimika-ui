@@ -20,14 +20,14 @@ export default async function DashboardLayout({
 
   const userResponse = await getUserProfile()
   const userData = userResponse?.data?.content?.[0]
-  // if (
-  //   !userData || (userData && !userData?.user_domain)
+  if (
+    !userData || (userData && !userData?.user_domain)
 
-  // ) {
-  //   redirect("/onboarding")
-  // }
-  // const domain = userData.user_domain
-  // const activeChild = domain === "instructor" ? instructor : domain === "student" ? student : domain == 'organisation_user' ? admin : children
+  ) {
+    redirect("/onboarding")
+  }
+  const domain = userData.user_domain
+  const activeChild = domain === "instructor" ? instructor : domain === "student" ? student : domain == 'organisation_user' ? admin : children
   return (
     <TrainingCenterProvider>
       <SidebarProvider>
@@ -37,7 +37,7 @@ export default async function DashboardLayout({
             <BreadcrumbProvider>
               <DashboardHeader />
               <div className="flex flex-1 flex-col gap-4 space-y-4 px-6 pt-0">
-                {admin}
+                {activeChild}
               </div>
             </BreadcrumbProvider>
           </SidebarInset>
