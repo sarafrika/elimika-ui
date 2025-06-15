@@ -1166,15 +1166,15 @@ export interface components {
              */
             user_uuid: string;
             /**
-             * @description **[REQUIRED]** Full name of the primary guardian/parent. This is the main emergency contact for the student.
+             * @description **[OPTIONAL]** Full name of the primary guardian/parent. This is the main emergency contact for the student.
              * @example John Doe
              */
-            first_guardian_name: string;
+            first_guardian_name?: string;
             /**
-             * @description **[REQUIRED]** Mobile phone number of the primary guardian. Used for emergency contacts and notifications. Should include country code.
+             * @description **[OPTIONAL]** Mobile phone number of the primary guardian. Used for emergency contacts and notifications. Should include country code.
              * @example +254712345678
              */
-            first_guardian_mobile: string;
+            first_guardian_mobile?: string;
             /**
              * @description **[OPTIONAL]** Full name of the secondary guardian/parent. Additional emergency contact for the student.
              * @example Jane Doe
