@@ -17,93 +17,115 @@ export default function StudentOnboardingPage() {
   const { user, isLoading } = useUserStore()
   const { data: session, status } = useSession()
   const [isPending, startTransition] = useTransition()
-  const handleSubmit = useCallback(async (data: StudentOnboardingFormData) => {
-    if (typeof data.age !== "number" || data.age < 1) {
-      toast.error("Please enter a valid age")
-      return
-    }
-    const firstName = session?.user.name ? session.user.name.includes(" ")
-      ? session.user.name.split(" ")[0]
-      : session.user.name : ""
-    const lastName = session?.user.name ? session.user.name.includes(" ")
-      ? session.user.name.split(" ").slice(1).join(" ")
-      : "" : ""
-    startTransition(async () => {
-      if (user?.uuid) {
-        // Prepare the user update promise
-        const userUpdatePromise = fetchClient.PUT("/api/v1/users/{uuid}", {
-          params: {
-            path: {
-              uuid: user.uuid
-            }
-          },
-          body: {
-            user: {
-              user_domain: "student",
-              email: user.email ?? "",
-              // split the name into first and last name
-              first_name: firstName ?? "",
-              last_name: lastName ?? "",
-              phone_number:
-                data.age >= 18 && data.phone_number ? data.phone_number : "",
-              dob: "",
-              username: session?.user.name ?? "",
-              active: true,
+  const handleSubmit = useCallback(
+    async (data: StudentOnboardingFormData) => {
+      const today = new Date()
+      const birthDate = new Date(data.date_of_birth)
+      const age = today.getFullYear() - birthDate.getFullYear()
+      const monthDiff = today.getMonth() - birthDate.getMonth()
+      const isAdult = age > 18 || (age === 18 && monthDiff >= 0)
+
+      const fullName = session?.user.name
+
+      if (!fullName) {
+        toast.error("User name is required. Please try logging in again.")
+        return
+      }
+
+      const firstName = fullName.split(" ")[0]
+      const lastName = fullName.split(" ").slice(1).join(" ")
+      startTransition(async () => {
+        if (user?.uuid) {
+          // Prepare the user update promise
+          const userUpdatePromise = fetchClient.PUT("/api/v1/users/{uuid}", {
+            params: {
+              path: {
+                uuid: user.uuid,
+              },
             },
-          },
-        });
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: {
+              user: {
+                user_domain: "student",
+                email: user.email || "",
+                first_name: firstName ?? "",
+                last_name: lastName ?? "",
+                phone_number:
+                  isAdult && data.phone_number ? data.phone_number : "",
+                dob: data.date_of_birth?.toISOString().split("T")[0] || "",
+                username: session?.user.name ?? "",
+                active: true,
+              },
+            },
+          })
 
-        // Prepare the student details promise if needed
-        let studentDetailsPromise: Promise<any> | null = null;
+          // Prepare the student details promise if needed
+          let studentDetailsPromise: Promise<any> | null = null
 
-        studentDetailsPromise = fetchClient.POST("/api/v1/students", {
-          body: {
-            user_uuid: user.uuid,
-            first_guardian_name: data.first_guardian_name ?? "",
-            first_guardian_mobile: data.first_guardian_mobile ?? "",
-            second_guardian_name: data.second_guardian_name ?? "",
-            second_guardian_mobile: data.second_guardian_mobile ?? "",
-          }
-        });
+          studentDetailsPromise = fetchClient.POST("/api/v1/students", {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: {
+              user_uuid: user.uuid,
+              full_name: fullName ?? "",
+              first_guardian_name: data.first_guardian_name ?? "",
+              first_guardian_mobile: data.first_guardian_mobile ?? "",
+              second_guardian_name: data.second_guardian_name ?? "",
+              second_guardian_mobile: data.second_guardian_mobile ?? "",
+            },
+          })
 
-        // Run both in parallel if both exist, otherwise just the user update
-        try {
-          const [userUpdateResponse, studentDetailsResponse] = await Promise.all([userUpdatePromise, studentDetailsPromise]);
-          if (userUpdateResponse.error) {
-            toast.error(userUpdateResponse.error.message)
+          // Run both in parallel if both exist, otherwise just the user update
+          try {
+            const [userUpdateResponse, studentDetailsResponse] =
+              await Promise.all([userUpdatePromise, studentDetailsPromise])
+            if (userUpdateResponse.error) {
+              toast.error(userUpdateResponse.error.message)
+            } else if (studentDetailsResponse.error) {
+              toast.error(studentDetailsResponse.error.message)
+            } else if (
+              userUpdateResponse.data.error ||
+              studentDetailsResponse.data.error
+            ) {
+              toast.error(
+                userUpdateResponse?.data?.message ||
+                  studentDetailsResponse?.data?.message,
+              )
+            } else if (
+              userUpdateResponse.data.success &&
+              studentDetailsResponse.data.success
+            ) {
+              toast.success("Registration completed successfully!")
+              router.replace("/dashboard/overview")
+            }
+          } catch (error) {
+            console.error("Error updating user or creating student:", error)
+            toast.error("Failed to complete registration. Please try again.")
           }
-          else if (studentDetailsResponse.error) {
-            toast.error(studentDetailsResponse.error.message)
-          }
-          else if (userUpdateResponse.data.error || studentDetailsResponse.data.error) {
-            toast.error(userUpdateResponse?.data?.message || studentDetailsResponse?.data?.message)
-          }
-          else if (userUpdateResponse.data.success && studentDetailsResponse.data.success) {
-            toast.success("Registration completed successfully!")
-            router.replace("/dashboard/overview")
-          }
-        } catch (error) {
-          console.error("Error updating user or creating student:", error);
-          toast.error("Failed to complete registration. Please try again.");
+        } else {
+          toast.error("User not found")
         }
-      }
-      else {
-        toast.error("User not found")
-      }
-    })
-  }, [user?.uuid, user?.email, session?.user.name, router])
+      })
+    },
+    [user?.uuid, user?.email, session?.user.name, router],
+  )
 
-  if (isLoading || status == 'loading') {
+  if (isLoading || status == "loading") {
     return <Loading />
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      {user?.uuid && <StudentOnboardingForm
-        userUuid={user?.uuid}
-        isSubmitting={isPending}
-        onSubmit={handleSubmit} />
-      }
+      {user?.uuid && (
+        <StudentOnboardingForm
+          userUuid={user?.uuid}
+          isSubmitting={isPending}
+          onSubmit={handleSubmit}
+        />
+      )}
     </div>
   )
 }

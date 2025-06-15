@@ -1,9 +1,7 @@
 import Link from "next/link"
 import React from "react"
-import SearchUsers from "./SearchUsers"
 
 const OnboardingPage = () => {
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-4xl rounded-lg bg-white p-8 shadow-xl">
@@ -59,8 +57,7 @@ const OnboardingPage = () => {
               <div className="mt-4 text-right font-medium">Choose &rarr;</div>
             </div>
           </Link>
-          <SearchUsers />
-
+          {/* <SearchUsers /> */}
         </div>
       </div>
     </div>
