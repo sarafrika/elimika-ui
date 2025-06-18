@@ -11,6 +11,16 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        success:
+          "bg-success text-success-foreground shadow-xs hover:bg-success/90",
+        warning:
+          "bg-warning text-warning-foreground shadow-xs hover:bg-warning/90",
+        outlineSuccess:
+          "border border-success text-success-foreground shadow-xs hover:bg-success/90",
+        outlineWarning:
+          "border border-warning text-warning-foreground shadow-xs hover:bg-warning/90",
+        outlineDestructive:
+          "border border-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         outline:
