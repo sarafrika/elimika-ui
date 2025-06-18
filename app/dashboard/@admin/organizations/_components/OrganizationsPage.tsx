@@ -67,9 +67,9 @@ export default function OrganizationsPage({ organizations }: Props) {
 
     const getStatusBadgeComponent = (organizationId: string) => {
         const status = getStatusBadge(organizationId)
-        const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-            approved: 'default',
-            pending: 'secondary',
+        const variants: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "outlineSuccess" | "outlineWarning" | "outlineDestructive"> = {
+            approved: 'success',
+            pending: 'warning',
             rejected: 'destructive'
         }
 

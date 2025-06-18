@@ -50,12 +50,10 @@ export default function InstructorDetailsPanel({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                <div className="max-w-2xl">
-                    <InstructorDetails
-                        instructor={instructor}
-                        getStatusBadgeComponent={getStatusBadgeComponent}
-                    />
-                </div>
+                <InstructorDetails
+                    instructor={instructor}
+                    getStatusBadgeComponent={getStatusBadgeComponent}
+                />
             </div>
 
             {/* Action Buttons */}

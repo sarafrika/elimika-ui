@@ -36,23 +36,25 @@ export default function OrganizationCard({
 
     return (
         <Card
-            className={`m-2 p-4 cursor-pointer transition-colors hover:bg-accent/50 ${isSelected ? 'ring-2 ring-blue-500 bg-accent/30' : ''
+            className={`m-2 p-4 cursor-pointer transition-colors hover:bg-accent/10 ${isSelected ? 'ring ring-primary bg-accent/10' : ''
                 }`}
             onClick={() => onSelect(organization)}
         >
             <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3 flex-1">
+                <div className="flex items-start space-x-3 flex-1 min-w-0">
                     <div className="flex-shrink-0">
                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Building2 className="h-5 w-5 text-blue-600" />
+                            <Building2 className="h-5 w-5 text-primary" />
                         </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium text-sm truncate">
+                        <div className="mb-2">
+                            <h3 className="font-medium text-sm truncate mb-1">
                                 {organization.name}
                             </h3>
-                            {organization.uuid && getStatusBadgeComponent(organization.uuid)}
+                            <div className="flex items-center">
+                                {organization.uuid && getStatusBadgeComponent(organization.uuid)}
+                            </div>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
                             {organization.domain}
@@ -65,26 +67,28 @@ export default function OrganizationCard({
                         </p>}
                     </div>
                 </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <MoreVertical className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            onDelete(organization)
-                        }}>
-                            Delete
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex-shrink-0 ml-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                onDelete(organization)
+                            }}>
+                                Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
         </Card>
     )

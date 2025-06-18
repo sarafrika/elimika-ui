@@ -50,7 +50,7 @@ export default function OrganizationDetailsPanel({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                <div className="max-w-2xl">
+                <div >
                     <OrganizationDetails
                         organization={organization}
                         getStatusBadgeComponent={getStatusBadgeComponent}
@@ -63,7 +63,7 @@ export default function OrganizationDetailsPanel({
                 <div className="flex gap-3">
                     <Button
                         onClick={() => onApprove(organization)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        variant="success"
                     >
                         <Edit className="h-4 w-4 mr-2" />
                         Approve
