@@ -2281,7 +2281,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": {
+                "multipart/form-data": {
                     user: components["schemas"]["User"];
                     /** Format: binary */
                     profile_image?: string;
@@ -2295,7 +2295,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponseUser"];
+                    "application/json": components["schemas"]["ApiResponseUser"];
                 };
             };
             /** @description Invalid input data */
@@ -2304,7 +2304,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponseUser"];
+                    "application/json": components["schemas"]["ApiResponseUser"];
                 };
             };
             /** @description User not found */
@@ -5407,7 +5407,9 @@ export interface operations {
     };
     createCourse: {
         parameters: {
-            query?: never;
+            query: {
+                course: components["schemas"]["CreateCourseRequestDTO"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -5415,7 +5417,6 @@ export interface operations {
         requestBody?: {
             content: {
                 "multipart/form-data": {
-                    course: components["schemas"]["CreateCourseRequestDTO"];
                     /** Format: binary */
                     thumbnail: string;
                 };
@@ -5513,7 +5514,9 @@ export interface operations {
     };
     createLesson: {
         parameters: {
-            query?: never;
+            query: {
+                lesson: components["schemas"]["CreateLessonRequestDTO"];
+            };
             header?: never;
             path: {
                 courseId: number;
@@ -5523,7 +5526,6 @@ export interface operations {
         requestBody?: {
             content: {
                 "multipart/form-data": {
-                    lesson: components["schemas"]["CreateLessonRequestDTO"];
                     files?: string[];
                 };
             };
