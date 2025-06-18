@@ -34,70 +34,182 @@ export default function StudentOnboardingPage() {
         return
       }
 
-      const firstName = fullName.split(" ")[0]
-      const lastName = fullName.split(" ").slice(1).join(" ")
+      const firstName = fullName.split(" ")[0]!
+      const lastName = fullName.split(" ").slice(1).join(" ") || firstName
 
       startTransition(async () => {
         try {
           // Get auth token
           const authToken = await getAuthToken()
 
-          // Step 1: Update user with PUT request (multipart/form-data)
+          // Step 1: Update user with PUT request using fetchClient
           const userData = {
-            user_domain: "student" as const,
-            email: user.email || "",
             first_name: firstName,
             last_name: lastName,
-            phone_number: isAdult && data.phone_number ? data.phone_number : "",
+            email: user.email || "",
+            phone_number: isAdult
+              ? data.phone_number || ""
+              : data.first_guardian_mobile || "",
             dob: data.date_of_birth?.toISOString().split("T")[0] || "",
             username: session?.user.name ?? "",
             active: true,
+            user_domain: ["student"] as any, // Backend expects array despite schema showing string enum
+            // Include any existing fields that might be required
+            ...(user.middle_name && { middle_name: user.middle_name }),
+            ...(user.organisation_uuid && {
+              organisation_uuid: user.organisation_uuid,
+            }),
+            ...(user.gender && { gender: user.gender }),
           }
 
-          const formData = new FormData()
-          formData.append("user", JSON.stringify(userData))
-
-          const userUpdateResponse = await fetch(
-            `https://api.elimika.sarafrika.com/api/v1/users/${user.uuid}`,
+          const userUpdateResponse = await fetchClient.PUT(
+            "/api/v1/users/{uuid}",
             {
-              method: "PUT",
+              params: {
+                path: {
+                  uuid: user.uuid!,
+                },
+              },
               headers: {
+                "Content-Type": "application/json",
                 Authorization: `Bearer ${authToken}`,
               },
-              body: formData,
+              body: userData,
             },
           )
 
-          if (!userUpdateResponse.ok) {
-            const errorData = await userUpdateResponse.json()
-            throw new Error(errorData.message || "Failed to update user")
+          if (userUpdateResponse.error) {
+            throw new Error(
+              userUpdateResponse.error.message || "Failed to update user",
+            )
           }
 
-          const userUpdateData = await userUpdateResponse.json()
+          console.log("User updated successfully:", userUpdateResponse.data)
 
-          if (!userUpdateData.success) {
-            throw new Error(userUpdateData.message || "Failed to update user")
+          // Step 2: Search for student record using user UUID
+          const studentSearchResponse = await fetchClient.GET(
+            "/api/v1/students/search",
+            {
+              params: {
+                query: {
+                  // @ts-ignore
+                  user_uuid_eq: user.uuid!,
+                },
+              },
+              headers: {
+                Authorization: `Bearer ${authToken}`,
+              },
+            },
+          )
+
+          if (studentSearchResponse.error) {
+            throw new Error(
+              studentSearchResponse.error.message ||
+                "Failed to search for student record",
+            )
           }
 
-          // Step 2: Create student record with POST request (JSON)
+          const studentsData = studentSearchResponse.data
+          console.log("Student search response:", studentsData)
+
+          let student
+
+          if (
+            !(studentsData as any)?.data?.content ||
+            (studentsData as any).data.content.length === 0
+          ) {
+            console.log("No students found. Response structure:", studentsData)
+            console.log("Waiting 2 seconds for student record to be created...")
+
+            // Wait 4 seconds for the backend to create the student record
+            await new Promise((resolve) => setTimeout(resolve, 4000))
+
+            // Retry the search after delay
+            const retrySearchResponse = await fetchClient.GET(
+              "/api/v1/students/search",
+              {
+                params: {
+                  query: {
+                    // @ts-ignore
+                    user_uuid_eq: user.uuid!,
+                  },
+                },
+                headers: {
+                  Authorization: `Bearer ${authToken}`,
+                },
+              },
+            )
+
+            if (retrySearchResponse.error) {
+              throw new Error(
+                retrySearchResponse.error.message ||
+                  "Failed to search for student record after retry",
+              )
+            }
+
+            const retryStudentsData = retrySearchResponse.data
+            console.log("Retry student search response:", retryStudentsData)
+
+            if (
+              !(retryStudentsData as any)?.data?.content ||
+              (retryStudentsData as any).data.content.length === 0
+            ) {
+              throw new Error(
+                "Student record not found even after waiting for backend processing",
+              )
+            }
+
+            student = (retryStudentsData as any).data.content[0]
+            console.log("Student found after retry:", student)
+          } else {
+            student = (studentsData as any).data.content[0]
+            console.log("Student found immediately:", student)
+          }
+
+          if (!student?.uuid) {
+            throw new Error("Student UUID not found")
+          }
+
+          // Step 3: Update student record with PUT request using fetchClient
           const studentData = {
             user_uuid: user.uuid!,
-            full_name: fullName,
-            first_guardian_name: data.first_guardian_name || undefined,
-            first_guardian_mobile: data.first_guardian_mobile || undefined,
-            second_guardian_name: data.second_guardian_name || undefined,
-            second_guardian_mobile: data.second_guardian_mobile || undefined,
+            full_name: fullName!,
+            // Guardian information - using exact schema field names
+            ...(data.first_guardian_name && {
+              first_guardian_name: data.first_guardian_name,
+            }),
+            ...(data.first_guardian_mobile && {
+              first_guardian_mobile: data.first_guardian_mobile,
+            }),
+            ...(data.second_guardian_name && {
+              second_guardian_name: data.second_guardian_name,
+            }),
+            ...(data.second_guardian_mobile && {
+              second_guardian_mobile: data.second_guardian_mobile,
+            }),
           }
 
-          const studentResponse = await fetchClient.POST("/api/v1/students", {
-            headers: {
-              "Content-Type": "application/json",
+          const studentUpdateResponse = await fetchClient.PUT(
+            "/api/v1/students/{uuid}",
+            {
+              params: {
+                path: {
+                  uuid: student.uuid!,
+                },
+              },
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${authToken}`,
+              },
+              body: studentData,
             },
-            body: studentData,
-          })
+          )
 
-          if (studentResponse.error) {
-            throw new Error("Failed to create student record")
+          if (studentUpdateResponse.error) {
+            throw new Error(
+              studentUpdateResponse.error.message ||
+                "Failed to update student record",
+            )
           }
 
           // Both requests successful
@@ -113,7 +225,15 @@ export default function StudentOnboardingPage() {
         }
       })
     },
-    [user?.uuid, user?.email, session?.user.name, router],
+    [
+      user?.uuid,
+      user?.email,
+      user?.middle_name,
+      user?.organisation_uuid,
+      user?.gender,
+      session?.user.name,
+      router,
+    ],
   )
 
   if (isLoading || status == "loading") {

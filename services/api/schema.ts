@@ -25,7 +25,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/user-groups/{uuid}": {
+    "/api/v1/users/{uuid}/profile-image": {
         parameters: {
             query?: never;
             header?: never;
@@ -34,13 +34,11 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Get a user group by UUID */
-        get: operations["getUserGroupByUuid"];
-        /** Update a user group by UUID */
-        put: operations["updateUserGroup"];
+        get?: never;
+        /** Upload User's Profile Image */
+        put: operations["uploadProfileImage"];
         post?: never;
-        /** Delete a user group by UUID */
-        delete: operations["deleteUserGroup"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -301,65 +299,6 @@ export interface paths {
         put: operations["updateQuestion"];
         post?: never;
         delete: operations["deleteQuestion"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/user-groups": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create a new user group */
-        post: operations["createUserGroup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/user-groups/{uuid}/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        /** Get users for a user group */
-        get: operations["getUsersForUserGroup"];
-        put?: never;
-        /** Add users to a user group */
-        post: operations["addUsersToGroup"];
-        /** Remove users from a user group */
-        delete: operations["removeUsersFromGroup"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/user-groups/{uuid}/roles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        /** Get roles for a user group */
-        get: operations["getRolesForUserGroup"];
-        put?: never;
-        /** Assign roles to a user group */
-        post: operations["assignRolesToGroup"];
-        /** Remove roles from a user group */
-        delete: operations["removeRolesFromGroup"];
         options?: never;
         head?: never;
         patch?: never;
@@ -662,45 +601,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/user-groups/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Search user groups
-         * @description Fetches a paginated list of user groups based on optional filters. Supports pagination and sorting.
-         */
-        get: operations["search_1"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/user-groups/organisation/{organisationUuid}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationUuid: string;
-            };
-            cookie?: never;
-        };
-        /** Get all user groups for an organisation */
-        get: operations["getUserGroupsByOrganisation"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/training-sessions/search": {
         parameters: {
             query?: never;
@@ -833,7 +733,7 @@ export interface paths {
          * Search organisations
          * @description Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting.
          */
-        get: operations["search_2"];
+        get: operations["search_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1093,24 +993,6 @@ export interface components {
         ApiResponseUser: {
             success?: boolean;
             data?: components["schemas"]["User"];
-            message?: string;
-            error?: Record<string, never>;
-        };
-        UserGroupDTO: {
-            /** Format: uuid */
-            uuid?: string;
-            /** Format: uuid */
-            organisation_uuid?: string;
-            name: string;
-            active: boolean;
-            /** Format: date-time */
-            readonly created_date?: string;
-            /** Format: date-time */
-            readonly modified_date?: string;
-        };
-        ApiResponseUserGroupDTO: {
-            success?: boolean;
-            data?: components["schemas"]["UserGroupDTO"];
             message?: string;
             error?: Record<string, never>;
         };
@@ -1385,6 +1267,11 @@ export interface components {
              */
             readonly full_name?: string;
             /**
+             * @description **[READ-ONLY]** Indicates whether the instructor has been verified by an administrator. True if verified, false if not verified, null if verification status is unknown or pending.
+             * @example true
+             */
+            readonly admin_verified?: boolean;
+            /**
              * Format: date-time
              * @description **[READ-ONLY]** Timestamp when the instructor profile was first created. Automatically set by the system.
              * @example 2024-04-01T12:00:00
@@ -1624,12 +1511,6 @@ export interface components {
             orderInAssessment?: number;
             answerOptions?: components["schemas"]["UpdateAnswerOptionRequestDTO"][];
         };
-        ApiResponseVoid: {
-            success?: boolean;
-            data?: Record<string, never>;
-            message?: string;
-            error?: Record<string, never>;
-        };
         ApiResponseTrainingSessionDTO: {
             success?: boolean;
             data?: components["schemas"]["TrainingSessionDTO"];
@@ -1828,28 +1709,6 @@ export interface components {
             metadata?: components["schemas"]["PageMetadata"];
             links?: components["schemas"]["PageLinks"];
         };
-        ApiResponsePagedDTORoleDTO: {
-            success?: boolean;
-            data?: components["schemas"]["PagedDTORoleDTO"];
-            message?: string;
-            error?: Record<string, never>;
-        };
-        PagedDTORoleDTO: {
-            content?: components["schemas"]["RoleDTO"][];
-            metadata?: components["schemas"]["PageMetadata"];
-            links?: components["schemas"]["PageLinks"];
-        };
-        ApiResponsePagedDTOUserGroupDTO: {
-            success?: boolean;
-            data?: components["schemas"]["PagedDTOUserGroupDTO"];
-            message?: string;
-            error?: Record<string, never>;
-        };
-        PagedDTOUserGroupDTO: {
-            content?: components["schemas"]["UserGroupDTO"][];
-            metadata?: components["schemas"]["PageMetadata"];
-            links?: components["schemas"]["PageLinks"];
-        };
         ApiResponsePagedDTOTrainingSessionDTO: {
             success?: boolean;
             data?: components["schemas"]["PagedDTOTrainingSessionDTO"];
@@ -1911,6 +1770,17 @@ export interface components {
             data?: components["schemas"]["RoleDTO"][];
             message?: string;
             error?: Record<string, never>;
+        };
+        ApiResponsePagedDTORoleDTO: {
+            success?: boolean;
+            data?: components["schemas"]["PagedDTORoleDTO"];
+            message?: string;
+            error?: Record<string, never>;
+        };
+        PagedDTORoleDTO: {
+            content?: components["schemas"]["RoleDTO"][];
+            metadata?: components["schemas"]["PageMetadata"];
+            links?: components["schemas"]["PageLinks"];
         };
         ApiResponseListPermissionDTO: {
             success?: boolean;
@@ -2120,6 +1990,12 @@ export interface components {
             status?: number;
             message?: string;
         };
+        ApiResponseVoid: {
+            success?: boolean;
+            data?: Record<string, never>;
+            message?: string;
+            error?: Record<string, never>;
+        };
     };
     responses: never;
     parameters: never;
@@ -2132,8 +2008,6 @@ export type PermissionDto = components['schemas']['PermissionDTO'];
 export type RoleDto = components['schemas']['RoleDTO'];
 export type User = components['schemas']['User'];
 export type ApiResponseUser = components['schemas']['ApiResponseUser'];
-export type UserGroupDto = components['schemas']['UserGroupDTO'];
-export type ApiResponseUserGroupDto = components['schemas']['ApiResponseUserGroupDTO'];
 export type TrainingSessionDto = components['schemas']['TrainingSessionDTO'];
 export type Student = components['schemas']['Student'];
 export type ApiResponseRoleDto = components['schemas']['ApiResponseRoleDTO'];
@@ -2160,7 +2034,6 @@ export type ResponseDtoCategoryResponseDto = components['schemas']['ResponseDTOC
 export type UpdateAssessmentRequestDto = components['schemas']['UpdateAssessmentRequestDTO'];
 export type UpdateAnswerOptionRequestDto = components['schemas']['UpdateAnswerOptionRequestDTO'];
 export type UpdateQuestionRequestDto = components['schemas']['UpdateQuestionRequestDTO'];
-export type ApiResponseVoid = components['schemas']['ApiResponseVoid'];
 export type ApiResponseTrainingSessionDto = components['schemas']['ApiResponseTrainingSessionDTO'];
 export type ApiResponseStudent = components['schemas']['ApiResponseStudent'];
 export type CreatePrerequisiteRequestDto = components['schemas']['CreatePrerequisiteRequestDTO'];
@@ -2185,10 +2058,6 @@ export type ApiResponsePagedDtoUser = components['schemas']['ApiResponsePagedDTO
 export type PageLinks = components['schemas']['PageLinks'];
 export type PageMetadata = components['schemas']['PageMetadata'];
 export type PagedDtoUser = components['schemas']['PagedDTOUser'];
-export type ApiResponsePagedDtoRoleDto = components['schemas']['ApiResponsePagedDTORoleDTO'];
-export type PagedDtoRoleDto = components['schemas']['PagedDTORoleDTO'];
-export type ApiResponsePagedDtoUserGroupDto = components['schemas']['ApiResponsePagedDTOUserGroupDTO'];
-export type PagedDtoUserGroupDto = components['schemas']['PagedDTOUserGroupDTO'];
 export type ApiResponsePagedDtoTrainingSessionDto = components['schemas']['ApiResponsePagedDTOTrainingSessionDTO'];
 export type PagedDtoTrainingSessionDto = components['schemas']['PagedDTOTrainingSessionDTO'];
 export type Page = components['schemas']['Page'];
@@ -2197,6 +2066,8 @@ export type SortObject = components['schemas']['SortObject'];
 export type ApiResponsePagedDtoStudent = components['schemas']['ApiResponsePagedDTOStudent'];
 export type PagedDtoStudent = components['schemas']['PagedDTOStudent'];
 export type ApiResponseListRoleDto = components['schemas']['ApiResponseListRoleDTO'];
+export type ApiResponsePagedDtoRoleDto = components['schemas']['ApiResponsePagedDTORoleDTO'];
+export type PagedDtoRoleDto = components['schemas']['PagedDTORoleDTO'];
 export type ApiResponseListPermissionDto = components['schemas']['ApiResponseListPermissionDTO'];
 export type PrerequisiteRequestDto = components['schemas']['PrerequisiteRequestDTO'];
 export type PrerequisiteResponseDto = components['schemas']['PrerequisiteResponseDTO'];
@@ -2219,6 +2090,7 @@ export type QuestionResponseDto = components['schemas']['QuestionResponseDTO'];
 export type ResponsePageableDtoQuestionResponseDto = components['schemas']['ResponsePageableDTOQuestionResponseDTO'];
 export type ResponseDtoQuestionResponseDto = components['schemas']['ResponseDTOQuestionResponseDTO'];
 export type ResponsePageableDtoAssessmentResponseDto = components['schemas']['ResponsePageableDTOAssessmentResponseDTO'];
+export type ApiResponseVoid = components['schemas']['ApiResponseVoid'];
 export type $defs = Record<string, never>;
 export interface operations {
     getUserByUuid: {
@@ -2279,13 +2151,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
-                "multipart/form-data": {
-                    user: components["schemas"]["User"];
-                    /** Format: binary */
-                    profile_image?: string;
-                };
+                "application/json": components["schemas"]["User"];
             };
         };
         responses: {
@@ -2385,7 +2253,7 @@ export interface operations {
             };
         };
     };
-    getUserGroupByUuid: {
+    uploadProfileImage: {
         parameters: {
             query?: never;
             header?: never;
@@ -2394,120 +2262,34 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseUserGroupDTO"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
-    updateUserGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["UserGroupDTO"];
+                "multipart/form-data": {
+                    /** Format: binary */
+                    profile_image: string;
+                };
             };
         };
         responses: {
-            /** @description OK */
+            /** @description Profile Image Uploaded successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponseUserGroupDTO"];
+                    "application/json": components["schemas"]["ApiResponseUser"];
                 };
             };
-            /** @description Not Found */
-            404: {
+            /** @description Invalid input data */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
+                    "application/json": components["schemas"]["ApiResponseUser"];
                 };
             };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
-    deleteUserGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-            /** @description Not Found */
+            /** @description User not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -4242,371 +4024,6 @@ export interface operations {
             };
         };
     };
-    createUserGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserGroupDTO"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseUserGroupDTO"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
-    getUsersForUserGroup: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Users retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponsePagedDTOUser"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
-    addUsersToGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": string[];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
-    removeUsersFromGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": string[];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
-    getRolesForUserGroup: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Roles retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponsePagedDTORoleDTO"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
-    assignRolesToGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": string[];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
-    removeRolesFromGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                uuid: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": string[];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseVoid"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
     getAllTrainingSessions: {
         parameters: {
             query: {
@@ -5974,106 +5391,6 @@ export interface operations {
             };
         };
     };
-    search_1: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Paginated list of user groups matching the search criteria */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponsePagedDTOUserGroupDTO"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
-    getUserGroupsByOrganisation: {
-        parameters: {
-            query: {
-                pageable: components["schemas"]["Pageable"];
-            };
-            header?: never;
-            path: {
-                organisationUuid: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponsePagedDTOUserGroupDTO"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ResponseDTOVoid"];
-                };
-            };
-        };
-    };
     searchTrainingSessions: {
         parameters: {
             query: {
@@ -6374,7 +5691,7 @@ export interface operations {
             };
         };
     };
-    search_2: {
+    search_1: {
         parameters: {
             query: {
                 pageable: components["schemas"]["Pageable"];
