@@ -19,10 +19,10 @@ export default async function DashboardLayout({
 }: Props) {
   const userResponse = await getUserProfile()
   const userData = userResponse?.data?.content?.[0]
-  if (!userData || (userData && !userData?.user_domain)) {
+  if (!userData || (userData && userData.user_domain?.length == 0)) {
     redirect("/onboarding")
   }
-  const domain = userData.user_domain
+  const domain = userData?.user_domain?.[0]
   const activeChild =
     domain === "instructor"
       ? instructor

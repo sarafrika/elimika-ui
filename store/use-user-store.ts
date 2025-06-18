@@ -5,21 +5,17 @@ import { User } from "@/services/api/schema"
 
 type UserState = {
   user: User | null
-  activeDomain: UserDomain | null
-
+  activeDomain: User["user_domain"] | null
   isLoading: boolean
   error: string | null
 }
-
 type UserActions = {
   setUser: (user: User | null) => void
-  setActiveDomain: (domain: UserDomain) => void
   clearUser: () => void
   fetchCurrentUser: () => Promise<User | undefined>
 }
 
 type UserStore = UserState & UserActions
-
 export const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
@@ -41,8 +37,14 @@ export const useUserStore = create<UserStore>()(
 
           const userData = response?.data?.content?.[0]
           set({ user: userData, isLoading: false })
-          if (userData?.user_domain) {
-            set({ activeDomain: userData?.user_domain })
+          if (
+            userData &&
+            userData?.user_domain &&
+            userData?.user_domain?.length > 0
+          ) {
+            set({
+              activeDomain: userData?.user_domain,
+            })
           }
           return userData
         } catch (error) {
@@ -57,7 +59,6 @@ export const useUserStore = create<UserStore>()(
         }
       },
       activeDomain: null,
-      setActiveDomain: (domain) => set({ activeDomain: domain }),
     }),
     {
       name: "user-storage", // unique name for localStorage

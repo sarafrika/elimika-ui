@@ -14,7 +14,7 @@ export const getUserProfile = async () => {
   const resp = await fetchClient.GET("/api/v1/users/search", {
     params: {
       query: {
-        //@ts-ignore
+        // @ts-ignore
         page: 0,
         size: 1,
         email_eq: session.user.email,

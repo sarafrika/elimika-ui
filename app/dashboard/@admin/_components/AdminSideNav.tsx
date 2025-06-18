@@ -5,21 +5,14 @@ import {
     LayoutDashboard,
     Users,
     Building2,
-    ChevronRight
 } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
-    SidebarHeader,
     SidebarMenu,
     SidebarMenuItem,
     SidebarMenuButton,
-    SidebarProvider,
-    SidebarTrigger,
-    SidebarRail,
-    SidebarInset,
     SidebarGroupContent,
-    SidebarGroup,
     SidebarGroupLabel,
 } from "@/components/ui/sidebar"
 import Link from "next/link"

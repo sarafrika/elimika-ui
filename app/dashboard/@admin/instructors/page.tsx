@@ -22,6 +22,5 @@ export default async function Page() {
     }
 
     const instructors = response.data?.data?.content
-    console.log(instructors)
     return <InstructorsPage instructors={instructors || []} />
 } 

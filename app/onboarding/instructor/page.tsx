@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
-import { InstructorManagementService, UsersApiService } from "@/api-client"
+// import { InstructorManagementService, UsersApiService } from "@/api-client"
 import {
   InstructorOnboardingForm,
   type InstructorOnboardingFormData,
@@ -24,40 +24,40 @@ export default function InstructorOnboardingPage() {
       return
     }
 
-    try {
-      const resp = await UsersApiService.createUser("instructor", {
-        user: {
-          email: session.user.email,
-          first_name: session.user.name,
-          last_name: session.user.name,
-          username: session.user.name,
-          phone_number: data.phone_number,
-          dob: new Date().toISOString().split("T")[0],
-          active: true,
-        },
-      })
+    // try {
+    //   const resp = await UsersApiService.createUser("instructor", {
+    //     user: {
+    //       email: session.user.email,
+    //       first_name: session.user.name,
+    //       last_name: session.user.name,
+    //       username: session.user.name,
+    //       phone_number: data.phone_number,
+    //       dob: new Date().toISOString().split("T")[0],
+    //       active: true,
+    //     },
+    //   })
 
-      if (resp.error) {
-        toast.error(resp.error.message)
-        return
-      }
+    //   if (resp.error) {
+    //     toast.error(resp.error.message)
+    //     return
+    //   }
 
-      if (resp.success && resp.data?.uuid) {
-        await InstructorManagementService.updateInstructor(resp.data.uuid, {
-          user_uuid: resp.data.uuid,
-          professional_headline: data.school_name,
-          bio: data.training_areas.join(", "),
-        })
+    //   if (resp.success && resp.data?.uuid) {
+    //     await InstructorManagementService.updateInstructor(resp.data.uuid, {
+    //       user_uuid: resp.data.uuid,
+    //       professional_headline: data.school_name,
+    //       bio: data.training_areas.join(", "),
+    //     })
 
-        toast.success("Registration completed successfully!")
-        router.replace("/dashboard/overview")
-      }
-    } catch (error) {
-      console.error("Registration error:", error)
-      toast.error("An error occurred during registration")
-    } finally {
-      setIsSubmitting(false)
-    }
+    //     toast.success("Registration completed successfully!")
+    //     router.replace("/dashboard/overview")
+    //   }
+    // } catch (error) {
+    //   console.error("Registration error:", error)
+    //   toast.error("An error occurred during registration")
+    // } finally {
+    //   setIsSubmitting(false)
+    // }
   }
 
   if (!session?.user?.id) {
