@@ -12,7 +12,12 @@ COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && corepack prepare pnpm@7.33.7 --activate && pnpm i --frozen-lockfile; \
+  elif [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && \
+    # The 'corepack prepare pnpm@7.33.7 --activate' line can be removed here
+    # because 'packageManager' in package.json will dictate the version.
+    # However, keeping it explicitly won't hurt, but simplifies the logic if removed.
+    pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
@@ -30,7 +35,10 @@ COPY . .
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && corepack prepare pnpm@7.33.7 --activate && pnpm run build; \
+  elif [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && \
+    # Same here, remove 'corepack prepare' if using packageManager field
+    pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
