@@ -21,7 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Phone } from "lucide-react"
 import {
   Select,
@@ -42,8 +41,8 @@ import { cn } from "@/lib/utils"
 
 const genders = ["Male", "Female", "Other", "Prefer not to say"] as const
 
-// Schema for instructor onboarding
-export const InstructorOnboardingSchema = z.object({
+// Base schema for shared onboarding
+export const SharedOnboardingSchema = z.object({
   user_uuid: z.string(),
   date_of_birth: z.date({ required_error: "Please enter your date of birth" }),
   phone_number: z
@@ -55,23 +54,25 @@ export const InstructorOnboardingSchema = z.object({
   }),
 })
 
-export type InstructorOnboardingFormData = z.infer<
-  typeof InstructorOnboardingSchema
->
+export type SharedOnboardingFormData = z.infer<typeof SharedOnboardingSchema>
 
-interface InstructorOnboardingFormProps {
+type UserType = "instructor" | "organisation"
+
+interface SharedOnboardingFormProps {
   userUuid: string
+  userType: UserType
   isSubmitting: boolean
-  onSubmit: (data: InstructorOnboardingFormData) => Promise<void>
+  onSubmit: (data: SharedOnboardingFormData) => Promise<void>
 }
 
-export function InstructorOnboardingForm({
+export function SharedOnboardingForm({
   userUuid,
+  userType,
   isSubmitting,
   onSubmit,
-}: InstructorOnboardingFormProps) {
-  const form = useForm<InstructorOnboardingFormData>({
-    resolver: zodResolver(InstructorOnboardingSchema),
+}: SharedOnboardingFormProps) {
+  const form = useForm<SharedOnboardingFormData>({
+    resolver: zodResolver(SharedOnboardingSchema),
     defaultValues: {
       user_uuid: userUuid,
       date_of_birth: undefined,
@@ -79,17 +80,24 @@ export function InstructorOnboardingForm({
       gender: "Prefer not to say",
     },
   })
-  const dateOfBirth = form.watch("date_of_birth")
+
+  const getTitle = () => {
+    return userType === "instructor"
+      ? "Instructor Registration"
+      : "Organisation Registration"
+  }
+
+  const getDescription = () => {
+    return userType === "instructor"
+      ? "Complete your profile to start teaching on our platform"
+      : "Complete your organisation profile to start offering courses on our platform"
+  }
 
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-8 text-center">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900">
-          Instructor Registration
-        </h1>
-        <p className="text-gray-600">
-          Complete your profile to start teaching on our platform
-        </p>
+        <h1 className="mb-2 text-3xl font-bold text-gray-900">{getTitle()}</h1>
+        <p className="text-gray-600">{getDescription()}</p>
       </div>
 
       <Form {...form}>
@@ -222,4 +230,4 @@ export function InstructorOnboardingForm({
   )
 }
 
-export default InstructorOnboardingForm
+export default SharedOnboardingForm

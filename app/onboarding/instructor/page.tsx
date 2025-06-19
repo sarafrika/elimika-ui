@@ -4,11 +4,10 @@ import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
-// import { InstructorManagementService, UsersApiService } from "@/api-client"
 import {
-  InstructorOnboardingForm,
-  type InstructorOnboardingFormData,
-} from "./_components/instructor-onboarding-form"
+  SharedOnboardingForm,
+  type SharedOnboardingFormData,
+} from "@/app/onboarding/_components/shared-onboarding-form"
 import { useUserStore } from "@/store/use-user-store"
 import { fetchClient } from "@/services/api/fetch-client"
 import { getAuthToken } from "@/services/auth/get-token"
@@ -20,7 +19,7 @@ export default function InstructorOnboardingPage() {
   const { user, isLoading } = useUserStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (data: InstructorOnboardingFormData) => {
+  const handleSubmit = async (data: SharedOnboardingFormData) => {
     setIsSubmitting(true)
     try {
       if (!user?.uuid || !session?.user?.name || !user.email) {
@@ -41,7 +40,9 @@ export default function InstructorOnboardingPage() {
         dob: data.date_of_birth?.toISOString().split("T")[0] || "",
         username: session.user.name,
         active: true,
-        user_domain: ["instructor"],
+        user_domain: ["instructor"] as Array<
+          "student" | "instructor" | "admin" | "organisation_user"
+        >,
         ...(user.middle_name && { middle_name: user.middle_name }),
         ...(user.organisation_uuid && {
           organisation_uuid: user.organisation_uuid,
@@ -118,8 +119,9 @@ export default function InstructorOnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <InstructorOnboardingForm
+      <SharedOnboardingForm
         userUuid={user.uuid}
+        userType="instructor"
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
       />
