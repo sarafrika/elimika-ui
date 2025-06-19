@@ -11,7 +11,7 @@ import {
 } from "react"
 import { fetchTrainingCenters } from "@/app/auth/create-account/actions"
 import { toast } from "sonner"
-import { useSessionContext } from "@/context/session-provider-wrapper"
+import { useSession } from "next-auth/react"
 import { TrainingCenter } from "@/app/auth/create-account/_components/training-center-form"
 
 export interface UseTrainingCenterReturn {
@@ -29,7 +29,7 @@ const initialState: Omit<UseTrainingCenterReturn, "refetchTrainingCenter"> = {
 
 export function useTrainingCenter(): UseTrainingCenterReturn {
   const [state, setState] = useState(initialState)
-  const { session } = useSessionContext()
+  const { data: session } = useSession()
 
   const trainingCenterSlug = useMemo(
     () => session?.decoded?.organization?.[0] ?? null,

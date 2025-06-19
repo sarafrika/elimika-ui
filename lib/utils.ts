@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import crypto from "crypto"
+// import crypto from "crypto"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -26,28 +26,28 @@ export type EncryptedData = {
   authTag: string
 }
 
-export function encrypt(text: string, key: Buffer, iv: Buffer): EncryptedData {
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv)
-  let encrypted = cipher.update(text, "utf8", "hex")
-  encrypted += cipher.final("hex")
-  const authTag = cipher.getAuthTag()
+// export function encrypt(text: string, key: Buffer, iv: Buffer): EncryptedData {
+//   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv)
+//   let encrypted = cipher.update(text, "utf8", "hex")
+//   encrypted += cipher.final("hex")
+//   const authTag = cipher.getAuthTag()
 
-  return {
-    encrypted,
-    iv: iv.toString("hex"),
-    authTag: authTag.toString("hex"),
-  }
-}
+//   return {
+//     encrypted,
+//     iv: iv.toString("hex"),
+//     authTag: authTag.toString("hex"),
+//   }
+// }
 
-export function decrypt(data: EncryptedData, key: Buffer) {
-  const decipher = crypto.createDecipheriv(
-    "aes-256-gcm",
-    key,
-    Buffer.from(data.iv, "hex"),
-  )
-  decipher.setAuthTag(Buffer.from(data.authTag, "hex"))
+// export function decrypt(data: EncryptedData, key: Buffer) {
+//   const decipher = crypto.createDecipheriv(
+//     "aes-256-gcm",
+//     key,
+//     Buffer.from(data.iv, "hex"),
+//   )
+//   decipher.setAuthTag(Buffer.from(data.authTag, "hex"))
 
-  let decrypted = decipher.update(data.encrypted, "hex", "utf8")
-  decrypted += decipher.final("utf8")
-  return decrypted
-}
+//   let decrypted = decipher.update(data.encrypted, "hex", "utf8")
+//   decrypted += decipher.final("utf8")
+//   return decrypted
+// }

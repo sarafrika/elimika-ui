@@ -22,11 +22,11 @@ import Link from "next/link"
 import * as React from "react"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { useAuth } from "@/context/auth-provider"
+import { useUserStore } from "@/store/use-user-store"
 
 export function NavMain({ items }: { items: MenuItem[] }) {
   const pathname = usePathname()
-  const { activeDomain } = useAuth()
+  const activeDomain = useUserStore(store => store.activeDomain)
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
 
   const OVERVIEW_PATH = `/dashboard/${activeDomain}/overview`
@@ -38,6 +38,9 @@ export function NavMain({ items }: { items: MenuItem[] }) {
       break
     case "student":
       menuLabel = "Learning Hub"
+      break
+    case "admin":
+      menuLabel = "Admin Panel"
       break
     default:
       menuLabel = "Dashboard"

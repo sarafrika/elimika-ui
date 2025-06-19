@@ -4,7 +4,6 @@ import { getEnvironmentVariable } from "@/lib/utils"
 import { ApiResponse, ApiResponseWithPagination } from "@/lib/types"
 import { User } from "@/app/auth/create-account/_components/user-account-form"
 import { TrainingCenter } from "@/app/auth/create-account/_components/training-center-form"
-import { UserDomain } from "@/context/auth-provider"
 
 const DEFAULT_PAGE_SIZE = 10
 const EVERY_THIRTY_MINUTES = 60 * 30 // 1,800 seconds

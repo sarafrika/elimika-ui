@@ -1,5 +1,4 @@
 "use client"
-
 import * as React from "react"
 import { LibraryBigIcon } from "lucide-react"
 import { NavUser } from "@/components/nav-user"
@@ -17,11 +16,11 @@ import { NavMain } from "@/components/nav-main"
 import { useTrainingCenter } from "@/context/training-center-provider"
 import menu from "@/lib/menu"
 import { NavSecondary } from "@/components/nav-secondary"
-import { useAuth } from "@/context/auth-provider"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { activeDomain } = useAuth()
   const { trainingCenter } = useTrainingCenter()
+  const domain = "admin"
+  const menuItems = menu[domain]
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -29,7 +28,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href={`/dashboard/${activeDomain}/overview`}>
+              <Link href={`/dashboard/overview`}>
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <LibraryBigIcon className="size-4" />
                 </div>
@@ -44,12 +43,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={menu.main} />
+        {menuItems && <NavMain items={menuItems} />}
         {/*<NavOffice office={menu.office} />*/}
         <NavSecondary items={menu?.secondary ?? []} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser items={menu.user ?? []} />
+        <NavUser items={menu?.user ?? []} />
       </SidebarFooter>
     </Sidebar>
   )

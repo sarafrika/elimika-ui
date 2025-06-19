@@ -1,62 +1,51 @@
-import { User } from "@/app/auth/create-account/_components/user-account-form"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { fetchUsers } from "@/app/auth/create-account/actions"
-import { useQuery } from "@tanstack/react-query"
+import { getUserProfile } from "@/services/user/actions"
+import { User } from "@/services/api/schema"
 
 type UserState = {
   user: User | null
+  activeDomain: User["user_domain"] | null
   isLoading: boolean
   error: string | null
 }
-
 type UserActions = {
   setUser: (user: User | null) => void
   clearUser: () => void
-  fetchCurrentUser: (email: string) => Promise<User | undefined>
+  fetchCurrentUser: () => Promise<User | undefined>
 }
 
 type UserStore = UserState & UserActions
-
-function useUserByEmail(email: string | undefined) {
-  return useQuery<User | undefined>({
-    queryKey: ["user", email],
-    queryFn: async () => {
-      if (!email) return undefined
-
-      const response = await fetchUsers(0, `email_eq=${email}`)
-
-      if (!response.success) throw new Error(response.message)
-
-      return response.data.content[0]
-    },
-    enabled: !!email,
-  })
-}
-
 export const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
       user: null,
       isLoading: false,
       error: null,
-
       setUser: (user) => set({ user }),
-
       clearUser: () => set({ user: null }),
-
-      fetchCurrentUser: async (email: string) => {
+      fetchCurrentUser: async () => {
         try {
           set({ isLoading: true, error: null })
 
-          const response = await fetchUsers(0, `email_eq=${email}`)
+          const response = await getUserProfile()
 
-          if (!response.success) {
-            throw new Error(response.message)
+          if (response?.error) {
+            console.log(response.error)
+            throw new Error(response.error.toString())
           }
 
-          const userData = response.data.content[0]
+          const userData = response?.data?.content?.[0]
           set({ user: userData, isLoading: false })
+          if (
+            userData &&
+            userData?.user_domain &&
+            userData?.user_domain?.length > 0
+          ) {
+            set({
+              activeDomain: userData?.user_domain,
+            })
+          }
           return userData
         } catch (error) {
           set({
@@ -69,6 +58,7 @@ export const useUserStore = create<UserStore>()(
           return undefined
         }
       },
+      activeDomain: null,
     }),
     {
       name: "user-storage", // unique name for localStorage

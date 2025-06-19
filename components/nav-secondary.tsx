@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useAuth } from "@/context/auth-provider"
+import { useUserStore } from "@/store/use-user-store"
 
 interface NavSecondaryProps {
   items: MenuItem[]
@@ -20,7 +20,7 @@ export function NavSecondary({
   ...props
 }: NavSecondaryProps & ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const pathname = usePathname()
-  const { activeDomain } = useAuth()
+  const activeDomain = useUserStore(store => store.activeDomain)
 
   const filteredItems = items.filter(
     (item) => !item.domain || item.domain === activeDomain,

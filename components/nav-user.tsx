@@ -1,12 +1,11 @@
 "use client"
 
-import { ChevronsUpDown, LogOut, UserIcon } from "lucide-react"
+import { ChevronsUpDown, LogOut } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuRadioGroup,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -17,30 +16,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { signOut } from "next-auth/react"
-import { toast } from "sonner"
-import { useSessionContext } from "@/context/session-provider-wrapper"
+import { useSession } from "next-auth/react"
 import { Badge } from "@/components/ui/badge"
-import { useMemo } from "react"
-import { useAuth, UserDomain } from "@/context/auth-provider"
 import { useRouter } from "next/navigation"
 import { MenuItem } from "@/lib/menu"
+import { useUserStore } from "@/store/use-user-store"
 
-export async function logout() {
-  try {
-    await fetch("/api/auth/logout").then(() => {
-      signOut({ callbackUrl: "/" }).then(() => {
-        toast.success("You have been logged out successfully.")
-      })
-    })
-  } catch (error) {
-    console.error("Error logging out:", error)
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : "Something went wrong while logging out. Please try again.",
-    )
-  }
-}
+
 
 type NavUserProps = {
   items: MenuItem[]
@@ -49,8 +31,8 @@ type NavUserProps = {
 export function NavUser({ items }: NavUserProps) {
   const router = useRouter()
   const { isMobile } = useSidebar()
-  const { session } = useSessionContext()
-  const { domains, activeDomain, setActiveDomain } = useAuth()
+  const { data: session } = useSession()
+  const activeDomain = useUserStore(state => state.activeDomain)
 
   const userInitials =
     session?.user?.name
@@ -59,20 +41,7 @@ export function NavUser({ items }: NavUserProps) {
       ?.map((name) => name?.[0])
       ?.join("") || ""
 
-  const hasMultipleDomains = domains.length > 1
-  const formatDomain = useMemo(
-    () => (domain: UserDomain) => domain.replace(/_/g, " "),
-    [],
-  )
 
-  const formatDomainRoute = useMemo(
-    () => (domain: UserDomain) => domain.replace(/_/g, "-"),
-    [],
-  )
-
-  const filteredItems = items.filter(
-    (item) => !item.domain || item.domain === activeDomain,
-  )
 
   return (
     <SidebarMenu>
@@ -139,73 +108,10 @@ export function NavUser({ items }: NavUserProps) {
                   </span>
                 </div>
               </div>
-
-              {/* Domain Switcher */}
-              <div>
-                <div className="text-muted-foreground mb-2 text-xs font-medium">
-                  {hasMultipleDomains ? "Switch Domain" : "Current Domain"}
-                </div>
-                {hasMultipleDomains ? (
-                  <DropdownMenuRadioGroup
-                    value={activeDomain || ""}
-                    onValueChange={(value) =>
-                      setActiveDomain(value as UserDomain)
-                    }
-                    className="flex flex-col gap-1"
-                  >
-                    {domains.map((domain) => (
-                      <div
-                        key={domain}
-                        className={`flex items-center rounded-md px-2 py-1.5 text-sm ${
-                          domain === activeDomain
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "hover:bg-muted cursor-pointer"
-                        }`}
-                        onClick={() => setActiveDomain(domain)}
-                      >
-                        <div className="mr-2 flex h-4 w-4 items-center justify-center">
-                          {domain === activeDomain ? (
-                            <div className="bg-primary h-2 w-2 rounded-full" />
-                          ) : (
-                            <div className="border-muted-foreground h-2 w-2 rounded-full border" />
-                          )}
-                        </div>
-                        <span className="flex-1 capitalize">
-                          {formatDomain(domain)}
-                        </span>
-                        {domain === activeDomain && (
-                          <Badge
-                            variant="outline"
-                            className="border-primary/20 text-primary ml-auto px-2 py-0.5 text-xs font-normal"
-                          >
-                            Active
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                ) : (
-                  <div className="bg-primary/10 flex items-center rounded-md px-2 py-1.5 text-sm">
-                    <div className="mr-2 flex h-4 w-4 items-center justify-center">
-                      <div className="bg-primary h-2 w-2 rounded-full" />
-                    </div>
-                    <span className="text-primary flex-1 font-medium capitalize">
-                      {activeDomain}
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className="border-primary/20 text-primary ml-auto px-2 py-0.5 text-xs font-normal"
-                    >
-                      Active
-                    </Badge>
-                  </div>
-                )}
-              </div>
-
               <DropdownMenuSeparator className="my-2" />
               {/* Profile & Logout Actions */}
               <div className="mt-0.5 flex flex-col gap-1">
-                {filteredItems.map((item) => (
+                {items.map((item) => (
                   <div
                     key={item.title}
                     onClick={() => item.url && router.push(item.url)}
@@ -218,7 +124,7 @@ export function NavUser({ items }: NavUserProps) {
 
                 <div
                   className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
-                  onClick={async () => await logout()}
+                  onClick={async () => await signOut()}
                 >
                   <LogOut className="size-4" />
                   <span>Log out</span>

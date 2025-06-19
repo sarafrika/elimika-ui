@@ -9,7 +9,7 @@ import {
 } from "./breadcrumb"
 import Link from "next/link"
 import { Fragment } from "react"
-import { useAuth } from "@/context/auth-provider"
+import { useUserStore } from "@/store/use-user-store"
 
 interface AppBreadcrumbProps {
   className?: string
@@ -21,7 +21,7 @@ export function AppBreadcrumb({
   showHome = true,
 }: AppBreadcrumbProps) {
   const { breadcrumbs } = useBreadcrumb()
-  const { activeDomain } = useAuth()
+  const activeDomain = useUserStore(state => state.activeDomain)
 
   if (breadcrumbs.length === 0 && !showHome) return null
 
@@ -63,7 +63,7 @@ export function AppBreadcrumb({
         {breadcrumbs.length > 0 && (
           <BreadcrumbItem className="md:hidden">
             <BreadcrumbPage>
-              {breadcrumbs[breadcrumbs.length - 1].title}
+              {breadcrumbs?.[breadcrumbs.length - 1]?.title}
             </BreadcrumbPage>
           </BreadcrumbItem>
         )}

@@ -1,9 +1,5 @@
-"use client"
-
-import { Button } from "@/components/ui/button"
-import { signIn } from "next-auth/react"
-import Link from "next/link"
-import { BookOpen, Users, Award, ArrowRight } from "lucide-react"
+import LoginButton from "@/components/LoginButton"
+import { BookOpen, Users, Award, } from "lucide-react"
 
 export default function Home() {
   return (
@@ -13,18 +9,7 @@ export default function Home() {
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <div className="text-primary text-2xl font-bold">Elimika</div>
           <div className="flex items-center gap-4">
-            <Button
-              onClick={() => signIn("keycloak")}
-              variant="ghost"
-              className="hover:bg-primary/10"
-            >
-              Sign In
-            </Button>
-            <Link href="/auth/create-account">
-              <Button className="bg-primary hover:bg-primary/90">
-                Sign Up
-              </Button>
-            </Link>
+            <LoginButton />
           </div>
         </div>
       </nav>
@@ -41,18 +26,7 @@ export default function Home() {
             career with our comprehensive courses.
           </p>
           <div className="flex justify-center gap-4">
-            <Link href="/auth/create-account">
-              <Button size="lg" className="bg-primary hover:bg-primary/90">
-                Get Started <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => signIn("keycloak")}
-            >
-              Sign In
-            </Button>
+            <LoginButton />
           </div>
         </div>
       </section>
@@ -96,11 +70,6 @@ export default function Home() {
           <p className="mb-8 text-gray-600">
             Join thousands of students already learning on Elimika
           </p>
-          <Link href="/auth/create-account">
-            <Button size="lg" className="bg-primary hover:bg-primary/90">
-              Create Free Account
-            </Button>
-          </Link>
         </div>
       </section>
     </div>

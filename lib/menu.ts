@@ -1,6 +1,13 @@
 import { ComponentType } from "react"
-import { BoltIcon, FileText, LibraryIcon, UserIcon } from "lucide-react"
-import { UserDomain } from "@/context/auth-provider"
+import {
+  BoltIcon,
+  FileText,
+  LibraryIcon,
+  UserIcon,
+  Users,
+  Building2,
+  BookOpen,
+} from "lucide-react"
 
 export type MenuItem = {
   title: string
@@ -44,6 +51,7 @@ type Menu = {
   main: MenuItem[]
   secondary?: MenuItem[]
   user?: MenuItem[]
+  admin?: MenuItem[]
 }
 
 export default {
@@ -51,15 +59,14 @@ export default {
     {
       title: "Course Management",
       icon: LibraryIcon,
-      domain: "instructor",
       items: [
         {
           title: "Create New Course",
-          url: "/dashboard/instructor/course-management/create-new-course",
+          url: "/dashboard/course-management/create-new-course",
         },
         {
           title: "Drafts",
-          url: "/dashboard/instructor/course-management/drafts",
+          url: "/dashboard/course-management/drafts",
         },
       ],
     },
@@ -75,23 +82,47 @@ export default {
   user: [
     {
       title: "Profile",
-      url: "/dashboard/instructor/profile",
+      url: "/dashboard/profile",
       icon: UserIcon,
-      domain: "instructor",
-    },
-
-    {
-      title: "Profile",
-      url: "/dashboard/student/profile",
-      icon: UserIcon,
-      domain: "student",
     },
 
     {
       title: "Account",
-      url: "/dashboard/organisation-user/account",
+      url: "/dashboard/account",
       icon: BoltIcon,
-      domain: "organisation_user",
+    },
+  ],
+  student: [
+    {
+      title: "Courses",
+      url: "/dashboard/courses",
+      icon: BookOpen,
+    },
+  ],
+  instructor: [
+    {
+      title: "Courses",
+      url: "/dashboard/courses",
+      icon: BookOpen,
+    },
+  ],
+  admin: [
+    {
+      title: "Users",
+      url: "/dashboard/instructors",
+      icon: Users,
+      items: [
+        {
+          title: "Instructors",
+          url: "/dashboard/instructors",
+          icon: Users,
+        },
+        {
+          title: "Organizations",
+          url: "/dashboard/organizations",
+          icon: Building2,
+        },
+      ],
     },
   ],
 } as Menu
