@@ -22,7 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Building2, Phone, Globe, Users2, BookOpen, X } from "lucide-react"
+import { Phone } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -30,28 +30,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useState } from "react"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { format } from "date-fns"
+import { CalendarIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const genders = ["Male", "Female", "Other", "Prefer not to say"] as const
 
 // Schema for instructor onboarding
 export const InstructorOnboardingSchema = z.object({
-  // User reference
   user_uuid: z.string(),
-
-  // Contact information
-  school_name: z.string().optional(),
+  date_of_birth: z.date({ required_error: "Please enter your date of birth" }),
   phone_number: z
     .string()
     .min(10, "Phone number must be at least 10 digits")
     .regex(/^\+?[\d\s-()]+$/, "Please enter a valid phone number"),
-  country: z.string().min(2, "Country is required"),
   gender: z.enum(genders, {
     required_error: "Please select a gender",
   }),
-
-  // Training areas
-  training_areas: z.array(z.string()).min(1, "Add at least one training area"),
 })
 
 export type InstructorOnboardingFormData = z.infer<
@@ -73,36 +74,12 @@ export function InstructorOnboardingForm({
     resolver: zodResolver(InstructorOnboardingSchema),
     defaultValues: {
       user_uuid: userUuid,
-      school_name: "",
+      date_of_birth: undefined,
       phone_number: "",
-      country: "",
       gender: "Prefer not to say",
-      training_areas: [],
     },
   })
-
-  // Handle training areas input
-  const [trainingInput, setTrainingInput] = useState("")
-
-  const handleAddTrainingArea = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault()
-      const newArea = trainingInput.trim()
-      if (newArea && !form.getValues("training_areas").includes(newArea)) {
-        const currentAreas = form.getValues("training_areas")
-        form.setValue("training_areas", [...currentAreas, newArea])
-        setTrainingInput("")
-      }
-    }
-  }
-
-  const handleRemoveTrainingArea = (area: string) => {
-    const currentAreas = form.getValues("training_areas")
-    form.setValue(
-      "training_areas",
-      currentAreas.filter((a) => a !== area),
-    )
-  }
+  const dateOfBirth = form.watch("date_of_birth")
 
   return (
     <div className="mx-auto max-w-2xl p-6">
@@ -117,31 +94,58 @@ export function InstructorOnboardingForm({
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Institution Information */}
+          {/* Date of Birth */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-blue-600" />
-                Institution Information
-                <Badge variant="secondary">Optional</Badge>
-              </CardTitle>
-              <CardDescription>
-                Your current or previous teaching institution
-              </CardDescription>
+              <CardTitle>Date of Birth</CardTitle>
+              <CardDescription>Please enter your date of birth</CardDescription>
             </CardHeader>
             <CardContent>
               <FormField
                 control={form.control}
-                name="school_name"
+                name="date_of_birth"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>School/Company Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., University of Technology"
-                        {...field}
-                      />
-                    </FormControl>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>
+                      Date of Birth <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date: Date) =>
+                            date > new Date() || date < new Date("1920-01-01")
+                          }
+                          fromYear={1900}
+                          toYear={new Date().getFullYear()}
+                          captionLayout="dropdown"
+                          className="rounded-md border shadow-sm"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      Your date of birth helps us verify your eligibility
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -177,105 +181,35 @@ export function InstructorOnboardingForm({
                   </FormItem>
                 )}
               />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="country"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Country <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., United States" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Gender <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {genders.map((gender) => (
-                            <SelectItem key={gender} value={gender}>
-                              {gender}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Training Areas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-purple-600" />
-                Training Areas
-              </CardTitle>
-              <CardDescription>
-                Add the subjects or skills you can teach
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <FormLabel>
-                  Add Training Areas <span className="text-red-500">*</span>
-                </FormLabel>
-                <Input
-                  placeholder="Type an area and press Enter (e.g., Piano, Guitar)"
-                  value={trainingInput}
-                  onChange={(e) => setTrainingInput(e.target.value)}
-                  onKeyDown={handleAddTrainingArea}
-                />
-                <FormDescription>
-                  Press Enter or comma (,) to add each area
-                </FormDescription>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {form.getValues("training_areas").map((area) => (
-                  <Badge
-                    key={area}
-                    variant="secondary"
-                    className="flex items-center gap-1"
-                  >
-                    {area}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTrainingArea(area)}
-                      className="ml-1 rounded-full p-1 hover:bg-gray-200"
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Gender <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <FormMessage>
-                {form.formState.errors.training_areas?.message}
-              </FormMessage>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {genders.map((gender) => (
+                          <SelectItem key={gender} value={gender}>
+                            {gender}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 

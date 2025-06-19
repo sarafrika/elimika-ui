@@ -9,58 +9,99 @@ import {
   InstructorOnboardingForm,
   type InstructorOnboardingFormData,
 } from "./_components/instructor-onboarding-form"
+import { useUserStore } from "@/store/use-user-store"
+import { fetchClient } from "@/services/api/fetch-client"
+import { getAuthToken } from "@/services/auth/get-token"
+import Loading from "@/components/Loading"
 
 export default function InstructorOnboardingPage() {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
+  const { user, isLoading } = useUserStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (data: InstructorOnboardingFormData) => {
     setIsSubmitting(true)
-
-    if (!session?.user?.email || !session?.user?.name) {
-      toast.error("User not found. Please log in again.")
+    try {
+      if (!user?.uuid || !session?.user?.name || !user.email) {
+        toast.error("User information is missing. Please try logging in again.")
+        setIsSubmitting(false)
+        return
+      }
+      // Split name into first and last
+      const fullName = session.user.name
+      const firstName = fullName.split(" ")[0]!
+      const lastName = fullName.split(" ").slice(1).join(" ") || firstName
+      // Prepare user data for PUT
+      const userData = {
+        first_name: firstName,
+        last_name: lastName,
+        email: user.email,
+        phone_number: data.phone_number,
+        dob: data.date_of_birth?.toISOString().split("T")[0] || "",
+        username: session.user.name,
+        active: true,
+        user_domain: ["instructor"],
+        ...(user.middle_name && { middle_name: user.middle_name }),
+        ...(user.organisation_uuid && {
+          organisation_uuid: user.organisation_uuid,
+        }),
+        gender: mapGender(data.gender),
+      }
+      const authToken = await getAuthToken()
+      const userUpdateResponse = await fetchClient.PUT("/api/v1/users/{uuid}", {
+        params: {
+          path: { uuid: user.uuid },
+        },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        // @ts-ignore
+        body: {
+          ...userData,
+          gender: mapGender(data.gender),
+        },
+      })
+      if (userUpdateResponse.error) {
+        throw new Error(
+          userUpdateResponse.error.message || "Failed to update user",
+        )
+      }
+      toast.success("Registration completed successfully!")
+      router.replace("/dashboard/overview")
+    } catch (error) {
+      console.error("Error during registration:", error)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to complete registration. Please try again.",
+      )
+    } finally {
       setIsSubmitting(false)
-      return
     }
-
-    // try {
-    //   const resp = await UsersApiService.createUser("instructor", {
-    //     user: {
-    //       email: session.user.email,
-    //       first_name: session.user.name,
-    //       last_name: session.user.name,
-    //       username: session.user.name,
-    //       phone_number: data.phone_number,
-    //       dob: new Date().toISOString().split("T")[0],
-    //       active: true,
-    //     },
-    //   })
-
-    //   if (resp.error) {
-    //     toast.error(resp.error.message)
-    //     return
-    //   }
-
-    //   if (resp.success && resp.data?.uuid) {
-    //     await InstructorManagementService.updateInstructor(resp.data.uuid, {
-    //       user_uuid: resp.data.uuid,
-    //       professional_headline: data.school_name,
-    //       bio: data.training_areas.join(", "),
-    //     })
-
-    //     toast.success("Registration completed successfully!")
-    //     router.replace("/dashboard/overview")
-    //   }
-    // } catch (error) {
-    //   console.error("Registration error:", error)
-    //   toast.error("An error occurred during registration")
-    // } finally {
-    //   setIsSubmitting(false)
-    // }
   }
 
-  if (!session?.user?.id) {
+  function mapGender(gender: string) {
+    switch (gender) {
+      case "Male":
+        return "MALE"
+      case "Female":
+        return "FEMALE"
+      case "Other":
+        return "OTHER"
+      case "Prefer not to say":
+        return "PREFER_NOT_TO_SAY"
+      default:
+        return undefined
+    }
+  }
+
+  if (isLoading || status === "loading") {
+    return <Loading />
+  }
+
+  if (!user?.uuid) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -78,7 +119,7 @@ export default function InstructorOnboardingPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <InstructorOnboardingForm
-        userUuid={session.user.id}
+        userUuid={user.uuid}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
       />
