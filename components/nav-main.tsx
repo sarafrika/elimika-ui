@@ -22,14 +22,19 @@ import Link from "next/link"
 import * as React from "react"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { useUserStore } from "@/store/use-user-store"
+import { UserDomain } from "@/lib/types"
 
-export function NavMain({ items }: { items: MenuItem[] }) {
+export function NavMain({
+  items,
+  activeDomain,
+}: {
+  items: MenuItem[]
+  activeDomain: UserDomain
+}) {
   const pathname = usePathname()
-  const activeDomain = useUserStore((store) => store.activeDomain)
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
 
-  const OVERVIEW_PATH = `/dashboard/${activeDomain}/overview`
+  const OVERVIEW_PATH = `/dashboard/overview`
 
   let menuLabel
   switch (activeDomain) {

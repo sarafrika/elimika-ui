@@ -5,16 +5,20 @@ import { TrainingCenterProvider } from "@/context/training-center-provider"
 import { BreadcrumbProvider } from "@/context/breadcrumb-provider"
 import { getUserProfile } from "@/services/user/actions"
 import { redirect } from "next/navigation"
+
 type Props = {
   instructor: React.ReactNode
   student: React.ReactNode
   admin: React.ReactNode
+  organization: React.ReactNode
   children: React.ReactNode
 }
+
 export default async function DashboardLayout({
   instructor,
   student,
   admin,
+  organization,
   children,
 }: Props) {
   const userResponse = await getUserProfile()
@@ -28,14 +32,16 @@ export default async function DashboardLayout({
       ? instructor
       : domain === "student"
         ? student
-        : domain == "organisation_user"
-          ? admin
-          : children
+        : domain === "organisation_user"
+          ? organization
+          : domain === "admin"
+            ? admin
+            : children
   return (
     <TrainingCenterProvider>
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
-          <AppSidebar />
+          <AppSidebar activeDomain={domain!} />
           <SidebarInset>
             <BreadcrumbProvider>
               <DashboardHeader />

@@ -54,11 +54,7 @@ const course = {
   ],
 }
 
-export default function CoursePreviewPage({
-  params,
-}: {
-  params: { courseId: string }
-}) {
+export default function CoursePreviewPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4">
       <div className="space-y-4">
@@ -142,9 +138,7 @@ export default function CoursePreviewPage({
                 Enroll Now
               </Button>
               <Button size="lg" variant="outline" className="w-full" asChild>
-                <Link
-                  href={`/dashboard/instructor/course-management/create-new-course?id=${params.courseId}`}
-                >
+                <Link href="/dashboard/instructor/course-management/create-new-course">
                   Edit Course
                 </Link>
               </Button>
