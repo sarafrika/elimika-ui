@@ -4,6 +4,8 @@ import * as z from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -62,6 +64,20 @@ const generalProfileSchema = z.object({
 type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>
 
 export default function GeneralProfileSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "general",
+        title: "General",
+        url: "/dashboard/profile/general",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<GeneralProfileFormValues>({
     resolver: zodResolver(generalProfileSchema),
     defaultValues: {

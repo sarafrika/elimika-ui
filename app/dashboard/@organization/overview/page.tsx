@@ -36,17 +36,17 @@ export default function OrganisationOverviewPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Your Organisation's Profile Status</CardTitle>
+          <CardTitle>Your Organisation&apos;s Profile Status</CardTitle>
           <CardDescription>
             {isProfileComplete
               ? "Your profile is up-to-date."
-              : "Your first step is to complete your organisation's profile."}
+              : "Your first step is to complete your organisation&apos;s profile."}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-2">
           {isProfileComplete ? (
             <div className="text-center">
-              <p>Welcome! Your organisation's profile is ready.</p>
+              <p>Welcome! Your organisation&apos;s profile is ready.</p>
             </div>
           ) : (
             <div className="bg-muted/40 flex flex-col items-center justify-center gap-4 rounded-lg p-8 text-center">
@@ -58,9 +58,9 @@ export default function OrganisationOverviewPage() {
                   Profile Update Required
                 </h3>
                 <p className="text-muted-foreground mx-auto max-w-sm">
-                  Your organisation's profile can&apos;t be reviewed until it is
-                  complete. Please add your training center details and other
-                  required information.
+                  Your organisation&apos;s profile can&apos;t be reviewed until
+                  it is complete. Please add your training center details and
+                  other required information.
                 </p>
               </div>
               <Button asChild className="mt-2">

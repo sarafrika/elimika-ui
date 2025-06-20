@@ -25,6 +25,8 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const ageGroups = [
   "Kindergarten",
@@ -55,6 +57,20 @@ const branchesSchema = z.object({
 type BranchesFormValues = z.infer<typeof branchesSchema>
 
 export default function BranchesPage() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "account", title: "Account", url: "/dashboard/account" },
+      {
+        id: "branches",
+        title: "Branches",
+        url: "/dashboard/account/branches",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<BranchesFormValues>({
     resolver: zodResolver(branchesSchema),
     defaultValues: {

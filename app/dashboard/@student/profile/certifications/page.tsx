@@ -30,6 +30,8 @@ import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const certificateSchema = z.object({
   id: z.string().optional(),
@@ -50,6 +52,20 @@ const certificationsSchema = z.object({
 type CertificationsFormValues = z.infer<typeof certificationsSchema>
 
 export default function CertificationsSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "certifications",
+        title: "Certifications",
+        url: "/dashboard/profile/certifications",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<CertificationsFormValues>({
     resolver: zodResolver(certificationsSchema),
     defaultValues: {

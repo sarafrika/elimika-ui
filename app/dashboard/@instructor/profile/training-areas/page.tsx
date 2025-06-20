@@ -15,6 +15,8 @@ import {
 import { PlusCircle, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const trainingAreasSchema = z.object({
   areas: z.array(
@@ -28,6 +30,20 @@ const trainingAreasSchema = z.object({
 type TrainingAreasFormValues = z.infer<typeof trainingAreasSchema>
 
 export default function TrainingAreasSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "training-areas",
+        title: "Training Areas",
+        url: "/dashboard/profile/training-areas",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<TrainingAreasFormValues>({
     resolver: zodResolver(trainingAreasSchema),
     defaultValues: {

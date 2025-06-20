@@ -29,6 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { CalendarDays } from "lucide-react"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const academicPeriods = [
   "Term",
@@ -51,6 +53,20 @@ const availabilitySchema = z.object({
 type AvailabilityFormValues = z.infer<typeof availabilitySchema>
 
 export default function AvailabilityPage() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "account", title: "Account", url: "/dashboard/account" },
+      {
+        id: "availability",
+        title: "Availability",
+        url: "/dashboard/account/availability",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<AvailabilityFormValues>({
     resolver: zodResolver(availabilitySchema),
     defaultValues: {

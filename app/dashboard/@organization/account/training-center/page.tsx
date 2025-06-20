@@ -23,6 +23,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const trainingCenterSchema = z.object({
   name: z.string().min(1, "Organisation name is required"),
@@ -39,6 +41,20 @@ const trainingCenterSchema = z.object({
 type TrainingCenterFormValues = z.infer<typeof trainingCenterSchema>
 
 export default function TrainingCenterPage() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "account", title: "Account", url: "/dashboard/account" },
+      {
+        id: "training-center",
+        title: "Training Center",
+        url: "/dashboard/account/training-center",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<TrainingCenterFormValues>({
     resolver: zodResolver(trainingCenterSchema),
     defaultValues: {

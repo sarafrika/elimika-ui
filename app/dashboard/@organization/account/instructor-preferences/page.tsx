@@ -22,6 +22,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const instructorPrefsSchema = z.object({
   revenueSplit: z
@@ -79,6 +81,20 @@ const preferenceHeaders: {
 ]
 
 export default function InstructorPreferencesPage() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "account", title: "Account", url: "/dashboard/account" },
+      {
+        id: "instructor-preferences",
+        title: "Instructor Preferences",
+        url: "/dashboard/account/instructor-preferences",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<InstructorPrefsFormValues>({
     resolver: zodResolver(instructorPrefsSchema),
     defaultValues: {

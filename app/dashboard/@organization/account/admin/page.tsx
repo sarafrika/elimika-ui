@@ -39,6 +39,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { CalendarIcon } from "lucide-react"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const adminProfileSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -52,6 +54,20 @@ const adminProfileSchema = z.object({
 })
 
 export default function AdminProfile() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "account", title: "Account", url: "/dashboard/account" },
+      {
+        id: "admin",
+        title: "Admin",
+        url: "/dashboard/account/admin",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm({
     resolver: zodResolver(adminProfileSchema),
     defaultValues: {
@@ -252,7 +268,7 @@ export default function AdminProfile() {
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
+                        <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
                             selected={field.value}
@@ -274,9 +290,9 @@ export default function AdminProfile() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
+              <CardTitle>Login Credentials</CardTitle>
               <CardDescription>
-                Your login credentials and security settings
+                Manage your administrator login details
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -285,7 +301,7 @@ export default function AdminProfile() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Admin Username</FormLabel>
+                    <FormLabel>Username</FormLabel>
                     <FormControl>
                       <Input placeholder="admin_username" {...field} />
                     </FormControl>
@@ -293,31 +309,27 @@ export default function AdminProfile() {
                   </FormItem>
                 )}
               />
-
-              <div className="bg-muted/50 rounded-lg p-4">
-                <h3 className="mb-2 font-medium">Password Management</h3>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  For security reasons, password changes are handled separately
-                </p>
-                <Button variant="outline" type="button">
-                  Change Password
-                </Button>
-              </div>
-
-              <div className="bg-muted/50 rounded-lg p-4">
-                <h3 className="mb-2 font-medium">Two-Factor Authentication</h3>
-                <p className="text-muted-foreground mb-4 text-sm">
-                  Add an extra layer of security to your account
-                </p>
-                <Button variant="outline" type="button">
-                  Enable 2FA
-                </Button>
+              <div className="space-y-2">
+                <FormLabel>Password</FormLabel>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    type="password"
+                    disabled
+                    value=".........."
+                    className="flex-1"
+                  />
+                  <Button variant="outline" type="button">
+                    Change Password
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
-            <Button type="submit">Save Changes</Button>
+          <div className="flex justify-end pt-2">
+            <Button type="submit" className="px-6">
+              Save Changes
+            </Button>
           </div>
         </form>
       </Form>

@@ -20,6 +20,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const feesSchedulingSchema = z.object({
   rateCard: z.array(
@@ -75,6 +77,20 @@ const scheduleHeaders: {
 ]
 
 export default function FeesSchedulingPage() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "account", title: "Account", url: "/dashboard/account" },
+      {
+        id: "fees-scheduling",
+        title: "Fees & Scheduling",
+        url: "/dashboard/account/fees-scheduling",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<FeesSchedulingFormValues>({
     resolver: zodResolver(feesSchedulingSchema),
     defaultValues: {
@@ -120,22 +136,33 @@ export default function FeesSchedulingPage() {
 
   const renderInput = (
     field: any,
-    headerKey: keyof FeesSchedulingFormValues["rateCard"][0],
+    headerKey:
+      | keyof FeesSchedulingFormValues["rateCard"][0]
+      | keyof FeesSchedulingFormValues["schedule"][0],
   ) => {
-    const isNumeric =
-      typeof form.getValues(`rateCard.${0}.${headerKey}`) === "number" ||
-      typeof form.getValues(`schedule.${0}.${headerKey as any}`) === "number"
+    const isNumeric = [
+      "rate",
+      "lessons",
+      "hours",
+      "hourlyFee",
+      "totalFee",
+      "materialFee",
+      "feePerPeriod",
+    ].includes(headerKey)
 
     return (
       <Input
         type={isNumeric ? "number" : "text"}
         placeholder={
-          rateCardHeaders.find((h) => h.key === headerKey)?.label ||
-          scheduleHeaders.find((h) => h.key === headerKey)?.label
+          [...rateCardHeaders, ...scheduleHeaders].find(
+            (h) => h.key === headerKey,
+          )?.label
         }
         {...field}
         onChange={(e) =>
-          field.onChange(isNumeric ? Number(e.target.value) : e.target.value)
+          field.onChange(
+            isNumeric ? Number(e.target.value) || 0 : e.target.value,
+          )
         }
         className="h-9 w-full min-w-[100px] text-sm"
       />

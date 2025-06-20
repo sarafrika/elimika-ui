@@ -16,6 +16,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { CalendarDays } from "lucide-react"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const availabilitySchema = z.object({
   calComLink: z.string().url().optional().or(z.literal("")),
@@ -50,6 +52,20 @@ const classTypes = [
 ]
 
 export default function AvailabilitySettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "availability",
+        title: "Availability",
+        url: "/dashboard/profile/availability",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<AvailabilityFormValues>({
     resolver: zodResolver(availabilitySchema),
     defaultValues: {

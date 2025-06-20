@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const skillsSchema = z.object({
   skills: z.array(
@@ -44,6 +46,20 @@ const proficiencyLevels = [
 ]
 
 export default function SkillsSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "skills",
+        title: "Skills",
+        url: "/dashboard/profile/skills",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<SkillsFormValues>({
     resolver: zodResolver(skillsSchema),
     defaultValues: {

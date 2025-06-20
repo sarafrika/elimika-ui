@@ -39,6 +39,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useSession } from "next-auth/react"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const guardianSchema = z.object({
   id: z.string().optional(),
@@ -63,6 +66,21 @@ const studentProfileSchema = z.object({
 })
 
 export default function StudentProfileGeneral() {
+  const { data: session } = useSession()
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "general",
+        title: "General",
+        url: "/dashboard/profile/general",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<z.infer<typeof studentProfileSchema>>({
     resolver: zodResolver(studentProfileSchema),
     defaultValues: {

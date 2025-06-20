@@ -31,8 +31,9 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { CheckSquare, Lightbulb, CalendarDays, X } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
 
 // Sample skills - this list can be expanded or fetched from an API
 const availableSkills = [
@@ -80,6 +81,20 @@ const educationSchema = z.object({
 type EducationFormValues = z.infer<typeof educationSchema>
 
 export default function EducationSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "education",
+        title: "Education",
+        url: "/dashboard/profile/education",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<EducationFormValues>({
     resolver: zodResolver(educationSchema),
     defaultValues: {

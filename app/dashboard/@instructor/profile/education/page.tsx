@@ -3,6 +3,8 @@
 import * as z from "zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,6 +57,20 @@ const educationSchema = z.object({
 type EducationFormValues = z.infer<typeof educationSchema>
 
 export default function EducationSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "education",
+        title: "Education",
+        url: "/dashboard/profile/education",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<EducationFormValues>({
     resolver: zodResolver(educationSchema),
     defaultValues: {

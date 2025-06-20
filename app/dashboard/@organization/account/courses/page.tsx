@@ -1,12 +1,13 @@
 "use client"
 
 import * as z from "zod"
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -20,6 +21,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 const affiliateCourses = [
   {
@@ -75,6 +78,20 @@ const coursesSchema = z.object({
 type CoursesFormValues = z.infer<typeof coursesSchema>
 
 export default function CoursesPage() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "account", title: "Account", url: "/dashboard/account" },
+      {
+        id: "courses",
+        title: "Courses",
+        url: "/dashboard/account/courses",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<CoursesFormValues>({
     resolver: zodResolver(coursesSchema),
     defaultValues: {
