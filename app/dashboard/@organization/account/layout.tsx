@@ -14,13 +14,20 @@ import {
 import { ReactNode } from "react"
 
 const sections = [
-  { name: "Admin", href: "/dashboard/account/admin" },
   {
     name: "Training Center",
     href: "/dashboard/account/training-center",
   },
   { name: "Branches", href: "/dashboard/account/branches" },
+  { name: "Courses", href: "/dashboard/account/courses" },
+  { name: "Availability", href: "/dashboard/account/availability" },
+  { name: "Fees & Scheduling", href: "/dashboard/account/fees-scheduling" },
+  {
+    name: "Instructor Preferences",
+    href: "/dashboard/account/instructor-preferences",
+  },
   { name: "Users", href: "/dashboard/account/users" },
+  { name: "Admin", href: "/dashboard/account/admin" },
 ]
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
