@@ -3,6 +3,8 @@
 import * as z from "zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,6 +50,20 @@ type ProfessionalMembershipFormValues = z.infer<
 >
 
 export default function ProfessionalBodySettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "professional-memberships",
+        title: "Professional Memberships",
+        url: "/dashboard/profile/professional-membership",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<ProfessionalMembershipFormValues>({
     resolver: zodResolver(professionalMembershipSchema),
     defaultValues: {

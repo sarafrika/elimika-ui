@@ -1,6 +1,7 @@
 "use client"
 
 import { useSession } from "next-auth/react"
+import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import {
@@ -10,9 +11,11 @@ import {
   ThumbsUp,
   GraduationCap,
   Info,
+  ArrowRight,
 } from "lucide-react"
 import {
   Dialog,
+  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -21,11 +24,22 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
+
+// TODO: Replace this with actual data from the backend
+const isProfileComplete = false // This will determine which view to show
+const currentStageIndex: number = 1 // Example: 1 = "Under Review", only used if profile is complete
 
 const approvalStages = [
   {
     title: "Profile Submitted",
-    description: "Your profile has been submitted.",
+    description: "Your profile has been submitted for review.",
     icon: FileText,
     tooltip: "We have received your registration details.",
   },
@@ -43,206 +57,249 @@ const approvalStages = [
   },
   {
     title: "Enrolled",
-    description: "You are now officially enrolled.",
+    description: "You are now officially enrolled and can start learning.",
     icon: GraduationCap,
     tooltip: "Welcome! You are now a student.",
   },
 ]
 
-const currentStage = 1 // 0-based index; e.g., 1 = "Under Review"
-const progressPercent = ((currentStage + 1) / approvalStages.length) * 100
-
 export default function StudentOverviewPage() {
   const { data: session } = useSession()
-  const firstGuardian = {
-    firstName: "Jane",
-    lastName: "Doe",
-    phone: "+254700000001",
-  }
-  const stage = approvalStages[currentStage]
 
-  if (!stage) {
+  // Data for when profile is complete
+  const currentStage = approvalStages[currentStageIndex]
+  const progressPercent =
+    ((currentStageIndex + 1) / approvalStages.length) * 100
+  const nextStage = approvalStages[currentStageIndex + 1]
+
+  // Mock data for submitted details dialog
+  const submittedDetails = {
+    name: "John Doe",
+    phone: "0712345678",
+    email: "john.doe@example.com",
+    guardianName: "Jane Doe",
+    guardianPhone: "+254700000001",
+    hasGuardian: true,
+  }
+
+  if (isProfileComplete && !currentStage) {
     return <p>Invalid approval stage.</p>
   }
 
-  const isProfileStage = Number(currentStage) === 0
-  const nextStage = approvalStages[currentStage + 1]
-
-  const editName = "John Doe"
-  const editPhone = "0712345678"
-  const editEmail = "john.doe@example.com"
-  const editGuardian = "Jane Doe"
-  const editGuardianPhone = "+254700000001"
-
   return (
-    <div className="bg-background mx-auto flex max-h-screen min-h-screen w-full max-w-2xl flex-col items-center gap-4 overflow-y-auto px-2 py-6">
-      <div className="flex flex-col justify-start gap-4">
-        <p className="text-2xl font-bold">
-          Welcome <span className="text-primary">{session?.user?.name}</span>
-        </p>
-        <span className="text-muted-foreground">
-          You are logged in as a Student.
-        </span>
-      </div>
-
-      {/* Section Header */}
-      <div className="mb-1 w-full text-center">
-        <h2 className="text-primary text-lg font-bold tracking-tight">
-          Approval Process
-        </h2>
-        <p className="text-muted-foreground text-xs">
-          Track your registration and approval progress below.
+    <div className="mx-auto w-full max-w-4xl space-y-8 px-4 py-8">
+      {/* Welcome Header */}
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Welcome,{" "}
+          <span className="text-primary">
+            {session?.user?.name ?? "Student"}
+          </span>
+        </h1>
+        <p className="text-muted-foreground">
+          Here&apos;s a quick overview of your{" "}
+          <span className="text-primary">Student</span> journey with us.
         </p>
       </div>
 
-      {/* Horizontal Stepper/Stages Row */}
-      <div className="flex w-full flex-col items-center gap-2">
-        <div className="no-scrollbar flex w-full items-center justify-center gap-2 overflow-x-auto">
-          {approvalStages.map((stage, idx) => {
-            const StepIcon = stage.icon
-            const isFirstStage = idx === 0
-            return (
-              <div
-                key={stage.title}
-                className={`group relative flex min-w-0 flex-col items-center ${isFirstStage ? "cursor-pointer" : ""}`}
-                style={{ minWidth: 70 }}
-                role={isFirstStage ? "button" : undefined}
-                tabIndex={isFirstStage ? 0 : -1}
-                aria-label={
-                  isFirstStage
-                    ? "View submitted profile details"
-                    : stage.tooltip
-                }
-              >
-                <div
-                  className={`mb-1 flex size-8 items-center justify-center rounded-full border-2 shadow-sm transition-all duration-300 ${
-                    idx < currentStage
-                      ? "border-green-500 bg-green-500 text-white"
-                      : idx === currentStage
-                        ? "bg-primary/90 text-primary-foreground border-primary"
-                        : "bg-muted text-muted-foreground border-muted"
-                  }`}
-                  tabIndex={isFirstStage ? -1 : 0} // Icon not focusable if parent is button
-                  aria-label={isFirstStage ? undefined : stage.tooltip} // Tooltip on parent for first stage
-                  aria-hidden={isFirstStage ? "true" : undefined}
-                >
-                  {idx < currentStage ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    <StepIcon className="h-5 w-5" />
+      {/* Application Status Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Application Status</CardTitle>
+          <CardDescription>
+            {isProfileComplete
+              ? "Track your registration and approval progress below."
+              : "Your first step is to complete your student profile."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2">
+          {isProfileComplete ? (
+            currentStage && (
+              <div className="space-y-6">
+                {/* Horizontal Stepper */}
+                <div className="flex w-full flex-col items-center gap-2">
+                  <Dialog>
+                    <div className="no-scrollbar flex w-full items-start justify-between gap-2 overflow-x-auto text-center">
+                      {approvalStages.map((stage, idx) => {
+                        const isCompleted = idx < currentStageIndex
+                        const isCurrent = idx === currentStageIndex
+                        const isFirstStage = idx === 0
+                        const StepIcon = stage.icon
+
+                        const stepContent = (
+                          <div
+                            className="group relative flex min-w-0 flex-col items-center"
+                            style={{ minWidth: 90 }}
+                          >
+                            <div
+                              className={`mb-2 flex size-10 items-center justify-center rounded-full border-2 shadow-sm transition-all duration-300 ${
+                                isCompleted
+                                  ? "border-green-500 bg-green-500 text-white"
+                                  : isCurrent
+                                    ? "bg-primary/90 text-primary-foreground border-primary"
+                                    : "bg-muted text-muted-foreground border-muted"
+                              }`}
+                              aria-label={stage.tooltip}
+                            >
+                              {isCompleted ? (
+                                <CheckCircle2 className="h-5 w-5" />
+                              ) : (
+                                <StepIcon className="h-5 w-5" />
+                              )}
+                            </div>
+                            <span
+                              className={`text-xs font-medium ${isCurrent ? "text-primary" : "text-muted-foreground"}`}
+                            >
+                              {stage.title}
+                            </span>
+                          </div>
+                        )
+
+                        if (isFirstStage) {
+                          return (
+                            <DialogTrigger asChild key={stage.title}>
+                              <button className="text-left">
+                                {stepContent}
+                              </button>
+                            </DialogTrigger>
+                          )
+                        }
+
+                        return (
+                          <div key={stage.title} className="flex-1">
+                            {stepContent}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Submitted Details</DialogTitle>
+                        <DialogDescription>
+                          This is the information you provided during
+                          registration.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="mt-2 space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Student name:</span>
+                          <span>{submittedDetails.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Mobile No.:</span>
+                          <span>{submittedDetails.phone}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Email Address:</span>
+                          <span>{submittedDetails.email}</span>
+                        </div>
+                        {submittedDetails.hasGuardian && (
+                          <>
+                            <hr className="my-2" />
+                            <div className="flex justify-between">
+                              <span className="font-medium">
+                                Guardian name:
+                              </span>
+                              <span>{submittedDetails.guardianName}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-medium">
+                                Guardian Mobile No.:
+                              </span>
+                              <span>{submittedDetails.guardianPhone}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button>Close</Button>
+                        </DialogClose>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Progress Bar */}
+                  <div className="bg-muted relative mt-1 h-1.5 w-full rounded-full">
+                    <div
+                      className="bg-primary absolute h-1.5 rounded-full transition-all duration-500"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Current Stage Details */}
+                <div className="bg-muted/50 flex flex-col items-center justify-center gap-3 rounded-lg p-6 text-center">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex items-center justify-center rounded-full border bg-white p-3 shadow-sm`}
+                    >
+                      <currentStage.icon
+                        className={`h-7 w-7 ${currentStageIndex > 0 ? "text-green-600" : "text-primary"}`}
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 text-xl font-semibold">
+                        {currentStage.title}
+                        <Badge
+                          variant={
+                            currentStageIndex === 0
+                              ? "destructive"
+                              : currentStageIndex < approvalStages.length - 1
+                                ? "default"
+                                : "success"
+                          }
+                          className="ml-1"
+                        >
+                          {currentStageIndex === 0
+                            ? "Action Required"
+                            : currentStageIndex < approvalStages.length - 1
+                              ? "In Progress"
+                              : "Completed"}
+                        </Badge>
+                      </div>
+                      <p className="text-muted-foreground text-left text-sm">
+                        {currentStage.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {nextStage && (
+                    <div className="border-primary/40 text-primary mt-2 flex items-center gap-2 rounded-md border-l-4 bg-white p-2 text-xs">
+                      <Info className="h-4 w-4" />
+                      <span className="font-semibold">What&apos;s next?</span>
+                      <span className="text-muted-foreground">
+                        {nextStage.description}
+                      </span>
+                    </div>
                   )}
                 </div>
-                <span
-                  className={`truncate text-[11px] font-medium ${idx === currentStage ? "text-primary" : "text-muted-foreground"}`}
-                >
-                  {stage.title}
-                </span>
               </div>
             )
-          })}
-        </div>
-        <div className="bg-muted relative mt-0.5 h-1 w-full rounded-full">
-          <div
-            className="bg-primary absolute h-1 rounded-full transition-all duration-500"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Current Stage Details Card */}
-      <div
-        className={`relative mt-2 flex w-full max-w-lg flex-col items-center justify-center gap-3 rounded-xl border bg-white/95 p-6 shadow-md transition-all duration-300`}
-        style={{ minHeight: 110 }}
-      >
-        <div className="mb-2 flex items-center gap-3">
-          <div
-            className={`bg-muted/60 border-muted-200 flex items-center justify-center rounded-full border p-3`}
-          >
-            <stage.icon
-              className={`h-6 w-6 ${currentStage > 0 ? "text-green-600" : "text-primary"}`}
-            />
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2 text-lg leading-tight font-semibold">
-              {stage.title}
-              <span className="bg-primary/10 text-primary ml-1 rounded px-2 py-0.5 text-sm font-medium">
-                Current
-              </span>
+          ) : (
+            <div className="bg-muted/40 flex flex-col items-center justify-center gap-4 rounded-lg p-8 text-center">
+              <div className="border-primary bg-primary/10 flex size-16 items-center justify-center rounded-full border-2 border-dashed">
+                <FileText className="text-primary h-8 w-8" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-semibold">
+                  Profile Update Required
+                </h3>
+                <p className="text-muted-foreground mx-auto max-w-sm">
+                  Your application can&apos;t be reviewed until your profile is
+                  complete. Please add your educational background, skills, and
+                  other required information.
+                </p>
+              </div>
+              <Button asChild className="mt-2">
+                <Link href="/dashboard/profile/general">
+                  Update Profile Now <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
             </div>
-            <Badge
-              variant={isProfileStage ? "default" : "secondary"}
-              className="mt-1 w-fit px-2 py-0.5 text-sm"
-            >
-              {isProfileStage ? "In Progress" : "Completed"}
-            </Badge>
-          </div>
-        </div>
-        <div className="text-muted-foreground mb-2 text-base leading-tight">
-          {stage.description}
-        </div>
-        {/* What's next section for current stage */}
-        {nextStage && (
-          <div className="bg-primary/5 border-primary/40 mt-1 flex items-center gap-2 rounded border-l-4 p-1">
-            <Info className="text-primary h-3 w-3" />
-            <span className="text-primary text-[11px] font-medium">
-              What&apos;s next?
-            </span>
-            <span className="text-muted-foreground text-[11px]">
-              {nextStage.description}
-            </span>
-          </div>
-        )}
-        <Alert className="bg-primary/5 mt-1 border-none p-2 shadow-none">
-          <AlertTitle className="text-xs">
-            Current Stage: {stage.title}
-          </AlertTitle>
-          <AlertDescription className="text-[11px]">
-            {stage.description}
-          </AlertDescription>
-        </Alert>
-      </div>
-      {/* Modal for viewing submitted details */}
-      <Dialog>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Submitted Details</DialogTitle>
-            <DialogDescription>
-              Here are the details you submitted during registration.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-2 flex flex-col gap-3 text-base">
-            <div className="flex justify-between">
-              <span className="font-medium">Student name:</span>{" "}
-              <span>{editName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium">Mobile No.:</span>{" "}
-              <span>{editPhone}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium">Email Address:</span>{" "}
-              <span>{editEmail}</span>
-            </div>
-            {firstGuardian && (
-              <>
-                <div className="flex justify-between">
-                  <span className="font-medium">Guardian name:</span>{" "}
-                  <span>{editGuardian}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Guardian Mobile No.:</span>{" "}
-                  <span>{editGuardianPhone}</span>
-                </div>
-              </>
-            )}
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button>Close</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

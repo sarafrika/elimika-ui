@@ -23,7 +23,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
+import { CheckSquare, Lightbulb, CalendarDays, X } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Badge } from "@/components/ui/badge"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+
+// Sample skills - this list can be expanded or fetched from an API
+const availableSkills = [
+  "Calculus",
+  "Web Development",
+  "Music Theory",
+  "Piano",
+  "Guitar",
+  "Graphic Design",
+  "Painting",
+  "French Language",
+  "Spanish Language",
+  "Creative Writing",
+  "Photography",
+  "Data Science",
+]
 
 const DEGREE_OPTIONS = {
   "Ph.D.": "Ph.D.",
@@ -48,11 +74,27 @@ const educationSchema = z.object({
       description: z.string().optional(),
     }),
   ),
+  skills: z.array(z.string()).optional(),
+  availability: z.string().url().optional(),
 })
 
 type EducationFormValues = z.infer<typeof educationSchema>
 
 export default function EducationSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "education",
+        title: "Education",
+        url: "/dashboard/profile/education",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<EducationFormValues>({
     resolver: zodResolver(educationSchema),
     defaultValues: {
@@ -68,6 +110,8 @@ export default function EducationSettings() {
           description: "Graduated with First Class Honours.",
         },
       ],
+      skills: [],
+      availability: "",
     },
     mode: "onChange",
   })
@@ -77,22 +121,171 @@ export default function EducationSettings() {
     name: "educations",
   })
 
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [customSkill, setCustomSkill] = useState("")
+
+  const handleSkillToggle = (skill: string) => {
+    const newSkills = selectedSkills.includes(skill)
+      ? selectedSkills.filter((s) => s !== skill)
+      : [...selectedSkills, skill]
+    setSelectedSkills(newSkills)
+    form.setValue("skills", newSkills)
+  }
+
+  const handleAddCustomSkill = () => {
+    const trimmedSkill = customSkill.trim()
+    if (trimmedSkill && !selectedSkills.includes(trimmedSkill)) {
+      handleSkillToggle(trimmedSkill)
+      setCustomSkill("")
+    }
+  }
+
   const onSubmit = (data: EducationFormValues) => {
     console.log(data)
-    // TODO: Implement submission logic
+    // TODO: Add mutation to save data
   }
+
+  const skillPillClassesBase =
+    "cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-1 hover:bg-gray-100"
+  const skillPillSelectedClasses =
+    "border-sky-600 bg-sky-600 text-white hover:bg-sky-700"
+  const skillPillUnselectedClasses = "border-gray-300 bg-white text-gray-700"
+  const buttonPrimaryClasses =
+    "inline-flex items-center justify-center rounded-md border border-transparent bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Education</h1>
+        <h1 className="text-2xl font-semibold">Education & Skills</h1>
         <p className="text-muted-foreground text-sm">
-          Add your educational background and qualifications
+          Manage your learning interests and availability.
         </p>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Lightbulb className="mr-2 h-5 w-5" />
+                Skills You&apos;d Like to Develop
+              </CardTitle>
+              <CardDescription>
+                Add your skills or select from the list below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <FormLabel>Your Skills</FormLabel>
+                <div className="border-input bg-background mt-2 flex min-h-[60px] flex-wrap items-center gap-2 rounded-md border p-2">
+                  {selectedSkills.length > 0 ? (
+                    selectedSkills.map((skill) => (
+                      <Badge
+                        key={skill}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        {skill}
+                        <button
+                          type="button"
+                          aria-label={`Remove ${skill}`}
+                          className="ring-offset-background focus:ring-ring rounded-full outline-none focus:ring-2 focus:ring-offset-2"
+                          onClick={() => handleSkillToggle(skill)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      Use the input below to add skills.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g. Project Management"
+                  value={customSkill}
+                  onChange={(e) => setCustomSkill(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleAddCustomSkill()
+                    }
+                  }}
+                />
+                <Button type="button" onClick={handleAddCustomSkill}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add
+                </Button>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-3">
+                {availableSkills.map((skill) => (
+                  <button
+                    type="button"
+                    key={skill}
+                    onClick={() => handleSkillToggle(skill)}
+                    className={`${skillPillClassesBase} ${
+                      selectedSkills.includes(skill)
+                        ? skillPillSelectedClasses
+                        : skillPillUnselectedClasses
+                    }`}
+                  >
+                    {selectedSkills.includes(skill) && (
+                      <CheckSquare className="mr-2 inline-block h-4 w-4" />
+                    )}
+                    {skill}
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <CalendarDays className="mr-2 h-5 w-5" />
+                Your Availability
+              </CardTitle>
+              <CardDescription>
+                Help us match you with suitable class schedules. You can connect
+                with Cal.com.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <a
+                href="https://cal.com/signup"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${buttonPrimaryClasses} w-full sm:w-auto`}
+              >
+                <CalendarDays className="mr-2 h-5 w-5" />
+                Set Up Your Availability on Cal.com
+              </a>
+              <FormField
+                control={form.control}
+                name="availability"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cal.com Scheduling Link</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://cal.com/your-username"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Paste your Cal.com link here after setting it up.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardContent className="space-y-6 pt-6">
               <div className="space-y-4">

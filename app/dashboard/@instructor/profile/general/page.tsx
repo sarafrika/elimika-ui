@@ -4,6 +4,8 @@ import * as z from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,11 +36,21 @@ import {
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const generalProfileSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
+  firstName: z.string().min(1, "First name is required"),
+  middleName: z.string().optional(),
+  lastName: z.string().min(1, "Last name is required"),
   phoneNumber: z.string().optional(),
   dateOfBirth: z.date().optional(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(),
   professionalHeadline: z.string().optional(),
   website: z
     .string()
@@ -46,21 +58,37 @@ const generalProfileSchema = z.object({
     .optional()
     .or(z.literal("")),
   location: z.string().optional(),
-  aboutMe: z.string().optional(),
+  bio: z.string().optional(),
 })
 
 type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>
 
 export default function GeneralProfileSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "general",
+        title: "General",
+        url: "/dashboard/profile/general",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<GeneralProfileFormValues>({
     resolver: zodResolver(generalProfileSchema),
     defaultValues: {
-      fullName: "",
+      firstName: "",
+      middleName: "",
+      lastName: "",
       phoneNumber: "",
       professionalHeadline: "",
       website: "",
       location: "",
-      aboutMe: "",
+      bio: "",
     },
   })
 
@@ -120,16 +148,16 @@ export default function GeneralProfileSettings() {
               </div>
 
               <div className="grid gap-6">
-                <div className="flex w-full flex-col items-start gap-8 sm:flex-row">
+                <div className="grid w-full grid-cols-1 items-start gap-8 sm:grid-cols-2">
                   <FormField
                     control={form.control}
-                    name="fullName"
+                    name="firstName"
                     render={({ field }) => (
                       <FormItem className="flex-1">
-                        <FormLabel>Full Name</FormLabel>
+                        <FormLabel>First Name</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. Tonny Ocholla"
+                            placeholder="e.g. Oliver"
                             className="h-10"
                             {...field}
                           />
@@ -138,15 +166,41 @@ export default function GeneralProfileSettings() {
                       </FormItem>
                     )}
                   />
-
-                  <div className="flex-1 space-y-2">
-                    <Label>Email Address</Label>
-                    <Input placeholder="name@example.com" disabled />
-                    <p className="text-muted-foreground text-[0.8rem]">
-                      Contact support to change your email address
-                    </p>
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g. Mwangi"
+                            className="h-10"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
+                <FormField
+                  control={form.control}
+                  name="middleName"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Middle Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. Kimani"
+                          className="h-10"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="flex w-full flex-col items-start gap-8 sm:flex-row">
                   <FormField
@@ -211,6 +265,43 @@ export default function GeneralProfileSettings() {
                     )}
                   />
                 </div>
+                <div className="flex w-full flex-col items-start gap-8 sm:flex-row">
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Gender</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a gender" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="MALE">Male</SelectItem>
+                            <SelectItem value="FEMALE">Female</SelectItem>
+                            <SelectItem value="OTHER">Other</SelectItem>
+                            <SelectItem value="PREFER_NOT_TO_SAY">
+                              Prefer not to say
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex-1 space-y-2">
+                    <Label>Email Address</Label>
+                    <Input placeholder="name@example.com" disabled />
+                    <p className="text-muted-foreground text-[0.8rem]">
+                      Contact support to change your email address
+                    </p>
+                  </div>
+                </div>
 
                 <FormField
                   control={form.control}
@@ -273,7 +364,7 @@ export default function GeneralProfileSettings() {
 
                 <FormField
                   control={form.control}
-                  name="aboutMe"
+                  name="bio"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>About Me</FormLabel>

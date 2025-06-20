@@ -21,6 +21,9 @@ const sections = [
     name: "Professional Memberships",
     href: "/dashboard/profile/professional-membership",
   },
+  { name: "Skills", href: "/dashboard/profile/skills" },
+  { name: "Training Areas", href: "/dashboard/profile/training-areas" },
+  { name: "Availability & Rates", href: "/dashboard/profile/availability" },
 ]
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {

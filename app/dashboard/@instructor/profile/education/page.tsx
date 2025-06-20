@@ -3,6 +3,8 @@
 import * as z from "zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,6 +49,7 @@ const educationSchema = z.object({
       endYear: z.string().optional(),
       current: z.boolean().default(false),
       description: z.string().optional(),
+      certificateNumber: z.string().optional(),
     }),
   ),
 })
@@ -54,6 +57,20 @@ const educationSchema = z.object({
 type EducationFormValues = z.infer<typeof educationSchema>
 
 export default function EducationSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "education",
+        title: "Education",
+        url: "/dashboard/profile/education",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<EducationFormValues>({
     resolver: zodResolver(educationSchema),
     defaultValues: {
@@ -67,6 +84,7 @@ export default function EducationSettings() {
           endYear: "2022",
           current: false,
           description: "Graduated with First Class Honours.",
+          certificateNumber: "CERT12345",
         },
       ],
     },
@@ -182,22 +200,41 @@ export default function EducationSettings() {
                       </div>
 
                       {/* Field of Study */}
-                      <FormField
-                        control={form.control}
-                        name={`educations.${index}.fieldOfStudy`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Field of Study</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="e.g. Computer Science"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name={`educations.${index}.fieldOfStudy`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Field of Study</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="e.g. Computer Science"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`educations.${index}.certificateNumber`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Certificate No.</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="e.g. CERT12345"
+                                  {...field}
+                                  value={field.value ?? ""}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       {/* Year Range */}
                       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -299,6 +336,7 @@ export default function EducationSettings() {
                     endYear: "",
                     current: false,
                     description: "",
+                    certificateNumber: "",
                   })
                 }
               >

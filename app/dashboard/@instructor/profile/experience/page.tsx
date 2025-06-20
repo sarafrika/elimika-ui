@@ -3,6 +3,8 @@
 import * as z from "zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,6 +37,20 @@ const profileExperienceSchema = z.object({
 type ProfileExperienceFormValues = z.infer<typeof profileExperienceSchema>
 
 export default function ProfessionalExperienceSettings() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      {
+        id: "experience",
+        title: "Experience",
+        url: "/dashboard/profile/experience",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const form = useForm<ProfileExperienceFormValues>({
     resolver: zodResolver(profileExperienceSchema),
     defaultValues: {
