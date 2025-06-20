@@ -31,10 +31,13 @@ export function useTrainingCenter(): UseTrainingCenterReturn {
   const [state, setState] = useState(initialState)
   const { data: session } = useSession()
 
-  const trainingCenterSlug = useMemo(
-    () => session?.decoded?.organization?.[0] ?? null,
-    [session?.decoded?.organization],
-  )
+  const trainingCenterSlug = useMemo(() => {
+    const orgs = session?.decoded?.organization
+    if (Array.isArray(orgs) && orgs.length > 0) {
+      return orgs[0]
+    }
+    return null
+  }, [session?.decoded?.organization])
 
   const fetchTrainingCenter = useCallback(async () => {
     if (!trainingCenterSlug) {
@@ -56,8 +59,12 @@ export function useTrainingCenter(): UseTrainingCenterReturn {
         throw new Error("No training center found")
       }
 
-      const [trainingCenter] = response.data.content
-      setState({ trainingCenter, loading: false, error: null })
+      const trainingCenter = response.data.content[0]
+      if (trainingCenter) {
+        setState({ trainingCenter, loading: false, error: null })
+      } else {
+        throw new Error("Training center is undefined")
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error

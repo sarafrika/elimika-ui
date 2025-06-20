@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 import { useFieldArray, useForm } from "react-hook-form"
-import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -16,9 +16,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { CalendarIcon, Grip, Loader, PlusCircle, Trash2 } from "lucide-react"
+import { CalendarIcon, Grip, PlusCircle, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Popover,
@@ -27,89 +26,55 @@ import {
 } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
-import { useSession } from "next-auth/react"
-import { useUserProfileQuery } from "@/services/user/queries"
-import { useInstructorProfileQuery } from "@/services/instructor/queries"
-import { useUpdateInstructorProfile } from "@/services/instructor/mutations"
-import {
-  ProfessionalBody,
-  ProfessionalBodySchema,
-} from "@/lib/types/instructor"
+import { cn } from "@/lib/utils"
 
-const FormSchema = z.object({
+const professionalMembershipSchema = z.object({
   professional_bodies: z.array(
-    ProfessionalBodySchema.extend({
+    z.object({
       id: z.string().optional(),
-      current: z.boolean().optional().default(true),
+      body_name: z.string().min(1, "This field is required"),
+      membership_no: z.string().min(1, "This field is required"),
+      member_since: z.date({ required_error: "Please select a date" }),
+      end_year: z.date().optional(),
+      current: z.boolean().default(false),
+      certificate_url: z.string().url().optional().or(z.literal("")),
+      description: z.string().optional(),
     }),
   ),
 })
 
+type ProfessionalMembershipFormValues = z.infer<
+  typeof professionalMembershipSchema
+>
+
 export default function ProfessionalBodySettings() {
-  const { data: session } = useSession()
-  const email = session?.user?.email
-  const { data: user } = useUserProfileQuery(email)
-  const { data: instructor } = useInstructorProfileQuery(user?.uuid)
-  const updateInstructor = useUpdateInstructorProfile()
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const form = useForm<ProfessionalMembershipFormValues>({
+    resolver: zodResolver(professionalMembershipSchema),
     defaultValues: {
-      professional_bodies: [],
+      professional_bodies: [
+        {
+          id: "1",
+          body_name: "Tech Experts Inc.",
+          membership_no: "MEM-12345",
+          member_since: new Date("2020-01-15"),
+          end_year: undefined,
+          current: true,
+          certificate_url: "https://example.com/certificate",
+          description: "Active member of the tech community.",
+        },
+      ],
     },
+    mode: "onChange",
   })
 
-  const { fields, append, remove, replace } = useFieldArray({
-    name: "professional_bodies",
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
+    name: "professional_bodies",
   })
 
-  useEffect(() => {
-    if (instructor?.professional_bodies) {
-      replace(
-        instructor.professional_bodies.map(
-          (professionalBody: ProfessionalBody) => ({
-            ...professionalBody,
-            member_since: new Date(professionalBody.member_since),
-            end_year: professionalBody.end_year
-              ? new Date(professionalBody.end_year)
-              : undefined,
-            current: !professionalBody.end_year,
-          }),
-        ),
-      )
-    }
-  }, [instructor, replace])
-
-  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    if (!instructor) return
-
-    try {
-      await updateInstructor.mutateAsync({
-        ...instructor,
-        professional_bodies: data.professional_bodies.map(
-          ({ current, end_year, ...rest }) => ({
-            ...rest,
-            end_year: current ? null : end_year,
-          }),
-        ),
-      })
-
-      toast.success("Memberships updated successfully.")
-    } catch {
-      toast.error("Something went wrong while saving.")
-    }
-  }
-
-  const getPeriod = (body: ProfessionalBody & { current: boolean }) => {
-    const from = body.member_since ? format(body.member_since, "yyyy") : ""
-    const to = body.current
-      ? "Present"
-      : body.end_year
-        ? format(body.end_year, "yyyy")
-        : ""
-    return `${from} - ${to}`
+  const onSubmit = (data: ProfessionalMembershipFormValues) => {
+    console.log(data)
+    // TODO: Handle form submission
   }
 
   return (
@@ -128,18 +93,6 @@ export default function ProfessionalBodySettings() {
               <div
                 key={field.id}
                 className="group relative space-y-4 rounded-md border p-5"
-                draggable
-                onDragStart={() => setDraggedIndex(index)}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  if (draggedIndex === null) return
-                  const copy = [...fields]
-                  const dragged = copy.splice(draggedIndex, 1)[0]
-                  copy.splice(index, 0, dragged)
-                  form.setValue("professional_bodies", copy)
-                  setDraggedIndex(index)
-                }}
-                onDragEnd={() => setDraggedIndex(null)}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-2">
@@ -147,17 +100,16 @@ export default function ProfessionalBodySettings() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-base font-medium">
-                          {field.body_name || "New Membership"}
+                          {form.watch(
+                            `professional_bodies.${index}.body_name`,
+                          ) || "New Membership"}
                         </h3>
-                        {field.current && (
+                        {form.watch(`professional_bodies.${index}.current`) && (
                           <Badge className="border-green-200 bg-green-100 text-xs text-green-700">
                             Active
                           </Badge>
                         )}
                       </div>
-                      <p className="text-muted-foreground text-xs">
-                        {getPeriod(field)}
-                      </p>
                     </div>
                   </div>
 
@@ -165,8 +117,8 @@ export default function ProfessionalBodySettings() {
                     type="button"
                     size="icon"
                     variant="ghost"
-                    onClick={() => remove(index)}
                     className="h-8 w-8"
+                    onClick={() => remove(index)}
                   >
                     <Trash2 className="text-destructive h-4 w-4" />
                   </Button>
@@ -212,11 +164,19 @@ export default function ProfessionalBodySettings() {
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
-                              <Button variant="outline" className="text-left">
-                                {field.value
-                                  ? format(field.value, "PPP")
-                                  : "Pick a date"}
-                                <CalendarIcon className="ml-auto h-4 w-4" />
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
@@ -243,18 +203,29 @@ export default function ProfessionalBodySettings() {
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
-                              <Button variant="outline" className="text-left">
-                                {field.value
-                                  ? format(field.value, "PPP")
-                                  : "Pick a date"}
-                                <CalendarIcon className="ml-auto h-4 w-4" />
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                                disabled={form.watch(
+                                  `professional_bodies.${index}.current`,
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value ?? undefined}
+                              selected={field.value}
                               onSelect={field.onChange}
                               initialFocus
                             />
@@ -264,23 +235,22 @@ export default function ProfessionalBodySettings() {
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name={`professional_bodies.${index}.current`}
-                    render={({ field }) => (
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormLabel>Current Member</FormLabel>
-                      </FormItem>
-                    )}
-                  />
                 </div>
+                <FormField
+                  control={form.control}
+                  name={`professional_bodies.${index}.current`}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-y-0 space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>I am currently a member</FormLabel>
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}
@@ -290,9 +260,9 @@ export default function ProfessionalBodySettings() {
                       <FormLabel>Certificate URL</FormLabel>
                       <FormControl>
                         <Input
+                          type="url"
                           {...field}
                           value={field.value ?? ""}
-                          type="url"
                         />
                       </FormControl>
                       <FormDescription>
@@ -322,29 +292,22 @@ export default function ProfessionalBodySettings() {
             <Button
               type="button"
               variant="outline"
+              className="flex w-full items-center justify-center gap-2"
               onClick={() =>
                 append({
                   body_name: "",
                   membership_no: "",
                   member_since: new Date(),
-                  current: true,
-                  user_uuid: user?.uuid || "",
+                  current: false,
                 })
               }
-              className="flex w-full items-center justify-center gap-2"
             >
               <PlusCircle className="h-4 w-4" /> Add Another Membership
             </Button>
 
             <div className="flex justify-end pt-2">
               <Button type="submit" className="px-6">
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                  </>
-                ) : (
-                  <>Save Changes</>
-                )}
+                Save Changes
               </Button>
             </div>
           </form>

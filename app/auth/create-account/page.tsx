@@ -47,6 +47,7 @@ import {
   TrainingCenterForm,
 } from "@/app/auth/create-account/_components/training-center-form"
 import { useAuthRealm } from "@/hooks/use-auth-realm"
+import { UserDomain } from "@/lib/types"
 
 type AccountCreationStatus = "idle" | "submitting" | "success" | "error"
 

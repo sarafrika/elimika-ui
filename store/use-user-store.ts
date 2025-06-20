@@ -2,28 +2,37 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { getUserProfile } from "@/services/user/actions"
 import { User } from "@/services/api/schema"
+import { UserDomain } from "@/lib/types"
 
 type UserState = {
   user: User | null
-  activeDomain: User["user_domain"] | null
+  domains: string[]
+  activeDomain: string | null
   isLoading: boolean
   error: string | null
-}
-type UserActions = {
   setUser: (user: User | null) => void
+  setDomains: (domains: string[]) => void
+  setActiveDomain: (domain: string) => void
   clearUser: () => void
   fetchCurrentUser: () => Promise<User | undefined>
 }
 
-type UserStore = UserState & UserActions
-export const useUserStore = create<UserStore>()(
+export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       user: null,
+      domains: [],
+      activeDomain: null,
       isLoading: false,
       error: null,
       setUser: (user) => set({ user }),
-      clearUser: () => set({ user: null }),
+      setDomains: (domains) =>
+        set({
+          domains,
+          activeDomain: domains.length > 0 ? domains[0] : null,
+        }),
+      setActiveDomain: (domain) => set({ activeDomain: domain }),
+      clearUser: () => set({ user: null, domains: [], activeDomain: null }),
       fetchCurrentUser: async () => {
         try {
           set({ isLoading: true, error: null })
@@ -43,7 +52,8 @@ export const useUserStore = create<UserStore>()(
             userData?.user_domain?.length > 0
           ) {
             set({
-              activeDomain: userData?.user_domain,
+              domains: userData.user_domain,
+              activeDomain: userData.user_domain[0],
             })
           }
           return userData
@@ -58,11 +68,13 @@ export const useUserStore = create<UserStore>()(
           return undefined
         }
       },
-      activeDomain: null,
     }),
     {
       name: "user-storage", // unique name for localStorage
-      partialize: (state) => ({ user: state.user }),
+      partialize: (state) => ({
+        user: state.user,
+        activeDomain: state.activeDomain,
+      }),
     },
   ),
 )

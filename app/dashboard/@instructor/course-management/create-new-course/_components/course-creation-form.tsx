@@ -1,33 +1,18 @@
 "use client"
 
-import { z } from "zod"
-import {
-  ChangeEvent,
-  forwardRef,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react"
+import { ReactNode, forwardRef, useImperativeHandle, useState } from "react"
+import * as z from "zod"
+import { useFieldArray, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Form,
   FormControl,
   FormDescription,
-  FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormField,
 } from "@/components/ui/form"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  createCourse,
-  fetchCourseCategories,
-} from "@/app/dashboard/instructor/course-management/create-new-course/actions"
-import { useDebounce } from "@/hooks/use-debounce"
-import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -43,82 +28,31 @@ import { PlusIcon, XIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 
+const courseCreationSchema = z.object({
+  name: z.string().min(1, "Course name is required"),
+  description: z.string().min(1, "Course description is required"),
+  thumbnail: z.any().optional(),
+  is_free: z.boolean().default(false),
+  price: z.coerce.number().optional(),
+  sale_price: z.coerce.number().optional(),
+  currency: z.string().optional(),
+  objectives: z.array(z.object({ value: z.string() })),
+  categories: z.array(z.object({ value: z.string() })),
+  difficulty: z.string().min(1, "Please select a difficulty level"),
+  class_limit: z.coerce.number().min(1, "Class limit must be at least 1"),
+})
+
+type CourseCreationFormValues = z.infer<typeof courseCreationSchema>
+
 const DIFFICULTY_LEVELS = {
   BEGINNER: "beginner",
   INTERMEDIATE: "intermediate",
   ADVANCED: "advanced",
 } as const
 
-export type DifficultyLevel = keyof typeof DIFFICULTY_LEVELS
-
 const CURRENCIES = {
   KES: "KES",
 } as const
-
-export type Currency = keyof typeof CURRENCIES
-
-const CoursePricingSchema = z.object({
-  originalPrice: z.coerce
-    .number()
-    .positive("Original price must be a positive number"),
-  salePrice: z.coerce.number().positive("New price must be a positive number"),
-  currency: z.nativeEnum(CURRENCIES, { message: "Currency is required" }),
-  free: z.boolean().optional().default(false),
-})
-
-export type CoursePricing = z.infer<typeof CoursePricingSchema>
-
-const LearningObjectiveSchema = z.object({
-  id: z.coerce.number().optional(),
-  objective: z.string().trim().min(1, "Objective is required"),
-})
-
-export type LearningObjective = z.infer<typeof LearningObjectiveSchema>
-
-const CategorySchema = z.object({
-  id: z.coerce.number().optional(),
-  name: z.string().trim().min(1, "Category name is required"),
-  description: z.string().trim().nullable().optional(),
-})
-
-export type Category = z.infer<typeof CategorySchema>
-
-const CourseCreationFormSchema = z.object({
-  id: z.coerce.number().optional(),
-  code: z.string().nullish(),
-  name: z.string().trim().min(1, "Course name is required"),
-  description: z.string().trim().min(1, "Course description is required"),
-  difficultyLevel: z.nativeEnum(DIFFICULTY_LEVELS, {
-    message: "Difficulty level is required",
-  }),
-  pricing: CoursePricingSchema,
-  classLimit: z.coerce.number().min(1, "Class limit is required"),
-  thumbnail: z
-    .any()
-    .refine((file) => file instanceof File, "Thumbnail is required")
-    .refine(
-      (file) => file instanceof File && file.size <= 5242880,
-      "Max file size is 5MB",
-    )
-    .refine(
-      (file) =>
-        file instanceof File &&
-        ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(
-          file.type,
-        ),
-      "Only .jpg, .jpeg, .png and .webp formats are supported",
-    ),
-  learningObjectives: z
-    .array(LearningObjectiveSchema)
-    .min(1, "At least one learning objective is required"),
-  categories: z
-    .array(CategorySchema)
-    .min(1, "At least one category is required"),
-  updated_date: z.coerce.string().optional(),
-  created_date: z.coerce.string(),
-})
-
-export type Course = z.infer<typeof CourseCreationFormSchema>
 
 type FormSectionProps = {
   title: string
@@ -129,155 +63,70 @@ type FormSectionProps = {
 const FormSection = ({ title, description, children }: FormSectionProps) => (
   <div className="block lg:flex lg:items-start lg:space-x-4">
     <div className="w-full lg:w-1/4">
-      <FormLabel>{title}</FormLabel>
-      <FormDescription className="mt-1">{description}</FormDescription>
+      <h3 className="leading-none font-semibold tracking-tight">{title}</h3>
+      <p className="text-muted-foreground mt-1 text-sm">{description}</p>
     </div>
     <div className="w-full lg:w-3/4">{children}</div>
   </div>
 )
 
 export type CourseFormProps = {
-  isEditing?: boolean
-  submitButtonText?: string
   showSubmitButton?: boolean
-  onSuccess?(data: Course): void
-  onSubmit?(data: Course): Promise<void>
 }
 
 export type CourseFormRef = {
-  submitForm: () => Promise<void>
+  submit: () => void
 }
 
 export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
-  function CourseCreationForm(
-    {
-      isEditing,
-      submitButtonText,
-      showSubmitButton,
-      onSuccess,
-      onSubmit,
-    }: CourseFormProps,
-    ref,
-  ) {
-    const [newCategory, setNewCategory] = useState({ name: "" })
-    const [categorySearchQuery, setCategorySearchQuery] = useState("")
-    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
-      null,
-    )
-    const [suggestedCategories, setSuggestedCategories] = useState<Category[]>(
-      [],
-    )
+  function CourseCreationForm({ showSubmitButton }: CourseFormProps, ref) {
+    const [categoryInput, setCategoryInput] = useState("")
 
-    const debouncedCategorySearchQuery = useDebounce(categorySearchQuery, 300)
-
-    const form = useForm<Course>({
-      resolver: zodResolver(CourseCreationFormSchema),
+    const form = useForm<CourseCreationFormValues>({
+      resolver: zodResolver(courseCreationSchema),
       defaultValues: {
         name: "",
         description: "",
-        difficultyLevel: DIFFICULTY_LEVELS.BEGINNER,
-        pricing: {
-          originalPrice: 0,
-          salePrice: 0,
-          currency: CURRENCIES.KES,
-          free: false,
-        },
-        learningObjectives: [{ objective: "" }],
+        is_free: false,
+        objectives: [{ value: "" }],
         categories: [],
+        class_limit: 30,
       },
+      mode: "onChange",
     })
 
-    const isFree = form.watch("pricing.free")
-    const learningObjectives = form.watch("learningObjectives")
-    const categories = form.watch("categories")
+    const {
+      fields: objectiveFields,
+      append: appendObjective,
+      remove: removeObjective,
+    } = useFieldArray({
+      control: form.control,
+      name: "objectives",
+    })
 
-    useEffect(() => {
-      if (isFree) {
-        form.setValue("pricing.originalPrice", 0)
-        form.setValue("pricing.salePrice", 0)
-      }
-    }, [isFree, form])
+    const {
+      fields: categoryFields,
+      append: appendCategory,
+      remove: removeCategory,
+    } = useFieldArray({
+      control: form.control,
+      name: "categories",
+    })
 
-    const loadCourseCategories = useCallback(async (searchQuery?: string) => {
-      try {
-        const params = new URLSearchParams()
-
-        if (searchQuery && searchQuery.length > 0) {
-          params.append("name", searchQuery)
-        }
-
-        const response = await fetchCourseCategories(params.toString())
-
-        if (response.status === 200) {
-          setSuggestedCategories(response.data)
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error)
-        toast.error(
-          "Something went wrong while fetching categories. Please try again later.",
-        )
-      }
-    }, [])
-
-    useEffect(() => {
-      loadCourseCategories(debouncedCategorySearchQuery)
-    }, [loadCourseCategories, debouncedCategorySearchQuery])
-
-    const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0]
-      if (file) {
-        form.setValue("thumbnail", file)
-
-        const reader = new FileReader()
-        reader.onload = () => {
-          setThumbnailPreview(reader.result as string)
-        }
-        reader.readAsDataURL(file)
-      }
-    }
-
-    const handleValidationErrors = (errors: Record<string, string>) => {
-      Object.entries(errors).forEach(([field, message]) => {
-        form.setError(field as keyof Course, { type: "server", message })
-      })
-    }
-
-    const handleSubmit = async (data: Course) => {
-      if (onSubmit) {
-        await onSubmit(data)
-        return
-      }
-
-      /** TODO: Implement update for course */
-      const response = await createCourse(data)
-
-      if (response.status === 201) {
-        toast.success(response.message)
-        onSuccess?.(response.data)
-        return
-      }
-
-      if (response.errors) {
-        handleValidationErrors(response.errors)
-      }
-
-      throw new Error(response.message)
+    const onSubmit = (data: CourseCreationFormValues) => {
+      console.log(data)
+      // TODO: Handle form submission
     }
 
     useImperativeHandle(ref, () => ({
-      submitForm: async () => {
-        const isValid = await form.trigger()
-        if (!isValid) {
-          throw new Error("Form is invalid!")
-        }
-
-        return form.handleSubmit(handleSubmit)()
-      },
+      submit: () => form.handleSubmit(onSubmit)(),
     }))
+
+    const isFree = form.watch("is_free")
 
     return (
       <Form {...form}>
-        <form className="space-y-8" onSubmit={form.handleSubmit(handleSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Course Name */}
           <FormSection
             title="Course Name"
@@ -328,27 +177,15 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             <FormField
               control={form.control}
               name="thumbnail"
-              render={({ field: { value, onChange, ...field } }) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <div className="flex items-center gap-4">
                       <Input
                         type="file"
                         accept="image/*"
-                        onChange={handleImageUpload}
-                        {...field}
+                        onChange={(e) => field.onChange(e.target.files?.[0])}
                       />
-                      {thumbnailPreview && (
-                        <div className="relative h-24 w-24">
-                          <Image
-                            src={thumbnailPreview}
-                            alt="Thumbnail preview"
-                            className="rounded object-cover"
-                            fill
-                            sizes="96px"
-                          />
-                        </div>
-                      )}
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -365,18 +202,17 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             <div className="space-y-4">
               <FormField
                 control={form.control}
-                name="pricing.free"
+                name="is_free"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        id="free-course"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel htmlFor="free-course">Free Course</FormLabel>
+                      <FormLabel>Free Course</FormLabel>
                       <FormDescription>
                         Make this course available for free
                       </FormDescription>
@@ -388,7 +224,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
-                  name="pricing.originalPrice"
+                  name="price"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Original Price</FormLabel>
@@ -397,8 +233,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                           type="number"
                           min="0"
                           step="0.01"
-                          disabled={isFree}
                           {...field}
+                          disabled={isFree}
                         />
                       </FormControl>
                       <FormMessage />
@@ -408,7 +244,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                 <FormField
                   control={form.control}
-                  name="pricing.salePrice"
+                  name="sale_price"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Sale Price</FormLabel>
@@ -417,8 +253,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                           type="number"
                           min="0"
                           step="0.01"
-                          disabled={isFree}
                           {...field}
+                          disabled={isFree}
                         />
                       </FormControl>
                       <FormMessage />
@@ -428,7 +264,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                 <FormField
                   control={form.control}
-                  name="pricing.currency"
+                  name="currency"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Currency</FormLabel>
@@ -464,11 +300,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             description="List what students will learn from your course"
           >
             <div className="space-y-4">
-              {learningObjectives.map((_, index) => (
+              {objectiveFields.map((field, index) => (
                 <FormField
-                  key={index}
                   control={form.control}
-                  name={`learningObjectives.${index}.objective`}
+                  key={field.id}
+                  name={`objectives.${index}.value`}
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex gap-2">
@@ -482,14 +318,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                           type="button"
                           variant="outline"
                           size="icon"
-                          onClick={() => {
-                            if (learningObjectives.length > 1) {
-                              const newObjectives = [...learningObjectives]
-                              newObjectives.splice(index, 1)
-                              form.setValue("learningObjectives", newObjectives)
-                            }
-                          }}
-                          disabled={learningObjectives.length === 1}
+                          onClick={() => removeObjective(index)}
+                          disabled={objectiveFields.length === 1}
                         >
                           <XIcon className="h-4 w-4" />
                         </Button>
@@ -504,12 +334,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  form.setValue("learningObjectives", [
-                    ...learningObjectives,
-                    { objective: "" },
-                  ])
-                }}
+                onClick={() => appendObjective({ value: "" })}
               >
                 <PlusIcon className="mr-2 h-4 w-4" />
                 Add Objective
@@ -523,77 +348,48 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             description="Add relevant categories for your course"
           >
             <div className="space-y-4">
-              {categories.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {categories.map((category) => (
-                    <Badge
-                      key={category.id || category.name}
-                      variant="secondary"
-                      className="flex items-center gap-1 px-3 py-1"
-                    >
-                      {category.name}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          form.setValue(
-                            "categories",
-                            categories.filter((c) => c.name !== category.name),
-                          )
-                        }}
-                        className="ml-1"
-                      >
-                        <XIcon className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
               <div className="flex gap-2">
                 <Input
-                  value={newCategory.name}
-                  onChange={(e) => {
-                    setNewCategory({ name: e.target.value })
-                    setCategorySearchQuery(e.target.value)
-                  }}
                   placeholder="Add a category"
+                  value={categoryInput}
+                  onChange={(e) => setCategoryInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      if (categoryInput.trim()) {
+                        appendCategory({ value: categoryInput.trim() })
+                        setCategoryInput("")
+                      }
+                    }
+                  }}
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    if (
-                      newCategory.name &&
-                      !categories.some((c) => c.name === newCategory.name)
-                    ) {
-                      form.setValue("categories", [...categories, newCategory])
-                      setNewCategory({ name: "" })
+                    if (categoryInput.trim()) {
+                      appendCategory({ value: categoryInput.trim() })
+                      setCategoryInput("")
                     }
                   }}
-                  disabled={!newCategory.name}
                 >
                   Add
                 </Button>
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {suggestedCategories
-                  .filter(
-                    (category) =>
-                      !categories.some((c) => c.name === category.name),
-                  )
-                  .map((category) => (
-                    <Badge
-                      key={category.id || category.name}
-                      variant="outline"
-                      className="cursor-pointer px-3 py-1"
-                      onClick={() => {
-                        form.setValue("categories", [...categories, category])
-                      }}
+                {categoryFields.map((field, index) => (
+                  <Badge key={field.id} variant="secondary">
+                    {form.watch(`categories.${index}.value`)}
+                    <button
+                      type="button"
+                      className="ml-2"
+                      onClick={() => removeCategory(index)}
                     >
-                      {category.name}
-                    </Badge>
-                  ))}
+                      <XIcon className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
               </div>
               <FormMessage />
             </div>
@@ -606,7 +402,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           >
             <FormField
               control={form.control}
-              name="difficultyLevel"
+              name="difficulty"
               render={({ field }) => (
                 <FormItem>
                   <Select
@@ -638,7 +434,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           >
             <FormField
               control={form.control}
-              name="classLimit"
+              name="class_limit"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
@@ -657,15 +453,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
           {showSubmitButton && (
             <div className="flex justify-end pt-6">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting
-                  ? "Saving..."
-                  : submitButtonText
-                    ? submitButtonText
-                    : isEditing
-                      ? "Update Course"
-                      : "Save Course"}
-              </Button>
+              <Button type="submit">Save Course</Button>
             </div>
           )}
         </form>
@@ -673,21 +461,5 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     )
   },
 )
-
-export function useCourseCreationForm() {
-  const formRef = useRef<CourseFormRef>(null)
-
-  return {
-    formRef,
-    submitForm: async () => {
-      if (formRef.current) {
-        await formRef.current.submitForm()
-        return
-      }
-
-      console.warn("Form reference is not available")
-    },
-  }
-}
 
 export default CourseCreationForm

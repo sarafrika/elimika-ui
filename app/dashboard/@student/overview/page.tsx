@@ -1,4 +1,6 @@
 "use client"
+
+import { useSession } from "next-auth/react"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import {
@@ -9,8 +11,6 @@ import {
   GraduationCap,
   Info,
 } from "lucide-react"
-import { useUserStore } from "@/store/use-user-store"
-import { useEffect, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -53,49 +53,38 @@ const currentStage = 1 // 0-based index; e.g., 1 = "Under Review"
 const progressPercent = ((currentStage + 1) / approvalStages.length) * 100
 
 export default function StudentOverviewPage() {
-  const { user } = useUserStore()
-  // Mock guardians for demo; replace with real guardians if available
-  const [guardians, setGuardians] = useState([
-    { firstName: "Jane", lastName: "Doe", phone: "+254700000001" },
-    { firstName: "John", lastName: "Smith", phone: "+254700000002" },
-  ])
-  const [showDetails, setShowDetails] = useState(true)
-  const [openProfileModal, setOpenProfileModal] = useState(false)
-
-  useEffect(() => {
-    // If you have guardians in user or profile, set them here
-    // setGuardians(user?.guardians || [])
-  }, [user])
-
-  // Helper to get full name
-  const getFullName = (u: any) =>
-    u
-      ? `${u.first_name || ""}${u.middle_name ? ` ${u.middle_name}` : ""} ${u.last_name || ""}`.trim()
-      : "-"
-
-  // Only show the first guardian for compactness
-  const firstGuardian = guardians[0]
+  const { data: session } = useSession()
+  const firstGuardian = {
+    firstName: "Jane",
+    lastName: "Doe",
+    phone: "+254700000001",
+  }
   const stage = approvalStages[currentStage]
-  const Icon = stage.icon
-  const isProfileStage = Number(currentStage) === 0
 
-  // Form state for modal (for demo, not hooked to backend)
-  const [editName, setEditName] = useState(
-    user
-      ? `${user.first_name || ""}${user.middle_name ? ` ${user.middle_name}` : ""} ${user.last_name || ""}`.trim()
-      : "",
-  )
-  const [editPhone, setEditPhone] = useState(user?.phone_number || "")
-  const [editEmail, setEditEmail] = useState(user?.email || "")
-  const [editGuardian, setEditGuardian] = useState(
-    firstGuardian ? `${firstGuardian.firstName} ${firstGuardian.lastName}` : "",
-  )
-  const [editGuardianPhone, setEditGuardianPhone] = useState(
-    firstGuardian ? firstGuardian.phone : "",
-  )
+  if (!stage) {
+    return <p>Invalid approval stage.</p>
+  }
+
+  const isProfileStage = Number(currentStage) === 0
+  const nextStage = approvalStages[currentStage + 1]
+
+  const editName = "John Doe"
+  const editPhone = "0712345678"
+  const editEmail = "john.doe@example.com"
+  const editGuardian = "Jane Doe"
+  const editGuardianPhone = "+254700000001"
 
   return (
     <div className="bg-background mx-auto flex max-h-screen min-h-screen w-full max-w-2xl flex-col items-center gap-4 overflow-y-auto px-2 py-6">
+      <div className="flex flex-col justify-start gap-4">
+        <p className="text-2xl font-bold">
+          Welcome <span className="text-primary">{session?.user?.name}</span>
+        </p>
+        <span className="text-muted-foreground">
+          You are logged in as a Student.
+        </span>
+      </div>
+
       {/* Section Header */}
       <div className="mb-1 w-full text-center">
         <h2 className="text-primary text-lg font-bold tracking-tight">
@@ -117,25 +106,12 @@ export default function StudentOverviewPage() {
                 key={stage.title}
                 className={`group relative flex min-w-0 flex-col items-center ${isFirstStage ? "cursor-pointer" : ""}`}
                 style={{ minWidth: 70 }}
-                onClick={
-                  isFirstStage ? () => setOpenProfileModal(true) : undefined
-                }
                 role={isFirstStage ? "button" : undefined}
                 tabIndex={isFirstStage ? 0 : -1}
                 aria-label={
                   isFirstStage
                     ? "View submitted profile details"
                     : stage.tooltip
-                }
-                onKeyDown={
-                  isFirstStage
-                    ? (e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault()
-                          setOpenProfileModal(true)
-                        }
-                      }
-                    : undefined
                 }
               >
                 <div
@@ -182,7 +158,7 @@ export default function StudentOverviewPage() {
           <div
             className={`bg-muted/60 border-muted-200 flex items-center justify-center rounded-full border p-3`}
           >
-            <Icon
+            <stage.icon
               className={`h-6 w-6 ${currentStage > 0 ? "text-green-600" : "text-primary"}`}
             />
           </div>
@@ -205,14 +181,14 @@ export default function StudentOverviewPage() {
           {stage.description}
         </div>
         {/* What's next section for current stage */}
-        {currentStage + 1 < approvalStages.length && (
+        {nextStage && (
           <div className="bg-primary/5 border-primary/40 mt-1 flex items-center gap-2 rounded border-l-4 p-1">
             <Info className="text-primary h-3 w-3" />
             <span className="text-primary text-[11px] font-medium">
-              What's next?
+              What&apos;s next?
             </span>
             <span className="text-muted-foreground text-[11px]">
-              {approvalStages[currentStage + 1].description}
+              {nextStage.description}
             </span>
           </div>
         )}
@@ -226,7 +202,7 @@ export default function StudentOverviewPage() {
         </Alert>
       </div>
       {/* Modal for viewing submitted details */}
-      <Dialog open={openProfileModal} onOpenChange={setOpenProfileModal}>
+      <Dialog>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Submitted Details</DialogTitle>
@@ -248,23 +224,21 @@ export default function StudentOverviewPage() {
               <span>{editEmail}</span>
             </div>
             {firstGuardian && (
-              <div className="flex flex-col gap-1">
+              <>
                 <div className="flex justify-between">
-                  <span className="font-medium">Guardian 1 name:</span>{" "}
+                  <span className="font-medium">Guardian name:</span>{" "}
                   <span>{editGuardian}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Mobile No.:</span>{" "}
+                  <span className="font-medium">Guardian Mobile No.:</span>{" "}
                   <span>{editGuardianPhone}</span>
                 </div>
-              </div>
+              </>
             )}
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Close
-              </Button>
+              <Button>Close</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>

@@ -1,8 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { format } from "date-fns"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -16,7 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { toast } from "sonner"
 import {
   Card,
   CardContent,
@@ -24,110 +25,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { CalendarIcon, Loader2Icon } from "lucide-react"
-import { useSession } from "next-auth/react"
-import { User } from "@/app/auth/create-account/_components/user-account-form"
+import { CalendarIcon } from "lucide-react"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
-import { useUserProfileQuery } from "@/services/user/queries"
-import { useInstructorProfileQuery } from "@/services/instructor/queries"
-import { useUpdateInstructorProfile } from "@/services/instructor/mutations"
-import { Instructor, InstructorFormSchema } from "@/lib/types/instructor"
+import { Label } from "@/components/ui/label"
 
-const getInitialValues = (user: User | null | undefined) => {
-  const sanitize = (value: unknown): string | undefined => {
-    return typeof value === "string" ? value : undefined
-  }
+const generalProfileSchema = z.object({
+  fullName: z.string().min(1, "Full name is required"),
+  phoneNumber: z.string().optional(),
+  dateOfBirth: z.date().optional(),
+  professionalHeadline: z.string().optional(),
+  website: z
+    .string()
+    .url({ message: "Invalid URL" })
+    .optional()
+    .or(z.literal("")),
+  location: z.string().optional(),
+  aboutMe: z.string().optional(),
+})
 
-  if (!user) {
-    return {
-      full_name: "",
-      email: "",
-      phone_number: "",
-      dob: undefined,
-      user_uuid: "",
-      professional_headline: "",
-      website: "",
-      location: "",
-      bio: "",
-    }
-  }
-
-  return {
-    full_name: `${user.first_name}${user.middle_name ? ` ${user.middle_name}` : ""} ${user.last_name}`,
-    email: sanitize(user.email),
-    phone_number: sanitize(user.phone_number),
-    dob: user.dob ? new Date(user.dob) : undefined,
-    user_uuid: sanitize(user.uuid),
-    professional_headline: "",
-    website: "",
-    location: "",
-    bio: "",
-  }
-}
+type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>
 
 export default function GeneralProfileSettings() {
-  const { data: session } = useSession()
-  const email = session?.user?.email
-  const {
-    data: user,
-    isLoading,
-    isSuccess,
-    refetch,
-  } = useUserProfileQuery(email)
-
-  const userUuid = user?.uuid
-  const {
-    data: instructor,
-    isSuccess: isInstructorSuccess,
-    isLoading: isInstructorLoading,
-    refetch: refetchInstructor,
-  } = useInstructorProfileQuery(userUuid)
-
-  const [isAvatarUploading, setIsAvatarUploading] = useState(false)
-
-  const form = useForm<Instructor>({
-    resolver: zodResolver(InstructorFormSchema),
-    defaultValues: getInitialValues(undefined),
+  const form = useForm<GeneralProfileFormValues>({
+    resolver: zodResolver(generalProfileSchema),
+    defaultValues: {
+      fullName: "",
+      phoneNumber: "",
+      professionalHeadline: "",
+      website: "",
+      location: "",
+      aboutMe: "",
+    },
   })
 
-  useEffect(() => {
-    if (isSuccess && user) {
-      form.reset(getInitialValues(user))
-    }
-  }, [form, isSuccess, user])
-
-  useEffect(() => {
-    if (isInstructorSuccess && instructor) {
-      form.reset({
-        ...form.getValues(),
-        ...instructor,
-      })
-    }
-  }, [form, isInstructorSuccess, instructor])
-
-  const updateInstructor = useUpdateInstructorProfile()
-
-  const onSubmit = async (data: Instructor) => {
-    try {
-      console.log(data)
-      const response = await updateInstructor.mutateAsync(data)
-      toast.success(response.message)
-    } catch (err) {
-      toast.error("Error updating instructor profile")
-    }
-  }
-
-  const handleAvatarUpload = () => {
-    setIsAvatarUploading(true)
-
-    /** TODO: Implement avatar upload functionality */
+  function onSubmit(data: GeneralProfileFormValues) {
+    console.log(data)
+    // TODO: Handle form submission
   }
 
   return (
@@ -154,8 +93,7 @@ export default function GeneralProfileSettings() {
                   <Avatar className="bg-primary-50 h-24 w-24">
                     <AvatarImage src="" alt="Avatar" />
                     <AvatarFallback className="bg-blue-50 text-xl text-blue-600">
-                      {form.watch("full_name").split(" ")[0]?.[0]}
-                      {form.watch("full_name").split(" ")[1]?.[0]}
+                      JO
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-2">
@@ -165,14 +103,8 @@ export default function GeneralProfileSettings() {
                       Max size: 5MB
                     </div>
                     <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        type="button"
-                        onClick={handleAvatarUpload}
-                        disabled={isAvatarUploading}
-                      >
-                        {isAvatarUploading ? "Uploading..." : "Change"}
+                      <Button variant="outline" size="sm" type="button">
+                        Change
                       </Button>
                       <Button
                         variant="outline"
@@ -191,15 +123,15 @@ export default function GeneralProfileSettings() {
                 <div className="flex w-full flex-col items-start gap-8 sm:flex-row">
                   <FormField
                     control={form.control}
-                    name="full_name"
+                    name="fullName"
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="e.g. Tonny Ocholla"
-                            {...field}
                             className="h-10"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -207,33 +139,19 @@ export default function GeneralProfileSettings() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="name@example.com"
-                            {...field}
-                            value={field.value ?? ""}
-                            disabled
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Contact support to change your email address
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="flex-1 space-y-2">
+                    <Label>Email Address</Label>
+                    <Input placeholder="name@example.com" disabled />
+                    <p className="text-muted-foreground text-[0.8rem]">
+                      Contact support to change your email address
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex w-full flex-col items-start gap-8 sm:flex-row">
                   <FormField
                     control={form.control}
-                    name="phone_number"
+                    name="phoneNumber"
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormLabel>Phone Number</FormLabel>
@@ -241,9 +159,8 @@ export default function GeneralProfileSettings() {
                           <Input
                             type="tel"
                             placeholder="e.g. +254712345678"
-                            {...field}
-                            value={field.value ?? ""}
                             className="h-10"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -253,7 +170,7 @@ export default function GeneralProfileSettings() {
 
                   <FormField
                     control={form.control}
-                    name="dob"
+                    name="dateOfBirth"
                     render={({ field }) => (
                       <FormItem className="flex flex-1 flex-col">
                         <FormLabel>Date of Birth</FormLabel>
@@ -279,6 +196,7 @@ export default function GeneralProfileSettings() {
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
+                              selected={field.value}
                               onSelect={field.onChange}
                               disabled={(date) =>
                                 date > new Date() ||
@@ -296,18 +214,15 @@ export default function GeneralProfileSettings() {
 
                 <FormField
                   control={form.control}
-                  name="professional_headline"
+                  name="professionalHeadline"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Professional Headline
-                      </FormLabel>
+                      <FormLabel>Professional Headline</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="e.g. Mathematics Professor with 10+ years experience"
-                          {...field}
-                          value={field.value ?? ""}
                           className="h-10"
+                          {...field}
                         />
                       </FormControl>
                       <FormDescription className="text-xs">
@@ -324,15 +239,12 @@ export default function GeneralProfileSettings() {
                     name="website"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">
-                          Website
-                        </FormLabel>
+                        <FormLabel>Website</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="https://yourwebsite.com"
-                            {...field}
-                            value={field.value ?? ""}
                             className="h-10"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -345,15 +257,12 @@ export default function GeneralProfileSettings() {
                     name="location"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">
-                          Location
-                        </FormLabel>
+                        <FormLabel>Location</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="e.g. Nairobi, Kenya"
-                            {...field}
-                            value={field.value ?? ""}
                             className="h-10"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -364,18 +273,15 @@ export default function GeneralProfileSettings() {
 
                 <FormField
                   control={form.control}
-                  name="bio"
+                  name="aboutMe"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        About Me
-                      </FormLabel>
+                      <FormLabel>About Me</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Tell us about yourself..."
                           className="min-h-32 resize-y"
                           {...field}
-                          value={field.value ?? ""}
                         />
                       </FormControl>
                       <FormDescription className="text-xs">
@@ -389,19 +295,8 @@ export default function GeneralProfileSettings() {
               </div>
 
               <div className="flex justify-end pt-2">
-                <Button
-                  className="cursor-pointer px-6"
-                  disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
-                  }
-                >
-                  {form.formState.isSubmitting ? (
-                    <span>
-                      <Loader2Icon className="animate-spin" /> Saving...
-                    </span>
-                  ) : (
-                    "Save Changes"
-                  )}
+                <Button type="submit" className="cursor-pointer px-6">
+                  Save Changes
                 </Button>
               </div>
             </CardContent>

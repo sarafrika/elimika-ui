@@ -14,12 +14,12 @@ import {
 import { ReactNode } from "react"
 
 const sections = [
-  { name: "General", href: "/dashboard/instructor/profile/general" },
-  { name: "Education", href: "/dashboard/instructor/profile/education" },
-  { name: "Experience", href: "/dashboard/instructor/profile/experience" },
+  { name: "General", href: "/dashboard/profile/general" },
+  { name: "Education", href: "/dashboard/profile/education" },
+  { name: "Experience", href: "/dashboard/profile/experience" },
   {
     name: "Professional Memberships",
-    href: "/dashboard/instructor/profile/professional-membership",
+    href: "/dashboard/profile/professional-membership",
   },
 ]
 

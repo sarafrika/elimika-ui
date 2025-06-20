@@ -8,6 +8,7 @@ import {
   Building2,
   BookOpen,
 } from "lucide-react"
+import { UserDomain } from "./types"
 
 export type MenuItem = {
   title: string
