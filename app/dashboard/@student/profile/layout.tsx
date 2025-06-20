@@ -14,8 +14,9 @@ import {
 import { ReactNode } from "react"
 
 const sections = [
-  { name: "General", href: "/dashboard/student/profile/general" },
-  { name: "Education", href: "/dashboard/student/profile/education" },
+  { name: "General", href: "/dashboard/profile/general" },
+  { name: "Education", href: "/dashboard/profile/education" },
+  { name: "Certifications", href: "/dashboard/profile/certifications" },
 ]
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
