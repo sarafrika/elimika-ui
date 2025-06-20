@@ -1,4 +1,8 @@
-export type UserDomain = "student" | "instructor" | "organisation_user"
+export type UserDomain =
+  | "student"
+  | "instructor"
+  | "organisation_user"
+  | "admin"
 
 export type UserProfile = {
   uuid?: string

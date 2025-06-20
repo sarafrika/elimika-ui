@@ -16,11 +16,14 @@ import { NavMain } from "@/components/nav-main"
 import { useTrainingCenter } from "@/context/training-center-provider"
 import menu from "@/lib/menu"
 import { NavSecondary } from "@/components/nav-secondary"
+import { UserDomain } from "@/lib/types"
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  activeDomain,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { activeDomain: UserDomain }) {
   const { trainingCenter } = useTrainingCenter()
-  const domain = "admin"
-  const menuItems = menu[domain]
+  const menuItems = activeDomain ? menu[activeDomain as keyof typeof menu] : []
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -43,7 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {menuItems && <NavMain items={menuItems} />}
+        {menuItems && <NavMain items={menuItems} activeDomain={activeDomain} />}
         {/*<NavOffice office={menu.office} />*/}
         <NavSecondary items={menu?.secondary ?? []} className="mt-auto" />
       </SidebarContent>

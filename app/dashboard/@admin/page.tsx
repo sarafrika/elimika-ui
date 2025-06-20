@@ -1,12 +1,5 @@
+import { redirect } from "next/navigation"
 
-type Props = {
-    children: React.ReactNode
-}
-
-export default function AdminLayout({ children }: Props) {
-    return (
-        <main>
-            {children}
-        </main>
-    )
+export default function AdminPage() {
+  redirect("/dashboard/overview")
 }
