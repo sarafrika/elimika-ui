@@ -1,5 +1,8 @@
 "use client"
 
+import * as z from "zod"
+import { Control, useFieldArray, useForm, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
   BookOpen,
   ClipboardCheck,
@@ -20,16 +23,7 @@ import {
   X,
   Youtube,
 } from "lucide-react"
-import {
-  ChangeEvent,
-  Dispatch,
-  ReactNode,
-  SetStateAction,
-  useState,
-} from "react"
-import { z } from "zod"
-import { useFieldArray, useForm, UseFormReturn } from "react-hook-form"
-import { toast } from "sonner"
+import { Dispatch, ReactNode, SetStateAction } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -57,7 +51,6 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Dialog,
   DialogContent,
@@ -66,7 +59,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { createLesson } from "@/app/dashboard/instructor/course-management/create-new-course/actions"
 
 const CONTENT_TYPES = {
   AUDIO: "Audio",
@@ -77,50 +69,35 @@ const CONTENT_TYPES = {
   YOUTUBE: "YouTube",
 } as const
 
+const contentItemSchema = z.object({
+  contentType: z.enum(["AUDIO", "VIDEO", "TEXT", "LINK", "PDF", "YOUTUBE"]),
+  title: z.string().min(1, "Title is required"),
+  value: z.any().optional(),
+  duration: z.coerce.number().min(0, "Duration must be positive").optional(),
+})
+
+const resourceSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  url: z.string().url("Please enter a valid URL"),
+})
+
+const lessonFormSchema = z.object({
+  title: z.string().min(1, "Lesson title is required"),
+  description: z.string().optional(),
+  content: z.array(contentItemSchema),
+  resources: z.array(resourceSchema),
+})
+
+type LessonFormValues = z.infer<typeof lessonFormSchema>
+
 type ContentType = keyof typeof CONTENT_TYPES
-
-const ResourceFormSchema = z.object({
-  id: z.number().optional(),
-  title: z.string().min(1, "Title is required"),
-  resourceUrl: z.string().url("Please enter a valid URL"),
-  displayOrder: z.coerce.number().min(0),
-})
-
-export type LessonResource = z.infer<typeof ResourceFormSchema>
-
-const ContentFormSchema = z.object({
-  id: z.number().optional(),
-  contentText: z.string().optional(),
-  contentUrl: z.string().optional(),
-  contentType: z.nativeEnum(CONTENT_TYPES),
-  title: z.string().min(1, "Title is required"),
-  duration: z.coerce.number().positive("Duration must be a positive number"),
-  displayOrder: z.coerce.number().min(0),
-})
-
-export type LessonContent = z.infer<typeof ContentFormSchema>
-
-const LessonCreationFormSchema = z.object({
-  id: z.number().optional(),
-  title: z.string().trim().min(1, "Title is required"),
-  description: z.string().trim().min(1, "Description is required"),
-  lessonOrder: z.coerce.number().min(0),
-  isPublished: z.boolean().default(false),
-  content: z
-    .array(ContentFormSchema)
-    .min(1, "At least one content item is required"),
-  resources: z.array(ResourceFormSchema),
-  hasAssessment: z.boolean().default(false),
-})
-
-export type Lesson = z.infer<typeof LessonCreationFormSchema>
 
 const getContentTypeIcon = (type: ContentType) => {
   switch (type) {
     case "VIDEO":
       return <VideoIcon className="h-4 w-4" />
     case "TEXT":
-      return <FileTextIcon className="h-4 w-4" />
+      return <FileText className="h-4 w-4" />
     case "LINK":
       return <LinkIcon className="h-4 w-4" />
     case "PDF":
@@ -132,12 +109,12 @@ const getContentTypeIcon = (type: ContentType) => {
 
 type LessonListProps = {
   courseTitle?: string
-  lessons: Lesson[]
+  lessons: any[]
   onAddLesson: () => void
-  onEditLesson: (lesson: Lesson) => void
+  onEditLesson: (lesson: any) => void
   onDeleteLesson: (lessonId: number) => void
-  onReorderLessons: (newLessons: Lesson[]) => void
-  onAddAssessment: (lesson: Lesson) => void
+  onReorderLessons: (newLessons: any[]) => void
+  onAddAssessment: (lesson: any) => void
   onEditAssessment: () => void
 }
 
@@ -151,30 +128,11 @@ function LessonList({
   onAddAssessment,
   onEditAssessment,
 }: LessonListProps) {
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
-
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index)
-  }
-
-  const handleDragOver = (
-    e: React.DragEvent<HTMLDivElement>,
-    index: number,
-  ) => {
-    e.preventDefault()
-    if (draggedIndex === null) return
-
-    const newLessons: Lesson[] = [...lessons]
-    const draggedLesson = newLessons[draggedIndex]
-    newLessons.splice(draggedIndex, 1)
-    newLessons.splice(index, 0, draggedLesson)
-
-    onReorderLessons(newLessons)
-    setDraggedIndex(index)
-  }
-
-  const getTotalDuration = (lesson: Lesson) => {
-    return lesson.content.reduce((acc, item) => acc + item.duration, 0)
+  const getTotalDuration = (lesson: any) => {
+    return lesson.content.reduce(
+      (acc: any, item: any) => acc + item.duration,
+      0,
+    )
   }
 
   return (
@@ -197,9 +155,6 @@ function LessonList({
           <div
             key={lesson?.id || index}
             className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
-            draggable
-            onDragStart={() => handleDragStart(index)}
-            onDragOver={(e) => handleDragOver(e, index)}
           >
             <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100" />
 
@@ -208,22 +163,6 @@ function LessonList({
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-medium">{lesson.title}</h3>
                 </div>
-                {/*<div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-lg">{lesson.title}</h3>
-                    {lesson.hasAssessment && (
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        <ClipboardCheck className="h-3 w-3" />
-                        Quiz
-                      </Badge>
-                    )}
-                  </div>
-                  <FroalaEditorView model={lesson.description} />
-                </div>*/}
-
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -263,7 +202,7 @@ function LessonList({
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {lesson.content.map((item, i) => (
+                {lesson.content.map((item: any, i: number) => (
                   <Badge
                     key={i}
                     variant="secondary"
@@ -313,21 +252,19 @@ interface FormSectionProps {
 
 function FormSection({ title, description, children }: FormSectionProps) {
   return (
-    <>
+    <div className="space-y-2">
       <div>
-        <FormLabel>{title}</FormLabel>
-        <FormDescription>{description}</FormDescription>
+        <h3 className="leading-none font-semibold tracking-tight">{title}</h3>
+        <p className="text-muted-foreground text-sm">{description}</p>
       </div>
-      {children}
-    </>
+      <div className="space-y-4">{children}</div>
+    </div>
   )
 }
 
 interface ContentItemFormProps {
+  control: Control<LessonFormValues>
   index: number
-  files: { [key: number]: File }
-  setFiles: Dispatch<SetStateAction<{ [key: number]: File }>>
-  form: UseFormReturn<Lesson>
   onRemove: () => void
   isOnly: boolean
 }
@@ -339,12 +276,12 @@ const ACCEPTED_FILE_TYPES = {
 }
 
 const ContentTypeIcons = {
-  [CONTENT_TYPES.AUDIO]: FileAudio,
-  [CONTENT_TYPES.VIDEO]: FileVideo,
-  [CONTENT_TYPES.TEXT]: FileText,
-  [CONTENT_TYPES.LINK]: LinkIcon,
-  [CONTENT_TYPES.PDF]: FileIcon,
-  [CONTENT_TYPES.YOUTUBE]: Youtube,
+  AUDIO: FileAudio,
+  VIDEO: FileVideo,
+  TEXT: FileText,
+  LINK: LinkIcon,
+  PDF: FileIcon,
+  YOUTUBE: Youtube,
 }
 
 const ContentTypeLabels = {
@@ -356,7 +293,7 @@ const ContentTypeLabels = {
   [CONTENT_TYPES.YOUTUBE]: "YouTube",
 }
 
-function getContentPlaceholder(contentType: ContentType) {
+function getContentPlaceholder(contentType: string) {
   switch (contentType) {
     case "TEXT":
       return "Enter text content"
@@ -370,23 +307,15 @@ function getContentPlaceholder(contentType: ContentType) {
 }
 
 function ContentItemForm({
+  control,
   index,
-  files,
-  setFiles,
-  form,
   onRemove,
   isOnly,
 }: ContentItemFormProps) {
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setFiles((prev: { [key: number]: File }) => ({ ...prev, [index]: file }))
-
-      form.setValue(`content.${index}.contentUrl`, undefined)
-    }
-  }
-
-  const contentType = form.watch(`content.${index}.contentType`)
+  const contentType = useWatch({
+    control,
+    name: `content.${index}.contentType`,
+  })
 
   return (
     <div className="space-y-4 rounded-lg border p-4">
@@ -401,33 +330,26 @@ function ContentItemForm({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormField
-          control={form.control}
+          control={control}
           name={`content.${index}.contentType`}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Content Type</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  field.onChange(value)
-                  delete files[index]
-                  form.setValue(`content.${index}.contentUrl`, undefined)
-                  form.setValue(`content.${index}.contentText`, undefined)
-                }}
-                value={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {Object.entries(CONTENT_TYPES).map(([_, value]) => {
-                    const Icon = ContentTypeIcons[value]
+                  {Object.entries(CONTENT_TYPES).map(([key, value]) => {
+                    const Icon =
+                      ContentTypeIcons[key as keyof typeof ContentTypeIcons]
                     return (
-                      <SelectItem key={value} value={value}>
+                      <SelectItem key={key} value={key}>
                         <div className="flex items-center gap-2">
                           <Icon className="h-4 w-4" />
-                          <span>{ContentTypeLabels[value]}</span>
+                          <span>{value}</span>
                         </div>
                       </SelectItem>
                     )
@@ -440,13 +362,13 @@ function ContentItemForm({
         />
 
         <FormField
-          control={form.control}
+          control={control}
           name={`content.${index}.title`}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Enter content title" />
+                <Input placeholder="Enter content title" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -454,15 +376,14 @@ function ContentItemForm({
         />
       </div>
 
-      {contentType === "Text" ? (
+      {contentType === "TEXT" ? (
         <FormField
-          control={form.control}
-          name={`content.${index}.contentText`}
+          control={control}
+          name={`content.${index}.value`}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                {/*<Editor model={field.value ?? ""} onChange={field.onChange} />*/}
                 <Textarea
                   placeholder="Enter content"
                   className="resize-none"
@@ -475,44 +396,51 @@ function ContentItemForm({
         />
       ) : (
         <>
-          {(contentType === CONTENT_TYPES.VIDEO ||
-            contentType === CONTENT_TYPES.AUDIO ||
-            contentType === CONTENT_TYPES.PDF) && (
-            <FormItem>
-              <FormLabel>File Upload</FormLabel>
-              <FormControl>
-                <Input
-                  type="file"
-                  accept={ACCEPTED_FILE_TYPES[contentType]}
-                  onChange={handleFileChange}
-                />
-              </FormControl>
-              <FormDescription>
-                Upload a file or provide a URL below
-              </FormDescription>
-            </FormItem>
+          {(contentType === "VIDEO" ||
+            contentType === "AUDIO" ||
+            contentType === "PDF") && (
+            <FormField
+              control={control}
+              name={`content.${index}.value`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>File Upload</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept={
+                        ACCEPTED_FILE_TYPES[
+                          contentType as keyof typeof ACCEPTED_FILE_TYPES
+                        ]
+                      }
+                      onChange={(e) => field.onChange(e.target.files?.[0])}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Upload a file or provide a URL below
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
           )}
 
           <FormField
-            control={form.control}
-            name={`content.${index}.contentUrl`}
+            control={control}
+            name={`content.${index}.value`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {contentType === CONTENT_TYPES.VIDEO ||
-                  contentType === CONTENT_TYPES.AUDIO ||
-                  contentType === CONTENT_TYPES.PDF
+                  {contentType === "VIDEO" ||
+                  contentType === "AUDIO" ||
+                  contentType === "PDF"
                     ? "Or External URL"
                     : "URL"}
                 </FormLabel>
                 <FormControl>
                   <Input
-                    {...field}
                     type="url"
-                    placeholder={getContentPlaceholder(
-                      contentType as ContentType,
-                    )}
-                    disabled={!!files[index]}
+                    placeholder={getContentPlaceholder(contentType)}
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
@@ -523,13 +451,13 @@ function ContentItemForm({
       )}
 
       <FormField
-        control={form.control}
+        control={control}
         name={`content.${index}.duration`}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Duration (minutes)</FormLabel>
             <FormControl>
-              <Input {...field} type="number" min="0" step="0.5" />
+              <Input type="number" min="0" step="0.5" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -540,51 +468,30 @@ function ContentItemForm({
 }
 
 interface AppLessonCreationFormProps {
-  courseId: number
-  initialData?: Lesson | null
-  onSuccess: (lesson: Lesson) => void
   onCancel: () => void
   className?: string
 }
 
 function LessonCreationForm({
-  courseId,
-  initialData,
-  onSuccess,
   onCancel,
   className,
 }: AppLessonCreationFormProps) {
-  const [files, setFiles] = useState<{ [key: number]: File }>({})
-  const [isLoading, setIsLoading] = useState(false)
-
-  const form = useForm<Lesson>({
-    resolver: zodResolver(LessonCreationFormSchema),
-    defaultValues: initialData || {
+  const form = useForm<LessonFormValues>({
+    resolver: zodResolver(lessonFormSchema),
+    defaultValues: {
       title: "",
       description: "",
-      lessonOrder: 0,
-      isPublished: false,
+      content: [{ contentType: "TEXT", title: "" }],
       resources: [],
-      content: [
-        {
-          title: "",
-          displayOrder: 0,
-          duration: 0,
-          contentType: "Text",
-          contentText: "",
-        },
-      ],
     },
   })
-
-  const { control, handleSubmit, trigger, formState, getValues } = form
 
   const {
     fields: contentFields,
     append: appendContent,
     remove: removeContent,
   } = useFieldArray({
-    control,
+    control: form.control,
     name: "content",
   })
 
@@ -597,46 +504,26 @@ function LessonCreationForm({
     name: "resources",
   })
 
-  const onSubmit = async () => {
-    const isValid = await trigger()
-
-    if (!isValid) {
-      const errors = formState.errors
-      throw new Error(
-        `Form invalid: ${Object.keys(errors).length} field(s) need attention.`,
-      )
-    }
-
-    setIsLoading(true)
-
-    const response = await createLesson(courseId, getValues(), files)
-
-    if (response.status === 201) {
-      onSuccess?.(response.data)
-
-      toast.success(response.message)
-    } else {
-      toast.error(response.message)
-    }
-
-    setIsLoading(false)
+  const onSubmit = (values: LessonFormValues) => {
+    console.log(values)
+    // TODO: Handle form submission
   }
 
   return (
     <Form {...form}>
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit)}
         className={`space-y-8 ${className}`}
       >
         <div className="space-y-4">
           <FormField
-            control={control}
+            control={form.control}
             name="title"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Lesson Title</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="Enter lesson title" />
+                  <Input placeholder="Enter lesson title" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -644,13 +531,12 @@ function LessonCreationForm({
           />
 
           <FormField
-            control={control}
+            control={form.control}
             name="description"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  {/*<Editor model={field.value} onChange={field.onChange} />*/}
                   <Textarea
                     placeholder="Enter description"
                     className="resize-none"
@@ -668,30 +554,24 @@ function LessonCreationForm({
             title="Lesson Content"
             description="Add multiple content items to your lesson"
           >
-            {contentFields.map((field, index) => (
-              <ContentItemForm
-                key={field.id}
-                index={index}
-                files={files}
-                setFiles={setFiles}
-                form={form}
-                onRemove={() => removeContent(index)}
-                isOnly={contentFields.length === 1}
-              />
-            ))}
+            <div className="space-y-4">
+              {contentFields.map((field, index) => (
+                <ContentItemForm
+                  key={field.id}
+                  control={form.control}
+                  index={index}
+                  onRemove={() => removeContent(index)}
+                  isOnly={contentFields.length === 1}
+                />
+              ))}
+            </div>
           </FormSection>
 
           <Button
             type="button"
             variant="outline"
             onClick={() =>
-              appendContent({
-                title: "",
-                displayOrder: contentFields.length,
-                duration: 0,
-                contentType: "Text",
-                contentText: "",
-              })
+              appendContent({ contentType: "TEXT", title: "", value: "" })
             }
           >
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -722,7 +602,7 @@ function LessonCreationForm({
                   <FormItem>
                     <FormLabel>Resource Title</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter resource title" />
+                      <Input placeholder="Enter resource title" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -731,15 +611,15 @@ function LessonCreationForm({
 
               <FormField
                 control={form.control}
-                name={`resources.${index}.resourceUrl`}
+                name={`resources.${index}.url`}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Resource URL</FormLabel>
                     <FormControl>
                       <Input
-                        {...field}
                         type="url"
                         placeholder="Enter resource URL"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -752,13 +632,7 @@ function LessonCreationForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              appendResource({
-                title: "",
-                resourceUrl: "",
-                displayOrder: resourceFields.length,
-              })
-            }
+            onClick={() => appendResource({ title: "", url: "" })}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Resource
@@ -769,15 +643,7 @@ function LessonCreationForm({
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">
-            {isLoading ? (
-              <Loader className="h-4 w-4 animate-spin" />
-            ) : initialData ? (
-              "Update Lesson"
-            ) : (
-              "Create Lesson"
-            )}
-          </Button>
+          <Button type="submit">Create Lesson</Button>
         </div>
       </form>
     </Form>
@@ -785,27 +651,16 @@ function LessonCreationForm({
 }
 
 interface AppLessonDialogProps {
-  courseId: number
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  selectedLesson: Lesson | null
-  onSuccess: (lesson: Lesson) => void
 }
 
-function LessonDialog({
-  courseId,
-  isOpen,
-  onOpenChange,
-  selectedLesson,
-  onSuccess,
-}: AppLessonDialogProps) {
+function LessonDialog({ isOpen, onOpenChange }: AppLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-w-6xl flex-col p-0">
         <DialogHeader className="border-b px-6 py-4">
-          <DialogTitle className="text-xl">
-            {selectedLesson ? "Edit Lesson" : "Create New Lesson"}
-          </DialogTitle>
+          <DialogTitle className="text-xl">Create New Lesson</DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm">
             Fill in the lesson details below. You&apos;ll be able to add a quiz
             after you&apos;ve created the lesson.
@@ -814,23 +669,10 @@ function LessonDialog({
 
         <ScrollArea className="h-[calc(90vh-8rem)]">
           <LessonCreationForm
-            courseId={courseId}
-            initialData={selectedLesson}
-            onSuccess={onSuccess}
             onCancel={() => onOpenChange(false)}
             className="px-6 pb-6"
           />
         </ScrollArea>
-
-        {/* Optional loading state overlay */}
-        {false && ( // Replace with actual loading state
-          <div className="bg-background/80 absolute inset-0 flex items-center justify-center">
-            <div className="flex items-center gap-2">
-              {/*<Spinner className="h-4 w-4" />*/}
-              <span>Saving lesson...</span>
-            </div>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   )

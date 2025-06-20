@@ -1,140 +1,65 @@
 "use client"
 
-import { useState } from "react"
+import * as z from "zod"
+import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Form, FormLabel } from "@/components/ui/form"
-import { Grip, PlusCircle, Trash2 } from "lucide-react"
-import { toast } from "sonner"
 import {
-  TrainingExperience,
-  TrainingExperienceSchema,
-} from "@/lib/types/instructor"
-import { useUpdateInstructorProfile } from "@/services/instructor/mutations"
-import { useSession } from "next-auth/react"
-import { useInstructorProfileQuery } from "@/services/instructor/queries"
-import { useUserProfileQuery } from "@/services/user/queries"
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Grip, PlusCircle, Trash2 } from "lucide-react"
 
-const ExperienceFormSchema = z.object({
-  training_experiences: z
-    .array(
-      TrainingExperienceSchema.extend({
-        id: z.string().optional(),
-        current: z.boolean().optional(),
-      }),
-    )
-    .min(1, "Add at least one experience"),
+const profileExperienceSchema = z.object({
+  experiences: z.array(
+    z.object({
+      id: z.string().optional(),
+      organisation_name: z.string().min(1, "This field is required"),
+      job_title: z.string().min(1, "This field is required"),
+      work_description: z.string().optional(),
+      start_date: z.string().min(1, "This field is required"),
+      end_date: z.string().optional(),
+      current: z.boolean().default(false),
+    }),
+  ),
 })
 
-type ExperienceFormValues = z.infer<typeof ExperienceFormSchema>
+type ProfileExperienceFormValues = z.infer<typeof profileExperienceSchema>
 
 export default function ProfessionalExperienceSettings() {
-  const { data: session } = useSession()
-  const email = session?.user?.email
-  const { data: user } = useUserProfileQuery(email)
-  const userUuid = user?.uuid
-  const { data: instructor } = useInstructorProfileQuery(userUuid)
-
-  const updateInstructor = useUpdateInstructorProfile()
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
-
-  const form = useForm<ExperienceFormValues>({
-    resolver: zodResolver(ExperienceFormSchema),
+  const form = useForm<ProfileExperienceFormValues>({
+    resolver: zodResolver(profileExperienceSchema),
     defaultValues: {
-      training_experiences: [],
+      experiences: [
+        {
+          id: "1",
+          organisation_name: "Google",
+          job_title: "Software Engineer",
+          work_description: "Worked on the search algorithm.",
+          start_date: "2020-01",
+          end_date: "2022-12",
+          current: false,
+        },
+      ],
     },
   })
 
-  const experiences = form.watch("training_experiences")
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "experiences",
+  })
 
-  const addExperience = () => {
-    const newId = (
-      experiences.length > 0
-        ? Math.max(...experiences.map((e) => parseInt(e?.id ?? "0"))) + 1
-        : 1
-    ).toString()
-
-    const newExperience: TrainingExperience & { id: string; current: boolean } =
-    {
-      id: newId,
-      organisation_name: "",
-      job_title: "",
-      work_description: "",
-      start_date: new Date(),
-      end_date: null,
-      user_uuid: userUuid ?? "",
-      current: false,
-    }
-
-    console.log(newExperience)
-
-    form.setValue("training_experiences", [
-      ...form.getValues("training_experiences"),
-      newExperience,
-    ])
-  }
-
-  const removeExperience = (id: string) => {
-    const list = form.getValues("training_experiences")
-    if (list.length <= 1) {
-      toast.error("You must have at least one experience entry.")
-      return
-    }
-    const filtered = list.filter((exp) => exp.id !== id)
-    form.setValue("training_experiences", filtered)
-  }
-
-  const updateExperienceField = (
-    id: string,
-    field: keyof ExperienceFormValues["training_experiences"][0],
-    value: unknown,
-  ) => {
-    const updated = experiences.map((exp) =>
-      exp.id === id ? { ...exp, [field]: value } : exp,
-    )
-
-    if (field === "current" && value === true) {
-      updated.forEach((exp) => {
-        if (exp.id === id) exp.end_date = null
-      })
-    }
-
-    form.setValue("training_experiences", updated)
-  }
-
-  function formatToMonthInput(val?: string | Date | null) {
-    if (!val) return ""
-    if (typeof val === "string") return val
-    return val.toISOString().slice(0, 7)
-  }
-
-  const onSubmit = async (data: ExperienceFormValues) => {
-    try {
-      if (!instructor) return
-
-      const response = await updateInstructor.mutateAsync({
-        ...instructor,
-        training_experiences: data.training_experiences.map(
-          ({ id, current, ...exp }) => ({
-            ...exp,
-            end_date: current ? null : exp.end_date,
-          }),
-        ),
-      })
-
-      toast.success(response.message)
-    } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong while saving.",
-      )
-    }
+  function onSubmit(data: ProfileExperienceFormValues) {
+    console.log(data)
+    // TODO: Handle form submission
   }
 
   return (
@@ -150,22 +75,10 @@ export default function ProfessionalExperienceSettings() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
-              {experiences.map((exp, index) => (
+              {fields.map((field, index) => (
                 <div
-                  key={exp.id || index}
+                  key={field.id}
                   className="bg-card group hover:bg-accent/5 relative rounded-md border transition-all"
-                  draggable
-                  onDragStart={() => setDraggedIndex(index)}
-                  onDragOver={(e) => {
-                    e.preventDefault()
-                    if (draggedIndex === null) return
-                    const reordered = [...experiences]
-                    const dragged = reordered.splice(draggedIndex, 1)[0]
-                    reordered.splice(index, 0, dragged)
-                    form.setValue("training_experiences", reordered)
-                    setDraggedIndex(index)
-                  }}
-                  onDragEnd={() => setDraggedIndex(null)}
                 >
                   <div className="space-y-5 p-5">
                     <div className="flex items-start justify-between gap-4">
@@ -173,10 +86,12 @@ export default function ProfessionalExperienceSettings() {
                         <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-grabbing opacity-0 transition-opacity group-hover:opacity-100" />
                         <div>
                           <h3 className="text-base font-medium">
-                            {exp.organisation_name || "New Experience"}
+                            {form.watch(
+                              `experiences.${index}.organisation_name`,
+                            ) || "New Experience"}
                           </h3>
                           <p className="text-muted-foreground text-sm">
-                            {exp.job_title}
+                            {form.watch(`experiences.${index}.job_title`)}
                           </p>
                         </div>
                       </div>
@@ -184,114 +99,124 @@ export default function ProfessionalExperienceSettings() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => removeExperience(exp.id!)}
                         className="hover:bg-destructive-foreground h-8 w-8"
+                        onClick={() => remove(index)}
                       >
                         <Trash2 className="text-destructive h-4 w-4" />
                       </Button>
                     </div>
 
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <FormLabel>Organization</FormLabel>
-                        <Input
-                          value={exp.organisation_name}
-                          onChange={(e) =>
-                            updateExperienceField(
-                              exp.id!,
-                              "organisation_name",
-                              e.target.value,
-                            )
-                          }
-                          placeholder="e.g. WHO"
-                          className="h-10"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <FormLabel>Job Title</FormLabel>
-                        <Input
-                          value={exp.job_title}
-                          onChange={(e) =>
-                            updateExperienceField(
-                              exp.id!,
-                              "job_title",
-                              e.target.value,
-                            )
-                          }
-                          placeholder="e.g. Analyst"
-                          className="h-10"
-                        />
-                      </div>
+                      <FormField
+                        control={form.control}
+                        name={`experiences.${index}.organisation_name`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Organization</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g. WHO"
+                                {...field}
+                                className="h-10"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`experiences.${index}.job_title`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Job Title</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g. Analyst"
+                                {...field}
+                                className="h-10"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <FormLabel>Start Date</FormLabel>
-                        <Input
-                          type="month"
-                          value={formatToMonthInput(exp.start_date)}
-                          onChange={(e) =>
-                            updateExperienceField(
-                              exp.id!,
-                              "start_date",
-                              e.target.value,
-                            )
-                          }
-                          className="h-10"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <FormLabel>End Date</FormLabel>
-                        <Input
-                          type="month"
-                          value={formatToMonthInput(exp.end_date)}
-                          onChange={(e) =>
-                            updateExperienceField(
-                              exp.id!,
-                              "end_date",
-                              e.target.value,
-                            )
-                          }
-                          disabled={exp.current}
-                          className="h-10"
-                        />
-                        <div className="mt-2 flex items-center space-x-2">
-                          <Checkbox
-                            id={`current-${exp.id}`}
-                            checked={exp.current}
-                            onCheckedChange={(checked) =>
-                              updateExperienceField(
-                                exp.id!,
-                                "current",
-                                checked === true,
-                              )
-                            }
-                          />
-                          <label
-                            htmlFor={`current-${exp.id}`}
-                            className="text-sm"
-                          >
-                            I currently work here
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <FormLabel>Work Description</FormLabel>
-                      <Textarea
-                        value={exp.work_description}
-                        onChange={(e) =>
-                          updateExperienceField(
-                            exp.id!,
-                            "work_description",
-                            e.target.value,
-                          )
-                        }
-                        className="min-h-24 resize-y"
-                        placeholder="Responsibilities, accomplishments..."
+                      <FormField
+                        control={form.control}
+                        name={`experiences.${index}.start_date`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Start Date</FormLabel>
+                            <FormControl>
+                              <Input type="month" {...field} className="h-10" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`experiences.${index}.end_date`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>End Date</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="month"
+                                disabled={form.watch(
+                                  `experiences.${index}.current`,
+                                )}
+                                {...field}
+                                className="h-10"
+                              />
+                            </FormControl>
+                            <div className="mt-2 flex items-center space-x-2">
+                              <FormField
+                                control={form.control}
+                                name={`experiences.${index}.current`}
+                                render={({ field }) => (
+                                  <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                      <FormLabel>
+                                        I currently work here
+                                      </FormLabel>
+                                    </div>
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
                     </div>
+
+                    <FormField
+                      control={form.control}
+                      name={`experiences.${index}.work_description`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Work Description</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Responsibilities, accomplishments..."
+                              className="min-h-24 resize-y"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
               ))}
@@ -300,8 +225,17 @@ export default function ProfessionalExperienceSettings() {
             <Button
               type="button"
               variant="outline"
-              onClick={addExperience}
               className="flex w-full items-center justify-center gap-2"
+              onClick={() =>
+                append({
+                  organisation_name: "",
+                  job_title: "",
+                  work_description: "",
+                  start_date: "",
+                  end_date: "",
+                  current: false,
+                })
+              }
             >
               <PlusCircle className="h-4 w-4" />
               Add Another Experience

@@ -185,14 +185,16 @@ export const InstitutionProfileContent: React.FC<
   const isLastTab = currentTabIndex === tabOrder.length - 1
 
   const handleNext = () => {
-    if (!isLastTab) {
-      setActiveTab(tabOrder[currentTabIndex + 1])
+    const nextTab = tabOrder[currentTabIndex + 1]
+    if (nextTab) {
+      setActiveTab(nextTab)
     }
   }
 
   const handlePrevious = () => {
-    if (currentTabIndex > 0) {
-      setActiveTab(tabOrder[currentTabIndex - 1])
+    const prevTab = tabOrder[currentTabIndex - 1]
+    if (prevTab) {
+      setActiveTab(prevTab)
     }
   }
 

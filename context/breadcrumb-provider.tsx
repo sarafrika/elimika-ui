@@ -144,9 +144,12 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
 
       if (newBreadcrumbs.length > 0) {
         const lastIndex = newBreadcrumbs.length - 1
-        newBreadcrumbs[lastIndex] = {
-          ...newBreadcrumbs[lastIndex],
-          isLast: true,
+        const lastItem = newBreadcrumbs[lastIndex]
+        if (lastItem) {
+          newBreadcrumbs[lastIndex] = {
+            ...lastItem,
+            isLast: true,
+          }
         }
       }
 

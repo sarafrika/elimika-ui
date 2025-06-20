@@ -1,109 +1,40 @@
 "use client"
 
 import { BookOpen, Check, List } from "lucide-react"
-import { toast } from "sonner"
-import { useState } from "react"
 import {
   StepperContent,
   StepperList,
   StepperRoot,
   StepperTrigger,
 } from "@/components/ui/stepper"
-import {
-  Course,
-  CourseCreationForm,
-  useCourseCreationForm,
-} from "@/app/dashboard/instructor/course-management/create-new-course/_components/course-creation-form"
-import {
-  Lesson,
-  LessonDialog,
-  LessonList,
-} from "@/app/dashboard/instructor/course-management/create-new-course/_components/lesson-management-form"
+import { CourseCreationForm } from "@/app/dashboard/@instructor/course-management/create-new-course/_components/course-creation-form"
+import { LessonList } from "@/app/dashboard/@instructor/course-management/create-new-course/_components/lesson-management-form"
 
 export default function CourseCreationPage() {
-  const [course, setCourse] = useState<Course | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { formRef, submitForm } = useCourseCreationForm()
-
-  const [lessons, setLessons] = useState<Lesson[]>([])
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
-  const [isLessonDialogOpen, setIsLessonDialogOpen] = useState(false)
-
-  const handleStepperNext = async (): Promise<void> => {
-    /** Step 1: Basic Course Information */
-    if (!course) {
-      setIsSubmitting(true)
-
-      try {
-        await submitForm()
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
-        )
-        throw error
-      } finally {
-        setIsSubmitting(false)
-      }
-    }
-
-    /** Step 2: Content */
-    if (course && lessons.length === 0) {
-      throw new Error("Please add lessons to your course before continuing")
-    }
+  const course = {
+    name: "Introduction to Programming",
+    description: "A beginner's course on programming fundamentals.",
+    difficultyLevel: "BEGINNER",
+    pricing: {
+      free: true,
+      originalPrice: 0,
+      salePrice: 0,
+      currency: "KES",
+    },
+    learningObjectives: [{ objective: "Learn to code" }],
+    categories: [{ name: "Programming" }],
   }
-
-  const handleAddLesson = () => {
-    setSelectedLesson(null)
-    setIsLessonDialogOpen(true)
-  }
-
-  const handleEditLesson = (lesson: Lesson) => {
-    setSelectedLesson(lesson)
-    setIsLessonDialogOpen(true)
-  }
-
-  const handleDeleteLesson = (lessonId: number) => {
-    const lessonToDelete = lessons.find((lesson) => lesson.id === lessonId)
-
-    setLessons(lessons.filter((lesson) => lesson.id !== lessonId))
-
-    toast.info(`"${lessonToDelete?.title}" has been removed from the course`)
-  }
-
-  const handleLessonSave = (lesson: Lesson) => {
-    if (selectedLesson) {
-      setLessons(
-        lessons.map((l) =>
-          l.id === selectedLesson.id ? { ...lesson, id: l.id } : l,
-        ),
-      )
-
-      toast.success(`"${lesson.title}" has been successfully updated`)
-    } else {
-      const newLesson = {
-        ...lesson,
-        id: Math.max(0, ...lessons.map((l) => l.id || 0)) + 1,
-      }
-      setLessons([...lessons, newLesson])
-
-      toast.success(`"${lesson.title}" has been added to the course`)
-    }
-    setIsLessonDialogOpen(false)
-  }
-
-  const handleReorderLessons = (newLessons: Lesson[]) => {
-    setLessons(newLessons)
-  }
-
-  const handleAddAssessment = (lesson: Lesson) => {
-    /** TODO: Implement quiz creation */
-  }
-
-  const handleEditAssessment = () => {
-    /** TODO: Implement quiz update */
-  }
+  const lessons = [
+    {
+      id: 1,
+      title: "Welcome",
+      description: "Introduction to the course",
+      content: [
+        { title: "Introduction Video", contentType: "VIDEO", duration: 5 },
+      ],
+      resources: [],
+    },
+  ]
 
   return (
     <div className="container mx-auto">
@@ -119,17 +50,11 @@ export default function CourseCreationPage() {
           title="Basic Course Information"
           description="Enter the fundamental details of your course"
           showNavigation
-          onNext={handleStepperNext}
-          nextButtonText={isSubmitting ? "Saving..." : "Save & Continue"}
+          nextButtonText={"Save & Continue"}
           hideNextButton={false}
           hidePreviousButton={true}
-          disableNext={isSubmitting}
         >
-          <CourseCreationForm
-            ref={formRef}
-            onSuccess={setCourse}
-            showSubmitButton={false}
-          />
+          <CourseCreationForm showSubmitButton={false} />
         </StepperContent>
 
         <StepperContent
@@ -139,39 +64,18 @@ export default function CourseCreationPage() {
           showNavigation
           nextButtonText="Continue to Review"
           previousButtonText="Back to Details"
-          disableNext={!course}
         >
           <div className="space-y-4">
             <LessonList
               courseTitle={course?.name}
               lessons={lessons}
-              onAddLesson={handleAddLesson}
-              onEditLesson={handleEditLesson}
-              onDeleteLesson={handleDeleteLesson}
-              onReorderLessons={handleReorderLessons}
-              onAddAssessment={handleAddAssessment}
-              onEditAssessment={handleEditAssessment}
+              onAddLesson={() => {}}
+              onEditLesson={() => {}}
+              onDeleteLesson={() => {}}
+              onReorderLessons={() => {}}
+              onAddAssessment={() => {}}
+              onEditAssessment={() => {}}
             />
-            {course ? (
-              <LessonDialog
-                courseId={course.id as number}
-                isOpen={isLessonDialogOpen}
-                onOpenChange={(open) => {
-                  setIsLessonDialogOpen(open)
-                  if (!open) {
-                    setSelectedLesson(null)
-                  }
-                }}
-                selectedLesson={selectedLesson}
-                onSuccess={handleLessonSave}
-              />
-            ) : (
-              <div className="flex h-48 flex-col items-center justify-center text-center">
-                <p className="mb-4 text-gray-500">
-                  Please complete the course details first
-                </p>
-              </div>
-            )}
           </div>
         </StepperContent>
 
@@ -182,7 +86,6 @@ export default function CourseCreationPage() {
           showNavigation
           nextButtonText="Publish Course"
           previousButtonText="Back to Content"
-          disableNext={!course}
         >
           {course ? (
             <div className="space-y-6">

@@ -1,7 +1,7 @@
 "use server"
 
 import { getEnvironmentVariable } from "@/lib/utils"
-import { ApiResponse, ApiResponseWithPagination } from "@/lib/types"
+import { ApiResponse, ApiResponseWithPagination, UserDomain } from "@/lib/types"
 import { User } from "@/app/auth/create-account/_components/user-account-form"
 import { TrainingCenter } from "@/app/auth/create-account/_components/training-center-form"
 

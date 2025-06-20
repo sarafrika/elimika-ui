@@ -8,13 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import {
-  EyeIcon,
-  FilePenIcon,
-  PenIcon,
-  PlusIcon,
-  TrashIcon,
-} from "lucide-react"
+import { EyeIcon, FilePenIcon, TrashIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -25,87 +19,60 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 
-const draftCourses = [
+const publishedCourses = [
   {
     id: 1,
-    name: "Introduction to Web Development",
-    description:
-      "A comprehensive course covering the basics of HTML, CSS, and JavaScript.",
-    categories: [{ name: "Web Development" }, { name: "Beginner" }],
-    classLimit: 50,
-    lastUpdated: "2023-10-27",
+    name: "Mastering Next.js",
+    description: "A deep dive into server-side rendering with Next.js.",
+    categories: [{ name: "Web Development" }, { name: "Next.js" }],
+    enrollmentCount: 120,
+    publishedDate: "2023-09-15",
   },
   {
     id: 2,
-    name: "Advanced React Patterns",
-    description:
-      "Learn advanced patterns and techniques for building scalable React applications.",
-    categories: [{ name: "React" }, { name: "Advanced" }],
-    classLimit: 30,
-    lastUpdated: "2023-10-25",
-  },
-  {
-    id: 3,
-    name: "Data Science with Python",
-    description:
-      "Explore the world of data science using Python, Pandas, and Scikit-learn.",
-    categories: [{ name: "Data Science" }, { name: "Python" }],
-    classLimit: 0,
-    lastUpdated: "2023-10-22",
+    name: "GraphQL for Beginners",
+    description: "Learn the fundamentals of GraphQL and build a simple API.",
+    categories: [{ name: "API" }, { name: "GraphQL" }],
+    enrollmentCount: 85,
+    publishedDate: "2023-08-01",
   },
 ]
 
-export default function CourseDraftsPage() {
+export default function PublishedCoursesPage() {
   return (
     <div className="space-y-6">
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Your Draft Courses</h1>
+          <h1 className="text-2xl font-semibold">Your Published Courses</h1>
           <p className="text-muted-foreground mt-1 text-base">
-            You have {draftCourses.length} course
-            {draftCourses.length > 1 ? "s" : ""} waiting to be published.
+            You have {publishedCourses.length} published course
+            {publishedCourses.length > 1 ? "s" : ""}.
           </p>
         </div>
-        <Button
-          type="button"
-          className="cursor-pointer px-4 py-2 text-sm"
-          asChild
-        >
-          <Link href="/dashboard/course-management/create-new-course">
-            <PlusIcon className="h-4 w-4" />
-            New Course
-          </Link>
-        </Button>
       </div>
 
-      {draftCourses.length === 0 ? (
+      {publishedCourses.length === 0 ? (
         <div className="bg-muted/20 rounded-md border py-12 text-center">
           <FilePenIcon className="text-muted-foreground mx-auto h-12 w-12" />
-          <h3 className="mt-4 text-lg font-medium">No draft courses</h3>
+          <h3 className="mt-4 text-lg font-medium">No published courses</h3>
           <p className="text-muted-foreground mt-2">
-            You don&apos;t have any draft courses. Start by creating a new
-            course to get started.
+            You don&apos;t have any published courses yet.
           </p>
-          <Button className="mt-4" asChild>
-            <Link href="/dashboard/course-management/create-new-course">
-              Create Your First Course
-            </Link>
-          </Button>
         </div>
       ) : (
         <Table>
-          <TableCaption>A list of your course drafts</TableCaption>
+          <TableCaption>A list of your published courses</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[300px]">Course Name</TableHead>
               <TableHead>Categories</TableHead>
-              <TableHead>Class Limit</TableHead>
-              <TableHead>Last Updated</TableHead>
+              <TableHead>Enrollments</TableHead>
+              <TableHead>Published Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {draftCourses?.map((course) => (
+            {publishedCourses.map((course) => (
               <TableRow key={course.id}>
                 <TableCell className="font-medium">
                   <div>
@@ -118,14 +85,14 @@ export default function CourseDraftsPage() {
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {course.categories.map((category, i) => (
-                      <Badge key={i} variant="outline" className="capitalize">
+                      <Badge key={i} variant="default" className="capitalize">
                         {category.name}
                       </Badge>
                     ))}
                   </div>
                 </TableCell>
-                <TableCell>{course.classLimit || "Unlimited"}</TableCell>
-                <TableCell>{course.lastUpdated}</TableCell>
+                <TableCell>{course.enrollmentCount}</TableCell>
+                <TableCell>{course.publishedDate}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -151,26 +118,17 @@ export default function CourseDraftsPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>
                         <Link
-                          href={`/dashboard/course-management/create-new-course?id=${course.id}`}
-                          className="flex w-full items-center"
-                        >
-                          <PenIcon className="focus:text-primary-foreground mr-2 h-4 w-4" />
-                          Edit
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Link
-                          href={`/dashboard/course-management/preview/${course.id}`}
+                          href={`/dashboard/instructor/course-management/preview/${course.id}`}
                           className="flex w-full items-center"
                         >
                           <EyeIcon className="focus:text-primary-foreground mr-2 h-4 w-4" />
-                          Preview
+                          View
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem variant="destructive">
                         <TrashIcon className="mr-2 h-4 w-4" />
-                        Delete
+                        Unpublish
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

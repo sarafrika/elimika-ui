@@ -26,7 +26,7 @@ import { useUserStore } from "@/store/use-user-store"
 
 export function NavMain({ items }: { items: MenuItem[] }) {
   const pathname = usePathname()
-  const activeDomain = useUserStore(store => store.activeDomain)
+  const activeDomain = useUserStore((store) => store.activeDomain)
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({})
 
   const OVERVIEW_PATH = `/dashboard/${activeDomain}/overview`
@@ -82,7 +82,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
         </SidebarMenuItem>
       </SidebarMenu>
       <SidebarGroupLabel>{menuLabel}</SidebarGroupLabel>
-      <SidebarMenu>
+      {/* <SidebarMenu>
         {menuWithActivePath.map((item, index) => {
           const key = `${item.title}-${index}`
           const isOpen = openStates[key] ?? item.isActive
@@ -144,7 +144,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
             </Collapsible>
           )
         })}
-      </SidebarMenu>
+      </SidebarMenu> */}
     </SidebarGroup>
   )
 }
