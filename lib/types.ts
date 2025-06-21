@@ -1,5 +1,3 @@
-import { z } from "zod"
-
 export type UserDomain =
   | "student"
   | "instructor"
@@ -29,5 +27,4 @@ export interface PagedData<T> {
   metadata: PageMetadata
 }
 
-export interface ApiResponseWithPagination<T>
-  extends ApiResponse<PagedData<T>> {}
+export type ApiResponseWithPagination<T> = ApiResponse<PagedData<T>>
