@@ -7,6 +7,18 @@ import {
   Users,
   Building2,
   BookOpen,
+  LayoutDashboard,
+  Briefcase,
+  ClipboardList,
+  Building,
+  UserCog,
+  Settings,
+  Award,
+  DollarSign,
+  Star,
+  UserCircle,
+  Book,
+  Calendar,
 } from "lucide-react"
 import { UserDomain } from "./types"
 
@@ -18,6 +30,11 @@ export type MenuItem = {
   domain?: UserDomain | null
   launchInNewTab?: boolean
   icon?: ComponentType<{ className?: string }>
+  user?: MenuItem[]
+  admin?: MenuItem[]
+  student?: MenuItem[]
+  instructor?: MenuItem[]
+  organisation_user?: MenuItem[]
 }
 
 export function markActiveMenuItem(
@@ -53,6 +70,9 @@ type Menu = {
   secondary?: MenuItem[]
   user?: MenuItem[]
   admin?: MenuItem[]
+  student?: MenuItem[]
+  instructor?: MenuItem[]
+  organisation_user?: MenuItem[]
 }
 
 export default {
@@ -95,35 +115,135 @@ export default {
   ],
   student: [
     {
-      title: "Courses",
-      url: "/dashboard/courses",
-      icon: BookOpen,
+      title: "Overview",
+      url: "/dashboard/overview",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "My Courses",
+      url: "/dashboard/my-courses",
+      icon: Book,
+    },
+    {
+      title: "My Schedule",
+      url: "/dashboard/my-schedule",
+      icon: Calendar,
+    },
+    {
+      title: "My Grades",
+      url: "/dashboard/grades",
+      icon: Award,
+    },
+    {
+      title: "My Certificates",
+      url: "/dashboard/certificates",
+      icon: Star,
+    },
+    {
+      title: "Profile",
+      url: "/dashboard/profile",
+      icon: UserCircle,
     },
   ],
   instructor: [
     {
-      title: "Courses",
-      url: "/dashboard/courses",
+      title: "Overview",
+      url: "/dashboard/overview",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Course Management",
+      url: "/dashboard/course-management",
       icon: BookOpen,
+    },
+    {
+      title: "Classes",
+      url: "/dashboard/classes",
+      icon: ClipboardList,
+    },
+    {
+      title: "Assignments",
+      url: "/dashboard/assignments",
+      icon: Award,
+    },
+    {
+      title: "Students",
+      url: "/dashboard/students",
+      icon: Users,
+    },
+    {
+      title: "Earnings",
+      url: "/dashboard/earnings",
+      icon: DollarSign,
+    },
+    {
+      title: "Reviews",
+      url: "/dashboard/reviews",
+      icon: Star,
+    },
+    {
+      title: "Profile",
+      url: "/dashboard/profile",
+      icon: UserCircle,
     },
   ],
   admin: [
     {
-      title: "Users",
+      title: "Overview",
+      url: "/dashboard/overview",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Instructors",
       url: "/dashboard/instructors",
       icon: Users,
-      items: [
-        {
-          title: "Instructors",
-          url: "/dashboard/instructors",
-          icon: Users,
-        },
-        {
-          title: "Organizations",
-          url: "/dashboard/organizations",
-          icon: Building2,
-        },
-      ],
+    },
+    {
+      title: "Organizations",
+      url: "/dashboard/organizations",
+      icon: Building2,
+    },
+  ],
+  organisation_user: [
+    {
+      title: "Overview",
+      url: "/dashboard/overview",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Instructors",
+      url: "/dashboard/instructors",
+      icon: Briefcase,
+    },
+    {
+      title: "Students",
+      url: "/dashboard/students",
+      icon: Users,
+    },
+    {
+      title: "Courses",
+      url: "/dashboard/courses",
+      icon: BookOpen,
+    },
+    {
+      title: "Classes",
+      url: "/dashboard/classes",
+      icon: ClipboardList,
+    },
+    {
+      title: "Branches",
+      url: "/dashboard/branches",
+      icon: Building,
+    },
+    {
+      title: "Users",
+      url: "/dashboard/users",
+      icon: UserCog,
+    },
+    {
+      title: "Account",
+      url: "/dashboard/account",
+      icon: Settings,
     },
   ],
 } as Menu

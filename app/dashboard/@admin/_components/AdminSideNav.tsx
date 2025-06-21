@@ -2,62 +2,34 @@
 
 import React from "react"
 import {
-    LayoutDashboard,
-    Users,
-    Building2,
-} from "lucide-react"
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarMenu,
-    SidebarMenuItem,
-    SidebarMenuButton,
-    SidebarGroupContent,
-    SidebarGroupLabel,
+  Sidebar,
+  SidebarContent,
+  SidebarMenu,
+  SidebarGroupContent,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar"
-import Link from "next/link"
-
-const adminMenuItems = [
-    {
-        title: "Overview",
-        url: "/dashboard/overview",
-        icon: LayoutDashboard,
-    },
-    {
-        title: "Instructors",
-        url: "/dashboard/instructors",
-        icon: Users,
-    },
-    {
-        title: "Organizations",
-        url: "/dashboard/organizations",
-        icon: Building2,
-    },
-]
+import { NavMain } from "@/components/nav-main"
+import menu from "@/lib/menu"
+import { usePathname } from "next/navigation"
 
 function AdminSidebar(): React.JSX.Element {
-    return (
-        <Sidebar>
-            <SidebarContent>
-                <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
-                <SidebarGroupContent>
-                    <SidebarMenu>
-                        {adminMenuItems.map((item) => (
-                            <SidebarMenuItem key={item.title}>
-                                <SidebarMenuButton asChild>
-                                    <Link href={item.url}>
-                                        <item.icon />
-                                        <span>{item.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarMenu>
-                </SidebarGroupContent>
-            </SidebarContent>
-        </Sidebar>
-
-    )
+  const pathname = usePathname()
+  return (
+    <Sidebar>
+      <SidebarContent>
+        <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <NavMain
+              items={menu.admin!}
+              activeDomain="admin"
+              pathname={pathname}
+            />
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarContent>
+    </Sidebar>
+  )
 }
 
 export default AdminSidebar

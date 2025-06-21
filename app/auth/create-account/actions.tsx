@@ -62,6 +62,7 @@ export async function updateUser(user: User) {
 export async function fetchUsers(page: number = 0, searchParams?: string) {
   try {
     const headers = new Headers()
+
     headers.set("Content-Type", "application/json")
 
     const paginationParams = new URLSearchParams({
