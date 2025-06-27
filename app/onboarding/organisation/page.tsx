@@ -101,12 +101,7 @@ export default function OrganisationOnboardingPage() {
     }
   }
 
-  if (
-    isLoading ||
-    status === "loading" ||
-    !user?.uuid ||
-    !session?.user?.name
-  ) {
+  if (!user?.uuid) {
     return <Loading />
   }
 
