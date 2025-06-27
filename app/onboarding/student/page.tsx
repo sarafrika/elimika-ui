@@ -236,7 +236,12 @@ export default function StudentOnboardingPage() {
     ],
   )
 
-  if (isLoading || status == "loading") {
+  if (
+    isLoading ||
+    status === "loading" ||
+    !user?.uuid ||
+    !session?.user?.name
+  ) {
     return <Loading />
   }
 

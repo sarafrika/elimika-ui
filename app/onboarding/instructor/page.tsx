@@ -98,23 +98,13 @@ export default function InstructorOnboardingPage() {
     }
   }
 
-  if (isLoading || status === "loading") {
+  if (
+    isLoading ||
+    status === "loading" ||
+    !user?.uuid ||
+    !session?.user?.name
+  ) {
     return <Loading />
-  }
-
-  if (!user?.uuid) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Session Required
-          </h2>
-          <p className="text-gray-600">
-            Please log in to continue with onboarding.
-          </p>
-        </div>
-      </div>
-    )
   }
 
   return (
