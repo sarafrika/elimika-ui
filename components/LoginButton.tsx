@@ -5,10 +5,15 @@ import { signIn, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 export default function LoginButton() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
 
-  if (session) {
+  if (status === "loading") {
+    // Show a loading spinner or skeleton
+    return <Button disabled>Loading...</Button>
+  }
+
+  if (status === "authenticated") {
     return (
       <Button onClick={() => router.push("/dashboard/overview")}>
         Go to Dashboard
@@ -16,5 +21,6 @@ export default function LoginButton() {
     )
   }
 
+  // status === "unauthenticated"
   return <Button onClick={async () => await signIn("keycloak")}>Sign In</Button>
 }
