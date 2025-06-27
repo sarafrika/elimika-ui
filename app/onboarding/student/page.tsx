@@ -236,24 +236,17 @@ export default function StudentOnboardingPage() {
     ],
   )
 
-  if (
-    isLoading ||
-    status === "loading" ||
-    !user?.uuid ||
-    !session?.user?.name
-  ) {
+  if (!user?.uuid) {
     return <Loading />
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      {user?.uuid && (
-        <StudentOnboardingForm
-          userUuid={user?.uuid}
-          isSubmitting={isPending}
-          onSubmit={handleSubmit}
-        />
-      )}
+      <StudentOnboardingForm
+        userUuid={user.uuid}
+        isSubmitting={isPending}
+        onSubmit={handleSubmit}
+      />
     </div>
   )
 }

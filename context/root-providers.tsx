@@ -1,19 +1,22 @@
 "use client"
 
-import { SessionProvider } from "next-auth/react"
+import { SessionProvider, useSession } from "next-auth/react"
 import { ReactNode, useEffect } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { useUserStore } from "@/store/use-user-store"
 
-export function RootProviders({ children }: { children: ReactNode }) {
-  const queryClient = new QueryClient()
+function UserFetcher() {
+  const { data: session, status } = useSession()
   const { fetchCurrentUser, isLoading } = useUserStore()
+
   useEffect(() => {
-    fetchCurrentUser()
-  }, [fetchCurrentUser])
-  if (isLoading) {
-    //TODO: add a better loading state
+    if (status === "authenticated" && session?.user) {
+      fetchCurrentUser()
+    }
+  }, [status, session, fetchCurrentUser])
+
+  if (status === "loading" || isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <div className="flex animate-pulse flex-col items-center">
@@ -23,9 +26,15 @@ export function RootProviders({ children }: { children: ReactNode }) {
       </div>
     )
   }
+  return null
+}
+
+export function RootProviders({ children }: { children: ReactNode }) {
+  const queryClient = new QueryClient()
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
+        <UserFetcher />
         {children}
       </SessionProvider>
       <ReactQueryDevtools initialIsOpen={false} />
