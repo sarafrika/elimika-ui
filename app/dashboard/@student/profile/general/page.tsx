@@ -42,10 +42,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSession } from "next-auth/react"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
 import { useEffect, useMemo } from "react"
-import { useUserStore } from "@/store/use-user-store"
+import { useProfileContext } from "@/context/profile-context"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { toast } from "sonner"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import { Skeleton } from "@/components/ui/skeleton"
+import React, { Suspense } from "react"
 
 const guardianSchema = z.object({
   id: z.string().optional(),
@@ -65,38 +67,11 @@ const studentProfileSchema = z.object({
   guardians: z.array(guardianSchema).optional(),
 })
 
-export default function StudentProfileGeneral() {
+function StudentProfileGeneralContent() {
   const { data: session } = useSession()
   const { replaceBreadcrumbs } = useBreadcrumb()
-  const { user, isLoading: isUserLoading, fetchCurrentUser } = useUserStore()
+  const { user, student, isLoading, refetch } = useProfileContext()
   const queryClient = useQueryClient()
-
-  // Always fetch latest user data on mount
-  useEffect(() => {
-    fetchCurrentUser()
-  }, [fetchCurrentUser])
-
-  // Fetch student record by user uuid
-  const {
-    data: studentResp,
-    isLoading: isStudentLoading,
-    refetch: refetchStudent,
-  } = tanstackClient.useQuery("get", "/api/v1/students/search", {
-    params: {
-      query: {
-        // @ts-ignore
-        user_uuid_eq: user?.uuid,
-      },
-    },
-    enabled: !!user?.uuid,
-    staleTime: 0,
-    refetchOnMount: true,
-  })
-
-  // Extract student data
-  const student = useMemo(() => {
-    return studentResp?.content?.[0] || null
-  }, [studentResp])
 
   // Map API data to form default values
   const defaultValues = useMemo(() => {
@@ -201,8 +176,6 @@ export default function StudentProfileGeneral() {
           ...userPayload,
         },
       })
-      // Refetch user data in the store
-      await fetchCurrentUser()
       // 2. Update student (if exists)
       if (student?.uuid) {
         // Map guardians to student fields
@@ -231,9 +204,9 @@ export default function StudentProfileGeneral() {
           params: { path: { uuid: student.uuid } },
           body: studentPayload,
         })
-        // Refetch student data
-        refetchStudent()
       }
+      // Refetch both user and student from context
+      await refetch()
       toast.success("Profile updated successfully!")
       queryClient.invalidateQueries()
     } catch (error: any) {
@@ -241,8 +214,8 @@ export default function StudentProfileGeneral() {
     }
   }
 
-  if (isUserLoading || isStudentLoading || !defaultValues) {
-    return <div>Loading...</div>
+  if (isLoading || !defaultValues) {
+    return <StudentProfileGeneralSkeleton />
   }
 
   return (
@@ -550,5 +523,31 @@ export default function StudentProfileGeneral() {
         </form>
       </Form>
     </div>
+  )
+}
+
+function StudentProfileGeneralSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <Skeleton className="mb-2 h-8 w-48" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <div className="space-y-8">
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <div className="flex justify-end pt-2">
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function StudentProfileGeneral() {
+  return (
+    <Suspense fallback={<StudentProfileGeneralSkeleton />}>
+      <StudentProfileGeneralContent />
+    </Suspense>
   )
 }

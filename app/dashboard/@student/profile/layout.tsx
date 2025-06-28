@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { ReactNode } from "react"
+import { ProfileProvider } from "@/context/profile-context"
 
 const sections = [
   { name: "General", href: "/dashboard/profile/general" },
@@ -54,7 +55,7 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
       </Sidebar>
 
       <main className="flex-1 overflow-auto px-6 py-3">
-        <div>{children}</div>
+        <ProfileProvider>{children}</ProfileProvider>
       </main>
     </div>
   )
