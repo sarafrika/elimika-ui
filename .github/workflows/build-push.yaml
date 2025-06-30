@@ -1,0 +1,49 @@
+name: "Build and Push Docker Image"
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Create .env.local file from template
+        run: |
+          # Copy sample env file and populate with secrets
+          cp .env.sample .env.local
+          
+          # Replace placeholders with actual secret values
+          sed -i "s|__NEXT_PUBLIC_API_URL__|${{ secrets.NEXT_PUBLIC_API_URL }}|g" .env.local
+          sed -i "s|__NEXT_PUBLIC_KEYCLOAK_REALM__|${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}|g" .env.local
+          sed -i "s|__AUTH_URL__|${{ secrets.NEXTAUTH_URL }}|g" .env.local
+          sed -i "s|__AUTH_SECRET__|${{ secrets.NEXTAUTH_SECRET }}|g" .env.local
+          sed -i "s|__KEYCLOAK_ISSUER__|${{ secrets.KEYCLOAK_ISSUER }}|g" .env.local
+          sed -i "s|__KEYCLOAK_CLIENT_ID__|${{ secrets.KEYCLOAK_CLIENT_ID }}|g" .env.local
+          sed -i "s|__KEYCLOAK_CLIENT_SECRET__|${{ secrets.KEYCLOAK_CLIENT_SECRET }}|g" .env.local
+          
+          echo "✅ .env.local file created from template!"
+
+      - name: Login to GitHub Container Registry (GHCR)
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/elimika-ui
+          docker build -t $IMAGE_NAME:latest -f docker/Dockerfile .
+          docker push $IMAGE_NAME:latest
+
+      - name: Trigger Server Setup Workflow
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/setup-server.yml/dispatches \
+            -d '{"ref":"main"}'
