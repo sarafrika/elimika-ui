@@ -32,6 +32,10 @@ import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
 import { useEffect } from "react"
+import { useProfileContext } from "@/context/profile-context"
+import type { UserProfile, StudentProfile } from "../types"
+import { Skeleton } from "@/components/ui/skeleton"
+import React, { Suspense } from "react"
 
 const certificateSchema = z.object({
   id: z.string().optional(),
@@ -51,8 +55,14 @@ const certificationsSchema = z.object({
 
 type CertificationsFormValues = z.infer<typeof certificationsSchema>
 
-export default function CertificationsSettings() {
+function CertificationsSettingsContent() {
   const { replaceBreadcrumbs } = useBreadcrumb()
+  const { user, student, isLoading, refetch } = useProfileContext() as {
+    user: UserProfile
+    student: StudentProfile
+    isLoading: boolean
+    refetch: () => void
+  }
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -78,10 +88,12 @@ export default function CertificationsSettings() {
     name: "certifications",
   })
 
-  const onSubmit = (data: CertificationsFormValues) => {
-    console.log(data)
+  const onSubmit = async (data: CertificationsFormValues) => {
     // TODO: Add mutation to save certifications
+    await refetch()
   }
+
+  if (isLoading) return <CertificationsSettingsSkeleton />
 
   return (
     <div className="space-y-6">
@@ -247,5 +259,31 @@ export default function CertificationsSettings() {
         </form>
       </Form>
     </div>
+  )
+}
+
+function CertificationsSettingsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <Skeleton className="mb-2 h-8 w-48" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <div className="space-y-8">
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <div className="flex justify-end pt-2">
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function CertificationsSettings() {
+  return (
+    <Suspense fallback={<CertificationsSettingsSkeleton />}>
+      <CertificationsSettingsContent />
+    </Suspense>
   )
 }

@@ -34,6 +34,9 @@ import { CheckSquare, Lightbulb, CalendarDays, X } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { useProfileContext } from "@/context/profile-context"
+import { Skeleton } from "@/components/ui/skeleton"
+import React, { Suspense } from "react"
 
 // Sample skills - this list can be expanded or fetched from an API
 const availableSkills = [
@@ -80,8 +83,9 @@ const educationSchema = z.object({
 
 type EducationFormValues = z.infer<typeof educationSchema>
 
-export default function EducationSettings() {
+function EducationSettingsContent() {
   const { replaceBreadcrumbs } = useBreadcrumb()
+  const { user, student, isLoading, refetch } = useProfileContext()
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -98,18 +102,7 @@ export default function EducationSettings() {
   const form = useForm<EducationFormValues>({
     resolver: zodResolver(educationSchema),
     defaultValues: {
-      educations: [
-        {
-          id: "1",
-          institution: "University of Nairobi",
-          degree: "Bachelor's",
-          fieldOfStudy: "Computer Science",
-          startYear: "2018",
-          endYear: "2022",
-          current: false,
-          description: "Graduated with First Class Honours.",
-        },
-      ],
+      educations: [],
       skills: [],
       availability: "",
     },
@@ -140,9 +133,9 @@ export default function EducationSettings() {
     }
   }
 
-  const onSubmit = (data: EducationFormValues) => {
-    console.log(data)
+  const onSubmit = async (data: EducationFormValues) => {
     // TODO: Add mutation to save data
+    await refetch()
   }
 
   const skillPillClassesBase =
@@ -152,6 +145,8 @@ export default function EducationSettings() {
   const skillPillUnselectedClasses = "border-gray-300 bg-white text-gray-700"
   const buttonPrimaryClasses =
     "inline-flex items-center justify-center rounded-md border border-transparent bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+
+  if (isLoading) return <EducationSettingsSkeleton />
 
   return (
     <div className="space-y-6">
@@ -502,5 +497,32 @@ export default function EducationSettings() {
         </form>
       </Form>
     </div>
+  )
+}
+
+function EducationSettingsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <Skeleton className="mb-2 h-8 w-48" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <div className="space-y-8">
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <div className="flex justify-end pt-2">
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function EducationSettings() {
+  return (
+    <Suspense fallback={<EducationSettingsSkeleton />}>
+      <EducationSettingsContent />
+    </Suspense>
   )
 }

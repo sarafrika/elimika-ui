@@ -41,7 +41,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSession } from "next-auth/react"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
+import { useProfileContext } from "@/context/profile-context"
+import { tanstackClient } from "@/services/api/tanstack-client"
+import { toast } from "sonner"
+import { useQueryClient } from "@tanstack/react-query"
+import { Skeleton } from "@/components/ui/skeleton"
+import React, { Suspense } from "react"
 
 const guardianSchema = z.object({
   id: z.string().optional(),
@@ -52,22 +58,89 @@ const guardianSchema = z.object({
 })
 
 const studentProfileSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
-  middle_name: z.string().optional(),
-  last_name: z.string().min(1, "Last name is required"),
-  email: z.string().email(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  email: z.string().email().optional(),
   phone_number: z.string().optional(),
   date_of_birth: z.date().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(),
-  accept_terms: z.boolean().refine((val) => val === true, {
-    message: "You must accept the terms and conditions",
-  }),
-  guardians: z.array(guardianSchema),
+  guardians: z.array(guardianSchema).optional(),
 })
 
-export default function StudentProfileGeneral() {
+function StudentProfileGeneralContent() {
   const { data: session } = useSession()
   const { replaceBreadcrumbs } = useBreadcrumb()
+  const { user, student, isLoading, refetch } = useProfileContext()
+  const queryClient = useQueryClient()
+
+  // Map API data to form default values
+  const defaultValues = useMemo(() => {
+    if (!user) return undefined
+    // Map guardians from student fields
+    const guardians = []
+    if (student?.first_guardian_name || student?.first_guardian_mobile) {
+      const name =
+        typeof student?.first_guardian_name === "string"
+          ? student.first_guardian_name
+          : ""
+      guardians.push({
+        first_name: name.split(" ")[0] || "",
+        last_name: name.split(" ").slice(1).join(" ") || "",
+        phone_number: student?.first_guardian_mobile || "",
+        relationship: "Primary Guardian",
+      })
+    }
+    if (student?.second_guardian_name || student?.second_guardian_mobile) {
+      const name =
+        typeof student?.second_guardian_name === "string"
+          ? student.second_guardian_name
+          : ""
+      guardians.push({
+        first_name: name.split(" ")[0] || "",
+        last_name: name.split(" ").slice(1).join(" ") || "",
+        phone_number: student?.second_guardian_mobile || "",
+        relationship: "Secondary Guardian",
+      })
+    }
+    return {
+      first_name: user.first_name || "",
+      last_name: user.last_name || "",
+      email: user.email || "",
+      phone_number: user.phone_number || "",
+      date_of_birth: user.dob ? new Date(user.dob) : undefined,
+      gender: user.gender || undefined,
+      guardians:
+        guardians.length > 0
+          ? guardians
+          : [
+              {
+                first_name: "",
+                last_name: "",
+                phone_number: "",
+                relationship: "",
+              },
+            ],
+    }
+  }, [user, student])
+
+  // Mutations for updating user and student
+  const userMutation = tanstackClient.useMutation("put", "/api/v1/users/{uuid}")
+  const studentMutation = tanstackClient.useMutation(
+    "put",
+    "/api/v1/students/{uuid}",
+  )
+
+  const form = useForm<z.infer<typeof studentProfileSchema>>({
+    resolver: zodResolver(studentProfileSchema),
+    defaultValues: defaultValues,
+    values: defaultValues, // react-hook-form v7+ supports values prop for controlled updates
+    mode: "onChange",
+  })
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "guardians",
+  })
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -81,34 +154,68 @@ export default function StudentProfileGeneral() {
     ])
   }, [replaceBreadcrumbs])
 
-  const form = useForm<z.infer<typeof studentProfileSchema>>({
-    resolver: zodResolver(studentProfileSchema),
-    defaultValues: {
-      first_name: "John",
-      middle_name: "Quincy",
-      last_name: "Adams",
-      email: "student@example.com",
-      phone_number: "+254712345678",
-      accept_terms: false,
-      guardians: [
-        {
-          id: "1",
-          first_name: "Jane",
-          last_name: "Doe",
-          phone_number: "123-456-7890",
-          relationship: "Mother",
+  async function onSubmit(values: z.infer<typeof studentProfileSchema>) {
+    if (!user?.uuid) {
+      toast.error("User not found.")
+      return
+    }
+    try {
+      // Only send fields that have values
+      const userPayload: any = {}
+      if (values.first_name) userPayload.first_name = values.first_name
+      if (values.last_name) userPayload.last_name = values.last_name
+      if (values.email) userPayload.email = values.email
+      if (values.phone_number) userPayload.phone_number = values.phone_number
+      if (values.date_of_birth)
+        userPayload.dob = values.date_of_birth.toISOString().split("T")[0]
+      if (values.gender) userPayload.gender = values.gender
+      await userMutation.mutateAsync({
+        params: { path: { uuid: user.uuid } },
+        body: {
+          ...user,
+          ...userPayload,
         },
-      ],
-    },
-  })
+      })
+      // 2. Update student (if exists)
+      if (student?.uuid) {
+        // Map guardians to student fields
+        const g1 = values.guardians?.[0] ?? {
+          first_name: "",
+          last_name: "",
+          phone_number: "",
+        }
+        const g2 = values.guardians?.[1] ?? {
+          first_name: "",
+          last_name: "",
+          phone_number: "",
+        }
+        const studentPayload: any = { user_uuid: user.uuid }
+        if (g1.first_name || g1.last_name)
+          studentPayload.first_guardian_name =
+            `${g1.first_name} ${g1.last_name}`.trim()
+        if (g1.phone_number)
+          studentPayload.first_guardian_mobile = g1.phone_number
+        if (g2.first_name || g2.last_name)
+          studentPayload.second_guardian_name =
+            `${g2.first_name} ${g2.last_name}`.trim()
+        if (g2.phone_number)
+          studentPayload.second_guardian_mobile = g2.phone_number
+        await studentMutation.mutateAsync({
+          params: { path: { uuid: student.uuid } },
+          body: studentPayload,
+        })
+      }
+      // Refetch both user and student from context
+      await refetch()
+      toast.success("Profile updated successfully!")
+      queryClient.invalidateQueries()
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update profile.")
+    }
+  }
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "guardians",
-  })
-
-  function onSubmit(values: z.infer<typeof studentProfileSchema>) {
-    console.log(values)
+  if (isLoading || !defaultValues) {
+    return <StudentProfileGeneralSkeleton />
   }
 
   return (
@@ -167,19 +274,6 @@ export default function StudentProfileGeneral() {
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
                         <Input placeholder="John" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="middle_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Middle Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Quincy" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -421,34 +515,6 @@ export default function StudentProfileGeneral() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Terms and Conditions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="accept_terms"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Accept terms and conditions</FormLabel>
-                      <FormDescription>
-                        You agree to our Terms of Service and Privacy Policy.
-                      </FormDescription>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
           <div className="flex justify-end pt-2">
             <Button type="submit" className="px-6">
               Save Changes
@@ -457,5 +523,31 @@ export default function StudentProfileGeneral() {
         </form>
       </Form>
     </div>
+  )
+}
+
+function StudentProfileGeneralSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <Skeleton className="mb-2 h-8 w-48" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <div className="space-y-8">
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <div className="flex justify-end pt-2">
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function StudentProfileGeneral() {
+  return (
+    <Suspense fallback={<StudentProfileGeneralSkeleton />}>
+      <StudentProfileGeneralContent />
+    </Suspense>
   )
 }
