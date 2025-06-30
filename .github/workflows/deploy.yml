@@ -19,8 +19,8 @@ jobs:
           cat <<EOF > .env.local
           NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
           NEXT_PUBLIC_KEYCLOAK_REALM="${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}"
-          NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
-          NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
+          AUTH_URL="${{ secrets.AUTH_URL }}"
+          AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
           KEYCLOAK_ISSUER="${{ secrets.KEYCLOAK_ISSUER }}"
           KEYCLOAK_CLIENT_ID="${{ secrets.KEYCLOAK_CLIENT_ID }}"
           KEYCLOAK_CLIENT_SECRET="${{ secrets.KEYCLOAK_CLIENT_SECRET }}"
@@ -54,8 +54,8 @@ jobs:
           cat <<EOF > .env.local
           NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
           NEXT_PUBLIC_KEYCLOAK_REALM="${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}"
-          NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
-          NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}"
+          AUTH_URL="${{ secrets.AUTH_URL }}"
+          AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
           KEYCLOAK_ISSUER="${{ secrets.KEYCLOAK_ISSUER }}"
           KEYCLOAK_CLIENT_ID="${{ secrets.KEYCLOAK_CLIENT_ID }}"
           KEYCLOAK_CLIENT_SECRET="${{ secrets.KEYCLOAK_CLIENT_SECRET }}"
