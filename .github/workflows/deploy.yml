@@ -1,14 +1,18 @@
 name: "Deploy to Server"
 
 on:
-  workflow_dispatch:
-  repository_dispatch:
-    types: [deploy]
+  workflow_run:
+    workflows: ["Setup Server"]
+    types:
+      - completed
+    branches:
+      - main
 
 jobs:
   deploy:
     name: Deploy to Self-Hosted Server
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Setup SSH Connection & Deploy
