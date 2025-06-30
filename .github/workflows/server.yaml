@@ -1,0 +1,73 @@
+name: "Setup Server"
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [setup-server]
+
+jobs:
+  setup_server:
+    name: Setup Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Create & Transfer .env.local to Server
+        run: |
+          echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
+          chmod 600 private_key
+
+          echo "🔑 Creating .env.local file..."
+          cat <<EOF > .env.local
+          NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
+          NEXT_PUBLIC_KEYCLOAK_REALM="${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}"
+          AUTH_URL="${{ secrets.AUTH_URL }}"
+          AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
+          KEYCLOAK_ISSUER="${{ secrets.KEYCLOAK_ISSUER }}"
+          KEYCLOAK_CLIENT_ID="${{ secrets.KEYCLOAK_CLIENT_ID }}"
+          KEYCLOAK_CLIENT_SECRET="${{ secrets.KEYCLOAK_CLIENT_SECRET }}"
+          EOF
+
+          echo "📤 Transferring .env.local to server..."
+          scp -i private_key -o StrictHostKeyChecking=no .env.local "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}":~/products/elimika-ui/.env.local
+          echo "✅ .env.local file transferred!"
+
+      - name: Setup SSH Connection & Configure Server
+        run: |
+          echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
+          chmod 600 private_key
+
+          ssh -i private_key -o StrictHostKeyChecking=no "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}" <<-'EOF'
+            set -e  # Exit on error
+
+            echo "📂 Ensuring deployment directory exists..."
+            mkdir -p ~/products/elimika-ui/docker
+
+            echo "📄 Creating docker-compose.yaml..."
+            cat <<-EOC > ~/products/elimika-ui/docker/compose.yaml
+            version: "3.8"
+
+            services:
+              app:
+                container_name: elimika-ui
+                image: ghcr.io/${{ github.repository_owner }}/elimika-ui:latest
+                ports:
+                  - "3000:3000"
+                env_file:
+                  - ../.env.local
+                restart: always
+            EOC
+
+            echo "✅ Server setup configuration complete!"
+          EOF
+
+      - name: Trigger Deploy Workflow
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/deploy.yml/dispatches \
+            -d '{"ref":"main"}'
