@@ -7,7 +7,7 @@ import React, {
   ReactNode,
 } from "react"
 
-export type DashboardView = "student" | "admin"
+export type DashboardView = "student" | "admin" | "instructor"
 
 interface DashboardViewContextType {
   view: DashboardView
