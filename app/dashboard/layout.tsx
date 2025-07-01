@@ -65,7 +65,7 @@ export default async function DashboardLayout({
   }
   const { initialView, availableViews } = getDashboardViews(userDomains)
 
-  // If organisation_user, do not use DashboardViewProvider
+  // If organisation_user, do not use DashboardViewProvider or DashboardLayoutContent or DashboardMainContent
   if (initialView === "organisation_user") {
     return (
       <TrainingCenterProvider>
@@ -73,22 +73,11 @@ export default async function DashboardLayout({
           <BreadcrumbProvider>
             <div className="flex min-h-screen w-full">
               {/* Sidebar */}
-              <DashboardLayoutContent
-                student={student}
-                admin={admin}
-                instructor={instructor}
-                organization={organization}
-                children={children}
-              />
+              <AppSidebar activeDomain="organisation_user" />
               {/* Main content area */}
               <div className="flex w-full flex-1 flex-col">
-                <DashboardMainContent
-                  student={student}
-                  admin={admin}
-                  instructor={instructor}
-                  organization={organization}
-                  children={children}
-                />
+                <DashboardTopBar showToggle={false} />
+                {organization}
               </div>
             </div>
           </BreadcrumbProvider>
