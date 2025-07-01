@@ -1,6 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { DashboardHeader } from "@/components/dashboard-header"
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { TrainingCenterProvider } from "@/context/training-center-provider"
 import { BreadcrumbProvider } from "@/context/breadcrumb-provider"
 import { getUserProfile } from "@/services/user/actions"
@@ -32,13 +31,12 @@ function getDashboardViews(userDomains: UserDomain[]): {
     ),
   ) as ("student" | "admin" | "instructor")[]
   // Default to instructor if present, else student, else admin
-  let initialView: "student" | "admin" | "instructor" = availableViews.includes(
-    "instructor",
-  )
-    ? "instructor"
-    : availableViews.includes("student")
-      ? "student"
-      : availableViews[0] || "student"
+  const initialView: "student" | "admin" | "instructor" =
+    availableViews.includes("instructor")
+      ? "instructor"
+      : availableViews.includes("student")
+        ? "student"
+        : availableViews[0] || "student"
   return { initialView, availableViews }
 }
 
@@ -106,8 +104,9 @@ export default async function DashboardLayout({
                 admin={admin}
                 instructor={instructor}
                 organization={organization}
-                children={children}
-              />
+              >
+                {children}
+              </DashboardLayoutContent>
               {/* Main content area */}
               <div className="flex w-full flex-1 flex-col">
                 <DashboardMainContent
@@ -115,8 +114,9 @@ export default async function DashboardLayout({
                   admin={admin}
                   instructor={instructor}
                   organization={organization}
-                  children={children}
-                />
+                >
+                  {children}
+                </DashboardMainContent>
               </div>
             </div>
           </BreadcrumbProvider>

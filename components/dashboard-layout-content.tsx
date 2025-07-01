@@ -12,7 +12,7 @@ export default function DashboardLayoutContent({
   children,
 }: any) {
   const { view } = useDashboardView()
-  let activeDomain: UserDomain = view
+  const activeDomain: UserDomain = view
   // Only render the sidebar here
   return <AppSidebar activeDomain={activeDomain} />
 }
