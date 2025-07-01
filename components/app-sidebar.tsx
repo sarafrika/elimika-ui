@@ -10,6 +10,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarGroupLabel,
+  SidebarGroupContent,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { useTrainingCenter } from "@/context/training-center-provider"
@@ -25,7 +27,19 @@ export function AppSidebar({
 }: React.ComponentProps<typeof Sidebar> & { activeDomain: UserDomain }) {
   const { trainingCenter } = useTrainingCenter()
   const pathname = usePathname()
-  const menuItems = activeDomain ? menu[activeDomain] : []
+
+  // Helper to get menu items for a domain
+  const getMenuItems = (domain: UserDomain) => menu[domain] || []
+
+  // Label for the sidebar group
+  const groupLabel =
+    activeDomain === "admin"
+      ? "Admin Panel"
+      : activeDomain === "student"
+        ? "Student Panel"
+        : activeDomain.charAt(0).toUpperCase() +
+          activeDomain.slice(1) +
+          " Panel"
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -48,14 +62,15 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {menuItems && (
+        <SidebarGroupContent>
+          <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
           <NavMain
-            items={menuItems}
+            items={getMenuItems(activeDomain)}
             activeDomain={activeDomain}
             pathname={pathname}
           />
-        )}
-        {/*<NavOffice office={menu.office} />*/}
+        </SidebarGroupContent>
+        {/* Secondary menu */}
         <NavSecondary items={menu?.secondary ?? []} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
