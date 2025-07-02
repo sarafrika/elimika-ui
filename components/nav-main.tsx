@@ -1,6 +1,5 @@
 "use client"
 
-import { usePathname } from "next/navigation"
 import { markActiveMenuItem, MenuItem } from "@/lib/menu"
 import { UserDomain } from "@/lib/types"
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "./ui/sidebar"
