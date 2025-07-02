@@ -1,9 +1,7 @@
-version: "3.8"
-
 services:
   app:
     container_name: elimika-ui
-    image: ghcr.io/${GITHUB_USERNAME}/elimika-ui:latest
+    image: ghcr.io/sarafrika/elimika-ui:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile
