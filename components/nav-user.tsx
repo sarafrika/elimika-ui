@@ -15,12 +15,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { MenuItem } from "@/lib/menu"
 import { useUserStore } from "@/store/use-user-store"
+import { signOut } from "@/services/auth"
 
 
 

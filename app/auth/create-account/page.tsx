@@ -14,7 +14,6 @@ import {
   Loader2,
   MailCheck,
 } from "lucide-react"
-import { signIn } from "next-auth/react"
 import { toast } from "sonner"
 import {
   createOrUpdateTrainingCenter,
@@ -48,6 +47,7 @@ import {
 } from "@/app/auth/create-account/_components/training-center-form"
 import { useAuthRealm } from "@/hooks/use-auth-realm"
 import { UserDomain } from "@/lib/types"
+import { signIn } from "@/services/auth"
 
 type AccountCreationStatus = "idle" | "submitting" | "success" | "error"
 
