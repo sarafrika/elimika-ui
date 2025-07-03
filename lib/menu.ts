@@ -190,7 +190,7 @@ export default {
   admin: [
     {
       title: "Overview",
-      url: "/dashboard/admin/overview",
+      url: "/dashboard/overview",
       icon: LayoutDashboard,
     },
     {
