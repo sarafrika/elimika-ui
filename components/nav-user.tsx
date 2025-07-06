@@ -121,7 +121,7 @@ export function NavUser({ items }: NavUserProps) {
                 {/* Logout using Auth.js server action pattern */}
                 <form
                   action={async () => {
-                    await signOut({ redirectTo: "/" })
+                    await signOut()
                   }}
                 >
                   <button
