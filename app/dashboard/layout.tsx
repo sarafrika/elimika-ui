@@ -51,9 +51,9 @@ export default async function DashboardLayout({
   // First check if user is authenticated
   const session = await auth()
 
-  // If no session, redirect to sign-in instead of onboarding
+  // If no session, redirect to home page instead of forcing login
   if (!session) {
-    redirect("/auth/signin") // or wherever your sign-in page is
+    redirect("/") // Redirect to home page
   }
 
   try {
@@ -141,8 +141,8 @@ export default async function DashboardLayout({
       </TrainingCenterProvider>
     )
   } catch (error) {
-    // If getUserProfile fails due to authentication issues, redirect to sign-in
+    // If getUserProfile fails due to authentication issues, redirect to home page
     console.error("Failed to get user profile:", error)
-    redirect("/auth/signin")
+    redirect("/")
   }
 }

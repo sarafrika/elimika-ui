@@ -77,12 +77,15 @@ const config: NextAuthConfig = {
       clientId: process.env.KEYCLOAK_CLIENT_ID,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
       issuer: process.env.KEYCLOAK_ISSUER,
+      authorization: {
+        params: {
+          scope: "openid profile email",
+          response_type: "code",
+          code_challenge_method: "S256",
+        }
+      }
     }),
   ],
-  pages: {
-    signIn: "/auth/signin", // Custom sign-in page
-    signOut: "/auth/signout", // Optional: custom sign-out page
-  },
   callbacks: {
     async jwt({ token, account, user }) {
       // Initial sign in
@@ -135,15 +138,12 @@ const config: NextAuthConfig = {
       return session
     },
     async redirect({ url, baseUrl }) {
-      // Handle post-logout redirects
-      if (url.startsWith("/")) {
-        return `${baseUrl}${url}`
-      }
-      // After logout, redirect to home page instead of dashboard
-      if (url === baseUrl) {
-        return `${baseUrl}/`
-      }
-      return url
+      // Handle post-authentication redirects
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url
+      // Default to home page after logout
+      return `${baseUrl}/`
     },
   },
   events: {
@@ -157,8 +157,6 @@ const config: NextAuthConfig = {
       }
       // Check if event has session property (database strategy)
       else if ("session" in event && event.session) {
-        // For database strategy, we might not have the id_token in session
-        // In this case, you might need to store it differently or handle logout differently
         const customSession = event.session as any
         idToken = customSession.user?.id_token
       }
