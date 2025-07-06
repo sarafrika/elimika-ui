@@ -10,13 +10,9 @@ const config = {
       name: "Sarafrika",
       clientId: process.env.KEYCLOAK_CLIENT_ID,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
-      issuer: process.env.KEYCLOAK_ISSUER,
-    }),
+      issuer: process.env.KEYCLOAK_ISSUER
+    })
   ],
-  pages: {
-    // Redirect to home page after signout instead of signin page
-    signOut: "/",
-  },
   callbacks: {
     authorized: async ({ auth, request }) => {
       if (publicRoutes.includes(request.nextUrl.pathname)) {
@@ -42,13 +38,8 @@ const config = {
         token.accessToken = account.access_token
       }
       return token
-    },
-  },
-  events: {
-    async signOut(message) {
-      console.log("User successfully signed out:", message)
-    },
-  },
+    }
+  }
 } as NextAuthConfig
 
 export const { auth, handlers, signIn, signOut } = NextAuth(config)
