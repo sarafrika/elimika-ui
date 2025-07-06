@@ -79,6 +79,10 @@ const config: NextAuthConfig = {
       issuer: process.env.KEYCLOAK_ISSUER,
     }),
   ],
+  pages: {
+    signIn: "/auth/signin", // Custom sign-in page
+    signOut: "/auth/signout", // Optional: custom sign-out page
+  },
   callbacks: {
     async jwt({ token, account, user }) {
       // Initial sign in
@@ -129,6 +133,17 @@ const config: NextAuthConfig = {
       }
 
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle post-logout redirects
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`
+      }
+      // After logout, redirect to home page instead of dashboard
+      if (url === baseUrl) {
+        return `${baseUrl}/`
+      }
+      return url
     },
   },
   events: {
