@@ -8,6 +8,7 @@ const config = {
   session: { strategy: "jwt" },
   providers: [
     Keycloak({
+      name: "Sarafrika",
       clientId: process.env.KEYCLOAK_CLIENT_ID,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
       issuer: process.env.KEYCLOAK_ISSUER,
