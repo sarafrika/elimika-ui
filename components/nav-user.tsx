@@ -16,12 +16,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { useSession } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { MenuItem } from "@/lib/menu"
 import { useUserStore } from "@/store/use-user-store"
-import { logoutAction } from "@/lib/actions"
 
 type NavUserProps = {
   items: MenuItem[]
@@ -118,17 +117,13 @@ export function NavUser({ items }: NavUserProps) {
                     <span>{item.title}</span>
                   </div>
                 ))}
-
-                {/* Logout using the Server Action */}
-                <form action={logoutAction}> {/* Directly reference the server action */}
-                  <button
-                    type="submit"
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
-                  >
-                    <LogOut className="size-4" />
-                    <span>Log out</span>
-                  </button>
-                </form>
+                <div
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                  onClick={async () => await signOut()}
+                >
+                  <LogOut className="size-4" />
+                  <span>Log out</span>
+                </div>
               </div>
             </div>
           </DropdownMenuContent>
