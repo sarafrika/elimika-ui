@@ -15,14 +15,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { signOut } from "next-auth/react"
 import { useSession } from "next-auth/react"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { MenuItem } from "@/lib/menu"
 import { useUserStore } from "@/store/use-user-store"
-
-
+import { signOut } from "@/services/auth"
 
 type NavUserProps = {
   items: MenuItem[]
@@ -40,8 +38,6 @@ export function NavUser({ items }: NavUserProps) {
       ?.slice(0, 2)
       ?.map((name) => name?.[0])
       ?.join("") || ""
-
-
 
   return (
     <SidebarMenu>
@@ -122,13 +118,21 @@ export function NavUser({ items }: NavUserProps) {
                   </div>
                 ))}
 
-                <div
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
-                  onClick={async () => await signOut()}
+                {/* Logout using Auth.js server action pattern */}
+                <form
+                  action={async () => {
+                    "use server"
+                    await signOut({ redirectTo: "/" })
+                  }}
                 >
-                  <LogOut className="size-4" />
-                  <span>Log out</span>
-                </div>
+                  <button
+                    type="submit"
+                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                  >
+                    <LogOut className="size-4" />
+                    <span>Log out</span>
+                  </button>
+                </form>
               </div>
             </div>
           </DropdownMenuContent>

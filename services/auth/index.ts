@@ -1,6 +1,5 @@
 import NextAuth, { NextAuthConfig } from "next-auth"
 import Keycloak from "next-auth/providers/keycloak"
-import type { JWT } from "next-auth/jwt"
 
 const publicRoutes = ["/"]
 
@@ -14,6 +13,10 @@ const config = {
       issuer: process.env.KEYCLOAK_ISSUER,
     }),
   ],
+  pages: {
+    // Redirect to home page after signout instead of signin page
+    signOut: "/",
+  },
   callbacks: {
     authorized: async ({ auth, request }) => {
       if (publicRoutes.includes(request.nextUrl.pathname)) {
@@ -40,26 +43,12 @@ const config = {
       }
       return token
     },
-
-    async signOut({ token }: { token: JWT }) {
-      console.log("Signing out user:", token?.id)
-
-      // Construct Keycloak logout URL using your exact env variables
-      const keycloakLogoutUrl = `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`
-      const params = new URLSearchParams({
-        post_logout_redirect_uri: process.env.AUTH_URL || 'http://localhost:3000',
-        client_id: process.env.KEYCLOAK_CLIENT_ID || '',
-      })
-
-      // Return the logout URL - NextAuth will redirect to this
-      return `${keycloakLogoutUrl}?${params.toString()}`
-    }
   },
   events: {
     async signOut(message) {
       console.log("User successfully signed out:", message)
-    }
-  }
+    },
+  },
 } as NextAuthConfig
 
 export const { auth, handlers, signIn, signOut } = NextAuth(config)
