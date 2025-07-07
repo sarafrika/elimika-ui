@@ -22,6 +22,8 @@ Welcome to the Elimika UI project! This comprehensive guide will help you unders
   - `services/api/fetch-client.ts`, `services/api/tanstack-client.ts`, `services/api/schema.ts`
   - `.github/workflows/` (CI/CD)
   - See [Project Structure](#project-structure) for a full tree
+- **Environment Variables:**
+  - Use the provided [Elimika .env.local template](https://gist.github.com/OliverSolomon/1e88887043be92194bb5ee72b000a657) for quick setup
 
 ---
 
@@ -188,8 +190,9 @@ The onboarding flow is designed to provide a tailored experience for each user r
 ### Post-Onboarding
 
 - On successful onboarding, users see a success dialog with next steps (e.g., check email for verification, set password)
-- After verification, users are redirected to their dashboard, which is determined by their role/domain
-- The dashboard layout and navigation are then tailored to the user's assigned domain(s)
+- After verification, users are **redirected to the dashboard corresponding to their assigned role/domain**
+  - If a user has multiple roles, the dashboard layout will present all available dashboards and allow switching
+  - The dashboard layout and navigation are then tailored to the user's assigned domain(s)
 
 ### Extensibility
 
@@ -210,8 +213,8 @@ flowchart TB
   OrgAdminForm --> Submit
   Submit --> Backend["API Call to Backend"]
   Backend --> Success["Show Success Dialog"]
-  Success --> EmailVerify["User verifies email"]
-  EmailVerify --> Dashboard["Redirect to Dashboard"]
+  Success --> RoleRedirect["Redirect to Dashboard (based on user roles)"]
+  RoleRedirect --> Dashboard["User lands on correct dashboard (multi-role supported)"]
 ```
 
 ---
@@ -388,6 +391,7 @@ flowchart TB
    ```
 3. **Set up environment:**
    - Copy `env.example` to `.env.local` and fill in values (ask admin for secrets)
+   - Or use the [Elimika .env.local template](https://gist.github.com/OliverSolomon/1e88887043be92194bb5ee72b000a657) for quick setup
 4. **Run locally:**
    ```bash
    pnpm dev
