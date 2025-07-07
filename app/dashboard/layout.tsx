@@ -9,6 +9,7 @@ import { UserDomain } from "@/lib/types"
 import DashboardLayoutContent from "@/components/dashboard-layout-content"
 import DashboardTopBar from "@/components/dashboard-top-bar"
 import DashboardMainContent from "@/components/dashboard-main-content"
+import { auth } from "@/services/auth"
 
 // Helper to get the default view and available views
 function getDashboardViews(userDomains: UserDomain[]): {
@@ -41,87 +42,107 @@ function getDashboardViews(userDomains: UserDomain[]): {
 }
 
 export default async function DashboardLayout({
-  instructor,
-  student,
-  admin,
-  organization,
-  children,
-}: any) {
-  const userResponse = await getUserProfile()
-  const userData = userResponse?.data?.content?.[0]
-  if (!userData || (userData && userData.user_domain?.length == 0)) {
-    redirect("/onboarding")
-  }
-  let userDomains = userData.user_domain || []
-  // Ensure all student users have admin access
-  if (userDomains.includes("student") && !userDomains.includes("admin")) {
-    userDomains = [...userDomains, "admin"]
-  }
-  // Ensure all instructors have admin access
-  if (userDomains.includes("instructor") && !userDomains.includes("admin")) {
-    userDomains = [...userDomains, "admin"]
-  }
-  const { initialView, availableViews } = getDashboardViews(userDomains)
+                                                instructor,
+                                                student,
+                                                admin,
+                                                organization,
+                                                children,
+                                              }: any) {
+  // First check if user is authenticated
+  const session = await auth()
 
-  // If organisation_user, do not use DashboardViewProvider or DashboardLayoutContent or DashboardMainContent
-  if (initialView === "organisation_user") {
+  // If no session, redirect to home page instead of forcing login
+  if (!session) {
+    redirect("/") // Redirect to home page
+  }
+
+  try {
+    const userResponse = await getUserProfile()
+    const userData = userResponse?.data?.content?.[0]
+
+    // Check if user data exists and has domains
+    if (!userData || (userData && userData.user_domain?.length == 0)) {
+      // Only redirect to onboarding if user is authenticated but lacks profile data
+      // This distinguishes between "not logged in" vs "needs onboarding"
+      redirect("/onboarding")
+    }
+
+    let userDomains = userData.user_domain || []
+    // Ensure all student users have admin access
+    if (userDomains.includes("student") && !userDomains.includes("admin")) {
+      userDomains = [...userDomains, "admin"]
+    }
+    // Ensure all instructors have admin access
+    if (userDomains.includes("instructor") && !userDomains.includes("admin")) {
+      userDomains = [...userDomains, "admin"]
+    }
+    const { initialView, availableViews } = getDashboardViews(userDomains)
+
+    // If organisation_user, do not use DashboardViewProvider or DashboardLayoutContent or DashboardMainContent
+    if (initialView === "organisation_user") {
+      return (
+        <TrainingCenterProvider>
+          <SidebarProvider>
+            <BreadcrumbProvider>
+              <div className="flex min-h-screen w-full">
+                {/* Sidebar */}
+                <AppSidebar activeDomain="organisation_user" />
+                {/* Main content area */}
+                <div className="flex w-full flex-1 flex-col">
+                  <DashboardTopBar showToggle={false} />
+                  {organization}
+                </div>
+              </div>
+            </BreadcrumbProvider>
+          </SidebarProvider>
+        </TrainingCenterProvider>
+      )
+    }
+
+    // For student, admin, instructor
+    // Filter out 'organisation_user' for DashboardViewProvider
+    const filteredViews = availableViews.filter(
+      (v) => v !== "organisation_user",
+    ) as ("student" | "admin" | "instructor")[]
+
     return (
       <TrainingCenterProvider>
         <SidebarProvider>
-          <BreadcrumbProvider>
-            <div className="flex min-h-screen w-full">
-              {/* Sidebar */}
-              <AppSidebar activeDomain="organisation_user" />
-              {/* Main content area */}
-              <div className="flex w-full flex-1 flex-col">
-                <DashboardTopBar showToggle={false} />
-                {organization}
-              </div>
-            </div>
-          </BreadcrumbProvider>
-        </SidebarProvider>
-      </TrainingCenterProvider>
-    )
-  }
-
-  // For student, admin, instructor
-  // Filter out 'organisation_user' for DashboardViewProvider
-  const filteredViews = availableViews.filter(
-    (v) => v !== "organisation_user",
-  ) as ("student" | "admin" | "instructor")[]
-  return (
-    <TrainingCenterProvider>
-      <SidebarProvider>
-        <DashboardViewProvider
-          initialView={initialView as "student" | "admin" | "instructor"}
-          availableViews={filteredViews}
-        >
-          <BreadcrumbProvider>
-            <div className="flex min-h-screen w-full">
-              {/* Sidebar */}
-              <DashboardLayoutContent
-                student={student}
-                admin={admin}
-                instructor={instructor}
-                organization={organization}
-              >
-                {children}
-              </DashboardLayoutContent>
-              {/* Main content area */}
-              <div className="flex w-full flex-1 flex-col">
-                <DashboardMainContent
+          <DashboardViewProvider
+            initialView={initialView as "student" | "admin" | "instructor"}
+            availableViews={filteredViews}
+          >
+            <BreadcrumbProvider>
+              <div className="flex min-h-screen w-full">
+                {/* Sidebar */}
+                <DashboardLayoutContent
                   student={student}
                   admin={admin}
                   instructor={instructor}
                   organization={organization}
                 >
                   {children}
-                </DashboardMainContent>
+                </DashboardLayoutContent>
+                {/* Main content area */}
+                <div className="flex w-full flex-1 flex-col">
+                  <DashboardMainContent
+                    student={student}
+                    admin={admin}
+                    instructor={instructor}
+                    organization={organization}
+                  >
+                    {children}
+                  </DashboardMainContent>
+                </div>
               </div>
-            </div>
-          </BreadcrumbProvider>
-        </DashboardViewProvider>
-      </SidebarProvider>
-    </TrainingCenterProvider>
-  )
+            </BreadcrumbProvider>
+          </DashboardViewProvider>
+        </SidebarProvider>
+      </TrainingCenterProvider>
+    )
+  } catch (error) {
+    // If getUserProfile fails due to authentication issues, redirect to home page
+    console.error("Failed to get user profile:", error)
+    redirect("/")
+  }
 }

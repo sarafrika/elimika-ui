@@ -26,15 +26,15 @@ jobs:
             echo "🔑 Logging in to GitHub Container Registry..."
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-            echo "🚀 Pulling latest Docker image..."
+            echo "🛑 Stopping and removing existing containers..."
             cd ~/products/elimika-ui/docker
+            docker compose -f compose.yaml down --remove-orphans
+
+            echo "🚀 Pulling latest Docker image..."
             docker compose -f compose.yaml pull
 
-            echo "🚀 Restarting the application with .env.local..."
-            docker compose -f compose.yaml up -d --no-deps --build
-
-            echo "🧹 Cleaning up old Docker images..."
-            docker system prune -af
+            echo "🚀 Starting the application with latest image..."
+            docker compose -f compose.yaml up -d
 
             echo "✅ Deployment complete!"
           EOF

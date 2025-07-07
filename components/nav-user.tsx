@@ -1,3 +1,4 @@
+// components/layout/nav-user.tsx (or wherever NavUser is located)
 "use client"
 
 import { ChevronsUpDown, LogOut } from "lucide-react"
@@ -15,14 +16,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { signOut } from "next-auth/react"
-import { useSession } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { MenuItem } from "@/lib/menu"
 import { useUserStore } from "@/store/use-user-store"
-
-
 
 type NavUserProps = {
   items: MenuItem[]
@@ -40,8 +38,6 @@ export function NavUser({ items }: NavUserProps) {
       ?.slice(0, 2)
       ?.map((name) => name?.[0])
       ?.join("") || ""
-
-
 
   return (
     <SidebarMenu>
@@ -121,7 +117,6 @@ export function NavUser({ items }: NavUserProps) {
                     <span>{item.title}</span>
                   </div>
                 ))}
-
                 <div
                   className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
                   onClick={async () => await signOut()}

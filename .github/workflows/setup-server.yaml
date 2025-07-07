@@ -40,31 +40,15 @@ jobs:
           scp -i private_key -o StrictHostKeyChecking=no .env.local "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}":~/products/elimika-ui/.env.local
           echo "✅ .env.local file transferred!"
 
-      - name: Setup SSH Connection & Configure Server
+      - name: Transfer Docker Compose File & Setup Server
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > private_key
           chmod 600 private_key
 
-          ssh -i private_key -o StrictHostKeyChecking=no "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}" <<-'EOF'
-            set -e  # Exit on error
+          echo "📂 Ensuring deployment directory exists on server..."
+          ssh -i private_key -o StrictHostKeyChecking=no "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}" "mkdir -p ~/products/elimika-ui/docker"
 
-            echo "📂 Ensuring deployment directory exists..."
-            mkdir -p ~/products/elimika-ui/docker
-
-            echo "📄 Creating docker-compose.yaml..."
-            cat <<-EOC > ~/products/elimika-ui/docker/compose.yaml
-            version: "3.8"
-
-            services:
-              app:
-                container_name: elimika-ui
-                image: ghcr.io/${{ github.repository_owner }}/elimika-ui:latest
-                ports:
-                  - "3000:3000"
-                env_file:
-                  - ../.env.local
-                restart: always
-            EOC
-
-            echo "✅ Server setup configuration complete!"
-          EOF
+          echo "📤 Transferring docker-compose.yaml to server..."
+          scp -i private_key -o StrictHostKeyChecking=no docker/compose.yaml "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}":~/products/elimika-ui/docker/compose.yaml
+          
+          echo "✅ Server setup configuration complete!"
