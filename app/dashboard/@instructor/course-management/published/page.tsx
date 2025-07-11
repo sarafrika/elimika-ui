@@ -118,7 +118,8 @@ export default function PublishedCoursesPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>
                         <Link
-                          href={`/dashboard/instructor/course-management/preview/${course.id}`}
+                          // href={`/dashboard/instructor/course-management/preview/${course.id}`}
+                          href={`/dashboard/course-management/preview/${course.id}`}
                           className="flex w-full items-center"
                         >
                           <EyeIcon className="focus:text-primary-foreground mr-2 h-4 w-4" />

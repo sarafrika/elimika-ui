@@ -1,3 +1,5 @@
+"use client"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,6 +11,7 @@ import {
 } from "@/components/ui/card"
 import { CheckCircle, Clock, Users, Video } from "lucide-react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 const course = {
   name: "Introduction to Web Development",
@@ -55,6 +58,9 @@ const course = {
 }
 
 export default function CoursePreviewPage() {
+  const params = useParams()
+  const courseId = params?.id
+
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4">
       <div className="space-y-4">
@@ -138,7 +144,8 @@ export default function CoursePreviewPage() {
                 Enroll Now
               </Button>
               <Button size="lg" variant="outline" className="w-full" asChild>
-                <Link href="/dashboard/instructor/course-management/create-new-course">
+                {/* <Link href="/dashboard/instructor/course-management/create-new-course"> */}
+                <Link href="/dashboard/course-management/create-new-course">
                   Edit Course
                 </Link>
               </Button>

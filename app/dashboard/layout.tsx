@@ -42,12 +42,12 @@ function getDashboardViews(userDomains: UserDomain[]): {
 }
 
 export default async function DashboardLayout({
-                                                instructor,
-                                                student,
-                                                admin,
-                                                organization,
-                                                children,
-                                              }: any) {
+  instructor,
+  student,
+  admin,
+  organization,
+  children,
+}: any) {
   // First check if user is authenticated
   const session = await auth()
 
@@ -56,18 +56,21 @@ export default async function DashboardLayout({
     redirect("/") // Redirect to home page
   }
 
+  const userResponse = await getUserProfile()
+  const userData = userResponse?.data?.content?.[0]
+
+  if (!userData || (userData && userData.user_domain?.length == 0)) {
+    // Only redirect to onboarding if user is authenticated but lacks profile data
+    // This distinguishes between "not logged in" vs "needs onboarding"
+    return redirect("/onboarding")
+  }
+
   try {
+    // Check if user data exists and has domains
     const userResponse = await getUserProfile()
     const userData = userResponse?.data?.content?.[0]
 
-    // Check if user data exists and has domains
-    if (!userData || (userData && userData.user_domain?.length == 0)) {
-      // Only redirect to onboarding if user is authenticated but lacks profile data
-      // This distinguishes between "not logged in" vs "needs onboarding"
-      redirect("/onboarding")
-    }
-
-    let userDomains = userData.user_domain || []
+    let userDomains = userData?.user_domain || []
     // Ensure all student users have admin access
     if (userDomains.includes("student") && !userDomains.includes("admin")) {
       userDomains = [...userDomains, "admin"]

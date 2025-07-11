@@ -3,14 +3,18 @@ import React from "react"
 import { Button } from "./ui/button"
 import { signIn, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import Spinner from "./ui/spinner"
 
 export default function LoginButton() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
   if (status === "loading") {
-    // Show a loading spinner or skeleton
-    return <Button disabled>Loading...</Button>
+    return (
+      <Button disabled>
+        <Spinner />
+      </Button>
+    )
   }
 
   if (status === "authenticated") {

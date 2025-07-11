@@ -384,6 +384,7 @@ function ContentItemForm({
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
+                {/* Rich text implementation here */}
                 <Textarea
                   placeholder="Enter content"
                   className="resize-none"
