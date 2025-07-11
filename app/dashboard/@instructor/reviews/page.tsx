@@ -45,6 +45,78 @@ const reviewsData = [
       "I've taken a few Next.js courses, and this was by far the best. The advanced topics were covered in-depth and were easy to follow.",
     date: "2023-10-22",
   },
+  {
+    id: "review_4",
+    student: {
+      name: "Alice Johnson",
+      avatarUrl: "/avatars/01.png",
+    },
+    course: "Mastering Next.js",
+    rating: 5,
+    comment:
+      "This was an amazing course! The instructor explained everything clearly, and the projects were very helpful. Highly recommended!",
+    date: "2023-10-25",
+  },
+  {
+    id: "review_5",
+    student: {
+      name: "Bob Williams",
+      avatarUrl: "/avatars/02.png",
+    },
+    course: "GraphQL for Beginners",
+    rating: 4,
+    comment:
+      "A great introduction to GraphQL. I feel much more confident using it now. Some parts were a bit fast-paced, but overall very good.",
+    date: "2023-10-23",
+  },
+  {
+    id: "review_6",
+    student: {
+      name: "Charlie Brown",
+      avatarUrl: "/avatars/03.png",
+    },
+    course: "Mastering Next.js",
+    rating: 5,
+    comment:
+      "I've taken a few Next.js courses, and this was by far the best. The advanced topics were covered in-depth and were easy to follow.",
+    date: "2023-10-22",
+  },
+  {
+    id: "review_7",
+    student: {
+      name: "Alice Johnson",
+      avatarUrl: "/avatars/01.png",
+    },
+    course: "Mastering Next.js",
+    rating: 5,
+    comment:
+      "This was an amazing course! The instructor explained everything clearly, and the projects were very helpful. Highly recommended!",
+    date: "2023-10-25",
+  },
+  {
+    id: "review_8",
+    student: {
+      name: "Bob Williams",
+      avatarUrl: "/avatars/02.png",
+    },
+    course: "GraphQL for Beginners",
+    rating: 4,
+    comment:
+      "A great introduction to GraphQL. I feel much more confident using it now. Some parts were a bit fast-paced, but overall very good.",
+    date: "2023-10-23",
+  },
+  {
+    id: "review_9",
+    student: {
+      name: "Charlie Brown",
+      avatarUrl: "/avatars/03.png",
+    },
+    course: "Mastering Next.js",
+    rating: 5,
+    comment:
+      "I've taken a few Next.js courses, and this was by far the best. The advanced topics were covered in-depth and were easy to follow.",
+    date: "2023-10-22",
+  },
 ]
 
 const StarRating = ({ rating }: { rating: number }) => (

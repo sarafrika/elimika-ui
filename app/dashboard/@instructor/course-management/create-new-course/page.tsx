@@ -8,9 +8,19 @@ import {
   StepperTrigger,
 } from "@/components/ui/stepper"
 import { CourseCreationForm } from "@/app/dashboard/@instructor/course-management/create-new-course/_components/course-creation-form"
-import { LessonList } from "@/app/dashboard/@instructor/course-management/create-new-course/_components/lesson-management-form"
+import {
+  LessonDialog,
+  LessonList,
+} from "@/app/dashboard/@instructor/course-management/create-new-course/_components/lesson-management-form"
+import { useState } from "react"
+import { useRouter } from "next/router"
 
 export default function CourseCreationPage() {
+  const router = useRouter()
+  const { id } = router.query
+
+  console.log("editing course id", id)
+
   const course = {
     name: "Introduction to Programming",
     description: "A beginner's course on programming fundamentals.",
@@ -24,6 +34,7 @@ export default function CourseCreationPage() {
     learningObjectives: [{ objective: "Learn to code" }],
     categories: [{ name: "Programming" }],
   }
+
   const lessons = [
     {
       id: 1,
@@ -31,10 +42,19 @@ export default function CourseCreationPage() {
       description: "Introduction to the course",
       content: [
         { title: "Introduction Video", contentType: "VIDEO", duration: 5 },
+        {
+          title: "Introduction to programming ",
+          contentType: "TEXT",
+          duration: 60,
+        },
       ],
       resources: [],
     },
   ]
+
+  const [isDialogOpen, setDialogOpen] = useState(false)
+  const handleOpenDialog = () => setDialogOpen(true)
+  const handleCloseDialog = () => setDialogOpen(false)
 
   return (
     <div className="container mx-auto">
@@ -69,13 +89,15 @@ export default function CourseCreationPage() {
             <LessonList
               courseTitle={course?.name}
               lessons={lessons}
-              onAddLesson={() => {}}
+              onAddLesson={handleOpenDialog}
               onEditLesson={() => {}}
               onDeleteLesson={() => {}}
               onReorderLessons={() => {}}
               onAddAssessment={() => {}}
               onEditAssessment={() => {}}
             />
+
+            <LessonDialog isOpen={isDialogOpen} onOpenChange={setDialogOpen} />
           </div>
         </StepperContent>
 
