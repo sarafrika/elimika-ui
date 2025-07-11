@@ -1,16 +1,19 @@
 import { fetchClient } from "@/services/api/fetch-client";
-import { tanstackClient } from "@/services/api/tanstack-client";
 import { auth } from "@/services/auth";
-import { QueryClient } from "@tanstack/react-query";
 import StudentProfileGeneralForm from "./_components/StudentProfileForm";
 import { UUID } from "crypto";
-import { getUserByEmail, getUserProfile } from "@/services/user/actions";
+import { getUserByEmail } from "@/services/user/actions";
 import { z } from "zod";
 import { schemas } from "@/services/api/zod-client";
+import { redirect } from "next/dist/server/api-utils";
+import { RedirectType } from "next/navigation";
 
 export default async function StudentProfileGeneralPage() {
   const session = await auth();
-  const user = await getUserByEmail(session?.user.email!) as unknown as z.infer<typeof schemas.User>;
+  /* if(!session){
+    redirect("/", RedirectType.replace)
+  } */
+  const user = await getUserByEmail(session!.user.email!) as z.infer<typeof schemas.User>;
 
   const { data: { data } }: any = await fetchClient.GET("/api/v1/students/search", {
     params: {
