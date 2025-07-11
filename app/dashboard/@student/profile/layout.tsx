@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sidebar"
 import { ReactNode } from "react"
 import { ProfileProvider } from "@/context/profile-context"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
 
 const sections = [
   { name: "General", href: "/dashboard/profile/general" },
@@ -24,8 +25,8 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
 
   return (
-    <div className="relative flex min-h-screen p-0">
-      <Sidebar
+    <div className="relative min-h-screen p-0">
+      {/* <Sidebar
         variant="inset"
         className="relative w-64 border-r bg-white p-0"
         collapsible="none"
@@ -52,10 +53,19 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
-      </Sidebar>
+      </Sidebar> */}
 
       <main className="flex-1 overflow-auto px-6 py-3">
-        <ProfileProvider>{children}</ProfileProvider>
+
+        <Tabs defaultValue="General">
+          <TabsList>
+            {sections.map(sec => <TabsTrigger key={sec.name} value={sec.name}>{sec.name}</TabsTrigger>)}
+          </TabsList>
+          <TabsContent value="General">
+            <ProfileProvider>{children}</ProfileProvider>
+          </TabsContent>
+        </Tabs>
+
       </main>
     </div>
   )
