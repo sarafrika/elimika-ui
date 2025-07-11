@@ -11,7 +11,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { ReactNode } from "react"
+import { ReactNode, useEffect, useState } from "react"
+import { ProfileProvider } from "@/context/profile-context"
+import { ChevronsLeft, ChevronsRight } from "lucide-react"
+import clsx from "clsx"
 
 const sections = [
   { name: "General", href: "/dashboard/profile/general" },
@@ -28,40 +31,91 @@ const sections = [
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
+  const [showSidebar, setShowSidebar] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 745)
+      if (window.innerWidth > 745) {
+        setShowSidebar(true) // Always show sidebar on desktop
+      } else {
+        setShowSidebar(false) // Hide sidebar by default on mobile
+      }
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
 
   return (
     <div className="relative flex min-h-screen p-0">
-      <Sidebar
-        variant="inset"
-        className="relative w-64 border-r bg-white p-0"
-        collapsible="none"
-      >
-        <SidebarContent className="border-none bg-white">
-          <SidebarGroup>
-            <SidebarGroupLabel className="px-4 py-2 text-sm text-gray-500">
-              PROFILE SETTINGS
-            </SidebarGroupLabel>
-            <SidebarMenu className="space-y-1 px-2">
-              {sections.map((section) => (
-                <SidebarMenuItem key={section.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === section.href}
-                    className="w-full rounded px-4 py-2 text-left transition hover:bg-gray-100"
+      {(showSidebar || !isMobile) && (
+        <Sidebar
+          variant="inset"
+          className={clsx(
+            "z-50 border-r bg-white p-0 transition-all",
+            isMobile
+              ? "fixed inset-y-0 right-0 w-64 pt-16 shadow-lg"
+              : "relative w-64",
+          )}
+          collapsible="none"
+        >
+          <SidebarContent className="h-full border-none bg-white">
+            <SidebarGroup>
+              <SidebarGroupLabel className="flex items-center justify-between px-4 py-2 text-sm text-gray-500">
+                <span>PROFILE SETTINGS</span>
+                {isMobile && (
+                  <button
+                    onClick={() => setShowSidebar(false)}
+                    className="text-gray-500 hover:text-gray-800"
+                    aria-label="Close Sidebar"
                   >
-                    <Link href={section.href}>
-                      <span>{section.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
+                    <ChevronsLeft size={16} />
+                  </button>
+                )}
+              </SidebarGroupLabel>
+              <SidebarMenu className="space-y-1 px-2">
+                {sections.map((section) => (
+                  <SidebarMenuItem key={section.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === section.href}
+                      className="w-full rounded px-4 py-2 text-left transition hover:bg-gray-100"
+                      onClick={() => isMobile && setShowSidebar(false)} // close sidebar on menu click in mobile
+                    >
+                      <Link href={section.href}>
+                        <span>{section.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+      )}
 
-      <main className="flex-1 overflow-auto px-6 py-3">
-        <div>{children}</div>
+      <main className="relative flex-1 overflow-auto px-6 py-3">
+        {/* Show open button on mobile only when sidebar is closed */}
+        {isMobile && !showSidebar && (
+          <div className="mb-4 flex w-fit items-center justify-between gap-2 text-sm text-gray-500">
+            <span>PROFILE SETTINGS</span>
+            <button
+              onClick={() => setShowSidebar(true)}
+              className="text-gray-500 hover:text-gray-800"
+              aria-label="Open Sidebar"
+            >
+              <ChevronsRight size={20} />
+            </button>
+          </div>
+        )}
+
+        {/* Makeup for space when profile setting is shown on sidebar */}
+        {showSidebar && <div className="mb-4 h-5" />}
+
+        <ProfileProvider>{children}</ProfileProvider>
       </main>
     </div>
   )

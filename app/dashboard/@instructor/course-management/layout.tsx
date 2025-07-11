@@ -14,11 +14,13 @@ interface CourseManagementLayoutProps {
 const sidebarNavItems = [
   {
     title: "Drafts",
-    href: "/dashboard/instructor/course-management/drafts",
+    // href: "/dashboard/instructor/course-management/drafts",
+    href: "/dashboard/course-management/drafts",
   },
   {
     title: "Published",
-    href: "/dashboard/instructor/course-management/published",
+    // href: "/dashboard/instructor/course-management/published",
+    href: "/dashboard/course-management/published",
   },
 ]
 
