@@ -1,20 +1,8 @@
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+"use client"
+
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import {
-  EyeIcon,
-  FilePenIcon,
-  PenIcon,
-  PlusIcon,
-  TrashIcon,
-} from "lucide-react"
+import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -24,53 +12,177 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
+import { tanstackClient } from "@/services/api/tanstack-client"
+import { formatCourseDate } from "@/lib/format-course-date"
 
-const draftCourses = [
-  {
-    id: 1,
-    name: "Introduction to Web Development",
-    description:
-      "A comprehensive course covering the basics of HTML, CSS, and JavaScript.",
-    categories: [{ name: "Web Development" }, { name: "Beginner" }],
-    classLimit: 50,
-    lastUpdated: "2023-10-27",
+// const draftCourses: any[] = [
+//   {
+//     id: 1,
+//     name: "Introduction to Web Development",
+//     description: "A comprehensive course covering the basics of HTML, CSS, and JavaScript.",
+//     categories: [{ name: "Web Development" }, { name: "Beginner" }],
+//     classLimit: 50,
+//     lastUpdated: "2023-10-27",
+//   },
+//   {
+//     id: 2,
+//     name: "Advanced React Patterns",
+//     description: "Learn advanced patterns and techniques for building scalable React applications.",
+//     categories: [{ name: "React" }, { name: "Advanced" }],
+//     classLimit: 30,
+//     lastUpdated: "2023-10-25",
+//   },
+//   {
+//     id: 3,
+//     name: "Data Science with Python",
+//     description: "Explore the world of data science using Python, Pandas, and Scikit-learn.",
+//     categories: [{ name: "Data Science" }, { name: "Python" }],
+//     classLimit: 0,
+//     lastUpdated: "2023-10-22",
+//   },
+// ]
+
+const draftCourses = {
+  success: true,
+  data: {
+    content: [
+      {
+        uuid: "c1d7fbd9-0c60-4f89-a65d-d7ef2b789314",
+        name: "Advanced Java Programming",
+        instructor_uuid: "i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl",
+        category_uuid: "c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl",
+        difficulty_uuid: "d1i2f3f4-5i6c-7u8l-9t10-abcdefghijkl",
+        description: "Comprehensive course covering advanced Java concepts and enterprise development",
+        objectives: "Master advanced Java features, design patterns, and enterprise frameworks",
+        prerequisites: "Basic Java knowledge and OOP concepts",
+        duration_hours: 40,
+        duration_minutes: 30,
+        class_limit: 25,
+        price: 299.99,
+        age_lower_limit: 18,
+        age_upper_limit: 65,
+        thumbnail_url: "https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg",
+        intro_video_url: "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
+        banner_url: "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
+        status: "PUBLISHED",
+        active: true,
+        created_date: "2024-04-01T12:00:00",
+        created_by: "instructor@sarafrika.com",
+        updated_date: "2024-04-15T15:30:00",
+        updated_by: "instructor@sarafrika.com",
+        total_duration_display: "40 hours 30 minutes",
+        is_free: false,
+        is_published: true,
+        is_draft: false,
+      },
+      {
+        uuid: "c1d7fbd9-0c60-4f89-a65d-d7ef2b789316",
+        name: "Advanced Java Programming",
+        instructor_uuid: "i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl",
+        category_uuid: "c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl",
+        difficulty_uuid: "d1i2f3f4-5i6c-7u8l-9t10-abcdefghijkl",
+        description: "Comprehensive course covering advanced Java concepts and enterprise development",
+        objectives: "Master advanced Java features, design patterns, and enterprise frameworks",
+        prerequisites: "Basic Java knowledge and OOP concepts",
+        duration_hours: 40,
+        duration_minutes: 30,
+        class_limit: 25,
+        price: 299.99,
+        age_lower_limit: 18,
+        age_upper_limit: 65,
+        thumbnail_url: "https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg",
+        intro_video_url: "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
+        banner_url: "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
+        status: "PUBLISHED",
+        active: true,
+        created_date: "2024-04-01T12:00:00",
+        created_by: "instructor@sarafrika.com",
+        updated_date: "2024-04-15T15:30:00",
+        updated_by: "instructor@sarafrika.com",
+        total_duration_display: "40 hours 30 minutes",
+        is_free: false,
+        is_published: true,
+        is_draft: false,
+      },
+      {
+        uuid: "c1d7fbd9-0c60-4f89-a65d-d7ef2b789318",
+        name: "Advanced Java Programming",
+        instructor_uuid: "i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl",
+        category_uuid: "c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl",
+        difficulty_uuid: "d1i2f3f4-5i6c-7u8l-9t10-abcdefghijkl",
+        description: "Comprehensive course covering advanced Java concepts and enterprise development",
+        objectives: "Master advanced Java features, design patterns, and enterprise frameworks",
+        prerequisites: "Basic Java knowledge and OOP concepts",
+        duration_hours: 40,
+        duration_minutes: 30,
+        class_limit: 25,
+        price: 299.99,
+        age_lower_limit: 18,
+        age_upper_limit: 65,
+        thumbnail_url: "https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg",
+        intro_video_url: "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
+        banner_url: "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
+        status: "PUBLISHED",
+        active: true,
+        created_date: "2024-04-01T12:00:00",
+        created_by: "instructor@sarafrika.com",
+        updated_date: "2024-04-15T15:30:00",
+        updated_by: "instructor@sarafrika.com",
+        total_duration_display: "40 hours 30 minutes",
+        is_free: false,
+        is_published: true,
+        is_draft: false,
+      },
+    ],
+    metadata: {
+      pageNumber: 1073741824,
+      pageSize: 1073741824,
+      totalElements: 9007199254740991,
+      totalPages: 1073741824,
+      hasNext: true,
+      hasPrevious: true,
+      first: true,
+      last: true,
+    },
+    links: {
+      first: "string",
+      previous: "string",
+      self: "string",
+      next: "string",
+      last: "string",
+    },
   },
-  {
-    id: 2,
-    name: "Advanced React Patterns",
-    description:
-      "Learn advanced patterns and techniques for building scalable React applications.",
-    categories: [{ name: "React" }, { name: "Advanced" }],
-    classLimit: 30,
-    lastUpdated: "2023-10-25",
-  },
-  {
-    id: 3,
-    name: "Data Science with Python",
-    description:
-      "Explore the world of data science using Python, Pandas, and Scikit-learn.",
-    categories: [{ name: "Data Science" }, { name: "Python" }],
-    classLimit: 0,
-    lastUpdated: "2023-10-22",
-  },
-]
+  message: "string",
+  error: {},
+}
 
 export default function CourseDraftsPage() {
+  const { data, isPending } = tanstackClient.useQuery("get", "/api/v1/courses", {
+    params: {
+      query: {
+        //@ts-ignore
+        page: 0,
+        size: 1,
+      },
+    },
+  })
+
+  const deleteCourseMutation = tanstackClient.useMutation("delete", "/api/v1/courses/{courseId}")
+  const handleDeleteCourse = (courseId: string) => {
+    console.log("deleting.....", courseId)
+  }
+
   return (
     <div className="space-y-6">
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Your Draft Courses</h1>
           <p className="text-muted-foreground mt-1 text-base">
-            You have {draftCourses.length} course
-            {draftCourses.length > 1 ? "s" : ""} waiting to be published.
+            You have {draftCourses?.data?.content?.length} course
+            {draftCourses?.data?.content?.length > 1 ? "s" : ""} waiting to be published.
           </p>
         </div>
-        <Button
-          type="button"
-          className="cursor-pointer px-4 py-2 text-sm"
-          asChild
-        >
+        <Button type="button" className="cursor-pointer px-4 py-2 text-sm" asChild>
           <Link href="/dashboard/course-management/create-new-course">
             <PlusIcon className="h-4 w-4" />
             New Course
@@ -78,18 +190,15 @@ export default function CourseDraftsPage() {
         </Button>
       </div>
 
-      {draftCourses.length === 0 ? (
+      {draftCourses?.data?.content?.length === 0 ? (
         <div className="bg-muted/20 rounded-md border py-12 text-center">
           <FilePenIcon className="text-muted-foreground mx-auto h-12 w-12" />
           <h3 className="mt-4 text-lg font-medium">No draft courses</h3>
           <p className="text-muted-foreground mt-2">
-            You don&apos;t have any draft courses. Start by creating a new
-            course to get started.
+            You don&apos;t have any draft courses. Start by creating a new course to get started.
           </p>
           <Button className="mt-4" asChild>
-            <Link href="/dashboard/course-management/create-new-course">
-              Create Your First Course
-            </Link>
+            <Link href="/dashboard/course-management/create-new-course">Create Your First Course</Link>
           </Button>
         </div>
       ) : (
@@ -105,27 +214,28 @@ export default function CourseDraftsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {draftCourses?.map((course) => (
-              <TableRow key={course.id}>
+            {draftCourses?.data?.content?.map((course: any) => (
+              <TableRow key={course.uuid}>
                 <TableCell className="font-medium">
                   <div>
                     <div>{course.name}</div>
-                    <div className="text-muted-foreground max-w-[250px] truncate text-sm">
-                      {course.description}
-                    </div>
+                    <div className="text-muted-foreground max-w-[250px] truncate text-sm">{course.description}</div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {course.categories.map((category, i) => (
+                    {/* {course.categories.map((category: any, i: any) => (
                       <Badge key={i} variant="outline" className="capitalize">
                         {category.name}
                       </Badge>
-                    ))}
+                    ))} */}
+                    <Badge variant="outline" className="capitalize">
+                      xxxx
+                    </Badge>
                   </div>
                 </TableCell>
-                <TableCell>{course.classLimit || "Unlimited"}</TableCell>
-                <TableCell>{course.lastUpdated}</TableCell>
+                <TableCell>{course.class_limit || "Unlimited"}</TableCell>
+                <TableCell>{formatCourseDate(course.updated_date)}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -151,7 +261,7 @@ export default function CourseDraftsPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem>
                         <Link
-                          href={`/dashboard/course-management/create-new-course?id=${course.id}`}
+                          href={`/dashboard/course-management/create-new-course?id=${course.uuid}`}
                           className="flex w-full items-center"
                         >
                           <PenIcon className="focus:text-primary-foreground mr-2 h-4 w-4" />
@@ -160,7 +270,7 @@ export default function CourseDraftsPage() {
                       </DropdownMenuItem>
                       <DropdownMenuItem>
                         <Link
-                          href={`/dashboard/course-management/preview/${course.id}`}
+                          href={`/dashboard/course-management/preview/${course.uuid}`}
                           className="flex w-full items-center"
                         >
                           <EyeIcon className="focus:text-primary-foreground mr-2 h-4 w-4" />
@@ -168,7 +278,7 @@ export default function CourseDraftsPage() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem variant="destructive">
+                      <DropdownMenuItem variant="destructive" onClick={() => handleDeleteCourse(course.uuid)}>
                         <TrashIcon className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>

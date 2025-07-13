@@ -1,21 +1,11 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+"use client"
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { tanstackClient } from "@/services/api/tanstack-client"
 
 const studentsData = [
   {
@@ -61,15 +51,24 @@ const studentsData = [
 ]
 
 export default function StudentsPage() {
+  const { data, isPending } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/enrollments", {
+    params: {
+      query: {
+        //@ts-ignore
+        page: 0,
+        size: 1,
+      },
+    },
+  })
+  console.log("student enrollment data", data)
+
   return (
     <div className="space-y-6 p-4 md:p-10">
       <h2 className="text-2xl font-bold tracking-tight">Your Students</h2>
       <Card>
         <CardHeader>
           <CardTitle>Enrolled Students</CardTitle>
-          <CardDescription>
-            A list of students currently enrolled in your courses.
-          </CardDescription>
+          <CardDescription>A list of students currently enrolled in your courses.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -86,15 +85,11 @@ export default function StudentsPage() {
                     <div className="flex items-center gap-4">
                       <Avatar>
                         <AvatarImage src={student.avatarUrl} />
-                        <AvatarFallback>
-                          {student.name.charAt(0)}
-                        </AvatarFallback>
+                        <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
                         <p className="font-medium">{student.name}</p>
-                        <p className="text-muted-foreground text-sm">
-                          {student.email}
-                        </p>
+                        <p className="text-muted-foreground text-sm">{student.email}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -104,9 +99,7 @@ export default function StudentsPage() {
                         <div key={index}>
                           <div className="flex justify-between">
                             <p className="font-medium">{course.name}</p>
-                            <p className="text-muted-foreground text-sm">
-                              {course.progress}%
-                            </p>
+                            <p className="text-muted-foreground text-sm">{course.progress}%</p>
                           </div>
                           <Progress value={course.progress} />
                         </div>

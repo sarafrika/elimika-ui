@@ -4,29 +4,15 @@ import { ReactNode, forwardRef, useImperativeHandle, useState } from "react"
 import * as z from "zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormField,
-} from "@/components/ui/form"
+import { Form, FormControl, FormDescription, FormItem, FormLabel, FormMessage, FormField } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { PlusIcon, XIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
+import { tanstackClient } from "@/services/api/tanstack-client"
 
 const courseCreationSchema = z.object({
   name: z.string().min(1, "Course name is required"),
@@ -72,394 +58,373 @@ const FormSection = ({ title, description, children }: FormSectionProps) => (
 
 export type CourseFormProps = {
   showSubmitButton?: boolean
+  initialValues?: Partial<CourseCreationFormValues>
+  courseId?: string
 }
 
 export type CourseFormRef = {
   submit: () => void
 }
 
-export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
-  function CourseCreationForm({ showSubmitButton }: CourseFormProps, ref) {
-    const [categoryInput, setCategoryInput] = useState("")
+export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(function CourseCreationForm(
+  { showSubmitButton, initialValues, courseId },
+  ref,
+) {
+  const [categoryInput, setCategoryInput] = useState("")
 
-    const form = useForm<CourseCreationFormValues>({
-      resolver: zodResolver(courseCreationSchema),
-      defaultValues: {
-        name: "",
-        description: "",
-        is_free: false,
-        objectives: [{ value: "" }],
-        categories: [],
-        class_limit: 30,
-      },
-      mode: "onChange",
-    })
+  const form = useForm<CourseCreationFormValues>({
+    resolver: zodResolver(courseCreationSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      is_free: false,
+      objectives: [{ value: "" }],
+      categories: [],
+      class_limit: 30,
+      ...initialValues,
+    },
+    mode: "onChange",
+  })
 
-    const {
-      fields: objectiveFields,
-      append: appendObjective,
-      remove: removeObjective,
-    } = useFieldArray({
-      control: form.control,
-      name: "objectives",
-    })
+  const {
+    fields: objectiveFields,
+    append: appendObjective,
+    remove: removeObjective,
+  } = useFieldArray({
+    control: form.control,
+    name: "objectives",
+  })
 
-    const {
-      fields: categoryFields,
-      append: appendCategory,
-      remove: removeCategory,
-    } = useFieldArray({
-      control: form.control,
-      name: "categories",
-    })
+  const {
+    fields: categoryFields,
+    append: appendCategory,
+    remove: removeCategory,
+  } = useFieldArray({
+    control: form.control,
+    name: "categories",
+  })
 
-    const onSubmit = (data: CourseCreationFormValues) => {
-      console.log(data)
-      // TODO: Handle form submission
+  const createCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses")
+  // const updateCourseMutation = tanstackClient.useMutation("put", "/api/v1/courses/{courseId}")
+
+  const onSubmit = (data: CourseCreationFormValues) => {
+    console.log("✅ Form submitted data:", data)
+
+    if (courseId) {
+      console.log("editing course")
+      // updateCourseMutation.mutate({ courseId, data })
+    } else {
+      console.log("creating course")
+
+      const { thumbnail, ...otherFields } = data
+      const formData = new FormData()
+
+      // Append non-thumbnail fields
+      Object.entries(otherFields).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          // If backend expects comma-separated values
+          formData.append(key, value.join(","))
+
+          // OR if backend accepts JSON strings:
+          // formData.append(key, JSON.stringify(value))
+        } else if (typeof value === "object" && value !== null) {
+          formData.append(key, JSON.stringify(value))
+        } else if (value !== undefined && value !== null) {
+          // @ts-ignore
+          formData.append(key, value)
+        }
+      })
+
+      // Append thumbnail file (if present)
+      if (thumbnail instanceof File) {
+        formData.append("thumbnail", thumbnail)
+      }
+
+      createCourseMutation.mutate({
+        body: formData as any,
+        params: {
+          query: { course: {} },
+        },
+      })
     }
+  }
 
-    useImperativeHandle(ref, () => ({
-      submit: () => form.handleSubmit(onSubmit)(),
-    }))
+  useImperativeHandle(ref, () => ({
+    submit: () => form.handleSubmit(onSubmit)(),
+  }))
 
-    const isFree = form.watch("is_free")
+  const isFree = form.watch("is_free")
 
-    return (
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Course Name */}
-          <FormSection
-            title="Course Name"
-            description="This will be the name of your course, visible to students and instructors."
-          >
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Course Name */}
+        <FormSection
+          title="Course Name"
+          description="This will be the name of your course, visible to students and instructors."
+        >
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input placeholder="Enter course name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormSection>
+
+        {/* Course Description */}
+        <FormSection title="Course Description" description="A brief description of what this course covers">
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Textarea placeholder="Brief description of your course" className="min-h-[100px]" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormSection>
+
+        {/* Thumbnail */}
+        <FormSection title="Course Thumbnail" description="Upload a cover image for your course">
+          <FormField
+            control={form.control}
+            name="thumbnail"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="flex items-center gap-4">
+                    <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files?.[0])} />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormSection>
+
+        {/* Pricing */}
+        <FormSection title="Course Pricing" description="Set the pricing details for your course">
+          <div className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="is_free"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-row items-start space-x-3">
                   <FormControl>
-                    <Input placeholder="Enter course name" {...field} />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <FormMessage />
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Free Course</FormLabel>
+                    <FormDescription>Make this course available for free</FormDescription>
+                  </div>
                 </FormItem>
               )}
             />
-          </FormSection>
 
-          {/* Course Description */}
-          <FormSection
-            title="Course Description"
-            description="A brief description of what this course covers"
-          >
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Brief description of your course"
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </FormSection>
-
-          {/* Thumbnail */}
-          <FormSection
-            title="Course Thumbnail"
-            description="Upload a cover image for your course"
-          >
-            <FormField
-              control={form.control}
-              name="thumbnail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => field.onChange(e.target.files?.[0])}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </FormSection>
-
-          {/* Pricing */}
-          <FormSection
-            title="Course Pricing"
-            description="Set the pricing details for your course"
-          >
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
-                name="is_free"
+                name="price"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3">
+                  <FormItem>
+                    <FormLabel>Original Price</FormLabel>
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Input type="number" min="0" step="0.01" {...field} disabled={isFree} />
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Free Course</FormLabel>
-                      <FormDescription>
-                        Make this course available for free
-                      </FormDescription>
-                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Original Price</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          {...field}
-                          disabled={isFree}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="sale_price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sale Price</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" step="0.01" {...field} disabled={isFree} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="sale_price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sale Price</FormLabel>
+              <FormField
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Currency</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFree}>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          {...field}
-                          disabled={isFree}
-                        />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <SelectContent>
+                        {Object.values(CURRENCIES).map((currency) => (
+                          <SelectItem key={currency} value={currency}>
+                            {currency}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        </FormSection>
 
-                <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Currency</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isFree}
+        {/* Learning Objectives */}
+        <FormSection title="Learning Objectives" description="List what students will learn from your course">
+          <div className="space-y-4">
+            {objectiveFields.map((field, index) => (
+              <FormField
+                control={form.control}
+                key={field.id}
+                name={`objectives.${index}.value`}
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input placeholder={`Objective ${index + 1}`} {...field} />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => removeObjective(index)}
+                        disabled={objectiveFields.length === 1}
                       >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select currency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.values(CURRENCIES).map((currency) => (
-                            <SelectItem key={currency} value={currency}>
-                              {currency}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-          </FormSection>
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+            <Button
+              className="cursor-pointer"
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendObjective({ value: "" })}
+            >
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Add Objective
+            </Button>
+          </div>
+        </FormSection>
 
-          {/* Learning Objectives */}
-          <FormSection
-            title="Learning Objectives"
-            description="List what students will learn from your course"
-          >
-            <div className="space-y-4">
-              {objectiveFields.map((field, index) => (
-                <FormField
-                  control={form.control}
-                  key={field.id}
-                  name={`objectives.${index}.value`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input
-                            placeholder={`Objective ${index + 1}`}
-                            {...field}
-                          />
-                        </FormControl>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeObjective(index)}
-                          disabled={objectiveFields.length === 1}
-                        >
-                          <XIcon className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-              <Button
-                className="cursor-pointer"
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendObjective({ value: "" })}
-              >
-                <PlusIcon className="mr-2 h-4 w-4" />
-                Add Objective
-              </Button>
-            </div>
-          </FormSection>
-
-          {/* Categories */}
-          <FormSection
-            title="Course Categories"
-            description="Add relevant categories for your course"
-          >
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add a category"
-                  value={categoryInput}
-                  onChange={(e) => setCategoryInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      if (categoryInput.trim()) {
-                        appendCategory({ value: categoryInput.trim() })
-                        setCategoryInput("")
-                      }
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
+        {/* Categories */}
+        <FormSection title="Course Categories" description="Add relevant categories for your course">
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add a category"
+                value={categoryInput}
+                onChange={(e) => setCategoryInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
                     if (categoryInput.trim()) {
                       appendCategory({ value: categoryInput.trim() })
                       setCategoryInput("")
                     }
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {categoryFields.map((field, index) => (
-                  <Badge key={field.id} variant="secondary">
-                    {form.watch(`categories.${index}.value`)}
-                    <button
-                      type="button"
-                      className="ml-2"
-                      onClick={() => removeCategory(index)}
-                    >
-                      <XIcon className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <FormMessage />
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (categoryInput.trim()) {
+                    appendCategory({ value: categoryInput.trim() })
+                    setCategoryInput("")
+                  }
+                }}
+              >
+                Add
+              </Button>
             </div>
-          </FormSection>
 
-          {/* Duration & Level */}
-          <FormSection
-            title="Difficulty Level"
-            description="Set the difficulty level of your course"
-          >
-            <FormField
-              control={form.control}
-              name="difficulty"
-              render={({ field }) => (
-                <FormItem>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl className="w-full">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select difficulty level" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Object.values(DIFFICULTY_LEVELS).map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {level.charAt(0).toUpperCase() + level.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </FormSection>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {categoryFields.map((field, index) => (
+                <Badge key={field.id} variant="secondary">
+                  {form.watch(`categories.${index}.value`)}
+                  <button type="button" className="ml-2" onClick={() => removeCategory(index)}>
+                    <XIcon className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <FormMessage />
+          </div>
+        </FormSection>
 
-          <FormSection
-            title="Class Limit"
-            description="Set the maximum number of students allowed to enroll"
-          >
-            <FormField
-              control={form.control}
-              name="class_limit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="Maximum number of students"
-                      {...field}
-                    />
+        {/* Duration & Level */}
+        <FormSection title="Difficulty Level" description="Set the difficulty level of your course">
+          <FormField
+            control={form.control}
+            name="difficulty"
+            render={({ field }) => (
+              <FormItem>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl className="w-full">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select difficulty level" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </FormSection>
+                  <SelectContent>
+                    {Object.values(DIFFICULTY_LEVELS).map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level.charAt(0).toUpperCase() + level.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormSection>
 
-          {showSubmitButton && (
-            <div className="flex justify-end pt-6">
-              <Button type="submit">Save Course</Button>
-            </div>
-          )}
-        </form>
-      </Form>
-    )
-  },
-)
+        <FormSection title="Class Limit" description="Set the maximum number of students allowed to enroll">
+          <FormField
+            control={form.control}
+            name="class_limit"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input type="number" min="1" placeholder="Maximum number of students" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormSection>
+
+        {showSubmitButton && (
+          <div className="flex justify-end pt-6">
+            <Button type="submit">Save Course</Button>
+          </div>
+        )}
+      </form>
+    </Form>
+  )
+})
 
 export default CourseCreationForm

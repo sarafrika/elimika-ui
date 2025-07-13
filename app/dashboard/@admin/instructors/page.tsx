@@ -1,5 +1,4 @@
 import React from "react"
-import { Instructor } from "@/services/api/schema"
 import { fetchClient } from "@/services/api/fetch-client"
 import InstructorsPage from "./_components/InstructorsPage"
 import ErrorPage from "@/components/ErrorPage"
@@ -19,23 +18,10 @@ export default async function Page() {
 
   if (response.error) {
     console.error(response)
-    return (
-      <ErrorPage
-        message={
-          response.error.message ||
-          "Something went wrong while fetching instructors"
-        }
-      />
-    )
+    return <ErrorPage message={response.error.message || "Something went wrong while fetching instructors"} />
   }
 
   const instructors = response.data?.data?.content
   // Use sample data if API returns no instructors
-  return (
-    <InstructorsPage
-      instructors={
-        instructors && instructors.length > 0 ? instructors : sampleInstructors
-      }
-    />
-  )
+  return <InstructorsPage instructors={instructors && instructors.length > 0 ? instructors : sampleInstructors} />
 }

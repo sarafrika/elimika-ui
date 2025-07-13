@@ -230,6 +230,24 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  "/api/v1/courses/category/{categoryUuid}": {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        courseId: string
+      }
+      cookie?: never
+    }
+    get: operations["getCategory"]
+    put: operations["updateCategory"]
+    post?: never
+    delete: operations["deleteCategory"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   "/api/v1/courses/{courseId}/lessons/{lessonId}": {
     parameters: {
       query?: never
@@ -475,6 +493,38 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  "/api/v1/courses/{uuid}/publish": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getCourse"]
+    put?: never
+    post: operations["createCourse"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/courses/published": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getCourses"]
+    put?: never
+    post: operations["createCourse"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   "/api/v1/courses/{courseId}/lessons": {
     parameters: {
       query?: never
@@ -487,6 +537,22 @@ export interface paths {
     get: operations["getLessons"]
     put?: never
     post: operations["createLesson"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/courses/{courseId}/enrollments": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getAllStudents"]
+    put?: never
+    post: never
     delete?: never
     options?: never
     head?: never
@@ -2003,141 +2069,87 @@ export type ApiResponseUser = components["schemas"]["ApiResponseUser"]
 export type TrainingSessionDto = components["schemas"]["TrainingSessionDTO"]
 export type Student = components["schemas"]["Student"]
 export type ApiResponseRoleDto = components["schemas"]["ApiResponseRoleDTO"]
-export type UpdatePrerequisiteRequestDto =
-  components["schemas"]["UpdatePrerequisiteRequestDTO"]
-export type UpdatePrerequisiteGroupRequestDto =
-  components["schemas"]["UpdatePrerequisiteGroupRequestDTO"]
+export type UpdatePrerequisiteRequestDto = components["schemas"]["UpdatePrerequisiteRequestDTO"]
+export type UpdatePrerequisiteGroupRequestDto = components["schemas"]["UpdatePrerequisiteGroupRequestDTO"]
 export type OrganisationDto = components["schemas"]["OrganisationDTO"]
-export type ApiResponseOrganisationDto =
-  components["schemas"]["ApiResponseOrganisationDTO"]
+export type ApiResponseOrganisationDto = components["schemas"]["ApiResponseOrganisationDTO"]
 export type Instructor = components["schemas"]["Instructor"]
 export type ProfessionalBodyDto = components["schemas"]["ProfessionalBodyDTO"]
-export type TrainingExperienceDto =
-  components["schemas"]["TrainingExperienceDTO"]
+export type TrainingExperienceDto = components["schemas"]["TrainingExperienceDTO"]
 export type UserCertificationDto = components["schemas"]["UserCertificationDTO"]
 export type PricingRequestDto = components["schemas"]["PricingRequestDTO"]
-export type UpdateCourseCategoryRequestDto =
-  components["schemas"]["UpdateCourseCategoryRequestDTO"]
-export type UpdateCourseLearningObjectiveRequestDto =
-  components["schemas"]["UpdateCourseLearningObjectiveRequestDTO"]
-export type UpdateCourseRequestDto =
-  components["schemas"]["UpdateCourseRequestDTO"]
+export type UpdateCourseCategoryRequestDto = components["schemas"]["UpdateCourseCategoryRequestDTO"]
+export type UpdateCourseLearningObjectiveRequestDto = components["schemas"]["UpdateCourseLearningObjectiveRequestDTO"]
+export type UpdateCourseRequestDto = components["schemas"]["UpdateCourseRequestDTO"]
 export type CategoryResponseDto = components["schemas"]["CategoryResponseDTO"]
-export type CourseLearningObjectiveResponseDto =
-  components["schemas"]["CourseLearningObjectiveResponseDTO"]
+export type CourseLearningObjectiveResponseDto = components["schemas"]["CourseLearningObjectiveResponseDTO"]
 export type CourseResponseDto = components["schemas"]["CourseResponseDTO"]
 export type PricingResponseDto = components["schemas"]["PricingResponseDTO"]
-export type ResponseDtoCourseResponseDto =
-  components["schemas"]["ResponseDTOCourseResponseDTO"]
-export type UpdateLessonRequestDto =
-  components["schemas"]["UpdateLessonRequestDTO"]
-export type UpdateCategoryRequestDto =
-  components["schemas"]["UpdateCategoryRequestDTO"]
-export type ResponseDtoCategoryResponseDto =
-  components["schemas"]["ResponseDTOCategoryResponseDTO"]
-export type UpdateAssessmentRequestDto =
-  components["schemas"]["UpdateAssessmentRequestDTO"]
-export type UpdateAnswerOptionRequestDto =
-  components["schemas"]["UpdateAnswerOptionRequestDTO"]
-export type UpdateQuestionRequestDto =
-  components["schemas"]["UpdateQuestionRequestDTO"]
-export type ApiResponseTrainingSessionDto =
-  components["schemas"]["ApiResponseTrainingSessionDTO"]
+export type ResponseDtoCourseResponseDto = components["schemas"]["ResponseDTOCourseResponseDTO"]
+export type UpdateLessonRequestDto = components["schemas"]["UpdateLessonRequestDTO"]
+export type UpdateCategoryRequestDto = components["schemas"]["UpdateCategoryRequestDTO"]
+export type ResponseDtoCategoryResponseDto = components["schemas"]["ResponseDTOCategoryResponseDTO"]
+export type UpdateAssessmentRequestDto = components["schemas"]["UpdateAssessmentRequestDTO"]
+export type UpdateAnswerOptionRequestDto = components["schemas"]["UpdateAnswerOptionRequestDTO"]
+export type UpdateQuestionRequestDto = components["schemas"]["UpdateQuestionRequestDTO"]
+export type ApiResponseTrainingSessionDto = components["schemas"]["ApiResponseTrainingSessionDTO"]
 export type ApiResponseStudent = components["schemas"]["ApiResponseStudent"]
-export type CreatePrerequisiteRequestDto =
-  components["schemas"]["CreatePrerequisiteRequestDTO"]
-export type CreatePrerequisiteGroupRequestDto =
-  components["schemas"]["CreatePrerequisiteGroupRequestDTO"]
-export type CreatePrerequisiteTypeRequestDto =
-  components["schemas"]["CreatePrerequisiteTypeRequestDTO"]
-export type ApiResponseInstructor =
-  components["schemas"]["ApiResponseInstructor"]
-export type CreateCourseLearningObjectiveRequestDto =
-  components["schemas"]["CreateCourseLearningObjectiveRequestDTO"]
-export type CreateCourseRequestDto =
-  components["schemas"]["CreateCourseRequestDTO"]
-export type CreateLessonContentDto =
-  components["schemas"]["CreateLessonContentDTO"]
-export type CreateLessonRequestDto =
-  components["schemas"]["CreateLessonRequestDTO"]
-export type CreateLessonResourceRequestDto =
-  components["schemas"]["CreateLessonResourceRequestDTO"]
-export type LessonContentResponseDto =
-  components["schemas"]["LessonContentResponseDTO"]
-export type LessonResourceResponseDto =
-  components["schemas"]["LessonResourceResponseDTO"]
+export type CreatePrerequisiteRequestDto = components["schemas"]["CreatePrerequisiteRequestDTO"]
+export type CreatePrerequisiteGroupRequestDto = components["schemas"]["CreatePrerequisiteGroupRequestDTO"]
+export type CreatePrerequisiteTypeRequestDto = components["schemas"]["CreatePrerequisiteTypeRequestDTO"]
+export type ApiResponseInstructor = components["schemas"]["ApiResponseInstructor"]
+export type CreateCourseLearningObjectiveRequestDto = components["schemas"]["CreateCourseLearningObjectiveRequestDTO"]
+export type CreateCourseRequestDto = components["schemas"]["CreateCourseRequestDTO"]
+export type CreateLessonContentDto = components["schemas"]["CreateLessonContentDTO"]
+export type CreateLessonRequestDto = components["schemas"]["CreateLessonRequestDTO"]
+export type CreateLessonResourceRequestDto = components["schemas"]["CreateLessonResourceRequestDTO"]
+export type LessonContentResponseDto = components["schemas"]["LessonContentResponseDTO"]
+export type LessonResourceResponseDto = components["schemas"]["LessonResourceResponseDTO"]
 export type LessonResponseDto = components["schemas"]["LessonResponseDTO"]
-export type ResponseDtoLessonResponseDto =
-  components["schemas"]["ResponseDTOLessonResponseDTO"]
-export type CreateCategoryRequestDto =
-  components["schemas"]["CreateCategoryRequestDTO"]
-export type CreateAssessmentRequestDto =
-  components["schemas"]["CreateAssessmentRequestDTO"]
-export type CreateAnswerOptionRequestDto =
-  components["schemas"]["CreateAnswerOptionRequestDTO"]
-export type CreateQuestionRequestDto =
-  components["schemas"]["CreateQuestionRequestDTO"]
+export type ResponseDtoLessonResponseDto = components["schemas"]["ResponseDTOLessonResponseDTO"]
+export type CreateCategoryRequestDto = components["schemas"]["CreateCategoryRequestDTO"]
+export type CreateAssessmentRequestDto = components["schemas"]["CreateAssessmentRequestDTO"]
+export type CreateAnswerOptionRequestDto = components["schemas"]["CreateAnswerOptionRequestDTO"]
+export type CreateQuestionRequestDto = components["schemas"]["CreateQuestionRequestDTO"]
 export type Pageable = components["schemas"]["Pageable"]
-export type ApiResponsePagedDtoUser =
-  components["schemas"]["ApiResponsePagedDTOUser"]
+export type ApiResponsePagedDtoUser = components["schemas"]["ApiResponsePagedDTOUser"]
 export type PageLinks = components["schemas"]["PageLinks"]
 export type PageMetadata = components["schemas"]["PageMetadata"]
 export type PagedDtoUser = components["schemas"]["PagedDTOUser"]
-export type ApiResponsePagedDtoTrainingSessionDto =
-  components["schemas"]["ApiResponsePagedDTOTrainingSessionDTO"]
-export type PagedDtoTrainingSessionDto =
-  components["schemas"]["PagedDTOTrainingSessionDTO"]
+export type ApiResponsePagedDtoTrainingSessionDto = components["schemas"]["ApiResponsePagedDTOTrainingSessionDTO"]
+export type PagedDtoTrainingSessionDto = components["schemas"]["PagedDTOTrainingSessionDTO"]
 export type Page = components["schemas"]["Page"]
 export type PageableObject = components["schemas"]["PageableObject"]
 export type SortObject = components["schemas"]["SortObject"]
-export type ApiResponsePagedDtoStudent =
-  components["schemas"]["ApiResponsePagedDTOStudent"]
+export type ApiResponsePagedDtoStudent = components["schemas"]["ApiResponsePagedDTOStudent"]
 export type PagedDtoStudent = components["schemas"]["PagedDTOStudent"]
-export type ApiResponseListRoleDto =
-  components["schemas"]["ApiResponseListRoleDTO"]
-export type ApiResponsePagedDtoRoleDto =
-  components["schemas"]["ApiResponsePagedDTORoleDTO"]
+export type ApiResponseListRoleDto = components["schemas"]["ApiResponseListRoleDTO"]
+export type ApiResponsePagedDtoRoleDto = components["schemas"]["ApiResponsePagedDTORoleDTO"]
 export type PagedDtoRoleDto = components["schemas"]["PagedDTORoleDTO"]
-export type ApiResponseListPermissionDto =
-  components["schemas"]["ApiResponseListPermissionDTO"]
-export type PrerequisiteRequestDto =
-  components["schemas"]["PrerequisiteRequestDTO"]
-export type PrerequisiteResponseDto =
-  components["schemas"]["PrerequisiteResponseDTO"]
-export type PrerequisiteTypeResponseDto =
-  components["schemas"]["PrerequisiteTypeResponseDTO"]
+export type ApiResponseListPermissionDto = components["schemas"]["ApiResponseListPermissionDTO"]
+export type PrerequisiteRequestDto = components["schemas"]["PrerequisiteRequestDTO"]
+export type PrerequisiteResponseDto = components["schemas"]["PrerequisiteResponseDTO"]
+export type PrerequisiteTypeResponseDto = components["schemas"]["PrerequisiteTypeResponseDTO"]
 export type ResponsePageableDtoPrerequisiteResponseDto =
   components["schemas"]["ResponsePageableDTOPrerequisiteResponseDTO"]
 export type ResponsePageableDtoPrerequisiteTypeResponseDto =
   components["schemas"]["ResponsePageableDTOPrerequisiteTypeResponseDTO"]
-export type ApiResponsePagedDtoOrganisationDto =
-  components["schemas"]["ApiResponsePagedDTOOrganisationDTO"]
-export type PagedDtoOrganisationDto =
-  components["schemas"]["PagedDTOOrganisationDTO"]
-export type ApiResponsePagedDtoInstructor =
-  components["schemas"]["ApiResponsePagedDTOInstructor"]
+export type ApiResponsePagedDtoOrganisationDto = components["schemas"]["ApiResponsePagedDTOOrganisationDTO"]
+export type PagedDtoOrganisationDto = components["schemas"]["PagedDTOOrganisationDTO"]
+export type ApiResponsePagedDtoInstructor = components["schemas"]["ApiResponsePagedDTOInstructor"]
 export type PagedDtoInstructor = components["schemas"]["PagedDTOInstructor"]
 export type CourseRequestDto = components["schemas"]["CourseRequestDTO"]
-export type ResponsePageableDtoCourseResponseDto =
-  components["schemas"]["ResponsePageableDTOCourseResponseDTO"]
-export type ResponsePageableDtoLessonResponseDto =
-  components["schemas"]["ResponsePageableDTOLessonResponseDTO"]
+export type ResponsePageableDtoCourseResponseDto = components["schemas"]["ResponsePageableDTOCourseResponseDTO"]
+export type ResponsePageableDtoLessonResponseDto = components["schemas"]["ResponsePageableDTOLessonResponseDTO"]
 export type CategoryRequestDto = components["schemas"]["CategoryRequestDTO"]
-export type ResponsePageableDtoCategoryResponseDto =
-  components["schemas"]["ResponsePageableDTOCategoryResponseDTO"]
-export type AssessmentResponseDto =
-  components["schemas"]["AssessmentResponseDTO"]
-export type ResponseDtoAssessmentResponseDto =
-  components["schemas"]["ResponseDTOAssessmentResponseDTO"]
-export type AnswerOptionResponseDto =
-  components["schemas"]["AnswerOptionResponseDTO"]
+export type ResponsePageableDtoCategoryResponseDto = components["schemas"]["ResponsePageableDTOCategoryResponseDTO"]
+export type AssessmentResponseDto = components["schemas"]["AssessmentResponseDTO"]
+export type ResponseDtoAssessmentResponseDto = components["schemas"]["ResponseDTOAssessmentResponseDTO"]
+export type AnswerOptionResponseDto = components["schemas"]["AnswerOptionResponseDTO"]
 export type QuestionResponseDto = components["schemas"]["QuestionResponseDTO"]
-export type ResponsePageableDtoQuestionResponseDto =
-  components["schemas"]["ResponsePageableDTOQuestionResponseDTO"]
-export type ResponseDtoQuestionResponseDto =
-  components["schemas"]["ResponseDTOQuestionResponseDTO"]
-export type ResponsePageableDtoAssessmentResponseDto =
-  components["schemas"]["ResponsePageableDTOAssessmentResponseDTO"]
+export type ResponsePageableDtoQuestionResponseDto = components["schemas"]["ResponsePageableDTOQuestionResponseDTO"]
+export type ResponseDtoQuestionResponseDto = components["schemas"]["ResponseDTOQuestionResponseDTO"]
+export type ResponsePageableDtoAssessmentResponseDto = components["schemas"]["ResponsePageableDTOAssessmentResponseDTO"]
 export type ApiResponseVoid = components["schemas"]["ApiResponseVoid"]
 export type $defs = Record<string, never>
 export interface operations {
@@ -3324,7 +3336,7 @@ export interface operations {
       query?: never
       header?: never
       path: {
-        courseId: number
+        courseId: string | number
       }
       cookie?: never
     }
@@ -4933,7 +4945,7 @@ export interface operations {
       }
       header?: never
       path: {
-        courseId: number
+        courseId: string | number
       }
       cookie?: never
     }

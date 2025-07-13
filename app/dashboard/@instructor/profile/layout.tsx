@@ -12,7 +12,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { ReactNode, useEffect, useState } from "react"
-import { ProfileProvider } from "@/context/profile-context"
 import { ChevronsLeft, ChevronsRight } from "lucide-react"
 import clsx from "clsx"
 
@@ -56,9 +55,7 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
           variant="inset"
           className={clsx(
             "z-50 border-r bg-white p-0 transition-all",
-            isMobile
-              ? "fixed inset-y-0 right-0 w-64 pt-16 shadow-lg"
-              : "relative w-64",
+            isMobile ? "fixed inset-y-0 right-0 w-64 pt-16 shadow-lg" : "relative w-64",
           )}
           collapsible="none"
         >
@@ -115,7 +112,7 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
         {/* Makeup for space when profile setting is shown on sidebar */}
         {showSidebar && <div className="mb-4 h-5" />}
 
-        <ProfileProvider>{children}</ProfileProvider>
+        <div>{children}</div>
       </main>
     </div>
   )

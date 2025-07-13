@@ -10,11 +10,9 @@ import {
   FileAudio,
   FileIcon,
   FileText,
-  FileTextIcon,
   FileVideo,
   Grip,
   LinkIcon,
-  Loader,
   MoreVertical,
   PenLine,
   PlusCircle,
@@ -23,7 +21,7 @@ import {
   X,
   Youtube,
 } from "lucide-react"
-import { Dispatch, ReactNode, SetStateAction } from "react"
+import { ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -33,32 +31,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import RichTextEditor from "@/components/richtext-editor"
+import { tanstackClient } from "@/services/api/tanstack-client"
 
 const CONTENT_TYPES = {
   AUDIO: "Audio",
@@ -88,7 +68,9 @@ const lessonFormSchema = z.object({
   resources: z.array(resourceSchema),
 })
 
-type LessonFormValues = z.infer<typeof lessonFormSchema>
+export type LessonFormValues = z.infer<typeof lessonFormSchema>
+
+export type AssessmentFormValues = z.infer<typeof assessmentFormSchema>
 
 type ContentType = keyof typeof CONTENT_TYPES
 
@@ -107,12 +89,36 @@ const getContentTypeIcon = (type: ContentType) => {
   }
 }
 
+export type TLesson = {
+  uuid: string | number
+  course_uuid: string
+  lesson_number: number
+  title: string
+  duration_hours: number
+  duration_minutes: number
+  description: string
+  learning_objectives: string
+  status: "PUBLISHED" | "DRAFT" | string
+  active: boolean
+  created_date: string
+  created_by: string
+  updated_date: string
+  updated_by: string
+  duration_display: string
+  is_published: boolean
+  lesson_sequence: string
+  content?: any[]
+  resources?: any[]
+
+  [key: string]: unknown // ✅ allows any other property
+}
+
 type LessonListProps = {
   courseTitle?: string
-  lessons: any[]
+  lessons: TLesson[]
   onAddLesson: () => void
   onEditLesson: (lesson: any) => void
-  onDeleteLesson: (lessonId: number) => void
+  onDeleteLesson: (lessonId: string) => void
   onReorderLessons: (newLessons: any[]) => void
   onAddAssessment: (lesson: any) => void
   onEditAssessment: () => void
@@ -129,10 +135,9 @@ function LessonList({
   onEditAssessment,
 }: LessonListProps) {
   const getTotalDuration = (lesson: any) => {
-    return lesson.content.reduce(
-      (acc: any, item: any) => acc + item.duration,
-      0,
-    )
+    const hours = lesson.duration_hours || 0
+    const minutes = lesson.duration_minutes || 0
+    return hours * 60 + minutes
   }
 
   return (
@@ -151,9 +156,9 @@ function LessonList({
       </div>
 
       <div className="space-y-3">
-        {lessons.map((lesson, index) => (
+        {lessons?.map((lesson, index) => (
           <div
-            key={lesson?.id || index}
+            key={lesson?.uuid || index}
             className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
           >
             <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100" />
@@ -192,7 +197,11 @@ function LessonList({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-red-600"
-                      onClick={() => lesson.id && onDeleteLesson(lesson.id)}
+                      onClick={() => {
+                        if (lesson.uuid) {
+                          onDeleteLesson(lesson?.uuid as string)
+                        }
+                      }}
                     >
                       <Trash className="mr-2 h-4 w-4" />
                       Delete Lesson
@@ -202,16 +211,16 @@ function LessonList({
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {lesson.content.map((item: any, i: number) => (
-                  <Badge
-                    key={i}
-                    variant="secondary"
-                    className="flex items-center gap-1.5"
-                  >
+                {/* {lesson.content.map((item: any, i: number) => (
+                  <Badge key={i} variant="secondary" className="flex items-center gap-1.5">
                     {getContentTypeIcon(item.contentType as ContentType)}
                     <span>{item.title}</span>
                   </Badge>
-                ))}
+                ))} */}
+                <Badge variant="secondary" className="flex items-center gap-1.5">
+                  {getContentTypeIcon("AUDIO" as ContentType)}
+                  <span>{"xxx content type xxx"}</span>
+                </Badge>
               </div>
 
               <div className="text-muted-foreground flex items-center gap-4 text-sm">
@@ -222,16 +231,14 @@ function LessonList({
                 <div className="flex items-center gap-1.5">
                   <BookOpen className="h-4 w-4" />
                   <span>
-                    {lesson.content.length}{" "}
-                    {lesson.content.length === 1 ? "item" : "items"}
+                    {lesson?.content?.length} {lesson?.content?.length === 1 ? "item" : "items"}
                   </span>
                 </div>
-                {lesson.resources.length > 0 && (
+                {(lesson.resources?.length ?? 0) > 0 && (
                   <div className="flex items-center gap-1.5">
                     <LinkIcon className="h-4 w-4" />
                     <span>
-                      {lesson.resources.length}{" "}
-                      {lesson.resources.length === 1 ? "resource" : "resources"}
+                      {lesson.resources?.length ?? 0} {(lesson.resources?.length ?? 0) === 1 ? "resource" : "resources"}
                     </span>
                   </div>
                 )}
@@ -306,12 +313,7 @@ function getContentPlaceholder(contentType: string) {
   }
 }
 
-function ContentItemForm({
-  control,
-  index,
-  onRemove,
-  isOnly,
-}: ContentItemFormProps) {
+function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormProps) {
   const contentType = useWatch({
     control,
     name: `content.${index}.contentType`,
@@ -343,8 +345,7 @@ function ContentItemForm({
                 </FormControl>
                 <SelectContent>
                   {Object.entries(CONTENT_TYPES).map(([key, value]) => {
-                    const Icon =
-                      ContentTypeIcons[key as keyof typeof ContentTypeIcons]
+                    const Icon = ContentTypeIcons[key as keyof typeof ContentTypeIcons]
                     return (
                       <SelectItem key={key} value={key}>
                         <div className="flex items-center gap-2">
@@ -384,11 +385,9 @@ function ContentItemForm({
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                {/* Rich text implementation here */}
-                <Textarea
-                  placeholder="Enter content"
-                  className="resize-none"
-                  {...field}
+                <RichTextEditor
+                  value={field.value || []} // pass current form value (default empty array)
+                  onChange={field.onChange} // update form value on editor change
                 />
               </FormControl>
               <FormMessage />
@@ -397,9 +396,7 @@ function ContentItemForm({
         />
       ) : (
         <>
-          {(contentType === "VIDEO" ||
-            contentType === "AUDIO" ||
-            contentType === "PDF") && (
+          {(contentType === "VIDEO" || contentType === "AUDIO" || contentType === "PDF") && (
             <FormField
               control={control}
               name={`content.${index}.value`}
@@ -409,17 +406,11 @@ function ContentItemForm({
                   <FormControl>
                     <Input
                       type="file"
-                      accept={
-                        ACCEPTED_FILE_TYPES[
-                          contentType as keyof typeof ACCEPTED_FILE_TYPES
-                        ]
-                      }
+                      accept={ACCEPTED_FILE_TYPES[contentType as keyof typeof ACCEPTED_FILE_TYPES]}
                       onChange={(e) => field.onChange(e.target.files?.[0])}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Upload a file or provide a URL below
-                  </FormDescription>
+                  <FormDescription>Upload a file or provide a URL below</FormDescription>
                 </FormItem>
               )}
             />
@@ -431,18 +422,12 @@ function ContentItemForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {contentType === "VIDEO" ||
-                  contentType === "AUDIO" ||
-                  contentType === "PDF"
+                  {contentType === "VIDEO" || contentType === "AUDIO" || contentType === "PDF"
                     ? "Or External URL"
                     : "URL"}
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    type="url"
-                    placeholder={getContentPlaceholder(contentType)}
-                    {...field}
-                  />
+                  <Input type="url" placeholder={getContentPlaceholder(contentType)} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -471,12 +456,12 @@ function ContentItemForm({
 interface AppLessonCreationFormProps {
   onCancel: () => void
   className?: string
+  courseId?: string | number
+  lessonId?: string | number
+  initialValues?: Partial<LessonFormValues>
 }
 
-function LessonCreationForm({
-  onCancel,
-  className,
-}: AppLessonCreationFormProps) {
+function LessonCreationForm({ onCancel, className, courseId }: AppLessonCreationFormProps) {
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
     defaultValues: {
@@ -505,17 +490,21 @@ function LessonCreationForm({
     name: "resources",
   })
 
+  const createCourseLessonMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseId}/lessons")
+
   const onSubmit = (values: LessonFormValues) => {
-    console.log(values)
-    // TODO: Handle form submission
+    //   // TODO: Handle form submission
+
+    console.log("✅ Form submitted data:", values)
+    console.log("✅ Creating lesson for course id:", courseId)
+
+    // createCourseLessonMutation.mutate({ courseId, values })
+    onCancel()
   }
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className={`space-y-8 ${className}`}
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
         <div className="space-y-4">
           <FormField
             control={form.control}
@@ -538,11 +527,7 @@ function LessonCreationForm({
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea
-                    placeholder="Enter description"
-                    className="resize-none"
-                    {...field}
-                  />
+                  <Textarea placeholder="Enter description" className="resize-none" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -551,10 +536,7 @@ function LessonCreationForm({
         </div>
 
         <div className="space-y-4">
-          <FormSection
-            title="Lesson Content"
-            description="Add multiple content items to your lesson"
-          >
+          <FormSection title="Lesson Content" description="Add multiple content items to your lesson">
             <div className="space-y-4">
               {contentFields.map((field, index) => (
                 <ContentItemForm
@@ -571,9 +553,7 @@ function LessonCreationForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              appendContent({ contentType: "TEXT", title: "", value: "" })
-            }
+            onClick={() => appendContent({ contentType: "TEXT", title: "", value: "" })}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Content Item
@@ -586,12 +566,7 @@ function LessonCreationForm({
             <div key={field.id} className="space-y-4 rounded-lg border p-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Resource {index + 1}</h4>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeResource(index)}
-                >
+                <Button type="button" variant="ghost" size="sm" onClick={() => removeResource(index)}>
                   <X className="h-4 w-4 text-red-500" />
                 </Button>
               </div>
@@ -617,11 +592,7 @@ function LessonCreationForm({
                   <FormItem>
                     <FormLabel>Resource URL</FormLabel>
                     <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="Enter resource URL"
-                        {...field}
-                      />
+                      <Input type="url" placeholder="Enter resource URL" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -630,11 +601,7 @@ function LessonCreationForm({
             </div>
           ))}
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => appendResource({ title: "", url: "" })}
-          >
+          <Button type="button" variant="outline" onClick={() => appendResource({ title: "", url: "" })}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Resource
           </Button>
@@ -651,27 +618,416 @@ function LessonCreationForm({
   )
 }
 
+function LessonEditingForm({ onCancel, className, courseId, initialValues, lessonId }: AppLessonCreationFormProps) {
+  const form = useForm<LessonFormValues>({
+    resolver: zodResolver(lessonFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      content: [{ contentType: "TEXT", title: "" }],
+      resources: [],
+      ...initialValues,
+    },
+  })
+
+  const {
+    fields: contentFields,
+    append: appendContent,
+    remove: removeContent,
+  } = useFieldArray({
+    control: form.control,
+    name: "content",
+  })
+
+  const {
+    fields: resourceFields,
+    append: appendResource,
+    remove: removeResource,
+  } = useFieldArray({
+    control: form.control,
+    name: "resources",
+  })
+
+  const updateCourseLessonMutation = tanstackClient.useMutation("put", "/api/v1/courses/{courseId}/lessons/{lessonId}")
+
+  const onSubmit = (values: LessonFormValues) => {
+    //   // TODO: Handle form submission
+
+    console.log("✅ Form submitted data:", values)
+    console.log("✅ updating lesson for course id:", courseId)
+    console.log("✅ updating lesson with id:", lessonId)
+
+    // updateCourseLessonMutation.mutate({ courseId, values })
+    onCancel()
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lesson Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter lesson title" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Enter description" className="resize-none" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <FormSection title="Lesson Content" description="Add multiple content items to your lesson">
+            <div className="space-y-4">
+              {contentFields.map((field, index) => (
+                <ContentItemForm
+                  key={field.id}
+                  control={form.control}
+                  index={index}
+                  onRemove={() => removeContent(index)}
+                  isOnly={contentFields.length === 1}
+                />
+              ))}
+            </div>
+          </FormSection>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => appendContent({ contentType: "TEXT", title: "", value: "" })}
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Content Item
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Resources</h3>
+          {resourceFields.map((field, index) => (
+            <div key={field.id} className="space-y-4 rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Resource {index + 1}</h4>
+                <Button type="button" variant="ghost" size="sm" onClick={() => removeResource(index)}>
+                  <X className="h-4 w-4 text-red-500" />
+                </Button>
+              </div>
+
+              <FormField
+                control={form.control}
+                name={`resources.${index}.title`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Resource Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter resource title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name={`resources.${index}.url`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Resource URL</FormLabel>
+                    <FormControl>
+                      <Input type="url" placeholder="Enter resource URL" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          ))}
+
+          <Button type="button" variant="outline" onClick={() => appendResource({ title: "", url: "" })}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Resource
+          </Button>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-6">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">Edit Lesson</Button>
+        </div>
+      </form>
+    </Form>
+  )
+}
+
+interface AssessmentCreationFormProps {
+  courseId: string | number
+  onCancel: () => void
+  className?: string
+}
+
+// defaultValues: {
+//   title: "",
+//   description: "",
+//   questions: [{ prompt: "", options: [{ text: "", isCorrect: false }] }],
+//   resources: [],
+// }
+
+const assessmentFormSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  questions: z.array(
+    z.object({
+      prompt: z.string().min(1),
+      options: z
+        .array(
+          z.object({
+            text: z.string().min(1),
+            isCorrect: z.boolean().optional(),
+          }),
+        )
+        .optional(),
+    }),
+  ),
+  resources: z.array(
+    z.object({
+      title: z.string().optional(),
+      url: z.string().url().optional(),
+    }),
+  ),
+})
+
+function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCreationFormProps) {
+  const form = useForm<AssessmentFormValues>({
+    resolver: zodResolver(assessmentFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      questions: [{ prompt: "" }],
+      resources: [],
+    },
+  })
+
+  const {
+    fields: questionFields,
+    append: appendQuestion,
+    remove: removeQuestion,
+  } = useFieldArray({
+    control: form.control,
+    name: "questions",
+  })
+
+  const {
+    fields: resourceFields,
+    append: appendResource,
+    remove: removeResource,
+  } = useFieldArray({
+    control: form.control,
+    name: "resources",
+  })
+
+  // const createAssessmentMutation = tanstackClient.useMutation(
+  //   "post",
+  //   "/api/v1/courses/{courseId}/assessments"
+  // )
+
+  const onSubmit = async (values: AssessmentFormValues) => {
+    console.log("✅ Assessment created:", values)
+    console.log("✅ Assessment created for courseID:", courseId)
+
+    onCancel()
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assessment Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter assessment title" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Optional description" className="resize-none" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <FormSection title="Questions" description="Add one or more questions to this assessment">
+            {questionFields.map((field, index) => (
+              <div key={field.id} className="flex items-center gap-2">
+                <FormField
+                  control={form.control}
+                  name={`questions.${index}.prompt`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Question {index + 1}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter question prompt" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeQuestion(index)}
+                  disabled={questionFields.length === 1}
+                >
+                  <X className="h-4 w-4 text-red-600" />
+                </Button>
+              </div>
+            ))}
+
+            <Button type="button" variant="outline" onClick={() => appendQuestion({ prompt: "" })}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Question
+            </Button>
+          </FormSection>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Resources</h3>
+
+          {resourceFields.map((field, index) => (
+            <div key={field.id} className="space-y-4 rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Resource {index + 1}</h4>
+                <Button type="button" variant="ghost" size="sm" onClick={() => removeResource(index)}>
+                  <X className="h-4 w-4 text-red-500" />
+                </Button>
+              </div>
+
+              <FormField
+                control={form.control}
+                name={`resources.${index}.title`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Resource Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter resource title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name={`resources.${index}.url`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Resource URL</FormLabel>
+                    <FormControl>
+                      <Input type="url" placeholder="https://..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          ))}
+
+          <Button type="button" variant="outline" onClick={() => appendResource({ title: "", url: "" })}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Resource
+          </Button>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-6">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">Create Assessment</Button>
+        </div>
+      </form>
+    </Form>
+  )
+}
+
 interface AppLessonDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  courseId: string | number
+  lessonId?: string | number
+  initialValues?: Partial<LessonFormValues>
 }
 
-function LessonDialog({ isOpen, onOpenChange }: AppLessonDialogProps) {
+function LessonDialog({ isOpen, onOpenChange, courseId }: AppLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-w-6xl flex-col p-0">
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle className="text-xl">Create New Lesson</DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm">
-            Fill in the lesson details below. You&apos;ll be able to add a quiz
-            after you&apos;ve created the lesson.
+            Fill in the lesson details below. You&apos;ll be able to add a quiz after you&apos;ve created the lesson.
           </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="h-[calc(90vh-8rem)]">
-          <LessonCreationForm
+          <LessonCreationForm onCancel={() => onOpenChange(false)} className="px-6 pb-6" courseId={courseId} />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function EditLessonDialog({ isOpen, onOpenChange, courseId, initialValues, lessonId }: AppLessonDialogProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-w-6xl flex-col p-0">
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle className="text-xl">Edit Lesson</DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm">
+            Fill in the lesson details below.
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className="h-[calc(90vh-8rem)]">
+          <LessonEditingForm
             onCancel={() => onOpenChange(false)}
             className="px-6 pb-6"
+            courseId={courseId}
+            lessonId={lessonId}
+            initialValues={initialValues}
           />
         </ScrollArea>
       </DialogContent>
@@ -679,4 +1035,23 @@ function LessonDialog({ isOpen, onOpenChange }: AppLessonDialogProps) {
   )
 }
 
-export { LessonDialog, LessonList }
+function AssessmentDialog({ isOpen, onOpenChange, courseId, initialValues, lessonId }: AppLessonDialogProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-w-6xl flex-col p-0">
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle className="text-xl">Add Assessment</DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm">
+            Create a new assessment by providing its title, description, questions, and any helpful resources.
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className="min-h-auto">
+          <AssessmentCreationForm onCancel={() => onOpenChange(false)} className="px-6 pb-6" courseId={courseId} />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export { LessonDialog, EditLessonDialog, AssessmentDialog, LessonList }

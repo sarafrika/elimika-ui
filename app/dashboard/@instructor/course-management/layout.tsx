@@ -14,31 +14,23 @@ interface CourseManagementLayoutProps {
 const sidebarNavItems = [
   {
     title: "Drafts",
-    // href: "/dashboard/instructor/course-management/drafts",
     href: "/dashboard/course-management/drafts",
   },
   {
     title: "Published",
-    // href: "/dashboard/instructor/course-management/published",
     href: "/dashboard/course-management/published",
   },
 ]
 
-export default function CourseManagementLayout({
-  children,
-}: CourseManagementLayoutProps) {
+export default function CourseManagementLayout({ children }: CourseManagementLayoutProps) {
   const pathname = usePathname()
 
   return (
     <div className="space-y-6 p-4 pb-16 md:p-10">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            Course Management
-          </h2>
-          <p className="text-muted-foreground">
-            Manage your course drafts and published courses.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">Course Management</h2>
+          <p className="text-muted-foreground">Manage your course drafts and published courses.</p>
         </div>
       </div>
       <Separator />
@@ -51,9 +43,7 @@ export default function CourseManagementLayout({
                 href={item.href}
                 className={cn(
                   buttonVariants({ variant: "ghost" }),
-                  pathname === item.href
-                    ? "bg-muted hover:bg-muted"
-                    : "hover:bg-transparent hover:underline",
+                  pathname === item.href ? "bg-muted hover:bg-muted" : "hover:bg-transparent hover:underline",
                   "justify-start",
                 )}
               >
