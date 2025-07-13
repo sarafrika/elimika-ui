@@ -57,14 +57,13 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
 
       <main className="flex-1 overflow-auto px-6 py-3">
 
-        <Tabs defaultValue="General">
-          <TabsList>
-            {sections.map(sec => <TabsTrigger key={sec.name} value={sec.name}>{sec.name}</TabsTrigger>)}
-          </TabsList>
-          <TabsContent value="General">
-            <ProfileProvider>{children}</ProfileProvider>
-          </TabsContent>
-        </Tabs>
+        <ul className="flex gap-5">
+          {sections.map(sec => <Link key={sec.name} href={sec.href}>{sec.name}</Link>)}
+        </ul>
+        
+        <ProfileProvider>
+          {children}
+        </ProfileProvider>
 
       </main>
     </div>

@@ -53,3 +53,12 @@ export const profilePicSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDov
 //   decrypted += decipher.final("utf8")
 //   return decrypted
 // }
+
+export async function fileToBinaryString(file: File) {
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+
+  return Array.from(bytes)
+    .map((b) => String.fromCharCode(b))
+    .join("");
+}

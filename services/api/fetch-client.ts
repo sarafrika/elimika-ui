@@ -1,6 +1,8 @@
 import createClient, { Middleware } from "openapi-fetch"
 import { paths } from "./schema"
 import { getAuthToken } from "@/services/auth/get-token"
+import { api, createApiClient } from "./zod-client"
+import { pluginToken } from "@zodios/plugins"
 
 const authMiddleware: Middleware = {
   async onRequest({ request }) {
@@ -20,7 +22,12 @@ const authMiddleware: Middleware = {
     return request
   },
 }
+
 export const fetchClient = createClient<paths>({
   baseUrl: "https://api.elimika.sarafrika.com",
-})
+});
+
 fetchClient.use(authMiddleware)
+
+export const zodClient = createApiClient("https://api.elimika.sarafrika.com");
+zodClient.use(pluginToken({ getToken: getAuthToken }))

@@ -19,9 +19,7 @@ export default function ImageSelector({
     async function handProfilePicChange(evt: SyntheticEvent<HTMLInputElement>) {
         const files = evt.currentTarget.files as FileList | null;
         if (files && files.length > 0) {
-            const fileReader = new FileReader();
-            fileReader.onload = evt => onSelect({ file: files[0], url: evt.target?.result as string })
-            fileReader.readAsDataURL(files[0] as File);
+            onSelect({file: files[0], url: URL.createObjectURL(files[0] as Blob)});
         }
     }
 
