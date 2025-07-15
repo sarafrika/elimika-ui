@@ -9,6 +9,7 @@ type UserType = z.infer<typeof schemas.User>
 
 export default async function StudentProfileGeneralPage() {
   const session = await auth();
+  console.log(session?.user)
   const searchResult = await search("/api/v1/users/search", { email_eq: session!.user.email! }) as UserType[];
   const user = searchResult[0] as UserType;
 

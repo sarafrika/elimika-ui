@@ -46,6 +46,7 @@ import ImageSelector, { ImageType } from "@/components/image-selector"
 import Spinner from "@/components/ui/spinner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useSession } from "next-auth/react"
+import useMultiMutations from "@/hooks/use-multi-mutations"
 
 const StudentProfileSchema = z.object({
     user: schemas.User.merge(z.object({
@@ -99,45 +100,11 @@ export default function StudentProfileGeneralForm({
     const userMutation = tanstackClient.useMutation("put", "/api/v1/users/{uuid}");
     const updateStudentMutation = tanstackClient.useMutation("put", "/api/v1/students/{uuid}");
     const profilePicUpload = tanstackClient.useMutation("put", "/api/v1/users/{uuid}/profile-image");
-
-    /** Progress and error handling state */
-    const [isSubmitting, setSubmitting] = useState<boolean>(false);
-    const [errors, setErrors] = useState<any[]>();
-    useEffect(() => {
-        setSubmitting(userMutation.isPending || updateStudentMutation.isPending || profilePicUpload.isPending);
-        if (userMutation.status === "error" || updateStudentMutation.status === "error" || profilePicUpload.status === "error") {
-            let respErrors = []
-            if (userMutation.error) respErrors.push(userMutation.error)
-            if (updateStudentMutation.error) respErrors.push(updateStudentMutation.error)
-            if (profilePicUpload.error) respErrors.push(profilePicUpload.error)
-            console.log(respErrors)
-            if (respErrors.length > 0) setErrors(respErrors)
-        }
-        if (profilePicUpload.status === "success") {
-            fetch(profilePicUpload.data?.data!.profile_image_url!, {
-                headers:{
-                    Authorization: `Bearer ${session.data!.user.accessToken}`
-                }
-            })
-            .then(resp=>resp.blob())
-            .then(imgBlob => console.log("imgUrl", URL.createObjectURL(imgBlob)))
-            .catch(console.log)
-            /* console.log(userMutation.data?.data!.profile_image_url);
-            StudentProfileSchema.safeParse({ 
-                user: { 
-                    ...user,
-                    dob: new Date(user.dob ?? ""),
-                    profile_image_url: profilePicUpload.data?.data!.profile_image_url 
-                } 
-            }) */
-        }
-    }, [
-        userMutation.status, updateStudentMutation.status, profilePicUpload.status,
-        userMutation.isPending, updateStudentMutation.isPending, profilePicUpload.isPending
-    ]);
+    const {errors, submitting, resetErrors} = useMultiMutations([ userMutation, updateStudentMutation, profilePicUpload ]);
 
     async function onSubmit(data: StudentProfileType) {
-        setErrors([])
+
+        resetErrors([])
 
         /** Upload profile picture */
         if (profilePic.file) {
@@ -197,7 +164,7 @@ export default function StudentProfileGeneralForm({
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    {errors && errors.length && <Alert variant={"destructive"} className="text-red-600">
+                    {errors && errors.length > 0 && <Alert variant={"destructive"} className="text-red-600">
                         <AlertCircleIcon />
                         <AlertTitle>Error processing form</AlertTitle>
                         <AlertDescription className="text-red-600">
@@ -463,8 +430,8 @@ export default function StudentProfileGeneralForm({
                     </Card>
 
                     <div className="flex justify-end pt-2">
-                        <Button type="submit" className="px-6" disabled={isSubmitting}>
-                            {isSubmitting ? <><Spinner /> Saving Changes</> : "Save Changes"}
+                        <Button type="submit" className="px-6" disabled={submitting}>
+                            {submitting ? <><Spinner /> Saving Changes</> : "Save Changes"}
                         </Button>
                     </div>
                 </form>
