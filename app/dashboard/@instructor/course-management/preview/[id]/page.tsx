@@ -3,9 +3,11 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { tanstackClient } from "@/services/api/tanstack-client"
 import { CheckCircle, Clock, Users, Video } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
+import { toast } from "sonner"
 
 // const course = {
 //   name: "Introduction to Web Development",
@@ -136,21 +138,28 @@ export default function CoursePreviewPage() {
   const params = useParams()
   const courseId = params?.id
 
-  // const { data: courseDetail } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
-  //   params: {
-  //     path: {
-  //       courseId: courseId,
-  //     },
-  //   },
-  //   onSuccess: (data: any) => {
-  //     if (data.success) {
-  //       toast.success("Course details fetched successfully")
-  //     } else {
-  //       toast.error(data.message || "Failed to fetch course details")
-  //     }
-  //   },
-  // })
-  // const course = data?.data
+  const { data: courseDetail } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
+    params: { path: { courseId: courseId as string } },
+    onSuccess: (data: any) => {
+      if (data.success) {
+        toast.success("Course details fetched successfully")
+      } else {
+        toast.error(data.message || "Failed to fetch course details")
+      }
+    },
+  })
+  const course = courseDetail?.data
+
+  const { data: instructorDetail } = tanstackClient.useQuery("get", "/api/v1/instructors/{uuid}", {
+    // @ts-ignore
+    params: { path: { uuid: course?.instructor_uuid as string } },
+  })
+
+  const { data: category } = tanstackClient.useQuery("get", "/api/v1/config/categories/{uuid}", {
+    // @ts-ignore
+    params: { path: { uuid: course?.category_uuid as string } },
+  })
+  console.log(category, "data")
 
   //   const { data: courseLessons } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/lessons", {
   //   params: {
@@ -177,14 +186,13 @@ export default function CoursePreviewPage() {
   //   },
 
   // })
-  const course = data?.data
   const lessons = courseLesson?.data
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4">
       <div className="space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">{course.name}</h1>
-        <p className="text-muted-foreground text-lg">{course.description}</p>
+        <h1 className="text-4xl font-bold tracking-tight">{course?.name}</h1>
+        <p className="text-muted-foreground text-lg">{course?.description}</p>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">Categories:</span>
           {/* {course.categories.map((category, i) => (
@@ -192,7 +200,8 @@ export default function CoursePreviewPage() {
               {category.name}
             </Badge>
           ))} */}
-          <Badge variant="outline">xxxxxx</Badge>
+          {/* @ts-ignore */}
+          <Badge variant="outline">{category?.data?.name}</Badge>
         </div>
       </div>
 
@@ -203,14 +212,14 @@ export default function CoursePreviewPage() {
               <CardTitle>What You&apos;ll Learn</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {/* {course.whatYouWillLearn.map((item, i) => (
-                  <li key={i} className="flex items-start">
-                    <CheckCircle className="mt-1 mr-2 h-4 w-4 text-green-500" />
-                    <span>{item}</span>
-                  </li>
-                ))} */}
-                <span>xxxx xxxx xxxx xxxxx</span>
+              <ul className="grid grid-cols-1">
+                <li className="flex items-start gap-2">
+                  <span className="min-h-4 min-w-4">
+                    <CheckCircle className="mt-[2px] h-4 w-4 text-green-500" />
+                  </span>
+                  {/* @ts-ignore */}
+                  <span>{course?.objectives}</span>
+                </li>
               </ul>
             </CardContent>
           </Card>
@@ -245,23 +254,25 @@ export default function CoursePreviewPage() {
           <Card>
             <CardHeader>
               <CardTitle>Course Details</CardTitle>
-              {/* <CardDescription>by {course.instructor.name}</CardDescription> */}
-              <CardDescription>by Instructor name here</CardDescription>
+              {/* @ts-ignore */}
+              <CardDescription>by {instructorDetail?.data?.full_name}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center">
                 <Users className="mr-2 h-5 w-5" />
-                <span>{course.class_limit === 0 ? "Unlimited" : `Up to ${course.class_limit} students`}</span>
+                {/* @ts-ignore */}
+                <span>{course?.classLimit === 0 ? "Unlimited" : `Up to ${course?.class_limit} students`}</span>
               </div>
               <div className="flex items-center">
                 <Clock className="mr-2 h-5 w-5" />
+                {/* @ts-ignore */}
                 <span>Approx. {course?.total_duration_display} to complete</span>
               </div>
               <Button size="lg" className="w-full">
                 Enroll Now
               </Button>
               <Button size="lg" variant="outline" className="w-full" asChild>
-                <Link href="/dashboard/course-management/create-new-course">Edit Course</Link>
+                <Link href={`/dashboard/course-management/create-new-course?id=${courseId}`}>Edit Course</Link>
               </Button>
             </CardContent>
           </Card>

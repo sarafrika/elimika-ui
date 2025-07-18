@@ -1,336 +1,226 @@
 "use client"
 
-import { BookOpen, Check, List, Loader } from "lucide-react"
-import { StepperContent, StepperList, StepperRoot, StepperTrigger } from "@/components/ui/stepper"
 import {
-  CourseCreationForm,
-  CourseFormRef,
-} from "@/app/dashboard/@instructor/course-management/create-new-course/_components/course-creation-form"
-import {
+  TLesson,
+  LessonList,
+  LessonDialog,
   AssessmentDialog,
   EditLessonDialog,
-  LessonDialog,
   LessonFormValues,
-  LessonList,
-} from "@/app/dashboard/@instructor/course-management/create-new-course/_components/lesson-management-form"
-import { useRef, useState } from "react"
-import { useSearchParams } from "next/navigation"
-import { tanstackClient } from "@/services/api/tanstack-client"
-import { deserialize } from "@/hooks/serializeRichText"
-import { Button } from "@/components/ui/button"
+} from "@/app/dashboard/@instructor/_components/lesson-management-form"
+import { toast } from "sonner"
 import Spinner from "@/components/ui/spinner"
-
-const sampleCourseData = {
-  success: true,
-  data: {
-    uuid: "c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl",
-    name: "Advanced Java Programming",
-    instructor_uuid: "i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl",
-    category_uuid: "c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl",
-    difficulty_uuid: "d1i2f3f4-5i6c-7u8l-9t10-abcdefghijkl",
-    description: "Comprehensive course covering advanced Java concepts and enterprise development",
-
-    // update these 4 data format in course details
-    objectives: [
-      { objective: "Master advanced Java features, design patterns, and enterprise frameworks" },
-      { objective: "Objectives 2" },
-    ],
-    categories: [{ name: "Programming" }],
-    difficulty_level: "Intermediate",
-    currency: "KES",
-
-    prerequisites: "Basic Java knowledge and OOP concepts",
-    duration_hours: 40,
-    duration_minutes: 30,
-    class_limit: 25,
-    price: 299.99,
-    age_lower_limit: 18,
-    age_upper_limit: 65,
-    thumbnail_url: "https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg",
-    intro_video_url: "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
-    banner_url: "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
-    status: "PUBLISHED",
-    active: true,
-    created_date: "2024-04-01T12:00:00",
-    created_by: "instructor@sarafrika.com",
-    updated_date: "2024-04-15T15:30:00",
-    updated_by: "instructor@sarafrika.com",
-    total_duration_display: "40 hours 30 minutes",
-    is_free: false,
-    is_published: true,
-    is_draft: false,
-  },
-  message: "string",
-  error: {},
-}
-
-const sampleCourseLessons = {
-  success: true,
-  data: {
-    content: [
-      {
-        uuid: "de305d54-75b4-431b-adb2-eb6b9e546014",
-        course_uuid: "5a1b6fa1-8592-4a89-b71e-3ac1150c573d",
-        lesson_number: 3,
-        title: "Object-Oriented Programming Fundamentals",
-        duration_hours: 2,
-        duration_minutes: 30,
-        description: "Introduction to OOP concepts including classes, objects, inheritance, and polymorphism",
-        learning_objectives: "Understand OOP principles, implement classes and objects, apply inheritance concepts",
-        status: "PUBLISHED",
-        active: true,
-        created_date: "2024-04-01T12:00:00",
-        created_by: "instructor@sarafrika.com",
-        updated_date: "2024-04-15T15:30:00",
-        updated_by: "instructor@sarafrika.com",
-        duration_display: "2 hours 30 minutes",
-        is_published: true,
-        lesson_sequence: "Lesson 3",
-      },
-      {
-        uuid: "de305d54-75b4-431b-adb2-eb6b9e546204",
-        course_uuid: "5a1b6fa1-8592-4a89-b71e-3ac1120c573d",
-        lesson_number: 3,
-        title: "Object-Oriented Programming Fundamentals II",
-        duration_hours: 2,
-        duration_minutes: 30,
-        description: "Introduction to OOP concepts including classes, objects, inheritance, and polymorphism",
-        learning_objectives: "Understand OOP principles, implement classes and objects, apply inheritance concepts",
-        status: "PUBLISHED",
-        active: true,
-        created_date: "2024-04-01T12:00:00",
-        created_by: "instructor@sarafrika.com",
-        updated_date: "2024-04-15T15:30:00",
-        updated_by: "instructor@sarafrika.com",
-        duration_display: "4 hours 30 minutes",
-        is_published: true,
-        lesson_sequence: "Lesson 4",
-      },
-    ],
-    metadata: {
-      pageNumber: 1073741824,
-      pageSize: 1073741824,
-      totalElements: 9007199254740991,
-      totalPages: 1073741824,
-      hasNext: true,
-      hasPrevious: true,
-      first: true,
-      last: true,
-    },
-    links: {
-      first: "string",
-      previous: "string",
-      self: "string",
-      next: "string",
-      last: "string",
-    },
-  },
-  message: "string",
-  error: {},
-}
-
-const sampleCourseLesson = {
-  success: true,
-  data: {
-    uuid: "de305d54-75b4-431b-adb2-eb6b9e546014",
-    course_uuid: "5a1b6fa1-8592-4a89-b71e-3ac1150c573d",
-    lesson_number: 3,
-    title: "Object-Oriented Programming Fundamentals",
-    duration_hours: 2,
-    duration_minutes: 30,
-    description: "Introduction to OOP concepts including classes, objects, inheritance, and polymorphism",
-    learning_objectives: "Understand OOP principles, implement classes and objects, apply inheritance concepts",
-    status: "PUBLISHED",
-    active: true,
-    created_date: "2024-04-01T12:00:00",
-    created_by: "instructor@sarafrika.com",
-    updated_date: "2024-04-15T15:30:00",
-    updated_by: "instructor@sarafrika.com",
-    duration_display: "2 hours 30 minutes",
-    is_published: true,
-    lesson_sequence: "Lesson 3",
-  },
-  message: "string",
-  error: {},
-}
-
-const sampleLessonContent = {
-  success: true,
-  data: [
-    {
-      uuid: "l1c2o3n4-5t6e-7n8t-9i10-abcdefghijkl",
-      lesson_uuid: "l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl",
-      content_type_uuid: "c1o2n3t4-5e6n-7t8t-9y10-abcdefghijkl",
-
-      // needed fields
-      content_type: "AUDIO",
-
-      title: "Introduction to Classes and Objects",
-      description: "Comprehensive video explanation of OOP fundamentals with examples",
-      content_text: null,
-      file_url: "https://cdn.sarafrika.com/lessons/oop-intro.mp4",
-      file_size_bytes: 157286400,
-      mime_type: "video/mp4",
-      display_order: 1,
-      is_required: true,
-      created_date: "2024-04-01T12:00:00",
-      created_by: "instructor@sarafrika.com",
-      updated_date: "2024-04-15T15:30:00",
-      updated_by: "instructor@sarafrika.com",
-      file_size_display: "150 MB",
-      content_category: "Video Content",
-      is_downloadable: true,
-      estimated_duration: "15 minutes",
-    },
-    {
-      uuid: "l1c2o3n4-5t6e-7n8t-9i10-abcdefgsdjkl",
-      lesson_uuid: "l1e2s3s4-5o6n-7d8a-9t10-absdfefghijkl",
-      content_type_uuid: "c1o2n3t4-5e6n-7t8t-9y10-abcdefghijkl",
-
-      // needed fields
-      content_type: "VIDEO",
-
-      title: "Introduction to Classes and Objects",
-      description: "Comprehensive video explanation of OOP fundamentals with examples",
-      content_text: null,
-      file_url: "https://cdn.sarafrika.com/lessons/oop-intro.mp4",
-      file_size_bytes: 157286400,
-      mime_type: "video/mp4",
-      display_order: 1,
-      is_required: true,
-      created_date: "2024-04-01T12:00:00",
-      created_by: "instructor@sarafrika.com",
-      updated_date: "2024-04-15T15:30:00",
-      updated_by: "instructor@sarafrika.com",
-      file_size_display: "150 MB",
-      content_category: "Video Content",
-      is_downloadable: true,
-      estimated_duration: "15 minutes",
-    },
-    {
-      uuid: "l1c2o3n4-5t6e-7n8t-9i10-abcdefgsdjkl",
-      lesson_uuid: "l1e2s3s4-5o6n-7d8a-9t10-absdfefghijkl",
-      content_type_uuid: "c1o2n3t4-5e6n-7t8t-9y10-abcdefghijkl",
-
-      // needed fields
-      content_type: "TEXT",
-
-      title: "Introduction to Classes and Objects",
-      description: "Comprehensive video explanation of OOP fundamentals with examples",
-      content_text:
-        "<p>These are the texts that are being sent in the text editor</p><p>Updating the text here to be sure this is working fine</p>",
-      file_url: "https://cdn.sarafrika.com/lessons/oop-intro.mp4",
-      file_size_bytes: 157286400,
-      mime_type: "video/mp4",
-      display_order: 1,
-      is_required: true,
-      created_date: "2024-04-01T12:00:00",
-      created_by: "instructor@sarafrika.com",
-      updated_date: "2024-04-15T15:30:00",
-      updated_by: "instructor@sarafrika.com",
-      file_size_display: "150 MB",
-      content_category: "Video Content",
-      is_downloadable: true,
-      estimated_duration: "15 minutes",
-    },
-  ],
-  message: "string",
-  error: {},
-}
+import { Button } from "@/components/ui/button"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useRef, useState } from "react"
+import { deserialize } from "@/hooks/serializeRichText"
+import { BookOpen, Check, List, Loader } from "lucide-react"
+import { tanstackClient } from "@/services/api/tanstack-client"
+import { StepperContent, StepperList, StepperRoot, StepperTrigger } from "@/components/ui/stepper"
+import { CourseCreationForm, CourseFormRef } from "@/app/dashboard/@instructor/_components/course-creation-form"
 
 export default function CourseCreationPage() {
   const searchParams = useSearchParams()
   const courseId = searchParams.get("id")
-
-  console.log("courseID>>>", courseId)
-  const newCourseId = "3f4a8d52-9e8f-4aaf-a2db-cf58b75b5b12"
+  const [createdCourseId, setCreatedCourseId] = useState<string | null>(null)
 
   const formRef = useRef<CourseFormRef>(null)
 
   const [addLessonModalOpen, setAddLessonModalOpen] = useState(false)
   const openAddLessonModal = () => setAddLessonModalOpen(true)
 
+  const [selectedLesson, setSelectedLesson] = useState<TLesson | null>(null)
   const [editLessonModalOpen, setEditLessonModalOpen] = useState(false)
-  const openEditLessonModal = () => setEditLessonModalOpen(true)
+  const openEditLessonModal = (lesson: TLesson) => {
+    setSelectedLesson(lesson)
+    setEditLessonModalOpen(true)
+  }
 
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false)
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true)
 
-  const { data: courseDetail } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
-    params: {
-      path: {
-        courseId: courseId ? (courseId as string) : (newCourseId as string),
+  // get course by ID
+  const { data: courseData, refetch: refetchCourse } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
+    params: { path: { courseId: courseId ? (courseId as string) : (createdCourseId as string) } },
+  })
+  const course = courseData?.data
+
+  const [courseInitialValues, setCourseInitialValues] = useState<any>(undefined)
+
+  useEffect(() => {
+    if (!courseId || !course) return
+
+    setCourseInitialValues({
+      name: course?.name,
+      description: course?.description,
+      //@ts-ignore
+      instructor: course?.instructor_uuid,
+      //@ts-ignore
+      is_free: course?.is_free,
+      //@ts-ignore
+      price: course?.price,
+      //@ts-ignore
+      sale_price: course?.price,
+      currency: "KES",
+      //@ts-ignore
+      objectives: course?.objectives,
+      //@ts-ignore
+      categories: course?.category_uuid || [],
+      //@ts-ignore
+      difficulty: course?.difficulty_uuid ?? "",
+      class_limit: course?.classLimit ?? 30,
+      prerequisites: null,
+      //@ts-ignore
+      duration_hours: course?.duration_hours,
+      //@ts-ignore
+      duration_minutes: course?.duration_minutes,
+      //@ts-ignore
+      class_limit: course?.class_limit,
+      //@ts-ignore
+      age_lower_limit: course?.age_lower_limit,
+      //@ts-ignore
+      age_upper_limit: course?.age_upper_limit,
+      //@ts-ignore
+      thumbnail_url: course?.thumbnail_url,
+      //@ts-ignore
+      intro_video_url: course?.intro_video_url,
+      //@ts-ignore
+      banner_url: course?.banner_url,
+      //@ts-ignore
+      status: course?.status,
+      //@ts-ignore
+      active: course?.active,
+      //@ts-ignore
+      created_date: course?.created_date,
+      //@ts-ignore
+      created_by: course?.created_by,
+      //@ts-ignore
+      updated_date: course?.updated_date,
+      //@ts-ignore
+      updated_by: course?.updated_by,
+      //@ts-ignore
+      is_published: course?.is_published,
+      //@ts-ignore
+      total_duration_display: course?.total_duration_display,
+      //@ts-ignore
+      is_draft: course?.is_draft,
+    })
+  }, [courseId, course])
+
+  // get all lessons
+  const { data: courseLessons, refetch: refetchLessons } = tanstackClient.useQuery(
+    "get",
+    "/api/v1/courses/{courseId}/lessons",
+    {
+      params: {
+        path: { courseId: courseId ? (courseId as string) : (createdCourseId as string) },
+        query: { pageable: {} },
       },
     },
-  })
-
-  const { data: courseLessons } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/lessons", {
-    params: {
-      path: {
-        courseId: courseId ? (courseId as string) : (newCourseId as string),
-      },
-      query: {
-        pageable: {},
-      },
-    },
-  })
-
-  console.log("course details", courseDetail)
-  console.log("course lessons", courseLessons)
-
-  const publishCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/publish")
-
-  const deleteourseLessonMutation = tanstackClient.useMutation(
-    "delete",
-    "/api/v1/courses/{courseId}/lessons/{lessonId}",
   )
-  const handleDeleteLesson = async (lessonId: string) => {
-    console.log("deleting.....", lessonId)
+  const courseLessonDetails = courseLessons?.data
 
-    if (!course?.uuid) {
-      console.error("No course ID available for deletion")
-      return
-    }
+  // get lesson by Id
+  const { data: lessonData, refetch: refetchLesson } = tanstackClient.useQuery(
+    "get",
+    "/api/v1/courses/{courseId}/lessons/{lessonId}",
+    {
+      params: {
+        path: {
+          // @ts-ignore
+          courseId: courseId ? (courseId as string) : (newCourseId as string),
+          // @ts-ignore
+          lessonId: selectedLesson?.uuid,
+        },
+      },
+    },
+  )
+  const lesson = lessonData?.data
+  const lessonContent = [
+    {
+      content_type: "",
+      title: "",
+      value: "",
+      //@ts-ignore
+      duration_hours: lesson?.duration_hours,
+      //@ts-ignore
+      duration_minutes: lesson?.duration_minutes,
+    },
+  ]
 
-    // deleteourseLessonMutation.mutate({
-    //       path: {
-    //         courseId: course.uuid,
-    //         lessonId: lessonId,
-    //       },
-    //     });
-  }
-
-  const course = sampleCourseData?.data
-  const courseInitialValues = courseId
-    ? {
-        name: course?.name,
-        description: course?.description,
-        is_free: course?.is_free,
-        price: course?.price,
-        sale_price: course?.price,
-        currency: course?.currency,
-        objectives: course.objectives?.map((lo) => ({ value: lo.objective })) ?? [{ value: "" }],
-        categories: course.categories?.map((cat) => ({ value: cat.name })) ?? [],
-        difficulty: course.difficulty_level?.toLowerCase() ?? "",
-        class_limit: course.class_limit ?? 30,
-      }
-    : undefined
-
-  const courseLessonDetails = sampleCourseLesson?.data
-
-  const courseLessonInitialValues: Partial<LessonFormValues> = {
-    title: courseLessonDetails?.title ?? "",
-    description: courseLessonDetails?.description ?? "",
-    content: sampleLessonContent?.data
-      ? sampleLessonContent.data.map((item) => ({
+  const lessonInitialValues: Partial<LessonFormValues> = {
+    title: lesson?.title,
+    description: lesson?.description,
+    // @ts-ignore
+    number: lesson?.lesson_number,
+    // @ts-ignore
+    duration_hours: String(lesson?.duration_hours ?? "0"),
+    //@ts-ignore
+    duration_minutes: String(lesson?.duration_minutes ?? "0"),
+    content: lesson
+      ? lessonContent?.map((item: any) => ({
           contentType: item?.content_type as "AUDIO" | "VIDEO" | "TEXT" | "LINK" | "PDF" | "YOUTUBE",
           title: item?.title || "",
           value: item?.content_type === "TEXT" ? deserialize(item?.content_text as string) || "" : item?.file_url || "",
           duration: typeof item?.estimated_duration === "string" ? parseInt(item.estimated_duration) || 0 : 0,
+          durationHours: item?.duration_hours,
+          durationMinutes: item?.duration_minutes,
         }))
       : [],
     // resources: [],
   }
+
+  // const { data: cat, isLoading } = useGetCategories("")
+  // // @ts-ignore
+  // console.log("categories", cat?.data?.content)
+
+  const publishCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/publish")
+
+  const handlePublishCourse = () => {
+    //@ts-ignore
+    if (!course?.uuid) return
+    publishCourseMutation.mutate(
+      //@ts-ignore
+      { params: { path: { uuid: course?.uuid as string } } },
+      {
+        onSuccess: (data) => {
+          // @ts-ignore
+          toast.success(data?.message)
+          refetchLessons()
+        },
+      },
+    )
+  }
+
+  const deleteCourseLessonMutation = tanstackClient.useMutation(
+    "delete",
+    "/api/v1/courses/{courseId}/lessons/{lessonId}",
+  )
+  const handleDeleteLesson = (lessonId: string) => {
+    //@ts-ignore
+    if (!course?.uuid) return
+
+    deleteCourseLessonMutation.mutate(
+      // @ts-ignore
+      { params: { path: { courseId: course?.uuid as string, lessonId: lessonId as string } } },
+      {
+        onSuccess: () => {
+          // @ts-ignore
+          toast.success("Course lesson deleted successfully")
+          refetchLessons()
+        },
+      },
+    )
+  }
+
+  if (courseId && !courseInitialValues) {
+    return (
+      <div className="flex items-center justify-center">
+        <Spinner />
+      </div>
+    )
+  }
+  console.log(course, "course details")
 
   return (
     <div className="container mx-auto">
@@ -346,15 +236,20 @@ export default function CourseCreationPage() {
           title="Basic Course Information"
           description="Enter the fundamental details of your course"
           showNavigation
-          nextButtonText={"Save & Continue, should be only continue"}
+          nextButtonText={"Continue to Lesson Creation"}
           hideNextButton={false}
           hidePreviousButton={true}
         >
           <CourseCreationForm
             ref={formRef}
             showSubmitButton={true}
+            editingCourseId={courseId as string}
             initialValues={courseInitialValues as any}
-            courseId={courseId as string}
+            onSuccess={(data) => {
+              console.log("created data here", data)
+              setCreatedCourseId(data?.uuid)
+              refetchCourse()
+            }}
           />
         </StepperContent>
 
@@ -368,8 +263,12 @@ export default function CourseCreationPage() {
         >
           <div className="space-y-4">
             <LessonList
+              // @ts-ignore
               courseTitle={course?.name}
-              lessons={sampleCourseLessons.data.content}
+              // @ts-ignore
+              courseCategory={course?.category_uuid}
+              //@ts-ignore
+              lessons={courseLessons?.data?.content}
               onAddLesson={openAddLessonModal}
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
@@ -381,21 +280,30 @@ export default function CourseCreationPage() {
             <LessonDialog
               isOpen={addLessonModalOpen}
               onOpenChange={setAddLessonModalOpen}
-              courseId={courseId as string}
+              courseId={createdCourseId ? createdCourseId : (courseId as string)}
+              refetch={refetchLessons}
             />
 
-            <EditLessonDialog
-              isOpen={editLessonModalOpen}
-              onOpenChange={setEditLessonModalOpen}
-              courseId={courseId as string}
-              lessonId={courseLessonDetails?.uuid}
-              initialValues={courseLessonInitialValues}
-            />
+            {editLessonModalOpen && selectedLesson && lesson && (
+              <EditLessonDialog
+                isOpen={editLessonModalOpen}
+                onOpenChange={setEditLessonModalOpen}
+                courseId={courseId as string}
+                // @ts-ignore
+                lessonId={selectedLesson?.uuid}
+                initialValues={lessonInitialValues}
+                onSuccess={(data) => {
+                  console.log("created data here", data)
+                  setCreatedCourseId(data?.uuid)
+                  refetchLessons()
+                }}
+              />
+            )}
 
             <AssessmentDialog
               isOpen={addAssessmentModalOpen}
               onOpenChange={setAddAssessmentModalOpen}
-              courseId={courseId as string}
+              courseId={createdCourseId ? createdCourseId : (courseId as string)}
             />
           </div>
         </StepperContent>
@@ -408,14 +316,7 @@ export default function CourseCreationPage() {
           previousButtonText="Back to Content"
           hideNextButton={true}
           customButton={
-            <Button
-              type={"submit"}
-              onClick={() => {
-                console.log("publishing course", course)
-              }}
-              disabled={!course}
-              className="min-w-[150px]"
-            >
+            <Button onClick={handlePublishCourse} disabled={!course} className="min-w-[150px]">
               {publishCourseMutation.isPending ? <Spinner /> : "Publish Course"}
             </Button>
           }
@@ -433,7 +334,7 @@ export default function CourseCreationPage() {
                       <span className="font-medium">Description:</span> {course.description}
                     </p>
                     <p>
-                      <span className="font-medium">Difficulty:</span> {course.difficulty_uuid}
+                      <span className="font-medium">Difficulty:</span> {course.difficultyLevel}
                     </p>
                   </div>
                 </div>
@@ -442,15 +343,19 @@ export default function CourseCreationPage() {
                   <h3 className="mb-2 text-lg font-medium">Pricing</h3>
                   <div className="space-y-2">
                     <p>
-                      <span className="font-medium">Free Course:</span> {course.is_free ? "Yes" : "No"}
+                      {/* @ts-ignore */}
+                      <span className="font-medium">Free Course:</span> {course?.is_free ? "Yes" : "No"}
                     </p>
-                    {!course.is_free && (
+                    {/* @ts-ignore */}
+                    {!course?.is_free && (
                       <>
                         <p>
-                          <span className="font-medium">Original Price:</span> {course.price} {course.currency}
+                          {/* @ts-ignore */}
+                          <span className="font-medium">Original Price:</span> {course?.price} {"KES"}
                         </p>
                         <p>
-                          <span className="font-medium">Sale Price:</span> {course.price} {course.currency}
+                          {/* @ts-ignore */}
+                          <span className="font-medium">Sale Price:</span> {course?.price} {"KES"}
                         </p>
                       </>
                     )}
@@ -460,21 +365,21 @@ export default function CourseCreationPage() {
 
               <div>
                 <h3 className="mb-2 text-lg font-medium">Learning Objectives</h3>
-                <ul className="list-inside list-disc space-y-1">
-                  {course.objectives.map((obj, index) => (
-                    <li key={index}>{obj.objective}</li>
-                  ))}
-                </ul>
+                {/* @ts-ignore */}
+
+                <ul className="list-inside list-disc space-y-1">{course?.objectives}</ul>
               </div>
 
               <div>
                 <h3 className="mb-2 text-lg font-medium">Categories</h3>
                 <div className="flex flex-wrap gap-2">
-                  {course.categories.map((category, index) => (
+                  {/* {course?.categories?.map((category, index) => (
                     <span key={index} className="rounded-full bg-gray-100 px-3 py-1 text-sm">
-                      {category.name}
+                      {category}
                     </span>
-                  ))}
+                  ))} */}
+                  {/* @ts-ignore */}
+                  {course?.category_uuid}
                 </div>
               </div>
             </div>

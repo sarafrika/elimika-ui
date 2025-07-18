@@ -4,63 +4,63 @@ import Keycloak from "next-auth/providers/keycloak"
 /**
  * Refresh the access token using the refresh token
  */
-async function refreshAccessToken(token: any) {
-  try {
-    const response = await fetch(`${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        client_id: process.env.KEYCLOAK_CLIENT_ID!,
-        client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
-        grant_type: "refresh_token",
-        refresh_token: token.refreshToken,
-      }),
-    })
+// async function refreshAccessToken(token: any) {
+//   try {
+//     const response = await fetch(`${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/x-www-form-urlencoded",
+//       },
+//       body: new URLSearchParams({
+//         client_id: process.env.KEYCLOAK_CLIENT_ID!,
+//         client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
+//         grant_type: "refresh_token",
+//         refresh_token: token.refreshToken,
+//       }),
+//     })
 
-    const refreshedTokens = await response.json()
+//     const refreshedTokens = await response.json()
 
-    if (!response.ok) {
-      throw refreshedTokens
-    }
+//     if (!response.ok) {
+//       throw refreshedTokens
+//     }
 
-    return {
-      ...token,
-      accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-    }
-  } catch (error) {
-    console.error("Error refreshing access token:", error)
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    }
-  }
-}
+//     return {
+//       ...token,
+//       accessToken: refreshedTokens.access_token,
+//       accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+//       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+//     }
+//   } catch (error) {
+//     console.error("Error refreshing access token:", error)
+//     return {
+//       ...token,
+//       error: "RefreshAccessTokenError",
+//     }
+//   }
+// }
 
 /**
  * Decode JWT token to extract claims
  */
 function decodeJWT(token: string) {
   try {
-    const parts = token.split('.')
+    const parts = token.split(".")
     if (parts.length !== 3) {
-      throw new Error('Invalid JWT format')
+      throw new Error("Invalid JWT format")
     }
 
     const base64Url = parts[1]
     if (!base64Url) {
-      throw new Error('Invalid JWT payload')
+      throw new Error("Invalid JWT payload")
     }
 
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/")
     const jsonPayload = decodeURIComponent(
       atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(""),
     )
     return JSON.parse(jsonPayload)
   } catch (error) {
@@ -82,8 +82,8 @@ const config: NextAuthConfig = {
           scope: "openid profile email",
           response_type: "code",
           code_challenge_method: "S256",
-        }
-      }
+        },
+      },
     }),
   ],
   callbacks: {
@@ -112,7 +112,8 @@ const config: NextAuthConfig = {
       }
 
       // Access token has expired, try to update it
-      return refreshAccessToken(token)
+      // return refreshAccessToken(token)   <-- Commenting this out as per your request
+      return token // Just return the existing token without refresh
     },
     async session({ session, token }) {
       if (session.user) {

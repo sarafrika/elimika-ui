@@ -493,6 +493,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  "/api/v1/courses/instructor/{instructorUuid}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getCourses"]
+    put?: never
+    post: operations["createCourse"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   "/api/v1/courses/{uuid}/publish": {
     parameters: {
       query?: never
@@ -560,6 +576,54 @@ export interface paths {
     trace?: never
   }
   "/api/v1/categories": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getAllCategories"]
+    put?: never
+    post: operations["createCategory"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/config/categories": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getAllCategories"]
+    put?: never
+    post: operations["createCategory"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/config/categories/{uuid}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getAllCategories"]
+    put?: never
+    post: operations["createCategory"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/config/difficulty-levels": {
     parameters: {
       query?: never
       header?: never
@@ -3385,7 +3449,7 @@ export interface operations {
       query?: never
       header?: never
       path: {
-        courseId: number
+        courseId: number | string
       }
       cookie?: never
     }
@@ -3438,7 +3502,7 @@ export interface operations {
       query?: never
       header?: never
       path: {
-        courseId: number
+        courseId: string | number
       }
       cookie?: never
     }

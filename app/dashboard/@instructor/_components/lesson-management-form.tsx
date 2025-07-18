@@ -1,44 +1,46 @@
 "use client"
 
-import * as z from "zod"
-import { Control, useFieldArray, useForm, useWatch } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import {
-  BookOpen,
-  ClipboardCheck,
+  X,
+  Grip,
   Clock,
-  FileAudio,
+  Trash,
+  PenLine,
+  Youtube,
+  BookOpen,
   FileIcon,
   FileText,
-  FileVideo,
-  Grip,
   LinkIcon,
-  MoreVertical,
-  PenLine,
-  PlusCircle,
-  Trash,
+  FileAudio,
+  FileVideo,
   VideoIcon,
-  X,
-  Youtube,
+  PlusCircle,
+  MoreVertical,
+  ClipboardCheck,
 } from "lucide-react"
-import { ReactNode } from "react"
-import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
+  DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import * as z from "zod"
+import { toast } from "sonner"
+import { ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import Spinner from "@/components/ui/spinner"
+import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import RichTextEditor from "@/components/richtext-editor"
 import { tanstackClient } from "@/services/api/tanstack-client"
+import { Control, useFieldArray, useForm, useWatch } from "react-hook-form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 const CONTENT_TYPES = {
   AUDIO: "Audio",
@@ -53,7 +55,12 @@ const contentItemSchema = z.object({
   contentType: z.enum(["AUDIO", "VIDEO", "TEXT", "LINK", "PDF", "YOUTUBE"]),
   title: z.string().min(1, "Title is required"),
   value: z.any().optional(),
-  duration: z.coerce.number().min(0, "Duration must be positive").optional(),
+  durationMinutes: z.coerce
+    .number()
+    .min(0, "Duration minutes must be positive")
+    .max(59, "Minutes must be less than 60")
+    .optional(),
+  durationHours: z.coerce.number().min(0, "Duration hours must be positive").optional(),
 })
 
 const resourceSchema = z.object({
@@ -62,13 +69,14 @@ const resourceSchema = z.object({
 })
 
 const lessonFormSchema = z.object({
+  number: z.preprocess((val) => Number(val), z.number()),
   title: z.string().min(1, "Lesson title is required"),
   description: z.string().optional(),
   content: z.array(contentItemSchema),
   resources: z.array(resourceSchema),
 })
 
-export type LessonFormValues = z.infer<typeof lessonFormSchema>
+export type LessonFormValues = z.infer<typeof lessonFormSchema> & { [key: string]: any }
 
 export type AssessmentFormValues = z.infer<typeof assessmentFormSchema>
 
@@ -110,151 +118,21 @@ export type TLesson = {
   content?: any[]
   resources?: any[]
 
-  [key: string]: unknown // ✅ allows any other property
-}
-
-type LessonListProps = {
-  courseTitle?: string
-  lessons: TLesson[]
-  onAddLesson: () => void
-  onEditLesson: (lesson: any) => void
-  onDeleteLesson: (lessonId: string) => void
-  onReorderLessons: (newLessons: any[]) => void
-  onAddAssessment: (lesson: any) => void
-  onEditAssessment: () => void
-}
-
-function LessonList({
-  courseTitle,
-  lessons,
-  onAddLesson,
-  onEditLesson,
-  onDeleteLesson,
-  onReorderLessons,
-  onAddAssessment,
-  onEditAssessment,
-}: LessonListProps) {
-  const getTotalDuration = (lesson: any) => {
-    const hours = lesson.duration_hours || 0
-    const minutes = lesson.duration_minutes || 0
-    return hours * 60 + minutes
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-row items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">{courseTitle}</h1>
-          <p className="text-muted-foreground text-sm">
-            {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
-          </p>
-        </div>
-        <Button onClick={onAddLesson}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Lesson
-        </Button>
-      </div>
-
-      <div className="space-y-3">
-        {lessons?.map((lesson, index) => (
-          <div
-            key={lesson?.uuid || index}
-            className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
-          >
-            <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100" />
-
-            <div className="flex-1 space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-medium">{lesson.title}</h3>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 transition-opacity group-hover:opacity-100"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-                      <PenLine className="mr-2 h-4 w-4" />
-                      Edit Lesson
-                    </DropdownMenuItem>
-                    {lesson.hasAssessment ? (
-                      <DropdownMenuItem onClick={() => onEditAssessment()}>
-                        <ClipboardCheck className="mr-2 h-4 w-4" />
-                        Edit Assessment
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
-                        <ClipboardCheck className="mr-2 h-4 w-4" />
-                        Add Assessment
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => {
-                        if (lesson.uuid) {
-                          onDeleteLesson(lesson?.uuid as string)
-                        }
-                      }}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete Lesson
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {/* {lesson.content.map((item: any, i: number) => (
-                  <Badge key={i} variant="secondary" className="flex items-center gap-1.5">
-                    {getContentTypeIcon(item.contentType as ContentType)}
-                    <span>{item.title}</span>
-                  </Badge>
-                ))} */}
-                <Badge variant="secondary" className="flex items-center gap-1.5">
-                  {getContentTypeIcon("AUDIO" as ContentType)}
-                  <span>{"xxx content type xxx"}</span>
-                </Badge>
-              </div>
-
-              <div className="text-muted-foreground flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  <span>{getTotalDuration(lesson)} minutes</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <BookOpen className="h-4 w-4" />
-                  <span>
-                    {lesson?.content?.length} {lesson?.content?.length === 1 ? "item" : "items"}
-                  </span>
-                </div>
-                {(lesson.resources?.length ?? 0) > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <LinkIcon className="h-4 w-4" />
-                    <span>
-                      {lesson.resources?.length ?? 0} {(lesson.resources?.length ?? 0) === 1 ? "resource" : "resources"}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+  // ✅ allows any other property
+  [key: string]: unknown
 }
 
 interface FormSectionProps {
   title: string
   description: string
   children: ReactNode
+}
+
+interface ContentItemFormProps {
+  control: Control<LessonFormValues>
+  index: number
+  onRemove: () => void
+  isOnly: boolean
 }
 
 function FormSection({ title, description, children }: FormSectionProps) {
@@ -267,13 +145,6 @@ function FormSection({ title, description, children }: FormSectionProps) {
       <div className="space-y-4">{children}</div>
     </div>
   )
-}
-
-interface ContentItemFormProps {
-  control: Control<LessonFormValues>
-  index: number
-  onRemove: () => void
-  isOnly: boolean
 }
 
 const ACCEPTED_FILE_TYPES = {
@@ -438,7 +309,21 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
 
       <FormField
         control={control}
-        name={`content.${index}.duration`}
+        name={`content.${index}.durationHours`}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Duration (hours)</FormLabel>
+            <FormControl>
+              <Input type="number" min="0" step="0.5" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={`content.${index}.durationMinutes`}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Duration (minutes)</FormLabel>
@@ -453,18 +338,165 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   )
 }
 
+type LessonListProps = {
+  courseTitle: string
+  courseCategory: any
+  lessons: TLesson[]
+  onAddLesson: () => void
+  onEditLesson: (lesson: any) => void
+  onDeleteLesson: (lessonId: string) => void
+  onReorderLessons: (newLessons: any[]) => void
+  onAddAssessment: (lesson: any) => void
+  onEditAssessment: () => void
+}
+
+function LessonList({
+  courseTitle,
+  courseCategory,
+  lessons,
+  onAddLesson,
+  onEditLesson,
+  onDeleteLesson,
+  onReorderLessons,
+  onAddAssessment,
+  onEditAssessment,
+}: LessonListProps) {
+  const getTotalDuration = (lesson: any) => {
+    const hours = lesson.duration_hours || 0
+    const minutes = lesson.duration_minutes || 0
+    return hours * 60 + minutes
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-row items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold">{courseTitle}</h1>
+          <p className="text-muted-foreground text-sm">
+            You have {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"} created under this course.
+          </p>
+        </div>
+        <Button onClick={onAddLesson}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Lesson
+        </Button>
+      </div>
+
+      <div className="space-y-3">
+        {lessons?.map((lesson, index) => (
+          <div
+            key={lesson?.uuid || index}
+            className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
+          >
+            <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100" />
+
+            <div className="flex-1 space-y-3">
+              <div className="flex items-start justify-between">
+                <div className="flex flex-col items-start">
+                  <h3 className="text-lg font-medium">{lesson.title}</h3>
+                  <p className="text-muted-foreground text-sm">{lesson?.description}</p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
+                      <PenLine className="mr-2 h-4 w-4" />
+                      Edit Lesson
+                    </DropdownMenuItem>
+                    {lesson.hasAssessment ? (
+                      <DropdownMenuItem onClick={() => onEditAssessment()}>
+                        <ClipboardCheck className="mr-2 h-4 w-4" />
+                        Edit Assessment
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
+                        <ClipboardCheck className="mr-2 h-4 w-4" />
+                        Add Assessment
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => {
+                        if (lesson.uuid) {
+                          onDeleteLesson(lesson?.uuid as string)
+                        }
+                      }}
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Delete Lesson
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {/* {lesson.content.map((item: any, i: number) => (
+                  <Badge key={i} variant="secondary" className="flex items-center gap-1.5">
+                    {getContentTypeIcon(item.contentType as ContentType)}
+                    <span>{item.title}</span>
+                  </Badge>
+                ))} */}
+                <Badge variant="secondary" className="flex items-center gap-1.5">
+                  {getContentTypeIcon("AUDIO" as ContentType)}
+                  <span>{courseCategory}</span>
+                </Badge>
+              </div>
+
+              <div className="text-muted-foreground flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  <span>{getTotalDuration(lesson)} minutes</span>
+                </div>
+
+                {/* <div className="flex items-center gap-1.5">
+                  <BookOpen className="h-4 w-4" />
+                  <span>
+                    {lesson?.content?.length} {lesson?.content?.length === 1 ? "item" : "items"}
+                  </span>
+                </div> */}
+
+                {(lesson.resources?.length ?? 0) > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <LinkIcon className="h-4 w-4" />
+                    <span>
+                      {lesson.resources?.length ?? 0} {(lesson.resources?.length ?? 0) === 1 ? "resource" : "resources"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 interface AppLessonCreationFormProps {
   onCancel: () => void
   className?: string
   courseId?: string | number
   lessonId?: string | number
   initialValues?: Partial<LessonFormValues>
+  refetch: any
+  onSuccess?: (data: any) => void
 }
 
-function LessonCreationForm({ onCancel, className, courseId }: AppLessonCreationFormProps) {
+function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLessonCreationFormProps) {
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
     defaultValues: {
+      // @ts-ignore
+      number: "",
       title: "",
       description: "",
       content: [{ contentType: "TEXT", title: "" }],
@@ -490,22 +522,69 @@ function LessonCreationForm({ onCancel, className, courseId }: AppLessonCreation
     name: "resources",
   })
 
-  const createCourseLessonMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseId}/lessons")
+  const createLessonMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseId}/lessons")
+  const { data: courseData } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
+    // @ts-ignore
+    params: { path: { courseId } },
+  })
 
-  const onSubmit = (values: LessonFormValues) => {
-    //   // TODO: Handle form submission
-
-    console.log("✅ Form submitted data:", values)
-    console.log("✅ Creating lesson for course id:", courseId)
-
-    // createCourseLessonMutation.mutate({ courseId, values })
-    onCancel()
+  const onSubmitCreateLesson = (values: LessonFormValues) => {
+    createLessonMutation.mutate(
+      {
+        body: {
+          // @ts-ignore
+          course_uuid: courseId,
+          title: values?.title,
+          description: values?.description,
+          // @ts-ignore
+          learning_objectives: courseData?.data?.objectives,
+          duration_hours: values?.content[0]?.durationHours,
+          duration_minutes: values?.content[0]?.durationMinutes,
+          duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
+          // @ts-ignore
+          status: courseData.data?.status,
+          // @ts-ignore
+          active: courseData?.data?.active,
+          // @ts-ignore
+          is_published: courseData?.data?.is_published,
+          // @ts-ignore
+          created_by: courseData?.data?.instructor_uuid,
+          lesson_number: values?.number,
+          lesson_sequence: `Lesson ${values?.number}`,
+        },
+        // @ts-ignore
+        params: { path: { courseId } },
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.message)
+          refetch()
+          onCancel()
+        },
+      },
+    )
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
+      <form onSubmit={form.handleSubmit(onSubmitCreateLesson)} className={`space-y-8 ${className}`}>
         <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="number"
+            render={({ field }) => (
+              <FormItem>
+                <div className="mb-2 flex flex-col gap-2">
+                  <FormLabel>Lesson Number #</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter an order number for your lesson" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="title"
@@ -553,7 +632,8 @@ function LessonCreationForm({ onCancel, className, courseId }: AppLessonCreation
           <Button
             type="button"
             variant="outline"
-            onClick={() => appendContent({ contentType: "TEXT", title: "", value: "" })}
+            // onClick={() => appendContent({ contentType: "TEXT", title: "", value: "" })}
+            onClick={() => toast.message("Cannot add more contents at the moment")}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Content Item
@@ -601,7 +681,12 @@ function LessonCreationForm({ onCancel, className, courseId }: AppLessonCreation
             </div>
           ))}
 
-          <Button type="button" variant="outline" onClick={() => appendResource({ title: "", url: "" })}>
+          <Button
+            type="button"
+            variant="outline"
+            // onClick={() => appendResource({ title: "", url: "" })}
+            onClick={() => toast.message("Cannot add resource at the moment")}
+          >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Resource
           </Button>
@@ -611,17 +696,28 @@ function LessonCreationForm({ onCancel, className, courseId }: AppLessonCreation
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">Create Lesson</Button>
+          <Button type="submit" className="w-[120px]">
+            {createLessonMutation.isPending ? <Spinner /> : "Create Lesson"}
+          </Button>
         </div>
       </form>
     </Form>
   )
 }
 
-function LessonEditingForm({ onCancel, className, courseId, initialValues, lessonId }: AppLessonCreationFormProps) {
+function LessonEditingForm({
+  onCancel,
+  className,
+  courseId,
+  initialValues,
+  lessonId,
+  onSuccess,
+}: AppLessonCreationFormProps) {
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
     defaultValues: {
+      // @ts-ignore
+      number: "",
       title: "",
       description: "",
       content: [{ contentType: "TEXT", title: "" }],
@@ -648,23 +744,75 @@ function LessonEditingForm({ onCancel, className, courseId, initialValues, lesso
     name: "resources",
   })
 
-  const updateCourseLessonMutation = tanstackClient.useMutation("put", "/api/v1/courses/{courseId}/lessons/{lessonId}")
+  const { data: courseData } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
+    // @ts-ignore
+    params: { path: { courseId } },
+  })
+  const updateLessonMutation = tanstackClient.useMutation("put", "/api/v1/courses/{courseId}/lessons/{lessonId}")
 
-  const onSubmit = (values: LessonFormValues) => {
-    //   // TODO: Handle form submission
+  const onSubmitEditLesson = (values: LessonFormValues) => {
+    updateLessonMutation.mutate(
+      {
+        body: {
+          // @ts-ignore
+          course_uuid: courseId,
+          title: values?.title,
+          description: values?.description,
+          // @ts-ignore
+          learning_objectives: courseData?.data?.objectives,
+          duration_hours: values?.content[0]?.durationHours,
+          duration_minutes: values?.content[0]?.durationMinutes,
+          duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
+          // @ts-ignore
+          status: courseData.data?.status,
+          // @ts-ignore
+          active: courseData?.data?.active,
+          // @ts-ignore
+          is_published: courseData?.data?.is_published,
+          // @ts-ignore
+          created_by: courseData?.data?.instructor_uuid,
+          lesson_number: values?.number,
+          lesson_sequence: `Lesson ${values?.number}`,
+        },
 
-    console.log("✅ Form submitted data:", values)
-    console.log("✅ updating lesson for course id:", courseId)
-    console.log("✅ updating lesson with id:", lessonId)
+        params: {
+          // @ts-ignore
+          path: { courseId, lessonId: lessonId },
+        },
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.message)
+          onCancel()
 
-    // updateCourseLessonMutation.mutate({ courseId, values })
-    onCancel()
+          if (typeof onSuccess === "function") {
+            onSuccess(data?.data)
+          }
+        },
+      },
+    )
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
+      <form onSubmit={form.handleSubmit(onSubmitEditLesson)} className={`space-y-8 ${className}`}>
         <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="number"
+            render={({ field }) => (
+              <FormItem>
+                <div className="mb-2 flex flex-col gap-2">
+                  <FormLabel>Lesson Number #</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter an order number for your lesson" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="title"
@@ -712,7 +860,8 @@ function LessonEditingForm({ onCancel, className, courseId, initialValues, lesso
           <Button
             type="button"
             variant="outline"
-            onClick={() => appendContent({ contentType: "TEXT", title: "", value: "" })}
+            // onClick={() => appendContent({ contentType: "TEXT", title: "", value: "" })}
+            onClick={() => toast.message("Cannot add more contents at the moment")}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Content Item
@@ -760,7 +909,12 @@ function LessonEditingForm({ onCancel, className, courseId, initialValues, lesso
             </div>
           ))}
 
-          <Button type="button" variant="outline" onClick={() => appendResource({ title: "", url: "" })}>
+          <Button
+            type="button"
+            variant="outline"
+            // onClick={() => appendResource({ title: "", url: "" })}
+            onClick={() => toast.message("Cannot add resource at the moment")}
+          >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Resource
           </Button>
@@ -770,7 +924,9 @@ function LessonEditingForm({ onCancel, className, courseId, initialValues, lesso
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">Edit Lesson</Button>
+          <Button type="submit" className="w-[120px]">
+            {updateLessonMutation.isPending ? <Spinner /> : "Edit Lesson"}
+          </Button>
         </div>
       </form>
     </Form>
@@ -966,7 +1122,12 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
             </div>
           ))}
 
-          <Button type="button" variant="outline" onClick={() => appendResource({ title: "", url: "" })}>
+          <Button
+            type="button"
+            variant="outline"
+            // onClick={() => appendResource({ title: "", url: "" })}
+            onClick={() => toast.message("Cannot add resource at the moment")}
+          >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Resource
           </Button>
@@ -989,9 +1150,11 @@ interface AppLessonDialogProps {
   courseId: string | number
   lessonId?: string | number
   initialValues?: Partial<LessonFormValues>
+  refetch?: () => any
+  onSuccess?: (data: any) => void
 }
 
-function LessonDialog({ isOpen, onOpenChange, courseId }: AppLessonDialogProps) {
+function LessonDialog({ isOpen, onOpenChange, courseId, refetch }: AppLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-w-6xl flex-col p-0">
@@ -1003,14 +1166,27 @@ function LessonDialog({ isOpen, onOpenChange, courseId }: AppLessonDialogProps) 
         </DialogHeader>
 
         <ScrollArea className="h-[calc(90vh-8rem)]">
-          <LessonCreationForm onCancel={() => onOpenChange(false)} className="px-6 pb-6" courseId={courseId} />
+          <LessonCreationForm
+            onCancel={() => onOpenChange(false)}
+            className="px-6 pb-6"
+            courseId={courseId}
+            refetch={refetch}
+          />
         </ScrollArea>
       </DialogContent>
     </Dialog>
   )
 }
 
-function EditLessonDialog({ isOpen, onOpenChange, courseId, initialValues, lessonId }: AppLessonDialogProps) {
+function EditLessonDialog({
+  isOpen,
+  onOpenChange,
+  courseId,
+  initialValues,
+  lessonId,
+  refetch,
+  onSuccess,
+}: AppLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-w-6xl flex-col p-0">
@@ -1023,11 +1199,13 @@ function EditLessonDialog({ isOpen, onOpenChange, courseId, initialValues, lesso
 
         <ScrollArea className="h-[calc(90vh-8rem)]">
           <LessonEditingForm
-            onCancel={() => onOpenChange(false)}
             className="px-6 pb-6"
             courseId={courseId}
             lessonId={lessonId}
             initialValues={initialValues}
+            onCancel={() => onOpenChange(false)}
+            refetch={refetch}
+            onSuccess={onSuccess}
           />
         </ScrollArea>
       </DialogContent>

@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { Node, Text } from "slate"
 
 export function serialize(nodes: Node[]): string {
@@ -5,16 +6,12 @@ export function serialize(nodes: Node[]): string {
     .map((node) => {
       if (Text.isText(node)) {
         let text = node.text
-        //@ts-ignore
         if (node.bold) text = `<strong>${text}</strong>`
-        //@ts-ignore
         if (node.italic) text = `<em>${text}</em>`
-        //@ts-ignore
         if (node.underline) text = `<u>${text}</u>`
         return text
       }
 
-      //@ts-ignore
       switch (node.type) {
         case "h1":
           return `<h1>${serialize(node.children)}</h1>`
@@ -37,7 +34,6 @@ export function deserialize(html: string): Node[] {
   const doc = parser.parseFromString(html, "text/html")
   const body = doc.body
 
-  //@ts-ignore
   const deserializeElement = (el: Element): SlateElement => {
     const children = Array.from(el.childNodes).map(deserializeNode)
 
@@ -66,17 +62,12 @@ export function deserialize(html: string): Node[] {
 
       // Formatting tags
       if (el.tagName === "STRONG") {
-        // @ts-ignore
         return { text: el.textContent || "", bold: true }
       }
       if (el.tagName === "EM") {
-        // @ts-ignore
-
         return { text: el.textContent || "", italic: true }
       }
       if (el.tagName === "U") {
-        // @ts-ignore
-
         return { text: el.textContent || "", underline: true }
       }
 
@@ -87,6 +78,5 @@ export function deserialize(html: string): Node[] {
     return { text: "" }
   }
 
-  // <---- Here is the fix: use body.children instead of childNodes
   return Array.from(body.children).map(deserializeNode)
 }

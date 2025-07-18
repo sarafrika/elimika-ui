@@ -1,11 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-
 import { cn } from "@/lib/utils"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { usePathname } from "next/navigation"
 import { Separator } from "@/components/ui/separator"
+import { buttonVariants } from "@/components/ui/button"
 
 interface CourseManagementLayoutProps {
   children: React.ReactNode
@@ -34,8 +33,8 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
         </div>
       </div>
       <Separator />
-      <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
-        <aside className="-mx-4 lg:w-1/5">
+      <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-6">
+        <aside className="lg:w-1/5">
           <nav className="flex space-x-2 lg:flex-col lg:space-y-1 lg:space-x-0">
             {sidebarNavItems.map((item) => (
               <Link
