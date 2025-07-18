@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Spinner from "@/components/ui/spinner"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { CheckCircle, Clock, Users, Video } from "lucide-react"
 import Link from "next/link"
@@ -53,92 +54,11 @@ import { toast } from "sonner"
 //   ],
 // }
 
-const data = {
-  success: true,
-  data: {
-    uuid: "c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl",
-    name: "Advanced Java Programming",
-    description: "Comprehensive course covering advanced Java concepts and enterprise development",
-    category_uuid: "c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl",
-    instructor_uuid: "i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl",
-    difficulty_uuid: "d1i2f3f4-5i6c-7u8l-9t10-abcdefghijkl",
-    objectives: "Master advanced Java features, design patterns, and enterprise frameworks",
-    prerequisites: "Basic Java knowledge and OOP concepts",
-    duration_hours: 40,
-    duration_minutes: 30,
-    class_limit: 25,
-    price: 299.99,
-    age_lower_limit: 18,
-    age_upper_limit: 65,
-    thumbnail_url: "https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg",
-    intro_video_url: "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
-    banner_url: "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
-    status: "PUBLISHED",
-    active: true,
-    created_date: "2024-04-01T12:00:00",
-    created_by: "instructor@sarafrika.com",
-    updated_date: "2024-04-15T15:30:00",
-    updated_by: "instructor@sarafrika.com",
-    total_duration_display: "40 hours 30 minutes",
-    is_free: false,
-    is_published: true,
-    is_draft: false,
-  },
-  message: "string",
-  error: {},
-}
-
-const courseLesson = {
-  success: true,
-  data: {
-    content: [
-      {
-        uuid: "l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl",
-        course_uuid: "c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl",
-        lesson_number: 3,
-        title: "Object-Oriented Programming Fundamentals",
-        duration_hours: 2,
-        duration_minutes: 30,
-        description: "Introduction to OOP concepts including classes, objects, inheritance, and polymorphism",
-        learning_objectives: "Understand OOP principles, implement classes and objects, apply inheritance concepts",
-        status: "PUBLISHED",
-        active: true,
-        created_date: "2024-04-01T12:00:00",
-        created_by: "instructor@sarafrika.com",
-        updated_date: "2024-04-15T15:30:00",
-        updated_by: "instructor@sarafrika.com",
-        duration_display: "2 hours 30 minutes",
-        is_published: true,
-        lesson_sequence: "Lesson 3",
-      },
-    ],
-    metadata: {
-      pageNumber: 1073741824,
-      pageSize: 1073741824,
-      totalElements: 9007199254740991,
-      totalPages: 1073741824,
-      hasNext: true,
-      hasPrevious: true,
-      first: true,
-      last: true,
-    },
-    links: {
-      first: "string",
-      previous: "string",
-      self: "string",
-      next: "string",
-      last: "string",
-    },
-  },
-  message: "string",
-  error: {},
-}
-
 export default function CoursePreviewPage() {
   const params = useParams()
   const courseId = params?.id
 
-  const { data: courseDetail } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
+  const { data: courseDetail, isLoading } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
     params: { path: { courseId: courseId as string } },
     onSuccess: (data: any) => {
       if (data.success) {
@@ -159,34 +79,29 @@ export default function CoursePreviewPage() {
     // @ts-ignore
     params: { path: { uuid: course?.category_uuid as string } },
   })
-  console.log(category, "data")
 
-  //   const { data: courseLessons } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/lessons", {
-  //   params: {
-  //     path: {
-  //       courseId: courseId,
-  //     },
-  //     query: {
-  //       pageable: {}
-  //     }
-  //   },
-
-  // })
+  const { data: courseLessons } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/lessons", {
+    //@ts-ignore
+    params: { path: { courseId: courseId }, query: { pageable: {} } },
+  })
 
   // const { data: courseCategory } = tanstackClient.useQuery("get", "/api/v1/courses/category/{categoryUuid}", {
   //   params: {
   //     path: {
-
   //       categoryId: course?.category_uuid,
   //     },
   //     query: {
   //       categoryId: course?.category_uuid,
   //     }
-
   //   },
-
   // })
-  const lessons = courseLesson?.data
+
+  if (isLoading)
+    return (
+      <div className="mt-10 flex items-center justify-center">
+        <Spinner />
+      </div>
+    )
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4">
@@ -205,7 +120,7 @@ export default function CoursePreviewPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+      <div className="">
         <div className="col-span-1 space-y-6 md:col-span-2">
           <Card>
             <CardHeader>
@@ -222,18 +137,23 @@ export default function CoursePreviewPage() {
                 </li>
               </ul>
             </CardContent>
-          </Card>
 
-          <Card>
             <CardHeader>
               <CardTitle>Course Content</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {lessons?.content.map((lesson, i) => (
-                  <div key={i}>
-                    <h3 className="font-semibold">{lesson.title}</h3>
-                    {/* <ul className="mt-2 space-y-2">
+                <h3 className="font-semibold">Lessons</h3>
+
+                {/* @ts-ignore */}
+                {courseLessons?.data?.content
+                  ?.slice() // create a copy so you don't mutate original data
+                  ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
+                  ?.map((lesson: any, i: any) => (
+                    <div key={i}>
+                      <h3 className="font-semibold">{lesson.title}</h3>
+                      <h3 className="font-semibold">{lesson.description}</h3>
+                      {/* <ul className="mt-2 space-y-2">
                       {lesson.lectures.map((lecture, j) => (
                         <li key={j} className="flex items-center">
                           <Video className="mr-2 h-4 w-4" />
@@ -242,39 +162,38 @@ export default function CoursePreviewPage() {
                         </li>
                       ))}
                     </ul> */}
-                    <p>xxx xxxx xxxx xxxx</p>
-                  </div>
-                ))}
+                      <h3 className="font-semibold">{lesson.duration_display}</h3>
+                    </div>
+                  ))}
               </div>
             </CardContent>
-          </Card>
-        </div>
 
-        <div className="col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Details</CardTitle>
-              {/* @ts-ignore */}
-              <CardDescription>by {instructorDetail?.data?.full_name}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center">
-                <Users className="mr-2 h-5 w-5" />
+            <div className="flex max-w-[300px] flex-col gap-2 self-end">
+              <CardHeader className="flex gap-2">
+                <CardTitle>Course Details</CardTitle>
                 {/* @ts-ignore */}
-                <span>{course?.classLimit === 0 ? "Unlimited" : `Up to ${course?.class_limit} students`}</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="mr-2 h-5 w-5" />
-                {/* @ts-ignore */}
-                <span>Approx. {course?.total_duration_display} to complete</span>
-              </div>
-              <Button size="lg" className="w-full">
-                Enroll Now
-              </Button>
-              <Button size="lg" variant="outline" className="w-full" asChild>
-                <Link href={`/dashboard/course-management/create-new-course?id=${courseId}`}>Edit Course</Link>
-              </Button>
-            </CardContent>
+                <CardDescription>by {instructorDetail?.data?.full_name}</CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                <div className="flex items-center">
+                  <Users className="mr-2 h-5 w-5" />
+                  {/* @ts-ignore */}
+                  <span>{course?.classLimit === 0 ? "Unlimited" : `Up to ${course?.class_limit} students`}</span>
+                </div>
+                <div className="flex items-center">
+                  <Clock className="mr-2 h-5 w-5" />
+                  {/* @ts-ignore */}
+                  <span>Approx. {course?.total_duration_display} to complete</span>
+                </div>
+                <Button size="lg" className="w-full">
+                  Enroll Now
+                </Button>
+                <Button size="lg" variant="outline" className="w-full" asChild>
+                  <Link href={`/dashboard/course-management/create-new-course?id=${courseId}`}>Edit Course</Link>
+                </Button>
+              </CardContent>
+            </div>
           </Card>
         </div>
       </div>

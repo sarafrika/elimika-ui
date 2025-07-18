@@ -292,7 +292,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
                     <Input type="file" accept="image/*" onChange={(e) => handleFileChange(e, field.onChange)} />
                     {thumbnailPreview && (
                       <div className="h-32 w-48 overflow-hidden rounded border">
-                        <Image src={thumbnailPreview} alt="Thumbnail Preview" className="h-full w-full object-cover" />
+                        <img src={thumbnailPreview} alt="Thumbnail Preview" className="h-full w-full object-cover" />
                       </div>
                     )}
                   </div>

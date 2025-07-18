@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner"
 import Spinner from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { deserialize } from "@/hooks/serializeRichText"
 import { BookOpen, Check, List, Loader } from "lucide-react"
@@ -20,6 +20,7 @@ import { StepperContent, StepperList, StepperRoot, StepperTrigger } from "@/comp
 import { CourseCreationForm, CourseFormRef } from "@/app/dashboard/@instructor/_components/course-creation-form"
 
 export default function CourseCreationPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const courseId = searchParams.get("id")
   const [createdCourseId, setCreatedCourseId] = useState<string | null>(null)
@@ -118,7 +119,6 @@ export default function CourseCreationPage() {
       },
     },
   )
-  const courseLessonDetails = courseLessons?.data
 
   // get lesson by Id
   const { data: lessonData, refetch: refetchLesson } = tanstackClient.useQuery(
@@ -128,7 +128,7 @@ export default function CourseCreationPage() {
       params: {
         path: {
           // @ts-ignore
-          courseId: courseId ? (courseId as string) : (newCourseId as string),
+          courseId: courseId ? (courseId as string) : (createdCourseId as string),
           // @ts-ignore
           lessonId: selectedLesson?.uuid,
         },
@@ -170,10 +170,6 @@ export default function CourseCreationPage() {
     // resources: [],
   }
 
-  // const { data: cat, isLoading } = useGetCategories("")
-  // // @ts-ignore
-  // console.log("categories", cat?.data?.content)
-
   const publishCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/publish")
 
   const handlePublishCourse = () => {
@@ -186,7 +182,8 @@ export default function CourseCreationPage() {
         onSuccess: (data) => {
           // @ts-ignore
           toast.success(data?.message)
-          refetchLessons()
+          router.push("/dashboard/course-management/published")
+          // refetchLessons()
         },
       },
     )
@@ -220,7 +217,6 @@ export default function CourseCreationPage() {
       </div>
     )
   }
-  console.log(course, "course details")
 
   return (
     <div className="container mx-auto">
@@ -293,7 +289,6 @@ export default function CourseCreationPage() {
                 lessonId={selectedLesson?.uuid}
                 initialValues={lessonInitialValues}
                 onSuccess={(data) => {
-                  console.log("created data here", data)
                   setCreatedCourseId(data?.uuid)
                   refetchLessons()
                 }}
@@ -334,7 +329,8 @@ export default function CourseCreationPage() {
                       <span className="font-medium">Description:</span> {course.description}
                     </p>
                     <p>
-                      <span className="font-medium">Difficulty:</span> {course.difficultyLevel}
+                      {/* @ts-ignore */}
+                      <span className="font-medium">Difficulty:</span> {course.difficulty_uuid}
                     </p>
                   </div>
                 </div>

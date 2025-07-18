@@ -30,6 +30,9 @@ export default function CourseDraftsPage() {
     "/api/v1/courses/instructor/{instructorUuid}",
     { params: { path: { instructorUuid }, query: { page, size } } },
   )
+  const draftCourses = data?.data?.content?.filter(
+    (course: any) => course.status === "draft" && course.is_published === false,
+  )
 
   const deleteCourseMutation = tanstackClient.useMutation("delete", "/api/v1/courses/{courseId}")
   const handleDeleteCourse = (courseId: string) => {
@@ -50,8 +53,8 @@ export default function CourseDraftsPage() {
         <div>
           <h1 className="text-2xl font-semibold">Your Draft Courses</h1>
           <p className="text-muted-foreground mt-1 text-base">
-            You have {data?.data?.content?.length} course
-            {data?.data?.content?.length > 1 ? "s" : ""} waiting to be published.
+            You have {draftCourses?.length} course
+            {draftCourses?.length > 1 ? "s" : ""} waiting to be published.
           </p>
         </div>
         <Button type="button" className="cursor-pointer px-4 py-2 text-sm" asChild>
@@ -62,7 +65,7 @@ export default function CourseDraftsPage() {
         </Button>
       </div>
 
-      {data?.data?.content?.length === 0 ? (
+      {draftCourses?.length === 0 ? (
         <div className="bg-muted/20 rounded-md border py-12 text-center">
           <FilePenIcon className="text-muted-foreground mx-auto h-12 w-12" />
           <h3 className="mt-4 text-lg font-medium">No draft courses</h3>
@@ -85,6 +88,7 @@ export default function CourseDraftsPage() {
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {isFetching || isLoading ? (
               <TableRow>
@@ -96,7 +100,7 @@ export default function CourseDraftsPage() {
               </TableRow>
             ) : (
               <>
-                {data?.data?.content?.map((course: any) => (
+                {draftCourses?.map((course: any) => (
                   <TableRow key={course.uuid}>
                     <TableCell className="font-medium">
                       <div>
@@ -112,7 +116,7 @@ export default function CourseDraftsPage() {
                       </Badge>
                     ))} */}
                         <Badge variant="outline" className="capitalize">
-                          {"Entertainment"}
+                          {course?.category_uuid}
                         </Badge>
                       </div>
                     </TableCell>

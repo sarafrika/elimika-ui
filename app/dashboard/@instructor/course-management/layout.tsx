@@ -25,7 +25,7 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
   const pathname = usePathname()
 
   return (
-    <div className="space-y-6 p-4 pb-16 md:p-10">
+    <div className="space-y-6 p-4 pb-16 md:py-10">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Course Management</h2>
@@ -33,9 +33,9 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
         </div>
       </div>
       <Separator />
-      <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-6">
-        <aside className="lg:w-1/5">
-          <nav className="flex space-x-2 lg:flex-col lg:space-y-1 lg:space-x-0">
+      <div className="flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6">
+        <aside className="">
+          <nav className="flex space-x-2 lg:mb-6 lg:flex-row lg:space-y-1 lg:space-x-6">
             {sidebarNavItems.map((item) => (
               <Link
                 key={item.href}
@@ -43,7 +43,7 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
                 className={cn(
                   buttonVariants({ variant: "ghost" }),
                   pathname === item.href ? "bg-muted hover:bg-muted" : "hover:bg-transparent hover:underline",
-                  "justify-start",
+                  "justify-start lg:min-w-[200px] lg:justify-center",
                 )}
               >
                 {item.title}
