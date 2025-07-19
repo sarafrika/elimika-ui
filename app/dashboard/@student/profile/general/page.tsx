@@ -1,17 +1,35 @@
-import { auth } from "@/services/auth";
+"use client"
+
 import StudentProfileGeneralForm from "./_components/StudentProfileForm";
-import { z } from "zod";
-import { schemas } from "@/services/api/zod-client";
 import { search } from "@/services/api/actions";
+import { useSession } from "next-auth/react";
+import { Student, User } from "@/services/api/schema";
+import Spinner from "@/components/ui/spinner";
+import { useAppStore } from "@/store/app-store";
+import { useEffect, useState } from "react";
 
-type StudentType = z.infer<typeof schemas.Student>;
-type UserType = z.infer<typeof schemas.User>
+export default function StudentProfileGeneralPage() {
+  const { data } = useSession();
+  const user = data ? data.user : null;
+  const student = useAppStore("student", async () => {
+    const results = await search("/api/v1/students/search", { user_uuid_eq: user!.uuid });
+    return results.length > 0 ? results[0] : null;
+  }) as Student;
 
-export default async function StudentProfileGeneralPage() {
+  return (<>
+    {
+      user ?
+        <StudentProfileGeneralForm user={user as User} {...(student ? { student } : {})} /> :
+        <Spinner />
+    }
+  </>);
+
+}
+
+/* export default async function StudentProfileGeneralPage() {
   const session = await auth();
-  console.log(session?.user)
-  const searchResult = await search("/api/v1/users/search", { email_eq: session!.user.email! }) as UserType[];
-  const user = searchResult[0] as UserType;
+
+  const user = session!.user as any as UserType;
 
   let profilePicBlob;
   if (user && user.profile_image_url) {
@@ -33,4 +51,4 @@ export default async function StudentProfileGeneralPage() {
     }} />
   </>);
 
-}
+} */

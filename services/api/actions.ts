@@ -17,11 +17,14 @@ export async function search<P extends SearchEndpoints>(
 ) {
 
     const init: any = {}
+    console.log(searchParams)
     if (searchParams) {
         init.params = {
-            query: {
-                ...searchParams
-            }
+            pageable: {
+                page: 0,
+                size: 10
+            },
+            query: { ...searchParams }
         }
     }
     const resp = await fetchClient.GET(endpoint, init);

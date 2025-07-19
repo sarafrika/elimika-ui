@@ -1,3 +1,6 @@
+import { schemas } from "@/services/api/zod-client"
+import { z } from "zod"
+
 export type UserDomain =
   | "student"
   | "instructor"
@@ -26,5 +29,10 @@ export interface PagedData<T> {
   content: T[]
   metadata: PageMetadata
 }
+
+export type AllSchemas = typeof schemas;
+export type AllSchemaTypes = {
+    [K in keyof AllSchemas]: AllSchemas[K] extends z.ZodTypeAny ? z.infer<AllSchemas[K]> : never;
+}[keyof AllSchemas]
 
 export type ApiResponseWithPagination<T> = ApiResponse<PagedData<T>>

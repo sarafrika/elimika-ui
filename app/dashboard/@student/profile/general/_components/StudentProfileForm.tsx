@@ -37,7 +37,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import React from "react"
 import { schemas } from "@/services/api/zod-client"
@@ -47,6 +47,10 @@ import Spinner from "@/components/ui/spinner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useSession } from "next-auth/react"
 import useMultiMutations from "@/hooks/use-multi-mutations"
+import { GenericStoreType, StoreContext as StudentContext } from "@/context/generic-store-context"
+import { appStore } from "@/store/app-store"
+
+// console.log(Object.values(schemas))
 
 const StudentProfileSchema = z.object({
     user: schemas.User.merge(z.object({
@@ -54,28 +58,38 @@ const StudentProfileSchema = z.object({
         updated_date: z.string().optional().readonly(),
         dob: z.date()
     })),
+
     student: schemas.Student.merge(z.object({
         created_date: z.string().optional().readonly(),
-        updated_date: z.string().optional().readonly()
+        updated_date: z.string().optional().readonly(),
+        updated_by: z.string().optional().readonly(),
+        secondaryGuardianContact: z.string().optional()
     }))
 });
 
+type StudentType = z.infer<typeof schemas.Student>
+type UserType = z.infer<typeof schemas.User>
 type StudentProfileType = z.infer<typeof StudentProfileSchema>
+
+const UserFieldTypes = []
 
 export default function StudentProfileGeneralForm({
     user,
     student,
-    profilePicBlob
+    // profilePicBlob
 }: {
     user: z.infer<typeof schemas.User>,
     student?: z.infer<typeof schemas.Student>,
-    profilePicBlob?: Blob
+    // profilePicBlob?: Blob
 }) {
+    console.log("student", student)
 
     const session = useSession();
+    const appSrore = appStore();
+
     /** For handling profile picture preview */
     const fileElmentRef = useRef<HTMLInputElement>(null);
-    const [profilePic, setProfilePic] = useState<ImageType>({ url: profilePicSvg });
+    const [profilePic, setProfilePic] = useState<ImageType>({ url: user.profile_image_url ?? profilePicSvg });
 
     /** For handling form */
     const form = useForm<StudentProfileType>({
@@ -89,9 +103,9 @@ export default function StudentProfileGeneralForm({
             /** Students guardian data to be refactored to array */
             student: {
                 ...student,
-                user_uuid: user.uuid,
-                updated_by: user.uuid,
-                secondaryGuardianContact: "Someone"
+                updated_by: student?.updated_by ?? "",
+                secondaryGuardianContact: student?.secondaryGuardianContact ?? "",
+                user_uuid: user.uuid
             }
         }
     });
@@ -99,12 +113,26 @@ export default function StudentProfileGeneralForm({
     /** User, student and profile picture mutation handlers */
     const userMutation = tanstackClient.useMutation("put", "/api/v1/users/{uuid}");
     const updateStudentMutation = tanstackClient.useMutation("put", "/api/v1/students/{uuid}");
+    //@ts-ignore
     const profilePicUpload = tanstackClient.useMutation("put", "/api/v1/users/{uuid}/profile-image");
-    const {errors, submitting, resetErrors} = useMultiMutations([ userMutation, updateStudentMutation, profilePicUpload ]);
+    const { errors, datas, submitting, resetErrors } = useMultiMutations([userMutation, updateStudentMutation]); //, profilePicUpload
 
-    async function onSubmit(data: StudentProfileType) {
+    console.log("Ma errors", errors);
+    if (errors && errors.length > 0) {
+        errors.forEach(error => {
+            Object.keys(error.error).forEach((k) => {
+                if (k in user) {
+                    const fieldName = `user.${k}`;
+                    // @ts-ignore
+                    form.setError(fieldName, error.error[k])
+                }
+            });
+        })
+    }
 
+    const onSubmit = useCallback(async (data: StudentProfileType) => {
         resetErrors([])
+        console.log(data)
 
         /** Upload profile picture */
         if (profilePic.file) {
@@ -122,7 +150,7 @@ export default function StudentProfileGeneralForm({
             });
         }
 
-        console.log(profilePicUpload.data?.data?.profile_image_url!);
+        console.log("after profile pic upload", datas![1]);
 
         /** update User */
         userMutation.mutate({
@@ -134,24 +162,43 @@ export default function StudentProfileGeneralForm({
             body: {
                 ...data.user,
                 dob: new Date(data.user.dob!).toISOString(),
-                profile_image_url: profilePicUpload.data?.data?.profile_image_url!,
                 user_domain: [
                     ...(user.user_domain ? new Set([...user.user_domain, "student"]) : ["student"])
                 ] as ("student" | "instructor" | "admin" | "organisation_user")[]
             }
         });
 
+        console.log(data.student)
+
         /** Update student */
         updateStudentMutation.mutate({
             params: {
                 path: {
-                    uuid: student?.uuid as UUID
+                    uuid: student!.uuid as UUID
                 }
             },
             body: data.student
         });
 
-    }
+        // update localstorage
+        appSrore.softUpdate("student", { ...student, ...data.student });
+        // update session
+        await session.update({ user: data.user });
+    }, [errors, datas])
+
+    /* async function onSubmit(data: StudentProfileType) {
+
+        
+
+    } */
+
+    console.log(form.formState.errors);
+    const ref = useRef(submitting);
+    useEffect(() => {
+        if (ref.current) {
+
+        }
+    }, [submitting])
 
     return (
         <div className="max-w-3/4">
@@ -227,6 +274,19 @@ export default function StudentProfileGeneralForm({
                                             <FormLabel>First Name</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="John" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="user.middle_name"
+                                    render={({ field }) => (
+                                        <FormItem className="flex-grow">
+                                            <FormLabel>Middle Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Adams" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

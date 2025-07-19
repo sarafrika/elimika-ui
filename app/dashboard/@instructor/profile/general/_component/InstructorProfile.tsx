@@ -44,12 +44,14 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { schemas } from "@/services/api/zod-client"
-import { components } from "@/services/api/schema"
+import { components, Instructor } from "@/services/api/schema"
 import { useMutation, UseMutationResult, useMutationState } from "@tanstack/react-query"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import useMultiMutations from "@/hooks/use-multi-mutations"
 import { UUID } from "crypto"
 import Spinner from "@/components/ui/spinner"
+import { appStore } from "@/store/app-store"
+import { useSession } from "next-auth/react"
 
 const generalProfileSchema = z.object({
     user: schemas.User.merge(z.object({
@@ -70,7 +72,7 @@ export default function InstructorProfile({
     instructor
 }: {
     user: z.infer<typeof schemas.User>,
-    instructor?: components["schemas"]['Instructor']
+    instructor?: Instructor | null
 }) {
     const { replaceBreadcrumbs } = useBreadcrumb()
 
@@ -86,6 +88,10 @@ export default function InstructorProfile({
         ])
     }, [replaceBreadcrumbs])
 
+    const { data: session, update } = useSession();
+    const updateSession = update;
+    const instructorStore = appStore();
+    
     const form = useForm<GeneralProfileFormValues>({
         resolver: zodResolver(generalProfileSchema),
         defaultValues: {
@@ -112,7 +118,7 @@ export default function InstructorProfile({
     const instructorMutation = tanstackClient.useMutation("put", "/api/v1/instructors/{uuid}");
     const { errors, submitting } = useMultiMutations([userMutation, instructorMutation]);
 
-    function onSubmit(data: GeneralProfileFormValues) {
+    async function onSubmit(data: GeneralProfileFormValues) {
         console.log(data)
         userMutation.mutate({
             params: {
@@ -136,7 +142,10 @@ export default function InstructorProfile({
                 }
             },
             body: data.instructor
-        })
+        });
+
+        await updateSession({ ...session, user: { ...user, ...data.user } })
+        await instructorStore.softUpdate("instructor", { ...instructor, ...data.instructor });
     }
 
     return (

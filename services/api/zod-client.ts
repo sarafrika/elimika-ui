@@ -7,7 +7,7 @@ import { z } from "zod";
 const User = z.object({ uuid: z.string().uuid().optional(), first_name: z.string().min(0).max(50), middle_name: z.string().min(0).max(50).optional(), last_name: z.string().min(0).max(50), email: z.string().min(0).max(100).email(), username: z.string().min(0).max(50), dob: z.string(), phone_number: z.string().min(0).max(20).regex(/^(\+254|0)?[17]\d{8}$/), active: z.boolean().default(true), keycloak_id: z.string().min(0).max(255).optional(), gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(), user_domain: z.array(z.unknown()).optional(), profile_image_url: z.string().url().optional(), created_date: z.string().datetime({ offset: true }).optional(), updated_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_by: z.string().optional(), display_name: z.string().optional(), full_name: z.string().optional() }).passthrough();
 const ApiResponseUser = z.object({ success: z.boolean(), data: User, message: z.string(), error: z.object({}).partial().passthrough() }).partial().passthrough();
 const TrainingBranch = z.object({ uuid: z.string().uuid().optional(), organisation_uuid: z.string().uuid(), branch_name: z.string().min(0).max(200), address: z.string().optional(), poc_user_uuid: z.string().uuid().optional(), active: z.boolean().default(true), created_date: z.string().datetime({ offset: true }).optional(), updated_date: z.string().datetime({ offset: true }).optional() }).passthrough();
-const Student = z.object({ uuid: z.string().uuid().optional(), user_uuid: z.string().uuid(), first_guardian_name: z.string().min(0).max(100).optional(), first_guardian_mobile: z.string().min(0).max(20).optional(), second_guardian_name: z.string().min(0).max(100).optional(), second_guardian_mobile: z.string().min(0).max(20).optional(), secondaryGuardianContact: z.string().optional(), primaryGuardianContact: z.string().optional(), allGuardianContacts: z.array(z.string()).optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional() }).passthrough();
+const Student = z.object({ uuid: z.string().uuid().optional(), user_uuid: z.string().uuid(), first_guardian_name: z.string().min(0).max(100).optional(), first_guardian_mobile: z.string().min(0).max(20).regex(/^(\+254|0)?[17]\d{8}$/).optional(), second_guardian_name: z.string().min(0).max(100).optional(), second_guardian_mobile: z.string().min(0).max(20).regex(/^(\+254|0)?[17]\d{8}$/).optional(), secondaryGuardianContact: z.string().optional(), allGuardianContacts: z.array(z.string()).optional(), primaryGuardianContact: z.string().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional() }).passthrough();
 const Quiz = z.object({ uuid: z.string().uuid().optional(), lesson_uuid: z.string().uuid(), title: z.string().min(0).max(255), description: z.string().min(0).max(1000).optional(), instructions: z.string().min(0).max(1000).optional(), time_limit_minutes: z.number().int().gte(1).optional(), attempts_allowed: z.number().int().gte(1), passing_score: z.number().gte(0).lte(100), rubric_uuid: z.string().uuid().optional(), status: z.enum(["DRAFT", "IN_REVIEW", "PUBLISHED", "ARCHIVED"]), active: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), is_published: z.boolean().optional(), time_limit_display: z.string().optional(), is_timed: z.boolean().optional(), has_multiple_attempts: z.boolean().optional() }).passthrough();
 const QuizQuestion = z.object({ uuid: z.string().uuid().optional(), quiz_uuid: z.string().uuid(), question_text: z.string().min(0).max(2000), question_type: z.enum(["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER", "ESSAY"]), points: z.number().gte(0.01), display_order: z.number().int().gte(1), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), requires_options: z.boolean().optional(), question_category: z.string().optional(), points_display: z.string().optional(), question_number: z.string().optional() }).passthrough();
 const QuizQuestionOption = z.object({ uuid: z.string().uuid().optional(), question_uuid: z.string().uuid(), option_text: z.string().min(0).max(1000), is_correct: z.boolean().optional(), display_order: z.number().int().gte(1).optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), option_category: z.string().optional(), is_incorrect: z.boolean().optional(), position_display: z.string().optional(), correctness_status: z.string().optional(), option_summary: z.string().optional() }).passthrough();
@@ -16,11 +16,11 @@ const ProgramCourse = z.object({ uuid: z.string().uuid().optional(), program_uui
 const Organisation = z.object({ uuid: z.string().uuid().optional(), name: z.string().min(0).max(50), description: z.string().optional(), active: z.boolean().default(true), code: z.string().optional(), licence_no: z.string().max(100).optional(), domain: z.string().max(255).optional(), user_uuid: z.string().uuid().optional(), location: z.string().max(200).optional(), country: z.string().max(100).optional(), created_date: z.string().datetime({ offset: true }).optional(), updated_date: z.string().datetime({ offset: true }).optional() }).passthrough();
 const Instructor = z.object({ uuid: z.string().uuid().optional(), user_uuid: z.string().uuid(), latitude: z.number().gte(-90).lte(90).optional(), longitude: z.number().gte(-180).lte(180).optional(), website: z.string().min(0).max(255).regex(/^https?:\/\/.*/).url().optional(), bio: z.string().min(0).max(2000).optional(), professional_headline: z.string().min(0).max(150).optional(), full_name: z.string().optional(), admin_verified: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), has_location_coordinates: z.boolean().optional(), formatted_location: z.string().optional(), is_profile_complete: z.boolean().optional() }).passthrough();
 const InstructorSkill = z.object({ uuid: z.string().uuid().optional(), instructor_uuid: z.string().uuid(), skill_name: z.string().min(0).max(100), proficiency_level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"]), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), display_name: z.string().optional(), summary: z.string().optional(), proficiency_description: z.string().optional() }).passthrough();
-const InstructorProfessionalMembership = z.object({ uuid: z.string().uuid().optional(), instructor_uuid: z.string().uuid(), organization_name: z.string().min(0).max(255), membership_number: z.string().min(0).max(100).optional(), start_date: z.string().optional(), end_date: z.string().optional(), is_active: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), is_valid: z.boolean().optional(), summary: z.string().optional(), membership_duration_months: z.number().int().optional(), formatted_duration: z.string().optional(), is_complete: z.boolean().optional(), membership_status: z.enum(["ACTIVE", "INACTIVE", "EXPIRED", "UNKNOWN"]).optional(), membership_period: z.string().optional(), is_long_standing_member: z.boolean().optional(), has_membership_number: z.boolean().optional(), organization_type: z.enum(["PROFESSIONAL_INSTITUTE", "CERTIFICATION_BODY", "INDUSTRY_ASSOCIATION", "ACADEMIC_SOCIETY", "TRADE_ORGANIZATION", "OTHER"]).optional(), years_of_membership: z.number().optional(), is_recent_membership: z.boolean().optional() }).passthrough();
-const InstructorExperience = z.object({ uuid: z.string().uuid().optional(), instructor_uuid: z.string().uuid(), position: z.string().min(0).max(255), organization_name: z.string().min(0).max(255), responsibilities: z.string().min(0).max(2000).optional(), years_of_experience: z.number().gte(0).lte(50).optional(), start_date: z.string().optional(), end_date: z.string().optional(), is_current_position: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), summary: z.string().optional(), employment_period: z.string().optional(), is_long_term_position: z.boolean().optional(), has_responsibilities: z.boolean().optional(), experience_level: z.enum(["ENTRY", "JUNIOR", "MID", "SENIOR", "LEAD", "EXECUTIVE"]).optional(), is_recent_experience: z.boolean().optional(), calculated_years: z.number().optional(), duration_in_months: z.number().int().optional(), formatted_duration: z.string().optional(), is_complete: z.boolean().optional() }).passthrough();
-const InstructorEducation = z.object({ uuid: z.string().uuid().optional(), instructor_uuid: z.string().uuid(), qualification: z.string().min(0).max(255), school_name: z.string().min(0).max(255), year_completed: z.number().int().gte(1950).lte(2030).optional(), certificate_number: z.string().min(0).max(100).optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), full_description: z.string().optional(), is_recent_qualification: z.boolean().optional(), years_since_completion: z.number().int().optional(), education_level: z.enum(["CERTIFICATE", "DIPLOMA", "UNDERGRADUATE", "POSTGRADUATE", "DOCTORAL", "OTHER"]).optional(), has_certificate_number: z.boolean().optional(), formatted_completion: z.string().optional(), is_complete: z.boolean().optional() }).passthrough();
+const InstructorProfessionalMembership = z.object({ uuid: z.string().uuid().optional(), instructor_uuid: z.string().uuid(), organization_name: z.string().min(0).max(255), membership_number: z.string().min(0).max(100).optional(), start_date: z.string().optional(), end_date: z.string().optional(), is_active: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), is_valid: z.boolean().optional(), summary: z.string().optional(), is_complete: z.boolean().optional(), formatted_duration: z.string().optional(), membership_status: z.enum(["ACTIVE", "INACTIVE", "EXPIRED", "UNKNOWN"]).optional(), membership_period: z.string().optional(), is_long_standing_member: z.boolean().optional(), has_membership_number: z.boolean().optional(), organization_type: z.enum(["PROFESSIONAL_INSTITUTE", "CERTIFICATION_BODY", "INDUSTRY_ASSOCIATION", "ACADEMIC_SOCIETY", "TRADE_ORGANIZATION", "OTHER"]).optional(), years_of_membership: z.number().optional(), is_recent_membership: z.boolean().optional(), membership_duration_months: z.number().int().optional() }).passthrough();
+const InstructorExperience = z.object({ uuid: z.string().uuid().optional(), instructor_uuid: z.string().uuid(), position: z.string().min(0).max(255), organization_name: z.string().min(0).max(255), responsibilities: z.string().min(0).max(2000).optional(), years_of_experience: z.number().gte(0).lte(50).optional(), start_date: z.string().optional(), end_date: z.string().optional(), is_current_position: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), summary: z.string().optional(), is_complete: z.boolean().optional(), duration_in_months: z.number().int().optional(), formatted_duration: z.string().optional(), employment_period: z.string().optional(), is_long_term_position: z.boolean().optional(), has_responsibilities: z.boolean().optional(), experience_level: z.enum(["ENTRY", "JUNIOR", "MID", "SENIOR", "LEAD", "EXECUTIVE"]).optional(), is_recent_experience: z.boolean().optional(), calculated_years: z.number().optional() }).passthrough();
+const InstructorEducation = z.object({ uuid: z.string().uuid().optional(), instructor_uuid: z.string().uuid(), qualification: z.string().min(0).max(255), school_name: z.string().min(0).max(255), year_completed: z.number().int().gte(1950).lte(2030).optional(), certificate_number: z.string().min(0).max(100).optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), full_description: z.string().optional(), is_complete: z.boolean().optional(), is_recent_qualification: z.boolean().optional(), years_since_completion: z.number().int().optional(), education_level: z.enum(["CERTIFICATE", "DIPLOMA", "UNDERGRADUATE", "POSTGRADUATE", "DOCTORAL", "OTHER"]).optional(), has_certificate_number: z.boolean().optional(), formatted_completion: z.string().optional() }).passthrough();
 const InstructorDocument = z.object({ uuid: z.string().uuid().optional(), instructor_uuid: z.string().uuid(), document_type_uuid: z.string().uuid(), education_uuid: z.string().uuid().optional(), experience_uuid: z.string().uuid().optional(), membership_uuid: z.string().uuid().optional(), original_filename: z.string().min(0).max(255), title: z.string().min(0).max(255), description: z.string().min(0).max(2000).optional(), status: z.enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED", "UNDER_REVIEW"]).optional(), expiry_date: z.string().optional(), stored_filename: z.string().optional(), file_path: z.string().optional(), file_size_bytes: z.number().int().gte(1).optional(), mime_type: z.string().optional(), file_hash: z.string().optional(), upload_date: z.string().datetime({ offset: true }).optional(), is_verified: z.boolean().optional(), verified_by: z.string().optional(), verified_at: z.string().datetime({ offset: true }).optional(), verification_notes: z.string().max(2000).optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), is_expired: z.boolean().optional(), file_size_formatted: z.string().optional(), days_until_expiry: z.number().int().optional(), is_pending_verification: z.boolean().optional(), has_expiry_date: z.boolean().optional(), verification_status: z.enum(["VERIFIED", "PENDING", "REJECTED"]).optional() }).passthrough();
-const Course = z.object({ uuid: z.string().uuid().optional(), name: z.string().min(0).max(255), instructor_uuid: z.string().uuid(), category_uuid: z.string().uuid().optional(), difficulty_uuid: z.string().uuid().optional(), description: z.string().min(0).max(2000).optional(), objectives: z.string().min(0).max(1000).optional(), prerequisites: z.string().min(0).max(1000).optional(), duration_hours: z.number().int().gte(0), duration_minutes: z.number().int().gte(0).lte(59), class_limit: z.number().int().gte(1).optional(), price: z.number().gte(0).optional(), age_lower_limit: z.number().int().gte(1).lte(120).optional(), age_upper_limit: z.number().int().gte(1).lte(120).optional(), thumbnail_url: z.string().min(0).max(500).url().optional(), intro_video_url: z.string().min(0).max(500).url().optional(), banner_url: z.string().min(0).max(500).url().optional(), status: z.enum(["DRAFT", "IN_REVIEW", "PUBLISHED", "ARCHIVED"]), active: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), is_free: z.boolean().optional(), is_published: z.boolean().optional(), total_duration_display: z.string().optional(), is_draft: z.boolean().optional() }).passthrough();
+const Course = z.object({ uuid: z.string().uuid().optional(), name: z.string().min(0).max(255), instructor_uuid: z.string().uuid(), category_uuids: z.array(z.string().uuid()).optional(), difficulty_uuid: z.string().uuid().optional(), description: z.string().min(0).max(2000).optional(), objectives: z.string().min(0).max(1000).optional(), prerequisites: z.string().min(0).max(1000).optional(), duration_hours: z.number().int().gte(0), duration_minutes: z.number().int().gte(0).lte(59), class_limit: z.number().int().gte(1).optional(), price: z.number().gte(0).optional(), age_lower_limit: z.number().int().gte(1).lte(120).optional(), age_upper_limit: z.number().int().gte(1).lte(120).optional(), thumbnail_url: z.string().min(0).max(500).url().optional(), intro_video_url: z.string().min(0).max(500).url().optional(), banner_url: z.string().min(0).max(500).url().optional(), status: z.enum(["draft", "in_review", "published", "archived"]), active: z.boolean().optional(), category_names: z.array(z.string()).optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), is_free: z.boolean().optional(), is_published: z.boolean().optional(), is_archived: z.boolean().optional(), is_in_review: z.boolean().optional(), is_draft: z.boolean().optional(), total_duration_display: z.string().optional(), has_multiple_categories: z.boolean().optional(), category_count: z.number().int().optional(), lifecycle_stage: z.string().optional(), accepts_new_enrollments: z.boolean().optional() }).passthrough();
 const CourseRequirement = z.object({ uuid: z.string().uuid().optional(), course_uuid: z.string().uuid(), requirement_type: z.enum(["STUDENT", "TRAINING_CENTER", "INSTRUCTOR"]), requirement_text: z.string().min(0).max(1000), is_mandatory: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional() }).passthrough();
 const Lesson = z.object({ uuid: z.string().uuid().optional(), course_uuid: z.string().uuid(), lesson_number: z.number().int().gte(1), title: z.string().min(0).max(255), duration_hours: z.number().int().gte(0), duration_minutes: z.number().int().gte(0).lte(59), description: z.string().min(0).max(1000).optional(), learning_objectives: z.string().min(0).max(500).optional(), status: z.enum(["DRAFT", "IN_REVIEW", "PUBLISHED", "ARCHIVED"]), active: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), is_published: z.boolean().optional(), duration_display: z.string().optional(), lesson_sequence: z.string().optional() }).passthrough();
 const LessonContent = z.object({ uuid: z.string().uuid().optional(), lesson_uuid: z.string().uuid(), content_type_uuid: z.string().uuid(), title: z.string().min(0).max(255), description: z.string().min(0).max(1000).optional(), content_text: z.string().optional(), file_url: z.string().min(0).max(500).url().optional(), display_order: z.number().int().gte(1), is_required: z.boolean().optional(), file_size_bytes: z.number().int().gte(0).optional(), mime_type: z.string().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), content_category: z.string().optional(), file_size_display: z.string().optional() }).passthrough();
@@ -33,6 +33,7 @@ const Certificate = z.object({ uuid: z.string().uuid().optional(), student_uuid:
 const CertificateTemplate = z.object({ uuid: z.string().uuid().optional(), name: z.string().min(0).max(255), template_type: z.enum(["COURSE_COMPLETION", "PARTICIPATION", "ACHIEVEMENT", "CUSTOM"]), template_html: z.string().min(0).max(20000).optional(), template_css: z.string().min(0).max(50000).optional(), background_image_url: z.string().min(0).max(500).optional(), active: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), design_complexity: z.string().optional() }).passthrough();
 const Assignment = z.object({ uuid: z.string().uuid().optional(), lesson_uuid: z.string().uuid(), title: z.string().min(0).max(255), description: z.string().min(0).max(2000).optional(), instructions: z.string().min(0).max(5000).optional(), due_date: z.string().datetime({ offset: true }).optional(), max_points: z.number().gte(0).optional(), rubric_uuid: z.string().uuid().optional(), submission_types: z.array(z.string()).optional(), is_published: z.boolean().optional(), created_date: z.string().datetime({ offset: true }).optional(), created_by: z.string().optional(), updated_date: z.string().datetime({ offset: true }).optional(), updated_by: z.string().optional(), assignment_category: z.string().optional(), points_display: z.string().optional(), assignment_scope: z.string().optional(), submission_summary: z.string().optional() }).passthrough();
 const pageable = z.object({ page: z.number().int().gte(0), size: z.number().int().gte(1), sort: z.array(z.string()) }).partial().passthrough();
+const ApiResponse = z.object({ success: z.boolean(), data: z.object({}).partial().passthrough(), message: z.string(), error: z.object({}).partial().passthrough() }).partial().passthrough();
 
 export const schemas = {
 	User,
@@ -64,6 +65,7 @@ export const schemas = {
 	CertificateTemplate,
 	Assignment,
 	pageable,
+	ApiResponse,
 };
 
 const endpoints = makeApi([
@@ -1299,6 +1301,33 @@ const endpoints = makeApi([
 		]
 	},
 	{
+		method: "get",
+		path: "/api/v1/config/categories/:uuid",
+		alias: "getCategoryByUuid",
+		description: `Retrieves a specific category by its UUID.`,
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "uuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 404,
+				description: `Not Found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
 		method: "put",
 		path: "/api/v1/config/categories/:uuid",
 		alias: "updateCategory",
@@ -1864,7 +1893,7 @@ const endpoints = makeApi([
 		method: "get",
 		path: "/api/v1/courses",
 		alias: "getAllCourses",
-		description: `Retrieves paginated list of all courses with filtering support.`,
+		description: `Retrieves paginated list of all courses with category information and filtering support.`,
 		requestFormat: "json",
 		parameters: [
 			{
@@ -1891,7 +1920,25 @@ const endpoints = makeApi([
 		method: "post",
 		path: "/api/v1/courses",
 		alias: "createCourse",
-		description: `Creates a new course with default DRAFT status and inactive state.`,
+		description: `Creates a new course with default DRAFT status and inactive state. Supports multiple categories.
+
+**Category Assignment:**
+- Use &#x60;category_uuids&#x60; field to assign multiple categories to the course
+- Categories are validated to ensure they exist before assignment
+- A course can belong to multiple categories for better organization and discoverability
+
+**Example Request Body:**
+&#x60;&#x60;&#x60;json
+{
+    &quot;name&quot;: &quot;Advanced Java Programming&quot;,
+    &quot;instructor_uuid&quot;: &quot;instructor-uuid-here&quot;,
+    &quot;category_uuids&quot;: [&quot;java-uuid&quot;, &quot;programming-uuid&quot;],
+    &quot;description&quot;: &quot;Comprehensive Java course&quot;,
+    &quot;duration_hours&quot;: 40,
+    &quot;duration_minutes&quot;: 0
+}
+&#x60;&#x60;&#x60;
+`,
 		requestFormat: "json",
 		parameters: [
 			{
@@ -1904,7 +1951,7 @@ const endpoints = makeApi([
 		errors: [
 			{
 				status: 400,
-				description: `Invalid request data`,
+				description: `Invalid request data or category not found`,
 				schema: z.void()
 			},
 			{
@@ -2054,6 +2101,92 @@ const endpoints = makeApi([
 	},
 	{
 		method: "get",
+		path: "/api/v1/courses/:courseUuid/categories",
+		alias: "getCourseCategories",
+		description: `Retrieves all categories assigned to a specific course.`,
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "courseUuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 404,
+				description: `Not Found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "delete",
+		path: "/api/v1/courses/:courseUuid/categories",
+		alias: "removeAllCategoriesFromCourse",
+		description: `Removes all category associations from a course.`,
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "courseUuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 404,
+				description: `Not Found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "delete",
+		path: "/api/v1/courses/:courseUuid/categories/:categoryUuid",
+		alias: "removeCategoryFromCourse",
+		description: `Removes a specific category from a course without affecting other categories.`,
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "courseUuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+			{
+				name: "categoryUuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 404,
+				description: `Not Found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "get",
 		path: "/api/v1/courses/:courseUuid/completion-rate",
 		alias: "getCourseCompletionRate",
 		description: `Returns the completion rate percentage for a course.`,
@@ -2166,6 +2299,73 @@ const endpoints = makeApi([
 			{
 				status: 404,
 				description: `Not Found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "get",
+		path: "/api/v1/courses/:courseUuid/lessons/:lessonUuid",
+		alias: "getCourseLesson",
+		description: `Retrieves a specific lesson by its UUID within a course context.
+
+**Lesson Retrieval Details:**
+- Returns complete lesson profile including computed properties
+- Validates that the lesson belongs to the specified course
+- Includes lesson content count and duration calculations
+- Provides lesson status and completion tracking information
+
+**Response includes:**
+- Basic lesson information (title, description, objectives)
+- Lesson metadata (duration, sequence number, status)
+- Associated course UUID validation
+- Content summary statistics
+- Computed properties (isCompleted, progressPercentage for authenticated users)
+
+**Use Cases:**
+- Direct lesson navigation from course content
+- Lesson detail page rendering
+- Progress tracking and analytics
+- Content validation and prerequisites checking
+
+**Security Considerations:**
+- Validates lesson belongs to specified course
+- Respects course enrollment status for detailed information
+- May return limited data for unenrolled users depending on course visibility settings
+`,
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "courseUuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+			{
+				name: "lessonUuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 400,
+				description: `Invalid UUID format provided`,
+				schema: z.void()
+			},
+			{
+				status: 403,
+				description: `Access denied - insufficient permissions to view lesson details`,
+				schema: z.void()
+			},
+			{
+				status: 404,
+				description: `Lesson not found or does not belong to the specified course`,
 				schema: z.void()
 			},
 			{
@@ -2566,7 +2766,15 @@ const endpoints = makeApi([
 		method: "get",
 		path: "/api/v1/courses/:uuid",
 		alias: "getCourseByUuid",
-		description: `Retrieves a complete course profile including computed properties.`,
+		description: `Retrieves a complete course profile including computed properties and category information.
+
+**Response includes:**
+- All course details and metadata
+- &#x60;category_uuids&#x60;: List of category UUIDs the course belongs to
+- &#x60;category_names&#x60;: List of category names for display (read-only)
+- &#x60;category_count&#x60;: Number of categories assigned to the course
+- &#x60;has_multiple_categories&#x60;: Boolean indicating if course has multiple categories
+`,
 		requestFormat: "json",
 		parameters: [
 			{
@@ -2593,7 +2801,14 @@ const endpoints = makeApi([
 		method: "put",
 		path: "/api/v1/courses/:uuid",
 		alias: "updateCourse",
-		description: `Updates an existing course with selective field updates.`,
+		description: `Updates an existing course with selective field updates including category management.
+
+**Category Updates:**
+- Provide &#x60;category_uuids&#x60; to completely replace existing categories
+- To add categories, include existing + new category UUIDs
+- To remove all categories, provide an empty array
+- Changes to categories are applied atomically
+`,
 		requestFormat: "json",
 		parameters: [
 			{
@@ -2601,6 +2816,38 @@ const endpoints = makeApi([
 				type: "Body",
 				schema: Course
 			},
+			{
+				name: "uuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 400,
+				description: `Invalid category UUIDs provided`,
+				schema: z.void()
+			},
+			{
+				status: 404,
+				description: `Course not found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "delete",
+		path: "/api/v1/courses/:uuid",
+		alias: "deleteCourse",
+		description: `Permanently removes a course, its category associations, and all associated data.`,
+		requestFormat: "json",
+		parameters: [
 			{
 				name: "uuid",
 				type: "Path",
@@ -2622,10 +2869,17 @@ const endpoints = makeApi([
 		]
 	},
 	{
-		method: "delete",
-		path: "/api/v1/courses/:uuid",
-		alias: "deleteCourse",
-		description: `Permanently removes a course and its associated data.`,
+		method: "post",
+		path: "/api/v1/courses/:uuid/archive",
+		alias: "archiveCourse",
+		description: `Archives a course, making it completely unavailable.
+
+**Important:**
+- This is typically a permanent action
+- Course becomes completely inaccessible to new students
+- Existing enrollments may be handled differently based on business rules
+- Course data is preserved for historical/audit purposes
+`,
 		requestFormat: "json",
 		parameters: [
 			{
@@ -2640,6 +2894,120 @@ const endpoints = makeApi([
 				status: 404,
 				description: `Course not found`,
 				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "post",
+		path: "/api/v1/courses/:uuid/banner",
+		alias: "uploadCourseBanner",
+		description: `Uploads a banner image for the specified course. The banner is typically used on the course
+detail page as a hero image and in promotional materials.
+
+**File Requirements:**
+- Supported formats: JPG, PNG, GIF, WebP
+- Maximum file size: 10MB
+- Recommended dimensions: 1200x400 pixels or 3:1 aspect ratio
+- Files will be automatically optimized for web delivery
+
+**Usage Guidelines:**
+- Banners should be visually striking and professional
+- Consider responsive design - banner should work on mobile and desktop
+- Use images that complement your course branding
+- Ensure good contrast if overlaying text
+
+**Storage Details:**
+- Files are stored in the course_banners folder
+- Previous banner will be replaced if a new one is uploaded
+- Generated URL will be automatically set in the course record
+`,
+		requestFormat: "form-data",
+		parameters: [
+			{
+				name: "body",
+				type: "Body",
+				schema: z.object({ banner: z.instanceof(File) }).passthrough()
+			},
+			{
+				name: "uuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: Course,
+		errors: [
+			{
+				status: 400,
+				description: `Invalid file format or size exceeds limit`,
+				schema: ApiResponse
+			},
+			{
+				status: 404,
+				description: `Course not found`,
+				schema: ApiResponse
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "post",
+		path: "/api/v1/courses/:uuid/intro-video",
+		alias: "uploadCourseIntroVideo",
+		description: `Uploads an introduction video for the specified course. The intro video is used for course
+previews, marketing, and helping students understand what they&#x27;ll learn.
+
+**File Requirements:**
+- Supported formats: MP4, WebM, MOV, AVI
+- Maximum file size: 100MB
+- Recommended duration: 1-3 minutes
+- Recommended resolution: 720p or 1080p
+
+**Content Guidelines:**
+- Keep intro videos concise and engaging
+- Clearly explain what students will learn
+- Include instructor introduction if appropriate
+- Ensure good audio quality
+- Consider adding captions for accessibility
+
+**Storage Details:**
+- Files are stored in the course_intro_videos folder
+- Previous intro video will be replaced if a new one is uploaded
+- Generated URL will be automatically set in the course record
+- Consider video compression for optimal streaming performance
+`,
+		requestFormat: "form-data",
+		parameters: [
+			{
+				name: "body",
+				type: "Body",
+				schema: z.object({ intro_video: z.instanceof(File) }).passthrough()
+			},
+			{
+				name: "uuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: Course,
+		errors: [
+			{
+				status: 400,
+				description: `Invalid file format or size exceeds limit`,
+				schema: ApiResponse
+			},
+			{
+				status: 404,
+				description: `Course not found`,
+				schema: ApiResponse
 			},
 			{
 				status: 500,
@@ -2671,6 +3039,139 @@ const endpoints = makeApi([
 			{
 				status: 404,
 				description: `Not Found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "get",
+		path: "/api/v1/courses/:uuid/status-transitions",
+		alias: "getStatusTransitions",
+		description: `Returns the list of valid status transitions for a course based on its current state and business rules.
+
+**Status Transition Rules:**
+- DRAFT → IN_REVIEW, ARCHIVED
+- IN_REVIEW → DRAFT, PUBLISHED, ARCHIVED
+- PUBLISHED → DRAFT (if no active enrollments), ARCHIVED
+- ARCHIVED → (no transitions - permanent state)
+`,
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "uuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 404,
+				description: `Not Found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "post",
+		path: "/api/v1/courses/:uuid/thumbnail",
+		alias: "uploadCourseThumbnail",
+		description: `Uploads a thumbnail image for the specified course. The thumbnail is typically used in course
+listings, search results, and course cards throughout the application.
+
+**File Requirements:**
+- Supported formats: JPG, PNG, GIF, WebP
+- Maximum file size: 5MB
+- Recommended dimensions: 400x300 pixels or 4:3 aspect ratio
+- Files will be automatically optimized for web delivery
+
+**Usage Guidelines:**
+- Thumbnails should clearly represent the course content
+- Use high-quality, professional images
+- Avoid images with too much text or small details
+- Consider accessibility and contrast for text overlays
+
+**Storage Details:**
+- Files are stored in the course_thumbnails folder
+- Previous thumbnail will be replaced if a new one is uploaded
+- Generated URL will be automatically set in the course record
+`,
+		requestFormat: "form-data",
+		parameters: [
+			{
+				name: "body",
+				type: "Body",
+				schema: z.object({ thumbnail: z.instanceof(File) }).passthrough()
+			},
+			{
+				name: "uuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: Course,
+		errors: [
+			{
+				status: 400,
+				description: `Invalid file format or size exceeds limit`,
+				schema: ApiResponse
+			},
+			{
+				status: 404,
+				description: `Course not found`,
+				schema: ApiResponse
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "post",
+		path: "/api/v1/courses/:uuid/unpublish",
+		alias: "unpublishCourse",
+		description: `Unpublishes a course, changing it from PUBLISHED to DRAFT status.
+
+**Smart Active Status Logic:**
+- If NO active enrollments: Course becomes DRAFT and ACTIVE (available for new enrollments)
+- If HAS active enrollments: Course becomes DRAFT and INACTIVE (existing students continue, no new enrollments)
+
+**Business Rules:**
+- Course status always changes from PUBLISHED to DRAFT
+- Active status depends on current enrollment situation
+- Existing enrollments are never affected
+- Course can be published again later
+
+**Use Cases:**
+- Temporarily remove course from catalog while keeping it available
+- Stop new enrollments while allowing current students to continue
+- Prepare course for updates before republishing
+`,
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "uuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 404,
+				description: `Course not found`,
 				schema: z.void()
 			},
 			{
@@ -2748,9 +3249,53 @@ const endpoints = makeApi([
 	},
 	{
 		method: "get",
+		path: "/api/v1/courses/category-mappings/search",
+		alias: "searchCategoryMappings",
+		description: `Search course-category relationships.
+
+**Common Mapping Search Examples:**
+- &#x60;courseUuid&#x3D;uuid&#x60; - All category mappings for specific course
+- &#x60;categoryUuid&#x3D;uuid&#x60; - All course mappings for specific category
+- &#x60;courseName_like&#x3D;java&#x60; - Mappings for courses with &quot;java&quot; in name
+- &#x60;categoryName_like&#x3D;programming&#x60; - Mappings for categories with &quot;programming&quot; in name
+`,
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "searchParams",
+				type: "Query",
+				schema: z.record(z.string())
+			},
+			{
+				name: "pageable",
+				type: "Query",
+				schema: pageable
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 404,
+				description: `Not Found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "get",
 		path: "/api/v1/courses/category/:categoryUuid",
 		alias: "getCoursesByCategory",
-		description: `Retrieves all courses in a specific category.`,
+		description: `Retrieves all courses in a specific category.
+
+**Enhanced Category Search:**
+This endpoint now supports the many-to-many relationship, returning courses that have
+the specified category assigned to them, regardless of what other categories they may also have.
+`,
 		requestFormat: "json",
 		parameters: [
 			{
@@ -2860,33 +3405,6 @@ const endpoints = makeApi([
 	},
 	{
 		method: "get",
-		path: "/api/v1/courses/free",
-		alias: "getFreeCourses",
-		description: `Retrieves all courses available at no cost.`,
-		requestFormat: "json",
-		parameters: [
-			{
-				name: "pageable",
-				type: "Query",
-				schema: pageable
-			},
-		],
-		response: z.void(),
-		errors: [
-			{
-				status: 404,
-				description: `Not Found`,
-				schema: z.void()
-			},
-			{
-				status: 500,
-				description: `Internal Server Error`,
-				schema: z.void()
-			},
-		]
-	},
-	{
-		method: "get",
 		path: "/api/v1/courses/instructor/:instructorUuid",
 		alias: "getCoursesByInstructor",
 		description: `Retrieves all courses created by a specific instructor.`,
@@ -2949,6 +3467,51 @@ const endpoints = makeApi([
 			{
 				status: 404,
 				description: `Not Found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
+		method: "get",
+		path: "/api/v1/courses/media/:fileName",
+		alias: "getCourseMedia",
+		description: `Retrieves course media files (thumbnails, banners, intro videos) by their file name.
+This endpoint serves the actual media files with appropriate content types and caching headers.
+
+**File Types Served:**
+- Course thumbnails from course_thumbnails folder
+- Course banners from course_banners folder
+- Course intro videos from course_intro_videos folder
+
+**Response Features:**
+- Automatic content type detection
+- Optimized caching headers for performance
+- Support for range requests (for videos)
+- Proper file serving with inline disposition
+
+**Usage:**
+- File names are typically returned from upload endpoints
+- URLs are automatically generated and stored in course records
+- Direct access via this endpoint for custom implementations
+`,
+		requestFormat: "json",
+		parameters: [
+			{
+				name: "fileName",
+				type: "Path",
+				schema: z.string()
+			},
+		],
+		response: z.void(),
+		errors: [
+			{
+				status: 404,
+				description: `Media file not found`,
 				schema: z.void()
 			},
 			{
@@ -3028,27 +3591,20 @@ const endpoints = makeApi([
 		method: "get",
 		path: "/api/v1/courses/search",
 		alias: "searchCourses",
-		description: `Advanced course search with flexible criteria and operators.
+		description: `Advanced course search with flexible criteria and operators, including category-based filtering.
 
-**Common Course Search Examples:**
-- &#x60;name_like&#x3D;javascript&#x60; - Courses with names containing &quot;javascript&quot;
-- &#x60;status&#x3D;PUBLISHED&#x60; - Only published courses
-- &#x60;active&#x3D;true&#x60; - Only active courses
-- &#x60;status_in&#x3D;PUBLISHED,ACTIVE&#x60; - Published or active courses
-- &#x60;price_lte&#x3D;100.00&#x60; - Courses priced at $100 or less
-- &#x60;price&#x3D;null&#x60; - Free courses
-- &#x60;instructorUuid&#x3D;uuid&#x60; - Courses by specific instructor
-- &#x60;categoryUuid&#x3D;uuid&#x60; - Courses in specific category
-- &#x60;difficultyUuid&#x3D;uuid&#x60; - Courses of specific difficulty level
-- &#x60;durationHours_gte&#x3D;20&#x60; - Courses 20+ hours long
-- &#x60;createdDate_gte&#x3D;2024-01-01T00:00:00&#x60; - Courses created after Jan 1, 2024
+**Category-Specific Search Examples:**
+- &#x60;categoryUuids_in&#x3D;uuid1,uuid2&#x60; - Courses in any of these categories
+- &#x60;categoryUuids_contains&#x3D;uuid&#x60; - Courses containing specific category
+- &#x60;categoryNames_like&#x3D;programming&#x60; - Courses in categories with &quot;programming&quot; in the name
+- &#x60;categoryCount_gte&#x3D;2&#x60; - Courses assigned to 2 or more categories
+- &#x60;hasMultipleCategories&#x3D;true&#x60; - Courses with multiple category assignments
 
-**Advanced Course Queries:**
-- &#x60;status&#x3D;PUBLISHED&amp;active&#x3D;true&amp;price_lte&#x3D;50&#x60; - Published, active courses under $50
-- &#x60;name_like&#x3D;python&amp;difficultyUuid&#x3D;beginner-uuid&#x60; - Beginner Python courses
-- &#x60;instructorUuid&#x3D;uuid&amp;status&#x3D;PUBLISHED&#x60; - Published courses by specific instructor
+**Combined Search Examples:**
+- &#x60;status&#x3D;PUBLISHED&amp;categoryUuids_in&#x3D;uuid1,uuid2&amp;price_lte&#x3D;100&#x60; - Published courses under $100 in specific categories
+- &#x60;name_like&#x3D;java&amp;categoryNames_like&#x3D;programming&amp;active&#x3D;true&#x60; - Active Java courses in programming categories
 
-For complete operator documentation, see the instructor search endpoint.
+For complete operator documentation, see the general course search endpoint.
 `,
 		requestFormat: "json",
 		parameters: [
@@ -7230,6 +7786,42 @@ For complete operator documentation, see the instructor search endpoint.
 		]
 	},
 	{
+		method: "post",
+		path: "/api/v1/users/:userUuid/profile-image",
+		alias: "uploadProfileImage",
+		requestFormat: "form-data",
+		parameters: [
+			{
+				name: "body",
+				type: "Body",
+				schema: z.object({ profileImage: z.instanceof(File) }).passthrough()
+			},
+			{
+				name: "userUuid",
+				type: "Path",
+				schema: z.string().uuid()
+			},
+		],
+		response: User,
+		errors: [
+			{
+				status: 400,
+				description: `Invalid input data`,
+				schema: User
+			},
+			{
+				status: 404,
+				description: `User not found`,
+				schema: z.void()
+			},
+			{
+				status: 500,
+				description: `Internal Server Error`,
+				schema: z.void()
+			},
+		]
+	},
+	{
 		method: "get",
 		path: "/api/v1/users/:uuid",
 		alias: "getUserByUuid",
@@ -7433,42 +8025,6 @@ For complete operator documentation, see the instructor search endpoint.
 		],
 		response: z.void(),
 		errors: [
-			{
-				status: 404,
-				description: `User not found`,
-				schema: z.void()
-			},
-			{
-				status: 500,
-				description: `Internal Server Error`,
-				schema: z.void()
-			},
-		]
-	},
-	{
-		method: "put",
-		path: "/api/v1/users/:uuid/profile-image",
-		alias: "uploadProfileImage",
-		requestFormat: "form-data",
-		parameters: [
-			{
-				name: "body",
-				type: "Body",
-				schema: z.object({ profile_image: z.instanceof(File) }).passthrough()
-			},
-			{
-				name: "uuid",
-				type: "Path",
-				schema: z.string().uuid()
-			},
-		],
-		response: ApiResponseUser,
-		errors: [
-			{
-				status: 400,
-				description: `Invalid input data`,
-				schema: ApiResponseUser
-			},
 			{
 				status: 404,
 				description: `User not found`,

@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "generate-types": "npx openapi-typescript https://api.elimika.sarafrika.com/v3/api-docs --root-types-no-schema-prefix --root-types --generate-path-params -o ./services/api/schema.ts",
+    "generate-zod-client": "pnpx openapi-zod-client https://api.elimika.sarafrika.com/v3/api-docs -o ./services/api/zod-client.ts",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"

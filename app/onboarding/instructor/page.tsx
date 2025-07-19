@@ -16,7 +16,7 @@ import Loading from "@/components/Loading"
 export default function InstructorOnboardingPage() {
   const router = useRouter()
   const { data: session, status } = useSession()
-  const { user, isLoading } = useUserStore()
+  const user = session!.user;
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (data: SharedOnboardingFormData) => {
@@ -43,10 +43,10 @@ export default function InstructorOnboardingPage() {
         user_domain: ["instructor"] as Array<
           "student" | "instructor" | "admin" | "organisation_user"
         >,
-        ...(user.middle_name && { middle_name: user.middle_name }),
-        ...(user.organisation_uuid && {
-          organisation_uuid: user.organisation_uuid,
-        }),
+        // ...(user.middle_name && { middle_name: user.middle_name }),
+        // ...(user.organisation_uuid! && {
+        //   organisation_uuid: user.organisation_uuid!,
+        // }),
         gender: mapGender(data.gender),
       }
       const authToken = await getAuthToken()
