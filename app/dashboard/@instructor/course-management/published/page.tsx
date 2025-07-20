@@ -16,6 +16,8 @@ import { tanstackClient } from "@/services/api/tanstack-client"
 import { formatCourseDate } from "@/lib/format-course-date"
 import { useState } from "react"
 import Spinner from "@/components/ui/spinner"
+import { toast } from "sonner"
+import RichTextRenderer from "@/components/editors/richTextRenders"
 
 export default function PublishedCoursesPage() {
   const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
@@ -33,9 +35,13 @@ export default function PublishedCoursesPage() {
     (course: any) => course.status === "published" && course.is_published === true,
   )
 
-  // const unpublishCourseMutation = tanstackClient.useMutation("delete", "/api/v1/courses/{courseId}/unpublish")
+  const unpublishCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/unpublish")
   const handleUnpublishCourse = (courseId: string) => {
-    console.log("unpublishing course", courseId)
+    unpublishCourseMutation.mutate(
+      // @ts-ignore
+      { params: { path: { uuid: courseId } } },
+      { onSuccess: (data) => toast.success(data?.message), refetch, onError: (error) => toast.error(error?.message) },
+    )
   }
 
   return (
@@ -84,19 +90,16 @@ export default function PublishedCoursesPage() {
                     <TableCell className="font-medium">
                       <div>
                         <div className="max-w-[270px] truncate">{course.name}</div>
-                        <div className="text-muted-foreground max-w-[250px] truncate text-sm">{course.description}</div>
+                        <RichTextRenderer htmlString={course?.description} maxChars={42} />{" "}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {/* {course.categories.map((category, i) => (
-                      <Badge key={i} variant="default" className="capitalize">
-                        {category.name}
-                      </Badge>
-                    ))} */}
-                        <Badge variant="default" className="capitalize">
-                          {course?.category_uuid}
-                        </Badge>
+                      <div className="flex max-w-[250px] flex-wrap gap-1">
+                        {course.category_names.map((i: any) => (
+                          <Badge key={i} variant="default" className="capitalize">
+                            {i}
+                          </Badge>
+                        ))}
                       </div>
                     </TableCell>
                     <TableCell>{course.class_limit}</TableCell>

@@ -1,62 +1,29 @@
 "use client"
 
+import HTMLTextPreview from "@/components/editors/html-text-preview"
+import RichTextRenderer from "@/components/editors/richTextRenders"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Spinner from "@/components/ui/spinner"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { CheckCircle, Clock, Users, Video } from "lucide-react"
-import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
+import { useState } from "react"
 import { toast } from "sonner"
-
-// const course = {
-//   name: "Introduction to Web Development",
-//   description:
-//     "A comprehensive course covering the basics of HTML, CSS, and JavaScript, designed to take you from a complete beginner to a capable front-end developer.",
-//   categories: [{ name: "Web Development" }, { name: "Beginner" }],
-//   classLimit: 50,
-//   instructor: {
-//     name: "John Doe",
-//     title: "Senior Web Developer",
-//   },
-//   lessons: [
-//     {
-//       title: "Module 1: Getting Started with HTML",
-//       lectures: [
-//         { title: "Introduction to HTML", duration: "15 mins" },
-//         { title: "HTML Tags and Attributes", duration: "25 mins" },
-//         { title: "Creating Your First Web Page", duration: "30 mins" },
-//       ],
-//     },
-//     {
-//       title: "Module 2: Styling with CSS",
-//       lectures: [
-//         { title: "Introduction to CSS", duration: "20 mins" },
-//         { title: "Selectors and Properties", duration: "35 mins" },
-//         { title: "The Box Model", duration: "25 mins" },
-//       ],
-//     },
-//     {
-//       title: "Module 3: Interactive JavaScript",
-//       lectures: [
-//         { title: "Introduction to JavaScript", duration: "30 mins" },
-//         { title: "Variables, Data Types, and Functions", duration: "40 mins" },
-//         { title: "DOM Manipulation", duration: "45 mins" },
-//       ],
-//     },
-//   ],
-//   whatYouWillLearn: [
-//     "Build a complete website from scratch.",
-//     "Understand the core concepts of web development.",
-//     "Style web pages with modern CSS techniques.",
-//     "Add interactivity to your websites with JavaScript.",
-//   ],
-// }
+import { Dialog, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog"
+import { DialogTitle } from "@radix-ui/react-dialog"
 
 export default function CoursePreviewPage() {
   const params = useParams()
   const courseId = params?.id
+
+  const [open, setOpen] = useState(false)
+  const router = useRouter()
+
+  const handleConfirm = () => {
+    router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
+  }
 
   const { data: courseDetail, isLoading } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
     params: { path: { courseId: courseId as string } },
@@ -75,26 +42,10 @@ export default function CoursePreviewPage() {
     params: { path: { uuid: course?.instructor_uuid as string } },
   })
 
-  const { data: category } = tanstackClient.useQuery("get", "/api/v1/config/categories/{uuid}", {
-    // @ts-ignore
-    params: { path: { uuid: course?.category_uuid as string } },
-  })
-
   const { data: courseLessons } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/lessons", {
     //@ts-ignore
     params: { path: { courseId: courseId }, query: { pageable: {} } },
   })
-
-  // const { data: courseCategory } = tanstackClient.useQuery("get", "/api/v1/courses/category/{categoryUuid}", {
-  //   params: {
-  //     path: {
-  //       categoryId: course?.category_uuid,
-  //     },
-  //     query: {
-  //       categoryId: course?.category_uuid,
-  //     }
-  //   },
-  // })
 
   if (isLoading)
     return (
@@ -107,16 +58,18 @@ export default function CoursePreviewPage() {
     <div className="mx-auto max-w-4xl space-y-8 p-4">
       <div className="space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">{course?.name}</h1>
-        <p className="text-muted-foreground text-lg">{course?.description}</p>
+        <div className="px-4 py-4">
+          <HTMLTextPreview htmlContent={course?.description as string} />
+        </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">Categories:</span>
-          {/* {course.categories.map((category, i) => (
-            <Badge key={i} variant="outline">
-              {category.name}
-            </Badge>
-          ))} */}
           {/* @ts-ignore */}
-          <Badge variant="outline">{category?.data?.name}</Badge>
+          {course?.category_names.map((i: any) => (
+            <Badge key={i} variant="outline">
+              {i}
+            </Badge>
+          ))}
         </div>
       </div>
 
@@ -130,29 +83,30 @@ export default function CoursePreviewPage() {
               <ul className="grid grid-cols-1">
                 <li className="flex items-start gap-2">
                   <span className="min-h-4 min-w-4">
-                    <CheckCircle className="mt-[2px] h-4 w-4 text-green-500" />
+                    <CheckCircle className="mt-1 h-4 w-4 text-green-500" />
                   </span>
-                  {/* @ts-ignore */}
-                  <span>{course?.objectives}</span>
+                  <div className="">
+                    {/* @ts-ignore */}
+                    <HTMLTextPreview htmlContent={course?.objectives} />
+                  </div>
                 </li>
               </ul>
             </CardContent>
 
-            <CardHeader>
+            <CardHeader className="mt-4">
               <CardTitle>Course Content</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <h3 className="font-semibold">Lessons</h3>
-
+              <div className="-mt-2 flex flex-col gap-2 space-y-4">
                 {/* @ts-ignore */}
                 {courseLessons?.data?.content
-                  ?.slice() // create a copy so you don't mutate original data
+                  ?.slice()
                   ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
                   ?.map((lesson: any, i: any) => (
-                    <div key={i}>
+                    <div key={i} className="flex flex-col gap-2">
                       <h3 className="font-semibold">{lesson.title}</h3>
-                      <h3 className="font-semibold">{lesson.description}</h3>
+                      <RichTextRenderer htmlString={(lesson?.description as string) || "No lesson provided"} />
+
                       {/* <ul className="mt-2 space-y-2">
                       {lesson.lectures.map((lecture, j) => (
                         <li key={j} className="flex items-center">
@@ -162,36 +116,70 @@ export default function CoursePreviewPage() {
                         </li>
                       ))}
                     </ul> */}
-                      <h3 className="font-semibold">{lesson.duration_display}</h3>
+
+                      <h3 className="font-semibold">
+                        <span>📅 Duration:</span> {lesson.duration_display}
+                      </h3>
                     </div>
                   ))}
               </div>
             </CardContent>
 
-            <div className="flex max-w-[300px] flex-col gap-2 self-end">
+            <div className="mt-4 flex max-w-[300px] flex-col gap-2 self-end">
               <CardHeader className="flex gap-2">
                 <CardTitle>Course Details</CardTitle>
                 {/* @ts-ignore */}
                 <CardDescription>by {instructorDetail?.data?.full_name}</CardDescription>
               </CardHeader>
 
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-2">
                 <div className="flex items-center">
-                  <Users className="mr-2 h-5 w-5" />
+                  <Users className="mr-2 h-4 w-4" />
                   {/* @ts-ignore */}
                   <span>{course?.classLimit === 0 ? "Unlimited" : `Up to ${course?.class_limit} students`}</span>
                 </div>
                 <div className="flex items-center">
-                  <Clock className="mr-2 h-5 w-5" />
+                  <Clock className="mr-2 h-4 w-4" />
                   {/* @ts-ignore */}
                   <span>Approx. {course?.total_duration_display} to complete</span>
                 </div>
-                <Button size="lg" className="w-full">
+                <Button size="lg" className="mt-4 w-full">
                   Enroll Now
                 </Button>
-                <Button size="lg" variant="outline" className="w-full" asChild>
-                  <Link href={`/dashboard/course-management/create-new-course?id=${courseId}`}>Edit Course</Link>
+                <Button size="lg" variant="outline" className="w-full" onClick={() => setOpen(true)}>
+                  Edit Course
                 </Button>
+
+                {/* Modal */}
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogTitle />
+                    <DialogHeader>
+                      <h3 className="text-xl font-semibold text-gray-900">Edit Course</h3>
+                      <p className="text-sm text-gray-500">Are you sure you want to edit this course?</p>
+                    </DialogHeader>
+
+                    <div className="mt-4 space-y-3 text-sm text-gray-700">
+                      <p>
+                        This action will <strong>unpublish</strong> the course. You&apos;`ll need to re-publish it after
+                        making your changes.
+                      </p>
+                      <p>
+                        Any currently enrolled students will retain access, but the course will no longer be
+                        discoverable publicly until it&apos;`s re-published.
+                      </p>
+                    </div>
+
+                    <DialogFooter className="pt-6">
+                      <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">
+                        Cancel
+                      </Button>
+                      <Button onClick={handleConfirm} className="w-full sm:w-auto">
+                        Confirm & Continue
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </div>
           </Card>

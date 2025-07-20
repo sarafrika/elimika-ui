@@ -17,17 +17,17 @@ interface FormSectionProps {
   children: ReactNode
 }
 
-function FormSection({ title, description, children }: FormSectionProps) {
-  return (
-    <div className="space-y-2">
-      <div>
-        <h3 className="leading-none font-semibold tracking-tight">{title}</h3>
-        <p className="text-muted-foreground text-sm">{description}</p>
-      </div>
-      <div className="space-y-4">{children}</div>
-    </div>
-  )
-}
+// function FormSection({ title, description, children }: FormSectionProps) {
+//   return (
+//     <div className="space-y-2">
+//       <div>
+//         <h3 className="leading-none font-semibold tracking-tight">{title}</h3>
+//         <p className="text-muted-foreground text-sm">{description}</p>
+//       </div>
+//       <div className="space-y-4">{children}</div>
+//     </div>
+//   )
+// }
 
 const classFormSchema = z.object({
   title: z.string().min(1, "Class title is required"),

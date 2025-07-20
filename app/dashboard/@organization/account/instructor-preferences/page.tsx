@@ -4,23 +4,9 @@ import * as z from "zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { PlusCircle, Trash2 } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
 import { useEffect } from "react"
@@ -28,14 +14,8 @@ import { useEffect } from "react"
 const instructorPrefsSchema = z.object({
   revenueSplit: z
     .object({
-      instructor: z
-        .number()
-        .min(0, "Must be between 0-100")
-        .max(100, "Must be between 0-100"),
-      organisation: z
-        .number()
-        .min(0, "Must be between 0-100")
-        .max(100, "Must be between 0-100"),
+      instructor: z.number().min(0, "Must be between 0-100").max(100, "Must be between 0-100"),
+      organisation: z.number().min(0, "Must be between 0-100").max(100, "Must be between 0-100"),
     })
     .refine((data) => data.instructor + data.organisation === 100, {
       message: "The two splits must add up to 100%",
@@ -102,9 +82,7 @@ export default function InstructorPreferencesPage() {
         instructor: 70,
         organisation: 30,
       },
-      preferences: [
-        { course: "Music", type: "Vocal", gender: "Any", maxFee: 50 },
-      ],
+      preferences: [{ course: "Music", type: "Vocal", gender: "Any", maxFee: 50 }],
     },
   })
 
@@ -118,19 +96,14 @@ export default function InstructorPreferencesPage() {
     console.log(data)
   }
 
-  const renderInput = (
-    field: any,
-    headerKey: keyof InstructorPrefsFormValues["preferences"][0],
-  ) => {
+  const renderInput = (field: any, headerKey: keyof InstructorPrefsFormValues["preferences"][0]) => {
     const isNumeric = ["experienceYears", "maxFee"].includes(headerKey)
     return (
       <Input
         type={isNumeric ? "number" : "text"}
         placeholder={preferenceHeaders.find((h) => h.key === headerKey)?.label}
         {...field}
-        onChange={(e) =>
-          field.onChange(isNumeric ? Number(e.target.value) : e.target.value)
-        }
+        onChange={(e) => field.onChange(isNumeric ? Number(e.target.value) : e.target.value)}
         className="h-9 w-full min-w-[100px] text-sm"
       />
     )
@@ -143,8 +116,7 @@ export default function InstructorPreferencesPage() {
           <CardHeader>
             <CardTitle>Revenue Split Ratio</CardTitle>
             <CardDescription>
-              Set the default revenue split between instructors and your
-              organisation for classes.
+              Set the default revenue split between instructors and your organisation for classes.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -196,9 +168,7 @@ export default function InstructorPreferencesPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <CardTitle>Instructor Search Preferences</CardTitle>
-                <CardDescription>
-                  Set filters to find the ideal instructors for your needs.
-                </CardDescription>
+                <CardDescription>Set filters to find the ideal instructors for your needs.</CardDescription>
               </div>
               <Button
                 type="button"
@@ -218,10 +188,7 @@ export default function InstructorPreferencesPage() {
                 <thead className="bg-muted/50">
                   <tr className="border-b">
                     {preferenceHeaders.map((header) => (
-                      <th
-                        key={header.key}
-                        className="h-12 px-4 text-left align-middle font-medium"
-                      >
+                      <th key={header.key} className="h-12 px-4 text-left align-middle font-medium">
                         {header.label}
                       </th>
                     ))}
@@ -238,9 +205,7 @@ export default function InstructorPreferencesPage() {
                             name={`preferences.${index}.${header.key}` as const}
                             render={({ field }) => (
                               <FormItem>
-                                <FormControl>
-                                  {renderInput(field, header.key)}
-                                </FormControl>
+                                <FormControl>{renderInput(field, header.key)}</FormControl>
                                 <FormMessage className="text-xs" />
                               </FormItem>
                             )}

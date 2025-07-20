@@ -11,11 +11,12 @@ import {
 import { toast } from "sonner"
 import Spinner from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
-import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { deserialize } from "@/hooks/serializeRichText"
-import { BookOpen, Check, List, Loader } from "lucide-react"
+import { BookOpen, Check, List } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { tanstackClient } from "@/services/api/tanstack-client"
+import RichTextRenderer from "@/components/editors/richTextRenders"
+import HTMLTextPreview from "@/components/editors/html-text-preview"
 import { StepperContent, StepperList, StepperRoot, StepperTrigger } from "@/components/ui/stepper"
 import { CourseCreationForm, CourseFormRef } from "@/app/dashboard/@instructor/_components/course-creation-form"
 
@@ -46,11 +47,41 @@ export default function CourseCreationPage() {
   })
   const course = courseData?.data
 
-  const [courseInitialValues, setCourseInitialValues] = useState<any>(undefined)
+  interface Course {
+    name?: string
+    description?: string | object
+    objectives?: string | object
+    instructor_uuid?: string
+    is_free?: boolean
+    price?: number
+    sale_price?: number
+    category_uuids?: string[]
+    difficulty_uuid?: string
+    class_limit?: number
+    classLimit?: number
+    prerequisites?: string | null
+    duration_hours?: number
+    duration_minutes?: number
+    age_lower_limit?: number
+    age_upper_limit?: number
+    thumbnail_url?: string
+    intro_video_url?: string
+    banner_url?: string
+    status?: string
+    active?: boolean
+    created_date?: string
+    created_by?: string
+    updated_date?: string
+    updated_by?: string
+    is_published?: boolean
+    total_duration_display?: string
+    is_draft?: boolean
+  }
+
+  const [courseInitialValues, setCourseInitialValues] = useState<Course | undefined>(undefined)
 
   useEffect(() => {
     if (!courseId || !course) return
-
     setCourseInitialValues({
       name: course?.name,
       description: course?.description,
@@ -66,17 +97,16 @@ export default function CourseCreationPage() {
       //@ts-ignore
       objectives: course?.objectives,
       //@ts-ignore
-      categories: course?.category_uuid || [],
+      categories: course?.category_uuids || [],
       //@ts-ignore
       difficulty: course?.difficulty_uuid ?? "",
-      class_limit: course?.classLimit ?? 30,
+      // @ts-ignore
+      class_limit: course?.class_limit ?? 0,
       prerequisites: null,
       //@ts-ignore
       duration_hours: course?.duration_hours,
       //@ts-ignore
       duration_minutes: course?.duration_minutes,
-      //@ts-ignore
-      class_limit: course?.class_limit,
       //@ts-ignore
       age_lower_limit: course?.age_lower_limit,
       //@ts-ignore
@@ -121,20 +151,16 @@ export default function CourseCreationPage() {
   )
 
   // get lesson by Id
-  const { data: lessonData, refetch: refetchLesson } = tanstackClient.useQuery(
-    "get",
-    "/api/v1/courses/{courseId}/lessons/{lessonId}",
-    {
-      params: {
-        path: {
-          // @ts-ignore
-          courseId: courseId ? (courseId as string) : (createdCourseId as string),
-          // @ts-ignore
-          lessonId: selectedLesson?.uuid,
-        },
+  const { data: lessonData } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/lessons/{lessonId}", {
+    params: {
+      path: {
+        // @ts-ignore
+        courseId: courseId ? (courseId as string) : (createdCourseId as string),
+        // @ts-ignore
+        lessonId: selectedLesson?.uuid,
       },
     },
-  )
+  })
   const lesson = lessonData?.data
   const lessonContent = [
     {
@@ -152,6 +178,8 @@ export default function CourseCreationPage() {
     title: lesson?.title,
     description: lesson?.description,
     // @ts-ignore
+    objectives: lesson?.learning_objectives,
+    // @ts-ignore
     number: lesson?.lesson_number,
     // @ts-ignore
     duration_hours: String(lesson?.duration_hours ?? "0"),
@@ -161,7 +189,7 @@ export default function CourseCreationPage() {
       ? lessonContent?.map((item: any) => ({
           contentType: item?.content_type as "AUDIO" | "VIDEO" | "TEXT" | "LINK" | "PDF" | "YOUTUBE",
           title: item?.title || "",
-          value: item?.content_type === "TEXT" ? deserialize(item?.content_text as string) || "" : item?.file_url || "",
+          value: item?.content_type === "TEXT" ? item?.content_text || "" : item?.file_url || "",
           duration: typeof item?.estimated_duration === "string" ? parseInt(item.estimated_duration) || 0 : 0,
           durationHours: item?.duration_hours,
           durationMinutes: item?.duration_minutes,
@@ -233,7 +261,7 @@ export default function CourseCreationPage() {
           description="Enter the fundamental details of your course"
           showNavigation
           nextButtonText={"Continue to Lesson Creation"}
-          hideNextButton={false}
+          hideNextButton={true}
           hidePreviousButton={true}
         >
           <CourseCreationForm
@@ -262,7 +290,7 @@ export default function CourseCreationPage() {
               // @ts-ignore
               courseTitle={course?.name}
               // @ts-ignore
-              courseCategory={course?.category_uuid}
+              courseCategory={course?.category_names}
               //@ts-ignore
               lessons={courseLessons?.data?.content}
               onAddLesson={openAddLessonModal}
@@ -318,64 +346,61 @@ export default function CourseCreationPage() {
         >
           {course ? (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                  <h3 className="mb-2 text-lg font-medium">Course Information</h3>
-                  <div className="space-y-2">
-                    <p>
-                      <span className="font-medium">Name:</span> {course.name}
-                    </p>
-                    <p>
-                      <span className="font-medium">Description:</span> {course.description}
-                    </p>
-                    <p>
-                      {/* @ts-ignore */}
-                      <span className="font-medium">Difficulty:</span> {course.difficulty_uuid}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="mb-2 text-lg font-medium">Pricing</h3>
-                  <div className="space-y-2">
-                    <p>
-                      {/* @ts-ignore */}
-                      <span className="font-medium">Free Course:</span> {course?.is_free ? "Yes" : "No"}
-                    </p>
+              <div>
+                <h3 className="mb-2 text-lg font-medium">Pricing</h3>
+                <div className="space-y-2">
+                  <p>
                     {/* @ts-ignore */}
-                    {!course?.is_free && (
-                      <>
-                        <p>
-                          {/* @ts-ignore */}
-                          <span className="font-medium">Original Price:</span> {course?.price} {"KES"}
-                        </p>
-                        <p>
-                          {/* @ts-ignore */}
-                          <span className="font-medium">Sale Price:</span> {course?.price} {"KES"}
-                        </p>
-                      </>
-                    )}
-                  </div>
+                    <span className="font-medium">Free Course:</span> {course?.is_free ? "Yes" : "No"}
+                  </p>
+                  {/* @ts-ignore */}
+                  {!course?.is_free && (
+                    <>
+                      <p>
+                        {/* @ts-ignore */}
+                        <span className="font-medium">Original Price:</span> {course?.price} {"KES"}
+                      </p>
+                      <p>
+                        {/* @ts-ignore */}
+                        <span className="font-medium">Sale Price:</span> {course?.price} {"KES"}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div>
+              <div className="flex flex-col gap-2">
+                <h3 className="mb-2 text-lg font-medium">Course Information</h3>
+                <div className="space-y-2">
+                  <p className="flex flex-col gap-1">
+                    <span className="font-medium">Name:</span> {course.name}
+                  </p>
+                  <div className="html-text-preview flex flex-col gap-2">
+                    <div className="font-medium">Description:</div>
+                    <RichTextRenderer htmlString={course.description as string} />
+                  </div>
+                  <p>
+                    {/* @ts-ignore */}
+                    <span className="font-medium">Difficulty:</span> {course.difficulty_uuid}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`html-text-preview`}>
                 <h3 className="mb-2 text-lg font-medium">Learning Objectives</h3>
                 {/* @ts-ignore */}
-
-                <ul className="list-inside list-disc space-y-1">{course?.objectives}</ul>
+                <HTMLTextPreview htmlContent={course?.objectives} />
               </div>
 
               <div>
                 <h3 className="mb-2 text-lg font-medium">Categories</h3>
                 <div className="flex flex-wrap gap-2">
-                  {/* {course?.categories?.map((category, index) => (
-                    <span key={index} className="rounded-full bg-gray-100 px-3 py-1 text-sm">
-                      {category}
-                    </span>
-                  ))} */}
                   {/* @ts-ignore */}
-                  {course?.category_uuid}
+                  {course?.category_names?.map((index) => (
+                    <span key={index} className="rounded-full bg-gray-100 px-3 py-1 text-sm">
+                      {index}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>

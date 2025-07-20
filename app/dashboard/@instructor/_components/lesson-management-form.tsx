@@ -35,12 +35,13 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import RichTextEditor from "@/components/richtext-editor"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { Control, useFieldArray, useForm, useWatch } from "react-hook-form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import WysiwygRichTextEditor from "@/components/editors/wysiwygRichTextEditor"
+import RichTextRenderer from "@/components/editors/richTextRenders"
 
 const CONTENT_TYPES = {
   AUDIO: "Audio",
@@ -58,9 +59,8 @@ const contentItemSchema = z.object({
   durationMinutes: z.coerce
     .number()
     .min(0, "Duration minutes must be positive")
-    .max(59, "Minutes must be less than 60")
-    .optional(),
-  durationHours: z.coerce.number().min(0, "Duration hours must be positive").optional(),
+    .max(59, "Minutes must be less than 60"),
+  durationHours: z.coerce.number().min(0, "Duration hours must be positive"),
 })
 
 const resourceSchema = z.object({
@@ -71,9 +71,11 @@ const resourceSchema = z.object({
 const lessonFormSchema = z.object({
   number: z.preprocess((val) => Number(val), z.number()),
   title: z.string().min(1, "Lesson title is required"),
-  description: z.string().optional(),
   content: z.array(contentItemSchema),
   resources: z.array(resourceSchema),
+  // description: z.string().optional(),
+  description: z.any(), // now accepts any type
+  objectives: z.any(),
 })
 
 export type LessonFormValues = z.infer<typeof lessonFormSchema> & { [key: string]: any }
@@ -256,10 +258,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                <RichTextEditor
-                  value={field.value || []} // pass current form value (default empty array)
-                  onChange={field.onChange} // update form value on editor change
-                />
+                <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -373,7 +372,7 @@ function LessonList({
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">{courseTitle}</h1>
           <p className="text-muted-foreground text-sm">
-            You have {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"} created under this course.
+            You have {lessons?.length} {lessons?.length === 1 ? "lesson" : "lessons"} created under this course.
           </p>
         </div>
         <Button onClick={onAddLesson}>
@@ -394,7 +393,9 @@ function LessonList({
               <div className="flex items-start justify-between">
                 <div className="flex flex-col items-start">
                   <h3 className="text-lg font-medium">{lesson.title}</h3>
-                  <p className="text-muted-foreground text-sm">{lesson?.description}</p>
+                  <div className="text-muted-foreground text-sm">
+                    <RichTextRenderer htmlString={lesson?.description} maxChars={400} />
+                  </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -445,10 +446,13 @@ function LessonList({
                     <span>{item.title}</span>
                   </Badge>
                 ))} */}
-                <Badge variant="secondary" className="flex items-center gap-1.5">
-                  {getContentTypeIcon("AUDIO" as ContentType)}
-                  <span>{courseCategory}</span>
-                </Badge>
+
+                {courseCategory?.map((i: any) => (
+                  <Badge key={i} variant="secondary" className="flex items-center gap-1.5">
+                    {getContentTypeIcon(i?.contentType as ContentType)}
+                    <span>{i}</span>
+                  </Badge>
+                ))}
               </div>
 
               <div className="text-muted-foreground flex items-center gap-4 text-sm">
@@ -457,12 +461,12 @@ function LessonList({
                   <span>{getTotalDuration(lesson)} minutes</span>
                 </div>
 
-                {/* <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <BookOpen className="h-4 w-4" />
                   <span>
-                    {lesson?.content?.length} {lesson?.content?.length === 1 ? "item" : "items"}
+                    {lesson?.content?.length || "0"} {lesson?.content?.length === 1 ? "item" : "items"}
                   </span>
-                </div> */}
+                </div>
 
                 {(lesson.resources?.length ?? 0) > 0 && (
                   <div className="flex items-center gap-1.5">
@@ -537,7 +541,7 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
           title: values?.title,
           description: values?.description,
           // @ts-ignore
-          learning_objectives: courseData?.data?.objectives,
+          learning_objectives: values?.objectives,
           duration_hours: values?.content[0]?.durationHours,
           duration_minutes: values?.content[0]?.durationMinutes,
           duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
@@ -604,9 +608,23 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>Lesson Description</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Enter description" className="resize-none" {...field} />
+                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="objectives"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lesson Objectives</FormLabel>
+                <FormControl>
+                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -834,7 +852,21 @@ function LessonEditingForm({
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Enter description" className="resize-none" {...field} />
+                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="objectives"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lesson Objectives</FormLabel>
+                <FormControl>
+                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

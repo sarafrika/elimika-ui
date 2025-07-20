@@ -3,7 +3,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { tanstackClient } from "@/services/api/tanstack-client"
 
@@ -116,7 +115,7 @@ const sampleEnrollmentData = {
 }
 
 export default function StudentsPage() {
-  const { data, isPending } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/enrollments", {
+  const { data } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/enrollments", {
     params: {
       query: {
         //@ts-ignore
@@ -125,6 +124,7 @@ export default function StudentsPage() {
       },
     },
   })
+  console.log(data, "students")
 
   const studentId = ""
   const { data: studentData } = tanstackClient.useQuery("get", "/api/v1/students/{uuid}", {
@@ -134,6 +134,7 @@ export default function StudentsPage() {
       },
     },
   })
+  console.log(studentData, "single student")
 
   return (
     <div className="space-y-6 p-4 md:p-10">

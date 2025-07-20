@@ -525,6 +525,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  "/api/v1/courses/{uuid}/unpublish": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getCourse"]
+    put?: never
+    post: operations["createCourse"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   "/api/v1/courses/published": {
     parameters: {
       query?: never

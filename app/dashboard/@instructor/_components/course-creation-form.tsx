@@ -13,32 +13,35 @@ import {
 import * as z from "zod"
 import { toast } from "sonner"
 import { XIcon } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import Spinner from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCreateCategory } from "@/services/category/req"
 import { tanstackClient } from "@/services/api/tanstack-client"
-import { ReactNode, forwardRef, useImperativeHandle, useState, useEffect } from "react"
+import { ReactNode, forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormDescription, FormItem, FormLabel, FormMessage, FormField } from "@/components/ui/form"
-import Image from "next/image"
+import { useStepper } from "@/components/ui/stepper"
+import React from "react"
+import WysiwygRichTextEditor from "@/components/editors/wysiwygRichTextEditor"
 
 const courseCreationSchema = z.object({
   name: z.string().min(1, "Course name is required"),
-  description: z.string().min(1, "Course description is required"),
+  // description: z.string().min(1, "Course description is required"),
+  // objectives: z.string(),
+  description: z.any(), // now accepts any type
+  objectives: z.any(),
   thumbnail_url: z.any().optional(),
   is_free: z.boolean().default(false),
   price: z.coerce.number().optional(),
   sale_price: z.coerce.number().optional(),
   currency: z.string().optional(),
-  objectives: z.string(),
-  categories: z.string(),
+  categories: z.string().array(),
   difficulty: z.string().min(1, "Please select a difficulty level"),
   class_limit: z.coerce.number().min(1, "Class limit must be at least 1"),
 })
@@ -80,6 +83,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
   { showSubmitButton, initialValues, editingCourseId, onSuccess },
   ref,
 ) {
+  const { setActiveStep } = useStepper()
+  const dialogCloseRef = useRef<HTMLButtonElement>(null)
+
   const form = useForm<CourseCreationFormValues>({
     resolver: zodResolver(courseCreationSchema),
     defaultValues: {
@@ -87,7 +93,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
       description: "",
       is_free: false,
       objectives: "",
-      categories: "",
+      categories: [],
       class_limit: 30,
       thumbnail_url: initialValues?.thumbnail_url,
       ...initialValues,
@@ -95,16 +101,16 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
     mode: "onChange",
   })
 
-  // const {
-  //   fields: categoryFields,
-  //   append: appendCategory,
-  //   remove: removeCategory,
-  // } = useFieldArray({
-  //   control: form.control,
-  //   name: "categories",
-  // })
+  const {
+    // fields: categoryFields,
+    append: appendCategory,
+    remove: removeCategory,
+  } = useFieldArray({
+    control: form.control,
+    name: "categories",
+  })
 
-  const [categoryInput, setCategoryInput] = useState<string | null>(null)
+  const [categoryInput, setCategoryInput] = useState("")
   const { mutate: createCategory, isPending: createCategoryPending } = useCreateCategory()
 
   const { data: difficultyLevels } = tanstackClient.useQuery("get", "/api/v1/config/difficulty-levels", {
@@ -122,94 +128,92 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
 
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
 
-  useEffect(() => {
-    const thumbnail = form.getValues("thumbnail")
-    if (thumbnail && !thumbnailPreview) {
-      setThumbnailPreview(thumbnail)
-    }
-    if (initialValues && initialValues?.thumbnail_url) {
-      setThumbnailPreview(initialValues?.thmbnail_url)
-    }
-  }, [form, thumbnailPreview, initialValues])
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, onChange: (val: string) => void) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const base64 = reader.result as string
-      setThumbnailPreview(base64)
-      onChange(base64)
-    }
-    reader.readAsDataURL(file)
+    const previewUrl = URL.createObjectURL(file)
+    setThumbnailPreview(previewUrl)
+
+    const formData = new FormData()
+    formData.append("file", file)
   }
 
   const onSubmit = (data: CourseCreationFormValues) => {
-    if (editingCourseId) {
-      updateCourseMutation.mutate(
-        {
-          body: {
-            name: data?.name,
-            description: data?.description,
-            //@ts-ignore
-            objectives: data?.objectives,
-            instructor_uuid: "8369b6a3-d889-4bc7-8520-e5e8605c25d8",
-            thumbnail_url: "https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg",
-            category_uuid: data?.categories,
-            difficulty_uuid: data?.difficulty,
-            duration_hours: 2,
-            duration_minutes: 0,
-            class_limit: data?.class_limit,
-            price: data?.price,
-            status: "draft",
-            active: false,
-            updated_by: "instructor@sarafrika.com",
-            total_duration_display: "2 hours 00 minutes",
-            is_free: data?.is_free,
-            is_published: false,
-            is_draft: true,
-            // prerequisites: "No prior music experience required; willingness to learn basic concepts.",
-            // age_lower_limit: 18,
-            // age_upper_limit: 65,
-            // intro_video_url: "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
-            // banner_url: "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
-            // created_by: "dotex245@sarafrika.com",
-          },
+    console.log(data, "data here")
 
-          params: {
-            path: { courseId: editingCourseId as string },
-          },
-        },
+    if (editingCourseId) {
+      const editBody = {
+        name: data?.name,
+        description: data?.description,
+        //@ts-ignore
+        objectives: data?.objectives,
+        instructor_uuid: "8369b6a3-d889-4bc7-8520-e5e8605c25d8",
+        thumbnail_url: data?.thumbnail_url,
+        category_uuids: data?.categories,
+        difficulty_uuid: data?.difficulty,
+        duration_hours: 2,
+        duration_minutes: 0,
+        class_limit: data?.class_limit,
+        price: data?.price,
+        status: "draft",
+        active: false,
+        updated_by: "instructor@sarafrika.com",
+        total_duration_display: "2 hours 00 minutes",
+        is_free: data?.is_free,
+        is_published: false,
+        is_draft: true,
+        // prerequisites: "No prior music experience required; willingness to learn basic concepts.",
+        // age_lower_limit: 18,
+        // age_upper_limit: 65,
+        // intro_video_url: "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
+        // banner_url: "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
+        // created_by: "dotex245@sarafrika.com",
+      }
+
+      console.log(editBody, "body")
+
+      updateCourseMutation.mutate(
+        { body: editBody, params: { path: { courseId: editingCourseId as string } } },
         {
           onSuccess: (data) => {
             toast.success(data?.message)
+            setActiveStep(1)
+
             if (typeof onSuccess === "function") {
               onSuccess(data?.data)
             }
           },
+          onError: (error) => {
+            // @ts-ignore
+            if (error?.error.objectives) {
+              toast.error("Objectives text is too long")
+            }
+          },
         },
       )
-    } else {
+    }
+
+    if (!editingCourseId) {
       createCourseMutation.mutate(
         {
           body: {
             // @ts-ignore
+            total_duration_display: "2 hours 00 minutes",
+            instructor_uuid: "8369b6a3-d889-4bc7-8520-e5e8605c25d8",
+            updated_by: "instructor@sarafrika.com",
             name: data?.name,
             description: data?.description,
             objectives: data?.objectives,
-            instructor_uuid: "8369b6a3-d889-4bc7-8520-e5e8605c25d8",
-            category_uuid: data?.categories,
+            category_uuids: data?.categories,
             difficulty_uuid: data?.difficulty,
             duration_hours: 2,
             duration_minutes: 0,
             class_limit: data?.class_limit,
             price: data?.price,
-            thumbnail_url: "https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg",
+            thumbnail_url: thumbnailPreview,
             status: "draft",
             active: false,
-            updated_by: "instructor@sarafrika.com",
-            total_duration_display: "2 hours 00 minutes",
             is_free: data?.is_free,
             is_published: false,
             is_draft: true,
@@ -227,6 +231,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
         {
           onSuccess: (data) => {
             toast.success(data?.message)
+            setActiveStep(1)
+
             if (typeof onSuccess === "function") {
               onSuccess(data?.data)
             }
@@ -241,6 +247,16 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
   }))
 
   const isFree = form.watch("is_free")
+
+  useEffect(() => {
+    const thumbnail = form.getValues("thumbnail")
+    if (thumbnail && !thumbnailPreview) {
+      setThumbnailPreview(thumbnail)
+    }
+    if (initialValues?.thumbnail_url) {
+      setThumbnailPreview(initialValues.thumbnail_url)
+    }
+  }, [form, thumbnailPreview, initialValues])
 
   return (
     <Form {...form}>
@@ -272,7 +288,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Textarea placeholder="Brief description of your course" className="min-h-[100px]" {...field} />
+                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -387,7 +403,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input placeholder="Enter learning objectives" {...field} />
+                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -397,111 +413,116 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
 
         {/* Categories */}
         <FormSection title="Course Categories" description="Add relevant categories for your course">
-          <FormField
-            control={form.control}
-            name="categories" // this now holds a string UUID
-            render={({ field }) => {
-              //@ts-ignore
-              const allCategories = categories?.data?.content || []
-              const selectedCategory = allCategories.find((cat: any) => cat.uuid === field.value)
-
-              return (
-                <FormItem>
-                  <div className="flex items-center gap-2">
-                    <Select
-                      onValueChange={(uuid) => {
-                        field.onChange(uuid) // single UUID
-                      }}
-                      value={field.value || ""}
-                    >
-                      <FormControl className="w-full">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <div className="max-h-[250px]">
-                          {allCategories.map((cat: any) => (
-                            <SelectItem key={cat.uuid} value={cat.uuid}>
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </div>
-                      </SelectContent>
-                    </Select>
-
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline">Add new</Button>
-                      </DialogTrigger>
-
-                      <DialogContent className="w-full sm:max-w-[350px]">
-                        <DialogHeader>
-                          <DialogTitle>Add new category</DialogTitle>
-                          <DialogDescription>Add a new category here.</DialogDescription>
-                        </DialogHeader>
-
-                        <div className="flex w-full items-center gap-2">
-                          <div className="grid w-full gap-3">
-                            <Label htmlFor="category-name">Name</Label>
-                            <Input
-                              id="category-name"
-                              name="category"
-                              value={categoryInput as string}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCategoryInput(e.target.value)}
-                            />
-                          </div>
-                        </div>
-
-                        <DialogFooter className="sm:justify-start">
-                          <DialogClose asChild>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => {
-                                if (categoryInput?.trim()) {
-                                  createCategory(
-                                    { body: { name: categoryInput } },
-                                    {
-                                      onSuccess: () => {
-                                        toast.success("Category added successfully")
-                                        setCategoryInput("")
-                                        refetchCategories()
-                                      },
-                                    },
-                                  )
-                                }
-                              }}
-                            >
-                              {createCategoryPending ? <Spinner /> : "Add"}
-                            </Button>
-                          </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+          <FormItem>
+            <div className="mb-4 flex items-center gap-2">
+              <Select
+                value=""
+                onValueChange={(uuid) => {
+                  if (uuid && !form.watch("categories").includes(uuid)) {
+                    appendCategory(uuid)
+                  }
+                }}
+              >
+                <FormControl className="w-full">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <div className="max-h-[250px] overflow-auto">
+                    {/* @ts-ignore */}
+                    {categories?.data?.content
+                      ?.filter((cat: any) => !form.watch("categories").includes(cat.uuid))
+                      .map((cat: any) => (
+                        <SelectItem key={cat.uuid} value={cat.uuid}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
                   </div>
-
-                  {/* Selected Category Badge */}
-                  {selectedCategory && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Badge key={selectedCategory.uuid} variant="secondary">
-                        {selectedCategory.name}
-                        <button
-                          type="button"
-                          className="ml-2"
-                          onClick={() => field.onChange("")} // Clear selection
-                        >
-                          <XIcon className="h-3 w-3" />
-                        </button>
-                      </Badge>
+                </SelectContent>
+              </Select>
+              {/* Dialog to add new category */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Add new</Button>
+                </DialogTrigger>
+                <DialogContent className="w-full sm:max-w-[350px]">
+                  <DialogHeader>
+                    <DialogTitle>Add new category</DialogTitle>
+                    <DialogDescription>Add a new category here.</DialogDescription>
+                  </DialogHeader>
+                  <div className="flex w-full items-center gap-2 py-2">
+                    <div className="grid w-full gap-3">
+                      <Label htmlFor="category-name">Category Name</Label>
+                      <Input
+                        id="category-name"
+                        name="category"
+                        value={categoryInput}
+                        onChange={(e) => setCategoryInput(e.target.value)}
+                        autoFocus
+                      />
                     </div>
-                  )}
+                  </div>
+                  <DialogFooter className="justify-end">
+                    <Button
+                      type="button"
+                      className="min-w-[75px]"
+                      onClick={() => {
+                        if (categoryInput?.trim()) {
+                          createCategory(
+                            { body: { name: categoryInput.trim() } },
+                            {
+                              onSuccess: (data) => {
+                                toast.success(data?.message)
+                                setCategoryInput("")
+                                refetchCategories()
+                                dialogCloseRef.current?.click()
 
-                  <FormMessage />
-                </FormItem>
+                                // Optionally auto-append:
+                                // appendCategory(newCategory.uuid)
+                              },
+                              onError: (error) => {
+                                toast.error("Category already exists or is invalid.")
+                              },
+                            },
+                          )
+                        }
+                      }}
+                    >
+                      {createCategoryPending ? <Spinner /> : "Add"}
+                    </Button>
+
+                    {/* Hidden button that will close the dialog when clicked */}
+                    <DialogClose asChild>
+                      <button ref={dialogCloseRef} style={{ display: "none" }} />
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </FormItem>
+
+          {/* Show badges of selected categories */}
+          <div className="flex flex-wrap gap-2">
+            {form.watch("categories").map((uuid: string, index: number) => {
+              //@ts-ignore
+              const cat = categories?.data?.content.find((c: any) => c.uuid === uuid)
+              if (!cat) return null
+              return (
+                <Badge key={uuid} variant="secondary" className="flex items-center gap-1">
+                  {cat.name}
+                  <button
+                    type="button"
+                    className="ml-2"
+                    onClick={() => removeCategory(index)}
+                    aria-label={`Remove category ${cat.name}`}
+                  >
+                    <XIcon className="h-3 w-3" />
+                  </button>
+                </Badge>
               )
-            }}
-          />
+            })}
+          </div>
         </FormSection>
 
         {/* Duration & Level */}
@@ -513,7 +534,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
               <FormItem>
                 <Select
                   onValueChange={field.onChange}
-                  value={field.value} // use `value` instead of `defaultValue`
+                  value={field.value ?? ""} // use `value` instead of `defaultValue`
                 >
                   <FormControl className="w-full">
                     <SelectTrigger>
@@ -523,7 +544,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
                   <SelectContent>
                     {difficultyLevels?.data?.map((level: any) => (
                       <SelectItem key={level.uuid} value={level.uuid}>
-                        {" "}
                         {/* ✅ string value */}
                         {level.name}
                       </SelectItem>
@@ -536,6 +556,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
           />
         </FormSection>
 
+        {/* Class Limit */}
         <FormSection title="Class Limit" description="Set the maximum number of students allowed to enroll">
           <FormField
             control={form.control}
@@ -552,9 +573,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
         </FormSection>
 
         {showSubmitButton && (
-          <div className="flex justify-end pt-6">
+          <div className="flex justify-end gap-4 pt-6">
             <Button type="submit" className="min-w-32">
               {createCourseMutation?.isPending || updateCourseMutation?.isPending ? <Spinner /> : "Save Course"}
+            </Button>
+            <Button onClick={() => setActiveStep(1)} className="min-w-32">
+              {"Continue →"}
             </Button>
           </div>
         )}

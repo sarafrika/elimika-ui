@@ -1,4 +1,3 @@
-//@ts-nocheck
 "use client"
 
 import {
@@ -18,6 +17,7 @@ import { formatCourseDate } from "@/lib/format-course-date"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import RichTextRenderer from "@/components/editors/richTextRenders"
 
 export default function CourseDraftsPage() {
   const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
@@ -28,8 +28,10 @@ export default function CourseDraftsPage() {
   const { data, isFetching, isLoading, refetch } = tanstackClient.useQuery(
     "get",
     "/api/v1/courses/instructor/{instructorUuid}",
+    // @ts-ignore
     { params: { path: { instructorUuid }, query: { page, size } } },
   )
+  // @ts-ignore
   const draftCourses = data?.data?.content?.filter(
     (course: any) => course.status === "draft" && course.is_published === false,
   )
@@ -105,19 +107,16 @@ export default function CourseDraftsPage() {
                     <TableCell className="font-medium">
                       <div>
                         <div className="max-w-[270px] truncate">{course.name}</div>
-                        <div className="text-muted-foreground max-w-[250px] truncate text-sm">{course.description}</div>
+                        <RichTextRenderer htmlString={course?.description} maxChars={42} />{" "}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {/* {course.categories.map((category: any, i: any) => (
-                      <Badge key={i} variant="outline" className="capitalize">
-                        {category.name}
-                      </Badge>
-                    ))} */}
-                        <Badge variant="outline" className="capitalize">
-                          {course?.category_uuid}
-                        </Badge>
+                      <div className="flex max-w-[250px] flex-wrap gap-1">
+                        {course.category_names.map((i: any) => (
+                          <Badge key={i} variant="default" className="capitalize">
+                            {i}
+                          </Badge>
+                        ))}
                       </div>
                     </TableCell>
                     <TableCell>{course.class_limit || "Unlimited"}</TableCell>
