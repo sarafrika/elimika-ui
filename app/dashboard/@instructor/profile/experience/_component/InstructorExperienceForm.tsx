@@ -59,7 +59,7 @@ export default function ProfessionalExperienceSettings({
                 isLast: true,
             },
         ])
-    }, [replaceBreadcrumbs])
+    }, [replaceBreadcrumbs]);
 
     const defaultExperience: ExperienceType = {
         organization_name: "Google",
@@ -74,24 +74,24 @@ export default function ProfessionalExperienceSettings({
         years_of_experience: ""
     };
 
+    const passExperiences = (exp: InstructorExperience) => ({
+        ...defaultExperience,
+        ...exp,
+        start_date: (exp.start_date ?? new Date().toISOString()).split("-").slice(0, 2).join("-"),
+        end_date: (exp.end_date ?? new Date().toISOString()).split("-").slice(0, 2).join("-"),
+        updated_by: exp.updated_by ?? "self",
+        updated_date: new Date(exp.updated_date!).toISOString(),
+        years_of_experience: exp.years_of_experience ? exp.years_of_experience.toString() : ""
+    })
+
     const form = useForm<ProfileExperienceFormValues>({
         resolver: zodResolver(profileExperienceSchema),
         defaultValues: {
             //@ts-ignore
-            experiences: instructorExperience.length > 0 ? instructorExperience.map(exp => ({
-                ...defaultExperience,
-                ...exp,
-                start_date: (exp.start_date ?? new Date().toISOString()).split("-").slice(0, 2).join("-"),
-                end_date: (exp.end_date ?? new Date().toISOString()).split("-").slice(0, 2).join("-"),
-                updated_by: exp.updated_by ?? "self",
-                updated_date: new Date(exp.updated_date!).toISOString(),
-                years_of_experience: exp.years_of_experience ? exp.years_of_experience.toString() : ""
-            })) : [defaultExperience],
+            experiences: instructorExperience.length > 0 ? instructorExperience.map(passExperiences) : [defaultExperience],
         },
         mode: "onChange",
     });
-
-    // console.log(form.formState.errors, form.getValues())
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -101,10 +101,10 @@ export default function ProfessionalExperienceSettings({
     const updateExpMutation = tanstackClient.useMutation("put", "/api/v1/instructors/{instructorUuid}/experience/{experienceUuid}");
     const addExpMutation = tanstackClient.useMutation("post", "/api/v1/instructors/{instructorUuid}/experience");
     const { errors, submitting } = useMultiMutations([updateExpMutation, addExpMutation]);
+
     async function onSubmit(data: ProfileExperienceFormValues) {
-        // console.log(data)
-        // TODO: Handle form submission
-        data.experiences.forEach(exp => {
+
+        data.experiences.forEach(async (exp, index) => {
             const expData = {
                 ...exp,
                 start_date: new Date(`${exp.start_date}-1`).toISOString(),
@@ -123,23 +123,20 @@ export default function ProfessionalExperienceSettings({
                 })
             }
             else {
-                addExpMutation.mutate({
+                const resp = await addExpMutation.mutateAsync({
                     params: {
                         path: {
                             instructorUuid: instructor.uuid!
                         }
                     },
                     body: expData
-                })
+                });
+                const exps = form.getValues("experiences");
+                exps[index] = passExperiences(resp.data!);
+                form.setValue("experiences", exps);
             }
 
-            if (errors) {
-                console.log("API Errors", errors)
-            }
-            else {
-                toast("Experience updated successfully")
-            }
-        })
+        });
     }
 
     async function onDelete(index: number) {
@@ -156,7 +153,7 @@ export default function ProfessionalExperienceSettings({
                         }
                     }
                 });
-                if(resp.error){
+                if (resp.error) {
                     console.log(resp.error);
                     return;
                 }

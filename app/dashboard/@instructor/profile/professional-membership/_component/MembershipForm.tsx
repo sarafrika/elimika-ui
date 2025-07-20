@@ -81,16 +81,18 @@ export default function ProfessionalBodySettings({
         instructor_uuid: instructor.uuid!
     }
 
+    const passMember = (mem:InstructorProfessionalMembership) => ({
+        ...mem,
+        start_date: new Date(mem.start_date!),
+        end_date: new Date(mem.end_date!),
+        updated_date: mem.updated_date ?? new Date().toISOString(),
+        updated_by: "self"
+    });
+
     const form = useForm<ProfessionalMembershipFormValues>({
         resolver: zodResolver(professionalMembershipSchema),
         defaultValues: {
-            professional_bodies: instructorMembership.length > 0 ? instructorMembership.map(mem=>({
-                ...mem,
-                start_date: new Date(mem.start_date!),
-                end_date: new Date(mem.end_date!),
-                updated_date: mem.updated_date ?? new Date().toISOString(),
-                updated_by: "self"
-            })) : [defaultMemebership],
+            professional_bodies: instructorMembership.length > 0 ? instructorMembership.map(passMember) : [defaultMemebership],
         },
         mode: "onChange",
     });
@@ -112,7 +114,7 @@ export default function ProfessionalBodySettings({
     const onSubmit = (data: ProfessionalMembershipFormValues) => {
         console.log(data)
         // TODO: Handle form submission
-        data.professional_bodies.forEach(mem => {
+        data.professional_bodies.forEach(async (mem, index) => {
             const memData = {
                 ...mem,
                 start_date: mem.start_date.toISOString(),
@@ -130,7 +132,7 @@ export default function ProfessionalBodySettings({
                 })
             }
             else {
-                addMemMutation.mutate({
+                const resp = await addMemMutation.mutateAsync({
                     params: {
                         path: {
                             instructorUuid: instructor.uuid!
@@ -138,6 +140,12 @@ export default function ProfessionalBodySettings({
                     },
                     body: memData
                 })
+
+                if(!resp.error){
+                    const memberships = form.getValues("professional_bodies");
+                    memberships[index] = passMember(resp.data!);
+                    form.setValue("professional_bodies", memberships);
+                }
             }
         })
     }

@@ -11,6 +11,7 @@ export default function InstructoEducationPage() {
 
   const instructor = useInstructor();
   const [eperience, setEperience] = useState<InstructorExperience[] | null>(null);
+  
   useEffect(() => {
     if (instructor) {
       fetchClient.GET("/api/v1/instructors/{instructorUuid}/experience", {

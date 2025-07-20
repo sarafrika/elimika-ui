@@ -100,20 +100,20 @@ export default function EducationSettings({
         instructor_uuid: instructor ? instructor.uuid as string : crypto.randomUUID()
     }
 
+    const passEducation = (ed: InstructorEducation) => ({
+        ...defaultEducation,
+        ...ed,
+        updated_date: ed.updated_date ?? new Date().toISOString(),
+        updated_by: "self",
+        year_completed: ed.year_completed?.toString(),
+        instructor_uuid: instructor.uuid!
+    })
+
     const form = useForm<EducationFormValues>({
         resolver: zodResolver(educationSchema),
         defaultValues: {
             //@ts-ignore
-            educations: instructorEducation.length > 0 ? instructorEducation.map(ed => {
-                return {
-                    ...defaultEducation,
-                    ...ed,
-                    updated_date: ed.updated_date ?? new Date().toISOString(),
-                    updated_by: "self",
-                    year_completed: ed.year_completed?.toString(),
-                    instructor_uuid: instructor.uuid!
-                } as EdType
-            }) : [defaultEducation]
+            educations: instructorEducation.length > 0 ? instructorEducation.map(passEducation) : [defaultEducation]
         },
         mode: "onChange",
     })
@@ -125,54 +125,39 @@ export default function EducationSettings({
 
     console.log(form.formState.errors)
 
-    const [submitting, setSubmitting] = useState(false);
+    const addEdMutation = tanstackClient.useMutation("post", "/api/v1/instructors/{instructorUuid}/education");
+    const updateMutation = tanstackClient.useMutation("put", "/api/v1/instructors/{instructorUuid}/education/{educationUuid}");
+    const { errors, submitting } = useMultiMutations([addEdMutation, updateMutation])
+
+    // const [submitting, setSubmitting] = useState(false);
     const onSubmit = async (data: EducationFormValues) => {
         console.log("instructor", instructor)
         console.log(data)
         // TODO: Implement submission logic
-        setSubmitting(true)
-        const responses = await Promise.all(
-            data.educations.map(
-                (education: EdType) => {
-                    const options = {
-                        params: {
-                            path: {
-                                instructorUuid: instructor!.uuid as string
-                            }
-                        },
-                        //@ts-ignore
-                        body: {
-                            ...education,
-                            year_completed: Number(education.year_completed)
-                        }
-                    }
-                    if (!education.uuid) {
-                        return fetchClient.POST("/api/v1/instructors/{instructorUuid}/education", options);
-                    }
-                    else {
-                        return fetchClient.PUT("/api/v1/instructors/{instructorUuid}/education/{educationUuid}", {
-                            ...options,
-                            params: {
-                                path: {
-                                    ...options.params.path,
-                                    educationUuid: education.uuid
-                                }
-                            }
-                        })
-                    }
-                }
-            )
-        );
+        // setSubmitting(true)
+        data.educations.forEach(async (ed, index) => {
+            const options = {
+                params: { path: { instructorUuid: instructor!.uuid as string } },
+                //@ts-ignore
+                body: { ...ed, year_completed: Number(ed.year_completed) }
+            }
 
-        setSubmitting(false);
-        const newData: InstructorEducation[] = []
-        responses.forEach(response => {
-            if (response.error) {
-                console.log(response.error)
+            if (!ed.uuid) {
+                const resp = await addEdMutation.mutateAsync(options);
+                const eds = form.getValues("educations");
+                eds[index] = passEducation(resp.data!);
+                form.setValue("educations", eds)
             }
             else {
-                newData.push(response.data.data! as InstructorEducation);
-                console.log(response.data)
+                updateMutation.mutate({
+                    ...options,
+                    params: {
+                        path: {
+                            ...options.params.path,
+                            educationUuid: ed.uuid
+                        }
+                    }
+                })
             }
         });
 
@@ -192,7 +177,7 @@ export default function EducationSettings({
                         }
                     }
                 });
-                if(resp.error){
+                if (resp.error) {
                     console.log(resp.error);
                     return;
                 }
