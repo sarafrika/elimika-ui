@@ -153,7 +153,7 @@ export default function SkillsSettings({
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
-                    {fields.map((field, index) => (<Card>
+                    {fields.map((field, index) => (<Card key={`card${index}`}>
                         <CardHeader>
                             <CardTitle className="flex justify-between items-center">
                                 <span>Your Skills</span>

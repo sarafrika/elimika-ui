@@ -95,7 +95,7 @@ export default function InstructorsPage({ instructors }: Props) {
             const matchesSearch =
                 instructor.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 instructor.professional_headline?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                instructor.formattedLocation?.toLowerCase().includes(searchQuery.toLowerCase())
+                instructor.formatted_location?.toLowerCase().includes(searchQuery.toLowerCase())
 
             // Status filter
             const matchesStatus = statusFilter === 'all' || getStatusBadge(instructor.uuid!) === statusFilter

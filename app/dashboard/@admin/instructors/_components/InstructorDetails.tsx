@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { MapPin, User, Globe, Award, Briefcase, GraduationCap } from 'lucide-react'
-import { Instructor } from '@/services/api/schema'
+import { Instructor, InstructorEducation } from '@/services/api/schema'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { fetchClient } from '@/services/api/fetch-client'
+import { tanstackClient } from '@/services/api/tanstack-client'
 
 interface InstructorDetailsProps {
     instructor: Instructor
@@ -11,11 +13,38 @@ interface InstructorDetailsProps {
     className?: string
 }
 
+const { useQuery } = tanstackClient;
+
 export default function InstructorDetails({
     instructor,
     getStatusBadgeComponent,
     className = ""
 }: InstructorDetailsProps) {
+
+    const educationQuery = useQuery("get", "/api/v1/instructors/{instructorUuid}/education", {
+        params: { path: { instructorUuid: instructor.uuid! } }
+    });
+
+    const profBodyQuery = useQuery("get", "/api/v1/instructors/{instructorUuid}/memberships", {
+        params: {
+            path: { instructorUuid: instructor.uuid! }, query: {
+                //@ts-ignore
+                page: 0,
+                size: 10
+            }
+        },
+    });
+
+    const expQuery = useQuery("get", "/api/v1/instructors/{instructorUuid}/experience", {
+        params: {
+            path: { instructorUuid: instructor.uuid! }, query: {
+                //@ts-ignore
+                page: 0,
+                size: 10
+            }
+        },
+    });
+
     return (
         <div className={`space-y-6 ${className}`}>
             {/* Profile Header */}
@@ -28,7 +57,7 @@ export default function InstructorDetails({
                                 <p className="text-muted-foreground text-lg">{instructor.professional_headline || 'Professional'}</p>
                                 <p className="text-sm text-muted-foreground flex items-center gap-2">
                                     <MapPin className="h-4 w-4" />
-                                    {instructor.formattedLocation || 'Location not specified'}
+                                    {instructor.formatted_location || 'Location not specified'}
                                 </p>
                             </div>
                             <div className="text-right space-y-2">
@@ -54,12 +83,12 @@ export default function InstructorDetails({
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Profile Complete:</p>
-                                <p className="text-sm">{instructor.profileComplete ? 'Yes' : 'No'}</p>
+                                <p className="text-sm">{instructor.is_profile_complete ? 'Yes' : 'No'}</p>
                             </div>
-                            <div>
+                            {/* <div>
                                 <p className="text-sm font-medium text-muted-foreground">Credentials:</p>
                                 <p className="text-sm">{instructor.totalProfessionalCredentials || 0}</p>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </CardHeader>
@@ -108,7 +137,7 @@ export default function InstructorDetails({
                         <Separator />
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">Permanent address</p>
-                            <p className="text-sm">{instructor.formattedLocation || 'Address not specified'}</p>
+                            <p className="text-sm">{instructor.formatted_location || 'Address not specified'}</p>
                         </div>
                         {instructor.website && (
                             <div>
@@ -136,21 +165,21 @@ export default function InstructorDetails({
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {instructor.certifications && instructor.certifications.length > 0 ? (
-                            instructor.certifications.map((cert, index) => (
+                        {!educationQuery.isPending && educationQuery.isSuccess && educationQuery.data.data!.length > 0 ? (
+                            educationQuery.data.data!.map((ed, index) => (
                                 <div key={index} className="space-y-2">
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
                                             <p className="font-medium text-sm">Certificate</p>
-                                            <p className="text-sm text-muted-foreground">{cert.issued_by || 'Institution not specified'}</p>
+                                            <p className="text-sm text-muted-foreground">{ed.school_name ?? 'Institution not specified'}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-medium">
-                                                {cert.issued_date ? new Date(cert.issued_date).getFullYear() : 'N/A'}
+                                                {ed.year_completed ?? 'N/A'}
                                             </p>
                                         </div>
                                     </div>
-                                    {cert.certificate_url && (
+                                    {/* cert.certificate_url && (
                                         <a
                                             href={cert.certificate_url}
                                             target="_blank"
@@ -160,7 +189,7 @@ export default function InstructorDetails({
                                             View Certificate
                                         </a>
                                     )}
-                                    {index < instructor.certifications!.length - 1 && <Separator />}
+                                    {index < instructor.certifications!.length - 1 && <Separator /> */}
                                 </div>
                             ))
                         ) : (
@@ -179,11 +208,11 @@ export default function InstructorDetails({
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {instructor.professional_bodies && instructor.professional_bodies.length > 0 ? (
+                    {profBodyQuery.isSuccess && !profBodyQuery.isError && profBodyQuery.data.data!.content!.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                            {instructor.professional_bodies.map((body, index) => (
+                            {profBodyQuery.data.data!.content!.map((body, index) => (
                                 <Badge key={index} variant="outline" className="text-xs">
-                                    {body.body_name || 'N/A'}
+                                    {body.organization_name || 'N/A'}
                                 </Badge>
                             ))}
                         </div>
@@ -202,15 +231,15 @@ export default function InstructorDetails({
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {instructor.training_experiences && instructor.training_experiences.length > 0 ? (
-                        instructor.training_experiences.map((exp, index) => (
+                    {expQuery.isSuccess && !expQuery.isError && expQuery.data.data!.content!.length > 0 ? (
+                        expQuery.data.data!.content!.map((exp, index) => (
                             <div key={index} className="space-y-2">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
-                                        <p className="font-medium text-sm">{exp.job_title || 'Position not specified'}</p>
-                                        <p className="text-sm text-muted-foreground font-medium">{exp.organisation_name || 'Organization not specified'}</p>
-                                        {exp.work_description && (
-                                            <p className="text-sm text-muted-foreground mt-1">{exp.work_description}</p>
+                                        <p className="font-medium text-sm">{exp.position || 'Position not specified'}</p>
+                                        <p className="text-sm text-muted-foreground font-medium">{exp.organization_name || 'Organization not specified'}</p>
+                                        {exp.summary && (
+                                            <p className="text-sm text-muted-foreground mt-1">{exp.summary}</p>
                                         )}
                                     </div>
                                     <div className="text-right">
@@ -219,7 +248,7 @@ export default function InstructorDetails({
                                         </p>
                                     </div>
                                 </div>
-                                {index < instructor.training_experiences!.length - 1 && <Separator />}
+                                {/* {index < instructor.training_experiences!.length - 1 && <Separator />} */}
                             </div>
                         ))
                     ) : (

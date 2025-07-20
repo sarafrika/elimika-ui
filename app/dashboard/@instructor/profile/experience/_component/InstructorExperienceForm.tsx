@@ -142,7 +142,7 @@ export default function ProfessionalExperienceSettings({
     async function onDelete(index: number) {
         const shouldRemove = confirm("Are you sure you want to remove this experience?");
         if (shouldRemove) {
-            const expUUID = form.getValues("experiences")[index]?.uuid!;
+            const expUUID = form.getValues("experiences")[index]?.uuid;
             remove(index);
             if (expUUID) {
                 const resp = await fetchClient.DELETE("/api/v1/instructors/{instructorUuid}/experience/{experienceUuid}", {

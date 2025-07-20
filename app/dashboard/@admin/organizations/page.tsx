@@ -2,7 +2,7 @@ import React from "react"
 import OrganizationsPage from "./_components/OrganizationsPage"
 import { fetchClient } from "@/services/api/fetch-client"
 import ErrorPage from "@/components/ErrorPage"
-import { OrganisationDto } from "@/services/api/schema"
+import { Organisation as OrganisationDto } from "@/services/api/schema"
 import { sampleOrganizations } from "../overview/sample-admin-data"
 
 // Dummy organizations for layout preview
@@ -14,7 +14,7 @@ const dummyOrganizations: OrganisationDto[] = [
       "A leading provider of professional development and technical training programs across East Africa. We specialize in digital skills, leadership development, and industry-specific certifications.",
     domain: "elimika.co.ke",
     code: "ETI001",
-    slug: "elimika-training-institute",
+    // slug: "elimika-training-institute",
     active: true,
     created_date: "2023-01-15T08:30:00Z",
     updated_date: "2024-01-20T14:45:00Z",
@@ -26,7 +26,7 @@ const dummyOrganizations: OrganisationDto[] = [
       "Focused on bridging the skills gap in technology and business through comprehensive training programs and workshops.",
     domain: "skillsdev.org",
     code: "SDA002",
-    slug: "skills-development-academy",
+    // slug: "skills-development-academy",
     active: true,
     created_date: "2023-03-22T10:15:00Z",
     updated_date: "2024-01-18T16:20:00Z",
@@ -38,7 +38,7 @@ const dummyOrganizations: OrganisationDto[] = [
       "Delivering high-quality corporate training solutions and professional certification programs for working professionals.",
     domain: "prolearn.com",
     code: "PLH003",
-    slug: "professional-learning-hub",
+    // slug: "professional-learning-hub",
     active: false,
     created_date: "2023-07-10T12:00:00Z",
     updated_date: "2024-01-10T09:30:00Z",
@@ -50,7 +50,7 @@ const dummyOrganizations: OrganisationDto[] = [
       "Specializing in cutting-edge technology training including AI, blockchain, and data science for the next generation of tech leaders.",
     domain: "digitalinnovation.tech",
     code: "DIC004",
-    slug: "digital-innovation-center",
+    // slug: "digital-innovation-center",
     active: true,
     created_date: "2023-09-05T14:25:00Z",
     updated_date: "2024-01-25T11:10:00Z",

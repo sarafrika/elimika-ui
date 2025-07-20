@@ -1,13 +1,13 @@
 import React from 'react'
 import { Edit, Trash2, Building2 } from 'lucide-react'
-import { OrganisationDto } from '@/services/api/schema'
+import { Organisation as OrganisationDto } from '@/services/api/schema'
 import { Button } from '@/components/ui/button'
 import OrganizationDetails from './OrganizationDetails'
 
 interface OrganizationDetailsPanelProps {
-    organization: OrganisationDto | null
-    onApprove: (organization: OrganisationDto) => void
-    onReject: (organization: OrganisationDto) => void
+    organization:OrganisationDto | null
+    onApprove: (organization:OrganisationDto) => void
+    onReject: (organization:OrganisationDto) => void
     getStatusBadgeComponent: (organizationId: string) => React.ReactElement
 }
 

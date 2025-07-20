@@ -1,6 +1,6 @@
 import React from 'react'
 import { X, Edit, Trash2, Building2 } from 'lucide-react'
-import { OrganisationDto } from '@/services/api/schema'
+import { Organisation as OrganisationDto } from '@/services/api/schema'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
