@@ -8,9 +8,6 @@ type SearchEndpoints = {
     [K in keyof paths]: paths[K] extends { get: any } ? K : never;
 }[keyof paths];
 
-type QueryParams<P extends SearchEndpoints> =
-    paths[P]["get"] extends { parameters: { query: infer Q } } ? Q : undefined;
-
 export async function search<P extends SearchEndpoints>(
     endpoint: P,
     searchParams: any
@@ -22,7 +19,7 @@ export async function search<P extends SearchEndpoints>(
         init.params = {
             pageable: {
                 page: 0,
-                size: 10
+                size: 10,
             },
             query: { ...searchParams }
         }
@@ -34,7 +31,7 @@ export async function search<P extends SearchEndpoints>(
     }
 
     if (resp.data.data?.content?.length === 0) {
-        throw new Error("User not found")
+        throw new Error("Not found")
     }
 
     return resp.data.data?.content!;

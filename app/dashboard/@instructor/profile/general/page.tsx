@@ -1,25 +1,13 @@
 "use client"
-import { search } from "@/services/api/actions";
-import { components, Instructor, User } from "@/services/api/schema";
-import { schemas } from "@/services/api/zod-client";
-import { auth } from "@/services/auth";
-import { z } from "zod";
-import InstructorProfile from "./_component/InstructorProfile";
-import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import Spinner from "@/components/ui/spinner";
-import { useAppStore } from "@/store/app-store";
-import useInstructor from "@/hooks/use-instructor";
 
-type UserType = z.infer<typeof schemas.User>
-type InstructorType = components["schemas"]["Instructor"]
+import InstructorProfile from "./_component/InstructorProfile";
+import Spinner from "@/components/ui/spinner";
+import { useUser } from "@/context/user-context";
+import { useInstructor } from "@/context/instructor-context";
 
 export default function InstructorProfilePage() {
-  const session = useSession();
-
-  const user = session.data ? session.data.user as User : null;
-  const instructor = useInstructor(user);
-
+  const user = useUser();
+  const instructor = useInstructor();
   return (<>
     {user && instructor ? <InstructorProfile {...{ user, instructor }} /> : <Spinner />}
   </>);

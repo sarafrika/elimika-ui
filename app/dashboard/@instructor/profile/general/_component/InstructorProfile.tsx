@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
-import { useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -52,6 +52,9 @@ import { UUID } from "crypto"
 import Spinner from "@/components/ui/spinner"
 import { appStore } from "@/store/app-store"
 import { useSession } from "next-auth/react"
+import ImageSelector, { ImageType } from "@/components/image-selector"
+import { fetchClient } from "@/services/api/fetch-client"
+import { toast } from "sonner"
 
 const generalProfileSchema = z.object({
     user: schemas.User.merge(z.object({
@@ -86,12 +89,16 @@ export default function InstructorProfile({
                 isLast: true,
             },
         ])
-    }, [replaceBreadcrumbs])
+    }, [replaceBreadcrumbs]);
+
+    /** For handling profile picture preview */
+    const fileElmentRef = useRef<HTMLInputElement>(null);
+    const [profilePic, setProfilePic] = useState<ImageType>({ url: user.profile_image_url ?? profilePicSvg });
 
     const { data: session, update } = useSession();
     const updateSession = update;
     const instructorStore = appStore();
-    
+
     const form = useForm<GeneralProfileFormValues>({
         resolver: zodResolver(generalProfileSchema),
         defaultValues: {
@@ -119,7 +126,35 @@ export default function InstructorProfile({
     const { errors, submitting } = useMultiMutations([userMutation, instructorMutation]);
 
     async function onSubmit(data: GeneralProfileFormValues) {
-        console.log(data)
+
+        /** Upload profile picture */
+        if (profilePic.file) {
+            const fd = new FormData();
+            const fileName = `${crypto.randomUUID()}${profilePic.file.name}`;
+            fd.append("profile_image", profilePic.file as Blob, fileName);
+            //@ts-ignore
+            const resp = await fetchClient.PUT("/api/v1/users/{uuid}/profile-image", {
+                params: {
+                    path: {
+                        uuid: user.uuid as UUID
+                    }
+                },
+                // @ts-ignore
+                body: fd
+            });
+
+            if(resp.error){
+                //@ts-ignore
+                console.log(resp.error.error)
+                //@ts-ignore
+                toast(resp.error.message);
+            }
+            else{
+                console.log("Image Upload Data", resp.data)
+                // data!.user.profile_image_url = resp.data?.profile_image_url;
+            }
+        }
+
         userMutation.mutate({
             params: {
                 path: {
@@ -170,9 +205,9 @@ export default function InstructorProfile({
                             <div className="flex flex-col items-start gap-8 sm:flex-row">
                                 <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
                                     <Avatar className="bg-primary-50 h-24 w-24">
-                                        <AvatarImage src="" alt="Avatar" />
+                                        <AvatarImage src={profilePic.url} alt="Avatar" />
                                         <AvatarFallback className="bg-blue-50 text-xl text-blue-600">
-                                            JO
+                                            {`${user.first_name[0]?.toUpperCase()}${user.last_name[0]?.toUpperCase()}`}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="space-y-2">
@@ -182,9 +217,12 @@ export default function InstructorProfile({
                                             Max size: 5MB
                                         </div>
                                         <div className="flex space-x-2">
-                                            <Button variant="outline" size="sm" type="button">
-                                                Change
-                                            </Button>
+                                            <ImageSelector onSelect={setProfilePic} {...{ fileElmentRef }}>
+                                                <Button variant="outline" size="sm" type="button"
+                                                    onClick={() => fileElmentRef.current?.click()}>
+                                                    Change
+                                                </Button>
+                                            </ImageSelector>
                                             <Button
                                                 variant="outline"
                                                 size="sm"

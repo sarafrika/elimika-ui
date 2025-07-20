@@ -14,6 +14,7 @@ import { z } from "zod"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useUser } from "@/context/user-context"
 
 const ProfileSchema = z.object({
   user: schemas.User,
@@ -26,8 +27,10 @@ type UserSchema = z.infer<typeof schemas.User>
 export default function StudentOnboardingPage() {
   const router = useRouter()
   // const { user, isLoading } = useUserStore()
-  const { data: session, status } = useSession()
-  const user = session?.user;
+  // const { data: session, status } = useSession()
+  // const user = session?.user;
+  const user = useUser();
+
   const [isPending, startTransition] = useTransition()
 
   const form = useForm<ProfileType>({

@@ -47,7 +47,6 @@ import Spinner from "@/components/ui/spinner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useSession } from "next-auth/react"
 import useMultiMutations from "@/hooks/use-multi-mutations"
-import { GenericStoreType, StoreContext as StudentContext } from "@/context/generic-store-context"
 import { appStore } from "@/store/app-store"
 
 // console.log(Object.values(schemas))

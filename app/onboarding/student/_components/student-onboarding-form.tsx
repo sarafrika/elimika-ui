@@ -38,6 +38,7 @@ import { useSession } from "next-auth/react"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import useMultiMutations from "@/hooks/use-multi-mutations"
 import { UUID } from "crypto"
+import { useUser } from "@/context/user-context"
 
 const ProfileSchema = z.object({
   user: schemas.User.merge(z.object({
@@ -58,9 +59,10 @@ type UserSchema = z.infer<typeof schemas.User>
 
 export function StudentOnboardingForm() { //StudentOnboardingFormProps
 
-  const session = useSession()
-  const user = session.data?.user;
-  console.log("User", user)
+  /* const session = useSession()
+  const user = session.data?.user; */
+  const user = useUser();
+  console.log("User", user);
 
   const form = useForm<ProfileType>({
     resolver: zodResolver(ProfileSchema),

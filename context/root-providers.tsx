@@ -36,7 +36,9 @@ export function RootProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         {/* <UserFetcher /> */}
+        <UserContextProvider>
           {children}
+        </UserContextProvider>
       </SessionProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

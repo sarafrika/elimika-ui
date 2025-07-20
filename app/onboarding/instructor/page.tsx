@@ -2,35 +2,35 @@
 
 import React, { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import {
   SharedOnboardingForm,
   type SharedOnboardingFormData,
 } from "@/app/onboarding/_components/shared-onboarding-form"
-import { useUserStore } from "@/store/use-user-store"
 import { fetchClient } from "@/services/api/fetch-client"
 import { getAuthToken } from "@/services/auth/get-token"
 import Loading from "@/components/Loading"
+import { useUser } from "@/context/user-context"
 
 export default function InstructorOnboardingPage() {
   const router = useRouter()
-  const { data: session, status } = useSession()
-  const user = session!.user;
+  /* const { data: session, status } = useSession()
+  const user = session!.user; */
+  const user = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (data: SharedOnboardingFormData) => {
     setIsSubmitting(true)
     try {
-      if (!user?.uuid || !session?.user?.name || !user.email) {
+      if (!user?.uuid ||  !user.email) {
         toast.error("User information is missing. Please try logging in again.")
         setIsSubmitting(false)
         return
       }
       // Split name into first and last
-      const fullName = session.user.name
-      const firstName = fullName.split(" ")[0]!
-      const lastName = fullName.split(" ").slice(1).join(" ") || firstName
+      const fullName = user.full_name
+      const firstName = fullName!.split(" ")[0]!
+      const lastName = fullName!.split(" ").slice(1).join(" ") || firstName
       // Prepare user data for PUT
       const userData = {
         first_name: firstName,
@@ -38,7 +38,7 @@ export default function InstructorOnboardingPage() {
         email: user.email,
         phone_number: data.phone_number,
         dob: data.date_of_birth?.toISOString().split("T")[0] || "",
-        username: session.user.name,
+        username: user.first_name,
         active: true,
         user_domain: ["instructor"] as Array<
           "student" | "instructor" | "admin" | "organisation_user"

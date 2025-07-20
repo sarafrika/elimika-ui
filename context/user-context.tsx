@@ -1,16 +1,17 @@
 import { User } from "@/services/api/schema";
-import { UserState, useUserStore } from "@/store/use-user-store";
-import { createContext, ReactNode, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
-export const UserContext = createContext<UserState | { user: null }>({ user: null });
-
-export default function UserContextProvider({ children, user }: { user?: User, children: ReactNode }) {
-    const userStore = useUserStore();
-    userStore.setUser(user!);
+const UserContext = createContext<User | null>(null)
+export default function UserContextProvider({ children }: { children: ReactNode }) {
+    const session = useSession();
+    const [user, setUser] = useState(session.data?.user!);
     useEffect(() => {
-        // if (!userStore.user) {
-        //     userStore.fetchCurrentUser()
-        // }
-    }, [])
-    return (<UserContext.Provider value={userStore}>{children}</UserContext.Provider>);
+        setUser(session.data?.user!);
+    }, [session.status])
+    return (<UserContext.Provider value={user!}>{children}</UserContext.Provider>);
+}
+
+export function useUser() {
+    return useContext(UserContext);
 }
