@@ -19,12 +19,28 @@ import RichTextRenderer from "@/components/editors/richTextRenders"
 import HTMLTextPreview from "@/components/editors/html-text-preview"
 import { StepperContent, StepperList, StepperRoot, StepperTrigger } from "@/components/ui/stepper"
 import { CourseCreationForm, CourseFormRef } from "@/app/dashboard/@instructor/_components/course-creation-form"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
 
 export default function CourseCreationPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const courseId = searchParams.get("id")
   const [createdCourseId, setCreatedCourseId] = useState<string | null>(null)
+
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "dashboard", title: "Dashboard", url: "/dashboard/overview" },
+      { id: "course-management", title: "Course-management", url: "/dashboard/course-management/drafts" },
+      {
+        id: "create-new-course",
+        title: "Create New Course",
+        url: `/dashboard/course-management/create-new-course?id=id`,
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
 
   const formRef = useRef<CourseFormRef>(null)
 

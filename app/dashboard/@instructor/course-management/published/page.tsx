@@ -14,12 +14,28 @@ import {
 import Link from "next/link"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { formatCourseDate } from "@/lib/format-course-date"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Spinner from "@/components/ui/spinner"
 import { toast } from "sonner"
 import RichTextRenderer from "@/components/editors/richTextRenders"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
 
 export default function PublishedCoursesPage() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "dashboard", title: "Dashboard", url: "/dashboard/overview" },
+      { id: "course-management", title: "Course-management", url: "/dashboard/course-management/published" },
+      {
+        id: "published",
+        title: "Published",
+        url: "/dashboard/course-management/published",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
   const [page, setPage] = useState(0)
   const [size, setSize] = useState(50)

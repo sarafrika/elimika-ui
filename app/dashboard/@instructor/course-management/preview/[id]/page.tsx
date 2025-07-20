@@ -9,14 +9,30 @@ import Spinner from "@/components/ui/spinner"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { CheckCircle, Clock, Users, Video } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog"
 import { DialogTitle } from "@radix-ui/react-dialog"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
 
 export default function CoursePreviewPage() {
   const params = useParams()
   const courseId = params?.id
+
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "dashboard", title: "Dashboard", url: "/dashboard/overview" },
+      { id: "course-management", title: "Course-management", url: "/dashboard/course-management/drafts" },
+      {
+        id: "preview",
+        title: "Preview",
+        url: `/dashboard/course-management/preview/${courseId}`,
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
 
   const [open, setOpen] = useState(false)
   const router = useRouter()

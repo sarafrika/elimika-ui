@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import { toast } from "sonner"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Spinner from "@/components/ui/spinner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,8 +18,24 @@ import { tanstackClient } from "@/services/api/tanstack-client"
 import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import RichTextRenderer from "@/components/editors/richTextRenders"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
 
 export default function CourseDraftsPage() {
+  const { replaceBreadcrumbs } = useBreadcrumb()
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: "dashboard", title: "Dashboard", url: "/dashboard/overview" },
+      { id: "course-management", title: "Course-management", url: "/dashboard/course-management/drafts" },
+      {
+        id: "drafts",
+        title: "Drafts",
+        url: "/dashboard/course-management/drafts",
+        isLast: true,
+      },
+    ])
+  }, [replaceBreadcrumbs])
+
   const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
 
   const [page, setPage] = useState(0)
