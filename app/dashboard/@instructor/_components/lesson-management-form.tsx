@@ -36,24 +36,30 @@ import { Textarea } from "@/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { tanstackClient } from "@/services/api/tanstack-client"
-import { Control, useFieldArray, useForm, useWatch } from "react-hook-form"
+import RichTextRenderer from "@/components/editors/richTextRenders"
+import WysiwygRichTextEditor from "@/components/editors/wysiwygRichTextEditor"
+import { Control, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import WysiwygRichTextEditor from "@/components/editors/wysiwygRichTextEditor"
-import RichTextRenderer from "@/components/editors/richTextRenders"
+import React from "react"
 
-const CONTENT_TYPES = {
+export const CONTENT_TYPES = {
   AUDIO: "Audio",
   VIDEO: "Video",
   TEXT: "Text",
   LINK: "Link",
   PDF: "PDF",
   YOUTUBE: "YouTube",
+  IMAGE: "Image",
 } as const
 
 const contentItemSchema = z.object({
-  contentType: z.enum(["AUDIO", "VIDEO", "TEXT", "LINK", "PDF", "YOUTUBE"]),
+  contentType: z.enum(["AUDIO", "VIDEO", "TEXT", "LINK", "PDF", "YOUTUBE"], {
+    required_error: "Content type is required",
+  }),
+  contentUuid: z.string(),
+  contentCategory: z.string(),
   title: z.string().min(1, "Title is required"),
   value: z.any().optional(),
   durationMinutes: z.coerce
@@ -159,19 +165,20 @@ const ContentTypeIcons = {
   AUDIO: FileAudio,
   VIDEO: FileVideo,
   TEXT: FileText,
+  IMAGE: FileText,
   LINK: LinkIcon,
   PDF: FileIcon,
   YOUTUBE: Youtube,
 }
 
-const ContentTypeLabels = {
-  [CONTENT_TYPES.AUDIO]: "Audio",
-  [CONTENT_TYPES.VIDEO]: "Video",
-  [CONTENT_TYPES.TEXT]: "Text",
-  [CONTENT_TYPES.LINK]: "Link",
-  [CONTENT_TYPES.PDF]: "PDF",
-  [CONTENT_TYPES.YOUTUBE]: "YouTube",
-}
+// const ContentTypeLabels = {
+//   [CONTENT_TYPES.AUDIO]: "Audio",
+//   [CONTENT_TYPES.VIDEO]: "Video",
+//   [CONTENT_TYPES.TEXT]: "Text",
+//   [CONTENT_TYPES.LINK]: "Link",
+//   [CONTENT_TYPES.PDF]: "PDF",
+//   [CONTENT_TYPES.YOUTUBE]: "YouTube",
+// }
 
 function getContentPlaceholder(contentType: string) {
   switch (contentType) {
@@ -187,10 +194,28 @@ function getContentPlaceholder(contentType: string) {
 }
 
 function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormProps) {
-  const contentType = useWatch({
+  const contentTypeUuid = useWatch({
     control,
     name: `content.${index}.contentType`,
   })
+  const { setValue } = useFormContext()
+
+  // @ts-ignore
+  const { data } = tanstackClient.useQuery("get", "/api/v1/config/content-types", {})
+
+  const contentTypeData = React.useMemo(() => {
+    // @ts-ignore
+    return data?.data?.content ?? {}
+  }, [data])
+
+  // Lookup type key from uuid (e.g., "VIDEO")
+  const selectedTypeKey = React.useMemo(() => {
+    if (!contentTypeUuid) return undefined
+    const match = Object.entries(contentTypeData).find(([_, val]: [string, any]) => {
+      return val?.uuid === contentTypeUuid
+    })
+    return match?.[0]
+  }, [contentTypeUuid, contentTypeData])
 
   return (
     <div className="space-y-4 rounded-lg border p-4">
@@ -210,20 +235,36 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Content Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={(val) => {
+                  const parsed = JSON.parse(val)
+                  setValue(`content.${index}.contentType`, parsed.name.toUpperCase())
+                  setValue(`content.${index}.contentUuid`, parsed.uuid)
+                  setValue(`content.${index}.contentCategory`, parsed.upload_category)
+                }}
+                value={
+                  contentTypeUuid
+                    ? JSON.stringify(Object.values(contentTypeData).find((v: any) => v.uuid === contentTypeUuid))
+                    : ""
+                }
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select content type" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {Object.entries(CONTENT_TYPES).map(([key, value]) => {
-                    const Icon = ContentTypeIcons[key as keyof typeof ContentTypeIcons]
+                  {Object.entries(contentTypeData).map(([key, value]) => {
+                    // @ts-ignore
+                    const Icon = ContentTypeIcons[value?.name.toUpperCase() as keyof typeof ContentTypeIcons]
+
                     return (
-                      <SelectItem key={key} value={key}>
+                      // @ts-ignore
+                      <SelectItem key={value.uuid} value={JSON.stringify(value)}>
                         <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          <span>{value}</span>
+                          {Icon && <Icon className="h-4 w-4" />}
+                          {/* @ts-ignore */}
+                          <span>{value.name}</span>
                         </div>
                       </SelectItem>
                     )
@@ -234,6 +275,12 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
             </FormItem>
           )}
         />
+
+        <FormField
+          control={control}
+          name={`content.${index}.contentUuid`}
+          render={({ field }) => <input type="hidden" {...field} />}
+        ></FormField>
 
         <FormField
           control={control}
@@ -250,7 +297,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
         />
       </div>
 
-      {contentType === "TEXT" ? (
+      {contentTypeUuid === "TEXT" ? (
         <FormField
           control={control}
           name={`content.${index}.value`}
@@ -266,7 +313,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
         />
       ) : (
         <>
-          {(contentType === "VIDEO" || contentType === "AUDIO" || contentType === "PDF") && (
+          {["PDF", "AUDIO", "IMAGE", "VIDEO"].includes(contentTypeUuid || "") && (
             <FormField
               control={control}
               name={`content.${index}.value`}
@@ -276,7 +323,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                   <FormControl>
                     <Input
                       type="file"
-                      accept={ACCEPTED_FILE_TYPES[contentType as keyof typeof ACCEPTED_FILE_TYPES]}
+                      accept={ACCEPTED_FILE_TYPES[selectedTypeKey as keyof typeof ACCEPTED_FILE_TYPES]}
                       onChange={(e) => field.onChange(e.target.files?.[0])}
                     />
                   </FormControl>
@@ -292,12 +339,11 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {contentType === "VIDEO" || contentType === "AUDIO" || contentType === "PDF"
-                    ? "Or External URL"
-                    : "URL"}
+                  {["VIDEO", "AUDIO", "PDF"].includes(selectedTypeKey || "") ? "Or External URL" : "URL"}
                 </FormLabel>
                 <FormControl>
-                  <Input type="url" placeholder={getContentPlaceholder(contentType)} {...field} />
+                  {/* @ts-ignore */}
+                  <Input type="url" placeholder={getContentPlaceholder(selectedTypeKey)} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -340,7 +386,8 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
 type LessonListProps = {
   courseTitle: string
   courseCategory: any
-  lessons: TLesson[]
+  // lessons: TLesson[]
+  lessons: any
   onAddLesson: () => void
   onEditLesson: (lesson: any) => void
   onDeleteLesson: (lessonId: string) => void
@@ -372,7 +419,8 @@ function LessonList({
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">{courseTitle}</h1>
           <p className="text-muted-foreground text-sm">
-            You have {lessons?.length} {lessons?.length === 1 ? "lesson" : "lessons"} created under this course.
+            You have {lessons?.content?.length} {lessons?.content?.length === 1 ? "lesson" : "lessons"} created under
+            this course.
           </p>
         </div>
         <Button onClick={onAddLesson}>
@@ -382,7 +430,7 @@ function LessonList({
       </div>
 
       <div className="space-y-3">
-        {lessons?.map((lesson, index) => (
+        {lessons?.content.map((lesson: any, index: any) => (
           <div
             key={lesson?.uuid || index}
             className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
@@ -481,6 +529,18 @@ function LessonList({
           </div>
         ))}
       </div>
+
+      {/* {lessons?.metatdata?.totalPages >= 1 && (
+        <Pagination
+          totalPages={lessons?.metatdata.totalPages}
+          currentPage={1}
+          onPageChange={() => {}}
+          // onPageChange={(newPage) => setPage(newPage - 1)}
+          hasNext={lessons?.metadata.hasNext}
+          hasPrevious={lessons?.metadata.hasPrevious}
+          className="mt-6 justify-center"
+        />
+      )} */}
     </div>
   )
 }
@@ -526,11 +586,17 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
     name: "resources",
   })
 
-  const createLessonMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseId}/lessons")
   const { data: courseData } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
     // @ts-ignore
     params: { path: { courseId } },
   })
+
+  const createLessonMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseId}/lessons")
+  const createLessonContentMutation = tanstackClient.useMutation(
+    "post",
+    // @ts-ignorex
+    "/api/v1/courses/{courseId}/lessons/{lessonId}/content",
+  )
 
   const onSubmitCreateLesson = (values: LessonFormValues) => {
     createLessonMutation.mutate(
@@ -560,10 +626,47 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
         params: { path: { courseId } },
       },
       {
-        onSuccess: (data) => {
-          toast.success(data?.message)
-          refetch()
-          onCancel()
+        onSuccess: (lessonResponse) => {
+          // @ts-ignore
+          const lessonUuid = lessonResponse?.data?.uuid
+
+          if (!lessonUuid) {
+            toast.error("Lesson UUID missing from response.")
+            return
+          }
+
+          createLessonContentMutation.mutate(
+            {
+              // @ts-ignore
+              body: {
+                // @ts-ignore
+                lesson_uuid: lessonUuid as string,
+                content_type_uuid: values.content[0]?.contentUuid,
+                title: values?.title,
+                description: values?.description,
+                content_text: values.content[0]?.value || "",
+                file_url: "",
+                file_size_bytes: 157200,
+                mime_type: values.content[0]?.value || "",
+                display_order: values?.number,
+                is_required: true,
+                created_by: "instructor@sarafrika.com",
+                updated_by: "instructor@sarafrika.com",
+                file_size_display: "",
+                content_category: values.contentCategory,
+                is_downloadable: true,
+                estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
+              },
+              // @ts-ignore
+              params: { path: { courseId, lessonId: lessonUuid } },
+            },
+            {
+              onSuccess: (data) => {
+                refetch()
+                onCancel()
+              },
+            },
+          )
         },
       },
     )
@@ -650,7 +753,17 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
           <Button
             type="button"
             variant="outline"
-            // onClick={() => appendContent({ contentType: "TEXT", title: "", value: "" })}
+            // onClick={() =>
+            //   appendContent({
+            //     contentType: "TEXT",
+            //     title: "",
+            //     value: "",
+            //     contentCategory: "",
+            //     contentUuid: "",
+            //     durationHours: 0,
+            //     durationMinutes: 0,
+            //   })
+            // }
             onClick={() => toast.message("Cannot add more contents at the moment")}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -767,6 +880,12 @@ function LessonEditingForm({
     params: { path: { courseId } },
   })
   const updateLessonMutation = tanstackClient.useMutation("put", "/api/v1/courses/{courseId}/lessons/{lessonId}")
+  const updateLessonContentMutation = tanstackClient.useMutation(
+    "put",
+    "/api/v1/courses/{courseId}/lessons/{lessonId}/content/{contentId}",
+  )
+
+  console.log(initialValues, "init again ooo")
 
   const onSubmitEditLesson = (values: LessonFormValues) => {
     updateLessonMutation.mutate(
@@ -796,6 +915,45 @@ function LessonEditingForm({
         params: {
           // @ts-ignore
           path: { courseId, lessonId: lessonId },
+        },
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.message)
+          onCancel()
+
+          if (typeof onSuccess === "function") {
+            onSuccess(data?.data)
+          }
+        },
+      },
+    )
+
+    updateLessonContentMutation.mutate(
+      {
+        body: {
+          //@ts-ignore
+          lesson_uuid: lessonId,
+          content_type_uuid: values.content[0]?.contentUuid,
+          title: values?.title,
+          description: values?.description,
+          content_text: values.content[0]?.value || "",
+          file_url: "",
+          file_size_bytes: 157200,
+          mime_type: values.content[0]?.value || "",
+          display_order: values?.number,
+          is_required: true,
+          created_by: "instructor@sarafrika.com",
+          updated_by: "instructor@sarafrika.com",
+          file_size_display: "",
+          content_category: values.contentCategory,
+          is_downloadable: true,
+          estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
+        },
+
+        params: {
+          // @ts-ignore
+          path: { courseId, lessonId: lessonId, contentId: initialValues?.content[0].uuid },
         },
       },
       {
@@ -859,7 +1017,7 @@ function LessonEditingForm({
             )}
           />
 
-          <FormField
+          {/* <FormField
             control={form.control}
             name="objectives"
             render={({ field }) => (
@@ -871,7 +1029,7 @@ function LessonEditingForm({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
         </div>
 
         <div className="space-y-4">
@@ -892,7 +1050,17 @@ function LessonEditingForm({
           <Button
             type="button"
             variant="outline"
-            // onClick={() => appendContent({ contentType: "TEXT", title: "", value: "" })}
+            // onClick={() =>
+            //   appendContent({
+            //     contentType: "TEXT",
+            //     title: "",
+            //     value: "",
+            //     contentCategory: "",
+            //     contentUuid: "",
+            //     durationHours: 0,
+            //     durationMinutes: 0,
+            //   })
+            // }
             onClick={() => toast.message("Cannot add more contents at the moment")}
           >
             <PlusCircle className="mr-2 h-4 w-4" />

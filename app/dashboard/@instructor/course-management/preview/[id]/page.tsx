@@ -32,7 +32,7 @@ export default function CoursePreviewPage() {
         isLast: true,
       },
     ])
-  }, [replaceBreadcrumbs])
+  }, [replaceBreadcrumbs, courseId])
 
   const [open, setOpen] = useState(false)
   const router = useRouter()

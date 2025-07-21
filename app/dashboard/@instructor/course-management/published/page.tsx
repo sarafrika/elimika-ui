@@ -19,8 +19,10 @@ import Spinner from "@/components/ui/spinner"
 import { toast } from "sonner"
 import RichTextRenderer from "@/components/editors/richTextRenders"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { CustomPagination } from "@/components/pagination"
 
 export default function PublishedCoursesPage() {
+  const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
   const { replaceBreadcrumbs } = useBreadcrumb()
 
   useEffect(() => {
@@ -36,19 +38,38 @@ export default function PublishedCoursesPage() {
     ])
   }, [replaceBreadcrumbs])
 
-  const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
+  type CourseSearchParams = {
+    instructor_uuid_eq: string
+    status?: string
+    page?: number
+    size?: number
+  }
+
+  // query string builder
+  const toQueryString = (params: Record<string, string | number | undefined>) => {
+    return Object.entries(params)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
+      .join("&")
+  }
+
   const [page, setPage] = useState(0)
-  const [size, setSize] = useState(50)
+  const size = 20
+
+  const queryParams: CourseSearchParams = {
+    instructor_uuid_eq: instructorUuid,
+    status: "published",
+    page,
+    size,
+  }
+
+  const queryString = toQueryString(queryParams)
+  const endpoint = `/api/v1/courses/search?${queryString}`
 
   const { data, isFetching, isLoading, refetch } = tanstackClient.useQuery(
-    "get",
-    "/api/v1/courses/instructor/{instructorUuid}",
-    //@ts-ignore
-    { params: { path: { instructorUuid }, query: { page, size } } },
-  )
-  // @ts-ignore
-  const publishedCourses = data?.data?.content?.filter(
-    (course: any) => course.status === "published" && course.is_published === true,
+    "get", // @ts-ignore
+    endpoint,
+    { params: {} }, // must still pass this even if unused
   )
 
   const unpublishCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/unpublish")
@@ -59,6 +80,11 @@ export default function PublishedCoursesPage() {
       { onSuccess: (data) => toast.success(data?.message), refetch, onError: (error) => toast.error(error?.message) },
     )
   }
+
+  //@ts-ignore
+  const publishedCourses = data?.data?.content
+  //@ts-ignore
+  const paginationMetadata = data?.data?.metadata
 
   return (
     <div className="space-y-6">
@@ -166,6 +192,16 @@ export default function PublishedCoursesPage() {
             )}
           </TableBody>
         </Table>
+      )}
+
+      {paginationMetadata?.totalPages >= 1 && (
+        <CustomPagination
+          totalPages={paginationMetadata?.totalPages}
+          onPageChange={(page) => {
+            setPage(page - 1)
+            console.log("New page:", page)
+          }}
+        />
       )}
     </div>
   )

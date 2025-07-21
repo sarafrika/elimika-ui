@@ -230,6 +230,60 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  "/api/v1/courses/{courseId}/thumbnail": {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        courseId: string
+      }
+      cookie?: never
+    }
+    get: operations["getCourse"]
+    put: operations["updateCourse"]
+    post?: never
+    delete: operations["deleteCourse"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/courses/{courseId}/banner": {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        courseId: string
+      }
+      cookie?: never
+    }
+    get: operations["getCourse"]
+    put: operations["updateCourse"]
+    post?: never
+    delete: operations["deleteCourse"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/courses/{courseId}/intro-video": {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        courseId: string
+      }
+      cookie?: never
+    }
+    get: operations["getCourse"]
+    put: operations["updateCourse"]
+    post?: never
+    delete: operations["deleteCourse"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   "/api/v1/courses/category/{categoryUuid}": {
     parameters: {
       query?: never
@@ -248,6 +302,7 @@ export interface paths {
     patch?: never
     trace?: never
   }
+
   "/api/v1/courses/{courseId}/lessons/{lessonId}": {
     parameters: {
       query?: never
@@ -261,6 +316,45 @@ export interface paths {
     get: operations["getLesson"]
     put: operations["updateLesson"]
     post?: never
+    delete: operations["deleteLesson"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/courses/{courseId}/lessons/{lessonId}/content": {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        courseId: string
+        lessonId: string
+      }
+      cookie?: never
+    }
+    get: operations["getLesson"]
+    put: operations["updateLesson"]
+    post?: any
+    delete: operations["deleteLesson"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/courses/{courseId}/lessons/{lessonId}/content/{contentId}": {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        courseId: string
+        lessonId: string
+        contentId: string
+      }
+      cookie?: never
+    }
+    get: operations["getLesson"]
+    put: operations["updateLesson"]
+    post?: any
     delete: operations["deleteLesson"]
     options?: never
     head?: never
@@ -493,6 +587,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  "/api/v1/courses/search": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getCourses"]
+    put?: never
+    post: operations["createCourse"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   "/api/v1/courses/instructor/{instructorUuid}": {
     parameters: {
       query?: never
@@ -624,6 +734,22 @@ export interface paths {
     trace?: never
   }
   "/api/v1/config/categories/{uuid}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations["getAllCategories"]
+    put?: never
+    post: operations["createCategory"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/config/content-types": {
     parameters: {
       query?: never
       header?: never
@@ -1535,6 +1661,8 @@ export interface components {
       name?: string
       description?: string
       thumbnailUrl?: string
+      instructor?: string
+      instructor_uuid?: string
       durationHours?: number
       /** @enum {string} */
       difficultyLevel?: "beginner" | "intermediate" | "advanced"
@@ -1559,23 +1687,56 @@ export interface components {
     }
     CourseResponseDTO: {
       /** Format: int64 */
+      uuid?: string
       id?: number
       name?: string
-      code?: string
-      description?: string
-      durationHours?: number
+      description?: string | object
+      objectives?: string | object
+      instructor_uuid?: string
+      instructor?: string
+      is_free?: boolean
+      price?: number
+      sale_price?: number
+
+      currency: string
+      category_names?: any
+      categories?: string[]
+      category_uuids?: string[]
+      difficulty_uuid?: string
+
       /** @enum {string} */
-      difficultyLevel?: "beginner" | "intermediate" | "advanced"
+      difficultyLevel?: "beginner" | "intermediate" | "advanced" // Optional mapping if needed
       /** Format: int32 */
-      minAge?: number
-      /** Format: int32 */
-      maxAge?: number
+      class_limit?: number
       /** Format: int32 */
       classLimit?: number
+      prerequisites?: string | null
+      /** Format: int32 */
+      duration_hours?: number
+      /** Format: int32 */
+      duration_minutes?: number
+      /** Format: int32 */
+      age_lower_limit?: number
+      /** Format: int32 */
+      age_upper_limit?: number
+      thumbnail_url?: string
+      intro_video_url?: string
+      banner_url?: string
+      status?: string
+      active?: boolean
+      created_date?: string
+      created_by?: string
+      updated_date?: string
+      updated_by?: string
+      is_published?: boolean
+      total_duration_display?: string
+      is_draft?: boolean
+      // Existing nested references preserved for compatibility
       pricing?: components["schemas"]["PricingResponseDTO"]
       learningObjectives?: components["schemas"]["CourseLearningObjectiveResponseDTO"][]
-      categories?: components["schemas"]["CategoryResponseDTO"][]
+      // categories?: components["schemas"]["CategoryResponseDTO"][]
     }
+
     PricingResponseDTO: {
       isFree?: boolean
       originalPrice?: number
@@ -1712,6 +1873,8 @@ export interface components {
       title?: string
       /** Format: int32 */
       displayOrder?: number
+      learning_objectives: string
+
       /** Format: int32 */
       duration?: number
       contentType?: string
@@ -1720,6 +1883,7 @@ export interface components {
     CreateLessonRequestDTO: {
       title?: string
       description?: string
+      learning_objectives: string
       /** Format: int32 */
       lessonOrder?: number
       isPublished?: boolean
@@ -1755,6 +1919,10 @@ export interface components {
       id?: number
       title?: string
       description?: string
+      duration_hours: string
+      duration_minutes: string
+      learning_objectives: string
+      lesson_number: number
       /** Format: int32 */
       lessonOrder?: number
       isPublished?: boolean
@@ -3565,8 +3733,8 @@ export interface operations {
       query?: never
       header?: never
       path: {
-        courseId: number
-        lessonId: number
+        courseId: string | number
+        lessonId: string | number
       }
       cookie?: never
     }
@@ -4968,7 +5136,7 @@ export interface operations {
         course: components["schemas"]["CreateCourseRequestDTO"]
       }
       header?: never
-      path?: never
+      path?: { uuid: string }
       cookie?: never
     }
     requestBody?: {

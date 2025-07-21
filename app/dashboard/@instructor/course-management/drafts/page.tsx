@@ -19,8 +19,10 @@ import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from "lucide-react
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import RichTextRenderer from "@/components/editors/richTextRenders"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { CustomPagination } from "@/components/pagination"
 
 export default function CourseDraftsPage() {
+  const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
   const { replaceBreadcrumbs } = useBreadcrumb()
 
   useEffect(() => {
@@ -36,20 +38,38 @@ export default function CourseDraftsPage() {
     ])
   }, [replaceBreadcrumbs])
 
-  const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
+  type CourseSearchParams = {
+    instructor_uuid_eq: string
+    status?: string
+    page?: number
+    size?: number
+  }
+
+  // query string builder
+  const toQueryString = (params: Record<string, string | number | undefined>) => {
+    return Object.entries(params)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
+      .join("&")
+  }
 
   const [page, setPage] = useState(0)
-  const [size, setSize] = useState(50)
+  const size = 20
+
+  const queryParams: CourseSearchParams = {
+    instructor_uuid_eq: instructorUuid,
+    status: "draft",
+    page,
+    size,
+  }
+
+  const queryString = toQueryString(queryParams)
+  const endpoint = `/api/v1/courses/search?${queryString}`
 
   const { data, isFetching, isLoading, refetch } = tanstackClient.useQuery(
-    "get",
-    "/api/v1/courses/instructor/{instructorUuid}",
-    // @ts-ignore
-    { params: { path: { instructorUuid }, query: { page, size } } },
-  )
-  // @ts-ignore
-  const draftCourses = data?.data?.content?.filter(
-    (course: any) => course.status === "draft" && course.is_published === false,
+    "get", // @ts-ignore
+    endpoint,
+    { params: {} }, // must still pass this even if unused
   )
 
   const deleteCourseMutation = tanstackClient.useMutation("delete", "/api/v1/courses/{courseId}")
@@ -64,6 +84,11 @@ export default function CourseDraftsPage() {
       },
     )
   }
+
+  // @ts-ignore
+  const draftCourses = data?.data?.content
+  // @ts-ignore
+  const paginationMetadata = data?.data?.metadata
 
   return (
     <div className="space-y-6">
@@ -192,6 +217,16 @@ export default function CourseDraftsPage() {
             )}
           </TableBody>
         </Table>
+      )}
+
+      {paginationMetadata?.totalPages >= 1 && (
+        <CustomPagination
+          totalPages={paginationMetadata?.totalPages}
+          onPageChange={(page) => {
+            setPage(page - 1)
+            console.log("New page:", page)
+          }}
+        />
       )}
     </div>
   )

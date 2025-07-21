@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react"
-import { Editor } from "react-draft-wysiwyg"
-import { EditorState, ContentState, convertToRaw } from "draft-js"
 import draftToHtml from "draftjs-to-html"
 import htmlToDraft from "html-to-draftjs"
+import { Editor } from "react-draft-wysiwyg"
+import React, { useState } from "react"
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css"
+import { EditorState, ContentState, convertToRaw } from "draft-js"
 
 interface RichTextEditorProps {
   initialContent?: string

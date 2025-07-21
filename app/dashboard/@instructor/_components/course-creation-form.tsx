@@ -11,39 +11,46 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import * as z from "zod"
+import React from "react"
 import { toast } from "sonner"
 import { XIcon } from "lucide-react"
-import { useFieldArray, useForm } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import Spinner from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useStepper } from "@/components/ui/stepper"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useFieldArray, useForm } from "react-hook-form"
 import { useCreateCategory } from "@/services/category/req"
 import { tanstackClient } from "@/services/api/tanstack-client"
+import WysiwygRichTextEditor from "@/components/editors/wysiwygRichTextEditor"
 import { ReactNode, forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormDescription, FormItem, FormLabel, FormMessage, FormField } from "@/components/ui/form"
-import { useStepper } from "@/components/ui/stepper"
-import React from "react"
-import WysiwygRichTextEditor from "@/components/editors/wysiwygRichTextEditor"
+
+const MAX_FILE_SIZE = 15 * 1024 * 1024 // 4MB
+const MAX_VIDEO_SIZE_MB = 150 // Adjust according to your backend limit
+const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024
 
 const courseCreationSchema = z.object({
   name: z.string().min(1, "Course name is required"),
-  // description: z.string().min(1, "Course description is required"),
-  // objectives: z.string(),
-  description: z.any(), // now accepts any type
-  objectives: z.any(),
+  description: z.string().min(10, "Course description is required"),
+  objectives: z.string().min(10, "Course objectives is required"),
   thumbnail_url: z.any().optional(),
+  banner_url: z.any().optional(),
+  intro_video_url: z.any().optional(),
   is_free: z.boolean().default(false),
   price: z.coerce.number().optional(),
   sale_price: z.coerce.number().optional(),
   currency: z.string().optional(),
+  prerequisites: z.string().optional(),
   categories: z.string().array(),
   difficulty: z.string().min(1, "Please select a difficulty level"),
   class_limit: z.coerce.number().min(1, "Class limit must be at least 1"),
+  age_lower_limit: z.any().optional(),
+  age_upper_limit: z.any().optional(),
 })
 
 type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any }
@@ -72,6 +79,7 @@ export type CourseFormProps = {
   showSubmitButton?: boolean
   initialValues?: Partial<CourseCreationFormValues>
   editingCourseId?: string
+  courseId?: string
   onSuccess?: (data: any) => void
 }
 
@@ -80,7 +88,7 @@ export type CourseFormRef = {
 }
 
 export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(function CourseCreationForm(
-  { showSubmitButton, initialValues, editingCourseId, onSuccess },
+  { showSubmitButton, initialValues, editingCourseId, courseId, onSuccess },
   ref,
 ) {
   const { setActiveStep } = useStepper()
@@ -95,7 +103,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
       objectives: "",
       categories: [],
       class_limit: 30,
+      prerequisites: "",
+      age_lower_limit: "",
+      age_upper_limit: "",
       thumbnail_url: initialValues?.thumbnail_url,
+      banner_url: initialValues?.banner_url,
+      intro_video_url: initialValues?.intro_video_url,
       ...initialValues,
     },
     mode: "onChange",
@@ -126,52 +139,103 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
   const createCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses")
   const updateCourseMutation = tanstackClient.useMutation("put", "/api/v1/courses/{courseId}")
 
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
+  // @ts-ignore
+  const courseThumbnailMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseId}/thumbnail")
+  // @ts-ignore
+  const courseBannerMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseId}/banner")
+  // @ts-ignore
+  const courseIntroVideoMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseId}/intro-video")
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, onChange: (val: string) => void) => {
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(null)
+
+  type UploadOptions = {
+    key: "thumbnail" | "banner" | "intro_video"
+    setPreview: (val: string) => void
+    mutation: any
+    onChange: (val: string) => void
+  }
+
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    {
+      key,
+      setPreview,
+      mutation,
+      onChange,
+    }: {
+      key: string
+      setPreview: (val: string) => void
+      mutation: any
+      onChange: (val: string) => void
+    },
+  ) => {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Check size before upload
+    if (key === "intro_video" && file.size > MAX_VIDEO_SIZE_BYTES) {
+      toast.error(`Video file is too large. Maximum size is ${MAX_VIDEO_SIZE_MB}MB.`)
+      return
+    }
+
     const previewUrl = URL.createObjectURL(file)
-    setThumbnailPreview(previewUrl)
+    setPreview(previewUrl)
 
     const formData = new FormData()
-    formData.append("file", file)
+    formData.append(key, file)
+
+    mutation(
+      {
+        body: formData,
+        params: { path: { courseId: editingCourseId as string } },
+      },
+      {
+        onSuccess: () => {
+          onChange(previewUrl)
+        },
+        onError: (error: any) => {
+          if (error?.response?.status === 413) {
+            toast.error("Video file is too large. Please upload a smaller file.")
+          } else {
+            toast.error("Failed to upload file.")
+          }
+        },
+      },
+    )
   }
 
   const onSubmit = (data: CourseCreationFormValues) => {
-    console.log(data, "data here")
-
     if (editingCourseId) {
       const editBody = {
+        total_duration_display: "2 hours 00 minutes",
+        instructor_uuid: "8369b6a3-d889-4bc7-8520-e5e8605c25d8",
+        updated_by: "instructor@sarafrika.com",
+
         name: data?.name,
         description: data?.description,
         //@ts-ignore
         objectives: data?.objectives,
-        instructor_uuid: "8369b6a3-d889-4bc7-8520-e5e8605c25d8",
         thumbnail_url: data?.thumbnail_url,
+        banner_url: data?.banner_url,
+        intro_video_url: data?.intro_video_url || "",
         category_uuids: data?.categories,
         difficulty_uuid: data?.difficulty,
+        prerequisites: data?.prerequisites,
         duration_hours: 2,
         duration_minutes: 0,
         class_limit: data?.class_limit,
         price: data?.price,
         status: "draft",
         active: false,
-        updated_by: "instructor@sarafrika.com",
-        total_duration_display: "2 hours 00 minutes",
         is_free: data?.is_free,
         is_published: false,
         is_draft: true,
-        // prerequisites: "No prior music experience required; willingness to learn basic concepts.",
-        // age_lower_limit: 18,
-        // age_upper_limit: 65,
-        // intro_video_url: "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
-        // banner_url: "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
+        age_lower_limit: data?.age_lower_limit,
+        age_upper_limit: data?.age_upper_limit,
         // created_by: "dotex245@sarafrika.com",
       }
-
-      console.log(editBody, "body")
 
       updateCourseMutation.mutate(
         { body: editBody, params: { path: { courseId: editingCourseId as string } } },
@@ -202,26 +266,27 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
             total_duration_display: "2 hours 00 minutes",
             instructor_uuid: "8369b6a3-d889-4bc7-8520-e5e8605c25d8",
             updated_by: "instructor@sarafrika.com",
+
             name: data?.name,
             description: data?.description,
             objectives: data?.objectives,
             category_uuids: data?.categories,
             difficulty_uuid: data?.difficulty,
+            prerequisites: data?.prerequisites,
             duration_hours: 2,
             duration_minutes: 0,
             class_limit: data?.class_limit,
             price: data?.price,
             thumbnail_url: thumbnailPreview,
+            banner_url: bannerPreview,
+            intro_video_url: "",
             status: "draft",
             active: false,
             is_free: data?.is_free,
             is_published: false,
             is_draft: true,
-            // age_lower_limit: 18,
-            // age_upper_limit: 65,
-            // prerequisites: "No prior music experience required; willingness to learn basic concepts.",
-            // intro_video_url: "https://cdn.sarafrika.com/courses/java-advanced-intro.mp4",
-            // banner_url: "https://cdn.sarafrika.com/courses/java-advanced-banner.jpg",
+            age_lower_limit: data?.age_lower_limit,
+            age_upper_limit: data?.age_upper_limit,
             // created_by: "dotex245@sarafrika.com",
           },
           params: {
@@ -249,14 +314,22 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
   const isFree = form.watch("is_free")
 
   useEffect(() => {
-    const thumbnail = form.getValues("thumbnail")
+    const thumbnail = initialValues?.thumbnail_url || form.getValues("thumbnail")
+    const banner = initialValues?.banner_url || form.getValues("banner")
+    const video = initialValues?.intro_video_url || form.getValues("intro_video")
+
     if (thumbnail && !thumbnailPreview) {
       setThumbnailPreview(thumbnail)
     }
-    if (initialValues?.thumbnail_url) {
-      setThumbnailPreview(initialValues.thumbnail_url)
+
+    if (banner && !bannerPreview) {
+      setBannerPreview(banner)
     }
-  }, [form, thumbnailPreview, initialValues])
+
+    if (video && !videoPreview) {
+      setVideoPreview(video)
+    }
+  }, [form, thumbnailPreview, bannerPreview, videoPreview, initialValues])
 
   return (
     <Form {...form}>
@@ -296,22 +369,143 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
           />
         </FormSection>
 
+        {/* Intro Video */}
+        {editingCourseId && (
+          <FormSection title="Intro Video" description="Upload an introductory video for your course">
+            <FormField
+              control={form.control}
+              name="intro_video_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="flex flex-col gap-4">
+                      <Input
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) =>
+                          handleFileUpload(e, {
+                            key: "intro_video",
+                            setPreview: setVideoPreview,
+                            mutation: courseIntroVideoMutation.mutate,
+                            onChange: field.onChange,
+                          })
+                        }
+                      />
+                      {videoPreview && (
+                        <video controls className="w-full max-w-md rounded shadow">
+                          <source src={videoPreview} type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+        )}
+
+        {/* Banner */}
+        {editingCourseId && (
+          <FormSection title="Course Banner" description="Upload a banner cover image for your course">
+            <FormField
+              control={form.control}
+              name="banner_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="flex flex-col gap-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) =>
+                          handleFileUpload(e, {
+                            key: "banner",
+                            setPreview: setBannerPreview,
+                            mutation: courseBannerMutation.mutate,
+                            onChange: field.onChange,
+                          })
+                        }
+                      />
+                      {bannerPreview && (
+                        <div className="h-32 w-48 overflow-hidden rounded border">
+                          <img src={bannerPreview} alt="Banner Preview" className="h-full w-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+        )}
+
         {/* Thumbnail */}
-        <FormSection title="Course Thumbnail" description="Upload a cover image for your course">
+        {editingCourseId && (
+          <FormSection title="Course Thumbnail" description="Upload a cover image for your course">
+            <FormField
+              control={form.control}
+              name="thumbnail_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="flex flex-col gap-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) =>
+                          handleFileUpload(e, {
+                            key: "thumbnail",
+                            setPreview: setThumbnailPreview,
+                            mutation: courseThumbnailMutation.mutate,
+                            onChange: field.onChange,
+                          })
+                        }
+                      />
+                      {thumbnailPreview && (
+                        <div className="h-32 w-48 overflow-hidden rounded border">
+                          <img src={thumbnailPreview} alt="Thumbnail Preview" className="h-full w-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+        )}
+
+        {/* Learning Objectives */}
+        <FormSection title="Learning Objectives" description="List what students will learn from your course">
           <FormField
             control={form.control}
-            name="thumbnail"
+            name="objectives"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <div className="flex flex-col gap-4">
-                    <Input type="file" accept="image/*" onChange={(e) => handleFileChange(e, field.onChange)} />
-                    {thumbnailPreview && (
-                      <div className="h-32 w-48 overflow-hidden rounded border">
-                        <img src={thumbnailPreview} alt="Thumbnail Preview" className="h-full w-full object-cover" />
-                      </div>
-                    )}
-                  </div>
+                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormSection>
+
+        {/* Prerequisites */}
+        <FormSection
+          title="Course Prerequisites"
+          description="Outline the knowledge or skills students should have before starting this course."
+        >
+          <FormField
+            control={form.control}
+            name="prerequisites"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -393,22 +587,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
               />
             </div>
           </div>
-        </FormSection>
-
-        {/* Learning Objectives */}
-        <FormSection title="Learning Objectives" description="List what students will learn from your course">
-          <FormField
-            control={form.control}
-            name="objectives"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </FormSection>
 
         {/* Categories */}
@@ -572,12 +750,47 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
           />
         </FormSection>
 
+        {/* Age Limit */}
+        <FormSection title="Age Limit" description="Set the age limit for your course">
+          <div className="space-y-0">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="age_lower_limit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Age Lower Limit</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" step="1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="age_upper_limit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Age Upper Limit</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" step="1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        </FormSection>
+
         {showSubmitButton && (
           <div className="flex justify-end gap-4 pt-6">
             <Button type="submit" className="min-w-32">
               {createCourseMutation?.isPending || updateCourseMutation?.isPending ? <Spinner /> : "Save Course"}
             </Button>
-            <Button onClick={() => setActiveStep(1)} className="min-w-32">
+            <Button disabled={!editingCourseId} onClick={() => setActiveStep(1)} className="min-w-32">
               {"Continue →"}
             </Button>
           </div>
