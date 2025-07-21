@@ -25,6 +25,8 @@ export interface PageMetadata {
   last: boolean
 }
 
+export type SchemaType = any;
+
 export interface PagedData<T> {
   content: T[]
   metadata: PageMetadata
