@@ -127,31 +127,28 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
   const { mutate: createCategory, isPending: createCategoryPending } = useCreateCategory()
 
   const { data: difficultyLevels } = tanstackClient.useQuery("get", "/api/v1/config/difficulty-levels", {
-    //@ts-ignore
-    params: { path: {}, query: {} },
+    params: {},
   })
 
   const { data: categories, refetch: refetchCategories } = tanstackClient.useQuery("get", "/api/v1/config/categories", {
-    //@ts-ignore
-    params: { path: {}, query: {} },
+    params: { query: { pageable: {} } },
   })
 
   const createCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses")
   const updateCourseMutation = tanstackClient.useMutation("put", "/api/v1/courses/{uuid}")
 
-  // @ts-ignore
   const courseThumbnailMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/thumbnail")
-  // @ts-ignore
   const courseBannerMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/banner")
-  // @ts-ignore
   const courseIntroVideoMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/intro-video")
 
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
   const [bannerPreview, setBannerPreview] = useState<string | null>(null)
   const [videoPreview, setVideoPreview] = useState<string | null>(null)
 
+  type UploadKey = "thumbnail" | "banner" | "intro_video"
+
   type UploadOptions = {
-    key: "thumbnail" | "banner" | "intro_video"
+    key: UploadKey
     setPreview: (val: string) => void
     mutation: any
     onChange: (val: string) => void
@@ -159,36 +156,32 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    {
-      key,
-      setPreview,
-      mutation,
-      onChange,
-    }: {
-      key: string
-      setPreview: (val: string) => void
-      mutation: any
-      onChange: (val: string) => void
-    },
+    { key, setPreview, mutation, onChange }: UploadOptions,
   ) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Check size before upload
+    // Check video size
     if (key === "intro_video" && file.size > MAX_VIDEO_SIZE_BYTES) {
       toast.error(`Video file is too large. Maximum size is ${MAX_VIDEO_SIZE_MB}MB.`)
+      return
+    }
+
+    // Optional early validation (Zod)
+    try {
+      const schema = z.object({ [key]: z.instanceof(File) })
+      schema.parse({ [key]: file })
+    } catch (err) {
+      toast.error("Invalid file type.")
       return
     }
 
     const previewUrl = URL.createObjectURL(file)
     setPreview(previewUrl)
 
-    const formData = new FormData()
-    formData.append(key, file)
-
     mutation(
       {
-        body: formData,
+        body: { [key]: file }, // ✅ send as plain object so Zod sees it
         params: { path: { courseId: editingCourseId as string } },
       },
       {

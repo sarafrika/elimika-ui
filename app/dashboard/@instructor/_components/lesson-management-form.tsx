@@ -38,7 +38,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import RichTextRenderer from "@/components/editors/richTextRenders"
 import WysiwygRichTextEditor from "@/components/editors/wysiwygRichTextEditor"
-import { Control, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form"
+import { Control, SubmitHandler, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -54,37 +54,80 @@ export const CONTENT_TYPES = {
   IMAGE: "Image",
 } as const
 
-const contentItemSchema = z.object({
-  contentType: z.enum(["AUDIO", "VIDEO", "TEXT", "LINK", "PDF", "YOUTUBE"], {
-    required_error: "Content type is required",
-  }),
-  contentUuid: z.string(),
-  contentCategory: z.string(),
-  title: z.string().min(1, "Title is required"),
+// const contentItemSchema = z.object({
+//   contentType: z.enum(["AUDIO", "VIDEO", "TEXT", "LINK", "PDF", "YOUTUBE"], {
+//     required_error: "Content type is required",
+//   }),
+//   contentUuid: z.string(),
+//   contentCategory: z.string(),
+//   title: z.string().min(1, "Title is required"),
+//   value: z.any().optional(),
+//   durationMinutes: z.coerce
+//     .number()
+//     .min(0, "Duration minutes must be positive")
+//     .max(59, "Minutes must be less than 60"),
+//   durationHours: z.coerce.number().min(0, "Duration hours must be positive"),
+// })
+
+// const resourceSchema = z.object({
+//   title: z.string().min(1, "Title is required"),
+//   url: z.string().url("Please enter a valid URL"),
+// })
+
+// const lessonFormSchema = z.object({
+//   number: z.preprocess((val) => Number(val), z.number()),
+//   title: z.string().min(1, "Lesson title is required"),
+//   content: z.array(contentItemSchema),
+//   resources: z.array(resourceSchema),
+//   // description: z.string().optional(),
+//   description: z.any(), // now accepts any type
+//   objectives: z.any(),
+// })
+
+///////////////////////////////////
+// Your content item schema (adjusted to required fields and types)
+export const contentItemSchema = z.object({
+  title: z.string().min(1, "Content title is required"),
+  contentUuid: z.string().min(1, "Content UUID is required"),
+  contentType: z.enum(["PDF", "AUDIO", "VIDEO", "TEXT", "LINK", "YOUTUBE"]),
+  contentCategory: z.string().min(1, "Content category is required"),
+  durationMinutes: z.number().min(0),
+  durationHours: z.number().min(0),
   value: z.any().optional(),
-  durationMinutes: z.coerce
-    .number()
-    .min(0, "Duration minutes must be positive")
-    .max(59, "Minutes must be less than 60"),
-  durationHours: z.coerce.number().min(0, "Duration hours must be positive"),
 })
 
-const resourceSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  url: z.string().url("Please enter a valid URL"),
+// Your resource schema example (adjust as needed)
+export const resourceSchema = z.object({
+  title: z.string().min(1, "Resource title is required"),
+  url: z.string().url("Must be a valid URL"),
 })
 
-const lessonFormSchema = z.object({
-  number: z.preprocess((val) => Number(val), z.number()),
+// Main lesson form schema
+export const lessonFormSchema = z.object({
+  number: z.preprocess(
+    (val) => {
+      if (typeof val === "string" && val.trim() === "") return 0
+      return Number(val)
+    },
+    z.number().min(0, "Lesson number must be >= 0"),
+  ),
+
   title: z.string().min(1, "Lesson title is required"),
-  content: z.array(contentItemSchema),
-  resources: z.array(resourceSchema),
-  // description: z.string().optional(),
-  description: z.any(), // now accepts any type
-  objectives: z.any(),
+
+  content: z.array(contentItemSchema).min(1, "Content cannot be empty"),
+
+  resources: z.array(resourceSchema).optional(),
+
+  description: z.string().optional().nullable(),
+
+  objectives: z.string().optional().nullable(),
+
+  contentCategory: z.string().min(1, "Content category is required"),
 })
 
-export type LessonFormValues = z.infer<typeof lessonFormSchema> & { [key: string]: any }
+// Infer the type for TS
+export type LessonFormValues = z.infer<typeof lessonFormSchema>
+///////////////////////////
 
 export type AssessmentFormValues = z.infer<typeof assessmentFormSchema>
 
@@ -556,15 +599,49 @@ interface AppLessonCreationFormProps {
 }
 
 function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLessonCreationFormProps) {
+  // const form = useForm<LessonFormValues>({
+  //   resolver: zodResolver(lessonFormSchema),
+  //   defaultValues: {
+  //     number: 0, // number type, not string
+  //     title: "",
+  //     description: "",
+  //     objectives: "",
+  //     content: [
+  //       {
+  //         contentType: "TEXT",
+  //         title: "",
+  //         contentUuid: "", // required string
+  //         contentCategory: "", // required string
+  //         durationMinutes: 0,
+  //         durationHours: 0,
+  //         value: undefined,
+  //       },
+  //     ],
+  //     resources: [],
+  //     contentCategory: "", // required string
+  //   },
+  // })
+
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
     defaultValues: {
-      // @ts-ignore
-      number: "",
+      number: 0,
       title: "",
-      description: "",
-      content: [{ contentType: "TEXT", title: "" }],
-      resources: [],
+      description: null, // nullable string
+      objectives: null, // nullable string
+      contentCategory: "",
+      content: [
+        {
+          contentType: "TEXT",
+          title: "",
+          contentUuid: "",
+          contentCategory: "",
+          durationMinutes: 0,
+          durationHours: 0,
+          value: undefined,
+        },
+      ],
+      resources: [], // optional, empty array
     },
   })
 
@@ -597,39 +674,28 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
     "/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content",
   )
 
-  const onSubmitCreateLesson = (values: LessonFormValues) => {
+  const onSubmitCreateLesson: SubmitHandler<LessonFormValues> = (values) => {
     createLessonMutation.mutate(
       {
-        // @ts-ignore
         body: {
-          // @ts-ignore
-          course_uuid: courseId,
+          course_uuid: courseId as string,
           title: values?.title,
-          description: values?.description,
-          // @ts-ignore
-          learning_objectives: values?.objectives,
-          // @ts-ignore
-          duration_hours: values?.content[0]?.durationHours,
-          // @ts-ignore
-          duration_minutes: values?.content[0]?.durationMinutes,
+          description: values?.description as string,
+          learning_objectives: values?.objectives as string,
+          duration_hours: Number(values?.content[0]?.durationHours),
+          duration_minutes: Number(values?.content[0]?.durationMinutes),
           duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
-          // @ts-ignore
-          status: courseData.data?.status,
-          // @ts-ignore
+          status: courseData?.data?.status as any,
           active: courseData?.data?.active,
-          // @ts-ignore
           is_published: courseData?.data?.is_published,
-          // @ts-ignore
           created_by: courseData?.data?.instructor_uuid,
           lesson_number: values?.number,
           lesson_sequence: `Lesson ${values?.number}`,
         },
-        // @ts-ignore
-        params: { path: { courseId } },
+        params: { path: { courseUuid: courseId as string } },
       },
       {
         onSuccess: (lessonResponse) => {
-          // @ts-ignore
           const lessonUuid = lessonResponse?.data?.uuid
 
           if (!lessonUuid) {
@@ -639,14 +705,11 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
 
           createLessonContentMutation.mutate(
             {
-              // @ts-ignore
               body: {
-                // @ts-ignore
                 lesson_uuid: lessonUuid as string,
-                // @ts-ignore
-                content_type_uuid: values.content[0]?.contentUuid,
+                content_type_uuid: values.content[0]?.contentUuid ?? "",
                 title: values?.title,
-                description: values?.description,
+                description: values?.description ?? "",
                 content_text: values.content[0]?.value || "",
                 file_url: "",
                 file_size_bytes: 157200,
@@ -657,8 +720,8 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
                 updated_by: "instructor@sarafrika.com",
                 file_size_display: "",
                 content_category: values.contentCategory,
-                is_downloadable: true,
-                estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
+                // is_downloadable: true,
+                // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
               },
               // @ts-ignore
               params: { path: { courseId, lessonId: lessonUuid } },
@@ -716,7 +779,7 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
               <FormItem>
                 <FormLabel>Lesson Description</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                  <WysiwygRichTextEditor initialContent={field.value ?? ""} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -730,7 +793,7 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
               <FormItem>
                 <FormLabel>Lesson Objectives</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                  <WysiwygRichTextEditor initialContent={field.value ?? ""} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -894,20 +957,14 @@ function LessonEditingForm({
     updateLessonMutation.mutate(
       {
         body: {
-          // @ts-ignore
-          course_uuid: courseId,
+          course_uuid: courseId as string,
           title: values?.title,
-          description: values?.description,
-          // @ts-ignore
+          description: values?.description ?? "",
           learning_objectives: courseData?.data?.objectives,
-          //@ts-ignore
-          duration_hours: values?.content[0]?.durationHours,
-          //@ts-ignore
-          duration_minutes: values?.content[0]?.durationMinutes,
+          duration_hours: Number(values?.content[0]?.durationHours),
+          duration_minutes: Number(values?.content[0]?.durationMinutes),
           duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
-          // @ts-ignore
-          status: courseData.data?.status,
-          // @ts-ignore
+          status: courseData?.data?.status as any,
           active: courseData?.data?.active,
           // @ts-ignore
           is_published: courseData?.data?.is_published,
@@ -937,12 +994,10 @@ function LessonEditingForm({
     updateLessonContentMutation.mutate(
       {
         body: {
-          //@ts-ignore
-          lesson_uuid: lessonId,
-          //@ts-ignore
-          content_type_uuid: values.content[0]?.contentUuid,
+          lesson_uuid: lessonId as string,
+          content_type_uuid: values.content[0]?.contentUuid as string,
           title: values?.title,
-          description: values?.description,
+          description: values?.description ?? "",
           content_text: values.content[0]?.value || "",
           file_url: "",
           file_size_bytes: 157200,
@@ -953,8 +1008,8 @@ function LessonEditingForm({
           updated_by: "instructor@sarafrika.com",
           file_size_display: "",
           content_category: values.contentCategory,
-          is_downloadable: true,
-          estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
+          // is_downloadable: true,
+          // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
         },
 
         params: {
@@ -1016,7 +1071,7 @@ function LessonEditingForm({
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                  <WysiwygRichTextEditor initialContent={field.value ?? ""} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
