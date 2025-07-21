@@ -1,25 +1,39 @@
 "use client"
 
 import StudentProfileGeneralForm from "./_components/StudentProfileForm";
-import { search } from "@/services/api/actions";
-import { useSession } from "next-auth/react";
-import { Student, User } from "@/services/api/schema";
 import Spinner from "@/components/ui/spinner";
-import { useAppStore } from "@/store/app-store";
-import { useEffect, useState } from "react";
+
+import * as DataSchemas from "@/services/api/schema";
+import { useUser } from "@/context/user-context";
+import { useStudent } from "@/context/student-context";
+
+console.log(typeof DataSchemas);
 
 export default function StudentProfileGeneralPage() {
-  const { data } = useSession();
-  const user = data ? data.user : null;
-  const student = useAppStore("student", async () => {
+
+  const user = useUser();
+  const student = useStudent();
+
+  /* const dataStore = useUserData("Student", async () => {
+    const results = await search("/api/v1/students/search", { user_uuid_eq: user!.uuid });
+    return results.length > 0 ? results[0] as Student : null;
+  }, true);
+
+  const [student, setStudent] = useState<Student | null>(dataStore!.Student as Student | null);
+  useEffect(()=>{
+    console.log(dataStore!.data)
+  }, [dataStore]) */
+
+
+  /* const student = useAppStore("student", async () => {
     const results = await search("/api/v1/students/search", { user_uuid_eq: user!.uuid });
     return results.length > 0 ? results[0] : null;
-  }) as Student;
+  }) as Student; */
 
   return (<>
     {
-      user ?
-        <StudentProfileGeneralForm user={user as User} {...(student ? { student } : {})} /> :
+      user && student ?
+        <StudentProfileGeneralForm {...{ user, student }} /> :
         <Spinner />
     }
   </>);

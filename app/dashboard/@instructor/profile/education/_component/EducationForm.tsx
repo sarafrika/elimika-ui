@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { schemas } from "@/services/api/zod-client"
-import { appStore, useAppStore } from "@/store/app-store"
 import { Instructor, InstructorEducation } from "@/services/api/schema"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { useSession } from "next-auth/react"
