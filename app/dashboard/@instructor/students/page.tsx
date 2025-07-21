@@ -115,7 +115,7 @@ const sampleEnrollmentData = {
 }
 
 export default function StudentsPage() {
-  const { data } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/enrollments", {
+  const { data } = tanstackClient.useQuery("get", "/api/v1/courses/{courseUuid}/enrollments", {
     params: {
       query: {
         //@ts-ignore

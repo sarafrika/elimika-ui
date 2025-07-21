@@ -17,38 +17,38 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
-// TODO: Replace this with actual data from the backend
-const isProfileComplete = false // This will determine which view to show
-const currentStageIndex: number = 1 // Example: 1 = "Under Review", only used if profile is complete
-
-const approvalStages = [
-  {
-    title: "Profile Submitted",
-    description: "Your profile has been submitted for review.",
-    icon: FileText,
-    tooltip: "We have received your registration details.",
-  },
-  {
-    title: "Under Review",
-    description: "Your application is being reviewed by our team.",
-    icon: Search,
-    tooltip: "Our team is checking your information.",
-  },
-  {
-    title: "Approved",
-    description: "Congratulations! You have been approved.",
-    icon: ThumbsUp,
-    tooltip: "You are approved and ready for enrollment.",
-  },
-  {
-    title: "Enrolled",
-    description: "You are now officially enrolled and can start learning.",
-    icon: GraduationCap,
-    tooltip: "Welcome! You are now a student.",
-  },
-]
-
 export default function StudentOverviewPage() {
+  // TODO: Replace this with actual data from the backend
+  const isProfileComplete = false // This will determine which view to show
+  const currentStageIndex: number = 1 // Example: 1 = "Under Review", only used if profile is complete
+
+  const approvalStages = [
+    {
+      title: "Profile Submitted",
+      description: "Your profile has been submitted for review.",
+      icon: FileText,
+      tooltip: "We have received your registration details.",
+    },
+    {
+      title: "Under Review",
+      description: "Your application is being reviewed by our team.",
+      icon: Search,
+      tooltip: "Our team is checking your information.",
+    },
+    {
+      title: "Approved",
+      description: "Congratulations! You have been approved.",
+      icon: ThumbsUp,
+      tooltip: "You are approved and ready for enrollment.",
+    },
+    {
+      title: "Enrolled",
+      description: "You are now officially enrolled and can start learning.",
+      icon: GraduationCap,
+      tooltip: "Welcome! You are now a student.",
+    },
+  ]
+
   const { data: session } = useSession()
 
   // Data for when profile is complete

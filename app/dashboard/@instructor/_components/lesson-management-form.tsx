@@ -586,21 +586,21 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
     name: "resources",
   })
 
-  const { data: courseData } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
+  const { data: courseData } = tanstackClient.useQuery("get", "/api/v1/courses/{uuid}", {
     // @ts-ignore
-    params: { path: { courseId } },
+    params: { path: { uuid: courseId } },
   })
 
-  const createLessonMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseId}/lessons")
+  const createLessonMutation = tanstackClient.useMutation("post", "/api/v1/courses/{courseUuid}/lessons")
   const createLessonContentMutation = tanstackClient.useMutation(
     "post",
-    // @ts-ignorex
-    "/api/v1/courses/{courseId}/lessons/{lessonId}/content",
+    "/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content",
   )
 
   const onSubmitCreateLesson = (values: LessonFormValues) => {
     createLessonMutation.mutate(
       {
+        // @ts-ignore
         body: {
           // @ts-ignore
           course_uuid: courseId,
@@ -608,7 +608,9 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
           description: values?.description,
           // @ts-ignore
           learning_objectives: values?.objectives,
+          // @ts-ignore
           duration_hours: values?.content[0]?.durationHours,
+          // @ts-ignore
           duration_minutes: values?.content[0]?.durationMinutes,
           duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
           // @ts-ignore
@@ -641,6 +643,7 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
               body: {
                 // @ts-ignore
                 lesson_uuid: lessonUuid as string,
+                // @ts-ignore
                 content_type_uuid: values.content[0]?.contentUuid,
                 title: values?.title,
                 description: values?.description,
@@ -875,14 +878,14 @@ function LessonEditingForm({
     name: "resources",
   })
 
-  const { data: courseData } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
+  const { data: courseData } = tanstackClient.useQuery("get", "/api/v1/courses/{uuid}", {
     // @ts-ignore
-    params: { path: { courseId } },
+    params: { path: { uuid: courseId } },
   })
-  const updateLessonMutation = tanstackClient.useMutation("put", "/api/v1/courses/{courseId}/lessons/{lessonId}")
+  const updateLessonMutation = tanstackClient.useMutation("put", "/api/v1/courses/{courseUuid}/lessons/{lessonUuid}")
   const updateLessonContentMutation = tanstackClient.useMutation(
     "put",
-    "/api/v1/courses/{courseId}/lessons/{lessonId}/content/{contentId}",
+    "/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content/{contentUuid}",
   )
 
   console.log(initialValues, "init again ooo")
@@ -897,7 +900,9 @@ function LessonEditingForm({
           description: values?.description,
           // @ts-ignore
           learning_objectives: courseData?.data?.objectives,
+          //@ts-ignore
           duration_hours: values?.content[0]?.durationHours,
+          //@ts-ignore
           duration_minutes: values?.content[0]?.durationMinutes,
           duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
           // @ts-ignore
@@ -934,6 +939,7 @@ function LessonEditingForm({
         body: {
           //@ts-ignore
           lesson_uuid: lessonId,
+          //@ts-ignore
           content_type_uuid: values.content[0]?.contentUuid,
           title: values?.title,
           description: values?.description,
@@ -1201,7 +1207,7 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
 
   // const createAssessmentMutation = tanstackClient.useMutation(
   //   "post",
-  //   "/api/v1/courses/{courseId}/assessments"
+  //   "/api/v1/courses/{uuid}/assessments"
   // )
 
   const onSubmit = async (values: AssessmentFormValues) => {

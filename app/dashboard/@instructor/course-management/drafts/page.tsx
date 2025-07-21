@@ -72,10 +72,10 @@ export default function CourseDraftsPage() {
     { params: {} }, // must still pass this even if unused
   )
 
-  const deleteCourseMutation = tanstackClient.useMutation("delete", "/api/v1/courses/{courseId}")
+  const deleteCourseMutation = tanstackClient.useMutation("delete", "/api/v1/courses/{uuid}")
   const handleDeleteCourse = (courseId: string) => {
     deleteCourseMutation.mutate(
-      { params: { path: { courseId: courseId as string } } },
+      { params: { path: { uuid: courseId as string } } },
       {
         onSuccess: () => {
           toast.success("Success")

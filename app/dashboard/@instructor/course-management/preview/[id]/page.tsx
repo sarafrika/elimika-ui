@@ -41,8 +41,8 @@ export default function CoursePreviewPage() {
     router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
   }
 
-  const { data: courseDetail, isLoading } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
-    params: { path: { courseId: courseId as string } },
+  const { data: courseDetail, isLoading } = tanstackClient.useQuery("get", "/api/v1/courses/{uuid}", {
+    params: { path: { uuid: courseId as string } },
     onSuccess: (data: any) => {
       if (data.success) {
         toast.success("Course details fetched successfully")
@@ -58,9 +58,9 @@ export default function CoursePreviewPage() {
     params: { path: { uuid: course?.instructor_uuid as string } },
   })
 
-  const { data: courseLessons } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/lessons", {
+  const { data: courseLessons } = tanstackClient.useQuery("get", "/api/v1/courses/{courseUuid}/lessons", {
     //@ts-ignore
-    params: { path: { courseId: courseId }, query: { pageable: {} } },
+    params: { path: { courseUuid: courseId }, query: { pageable: {} } },
   })
 
   if (isLoading)

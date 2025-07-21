@@ -61,8 +61,8 @@ export default function CourseCreationPage() {
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true)
 
   // get course by ID
-  const { data: courseData, refetch: refetchCourse } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}", {
-    params: { path: { courseId: courseId ? (courseId as string) : (createdCourseId as string) } },
+  const { data: courseData, refetch: refetchCourse } = tanstackClient.useQuery("get", "/api/v1/courses/{uuid}", {
+    params: { path: { uuid: courseId ? (courseId as string) : (createdCourseId as string) } },
   })
   const course = courseData?.data
 
@@ -105,35 +105,35 @@ export default function CourseCreationPage() {
   // get all lessons
   const { data: courseLessons, refetch: refetchLessons } = tanstackClient.useQuery(
     "get",
-    "/api/v1/courses/{courseId}/lessons",
+    "/api/v1/courses/{courseUuid}/lessons",
     {
       params: {
-        path: { courseId: courseId ? (courseId as string) : (createdCourseId as string) },
+        path: { courseUuid: courseId ? (courseId as string) : (createdCourseId as string) },
         query: { pageable: {} },
       },
     },
   )
 
   // get lesson by Id
-  const { data: lessonData } = tanstackClient.useQuery("get", "/api/v1/courses/{courseId}/lessons/{lessonId}", {
+  const { data: lessonData } = tanstackClient.useQuery("get", "/api/v1/courses/{courseUuid}/lessons/{lessonUuid}", {
     params: {
       path: {
-        courseId: courseId ? (courseId as string) : (createdCourseId as string),
-        lessonId: selectedLesson?.uuid as string,
+        courseUuid: courseId ? (courseId as string) : (createdCourseId as string),
+        lessonUuid: selectedLesson?.uuid as string,
       },
     },
   })
-  const lesson = lessonData?.data
+  const lesson = lessonData
 
   // get lesson content
   const { data: lessonContentData, refetch: refetchLessonContent } = tanstackClient.useQuery(
     "get",
-    "/api/v1/courses/{courseId}/lessons/{lessonId}/content",
+    "/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content",
     {
       params: {
         path: {
-          courseId: courseId ? (courseId as string) : (createdCourseId as string),
-          lessonId: selectedLesson?.uuid as string,
+          courseUuid: courseId ? (courseId as string) : (createdCourseId as string),
+          lessonUuid: selectedLesson?.uuid as string,
         },
       },
     },
@@ -200,7 +200,7 @@ export default function CourseCreationPage() {
 
   const deleteCourseLessonMutation = tanstackClient.useMutation(
     "delete",
-    "/api/v1/courses/{courseId}/lessons/{lessonId}",
+    "/api/v1/courses/{courseUuid}/lessons/{lessonUuid}",
   )
   const handleDeleteLesson = (lessonId: string) => {
     if (!course?.uuid) return

@@ -77,7 +77,7 @@ export default function PublishedCoursesPage() {
     unpublishCourseMutation.mutate(
       // @ts-ignore
       { params: { path: { uuid: courseId } } },
-      { onSuccess: (data) => toast.success(data?.message), refetch, onError: (error) => toast.error(error?.message) },
+      { onSuccess: (data) => toast.success(data?.message), onError: (error) => toast.error(error?.message) },
     )
   }
 
