@@ -137,8 +137,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
   const createCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses")
   const updateCourseMutation = tanstackClient.useMutation("put", "/api/v1/courses/{uuid}")
 
-  const courseThumbnailMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/thumbnail")
   const courseBannerMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/banner")
+  const courseThumbnailMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/thumbnail")
   const courseIntroVideoMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/intro-video")
 
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
@@ -208,7 +208,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
 
         name: data?.name,
         description: data?.description,
-        //@ts-ignore
         objectives: data?.objectives,
         thumbnail_url: data?.thumbnail_url,
         banner_url: data?.banner_url,

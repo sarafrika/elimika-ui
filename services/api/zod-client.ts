@@ -3489,7 +3489,8 @@ detail page as a hero image and in promotional materials.
       {
         name: "body",
         type: "Body",
-        schema: z.object({ banner: z.instanceof(File) }).passthrough(),
+        // schema: z.object({ banner: z.instanceof(File) }).passthrough(),
+        schema: z.object({ banner: z.any() }).passthrough(),
       },
       {
         name: "uuid",
@@ -3547,7 +3548,8 @@ previews, marketing, and helping students understand what they&#x27;ll learn.
       {
         name: "body",
         type: "Body",
-        schema: z.object({ intro_video: z.instanceof(File) }).passthrough(),
+        // schema: z.object({ intro_video: z.instanceof(File) }).passthrough(),
+        schema: z.object({ intro_video: z.any() }).passthrough(),
       },
       {
         name: "uuid",
@@ -3669,7 +3671,8 @@ listings, search results, and course cards throughout the application.
       {
         name: "body",
         type: "Body",
-        schema: z.object({ thumbnail: z.instanceof(File) }).passthrough(),
+        // schema: z.object({ thumbnail: z.instanceof(File) }).passthrough(),
+        schema: z.object({ thumbnail: z.any() }).passthrough(),
       },
       {
         name: "uuid",
@@ -8352,7 +8355,8 @@ For complete operator documentation, see the instructor search endpoint.
       {
         name: "body",
         type: "Body",
-        schema: z.object({ profileImage: z.instanceof(File) }).passthrough(),
+        // schema: z.object({ profileImage: z.instanceof(File) }).passthrough(),
+        schema: z.object({ profileImage: z.any() }).passthrough(),
       },
       {
         name: "userUuid",
