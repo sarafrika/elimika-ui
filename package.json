@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "generate-types": "npx openapi-typescript https://api.elimika.sarafrika.com/v3/api-docs --root-types-no-schema-prefix --root-types --generate-path-params -o ./services/api/schema.ts",
+    "generate-zod-client": "pnpx openapi-zod-client https://api.elimika.sarafrika.com/v3/api-docs -o ./services/api/zod-client.ts",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
@@ -31,6 +32,8 @@
     "@tanstack/react-query": "^5.74.4",
     "@tanstack/react-query-devtools": "^5.74.4",
     "@tanstack/react-table": "^8.21.3",
+    "@zodios/core": "^10.9.6",
+    "@zodios/plugins": "^10.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

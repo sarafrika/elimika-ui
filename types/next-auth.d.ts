@@ -1,13 +1,14 @@
 // types/next-auth.d.ts
 import { DefaultSession } from "next-auth"
 import { JWT } from "next-auth/jwt"
+import { User } from "@/services/api/schema"
 
 declare module "next-auth" {
   /**
    * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
    */
   interface Session {
-    user: {
+    user: User & {
       /** The user's unique identifier */
       id: string
       /** The api access token. */

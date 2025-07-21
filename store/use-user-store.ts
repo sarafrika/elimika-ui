@@ -1,10 +1,9 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { getUserProfile } from "@/services/user/actions"
 import { User } from "@/services/api/schema"
-import { UserDomain } from "@/lib/types"
+import { useSession } from "next-auth/react"
 
-type UserState = {
+export type UserState = {
   user: User | null
   domains: string[]
   activeDomain: string | null
@@ -36,21 +35,11 @@ export const useUserStore = create<UserState>()(
       fetchCurrentUser: async () => {
         try {
           set({ isLoading: true, error: null })
+          const session = useSession();
+          const userData = session.data?.user;
 
-          const response = await getUserProfile()
-
-          if (response?.error) {
-            console.log(response.error)
-            throw new Error(response.error.toString())
-          }
-
-          const userData = response?.data?.content?.[0]
           set({ user: userData, isLoading: false })
-          if (
-            userData &&
-            userData?.user_domain &&
-            userData?.user_domain?.length > 0
-          ) {
+          if (userData && userData?.user_domain && userData?.user_domain?.length > 0) {
             set({
               domains: userData.user_domain,
               activeDomain: userData.user_domain[0],

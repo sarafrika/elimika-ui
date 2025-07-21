@@ -2,7 +2,7 @@ import React from 'react'
 import { Building2, Globe, Hash, Phone, User } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { OrganisationDto } from '@/services/api/schema'
+import { Organisation as OrganisationDto } from '@/services/api/schema'
 
 interface OrganizationDetailsProps {
     organization: OrganisationDto
@@ -64,7 +64,7 @@ export default function OrganizationDetails({
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Slug:</p>
-                                <p className="text-sm">{organization.slug || 'Not generated'}</p>
+                                <p className="text-sm">{organization.name || 'Not generated'}</p>
                             </div>
                         </div>
                     </div>
@@ -98,7 +98,7 @@ export default function OrganizationDetails({
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">URL Slug</p>
-                                <p className="text-sm">{organization.slug || 'Not generated'}</p>
+                                <p className="text-sm">{organization.name || 'Not generated'}</p>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">

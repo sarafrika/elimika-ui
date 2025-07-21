@@ -23,3 +23,26 @@ export const getUserProfile = async () => {
   })
   return resp.data
 }
+
+export const getUserByEmail = async (email: string) => {
+  const resp = await fetchClient.GET("/api/v1/users/search", {
+    params: {
+      query: {
+        // @ts-ignore
+        page: 0,
+        size: 1,
+        email_eq: email
+      },
+    },
+  });
+  
+  if (resp.error) {
+    throw new Error(resp.error.message);
+  }
+
+  if (resp.data.data?.content?.length === 0) {
+    throw new Error("User not found")
+  }
+
+  return resp.data.data?.content![0];
+}

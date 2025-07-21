@@ -1,19 +1,19 @@
 import React from 'react'
-import { OrganisationDto } from '@/services/api/schema'
+import { Organisation as OrganisationDto } from '@/services/api/schema'
 import OrganizationFilters from './OrganizationFilters'
 import OrganizationCard from './OrganizationCard'
 
 interface OrganizationsListProps {
-    organizations: OrganisationDto[]
-    selectedOrganization: OrganisationDto | null
+    organizations:OrganisationDto[]
+    selectedOrganization:OrganisationDto | null
     searchQuery: string
     setSearchQuery: (query: string) => void
     statusFilter: string
     setStatusFilter: (status: string) => void
     sortOrder: 'asc' | 'desc'
     setSortOrder: (order: 'asc' | 'desc') => void
-    onOrganizationSelect: (organization: OrganisationDto) => void
-    onOrganizationDelete: (organization: OrganisationDto) => void
+    onOrganizationSelect: (organization:OrganisationDto) => void
+    onOrganizationDelete: (organization:OrganisationDto) => void
     getStatusBadgeComponent: (organizationId: string) => React.ReactElement
 }
 
