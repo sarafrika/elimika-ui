@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
-import { OrganisationDto } from '@/services/api/schema'
+import { Organisation as OrganisationDto } from '@/services/api/schema'
 import OrganizationsList from './OrganizationsList'
 import OrganizationDetailsPanel from './OrganizationDetailsPanel'
 import OrganizationMobileModal from './OrganizationMobileModal'
@@ -33,7 +33,7 @@ export default function OrganizationsPage({ organizations }: Props) {
         setOrganizationStatuses(mockStatuses)
     }, [organizations])
 
-    const handleApproveOrganization = async (organization: OrganisationDto) => {
+    const handleApproveOrganization = async (organization:OrganisationDto) => {
         try {
             // In a real implementation, you would call an API to approve the organization
             // For now, we'll just update the local state
@@ -47,7 +47,7 @@ export default function OrganizationsPage({ organizations }: Props) {
         }
     }
 
-    const handleRejectOrganization = async (organization: OrganisationDto) => {
+    const handleRejectOrganization = async (organization:OrganisationDto) => {
         try {
             // In a real implementation, you would call an API to reject the organization
             // For now, we'll just update the local state
@@ -80,7 +80,7 @@ export default function OrganizationsPage({ organizations }: Props) {
         )
     }
 
-    const handleOrganizationSelect = (organization: OrganisationDto) => {
+    const handleOrganizationSelect = (organization:OrganisationDto) => {
         setSelectedOrganization(organization)
         // Open modal on small screens
         if (window.innerWidth < 1024) {
@@ -88,13 +88,13 @@ export default function OrganizationsPage({ organizations }: Props) {
         }
     }
 
-    const handleOrganizationDelete = (organization: OrganisationDto) => {
+    const handleOrganizationDelete = (organization:OrganisationDto) => {
         // Handle delete logic here
         console.log('Delete organization:', organization.uuid)
     }
 
     // Filter and sort organizations
-    const filteredAndSortedOrganizations = organizations
+    const filteredAndSortedOrganizations:OrganisationDto[] = organizations
         .filter(organization => {
             // Search filter
             const matchesSearch =

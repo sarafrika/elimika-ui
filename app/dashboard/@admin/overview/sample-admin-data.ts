@@ -7,7 +7,7 @@ import {
   Activity,
   Building2,
 } from "lucide-react"
-import { Instructor, OrganisationDto } from "@/services/api/schema"
+import { Instructor, Organisation as OrganisationDto } from "@/services/api/schema"
 
 // Sample instructors (structure based on schema.ts)
 export const sampleInstructors: Instructor[] = [
@@ -16,12 +16,12 @@ export const sampleInstructors: Instructor[] = [
     user_uuid: "user-uuid-1",
     full_name: "Jane Doe",
     professional_headline: "Senior Instructor",
-    formattedLocation: "Nairobi, Kenya",
-    profileComplete: true,
-    totalProfessionalCredentials: 3,
+    formatted_location: "Nairobi, Kenya",
+    is_profile_complete: true,
+    // totalProfessionalCredentials: 3,
     admin_verified: false,
     created_date: "2024-06-01T10:00:00Z",
-    certifications: [
+    /* certifications: [
       {
         issued_date: "2023-01-15",
         issued_by: "Coursera",
@@ -46,7 +46,7 @@ export const sampleInstructors: Instructor[] = [
         end_date: "2023-12-31",
         user_uuid: "user-uuid-1",
       },
-    ],
+    ], */
     bio: "Experienced educator with 10+ years in software development training.",
   },
   {
@@ -54,20 +54,20 @@ export const sampleInstructors: Instructor[] = [
     user_uuid: "user-uuid-2",
     full_name: "John Smith",
     professional_headline: "Instructor",
-    formattedLocation: "Mombasa, Kenya",
-    profileComplete: false,
-    totalProfessionalCredentials: 1,
+    formatted_location: "Mombasa, Kenya",
+    is_profile_complete: false,
+    // totalProfessionalCredentials: 1,
     admin_verified: false,
     created_date: "2024-06-02T11:00:00Z",
-    certifications: [],
+    /* certifications: [],
     professional_bodies: [],
-    training_experiences: [],
+    training_experiences: [], */
     bio: "Passionate about teaching and technology.",
   },
 ]
 
 // Sample organizations (structure based on schema.ts)
-export const sampleOrganizations: OrganisationDto[] = [
+export const sampleOrganizations: any[] = [
   {
     uuid: "org-123e4567-e89b-12d3-a456-426614174000",
     name: "Elimika Training Institute",

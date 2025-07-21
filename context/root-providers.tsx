@@ -5,6 +5,7 @@ import { ReactNode, useEffect } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { useUserStore } from "@/store/use-user-store"
+import UserContextProvider from "./user-context"
 
 function UserFetcher({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession()
@@ -34,7 +35,8 @@ export function RootProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        <UserFetcher>{children}</UserFetcher>
+        {/* <UserFetcher /> */}
+        <UserContextProvider>{children}</UserContextProvider>
       </SessionProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

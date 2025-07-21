@@ -1,8 +1,8 @@
 import React from "react"
-import { Building2, Globe, Phone } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { OrganisationDto } from "@/services/api/schema"
+import { Building2, Globe, Hash, Phone, User } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Organisation as OrganisationDto } from "@/services/api/schema"
 
 interface OrganizationDetailsProps {
   organization: OrganisationDto
@@ -61,7 +61,7 @@ export default function OrganizationDetails({ organization, getStatusBadgeCompon
               </div>
               <div>
                 <p className="text-muted-foreground text-sm font-medium">Slug:</p>
-                <p className="text-sm">{organization.slug || "Not generated"}</p>
+                <p className="text-sm">{organization.name || "Not generated"}</p>
               </div>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function OrganizationDetails({ organization, getStatusBadgeCompon
               </div>
               <div>
                 <p className="text-muted-foreground text-sm font-medium">URL Slug</p>
-                <p className="text-sm">{organization.slug || "Not generated"}</p>
+                <p className="text-sm">{organization.name || "Not generated"}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -159,6 +159,26 @@ export default function OrganizationDetails({ organization, getStatusBadgeCompon
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-4">
+        <div>
+          <p className="text-muted-foreground text-sm font-medium">Domain:</p>
+          <p className="text-sm">{organization.domain}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground text-sm font-medium">Code:</p>
+          <p className="text-sm">{organization.code || "Not provided"}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground text-sm font-medium">Active Status:</p>
+          <p className="text-sm">{organization.active ? "Active" : "Inactive"}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground text-sm font-medium">Slug:</p>
+          {/* @ts-ignore */}
+          <p className="text-sm">{organization.slug || "Not generated"}</p>
+        </div>
       </div>
     </div>
   )

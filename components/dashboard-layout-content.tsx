@@ -2,15 +2,9 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { useDashboardView } from "@/components/dashboard-view-context"
 import { UserDomain } from "@/lib/types"
-import React from "react"
+import React, { ReactNode } from "react"
 
-export default function DashboardLayoutContent({
-  student,
-  admin,
-  instructor,
-  organization,
-  children,
-}: any) {
+export default function DashboardLayoutContent({children}:{children:ReactNode}) {
   const { view } = useDashboardView()
   const activeDomain: UserDomain = view
   // Only render the sidebar here

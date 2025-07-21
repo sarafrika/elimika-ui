@@ -1,5 +1,7 @@
 import NextAuth, { NextAuthConfig } from "next-auth"
 import Keycloak from "next-auth/providers/keycloak"
+import { search } from "../api/actions"
+import { User } from "lucide-react"
 
 /**
  * Refresh the access token using the refresh token
@@ -117,7 +119,33 @@ const config: NextAuthConfig = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string
+        // console.log(session, token)
+        // Include the user data from API
+        const searchEndpoint = `${process.env.NEXT_PUBLIC_API_URL}/users/search`
+        try {
+          const searchResp = await fetch(`${searchEndpoint}?email_eq=${session.user.email}`, {
+            next: { revalidate: token.exp },
+            headers: {
+              Authorization: `Bearer ${token.accessToken}`,
+            },
+          }).then((r) => r.json())
+
+          const userDataResults = searchResp.data.content
+          session.user = {
+            ...session.user,
+            ...userDataResults[0],
+            id: token.id as string,
+            accessToken: token.accessToken as string,
+            id_token: token.id_token as string,
+          }
+        } catch (e) {
+          // console.log("fetching data error", e);
+          session.user.id = token.id as string
+          session.user.accessToken = token.accessToken as string
+          session.user.id_token = token.id_token as string
+        }
+
+        /* session.user.id = token.id as string */
         session.user.accessToken = token.accessToken as string
         session.user.id_token = token.id_token as string
       }
@@ -137,14 +165,6 @@ const config: NextAuthConfig = {
       }
 
       return session
-    },
-    async redirect({ url, baseUrl }) {
-      // Handle post-authentication redirects
-      if (url.startsWith("/")) return `${baseUrl}${url}`
-      // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url
-      // Default to home page after logout
-      return `${baseUrl}/`
     },
   },
   events: {

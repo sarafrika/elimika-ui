@@ -1,9 +1,9 @@
 import React from "react"
-import { Edit, Trash2, Building2 } from "lucide-react"
-import { OrganisationDto } from "@/services/api/schema"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Edit, Trash2, Building2 } from "lucide-react"
 import OrganizationDetails from "./OrganizationDetails"
+import { Organisation as OrganisationDto } from "@/services/api/schema"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 interface OrganizationMobileModalProps {
   organization: OrganisationDto | null

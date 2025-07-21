@@ -7,7 +7,10 @@ export default function Home() {
       {/* Navigation Bar */}
       <nav className="fixed top-0 z-50 w-full border-b bg-white">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <div className="text-primary text-2xl font-bold">Elimika</div>
+          <div className="text-primary text-2xl font-bold">
+            <img src={"/images/Elimika_Logo_Design-02.svg"} 
+              className="h-[48] w-[200]" />
+          </div>
           <div className="flex items-center gap-4">
             <LoginButton />
           </div>
