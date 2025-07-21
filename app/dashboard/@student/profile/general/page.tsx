@@ -3,11 +3,8 @@
 import StudentProfileGeneralForm from "./_components/StudentProfileForm";
 import Spinner from "@/components/ui/spinner";
 
-import * as DataSchemas from "@/services/api/schema";
 import { useUser } from "@/context/user-context";
 import { useStudent } from "@/context/student-context";
-
-console.log(typeof DataSchemas);
 
 export default function StudentProfileGeneralPage() {
 
