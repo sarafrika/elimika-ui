@@ -25,10 +25,17 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { useCreateCategory } from "@/services/category/req"
 import { tanstackClient } from "@/services/api/tanstack-client"
-import WysiwygRichTextEditor from "@/components/editors/wysiwygRichTextEditor"
 import { ReactNode, forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormDescription, FormItem, FormLabel, FormMessage, FormField } from "@/components/ui/form"
+import { useInstructor } from "@/context/instructor-context"
+
+import dynamic from "next/dynamic"
+
+// Dynamically import with SSR disabled
+const WysiwygRichTextEditor = dynamic(() => import("../../../../components/editors/wysiwygRichTextEditor"), {
+  ssr: false,
+})
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024 // 4MB
 const MAX_VIDEO_SIZE_MB = 150 // Adjust according to your backend limit
@@ -91,7 +98,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
   { showSubmitButton, initialValues, editingCourseId, courseId, onSuccess },
   ref,
 ) {
+  const instructor = useInstructor()
   const { setActiveStep } = useStepper()
+
   const dialogCloseRef = useRef<HTMLButtonElement>(null)
 
   const form = useForm<CourseCreationFormValues>({
@@ -103,7 +112,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
       objectives: "",
       categories: [],
       class_limit: 30,
-      prerequisites: "",
+      prerequisites: initialValues?.prerequisites,
       age_lower_limit: "",
       age_upper_limit: "",
       thumbnail_url: initialValues?.thumbnail_url,
@@ -145,6 +154,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
   const [bannerPreview, setBannerPreview] = useState<string | null>(null)
   const [videoPreview, setVideoPreview] = useState<string | null>(null)
 
+  const [uploadedUrls, setUploadedUrls] = useState<{
+    thumbnail?: string
+    banner?: string
+    intro_video?: string
+  }>({})
+
   type UploadKey = "thumbnail" | "banner" | "intro_video"
 
   type UploadOptions = {
@@ -161,13 +176,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Check video size
     if (key === "intro_video" && file.size > MAX_VIDEO_SIZE_BYTES) {
       toast.error(`Video file is too large. Maximum size is ${MAX_VIDEO_SIZE_MB}MB.`)
       return
     }
 
-    // Optional early validation (Zod)
     try {
       const schema = z.object({ [key]: z.instanceof(File) })
       schema.parse({ [key]: file })
@@ -179,14 +192,22 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
     const previewUrl = URL.createObjectURL(file)
     setPreview(previewUrl)
 
+    const formData = new FormData()
+    formData.append(key, file)
+
     mutation(
+      { body: formData, params: { path: { uuid: editingCourseId as string } } },
       {
-        body: { [key]: file }, // ✅ send as plain object so Zod sees it
-        params: { path: { courseId: editingCourseId as string } },
-      },
-      {
-        onSuccess: () => {
+        onSuccess: (data: any) => {
           onChange(previewUrl)
+          toast.success(data?.message)
+
+          const urls = data?.data
+
+          setUploadedUrls((prev) => ({
+            ...prev,
+            [key]: urls?.[`${key}_url`],
+          }))
         },
         onError: (error: any) => {
           if (error?.response?.status === 413) {
@@ -202,16 +223,16 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
   const onSubmit = (data: CourseCreationFormValues) => {
     if (editingCourseId) {
       const editBody = {
-        total_duration_display: "2 hours 00 minutes",
-        instructor_uuid: "8369b6a3-d889-4bc7-8520-e5e8605c25d8",
-        updated_by: "instructor@sarafrika.com",
-
+        total_duration_display: "",
+        created_by: instructor?.full_name,
+        updated_by: instructor?.full_name,
+        instructor_uuid: instructor?.uuid,
         name: data?.name,
         description: data?.description,
         objectives: data?.objectives,
-        thumbnail_url: data?.thumbnail_url,
-        banner_url: data?.banner_url,
-        intro_video_url: data?.intro_video_url || "",
+        thumbnail_url: uploadedUrls?.thumbnail || data?.thumbnail_url,
+        banner_url: uploadedUrls?.banner || data?.banner_url,
+        intro_video_url: uploadedUrls.intro_video || data?.intro_video_url,
         category_uuids: data?.categories,
         difficulty_uuid: data?.difficulty,
         prerequisites: data?.prerequisites,
@@ -226,12 +247,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
         is_draft: true,
         age_lower_limit: data?.age_lower_limit,
         age_upper_limit: data?.age_upper_limit,
-        // created_by: "dotex245@sarafrika.com",
       }
 
       updateCourseMutation.mutate(
-        // @ts-ignore
-        { body: editBody, params: { path: { uuid: editingCourseId as string } } },
+        { body: editBody as any, params: { path: { uuid: editingCourseId as string } } },
         {
           onSuccess: (data) => {
             toast.success(data?.message)
@@ -239,12 +258,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
 
             if (typeof onSuccess === "function") {
               onSuccess(data?.data)
-            }
-          },
-          onError: (error) => {
-            // @ts-ignore
-            if (error?.error.objectives) {
-              toast.error("Objectives text is too long")
             }
           },
         },
@@ -255,11 +268,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
       createCourseMutation.mutate(
         {
           body: {
-            // @ts-ignore
-            total_duration_display: "2 hours 00 minutes",
-            instructor_uuid: "8369b6a3-d889-4bc7-8520-e5e8605c25d8",
-            updated_by: "instructor@sarafrika.com",
-
+            total_duration_display: "",
+            updated_by: instructor?.full_name,
+            created_by: instructor?.full_name,
+            instructor_uuid: instructor?.uuid as string,
             name: data?.name,
             description: data?.description,
             objectives: data?.objectives,
@@ -270,10 +282,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
             duration_minutes: 0,
             class_limit: data?.class_limit,
             price: data?.price,
-            // @ts-ignore
-            thumbnail_url: thumbnailPreview,
-            // @ts-ignore
-            banner_url: bannerPreview,
+            thumbnail_url: thumbnailPreview as any,
+            banner_url: bannerPreview as any,
             intro_video_url: "",
             status: "draft",
             active: false,
@@ -282,18 +292,14 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(fun
             is_draft: true,
             age_lower_limit: data?.age_lower_limit,
             age_upper_limit: data?.age_upper_limit,
-            // created_by: "dotex245@sarafrika.com",
           },
-          params: {
-            // @ts-ignore
-            query: { course: {} },
-          },
+          params: {},
         },
         {
           onSuccess: (data) => {
-            // @ts-ignore
-            toast.success(data?.message)
+            toast.success("Course created successfully")
             setActiveStep(1)
+
             if (typeof onSuccess === "function") {
               // @ts-ignore
               onSuccess(data?.data)

@@ -1,28 +1,42 @@
 "use client"
 
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { EyeIcon, FilePenIcon, TrashIcon } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
+  DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { tanstackClient } from "@/services/api/tanstack-client"
-import { formatCourseDate } from "@/lib/format-course-date"
+import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import Spinner from "@/components/ui/spinner"
-import { toast } from "sonner"
-import RichTextRenderer from "@/components/editors/richTextRenders"
-import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { CustomPagination } from "@/components/pagination"
+import { formatCourseDate } from "@/lib/format-course-date"
+import { useInstructor } from "@/context/instructor-context"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { EyeIcon, FilePenIcon, TrashIcon } from "lucide-react"
+import { tanstackClient } from "@/services/api/tanstack-client"
+import RichTextRenderer from "@/components/editors/richTextRenders"
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
+type CourseSearchParams = {
+  instructor_uuid_eq: string
+  status?: string
+  page?: number
+  size?: number
+}
+
+const toQueryString = (params: Record<string, string | number | undefined>) => {
+  return Object.entries(params)
+    .filter(([, v]) => v !== undefined)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
+    .join("&")
+}
 
 export default function PublishedCoursesPage() {
-  const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
   const { replaceBreadcrumbs } = useBreadcrumb()
 
   useEffect(() => {
@@ -38,52 +52,30 @@ export default function PublishedCoursesPage() {
     ])
   }, [replaceBreadcrumbs])
 
-  type CourseSearchParams = {
-    instructor_uuid_eq: string
-    status?: string
-    page?: number
-    size?: number
-  }
-
-  // query string builder
-  const toQueryString = (params: Record<string, string | number | undefined>) => {
-    return Object.entries(params)
-      .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
-      .join("&")
-  }
-
+  const instructor = useInstructor()
   const [page, setPage] = useState(0)
   const size = 20
 
   const queryParams: CourseSearchParams = {
-    instructor_uuid_eq: instructorUuid,
-    status: "published",
     page,
     size,
+    status: "published",
+    instructor_uuid_eq: instructor?.uuid as string,
   }
 
   const queryString = toQueryString(queryParams)
   const endpoint = `/api/v1/courses/search?${queryString}`
-
-  const { data, isFetching, isLoading, refetch } = tanstackClient.useQuery(
-    "get", // @ts-ignore
-    endpoint,
-    { params: {} }, // must still pass this even if unused
-  )
+  const { data, isFetching, isLoading, refetch } = tanstackClient.useQuery("get", endpoint as any, { params: {} })
 
   const unpublishCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/unpublish")
   const handleUnpublishCourse = (courseId: string) => {
     unpublishCourseMutation.mutate(
-      // @ts-ignore
       { params: { path: { uuid: courseId } } },
       { onSuccess: (data) => toast.success(data?.message), onError: (error) => toast.error(error?.message) },
     )
   }
 
-  //@ts-ignore
   const publishedCourses = data?.data?.content
-  //@ts-ignore
   const paginationMetadata = data?.data?.metadata
 
   return (
@@ -199,7 +191,6 @@ export default function PublishedCoursesPage() {
           totalPages={paginationMetadata?.totalPages}
           onPageChange={(page) => {
             setPage(page - 1)
-            console.log("New page:", page)
           }}
         />
       )}

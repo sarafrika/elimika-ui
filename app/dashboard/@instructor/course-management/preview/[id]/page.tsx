@@ -1,26 +1,28 @@
 "use client"
 
-import HTMLTextPreview from "@/components/editors/html-text-preview"
-import RichTextRenderer from "@/components/editors/richTextRenders"
+import { toast } from "sonner"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Spinner from "@/components/ui/spinner"
+import { Button } from "@/components/ui/button"
+import { DialogTitle } from "@radix-ui/react-dialog"
+import { useParams, useRouter } from "next/navigation"
+import { useInstructor } from "@/context/instructor-context"
+import { useBreadcrumb } from "@/context/breadcrumb-provider"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import { CheckCircle, Clock, Users, Video } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import RichTextRenderer from "@/components/editors/richTextRenders"
+import HTMLTextPreview from "@/components/editors/html-text-preview"
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog"
-import { DialogTitle } from "@radix-ui/react-dialog"
-import { useBreadcrumb } from "@/context/breadcrumb-provider"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function CoursePreviewPage() {
   const params = useParams()
+  const router = useRouter()
   const courseId = params?.id
+  const instructor = useInstructor()
 
   const { replaceBreadcrumbs } = useBreadcrumb()
-
   useEffect(() => {
     replaceBreadcrumbs([
       { id: "dashboard", title: "Dashboard", url: "/dashboard/overview" },
@@ -35,8 +37,6 @@ export default function CoursePreviewPage() {
   }, [replaceBreadcrumbs, courseId])
 
   const [open, setOpen] = useState(false)
-  const router = useRouter()
-
   const handleConfirm = () => {
     router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
   }
@@ -44,23 +44,13 @@ export default function CoursePreviewPage() {
   const { data: courseDetail, isLoading } = tanstackClient.useQuery("get", "/api/v1/courses/{uuid}", {
     params: { path: { uuid: courseId as string } },
     onSuccess: (data: any) => {
-      if (data.success) {
-        toast.success("Course details fetched successfully")
-      } else {
-        toast.error(data.message || "Failed to fetch course details")
-      }
+      toast.success(data?.message)
     },
   })
   const course = courseDetail?.data
 
-  const { data: instructorDetail } = tanstackClient.useQuery("get", "/api/v1/instructors/{uuid}", {
-    // @ts-ignore
-    params: { path: { uuid: course?.instructor_uuid as string } },
-  })
-
   const { data: courseLessons } = tanstackClient.useQuery("get", "/api/v1/courses/{courseUuid}/lessons", {
-    //@ts-ignore
-    params: { path: { courseUuid: courseId }, query: { pageable: {} } },
+    params: { path: { courseUuid: courseId as string }, query: { pageable: {} } },
   })
 
   if (isLoading)
@@ -73,15 +63,14 @@ export default function CoursePreviewPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4">
       <div className="space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">{course?.name}</h1>
+        <h1 className="text-4xl font-bold tracking-tight md:max-w-[90%]">{course?.name}</h1>
         <div className="px-4 py-4">
           <HTMLTextPreview htmlContent={course?.description as string} />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">Categories:</span>
-          {/* @ts-ignore */}
-          {course?.category_names.map((i: any) => (
+          {course?.category_names?.map((i: any) => (
             <Badge key={i} variant="outline">
               {i}
             </Badge>
@@ -99,11 +88,11 @@ export default function CoursePreviewPage() {
               <ul className="grid grid-cols-1">
                 <li className="flex items-start gap-2">
                   <span className="min-h-4 min-w-4">
-                    <CheckCircle className="mt-1 h-4 w-4 text-green-500" />
+                    🎯
+                    {/* <CheckCircle className="mt-1 h-4 w-4 text-green-500" /> */}
                   </span>
-                  <div className="">
-                    {/* @ts-ignore */}
-                    <HTMLTextPreview htmlContent={course?.objectives} />
+                  <div className="-mt-[43px]">
+                    <HTMLTextPreview htmlContent={course?.objectives as string} />
                   </div>
                 </li>
               </ul>
@@ -114,7 +103,6 @@ export default function CoursePreviewPage() {
             </CardHeader>
             <CardContent>
               <div className="-mt-2 flex flex-col gap-2 space-y-4">
-                {/* @ts-ignore */}
                 {courseLessons?.data?.content
                   ?.slice()
                   ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
@@ -144,21 +132,19 @@ export default function CoursePreviewPage() {
             <div className="mt-4 flex max-w-[300px] flex-col gap-2 self-end">
               <CardHeader className="flex gap-2">
                 <CardTitle>Course Details</CardTitle>
-                {/* @ts-ignore */}
-                <CardDescription>by {instructorDetail?.data?.full_name}</CardDescription>
+                <CardDescription>by {instructor?.full_name}</CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-2">
                 <div className="flex items-center">
                   <Users className="mr-2 h-4 w-4" />
-                  {/* @ts-ignore */}
-                  <span>{course?.classLimit === 0 ? "Unlimited" : `Up to ${course?.class_limit} students`}</span>
+                  <span>{course?.class_limit === 0 ? "Unlimited" : `Up to ${course?.class_limit} students`}</span>
                 </div>
                 <div className="flex items-center">
                   <Clock className="mr-2 h-4 w-4" />
-                  {/* @ts-ignore */}
                   <span>Approx. {course?.total_duration_display} to complete</span>
                 </div>
+
                 <Button size="lg" className="mt-4 w-full">
                   Enroll Now
                 </Button>

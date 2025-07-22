@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  TLesson,
   LessonList,
   LessonDialog,
   AssessmentDialog,
@@ -20,9 +19,10 @@ import HTMLTextPreview from "@/components/editors/html-text-preview"
 import { StepperContent, StepperList, StepperRoot, StepperTrigger } from "@/components/ui/stepper"
 import { CourseCreationForm, CourseFormRef } from "@/app/dashboard/@instructor/_components/course-creation-form"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
-import { ICourse } from "../../_components/instructor-type"
+import { ICourse, TLesson } from "../../_components/instructor-type"
 import { contentTypeList } from "@/lib/content-types"
 import { DifficultyLabel } from "@/components/labels/difficulty-label"
+import { title } from "process"
 
 export default function CourseCreationPage() {
   const router = useRouter()
@@ -82,7 +82,7 @@ export default function CourseCreationPage() {
       categories: course?.category_uuids || [],
       difficulty: course?.difficulty_uuid as string,
       class_limit: course?.class_limit ?? 0,
-      prerequisites: null,
+      prerequisites: course?.prerequisites,
       duration_hours: course?.duration_hours,
       duration_minutes: course?.duration_minutes,
       age_lower_limit: course?.age_lower_limit,
@@ -103,16 +103,16 @@ export default function CourseCreationPage() {
   }, [courseId, course])
 
   // get all lessons
-  const { data: courseLessons, refetch: refetchLessons } = tanstackClient.useQuery(
-    "get",
-    "/api/v1/courses/{courseUuid}/lessons",
-    {
-      params: {
-        path: { courseUuid: courseId ? (courseId as string) : (createdCourseId as string) },
-        query: { pageable: {} },
-      },
+  const {
+    data: courseLessons,
+    refetch: refetchLessons,
+    isLoading,
+  } = tanstackClient.useQuery("get", "/api/v1/courses/{courseUuid}/lessons", {
+    params: {
+      path: { courseUuid: courseId ? (courseId as string) : (createdCourseId as string) },
+      query: { pageable: {} },
     },
-  )
+  })
 
   // get lesson by Id
   const { data: lessonData } = tanstackClient.useQuery("get", "/api/v1/courses/{courseUuid}/lessons/{lessonUuid}", {
@@ -123,7 +123,8 @@ export default function CourseCreationPage() {
       },
     },
   })
-  const lesson = lessonData
+  // @ts-ignore
+  const lesson = lessonData?.data
 
   // get lesson content
   const { data: lessonContentData, refetch: refetchLessonContent } = tanstackClient.useQuery(
@@ -139,9 +140,8 @@ export default function CourseCreationPage() {
     },
   )
 
-  const contentData = lessonContentData?.data || []
-  // @ts-ignore
-  const lessonContent = contentData?.map((item: any) => ({
+  const contentData = lessonContentData?.data?.[0]
+  const lessonContent = lessonContentData?.data?.map((item: any) => ({
     content_type: item.content_type_uuid,
     title: item.title,
     value: item.content_text || item.file_url || "",
@@ -151,15 +151,20 @@ export default function CourseCreationPage() {
     uuid: item.uuid,
   }))
 
+  // const getContentTypeName = (uuid: string) => {
+  //   return contentTypeList.find((type) => type.uuid === uuid)?.name || ""
+  // }
+
   const lessonInitialValues: Partial<LessonFormValues> = {
-    // @ts-ignore
-    uuid: lesson?.uuid,
+    // resources: [],
+    uuid: lesson?.uuid as string,
     title: lesson?.title,
     description: lesson?.description,
     objectives: lesson?.learning_objectives,
     number: lesson?.lesson_number,
     duration_hours: String(lesson?.duration_hours ?? "0"),
     duration_minutes: String(lesson?.duration_minutes ?? "0"),
+    // map content if multiple content upload is allowed
     content:
       lesson && lessonContent
         ? lessonContent?.map((item: any) => {
@@ -178,7 +183,6 @@ export default function CourseCreationPage() {
             }
           })
         : [],
-    // resources: [],
   }
 
   const publishCourseMutation = tanstackClient.useMutation("post", "/api/v1/courses/{uuid}/publish")
@@ -186,13 +190,11 @@ export default function CourseCreationPage() {
   const handlePublishCourse = () => {
     if (!course?.uuid) return
     publishCourseMutation.mutate(
-      //@ts-ignore
       { params: { path: { uuid: course?.uuid as string } } },
       {
         onSuccess: (data) => {
           toast.success(data?.message)
           router.push("/dashboard/course-management/published")
-          // refetchLessons()
         },
       },
     )
@@ -206,11 +208,10 @@ export default function CourseCreationPage() {
     if (!course?.uuid) return
 
     deleteCourseLessonMutation.mutate(
-      // @ts-ignore
-      { params: { path: { courseId: course?.uuid as string, lessonId: lessonId as string } } },
+      { params: { path: { courseUuid: course?.uuid as string, lessonUuid: lessonId as string } } },
       {
-        onSuccess: () => {
-          toast.success("Course lesson deleted successfully")
+        onSuccess: (data) => {
+          toast.success("Lesson deleted successfully")
           refetchLessons()
         },
       },
@@ -250,7 +251,6 @@ export default function CourseCreationPage() {
             editingCourseId={courseId as string}
             initialValues={courseInitialValues as any}
             onSuccess={(data) => {
-              console.log("created data here", data)
               setCreatedCourseId(data?.uuid)
               refetchCourse()
             }}
@@ -267,6 +267,7 @@ export default function CourseCreationPage() {
         >
           <div className="space-y-4">
             <LessonList
+              isLoading={isLoading}
               courseTitle={course?.name as string}
               courseCategory={course?.category_names}
               // @ts-ignore
@@ -324,58 +325,69 @@ export default function CourseCreationPage() {
           }
         >
           {course ? (
-            <div className="space-y-6">
-              <div>
-                <h3 className="mb-2 text-lg font-medium">Pricing</h3>
-                <div className="space-y-2">
+            <div className="space-y-8">
+              {/* Pricing Section */}
+              <section>
+                <h3 className="mb-3 text-xl font-semibold text-gray-800">💰 Pricing</h3>
+                <div className="space-y-2 text-gray-700">
                   <p>
                     <span className="font-medium">Free Course:</span> {course?.is_free ? "Yes" : "No"}
                   </p>
                   {!course?.is_free && (
-                    <>
+                    <div className="space-y-1">
                       <p>
-                        <span className="font-medium">Original Price:</span> {course?.price} {"KES"}
+                        <span className="font-medium">Original Price:</span> {course?.price} KES
                       </p>
                       <p>
-                        <span className="font-medium">Sale Price:</span> {course?.price} {"KES"}
+                        <span className="font-medium">Sale Price:</span>{" "}
+                        <span className="font-semibold text-green-600">{course?.price} KES</span>
                       </p>
-                    </>
+                    </div>
                   )}
                 </div>
-              </div>
+              </section>
 
-              <div className="flex flex-col gap-2">
-                <h3 className="mb-2 text-lg font-medium">Course Information</h3>
-                <div className="space-y-2">
-                  <p className="flex flex-col gap-1">
-                    <span className="font-medium">Name:</span> {course.name}
+              {/* Course Information */}
+              <section>
+                <h3 className="mb-3 text-xl font-semibold text-gray-800">📘 Course Information</h3>
+                <div className="space-y-3 text-gray-700">
+                  <p>
+                    <span className="font-medium">
+                      <strong>Name</strong>:
+                    </span>{" "}
+                    {course.name}
                   </p>
-                  <div className="html-text-preview flex flex-col gap-2">
-                    <div className="font-medium">Description:</div>
+                  <div className="html-text-preview">
+                    <div className="mb-1 font-bold">Description:</div>
                     <RichTextRenderer htmlString={course.description as string} />
                   </div>
-                  <p>
-                    <span className="font-medium">Difficulty:</span>{" "}
-                    <DifficultyLabel difficultyUuid={course.difficulty_uuid as string} />
-                  </p>
                 </div>
-              </div>
+              </section>
 
-              <div className={`html-text-preview`}>
-                <h3 className="mb-2 text-lg font-medium">Learning Objectives</h3>
-                <HTMLTextPreview htmlContent={course?.objectives as string} />
-              </div>
+              {/* Learning Objectives */}
+              <section>
+                <h3 className="mb-3 text-xl font-semibold text-gray-800">🎯 Learning Objectives</h3>
+                <div className="html-text-preview text-gray-700">
+                  <HTMLTextPreview htmlContent={course?.objectives as string} />
+                </div>
+              </section>
 
-              <div>
-                <h3 className="mb-2 text-lg font-medium">Categories</h3>
+              <p>
+                <span className="font-bold">Difficulty:</span>{" "}
+                <DifficultyLabel difficultyUuid={course.difficulty_uuid as string} />
+              </p>
+
+              {/* Categories */}
+              <section>
+                <h3 className="mb-3 text-xl font-semibold text-gray-800">🏷️ Categories</h3>
                 <div className="flex flex-wrap gap-2">
-                  {course?.category_names?.map((index: any) => (
-                    <span key={index} className="rounded-full bg-gray-100 px-3 py-1 text-sm">
-                      {index}
+                  {course?.category_names?.map((category: string, idx: number) => (
+                    <span key={idx} className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+                      {category}
                     </span>
                   ))}
                 </div>
-              </div>
+              </section>
             </div>
           ) : (
             <div className="flex h-48 flex-col items-center justify-center text-center">

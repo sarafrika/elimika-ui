@@ -20,9 +20,23 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import RichTextRenderer from "@/components/editors/richTextRenders"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
 import { CustomPagination } from "@/components/pagination"
+import { useInstructor } from "@/context/instructor-context"
+
+type CourseSearchParams = {
+  instructor_uuid_eq: string
+  status?: string
+  page?: number
+  size?: number
+}
+
+const toQueryString = (params: Record<string, string | number | undefined>) => {
+  return Object.entries(params)
+    .filter(([, v]) => v !== undefined)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
+    .join("&")
+}
 
 export default function CourseDraftsPage() {
-  const instructorUuid = "8369b6a3-d889-4bc7-8520-e5e8605c25d8"
   const { replaceBreadcrumbs } = useBreadcrumb()
 
   useEffect(() => {
@@ -38,39 +52,20 @@ export default function CourseDraftsPage() {
     ])
   }, [replaceBreadcrumbs])
 
-  type CourseSearchParams = {
-    instructor_uuid_eq: string
-    status?: string
-    page?: number
-    size?: number
-  }
-
-  // query string builder
-  const toQueryString = (params: Record<string, string | number | undefined>) => {
-    return Object.entries(params)
-      .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
-      .join("&")
-  }
-
+  const instructor = useInstructor()
   const [page, setPage] = useState(0)
   const size = 20
 
   const queryParams: CourseSearchParams = {
-    instructor_uuid_eq: instructorUuid,
-    status: "draft",
     page,
     size,
+    status: "draft",
+    instructor_uuid_eq: instructor?.uuid as string,
   }
 
   const queryString = toQueryString(queryParams)
   const endpoint = `/api/v1/courses/search?${queryString}`
-
-  const { data, isFetching, isLoading, refetch } = tanstackClient.useQuery(
-    "get", // @ts-ignore
-    endpoint,
-    { params: {} }, // must still pass this even if unused
-  )
+  const { data, isFetching, isLoading, refetch } = tanstackClient.useQuery("get", endpoint as any, { params: {} })
 
   const deleteCourseMutation = tanstackClient.useMutation("delete", "/api/v1/courses/{uuid}")
   const handleDeleteCourse = (courseId: string) => {
@@ -78,16 +73,14 @@ export default function CourseDraftsPage() {
       { params: { path: { uuid: courseId as string } } },
       {
         onSuccess: () => {
-          toast.success("Success")
+          toast.success("Course deleted successfully")
           refetch()
         },
       },
     )
   }
 
-  // @ts-ignore
   const draftCourses = data?.data?.content
-  // @ts-ignore
   const paginationMetadata = data?.data?.metadata
 
   return (
@@ -224,7 +217,6 @@ export default function CourseDraftsPage() {
           totalPages={paginationMetadata?.totalPages}
           onPageChange={(page) => {
             setPage(page - 1)
-            console.log("New page:", page)
           }}
         />
       )}

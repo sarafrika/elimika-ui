@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import * as z from "zod"
 import { toast } from "sonner"
-import { ReactNode } from "react"
+import { ReactNode, useEffect, useRef } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import Spinner from "@/components/ui/spinner"
@@ -37,12 +37,18 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { tanstackClient } from "@/services/api/tanstack-client"
 import RichTextRenderer from "@/components/editors/richTextRenders"
-import WysiwygRichTextEditor from "@/components/editors/wysiwygRichTextEditor"
 import { Control, SubmitHandler, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import React from "react"
+
+import dynamic from "next/dynamic"
+
+// Dynamically import with SSR disabled
+const WysiwygRichTextEditor = dynamic(() => import("../../../../components/editors/wysiwygRichTextEditor"), {
+  ssr: false,
+})
 
 export const CONTENT_TYPES = {
   AUDIO: "Audio",
@@ -54,80 +60,48 @@ export const CONTENT_TYPES = {
   IMAGE: "Image",
 } as const
 
-// const contentItemSchema = z.object({
-//   contentType: z.enum(["AUDIO", "VIDEO", "TEXT", "LINK", "PDF", "YOUTUBE"], {
-//     required_error: "Content type is required",
-//   }),
-//   contentUuid: z.string(),
-//   contentCategory: z.string(),
-//   title: z.string().min(1, "Title is required"),
-//   value: z.any().optional(),
-//   durationMinutes: z.coerce
-//     .number()
-//     .min(0, "Duration minutes must be positive")
-//     .max(59, "Minutes must be less than 60"),
-//   durationHours: z.coerce.number().min(0, "Duration hours must be positive"),
-// })
-
-// const resourceSchema = z.object({
-//   title: z.string().min(1, "Title is required"),
-//   url: z.string().url("Please enter a valid URL"),
-// })
-
-// const lessonFormSchema = z.object({
-//   number: z.preprocess((val) => Number(val), z.number()),
-//   title: z.string().min(1, "Lesson title is required"),
-//   content: z.array(contentItemSchema),
-//   resources: z.array(resourceSchema),
-//   // description: z.string().optional(),
-//   description: z.any(), // now accepts any type
-//   objectives: z.any(),
-// })
-
-///////////////////////////////////
-// Your content item schema (adjusted to required fields and types)
-export const contentItemSchema = z.object({
-  title: z.string().min(1, "Content title is required"),
-  contentUuid: z.string().min(1, "Content UUID is required"),
-  contentType: z.enum(["PDF", "AUDIO", "VIDEO", "TEXT", "LINK", "YOUTUBE"]),
-  contentCategory: z.string().min(1, "Content category is required"),
-  durationMinutes: z.number().min(0),
-  durationHours: z.number().min(0),
+const contentItemSchema = z.object({
+  contentType: z.enum(["AUDIO", "VIDEO", "TEXT", "LINK", "PDF", "YOUTUBE"], {
+    required_error: "Content type is required",
+  }),
+  contentUuid: z.string(),
+  contentCategory: z.string(),
+  title: z.string().min(1, "Title is required"),
   value: z.any().optional(),
+  durationMinutes: z.coerce
+    .number()
+    .min(0, "Duration minutes must be positive")
+    .max(59, "Minutes must be less than 60"),
+  durationHours: z.coerce.number().min(0, "Duration hours must be positive"),
 })
 
-// Your resource schema example (adjust as needed)
-export const resourceSchema = z.object({
-  title: z.string().min(1, "Resource title is required"),
-  url: z.string().url("Must be a valid URL"),
+const resourceSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  url: z.string().url("Please enter a valid URL"),
 })
 
-// Main lesson form schema
-export const lessonFormSchema = z.object({
+const lessonFormSchema = z.object({
   number: z.preprocess(
     (val) => {
-      if (typeof val === "string" && val.trim() === "") return 0
+      if (val === "" || val === null || val === undefined) return undefined
       return Number(val)
     },
-    z.number().min(0, "Lesson number must be >= 0"),
+    z.number({
+      required_error: "This field is required",
+      invalid_type_error: "Must be a valid number",
+    }),
   ),
-
   title: z.string().min(1, "Lesson title is required"),
-
-  content: z.array(contentItemSchema).min(1, "Content cannot be empty"),
-
-  resources: z.array(resourceSchema).optional(),
-
-  description: z.string().optional().nullable(),
-
-  objectives: z.string().optional().nullable(),
-
-  contentCategory: z.string().min(1, "Content category is required"),
+  content: z.array(contentItemSchema),
+  resources: z.array(resourceSchema),
+  description: z.string().min(1, "Lesson description is required"),
+  objectives: z.any(),
+  uuid: z.any(),
+  duration_hours: z.any(),
+  duration_minutes: z.any(),
 })
 
-// Infer the type for TS
 export type LessonFormValues = z.infer<typeof lessonFormSchema>
-///////////////////////////
 
 export type AssessmentFormValues = z.infer<typeof assessmentFormSchema>
 
@@ -146,31 +120,6 @@ const getContentTypeIcon = (type: ContentType) => {
     case "YOUTUBE":
       return <VideoIcon className="h-4 w-4" />
   }
-}
-
-export type TLesson = {
-  uuid: string | number
-  course_uuid: string
-  lesson_number: number
-  title: string
-  duration_hours: number
-  duration_minutes: number
-  description: string
-  learning_objectives: string
-  status: "PUBLISHED" | "DRAFT" | string
-  active: boolean
-  created_date: string
-  created_by: string
-  updated_date: string
-  updated_by: string
-  duration_display: string
-  is_published: boolean
-  lesson_sequence: string
-  content?: any[]
-  resources?: any[]
-
-  // ✅ allows any other property
-  [key: string]: unknown
 }
 
 interface FormSectionProps {
@@ -244,10 +193,9 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   const { setValue } = useFormContext()
 
   // @ts-ignore
-  const { data } = tanstackClient.useQuery("get", "/api/v1/config/content-types", {})
+  const { data } = tanstackClient.useQuery("get", "/api/v1/config/content-types", { params: {} })
 
   const contentTypeData = React.useMemo(() => {
-    // @ts-ignore
     return data?.data?.content ?? {}
   }, [data])
 
@@ -299,14 +247,14 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                 <SelectContent>
                   {Object.entries(contentTypeData).map(([key, value]) => {
                     // @ts-ignore
-                    const Icon = ContentTypeIcons[value?.name.toUpperCase() as keyof typeof ContentTypeIcons]
+                    const Icon = ContentTypeIcons[value?.name?.toUpperCase() as keyof typeof ContentTypeIcons]
 
                     return (
                       // @ts-ignore
                       <SelectItem key={value.uuid} value={JSON.stringify(value)}>
                         <div className="flex items-center gap-2">
                           {Icon && <Icon className="h-4 w-4" />}
-                          {/* @ts-ignore */}
+                          {/*  @ts-ignore */}
                           <span>{value.name}</span>
                         </div>
                       </SelectItem>
@@ -431,6 +379,7 @@ type LessonListProps = {
   courseCategory: any
   // lessons: TLesson[]
   lessons: any
+  isLoading: boolean
   onAddLesson: () => void
   onEditLesson: (lesson: any) => void
   onDeleteLesson: (lessonId: string) => void
@@ -443,6 +392,7 @@ function LessonList({
   courseTitle,
   courseCategory,
   lessons,
+  isLoading,
   onAddLesson,
   onEditLesson,
   onDeleteLesson,
@@ -472,106 +422,111 @@ function LessonList({
         </Button>
       </div>
 
-      <div className="space-y-3">
-        {lessons?.content.map((lesson: any, index: any) => (
-          <div
-            key={lesson?.uuid || index}
-            className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
-          >
-            <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100" />
+      {isLoading ? (
+        <Spinner />
+      ) : (
+        <div className="space-y-3">
+          {lessons?.content.map((lesson: any, index: any) => (
+            <div
+              key={lesson?.uuid || index}
+              className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
+            >
+              <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100" />
 
-            <div className="flex-1 space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex flex-col items-start">
-                  <h3 className="text-lg font-medium">{lesson.title}</h3>
-                  <div className="text-muted-foreground text-sm">
-                    <RichTextRenderer htmlString={lesson?.description} maxChars={400} />
+              <div className="flex-1 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex flex-col items-start">
+                    <h3 className="text-lg font-medium">{lesson.title}</h3>
+                    <div className="text-muted-foreground text-sm">
+                      <RichTextRenderer htmlString={lesson?.description} maxChars={400} />
+                    </div>
                   </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
+                        <PenLine className="mr-2 h-4 w-4" />
+                        Edit Lesson
+                      </DropdownMenuItem>
+                      {lesson.hasAssessment ? (
+                        <DropdownMenuItem onClick={() => onEditAssessment()}>
+                          <ClipboardCheck className="mr-2 h-4 w-4" />
+                          Edit Assessment
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
+                          <ClipboardCheck className="mr-2 h-4 w-4" />
+                          Add Assessment
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => {
+                          if (lesson.uuid) {
+                            onDeleteLesson(lesson?.uuid as string)
+                          }
+                        }}
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete Lesson
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 transition-opacity group-hover:opacity-100"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-                      <PenLine className="mr-2 h-4 w-4" />
-                      Edit Lesson
-                    </DropdownMenuItem>
-                    {lesson.hasAssessment ? (
-                      <DropdownMenuItem onClick={() => onEditAssessment()}>
-                        <ClipboardCheck className="mr-2 h-4 w-4" />
-                        Edit Assessment
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
-                        <ClipboardCheck className="mr-2 h-4 w-4" />
-                        Add Assessment
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => {
-                        if (lesson.uuid) {
-                          onDeleteLesson(lesson?.uuid as string)
-                        }
-                      }}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete Lesson
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
 
-              <div className="flex flex-wrap gap-2">
-                {/* {lesson.content.map((item: any, i: number) => (
+                <div className="flex flex-wrap gap-2">
+                  {/* {lesson.content.map((item: any, i: number) => (
                   <Badge key={i} variant="secondary" className="flex items-center gap-1.5">
                     {getContentTypeIcon(item.contentType as ContentType)}
                     <span>{item.title}</span>
                   </Badge>
                 ))} */}
 
-                {courseCategory?.map((i: any) => (
-                  <Badge key={i} variant="secondary" className="flex items-center gap-1.5">
-                    {getContentTypeIcon(i?.contentType as ContentType)}
-                    <span>{i}</span>
-                  </Badge>
-                ))}
-              </div>
-
-              <div className="text-muted-foreground flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  <span>{getTotalDuration(lesson)} minutes</span>
+                  {courseCategory?.map((i: any) => (
+                    <Badge key={i} variant="secondary" className="flex items-center gap-1.5">
+                      {getContentTypeIcon(i?.contentType as ContentType)}
+                      <span>{i}</span>
+                    </Badge>
+                  ))}
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <BookOpen className="h-4 w-4" />
-                  <span>
-                    {lesson?.content?.length || "0"} {lesson?.content?.length === 1 ? "item" : "items"}
-                  </span>
-                </div>
-
-                {(lesson.resources?.length ?? 0) > 0 && (
+                <div className="text-muted-foreground flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-1.5">
-                    <LinkIcon className="h-4 w-4" />
+                    <Clock className="h-4 w-4" />
+                    <span>{getTotalDuration(lesson)} minutes</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <BookOpen className="h-4 w-4" />
                     <span>
-                      {lesson.resources?.length ?? 0} {(lesson.resources?.length ?? 0) === 1 ? "resource" : "resources"}
+                      {lesson?.content?.length || "0"} {lesson?.content?.length === 1 ? "item" : "items"}
                     </span>
                   </div>
-                )}
+
+                  {(lesson.resources?.length ?? 0) > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <LinkIcon className="h-4 w-4" />
+                      <span>
+                        {lesson.resources?.length ?? 0}{" "}
+                        {(lesson.resources?.length ?? 0) === 1 ? "resource" : "resources"}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* {lessons?.metatdata?.totalPages >= 1 && (
         <Pagination
@@ -599,37 +554,13 @@ interface AppLessonCreationFormProps {
 }
 
 function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLessonCreationFormProps) {
-  // const form = useForm<LessonFormValues>({
-  //   resolver: zodResolver(lessonFormSchema),
-  //   defaultValues: {
-  //     number: 0, // number type, not string
-  //     title: "",
-  //     description: "",
-  //     objectives: "",
-  //     content: [
-  //       {
-  //         contentType: "TEXT",
-  //         title: "",
-  //         contentUuid: "", // required string
-  //         contentCategory: "", // required string
-  //         durationMinutes: 0,
-  //         durationHours: 0,
-  //         value: undefined,
-  //       },
-  //     ],
-  //     resources: [],
-  //     contentCategory: "", // required string
-  //   },
-  // })
-
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
     defaultValues: {
       number: 0,
       title: "",
-      description: null, // nullable string
-      objectives: null, // nullable string
-      contentCategory: "",
+      description: "",
+      objectives: "",
       content: [
         {
           contentType: "TEXT",
@@ -641,7 +572,7 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
           value: undefined,
         },
       ],
-      resources: [], // optional, empty array
+      resources: [],
     },
   })
 
@@ -699,7 +630,7 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
           const lessonUuid = lessonResponse?.data?.uuid
 
           if (!lessonUuid) {
-            toast.error("Lesson UUID missing from response.")
+            toast.error("Lesson uuid missing from response.")
             return
           }
 
@@ -719,15 +650,15 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
                 created_by: "instructor@sarafrika.com",
                 updated_by: "instructor@sarafrika.com",
                 file_size_display: "",
-                content_category: values.contentCategory,
+                // content_category: values.contentCategory,
                 // is_downloadable: true,
                 // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
               },
-              // @ts-ignore
-              params: { path: { courseId, lessonId: lessonUuid } },
+              params: { path: { courseUuid: courseId as string, lessonUuid: lessonUuid } },
             },
             {
               onSuccess: (data) => {
+                toast.success("Lesson content created successfully.")
                 refetch()
                 onCancel()
               },
@@ -894,7 +825,7 @@ function LessonCreationForm({ onCancel, className, courseId, refetch }: AppLesso
             Cancel
           </Button>
           <Button type="submit" className="w-[120px]">
-            {createLessonMutation.isPending ? <Spinner /> : "Create Lesson"}
+            {createLessonMutation.isPending || createLessonContentMutation.isPending ? <Spinner /> : "Create Lesson"}
           </Button>
         </div>
       </form>
@@ -910,18 +841,38 @@ function LessonEditingForm({
   lessonId,
   onSuccess,
 }: AppLessonCreationFormProps) {
+  const normalizedInitialValues = {
+    ...initialValues,
+    content: initialValues?.content
+      ? Array.isArray(initialValues.content)
+        ? initialValues.content
+        : [initialValues.content]
+      : [],
+  }
+
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
     defaultValues: {
-      // @ts-ignore
-      number: "",
+      number: 0,
       title: "",
       description: "",
-      content: [{ contentType: "TEXT", title: "" }],
       resources: [],
-      ...initialValues,
+      ...normalizedInitialValues,
     },
   })
+
+  // const form = useForm<LessonFormValues>({
+  //   resolver: zodResolver(lessonFormSchema),
+  //   defaultValues: {
+  //     // @ts-ignore
+  //     number: "",
+  //     title: "",
+  //     description: "",
+  //     content: [{ contentType: "TEXT", title: "" }],
+  //     resources: [],
+  //     ...initialValues,
+  //   },
+  // })
 
   const {
     fields: contentFields,
@@ -951,8 +902,6 @@ function LessonEditingForm({
     "/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content/{contentUuid}",
   )
 
-  console.log(initialValues, "init again ooo")
-
   const onSubmitEditLesson = (values: LessonFormValues) => {
     updateLessonMutation.mutate(
       {
@@ -976,7 +925,7 @@ function LessonEditingForm({
 
         params: {
           // @ts-ignore
-          path: { courseId, lessonId: lessonId },
+          path: { courseUuid: courseId, lessonUuid: lessonId },
         },
       },
       {
@@ -1007,14 +956,17 @@ function LessonEditingForm({
           created_by: "instructor@sarafrika.com",
           updated_by: "instructor@sarafrika.com",
           file_size_display: "",
-          content_category: values.contentCategory,
+          // content_category: values.contentCategory,
           // is_downloadable: true,
           // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
         },
 
         params: {
-          // @ts-ignore
-          path: { courseId, lessonId: lessonId, contentId: initialValues?.content[0].uuid },
+          path: {
+            courseUuid: courseId as string,
+            lessonUuid: lessonId as string,
+            contentUuid: values?.content[0]?.contentUuid as string,
+          },
         },
       },
       {

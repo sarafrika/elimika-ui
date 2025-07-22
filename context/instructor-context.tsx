@@ -7,7 +7,6 @@ const InstructrorContext = createContext<Instructor | null>(null)
 export default function InstructorProvider({ children }: { children: ReactNode }) {
   const user = useUser()
   const [instructor, setInstructor] = useState(null)
-  console.log(instructor, "instructor here?")
 
   useEffect(() => {
     if (user) {

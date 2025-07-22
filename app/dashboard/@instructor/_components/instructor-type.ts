@@ -32,3 +32,28 @@ export type ICourse = {
   total_duration_display?: string
   is_draft?: boolean
 }
+
+export type TLesson = {
+  uuid: string | number
+  course_uuid: string
+  lesson_number: number
+  title: string
+  duration_hours: number
+  duration_minutes: number
+  description: string
+  learning_objectives: string
+  status: "PUBLISHED" | "DRAFT" | string
+  active: boolean
+  created_date: string
+  created_by: string
+  updated_date: string
+  updated_by: string
+  duration_display: string
+  is_published: boolean
+  lesson_sequence: string
+  content?: any[]
+  resources?: any[]
+
+  // ✅ allows any other property
+  [key: string]: unknown
+}
