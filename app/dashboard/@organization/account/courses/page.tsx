@@ -1,25 +1,11 @@
 "use client"
 
 import * as z from "zod"
-import { useForm, useFieldArray } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
 import { useEffect } from "react"
@@ -111,8 +97,7 @@ export default function CoursesPage() {
           <CardHeader>
             <CardTitle>Manage Affiliate Courses</CardTitle>
             <CardDescription>
-              Select the courses and programs your organisation offers across
-              all branches.
+              Select the courses and programs your organisation offers across all branches.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -122,13 +107,8 @@ export default function CoursesPage() {
               render={() => (
                 <div className="space-y-6">
                   {affiliateCourses.map((category) => (
-                    <div
-                      key={category.category}
-                      className="space-y-4 rounded-lg border p-4"
-                    >
-                      <h3 className="text-lg font-medium">
-                        {category.category}
-                      </h3>
+                    <div key={category.category} className="space-y-4 rounded-lg border p-4">
+                      <h3 className="text-lg font-medium">{category.category}</h3>
                       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                         {category.items.map((item) => (
                           <FormField
@@ -137,30 +117,18 @@ export default function CoursesPage() {
                             name="courses"
                             render={({ field }) => {
                               return (
-                                <FormItem
-                                  key={item}
-                                  className="flex flex-row items-start space-y-0 space-x-3"
-                                >
+                                <FormItem key={item} className="flex flex-row items-start space-y-0 space-x-3">
                                   <FormControl>
                                     <Checkbox
                                       checked={field.value?.includes(item)}
                                       onCheckedChange={(checked) => {
                                         return checked
-                                          ? field.onChange([
-                                              ...field.value,
-                                              item,
-                                            ])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== item,
-                                              ),
-                                            )
+                                          ? field.onChange([...field.value, item])
+                                          : field.onChange(field.value?.filter((value) => value !== item))
                                       }}
                                     />
                                   </FormControl>
-                                  <FormLabel className="font-normal">
-                                    {item}
-                                  </FormLabel>
+                                  <FormLabel className="font-normal">{item}</FormLabel>
                                 </FormItem>
                               )
                             }}

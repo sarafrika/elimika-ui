@@ -1,24 +1,10 @@
 "use client"
 
 import { Check, Loader } from "lucide-react"
-import {
-  Children,
-  ComponentType,
-  createContext,
-  isValidElement,
-  ReactNode,
-  useContext,
-  useState,
-} from "react"
+import { Children, ComponentType, createContext, isValidElement, ReactNode, useContext, useState } from "react"
 import { toast } from "sonner"
 import { Button } from "./button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "./card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs"
 
 interface StepperProviderProps {
@@ -65,9 +51,7 @@ export function StepperRoot({ children }: { children: ReactNode }) {
         setIsLoading(true)
         await event()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "An error occurred",
-        )
+        toast.error(error instanceof Error ? error.message : "An error occurred")
         return
       } finally {
         setIsLoading(false)
@@ -131,11 +115,7 @@ export function StepperTrigger(props: TriggerProps) {
       {isCompleted ? (
         <Check className="h-4 w-4" />
       ) : (
-        props.icon && (
-          <props.icon
-            className={`h-4 w-4 ${props.icon.propTypes?.className}`}
-          />
-        )
+        props.icon && <props.icon className={`h-4 w-4 ${props.icon.propTypes?.className}`} />
       )}
       {props.title}
     </TabsTrigger>
@@ -155,6 +135,7 @@ interface ContentProps {
   previousButtonText?: string
   hideNextButton?: boolean
   hidePreviousButton?: boolean
+  customButton?: React.ReactNode
 }
 
 export function StepperContent({
@@ -170,9 +151,9 @@ export function StepperContent({
   previousButtonText = "Previous",
   hideNextButton,
   hidePreviousButton,
+  customButton,
 }: ContentProps) {
-  const { nextStep, prevStep, isLastStep, isFirstStep, isLoading } =
-    useStepper()
+  const { nextStep, prevStep, isLastStep, isFirstStep, isLoading } = useStepper()
 
   return (
     <TabsContent value={step.toString()}>
@@ -202,13 +183,11 @@ export function StepperContent({
                   onClick={() => nextStep(onNext)}
                   disabled={isLastStep || isLoading || disableNext}
                 >
-                  {isLoading ? (
-                    <Loader className="h-4 w-4 animate-spin" />
-                  ) : (
-                    nextButtonText
-                  )}
+                  {isLoading ? <Loader className="h-4 w-4 animate-spin" /> : nextButtonText}
                 </Button>
               )}
+
+              {customButton}
             </div>
           )}
         </CardContent>

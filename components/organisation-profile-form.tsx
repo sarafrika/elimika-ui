@@ -1,8 +1,7 @@
 import React, { useState } from "react"
-import { PlusCircle, Trash2, CalendarDays } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Move all the constants here
 const affiliateCourses = [
@@ -50,30 +49,15 @@ const affiliateCourses = [
   { category: "Arts", items: ["Painting", "Sculpture", "Drawing"] },
 ]
 
-const ageGroups = [
-  "Kindergarten",
-  "Lower Primary",
-  "Upper Primary",
-  "JSS",
-  "Secondary",
-  "Adults",
-]
+const ageGroups = ["Kindergarten", "Lower Primary", "Upper Primary", "JSS", "Secondary", "Adults"]
 
-const academicPeriods = [
-  "Term",
-  "Semester",
-  "Trimester",
-  "Quarters",
-  "Non Term",
-]
+const academicPeriods = ["Term", "Semester", "Trimester", "Quarters", "Non Term"]
 
 export interface InstitutionProfileContentProps {
   uuid?: string
 }
 
-export const InstitutionProfileContent: React.FC<
-  InstitutionProfileContentProps
-> = ({ uuid }) => {
+export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps> = ({ uuid }) => {
   const [activeTab, setActiveTab] = useState("age-branch")
 
   // Move all the state here (except contact details)
@@ -111,9 +95,7 @@ export const InstitutionProfileContent: React.FC<
     },
   ])
 
-  const [selectedCourses, setSelectedCourses] = useState<
-    Record<string, boolean>
-  >({})
+  const [selectedCourses, setSelectedCourses] = useState<Record<string, boolean>>({})
   const [availability, setAvailability] = useState<Record<string, boolean>>({})
   const [calComLink, setCalComLink] = useState("")
   const [academic, setAcademic] = useState({ period: "", duration: "" })
@@ -171,16 +153,9 @@ export const InstitutionProfileContent: React.FC<
   const cardBaseClasses = "bg-white shadow-xl rounded-xl overflow-hidden"
   const cardContentClasses = "p-6 sm:p-8"
   const sectionTitleClasses = "text-2xl font-semibold text-gray-800 mb-6"
-  const addMoreButtonClasses =
-    "inline-flex items-center text-sky-600 hover:text-sky-800 text-sm font-medium"
+  const addMoreButtonClasses = "inline-flex items-center text-sky-600 hover:text-sky-800 text-sm font-medium"
 
-  const tabOrder = [
-    "age-branch",
-    "courses-types",
-    "availability-academic",
-    "rates-split",
-    "schedule-confirmation",
-  ]
+  const tabOrder = ["age-branch", "courses-types", "availability-academic", "rates-split", "schedule-confirmation"]
   const currentTabIndex = tabOrder.indexOf(activeTab)
   const isLastTab = currentTabIndex === tabOrder.length - 1
 
@@ -203,9 +178,7 @@ export const InstitutionProfileContent: React.FC<
     <div className="bg-background flex min-h-screen flex-col px-4 py-8 sm:px-8 lg:px-16">
       <Card className="bg-card mx-auto flex w-full max-w-7xl flex-1 flex-col border-none shadow-none">
         <CardHeader>
-          <CardTitle className="text-center text-3xl font-bold text-sky-700">
-            Institution Profile
-          </CardTitle>
+          <CardTitle className="text-center text-3xl font-bold text-sky-700">Institution Profile</CardTitle>
         </CardHeader>
         <CardContent className={`${cardContentClasses} flex flex-1 flex-col`}>
           <Tabs
@@ -215,19 +188,11 @@ export const InstitutionProfileContent: React.FC<
             onValueChange={setActiveTab}
           >
             <TabsList className="mb-4 flex w-full space-x-1 overflow-x-auto">
-              <TabsTrigger value="age-branch">
-                Age Groups & Branch Info
-              </TabsTrigger>
-              <TabsTrigger value="courses-types">
-                Courses & Class Types
-              </TabsTrigger>
-              <TabsTrigger value="availability-academic">
-                Availability & Academic
-              </TabsTrigger>
+              <TabsTrigger value="age-branch">Age Groups & Branch Info</TabsTrigger>
+              <TabsTrigger value="courses-types">Courses & Class Types</TabsTrigger>
+              <TabsTrigger value="availability-academic">Availability & Academic</TabsTrigger>
               <TabsTrigger value="rates-split">Rates & Split Ratio</TabsTrigger>
-              <TabsTrigger value="schedule-confirmation">
-                Schedule & Confirmation
-              </TabsTrigger>
+              <TabsTrigger value="schedule-confirmation">Schedule & Confirmation</TabsTrigger>
             </TabsList>
 
             {/* Move all TabsContent components here */}

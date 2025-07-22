@@ -4,23 +4,9 @@ import * as z from "zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { PlusCircle, Trash2 } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
@@ -28,14 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useBreadcrumb } from "@/context/breadcrumb-provider"
 import { useEffect } from "react"
 
-const ageGroups = [
-  "Kindergarten",
-  "Lower Primary",
-  "Upper Primary",
-  "JSS",
-  "Secondary",
-  "Adults",
-] as const
+const ageGroups = ["Kindergarten", "Lower Primary", "Upper Primary", "JSS", "Secondary", "Adults"] as const
 
 const branchesSchema = z.object({
   branches: z.array(
@@ -106,28 +85,17 @@ export default function BranchesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Manage Training Locations & Branches</CardTitle>
-            <CardDescription>
-              Add, edit, or remove your organisation&apos;s branches.
-            </CardDescription>
+            <CardDescription>Add, edit, or remove your organisation&apos;s branches.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-8">
               {fields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className="bg-background/50 space-y-6 rounded-lg border p-6"
-                >
+                <div key={field.id} className="bg-background/50 space-y-6 rounded-lg border p-6">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-semibold">
-                      {form.getValues(`branches.${index}.branchName`) ||
-                        `Branch ${index + 1}`}
+                      {form.getValues(`branches.${index}.branchName`) || `Branch ${index + 1}`}
                     </h3>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => remove(index)}
-                    >
+                    <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Remove Branch
                     </Button>
@@ -142,10 +110,7 @@ export default function BranchesPage() {
                       <FormItem>
                         <FormLabel>Branch Name</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="e.g., Westlands Campus"
-                            {...field}
-                          />
+                          <Input placeholder="e.g., Westlands Campus" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -173,10 +138,7 @@ export default function BranchesPage() {
                         <FormItem>
                           <FormLabel>Full Address</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="e.g., 123 Waiyaki Way"
-                              {...field}
-                            />
+                            <Input placeholder="e.g., 123 Waiyaki Way" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -185,9 +147,7 @@ export default function BranchesPage() {
                   </div>
 
                   <div>
-                    <h4 className="text-md mb-4 font-medium">
-                      Point of Contact
-                    </h4>
+                    <h4 className="text-md mb-4 font-medium">Point of Contact</h4>
                     <div className="space-y-4 rounded-md border p-4">
                       <FormField
                         control={form.control}
@@ -223,11 +183,7 @@ export default function BranchesPage() {
                             <FormItem>
                               <FormLabel>Email Address</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="email"
-                                  placeholder="johndoe@example.com"
-                                  {...field}
-                                />
+                                <Input type="email" placeholder="johndoe@example.com" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -252,13 +208,7 @@ export default function BranchesPage() {
                                   type="number"
                                   placeholder="e.g., 15"
                                   {...field}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      e.target.value
-                                        ? parseInt(e.target.value, 10)
-                                        : "",
-                                    )
-                                  }
+                                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : "")}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -296,32 +246,18 @@ export default function BranchesPage() {
                                   name={`branches.${index}.ageGroups`}
                                   render={({ field }) => {
                                     return (
-                                      <FormItem
-                                        key={item}
-                                        className="flex flex-row items-start space-y-0 space-x-3"
-                                      >
+                                      <FormItem key={item} className="flex flex-row items-start space-y-0 space-x-3">
                                         <FormControl>
                                           <Checkbox
-                                            checked={field.value?.includes(
-                                              item,
-                                            )}
+                                            checked={field.value?.includes(item)}
                                             onCheckedChange={(checked) => {
                                               return checked
-                                                ? field.onChange([
-                                                    ...(field.value ?? []),
-                                                    item,
-                                                  ])
-                                                : field.onChange(
-                                                    field.value?.filter(
-                                                      (value) => value !== item,
-                                                    ),
-                                                  )
+                                                ? field.onChange([...(field.value ?? []), item])
+                                                : field.onChange(field.value?.filter((value) => value !== item))
                                             }}
                                           />
                                         </FormControl>
-                                        <FormLabel className="font-normal">
-                                          {item}
-                                        </FormLabel>
+                                        <FormLabel className="font-normal">{item}</FormLabel>
                                       </FormItem>
                                     )
                                   }}

@@ -196,3 +196,67 @@
     transform-origin: center bottom;
   }
 }
+
+/* styles.css */
+.html-text-preview ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+}
+.html-text-preview ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+.html-text-preview li {
+  margin-bottom: 0.5em;
+}
+
+/* --- Rich Text Editor Responsive Styles --- */
+.rte-wrapper {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rte-editor {
+  min-height: 200px;
+  padding: 10px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.rte-toolbar {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Responsive behavior */
+@media (max-width: 768px) {
+  .rte-wrapper {
+    font-size: 14px;
+  }
+
+  .rte-toolbar {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .rte-editor {
+    min-height: 150px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rte-toolbar {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .rte-editor {
+    min-height: 200px;
+    padding: 6px;
+  }
+}

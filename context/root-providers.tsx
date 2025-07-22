@@ -7,7 +7,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { useUserStore } from "@/store/use-user-store"
 import UserContextProvider from "./user-context"
 
-function UserFetcher() {
+function UserFetcher({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession()
   const { fetchCurrentUser, isLoading } = useUserStore()
 
@@ -27,7 +27,7 @@ function UserFetcher() {
       </div>
     )
   }
-  return null
+  return <>{children}</>
 }
 
 export function RootProviders({ children }: { children: ReactNode }) {
@@ -36,9 +36,7 @@ export function RootProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         {/* <UserFetcher /> */}
-        <UserContextProvider>
-          {children}
-        </UserContextProvider>
+        <UserContextProvider>{children}</UserContextProvider>
       </SessionProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

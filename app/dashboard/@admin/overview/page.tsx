@@ -1,52 +1,13 @@
 "use client"
 
-import { useSession } from "next-auth/react"
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table"
-import {
-  ArrowUpRight,
-  Users,
-  DollarSign,
-  CheckCircle,
-  Activity,
-  TrendingUp,
-  Bell,
-} from "lucide-react"
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
+import { Bell } from "lucide-react"
 import Link from "next/link"
-import {
-  stats,
-  approvalStats,
-  tasks,
-  topPerformers,
-  recentActivity,
-  revenueGraphData,
-  sampleInstructors,
-  sampleOrganizations,
-} from "./sample-admin-data"
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts"
+import { stats, approvalStats, tasks, topPerformers, recentActivity, revenueGraphData } from "./sample-admin-data"
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts"
 
 // Prepare data for Recharts
 const chartData = revenueGraphData.labels.map((label, i) => ({
@@ -55,7 +16,7 @@ const chartData = revenueGraphData.labels.map((label, i) => ({
 }))
 
 export default function AdminOverviewPage() {
-  const { data: session } = useSession()
+  // const { data: session } = useSession()
 
   // You can now use sampleInstructors and sampleOrganizations for any additional widgets or stats
 
@@ -70,9 +31,7 @@ export default function AdminOverviewPage() {
                 <stat.icon className="text-warning h-6 w-6" />
               </div>
               <div className="flex-1">
-                <CardTitle className="text-lg font-semibold">
-                  {stat.value}
-                </CardTitle>
+                <CardTitle className="text-lg font-semibold">{stat.value}</CardTitle>
                 <CardDescription className="flex items-center gap-2">
                   {stat.label}
                   <Badge variant={stat.badge as any} className="ml-2">
@@ -93,9 +52,7 @@ export default function AdminOverviewPage() {
               <stat.icon className="text-primary h-6 w-6" />
             </div>
             <div className="flex-1">
-              <CardTitle className="text-lg font-semibold">
-                {stat.value}
-              </CardTitle>
+              <CardTitle className="text-lg font-semibold">{stat.value}</CardTitle>
               <CardDescription className="flex items-center gap-2">
                 {stat.label}
                 <Badge variant={stat.badge as any} className="ml-2">
@@ -117,10 +74,7 @@ export default function AdminOverviewPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {tasks.map((task, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-2 border-b pb-2 last:border-b-0 last:pb-0"
-              >
+              <div key={i} className="flex items-start gap-2 border-b pb-2 last:border-b-0 last:pb-0">
                 <Badge
                   variant={
                     task.status === "Completed"
@@ -143,13 +97,9 @@ export default function AdminOverviewPage() {
                       </span>
                     )}
                   </div>
-                  <div className="text-muted-foreground text-xs">
-                    {task.comments} comments
-                  </div>
+                  <div className="text-muted-foreground text-xs">{task.comments} comments</div>
                 </div>
-                <span className="text-muted-foreground ml-auto text-xs whitespace-nowrap">
-                  {task.due}
-                </span>
+                <span className="text-muted-foreground ml-auto text-xs whitespace-nowrap">{task.due}</span>
               </div>
             ))}
           </CardContent>
@@ -164,23 +114,10 @@ export default function AdminOverviewPage() {
           <CardContent>
             <div className="flex h-48 w-full flex-col items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={chartData}
-                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                >
+                <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={30}
-                  />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#6b7280" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} axisLine={false} tickLine={false} width={30} />
                   <Tooltip contentStyle={{ borderRadius: 8, fontSize: 13 }} />
                   <Line
                     type="monotone"
@@ -218,9 +155,7 @@ export default function AdminOverviewPage() {
                   </div>
                   <Progress value={perf.progress} className="mt-1 h-2" />
                 </div>
-                <span className="text-primary text-xs font-semibold">
-                  {perf.progress}%
-                </span>
+                <span className="text-primary text-xs font-semibold">{perf.progress}%</span>
               </div>
             ))}
           </CardContent>
@@ -251,11 +186,7 @@ export default function AdminOverviewPage() {
                     <TableCell>
                       <Badge
                         variant={
-                          item.status === "Success"
-                            ? "success"
-                            : item.status === "Pending"
-                              ? "warning"
-                              : "secondary"
+                          item.status === "Success" ? "success" : item.status === "Pending" ? "warning" : "secondary"
                         }
                       >
                         {item.status}
