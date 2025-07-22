@@ -9,6 +9,7 @@
     "generate-zod-client": "pnpx openapi-zod-client https://api.elimika.sarafrika.com/v3/api-docs -o ./services/api/zod-client.ts",
     "start": "next start",
     "lint": "next lint",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

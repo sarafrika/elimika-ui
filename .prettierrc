@@ -1,4 +1,24 @@
-semi: false
+semi: true
+singleQuote: true
 printWidth: 120
+tabWidth: 2
+useTabs: false
+trailingComma: es5
+
+jsxSingleQuote: true
+jsxBracketSameLine: false
+
+bracketSpacing: true
+arrowParens: avoid
+endOfLine: lf
+quoteProps: as-needed
+
+parser: flow
+
+embeddedLanguageFormatting: auto
+htmlWhitespaceSensitivity: css
+insertPragma: false
+requirePragma: false
+proseWrap: preserve
 plugins:
   - prettier-plugin-tailwindcss
