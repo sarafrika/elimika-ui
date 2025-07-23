@@ -1,13 +1,12 @@
-"use client"
+'use client';
 
-import StudentProfileGeneralForm from "./_components/StudentProfileForm";
-import Spinner from "@/components/ui/spinner";
+import StudentProfileGeneralForm from './_components/StudentProfileForm';
+import Spinner from '@/components/ui/spinner';
 
-import { useUser } from "@/context/user-context";
-import { useStudent } from "@/context/student-context";
+import { useUser } from '@/context/user-context';
+import { useStudent } from '@/context/student-context';
 
 export default function StudentProfileGeneralPage() {
-
   const user = useUser();
   const student = useStudent();
 
@@ -21,20 +20,14 @@ export default function StudentProfileGeneralPage() {
     console.log(dataStore!.data)
   }, [dataStore]) */
 
-
   /* const student = useAppStore("student", async () => {
     const results = await search("/api/v1/students/search", { user_uuid_eq: user!.uuid });
     return results.length > 0 ? results[0] : null;
   }) as Student; */
 
-  return (<>
-    {
-      user && student ?
-        <StudentProfileGeneralForm {...{ user, student }} /> :
-        <Spinner />
-    }
-  </>);
-
+  return (
+    <>{user && student ? <StudentProfileGeneralForm {...{ user, student }} /> : <Spinner />}</>
+  );
 }
 
 /* export default async function StudentProfileGeneralPage() {

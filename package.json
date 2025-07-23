@@ -10,7 +10,7 @@
     "openapi-ts": "openapi-ts",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
+    "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

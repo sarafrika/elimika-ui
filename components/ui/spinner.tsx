@@ -1,8 +1,8 @@
-import { cn } from "@/lib/utils"
-import { LoaderIcon, LucideProps } from "lucide-react"
+import { cn } from '@/lib/utils';
+import { LoaderIcon, LucideProps } from 'lucide-react';
 
 const Spinner = ({ className, ...props }: LucideProps) => (
-  <LoaderIcon className={cn("animate-spin", className)} {...props} />
-)
+  <LoaderIcon className={cn('animate-spin', className)} {...props} />
+);
 
-export default Spinner
+export default Spinner;

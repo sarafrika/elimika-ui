@@ -1,13 +1,13 @@
-import { fetchClient } from "@/services/api/fetch-client";
-import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { fetchClient } from '@/services/api/fetch-client';
+import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
 
 export default function useSecureImageUrl(secureUrl: string | null) {
-    const session = useSession();
-    const [imageUrl, setImageUrl] = useState<string | null>();
-    useEffect(() => {
-        if (secureUrl && session.data) {
-            /* console.log("secureUrl", secureUrl)
+  const session = useSession();
+  const [imageUrl, setImageUrl] = useState<string | null>();
+  useEffect(() => {
+    if (secureUrl && session.data) {
+      /* console.log("secureUrl", secureUrl)
             fetch(secureUrl, {
                 headers: {
                     Authorization: `Bearer ${session.data.user.accessToken}`
@@ -20,7 +20,7 @@ export default function useSecureImageUrl(secureUrl: string | null) {
                 .catch(e => {
                     console.log("Image error", e)
                 }) */
-            /* fetchClient.request("get", "/api/v1/users/profile-image/{fileName}", {
+      /* fetchClient.request("get", "/api/v1/users/profile-image/{fileName}", {
                 params: {
                     path: {
                         fileName: secureUrl.split("/").pop() as string
@@ -32,8 +32,8 @@ export default function useSecureImageUrl(secureUrl: string | null) {
             }).then(resp=>{
                 console.log(new Blob([resp.data!]))
             }); */
-        }
-        /* (async () => {
+    }
+    /* (async () => {
             if (secureUrl) {
                 const 
                 const image = await fetchClient.GET("/api/v1/users/profile-image/{fileName}", {
@@ -52,7 +52,7 @@ export default function useSecureImageUrl(secureUrl: string | null) {
                 }
             }
         })(); */
-    }, [session]);
+  }, [session]);
 
-    return imageUrl;
+  return imageUrl;
 }

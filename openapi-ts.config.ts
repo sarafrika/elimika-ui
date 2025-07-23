@@ -2,7 +2,7 @@ import { defaultPaginationKeywords, defineConfig } from '@hey-api/openapi-ts';
 
 export default defineConfig({
   input: {
-    path: "https://api.elimika.sarafrika.com/v3/api-docs",
+    path: 'https://api.elimika.sarafrika.com/v3/api-docs',
     watch: true,
   },
   output: {
@@ -20,8 +20,23 @@ export default defineConfig({
       },
     },
     pagination: {
-      keywords: [...defaultPaginationKeywords, 'pageNumber', 'pageSize', 'totalElements', 'totalPages', 'hasNext', 'hasPrevious', 'first', 'last', 'metadata', 'links', 'self', 'previous', 'next'],
-    }
+      keywords: [
+        ...defaultPaginationKeywords,
+        'pageNumber',
+        'pageSize',
+        'totalElements',
+        'totalPages',
+        'hasNext',
+        'hasPrevious',
+        'first',
+        'last',
+        'metadata',
+        'links',
+        'self',
+        'previous',
+        'next',
+      ],
+    },
   },
   plugins: [
     '@tanstack/react-query',
@@ -41,8 +56,8 @@ export default defineConfig({
     {
       name: 'zod',
       definitions: true,
-      metadata: true
+      metadata: true,
     },
     '@hey-api/client-next',
-  ]
+  ],
 });

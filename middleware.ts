@@ -1,26 +1,24 @@
-import { auth } from "@/services/auth"
-import { NextResponse } from "next/server"
+import { auth } from '@/services/auth';
+import { NextResponse } from 'next/server';
 
-export default auth((req) => {
-  const { pathname } = req.nextUrl
-  const isAuth = !!req.auth
+export default auth(req => {
+  const { pathname } = req.nextUrl;
+  const isAuth = !!req.auth;
 
   // Define protected routes that require authentication
-  const protectedRoutes = ["/dashboard", "/onboarding"]
+  const protectedRoutes = ['/dashboard', '/onboarding'];
 
   // Check if current path is a protected route
-  const isProtectedRoute = protectedRoutes.some(route =>
-    pathname.startsWith(route)
-  )
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
   // If accessing protected route without authentication, redirect to home
   if (!isAuth && isProtectedRoute) {
-    return NextResponse.redirect(new URL("/", req.url))
+    return NextResponse.redirect(new URL('/', req.url));
   }
 
   // Allow the request to continue
-  return NextResponse.next()
-})
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [
@@ -29,7 +27,7 @@ export const config = {
      * - API routes
      * - Next.js internal files
      */
-    "/",
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    '/',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
-}
+};

@@ -1,9 +1,9 @@
-"use client"
+'use client';
 
-import * as z from "zod"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Button } from "@/components/ui/button"
+import * as z from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -12,115 +12,91 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+} from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { CalendarDays } from "lucide-react"
-import { useBreadcrumb } from "@/context/breadcrumb-provider"
-import { useEffect } from "react"
+} from '@/components/ui/select';
+import { CalendarDays } from 'lucide-react';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useEffect } from 'react';
 
-const academicPeriods = [
-  "Term",
-  "Semester",
-  "Trimester",
-  "Quarters",
-  "Non Term",
-] as const
+const academicPeriods = ['Term', 'Semester', 'Trimester', 'Quarters', 'Non Term'] as const;
 
 const availabilitySchema = z.object({
-  calComLink: z
-    .string()
-    .url("Must be a valid URL")
-    .optional()
-    .or(z.literal("")),
+  calComLink: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   academicPeriod: z.enum(academicPeriods).optional(),
   academicDuration: z.number().min(1).optional(),
-})
+});
 
-type AvailabilityFormValues = z.infer<typeof availabilitySchema>
+type AvailabilityFormValues = z.infer<typeof availabilitySchema>;
 
 export default function AvailabilityPage() {
-  const { replaceBreadcrumbs } = useBreadcrumb()
+  const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
     replaceBreadcrumbs([
-      { id: "account", title: "Account", url: "/dashboard/account" },
+      { id: 'account', title: 'Account', url: '/dashboard/account' },
       {
-        id: "availability",
-        title: "Availability",
-        url: "/dashboard/account/availability",
+        id: 'availability',
+        title: 'Availability',
+        url: '/dashboard/account/availability',
         isLast: true,
       },
-    ])
-  }, [replaceBreadcrumbs])
+    ]);
+  }, [replaceBreadcrumbs]);
 
   const form = useForm<AvailabilityFormValues>({
     resolver: zodResolver(availabilitySchema),
     defaultValues: {
-      calComLink: "",
-      academicPeriod: "Term",
+      calComLink: '',
+      academicPeriod: 'Term',
       academicDuration: 12,
     },
-  })
+  });
 
   const onSubmit = (data: AvailabilityFormValues) => {
     // TODO: Implement submission logic
-    console.log(data)
-  }
+    console.log(data);
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+        <div className='space-y-6'>
           <Card>
             <CardHeader>
               <CardTitle>Availability & Scheduling</CardTitle>
               <CardDescription>
-                Connect your main scheduling calendar and define your academic
-                year structure.
+                Connect your main scheduling calendar and define your academic year structure.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className='space-y-6'>
               <FormField
                 control={form.control}
-                name="calComLink"
+                name='calComLink'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Main Scheduling Link (Cal.com)</FormLabel>
                     <FormControl>
-                      <div className="flex flex-col gap-2 sm:flex-row">
-                        <Input
-                          placeholder="https://cal.com/your-organisation"
-                          {...field}
-                        />
-                        <Button type="button" variant="outline" asChild>
-                          <a
-                            href="https://cal.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <CalendarDays className="mr-2 h-4 w-4" />
+                      <div className='flex flex-col gap-2 sm:flex-row'>
+                        <Input placeholder='https://cal.com/your-organisation' {...field} />
+                        <Button type='button' variant='outline' asChild>
+                          <a href='https://cal.com' target='_blank' rel='noopener noreferrer'>
+                            <CalendarDays className='mr-2 h-4 w-4' />
                             Visit Cal.com
                           </a>
                         </Button>
                       </div>
                     </FormControl>
                     <FormDescription>
-                      This link can be used for general bookings for your main
-                      branch or entire organisation.
+                      This link can be used for general bookings for your main branch or entire
+                      organisation.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -133,24 +109,21 @@ export default function AvailabilityPage() {
               <CardTitle>School Academic Period</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
                 <FormField
                   control={form.control}
-                  name="academicPeriod"
+                  name='academicPeriod'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Academic Period Structure</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a period structure" />
+                            <SelectValue placeholder='Select a period structure' />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {academicPeriods.map((period) => (
+                          {academicPeriods.map(period => (
                             <SelectItem key={period} value={period}>
                               {period}
                             </SelectItem>
@@ -163,20 +136,18 @@ export default function AvailabilityPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="academicDuration"
+                  name='academicDuration'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Average Period Duration (weeks)</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
-                          placeholder="e.g., 12"
+                          type='number'
+                          placeholder='e.g., 12'
                           {...field}
-                          onChange={(e) =>
+                          onChange={e =>
                             field.onChange(
-                              e.target.value
-                                ? parseInt(e.target.value, 10)
-                                : undefined,
+                              e.target.value ? parseInt(e.target.value, 10) : undefined
                             )
                           }
                         />
@@ -190,10 +161,10 @@ export default function AvailabilityPage() {
           </Card>
         </div>
 
-        <div className="flex justify-end">
-          <Button type="submit">Save Availability Settings</Button>
+        <div className='flex justify-end'>
+          <Button type='submit'>Save Availability Settings</Button>
         </div>
       </form>
     </Form>
-  )
+  );
 }

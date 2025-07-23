@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation';
 
 export default function ProfileRoot() {
-  redirect("/dashboard/account/training-center")
+  redirect('/dashboard/account/training-center');
 }

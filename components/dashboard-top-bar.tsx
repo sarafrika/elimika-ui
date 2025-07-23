@@ -1,8 +1,8 @@
-"use client"
+'use client';
 
-import { useIsMobile } from "@/hooks/use-mobile"
-import { AppBreadcrumb } from "@/components/ui/app-breadcrumb"
-import DashboardViewSwitcher from "@/components/dashboard-view-switcher"
+import { useIsMobile } from '@/hooks/use-mobile';
+import { AppBreadcrumb } from '@/components/ui/app-breadcrumb';
+import DashboardViewSwitcher from '@/components/dashboard-view-switcher';
 
 // export default function DashboardTopBar({
 //   showToggle = true,
@@ -28,24 +28,20 @@ import DashboardViewSwitcher from "@/components/dashboard-view-switcher"
 // }
 
 // fixed topbar
-export default function DashboardTopBar({
-  showToggle = true,
-}: {
-  showToggle?: boolean
-}) {
-  const isMobile = useIsMobile()
+export default function DashboardTopBar({ showToggle = true }: { showToggle?: boolean }) {
+  const isMobile = useIsMobile();
 
   return (
-    <div className="bg-opacity-80 sticky top-0 z-40 flex items-center px-6 py-3 backdrop-blur-sm">
+    <div className='bg-opacity-80 sticky top-0 z-40 flex items-center px-6 py-3 backdrop-blur-sm'>
       {!showToggle ? (
         !isMobile && <AppBreadcrumb />
       ) : (
         <>
           {!isMobile && <AppBreadcrumb />}
-          <div className="flex-1" />
+          <div className='flex-1' />
           <DashboardViewSwitcher />
         </>
       )}
     </div>
-  )
+  );
 }
