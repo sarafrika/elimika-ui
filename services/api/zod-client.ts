@@ -1,5 +1,5 @@
-import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core"
-import { z } from "zod"
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
 
 const User = z
   .object({
@@ -17,7 +17,7 @@ const User = z
       .regex(/^(\+254|0)?[17]\d{8}$/),
     active: z.boolean().default(true),
     keycloak_id: z.string().min(0).max(255).optional(),
-    gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(),
+    gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY']).optional(),
     user_domain: z.array(z.unknown()).optional(),
     profile_image_url: z.string().url().optional(),
     created_date: z.string().datetime({ offset: true }).optional(),
@@ -27,11 +27,16 @@ const User = z
     display_name: z.string().optional(),
     full_name: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const ApiResponseUser = z
-  .object({ success: z.boolean(), data: User, message: z.string(), error: z.object({}).partial().passthrough() })
+  .object({
+    success: z.boolean(),
+    data: User,
+    message: z.string(),
+    error: z.object({}).partial().passthrough(),
+  })
   .partial()
-  .passthrough()
+  .passthrough();
 const TrainingBranch = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -43,7 +48,7 @@ const TrainingBranch = z
     created_date: z.string().datetime({ offset: true }).optional(),
     updated_date: z.string().datetime({ offset: true }).optional(),
   })
-  .passthrough()
+  .passthrough();
 const Student = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -70,7 +75,7 @@ const Student = z
     updated_date: z.string().datetime({ offset: true }).optional(),
     updated_by: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const Quiz = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -82,7 +87,7 @@ const Quiz = z
     attempts_allowed: z.number().int().gte(1),
     passing_score: z.number().gte(0).lte(100),
     rubric_uuid: z.string().uuid().optional(),
-    status: z.enum(["DRAFT", "IN_REVIEW", "PUBLISHED", "ARCHIVED"]),
+    status: z.enum(['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'ARCHIVED']),
     active: z.boolean().optional(),
     created_date: z.string().datetime({ offset: true }).optional(),
     created_by: z.string().optional(),
@@ -93,13 +98,13 @@ const Quiz = z
     is_timed: z.boolean().optional(),
     has_multiple_attempts: z.boolean().optional(),
   })
-  .passthrough()
+  .passthrough();
 const QuizQuestion = z
   .object({
     uuid: z.string().uuid().optional(),
     quiz_uuid: z.string().uuid(),
     question_text: z.string().min(0).max(2000),
-    question_type: z.enum(["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER", "ESSAY"]),
+    question_type: z.enum(['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY']),
     points: z.number().gte(0.01),
     display_order: z.number().int().gte(1),
     created_date: z.string().datetime({ offset: true }).optional(),
@@ -111,7 +116,7 @@ const QuizQuestion = z
     points_display: z.string().optional(),
     question_number: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const QuizQuestionOption = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -129,12 +134,12 @@ const QuizQuestionOption = z
     correctness_status: z.string().optional(),
     option_summary: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const ProgramRequirement = z
   .object({
     uuid: z.string().uuid().optional(),
     program_uuid: z.string().uuid(),
-    requirement_type: z.enum(["STUDENT", "TRAINING_CENTER", "INSTRUCTOR"]),
+    requirement_type: z.enum(['STUDENT', 'TRAINING_CENTER', 'INSTRUCTOR']),
     requirement_text: z.string().min(0).max(2000),
     is_mandatory: z.boolean().optional(),
     created_date: z.string().datetime({ offset: true }).optional(),
@@ -147,7 +152,7 @@ const ProgramRequirement = z
     compliance_level: z.string().optional(),
     requirement_summary: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const ProgramCourse = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -166,7 +171,7 @@ const ProgramCourse = z
     requirement_status: z.string().optional(),
     curriculum_summary: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const Organisation = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -182,7 +187,7 @@ const Organisation = z
     created_date: z.string().datetime({ offset: true }).optional(),
     updated_date: z.string().datetime({ offset: true }).optional(),
   })
-  .passthrough()
+  .passthrough();
 const Instructor = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -208,13 +213,13 @@ const Instructor = z
     formatted_location: z.string().optional(),
     is_profile_complete: z.boolean().optional(),
   })
-  .passthrough()
+  .passthrough();
 const InstructorSkill = z
   .object({
     uuid: z.string().uuid().optional(),
     instructor_uuid: z.string().uuid(),
     skill_name: z.string().min(0).max(100),
-    proficiency_level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"]),
+    proficiency_level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT']),
     created_date: z.string().datetime({ offset: true }).optional(),
     created_by: z.string().optional(),
     updated_date: z.string().datetime({ offset: true }).optional(),
@@ -223,7 +228,7 @@ const InstructorSkill = z
     summary: z.string().optional(),
     proficiency_description: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const InstructorProfessionalMembership = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -241,25 +246,25 @@ const InstructorProfessionalMembership = z
     summary: z.string().optional(),
     is_complete: z.boolean().optional(),
     formatted_duration: z.string().optional(),
-    membership_status: z.enum(["ACTIVE", "INACTIVE", "EXPIRED", "UNKNOWN"]).optional(),
+    membership_status: z.enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN']).optional(),
     membership_period: z.string().optional(),
     is_long_standing_member: z.boolean().optional(),
     has_membership_number: z.boolean().optional(),
     organization_type: z
       .enum([
-        "PROFESSIONAL_INSTITUTE",
-        "CERTIFICATION_BODY",
-        "INDUSTRY_ASSOCIATION",
-        "ACADEMIC_SOCIETY",
-        "TRADE_ORGANIZATION",
-        "OTHER",
+        'PROFESSIONAL_INSTITUTE',
+        'CERTIFICATION_BODY',
+        'INDUSTRY_ASSOCIATION',
+        'ACADEMIC_SOCIETY',
+        'TRADE_ORGANIZATION',
+        'OTHER',
       ])
       .optional(),
     years_of_membership: z.number().optional(),
     is_recent_membership: z.boolean().optional(),
     membership_duration_months: z.number().int().optional(),
   })
-  .passthrough()
+  .passthrough();
 const InstructorExperience = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -282,11 +287,11 @@ const InstructorExperience = z
     employment_period: z.string().optional(),
     is_long_term_position: z.boolean().optional(),
     has_responsibilities: z.boolean().optional(),
-    experience_level: z.enum(["ENTRY", "JUNIOR", "MID", "SENIOR", "LEAD", "EXECUTIVE"]).optional(),
+    experience_level: z.enum(['ENTRY', 'JUNIOR', 'MID', 'SENIOR', 'LEAD', 'EXECUTIVE']).optional(),
     is_recent_experience: z.boolean().optional(),
     calculated_years: z.number().optional(),
   })
-  .passthrough()
+  .passthrough();
 const InstructorEducation = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -304,12 +309,12 @@ const InstructorEducation = z
     is_recent_qualification: z.boolean().optional(),
     years_since_completion: z.number().int().optional(),
     education_level: z
-      .enum(["CERTIFICATE", "DIPLOMA", "UNDERGRADUATE", "POSTGRADUATE", "DOCTORAL", "OTHER"])
+      .enum(['CERTIFICATE', 'DIPLOMA', 'UNDERGRADUATE', 'POSTGRADUATE', 'DOCTORAL', 'OTHER'])
       .optional(),
     has_certificate_number: z.boolean().optional(),
     formatted_completion: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const InstructorDocument = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -321,7 +326,7 @@ const InstructorDocument = z
     original_filename: z.string().min(0).max(255),
     title: z.string().min(0).max(255),
     description: z.string().min(0).max(2000).optional(),
-    status: z.enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED", "UNDER_REVIEW"]).optional(),
+    status: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'EXPIRED', 'UNDER_REVIEW']).optional(),
     expiry_date: z.string().optional(),
     stored_filename: z.string().optional(),
     file_path: z.string().optional(),
@@ -342,9 +347,9 @@ const InstructorDocument = z
     days_until_expiry: z.number().int().optional(),
     is_pending_verification: z.boolean().optional(),
     has_expiry_date: z.boolean().optional(),
-    verification_status: z.enum(["VERIFIED", "PENDING", "REJECTED"]).optional(),
+    verification_status: z.enum(['VERIFIED', 'PENDING', 'REJECTED']).optional(),
   })
-  .passthrough()
+  .passthrough();
 const Course = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -364,7 +369,7 @@ const Course = z
     thumbnail_url: z.string().min(0).max(500).url().optional(),
     intro_video_url: z.string().min(0).max(500).url().optional(),
     banner_url: z.string().min(0).max(500).url().optional(),
-    status: z.enum(["draft", "in_review", "published", "archived"]),
+    status: z.enum(['draft', 'in_review', 'published', 'archived']),
     active: z.boolean().optional(),
     category_names: z.array(z.string()).optional(),
     created_date: z.string().datetime({ offset: true }).optional(),
@@ -382,12 +387,12 @@ const Course = z
     lifecycle_stage: z.string().optional(),
     accepts_new_enrollments: z.boolean().optional(),
   })
-  .passthrough()
+  .passthrough();
 const CourseRequirement = z
   .object({
     uuid: z.string().uuid().optional(),
     course_uuid: z.string().uuid(),
-    requirement_type: z.enum(["STUDENT", "TRAINING_CENTER", "INSTRUCTOR"]),
+    requirement_type: z.enum(['STUDENT', 'TRAINING_CENTER', 'INSTRUCTOR']),
     requirement_text: z.string().min(0).max(1000),
     is_mandatory: z.boolean().optional(),
     created_date: z.string().datetime({ offset: true }).optional(),
@@ -395,7 +400,7 @@ const CourseRequirement = z
     updated_date: z.string().datetime({ offset: true }).optional(),
     updated_by: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const Lesson = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -406,7 +411,7 @@ const Lesson = z
     duration_minutes: z.number().int().gte(0).lte(59),
     description: z.string().min(0).max(1000).optional(),
     learning_objectives: z.string().min(0).max(500).optional(),
-    status: z.enum(["DRAFT", "IN_REVIEW", "PUBLISHED", "ARCHIVED"]),
+    status: z.enum(['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'ARCHIVED']),
     active: z.boolean().optional(),
     created_date: z.string().datetime({ offset: true }).optional(),
     created_by: z.string().optional(),
@@ -416,7 +421,7 @@ const Lesson = z
     duration_display: z.string().optional(),
     lesson_sequence: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const LessonContent = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -437,7 +442,7 @@ const LessonContent = z
     content_category: z.string().optional(),
     file_size_display: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const CourseAssessment = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -457,7 +462,7 @@ const CourseAssessment = z
     is_major_assessment: z.boolean().optional(),
     contribution_level: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const GradingLevel = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -470,7 +475,7 @@ const GradingLevel = z
     updated_by: z.string().optional(),
     grade_display: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const DifficultyLevel = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -484,7 +489,7 @@ const DifficultyLevel = z
     display_name: z.string().optional(),
     is_entry_level: z.boolean().optional(),
   })
-  .passthrough()
+  .passthrough();
 const ContentType = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -500,7 +505,7 @@ const ContentType = z
     supported_formats: z.string().optional(),
     size_limit_display: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const Category = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -515,7 +520,7 @@ const Category = z
     is_root_category: z.boolean().optional(),
     category_path: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const Certificate = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -540,12 +545,12 @@ const Certificate = z
     grade_letter: z.string().optional(),
     validity_status: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const CertificateTemplate = z
   .object({
     uuid: z.string().uuid().optional(),
     name: z.string().min(0).max(255),
-    template_type: z.enum(["COURSE_COMPLETION", "PARTICIPATION", "ACHIEVEMENT", "CUSTOM"]),
+    template_type: z.enum(['COURSE_COMPLETION', 'PARTICIPATION', 'ACHIEVEMENT', 'CUSTOM']),
     template_html: z.string().min(0).max(20000).optional(),
     template_css: z.string().min(0).max(50000).optional(),
     background_image_url: z.string().min(0).max(500).optional(),
@@ -556,7 +561,7 @@ const CertificateTemplate = z
     updated_by: z.string().optional(),
     design_complexity: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const Assignment = z
   .object({
     uuid: z.string().uuid().optional(),
@@ -578,11 +583,15 @@ const Assignment = z
     assignment_scope: z.string().optional(),
     submission_summary: z.string().optional(),
   })
-  .passthrough()
+  .passthrough();
 const pageable = z
-  .object({ page: z.number().int().gte(0), size: z.number().int().gte(1), sort: z.array(z.string()) })
+  .object({
+    page: z.number().int().gte(0),
+    size: z.number().int().gte(1),
+    sort: z.array(z.string()),
+  })
   .partial()
-  .passthrough()
+  .passthrough();
 const ApiResponse = z
   .object({
     success: z.boolean(),
@@ -591,7 +600,7 @@ const ApiResponse = z
     error: z.object({}).partial().passthrough(),
   })
   .partial()
-  .passthrough()
+  .passthrough();
 
 export const schemas = {
   User,
@@ -624,19 +633,19 @@ export const schemas = {
   Assignment,
   pageable,
   ApiResponse,
-}
+};
 
 const endpoints = makeApi([
   {
-    method: "get",
-    path: "/api/v1/assignments",
-    alias: "getAllAssignments",
+    method: 'get',
+    path: '/api/v1/assignments',
+    alias: 'getAllAssignments',
     description: `Retrieves paginated list of all assignments with filtering support.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -655,15 +664,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/assignments",
-    alias: "createAssignment",
+    method: 'post',
+    path: '/api/v1/assignments',
+    alias: 'createAssignment',
     description: `Creates a new assignment with default DRAFT status and inactive state.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Assignment,
       },
     ],
@@ -687,15 +696,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/assignments/:assignmentUuid/analytics",
-    alias: "getSubmissionAnalytics",
+    method: 'get',
+    path: '/api/v1/assignments/:assignmentUuid/analytics',
+    alias: 'getSubmissionAnalytics',
     description: `Returns analytics data for assignment submissions including category distribution.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "assignmentUuid",
-        type: "Path",
+        name: 'assignmentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -714,15 +723,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/assignments/:assignmentUuid/average-score",
-    alias: "getAverageScore",
+    method: 'get',
+    path: '/api/v1/assignments/:assignmentUuid/average-score',
+    alias: 'getAverageScore',
     description: `Returns the average score for all graded submissions of an assignment.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "assignmentUuid",
-        type: "Path",
+        name: 'assignmentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -741,15 +750,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/assignments/:assignmentUuid/high-performance",
-    alias: "getHighPerformanceSubmissions",
+    method: 'get',
+    path: '/api/v1/assignments/:assignmentUuid/high-performance',
+    alias: 'getHighPerformanceSubmissions',
     description: `Returns submissions with scores above 85%.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "assignmentUuid",
-        type: "Path",
+        name: 'assignmentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -768,15 +777,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/assignments/:assignmentUuid/submissions",
-    alias: "getAssignmentSubmissions",
+    method: 'get',
+    path: '/api/v1/assignments/:assignmentUuid/submissions',
+    alias: 'getAssignmentSubmissions',
     description: `Retrieves all submissions for a specific assignment.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "assignmentUuid",
-        type: "Path",
+        name: 'assignmentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -795,35 +804,35 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/assignments/:assignmentUuid/submissions/:submissionUuid/grade",
-    alias: "gradeSubmission",
+    method: 'post',
+    path: '/api/v1/assignments/:assignmentUuid/submissions/:submissionUuid/grade',
+    alias: 'gradeSubmission',
     description: `Grades a student&#x27;s assignment submission with score and comments.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "assignmentUuid",
-        type: "Path",
+        name: 'assignmentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "submissionUuid",
-        type: "Path",
+        name: 'submissionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "score",
-        type: "Query",
+        name: 'score',
+        type: 'Query',
         schema: z.number(),
       },
       {
-        name: "maxScore",
-        type: "Query",
+        name: 'maxScore',
+        type: 'Query',
         schema: z.number(),
       },
       {
-        name: "comments",
-        type: "Query",
+        name: 'comments',
+        type: 'Query',
         schema: z.string().optional(),
       },
     ],
@@ -842,25 +851,25 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/assignments/:assignmentUuid/submissions/:submissionUuid/return",
-    alias: "returnSubmission",
+    method: 'post',
+    path: '/api/v1/assignments/:assignmentUuid/submissions/:submissionUuid/return',
+    alias: 'returnSubmission',
     description: `Returns a submission to student with feedback for revision.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "assignmentUuid",
-        type: "Path",
+        name: 'assignmentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "submissionUuid",
-        type: "Path",
+        name: 'submissionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "feedback",
-        type: "Query",
+        name: 'feedback',
+        type: 'Query',
         schema: z.string(),
       },
     ],
@@ -879,30 +888,30 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/assignments/:assignmentUuid/submit",
-    alias: "submitAssignment",
+    method: 'post',
+    path: '/api/v1/assignments/:assignmentUuid/submit',
+    alias: 'submitAssignment',
     description: `Creates a new submission for an assignment by a student.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "assignmentUuid",
-        type: "Path",
+        name: 'assignmentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "enrollmentUuid",
-        type: "Query",
+        name: 'enrollmentUuid',
+        type: 'Query',
         schema: z.string().uuid(),
       },
       {
-        name: "content",
-        type: "Query",
+        name: 'content',
+        type: 'Query',
         schema: z.string(),
       },
       {
-        name: "fileUrls",
-        type: "Query",
+        name: 'fileUrls',
+        type: 'Query',
         schema: z.array(z.string()).optional(),
       },
     ],
@@ -921,15 +930,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/assignments/:uuid",
-    alias: "getAssignmentByUuid",
+    method: 'get',
+    path: '/api/v1/assignments/:uuid',
+    alias: 'getAssignmentByUuid',
     description: `Retrieves a complete assignment including submission statistics.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -948,20 +957,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/assignments/:uuid",
-    alias: "updateAssignment",
+    method: 'put',
+    path: '/api/v1/assignments/:uuid',
+    alias: 'updateAssignment',
     description: `Updates an existing assignment with selective field updates.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Assignment,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -980,15 +989,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/assignments/:uuid",
-    alias: "deleteAssignment",
+    method: 'delete',
+    path: '/api/v1/assignments/:uuid',
+    alias: 'deleteAssignment',
     description: `Permanently removes an assignment and all associated submissions.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1007,15 +1016,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/assignments/instructor/:instructorUuid/pending-grading",
-    alias: "getPendingGrading",
+    method: 'get',
+    path: '/api/v1/assignments/instructor/:instructorUuid/pending-grading',
+    alias: 'getPendingGrading',
     description: `Retrieves all submissions pending grading for a specific instructor.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1034,9 +1043,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/assignments/search",
-    alias: "searchAssignments",
+    method: 'get',
+    path: '/api/v1/assignments/search',
+    alias: 'searchAssignments',
     description: `Advanced assignment search with flexible criteria and operators.
 
 **Common Assignment Search Examples:**
@@ -1047,16 +1056,16 @@ const endpoints = makeApi([
 - &#x60;dueDate_gte&#x3D;2024-12-01T00:00:00&#x60; - Assignments due from Dec 1, 2024
 - &#x60;maxPoints_gte&#x3D;50&#x60; - Assignments worth 50+ points
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -1075,9 +1084,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/assignments/submissions/search",
-    alias: "searchSubmissions",
+    method: 'get',
+    path: '/api/v1/assignments/submissions/search',
+    alias: 'searchSubmissions',
     description: `Search submissions across all assignments.
 
 **Common Submission Search Examples:**
@@ -1088,16 +1097,16 @@ const endpoints = makeApi([
 - &#x60;submittedAt_gte&#x3D;2024-01-01T00:00:00&#x60; - Submissions from 2024
 - &#x60;gradedByUuid&#x3D;uuid&#x60; - Submissions graded by specific instructor
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -1116,15 +1125,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates",
-    alias: "getAllCertificates",
+    method: 'get',
+    path: '/api/v1/certificates',
+    alias: 'getAllCertificates',
     description: `Retrieves paginated list of all certificates with filtering support.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -1143,15 +1152,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/certificates",
-    alias: "createCertificate",
+    method: 'post',
+    path: '/api/v1/certificates',
+    alias: 'createCertificate',
     description: `Manually creates a certificate record with automatic number generation.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Certificate,
       },
     ],
@@ -1175,15 +1184,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/:uuid",
-    alias: "getCertificateByUuid",
+    method: 'get',
+    path: '/api/v1/certificates/:uuid',
+    alias: 'getCertificateByUuid',
     description: `Retrieves a complete certificate including computed properties and verification status.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1202,20 +1211,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/certificates/:uuid",
-    alias: "updateCertificate",
+    method: 'put',
+    path: '/api/v1/certificates/:uuid',
+    alias: 'updateCertificate',
     description: `Updates an existing certificate with selective field updates.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Certificate,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1234,15 +1243,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/certificates/:uuid",
-    alias: "deleteCertificate",
+    method: 'delete',
+    path: '/api/v1/certificates/:uuid',
+    alias: 'deleteCertificate',
     description: `Permanently removes a certificate record.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1261,20 +1270,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/certificates/:uuid/generate-url",
-    alias: "generateCertificateUrl",
+    method: 'post',
+    path: '/api/v1/certificates/:uuid/generate-url',
+    alias: 'generateCertificateUrl',
     description: `Generates and updates the downloadable URL for a certificate.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "certificateUrl",
-        type: "Query",
+        name: 'certificateUrl',
+        type: 'Query',
         schema: z.string(),
       },
     ],
@@ -1293,20 +1302,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/certificates/:uuid/revoke",
-    alias: "revokeCertificate",
+    method: 'post',
+    path: '/api/v1/certificates/:uuid/revoke',
+    alias: 'revokeCertificate',
     description: `Revokes a certificate with reason, making it invalid.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "reason",
-        type: "Query",
+        name: 'reason',
+        type: 'Query',
         schema: z.string(),
       },
     ],
@@ -1325,11 +1334,11 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/course-certificates",
-    alias: "getCourseCertificates",
+    method: 'get',
+    path: '/api/v1/certificates/course-certificates',
+    alias: 'getCourseCertificates',
     description: `Retrieves all certificates issued for course completions.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     response: z.void(),
     errors: [
       {
@@ -1345,25 +1354,25 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/certificates/generate/course",
-    alias: "generateCourseCertificate",
+    method: 'post',
+    path: '/api/v1/certificates/generate/course',
+    alias: 'generateCourseCertificate',
     description: `Automatically generates a certificate upon course completion.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "studentUuid",
-        type: "Query",
+        name: 'studentUuid',
+        type: 'Query',
         schema: z.string().uuid(),
       },
       {
-        name: "courseUuid",
-        type: "Query",
+        name: 'courseUuid',
+        type: 'Query',
         schema: z.string().uuid(),
       },
       {
-        name: "finalGrade",
-        type: "Query",
+        name: 'finalGrade',
+        type: 'Query',
         schema: z.number(),
       },
     ],
@@ -1387,25 +1396,25 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/certificates/generate/program",
-    alias: "generateProgramCertificate",
+    method: 'post',
+    path: '/api/v1/certificates/generate/program',
+    alias: 'generateProgramCertificate',
     description: `Automatically generates a certificate upon program completion.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "studentUuid",
-        type: "Query",
+        name: 'studentUuid',
+        type: 'Query',
         schema: z.string().uuid(),
       },
       {
-        name: "programUuid",
-        type: "Query",
+        name: 'programUuid',
+        type: 'Query',
         schema: z.string().uuid(),
       },
       {
-        name: "finalGrade",
-        type: "Query",
+        name: 'finalGrade',
+        type: 'Query',
         schema: z.number(),
       },
     ],
@@ -1429,15 +1438,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/number/:certificateNumber",
-    alias: "getCertificateByNumber",
+    method: 'get',
+    path: '/api/v1/certificates/number/:certificateNumber',
+    alias: 'getCertificateByNumber',
     description: `Retrieves certificate details using certificate number for public verification.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "certificateNumber",
-        type: "Path",
+        name: 'certificateNumber',
+        type: 'Path',
         schema: z.string(),
       },
     ],
@@ -1456,11 +1465,11 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/program-certificates",
-    alias: "getProgramCertificates_1",
+    method: 'get',
+    path: '/api/v1/certificates/program-certificates',
+    alias: 'getProgramCertificates_1',
     description: `Retrieves all certificates issued for program completions.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     response: z.void(),
     errors: [
       {
@@ -1476,11 +1485,11 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/revoked",
-    alias: "getRevokedCertificates",
+    method: 'get',
+    path: '/api/v1/certificates/revoked',
+    alias: 'getRevokedCertificates',
     description: `Retrieves all revoked certificates for administrative review.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     response: z.void(),
     errors: [
       {
@@ -1496,9 +1505,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/search",
-    alias: "searchCertificates",
+    method: 'get',
+    path: '/api/v1/certificates/search',
+    alias: 'searchCertificates',
     description: `Advanced certificate search with flexible criteria and operators.
 
 **Common Certificate Search Examples:**
@@ -1516,16 +1525,16 @@ const endpoints = makeApi([
 - &#x60;programUuid_noteq&#x3D;null&amp;isValid&#x3D;true&#x60; - Valid program certificates
 - &#x60;finalGrade_between&#x3D;80,100&amp;isValid&#x3D;true&#x60; - High-grade valid certificates
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -1544,15 +1553,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/student/:studentUuid",
-    alias: "getStudentCertificates",
+    method: 'get',
+    path: '/api/v1/certificates/student/:studentUuid',
+    alias: 'getStudentCertificates',
     description: `Retrieves all certificates earned by a specific student.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "studentUuid",
-        type: "Path",
+        name: 'studentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1571,15 +1580,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/student/:studentUuid/downloadable",
-    alias: "getDownloadableCertificates",
+    method: 'get',
+    path: '/api/v1/certificates/student/:studentUuid/downloadable',
+    alias: 'getDownloadableCertificates',
     description: `Retrieves all valid certificates available for download by a student.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "studentUuid",
-        type: "Path",
+        name: 'studentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1598,15 +1607,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/templates",
-    alias: "getCertificateTemplates",
+    method: 'get',
+    path: '/api/v1/certificates/templates',
+    alias: 'getCertificateTemplates',
     description: `Retrieves all available certificate templates.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -1625,15 +1634,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/certificates/templates",
-    alias: "createCertificateTemplate",
+    method: 'post',
+    path: '/api/v1/certificates/templates',
+    alias: 'createCertificateTemplate',
     description: `Creates a new certificate template for generating certificates.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: CertificateTemplate,
       },
     ],
@@ -1652,20 +1661,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/certificates/templates/:templateUuid",
-    alias: "updateCertificateTemplate",
+    method: 'put',
+    path: '/api/v1/certificates/templates/:templateUuid',
+    alias: 'updateCertificateTemplate',
     description: `Updates an existing certificate template.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: CertificateTemplate,
       },
       {
-        name: "templateUuid",
-        type: "Path",
+        name: 'templateUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1684,15 +1693,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/certificates/templates/:templateUuid",
-    alias: "deleteCertificateTemplate",
+    method: 'delete',
+    path: '/api/v1/certificates/templates/:templateUuid',
+    alias: 'deleteCertificateTemplate',
     description: `Removes a certificate template.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "templateUuid",
-        type: "Path",
+        name: 'templateUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1711,9 +1720,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/templates/search",
-    alias: "searchCertificateTemplates",
+    method: 'get',
+    path: '/api/v1/certificates/templates/search',
+    alias: 'searchCertificateTemplates',
     description: `Search certificate templates with filtering.
 
 **Common Template Search Examples:**
@@ -1723,16 +1732,16 @@ const endpoints = makeApi([
 - &#x60;active&#x3D;true&#x60; - Active templates
 - &#x60;name_like&#x3D;modern&#x60; - Templates with &quot;modern&quot; in name
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -1751,15 +1760,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/certificates/verify/:certificateNumber",
-    alias: "verifyCertificate",
+    method: 'get',
+    path: '/api/v1/certificates/verify/:certificateNumber',
+    alias: 'verifyCertificate',
     description: `Verifies the authenticity of a certificate using its certificate number.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "certificateNumber",
-        type: "Path",
+        name: 'certificateNumber',
+        type: 'Path',
         schema: z.string(),
       },
     ],
@@ -1778,15 +1787,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/categories",
-    alias: "getAllCategories",
+    method: 'get',
+    path: '/api/v1/config/categories',
+    alias: 'getAllCategories',
     description: `Retrieves paginated list of all categories.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -1805,15 +1814,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/config/categories",
-    alias: "createCategory",
+    method: 'post',
+    path: '/api/v1/config/categories',
+    alias: 'createCategory',
     description: `Creates a new category for organizing courses and programs.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Category,
       },
     ],
@@ -1832,15 +1841,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/categories/:parentUuid/subcategories",
-    alias: "getSubCategories",
+    method: 'get',
+    path: '/api/v1/config/categories/:parentUuid/subcategories',
+    alias: 'getSubCategories',
     description: `Retrieves all subcategories for a specific parent category.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "parentUuid",
-        type: "Path",
+        name: 'parentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1859,15 +1868,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/categories/:uuid",
-    alias: "getCategoryByUuid",
+    method: 'get',
+    path: '/api/v1/config/categories/:uuid',
+    alias: 'getCategoryByUuid',
     description: `Retrieves a specific category by its UUID.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1886,20 +1895,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/config/categories/:uuid",
-    alias: "updateCategory",
+    method: 'put',
+    path: '/api/v1/config/categories/:uuid',
+    alias: 'updateCategory',
     description: `Updates an existing category.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Category,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1918,15 +1927,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/config/categories/:uuid",
-    alias: "deleteCategory",
+    method: 'delete',
+    path: '/api/v1/config/categories/:uuid',
+    alias: 'deleteCategory',
     description: `Removes a category if it has no subcategories or associated courses.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -1945,11 +1954,11 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/categories/root",
-    alias: "getRootCategories",
+    method: 'get',
+    path: '/api/v1/config/categories/root',
+    alias: 'getRootCategories',
     description: `Retrieves all top-level categories (no parent).`,
-    requestFormat: "json",
+    requestFormat: 'json',
     response: z.void(),
     errors: [
       {
@@ -1965,9 +1974,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/categories/search",
-    alias: "searchCategories",
+    method: 'get',
+    path: '/api/v1/config/categories/search',
+    alias: 'searchCategories',
     description: `Search categories with filtering options.
 
 **Common Category Search Examples:**
@@ -1976,16 +1985,16 @@ const endpoints = makeApi([
 - &#x60;parentUuid&#x3D;uuid&#x60; - Subcategories of specific parent
 - &#x60;isActive&#x3D;true&#x60; - Only active categories
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -2004,15 +2013,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/content-types",
-    alias: "getAllContentTypes",
+    method: 'get',
+    path: '/api/v1/config/content-types',
+    alias: 'getAllContentTypes',
     description: `Retrieves paginated list of all content types.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -2031,15 +2040,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/config/content-types",
-    alias: "createContentType",
+    method: 'post',
+    path: '/api/v1/config/content-types',
+    alias: 'createContentType',
     description: `Creates a new content type for lesson content classification.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ContentType,
       },
     ],
@@ -2058,20 +2067,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/config/content-types/:uuid",
-    alias: "updateContentType",
+    method: 'put',
+    path: '/api/v1/config/content-types/:uuid',
+    alias: 'updateContentType',
     description: `Updates an existing content type.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ContentType,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2090,15 +2099,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/config/content-types/:uuid",
-    alias: "deleteContentType",
+    method: 'delete',
+    path: '/api/v1/config/content-types/:uuid',
+    alias: 'deleteContentType',
     description: `Removes a content type if no lesson content is using it.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2117,11 +2126,11 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/content-types/media",
-    alias: "getMediaContentTypes",
+    method: 'get',
+    path: '/api/v1/config/content-types/media',
+    alias: 'getMediaContentTypes',
     description: `Retrieves content types for media files (video, audio, images).`,
-    requestFormat: "json",
+    requestFormat: 'json',
     response: z.void(),
     errors: [
       {
@@ -2137,15 +2146,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/content-types/mime-support/:mimeType",
-    alias: "checkMimeTypeSupport",
+    method: 'get',
+    path: '/api/v1/config/content-types/mime-support/:mimeType',
+    alias: 'checkMimeTypeSupport',
     description: `Checks if a specific MIME type is supported by the system.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "mimeType",
-        type: "Path",
+        name: 'mimeType',
+        type: 'Path',
         schema: z.string(),
       },
     ],
@@ -2164,9 +2173,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/content-types/search",
-    alias: "searchContentTypes",
+    method: 'get',
+    path: '/api/v1/config/content-types/search',
+    alias: 'searchContentTypes',
     description: `Search content types with filtering options.
 
 **Common Content Type Search Examples:**
@@ -2174,16 +2183,16 @@ const endpoints = makeApi([
 - &#x60;mimeTypes_like&#x3D;image/&#x60; - Image content types
 - &#x60;maxFileSizeMb_gte&#x3D;100&#x60; - Large file content types
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -2202,11 +2211,11 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/difficulty-levels",
-    alias: "getAllDifficultyLevels",
+    method: 'get',
+    path: '/api/v1/config/difficulty-levels',
+    alias: 'getAllDifficultyLevels',
     description: `Retrieves all difficulty levels in order.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     response: z.void(),
     errors: [
       {
@@ -2222,15 +2231,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/config/difficulty-levels",
-    alias: "createDifficultyLevel",
+    method: 'post',
+    path: '/api/v1/config/difficulty-levels',
+    alias: 'createDifficultyLevel',
     description: `Creates a new difficulty level for course classification.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: DifficultyLevel,
       },
     ],
@@ -2249,20 +2258,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/config/difficulty-levels/:uuid",
-    alias: "updateDifficultyLevel",
+    method: 'put',
+    path: '/api/v1/config/difficulty-levels/:uuid',
+    alias: 'updateDifficultyLevel',
     description: `Updates an existing difficulty level.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: DifficultyLevel,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2281,15 +2290,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/config/difficulty-levels/:uuid",
-    alias: "deleteDifficultyLevel",
+    method: 'delete',
+    path: '/api/v1/config/difficulty-levels/:uuid',
+    alias: 'deleteDifficultyLevel',
     description: `Removes a difficulty level if no courses are using it.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2308,15 +2317,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/config/difficulty-levels/reorder",
-    alias: "reorderDifficultyLevels",
+    method: 'post',
+    path: '/api/v1/config/difficulty-levels/reorder',
+    alias: 'reorderDifficultyLevels',
     description: `Updates the order of difficulty levels.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: z.array(z.string().uuid()),
       },
     ],
@@ -2335,15 +2344,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/config/grading-levels",
-    alias: "getAllGradingLevels",
+    method: 'get',
+    path: '/api/v1/config/grading-levels',
+    alias: 'getAllGradingLevels',
     description: `Retrieves paginated list of all grading levels.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -2362,15 +2371,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/config/grading-levels",
-    alias: "createGradingLevel",
+    method: 'post',
+    path: '/api/v1/config/grading-levels',
+    alias: 'createGradingLevel',
     description: `Creates a new grading level for assessment scoring.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: GradingLevel,
       },
     ],
@@ -2389,20 +2398,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/config/grading-levels/:uuid",
-    alias: "updateGradingLevel",
+    method: 'put',
+    path: '/api/v1/config/grading-levels/:uuid',
+    alias: 'updateGradingLevel',
     description: `Updates an existing grading level.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: GradingLevel,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2421,15 +2430,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/config/grading-levels/:uuid",
-    alias: "deleteGradingLevel",
+    method: 'delete',
+    path: '/api/v1/config/grading-levels/:uuid',
+    alias: 'deleteGradingLevel',
     description: `Removes a grading level.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2448,15 +2457,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses",
-    alias: "getAllCourses",
+    method: 'get',
+    path: '/api/v1/courses',
+    alias: 'getAllCourses',
     description: `Retrieves paginated list of all courses with category information and filtering support.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -2475,9 +2484,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses",
-    alias: "createCourse",
+    method: 'post',
+    path: '/api/v1/courses',
+    alias: 'createCourse',
     description: `Creates a new course with default DRAFT status and inactive state. Supports multiple categories.
 
 **Category Assignment:**
@@ -2497,11 +2506,11 @@ const endpoints = makeApi([
 }
 &#x60;&#x60;&#x60;
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Course,
       },
     ],
@@ -2525,20 +2534,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:courseUuid/assessments",
-    alias: "getCourseAssessments",
+    method: 'get',
+    path: '/api/v1/courses/:courseUuid/assessments',
+    alias: 'getCourseAssessments',
     description: `Retrieves all assessments for a specific course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -2557,20 +2566,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:courseUuid/assessments",
-    alias: "addCourseAssessment",
+    method: 'post',
+    path: '/api/v1/courses/:courseUuid/assessments',
+    alias: 'addCourseAssessment',
     description: `Creates a new assessment for the course with optional rubric association.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: CourseAssessment,
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2589,25 +2598,25 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/courses/:courseUuid/assessments/:assessmentUuid",
-    alias: "updateCourseAssessment",
+    method: 'put',
+    path: '/api/v1/courses/:courseUuid/assessments/:assessmentUuid',
+    alias: 'updateCourseAssessment',
     description: `Updates a specific assessment within a course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: CourseAssessment,
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "assessmentUuid",
-        type: "Path",
+        name: 'assessmentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2626,20 +2635,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/courses/:courseUuid/assessments/:assessmentUuid",
-    alias: "deleteCourseAssessment",
+    method: 'delete',
+    path: '/api/v1/courses/:courseUuid/assessments/:assessmentUuid',
+    alias: 'deleteCourseAssessment',
     description: `Removes an assessment from a course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "assessmentUuid",
-        type: "Path",
+        name: 'assessmentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2658,15 +2667,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:courseUuid/categories",
-    alias: "getCourseCategories",
+    method: 'get',
+    path: '/api/v1/courses/:courseUuid/categories',
+    alias: 'getCourseCategories',
     description: `Retrieves all categories assigned to a specific course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2685,15 +2694,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/courses/:courseUuid/categories",
-    alias: "removeAllCategoriesFromCourse",
+    method: 'delete',
+    path: '/api/v1/courses/:courseUuid/categories',
+    alias: 'removeAllCategoriesFromCourse',
     description: `Removes all category associations from a course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2712,20 +2721,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/courses/:courseUuid/categories/:categoryUuid",
-    alias: "removeCategoryFromCourse",
+    method: 'delete',
+    path: '/api/v1/courses/:courseUuid/categories/:categoryUuid',
+    alias: 'removeCategoryFromCourse',
     description: `Removes a specific category from a course without affecting other categories.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "categoryUuid",
-        type: "Path",
+        name: 'categoryUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2744,15 +2753,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:courseUuid/completion-rate",
-    alias: "getCourseCompletionRate",
+    method: 'get',
+    path: '/api/v1/courses/:courseUuid/completion-rate',
+    alias: 'getCourseCompletionRate',
     description: `Returns the completion rate percentage for a course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2771,20 +2780,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:courseUuid/enrollments",
-    alias: "getCourseEnrollments",
+    method: 'get',
+    path: '/api/v1/courses/:courseUuid/enrollments',
+    alias: 'getCourseEnrollments',
     description: `Retrieves enrollment data for a specific course with analytics.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -2803,20 +2812,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:courseUuid/lessons",
-    alias: "getCourseLessons",
+    method: 'get',
+    path: '/api/v1/courses/:courseUuid/lessons',
+    alias: 'getCourseLessons',
     description: `Retrieves all lessons for a specific course in sequence order.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -2835,20 +2844,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:courseUuid/lessons",
-    alias: "addCourseLesson",
+    method: 'post',
+    path: '/api/v1/courses/:courseUuid/lessons',
+    alias: 'addCourseLesson',
     description: `Creates a new lesson associated with the specified course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Lesson,
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2867,9 +2876,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:courseUuid/lessons/:lessonUuid",
-    alias: "getCourseLesson",
+    method: 'get',
+    path: '/api/v1/courses/:courseUuid/lessons/:lessonUuid',
+    alias: 'getCourseLesson',
     description: `Retrieves a specific lesson by its UUID within a course context.
 
 **Lesson Retrieval Details:**
@@ -2896,16 +2905,16 @@ const endpoints = makeApi([
 - Respects course enrollment status for detailed information
 - May return limited data for unenrolled users depending on course visibility settings
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "lessonUuid",
-        type: "Path",
+        name: 'lessonUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2934,25 +2943,25 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/courses/:courseUuid/lessons/:lessonUuid",
-    alias: "updateCourseLesson",
+    method: 'put',
+    path: '/api/v1/courses/:courseUuid/lessons/:lessonUuid',
+    alias: 'updateCourseLesson',
     description: `Updates a specific lesson within a course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Lesson,
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "lessonUuid",
-        type: "Path",
+        name: 'lessonUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -2971,20 +2980,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/courses/:courseUuid/lessons/:lessonUuid",
-    alias: "deleteCourseLesson",
+    method: 'delete',
+    path: '/api/v1/courses/:courseUuid/lessons/:lessonUuid',
+    alias: 'deleteCourseLesson',
     description: `Removes a lesson from a course including all associated content.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "lessonUuid",
-        type: "Path",
+        name: 'lessonUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3003,20 +3012,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:courseUuid/lessons/:lessonUuid/content",
-    alias: "getLessonContent",
+    method: 'get',
+    path: '/api/v1/courses/:courseUuid/lessons/:lessonUuid/content',
+    alias: 'getLessonContent',
     description: `Retrieves all content for a lesson in display order with computed properties.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "lessonUuid",
-        type: "Path",
+        name: 'lessonUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3035,25 +3044,25 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:courseUuid/lessons/:lessonUuid/content",
-    alias: "addLessonContent",
+    method: 'post',
+    path: '/api/v1/courses/:courseUuid/lessons/:lessonUuid/content',
+    alias: 'addLessonContent',
     description: `Adds new content item to a specific lesson with automatic ordering.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: LessonContent,
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "lessonUuid",
-        type: "Path",
+        name: 'lessonUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3072,30 +3081,30 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/courses/:courseUuid/lessons/:lessonUuid/content/:contentUuid",
-    alias: "updateLessonContent",
+    method: 'put',
+    path: '/api/v1/courses/:courseUuid/lessons/:lessonUuid/content/:contentUuid',
+    alias: 'updateLessonContent',
     description: `Updates a specific content item within a lesson.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: LessonContent,
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "lessonUuid",
-        type: "Path",
+        name: 'lessonUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "contentUuid",
-        type: "Path",
+        name: 'contentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3114,25 +3123,25 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/courses/:courseUuid/lessons/:lessonUuid/content/:contentUuid",
-    alias: "deleteLessonContent",
+    method: 'delete',
+    path: '/api/v1/courses/:courseUuid/lessons/:lessonUuid/content/:contentUuid',
+    alias: 'deleteLessonContent',
     description: `Removes content from a lesson.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "lessonUuid",
-        type: "Path",
+        name: 'lessonUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "contentUuid",
-        type: "Path",
+        name: 'contentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3151,25 +3160,25 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:courseUuid/lessons/:lessonUuid/content/reorder",
-    alias: "reorderLessonContent",
+    method: 'post',
+    path: '/api/v1/courses/:courseUuid/lessons/:lessonUuid/content/reorder',
+    alias: 'reorderLessonContent',
     description: `Updates the display order of content items within a lesson.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: z.array(z.string().uuid()),
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "lessonUuid",
-        type: "Path",
+        name: 'lessonUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3188,20 +3197,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:courseUuid/requirements",
-    alias: "getCourseRequirements",
+    method: 'get',
+    path: '/api/v1/courses/:courseUuid/requirements',
+    alias: 'getCourseRequirements',
     description: `Retrieves all requirements for a specific course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -3220,20 +3229,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:courseUuid/requirements",
-    alias: "addCourseRequirement",
+    method: 'post',
+    path: '/api/v1/courses/:courseUuid/requirements',
+    alias: 'addCourseRequirement',
     description: `Adds a new requirement or prerequisite to a course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: CourseRequirement,
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3252,25 +3261,25 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/courses/:courseUuid/requirements/:requirementUuid",
-    alias: "updateCourseRequirement",
+    method: 'put',
+    path: '/api/v1/courses/:courseUuid/requirements/:requirementUuid',
+    alias: 'updateCourseRequirement',
     description: `Updates a specific requirement for a course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: CourseRequirement,
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "requirementUuid",
-        type: "Path",
+        name: 'requirementUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3289,20 +3298,20 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/courses/:courseUuid/requirements/:requirementUuid",
-    alias: "deleteCourseRequirement",
+    method: 'delete',
+    path: '/api/v1/courses/:courseUuid/requirements/:requirementUuid',
+    alias: 'deleteCourseRequirement',
     description: `Removes a requirement from a course.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "requirementUuid",
-        type: "Path",
+        name: 'requirementUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3321,9 +3330,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:uuid",
-    alias: "getCourseByUuid",
+    method: 'get',
+    path: '/api/v1/courses/:uuid',
+    alias: 'getCourseByUuid',
     description: `Retrieves a complete course profile including computed properties and category information.
 
 **Response includes:**
@@ -3333,11 +3342,11 @@ const endpoints = makeApi([
 - &#x60;category_count&#x60;: Number of categories assigned to the course
 - &#x60;has_multiple_categories&#x60;: Boolean indicating if course has multiple categories
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3356,9 +3365,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/courses/:uuid",
-    alias: "updateCourse",
+    method: 'put',
+    path: '/api/v1/courses/:uuid',
+    alias: 'updateCourse',
     description: `Updates an existing course with selective field updates including category management.
 
 **Category Updates:**
@@ -3367,16 +3376,16 @@ const endpoints = makeApi([
 - To remove all categories, provide an empty array
 - Changes to categories are applied atomically
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Course,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3400,15 +3409,15 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/courses/:uuid",
-    alias: "deleteCourse",
+    method: 'delete',
+    path: '/api/v1/courses/:uuid',
+    alias: 'deleteCourse',
     description: `Permanently removes a course, its category associations, and all associated data.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3427,9 +3436,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:uuid/archive",
-    alias: "archiveCourse",
+    method: 'post',
+    path: '/api/v1/courses/:uuid/archive',
+    alias: 'archiveCourse',
     description: `Archives a course, making it completely unavailable.
 
 **Important:**
@@ -3438,11 +3447,11 @@ const endpoints = makeApi([
 - Existing enrollments may be handled differently based on business rules
 - Course data is preserved for historical/audit purposes
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3461,9 +3470,9 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:uuid/banner",
-    alias: "uploadCourseBanner",
+    method: 'post',
+    path: '/api/v1/courses/:uuid/banner',
+    alias: 'uploadCourseBanner',
     description: `Uploads a banner image for the specified course. The banner is typically used on the course
 detail page as a hero image and in promotional materials.
 
@@ -3484,17 +3493,17 @@ detail page as a hero image and in promotional materials.
 - Previous banner will be replaced if a new one is uploaded
 - Generated URL will be automatically set in the course record
 `,
-    requestFormat: "form-data",
+    requestFormat: 'form-data',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         // schema: z.object({ banner: z.instanceof(File) }).passthrough(),
         schema: z.object({ banner: z.any() }).passthrough(),
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3518,9 +3527,9 @@ detail page as a hero image and in promotional materials.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:uuid/intro-video",
-    alias: "uploadCourseIntroVideo",
+    method: 'post',
+    path: '/api/v1/courses/:uuid/intro-video',
+    alias: 'uploadCourseIntroVideo',
     description: `Uploads an introduction video for the specified course. The intro video is used for course
 previews, marketing, and helping students understand what they&#x27;ll learn.
 
@@ -3543,17 +3552,17 @@ previews, marketing, and helping students understand what they&#x27;ll learn.
 - Generated URL will be automatically set in the course record
 - Consider video compression for optimal streaming performance
 `,
-    requestFormat: "form-data",
+    requestFormat: 'form-data',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         // schema: z.object({ intro_video: z.instanceof(File) }).passthrough(),
         schema: z.object({ intro_video: z.any() }).passthrough(),
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3577,15 +3586,15 @@ previews, marketing, and helping students understand what they&#x27;ll learn.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:uuid/publish",
-    alias: "publishCourse",
+    method: 'post',
+    path: '/api/v1/courses/:uuid/publish',
+    alias: 'publishCourse',
     description: `Publishes a course making it available for enrollment.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3609,9 +3618,9 @@ previews, marketing, and helping students understand what they&#x27;ll learn.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/:uuid/status-transitions",
-    alias: "getStatusTransitions",
+    method: 'get',
+    path: '/api/v1/courses/:uuid/status-transitions',
+    alias: 'getStatusTransitions',
     description: `Returns the list of valid status transitions for a course based on its current state and business rules.
 
 **Status Transition Rules:**
@@ -3620,11 +3629,11 @@ previews, marketing, and helping students understand what they&#x27;ll learn.
 - PUBLISHED → DRAFT (if no active enrollments), ARCHIVED
 - ARCHIVED → (no transitions - permanent state)
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3643,9 +3652,9 @@ previews, marketing, and helping students understand what they&#x27;ll learn.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:uuid/thumbnail",
-    alias: "uploadCourseThumbnail",
+    method: 'post',
+    path: '/api/v1/courses/:uuid/thumbnail',
+    alias: 'uploadCourseThumbnail',
     description: `Uploads a thumbnail image for the specified course. The thumbnail is typically used in course
 listings, search results, and course cards throughout the application.
 
@@ -3666,17 +3675,17 @@ listings, search results, and course cards throughout the application.
 - Previous thumbnail will be replaced if a new one is uploaded
 - Generated URL will be automatically set in the course record
 `,
-    requestFormat: "form-data",
+    requestFormat: 'form-data',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         // schema: z.object({ thumbnail: z.instanceof(File) }).passthrough(),
         schema: z.object({ thumbnail: z.any() }).passthrough(),
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3700,9 +3709,9 @@ listings, search results, and course cards throughout the application.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/courses/:uuid/unpublish",
-    alias: "unpublishCourse",
+    method: 'post',
+    path: '/api/v1/courses/:uuid/unpublish',
+    alias: 'unpublishCourse',
     description: `Unpublishes a course, changing it from PUBLISHED to DRAFT status.
 
 **Smart Active Status Logic:**
@@ -3720,11 +3729,11 @@ listings, search results, and course cards throughout the application.
 - Stop new enrollments while allowing current students to continue
 - Prepare course for updates before republishing
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -3743,15 +3752,15 @@ listings, search results, and course cards throughout the application.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/active",
-    alias: "getActiveCourses",
+    method: 'get',
+    path: '/api/v1/courses/active',
+    alias: 'getActiveCourses',
     description: `Retrieves all currently active and published courses.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -3770,9 +3779,9 @@ listings, search results, and course cards throughout the application.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/assessments/search",
-    alias: "searchAssessments",
+    method: 'get',
+    path: '/api/v1/courses/assessments/search',
+    alias: 'searchAssessments',
     description: `Search assessments across all courses.
 
 **Common Assessment Search Examples:**
@@ -3781,16 +3790,16 @@ listings, search results, and course cards throughout the application.
 - &#x60;isRequired&#x3D;true&#x60; - Only required assessments
 - &#x60;weightPercentage_gte&#x3D;20&#x60; - Assessments worth 20% or more
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -3809,9 +3818,9 @@ listings, search results, and course cards throughout the application.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/category-mappings/search",
-    alias: "searchCategoryMappings",
+    method: 'get',
+    path: '/api/v1/courses/category-mappings/search',
+    alias: 'searchCategoryMappings',
     description: `Search course-category relationships.
 
 **Common Mapping Search Examples:**
@@ -3820,16 +3829,16 @@ listings, search results, and course cards throughout the application.
 - &#x60;courseName_like&#x3D;java&#x60; - Mappings for courses with &quot;java&quot; in name
 - &#x60;categoryName_like&#x3D;programming&#x60; - Mappings for categories with &quot;programming&quot; in name
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -3848,25 +3857,25 @@ listings, search results, and course cards throughout the application.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/category/:categoryUuid",
-    alias: "getCoursesByCategory",
+    method: 'get',
+    path: '/api/v1/courses/category/:categoryUuid',
+    alias: 'getCoursesByCategory',
     description: `Retrieves all courses in a specific category.
 
 **Enhanced Category Search:**
 This endpoint now supports the many-to-many relationship, returning courses that have
 the specified category assigned to them, regardless of what other categories they may also have.
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "categoryUuid",
-        type: "Path",
+        name: 'categoryUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -3885,9 +3894,9 @@ the specified category assigned to them, regardless of what other categories the
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/content/search",
-    alias: "searchLessonContent",
+    method: 'get',
+    path: '/api/v1/courses/content/search',
+    alias: 'searchLessonContent',
     description: `Search lesson content across all courses.
 
 **Common Content Search Examples:**
@@ -3897,16 +3906,16 @@ the specified category assigned to them, regardless of what other categories the
 - &#x60;title_like&#x3D;video&#x60; - Content with &quot;video&quot; in title
 - &#x60;fileSizeBytes_gt&#x3D;1048576&#x60; - Files larger than 1MB
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -3925,9 +3934,9 @@ the specified category assigned to them, regardless of what other categories the
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/enrollments/search",
-    alias: "searchEnrollments",
+    method: 'get',
+    path: '/api/v1/courses/enrollments/search',
+    alias: 'searchEnrollments',
     description: `Search enrollment records across all courses.
 
 **Common Enrollment Search Examples:**
@@ -3937,16 +3946,16 @@ the specified category assigned to them, regardless of what other categories the
 - &#x60;progressPercentage_gte&#x3D;80&#x60; - Students with 80%+ progress
 - &#x60;enrollmentDate_gte&#x3D;2024-01-01T00:00:00&#x60; - Enrollments from 2024
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -3965,20 +3974,20 @@ the specified category assigned to them, regardless of what other categories the
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/instructor/:instructorUuid",
-    alias: "getCoursesByInstructor",
+    method: 'get',
+    path: '/api/v1/courses/instructor/:instructorUuid',
+    alias: 'getCoursesByInstructor',
     description: `Retrieves all courses created by a specific instructor.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -3997,9 +4006,9 @@ the specified category assigned to them, regardless of what other categories the
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/lessons/search",
-    alias: "searchLessons",
+    method: 'get',
+    path: '/api/v1/courses/lessons/search',
+    alias: 'searchLessons',
     description: `Search course lessons with advanced filtering.
 
 **Common Lesson Search Examples:**
@@ -4010,16 +4019,16 @@ the specified category assigned to them, regardless of what other categories the
 - &#x60;title_like&#x3D;introduction&#x60; - Lessons with &quot;introduction&quot; in title
 - &#x60;durationHours_between&#x3D;1,3&#x60; - Lessons between 1-3 hours
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -4038,9 +4047,9 @@ the specified category assigned to them, regardless of what other categories the
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/media/:fileName",
-    alias: "getCourseMedia",
+    method: 'get',
+    path: '/api/v1/courses/media/:fileName',
+    alias: 'getCourseMedia',
     description: `Retrieves course media files (thumbnails, banners, intro videos) by their file name.
 This endpoint serves the actual media files with appropriate content types and caching headers.
 
@@ -4060,11 +4069,11 @@ This endpoint serves the actual media files with appropriate content types and c
 - URLs are automatically generated and stored in course records
 - Direct access via this endpoint for custom implementations
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "fileName",
-        type: "Path",
+        name: 'fileName',
+        type: 'Path',
         schema: z.string(),
       },
     ],
@@ -4083,15 +4092,15 @@ This endpoint serves the actual media files with appropriate content types and c
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/published",
-    alias: "getPublishedCourses",
+    method: 'get',
+    path: '/api/v1/courses/published',
+    alias: 'getPublishedCourses',
     description: `Retrieves all published courses available for enrollment.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -4110,9 +4119,9 @@ This endpoint serves the actual media files with appropriate content types and c
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/requirements/search",
-    alias: "searchRequirements",
+    method: 'get',
+    path: '/api/v1/courses/requirements/search',
+    alias: 'searchRequirements',
     description: `Search course requirements and prerequisites.
 
 **Common Requirement Search Examples:**
@@ -4121,16 +4130,16 @@ This endpoint serves the actual media files with appropriate content types and c
 - &#x60;isMandatory&#x3D;true&#x60; - Only mandatory requirements
 - &#x60;requirementText_like&#x3D;experience&#x60; - Requirements mentioning &quot;experience&quot;
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -4149,9 +4158,9 @@ This endpoint serves the actual media files with appropriate content types and c
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/courses/search",
-    alias: "searchCourses",
+    method: 'get',
+    path: '/api/v1/courses/search',
+    alias: 'searchCourses',
     description: `Advanced course search with flexible criteria and operators, including category-based filtering.
 
 **Category-Specific Search Examples:**
@@ -4167,16 +4176,16 @@ This endpoint serves the actual media files with appropriate content types and c
 
 For complete operator documentation, see the general course search endpoint.
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -4195,15 +4204,15 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors",
-    alias: "getAllInstructors",
+    method: 'get',
+    path: '/api/v1/instructors',
+    alias: 'getAllInstructors',
     description: `Fetches a paginated list of instructors.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -4222,15 +4231,15 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/instructors",
-    alias: "createInstructor",
+    method: 'post',
+    path: '/api/v1/instructors',
+    alias: 'createInstructor',
     description: `Saves a new instructor record in the system.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Instructor,
       },
     ],
@@ -4254,15 +4263,15 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/:instructorUuid/documents",
-    alias: "getInstructorDocuments",
+    method: 'get',
+    path: '/api/v1/instructors/:instructorUuid/documents',
+    alias: 'getInstructorDocuments',
     description: `Retrieves all documents for a specific instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4281,20 +4290,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/instructors/:instructorUuid/documents",
-    alias: "addInstructorDocument",
+    method: 'post',
+    path: '/api/v1/instructors/:instructorUuid/documents',
+    alias: 'addInstructorDocument',
     description: `Uploads and associates a document with an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorDocument,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4313,25 +4322,25 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/instructors/:instructorUuid/documents/:documentUuid",
-    alias: "updateInstructorDocument",
+    method: 'put',
+    path: '/api/v1/instructors/:instructorUuid/documents/:documentUuid',
+    alias: 'updateInstructorDocument',
     description: `Updates a specific document`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorDocument,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "documentUuid",
-        type: "Path",
+        name: 'documentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4350,20 +4359,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/instructors/:instructorUuid/documents/:documentUuid",
-    alias: "deleteInstructorDocument",
+    method: 'delete',
+    path: '/api/v1/instructors/:instructorUuid/documents/:documentUuid',
+    alias: 'deleteInstructorDocument',
     description: `Removes a document from an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "documentUuid",
-        type: "Path",
+        name: 'documentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4382,30 +4391,30 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/instructors/:instructorUuid/documents/:documentUuid/verify",
-    alias: "verifyDocument",
+    method: 'post',
+    path: '/api/v1/instructors/:instructorUuid/documents/:documentUuid/verify',
+    alias: 'verifyDocument',
     description: `Marks a document as verified`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "documentUuid",
-        type: "Path",
+        name: 'documentUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "verifiedBy",
-        type: "Query",
+        name: 'verifiedBy',
+        type: 'Query',
         schema: z.string(),
       },
       {
-        name: "verificationNotes",
-        type: "Query",
+        name: 'verificationNotes',
+        type: 'Query',
         schema: z.string().optional(),
       },
     ],
@@ -4424,15 +4433,15 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/:instructorUuid/education",
-    alias: "getInstructorEducation",
+    method: 'get',
+    path: '/api/v1/instructors/:instructorUuid/education',
+    alias: 'getInstructorEducation',
     description: `Retrieves all education records for a specific instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4451,20 +4460,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/instructors/:instructorUuid/education",
-    alias: "addInstructorEducation",
+    method: 'post',
+    path: '/api/v1/instructors/:instructorUuid/education',
+    alias: 'addInstructorEducation',
     description: `Adds educational qualification to an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorEducation,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4483,25 +4492,25 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/instructors/:instructorUuid/education/:educationUuid",
-    alias: "updateInstructorEducation",
+    method: 'put',
+    path: '/api/v1/instructors/:instructorUuid/education/:educationUuid',
+    alias: 'updateInstructorEducation',
     description: `Updates a specific education record`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorEducation,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "educationUuid",
-        type: "Path",
+        name: 'educationUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4520,20 +4529,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/instructors/:instructorUuid/education/:educationUuid",
-    alias: "deleteInstructorEducation",
+    method: 'delete',
+    path: '/api/v1/instructors/:instructorUuid/education/:educationUuid',
+    alias: 'deleteInstructorEducation',
     description: `Removes an education record from an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "educationUuid",
-        type: "Path",
+        name: 'educationUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4552,20 +4561,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/:instructorUuid/experience",
-    alias: "getInstructorExperience",
+    method: 'get',
+    path: '/api/v1/instructors/:instructorUuid/experience',
+    alias: 'getInstructorExperience',
     description: `Retrieves all experience records for a specific instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -4584,20 +4593,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/instructors/:instructorUuid/experience",
-    alias: "addInstructorExperience",
+    method: 'post',
+    path: '/api/v1/instructors/:instructorUuid/experience',
+    alias: 'addInstructorExperience',
     description: `Adds work experience to an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorExperience,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4616,25 +4625,25 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/instructors/:instructorUuid/experience/:experienceUuid",
-    alias: "updateInstructorExperience",
+    method: 'put',
+    path: '/api/v1/instructors/:instructorUuid/experience/:experienceUuid',
+    alias: 'updateInstructorExperience',
     description: `Updates a specific experience record`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorExperience,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "experienceUuid",
-        type: "Path",
+        name: 'experienceUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4653,20 +4662,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/instructors/:instructorUuid/experience/:experienceUuid",
-    alias: "deleteInstructorExperience",
+    method: 'delete',
+    path: '/api/v1/instructors/:instructorUuid/experience/:experienceUuid',
+    alias: 'deleteInstructorExperience',
     description: `Removes an experience record from an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "experienceUuid",
-        type: "Path",
+        name: 'experienceUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4685,20 +4694,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/:instructorUuid/memberships",
-    alias: "getInstructorMemberships",
+    method: 'get',
+    path: '/api/v1/instructors/:instructorUuid/memberships',
+    alias: 'getInstructorMemberships',
     description: `Retrieves all membership records for a specific instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -4717,20 +4726,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/instructors/:instructorUuid/memberships",
-    alias: "addInstructorMembership",
+    method: 'post',
+    path: '/api/v1/instructors/:instructorUuid/memberships',
+    alias: 'addInstructorMembership',
     description: `Adds professional membership to an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorProfessionalMembership,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4749,25 +4758,25 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/instructors/:instructorUuid/memberships/:membershipUuid",
-    alias: "updateInstructorMembership",
+    method: 'put',
+    path: '/api/v1/instructors/:instructorUuid/memberships/:membershipUuid',
+    alias: 'updateInstructorMembership',
     description: `Updates a specific membership record`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorProfessionalMembership,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "membershipUuid",
-        type: "Path",
+        name: 'membershipUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4786,20 +4795,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/instructors/:instructorUuid/memberships/:membershipUuid",
-    alias: "deleteInstructorMembership",
+    method: 'delete',
+    path: '/api/v1/instructors/:instructorUuid/memberships/:membershipUuid',
+    alias: 'deleteInstructorMembership',
     description: `Removes a membership record from an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "membershipUuid",
-        type: "Path",
+        name: 'membershipUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4818,20 +4827,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/:instructorUuid/skills",
-    alias: "getInstructorSkills",
+    method: 'get',
+    path: '/api/v1/instructors/:instructorUuid/skills',
+    alias: 'getInstructorSkills',
     description: `Retrieves all skills for a specific instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -4850,20 +4859,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/instructors/:instructorUuid/skills",
-    alias: "addInstructorSkill",
+    method: 'post',
+    path: '/api/v1/instructors/:instructorUuid/skills',
+    alias: 'addInstructorSkill',
     description: `Adds a skill to an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorSkill,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4882,25 +4891,25 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/instructors/:instructorUuid/skills/:skillUuid",
-    alias: "updateInstructorSkill",
+    method: 'put',
+    path: '/api/v1/instructors/:instructorUuid/skills/:skillUuid',
+    alias: 'updateInstructorSkill',
     description: `Updates a specific skill record`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: InstructorSkill,
       },
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "skillUuid",
-        type: "Path",
+        name: 'skillUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4919,20 +4928,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/instructors/:instructorUuid/skills/:skillUuid",
-    alias: "deleteInstructorSkill",
+    method: 'delete',
+    path: '/api/v1/instructors/:instructorUuid/skills/:skillUuid',
+    alias: 'deleteInstructorSkill',
     description: `Removes a skill from an instructor`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "skillUuid",
-        type: "Path",
+        name: 'skillUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4951,15 +4960,15 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/:uuid",
-    alias: "getInstructorByUuid",
+    method: 'get',
+    path: '/api/v1/instructors/:uuid',
+    alias: 'getInstructorByUuid',
     description: `Fetches an instructor by their UUID.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -4978,20 +4987,20 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/instructors/:uuid",
-    alias: "updateInstructor",
+    method: 'put',
+    path: '/api/v1/instructors/:uuid',
+    alias: 'updateInstructor',
     description: `Updates an existing instructor record.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Instructor,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5010,15 +5019,15 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/instructors/:uuid",
-    alias: "deleteInstructor",
+    method: 'delete',
+    path: '/api/v1/instructors/:uuid',
+    alias: 'deleteInstructor',
     description: `Removes an instructor record from the system.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5037,9 +5046,9 @@ For complete operator documentation, see the general course search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/documents/search",
-    alias: "searchDocuments",
+    method: 'get',
+    path: '/api/v1/instructors/documents/search',
+    alias: 'searchDocuments',
     description: `Search documents with flexible criteria using advanced operators.
 
 **Common Document Search Examples:**
@@ -5059,16 +5068,16 @@ For complete operator documentation, see the general course search endpoint.
 
 For complete operator documentation, see the main search endpoint.
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -5087,9 +5096,9 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/education/search",
-    alias: "searchEducation",
+    method: 'get',
+    path: '/api/v1/instructors/education/search',
+    alias: 'searchEducation',
     description: `Search education records with flexible criteria.
 
 **Common Education Search Examples:**
@@ -5102,16 +5111,16 @@ For complete operator documentation, see the main search endpoint.
 
 For complete operator documentation, see the main search endpoint.
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -5130,9 +5139,9 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/experience/search",
-    alias: "searchExperience",
+    method: 'get',
+    path: '/api/v1/instructors/experience/search',
+    alias: 'searchExperience',
     description: `Search experience records with flexible criteria.
 
 **Common Experience Search Examples:**
@@ -5151,16 +5160,16 @@ For complete operator documentation, see the main search endpoint.
 
 For complete operator documentation, see the main search endpoint.
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -5179,9 +5188,9 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/memberships/search",
-    alias: "searchMemberships",
+    method: 'get',
+    path: '/api/v1/instructors/memberships/search',
+    alias: 'searchMemberships',
     description: `Search membership records with flexible criteria.
 
 **Common Membership Search Examples:**
@@ -5199,16 +5208,16 @@ For complete operator documentation, see the main search endpoint.
 
 For complete operator documentation, see the main search endpoint.
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -5227,9 +5236,9 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/search",
-    alias: "searchInstructors",
+    method: 'get',
+    path: '/api/v1/instructors/search',
+    alias: 'searchInstructors',
     description: ` Search for instructors using flexible criteria with advanced operators.
  
  **Basic Search:**
@@ -5277,16 +5286,16 @@ For complete operator documentation, see the main search endpoint.
  - &#x60;/search?experience_gt&#x3D;5&amp;status_in&#x3D;ACTIVE,VERIFIED&#x60;
  - &#x60;/search?email_endswith&#x3D;@company.com&amp;department_noteq&#x3D;IT&#x60;
  `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -5305,9 +5314,9 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/instructors/skills/search",
-    alias: "searchSkills",
+    method: 'get',
+    path: '/api/v1/instructors/skills/search',
+    alias: 'searchSkills',
     description: `Search skills with flexible criteria.
 
 **Common Skills Search Examples:**
@@ -5326,16 +5335,16 @@ For complete operator documentation, see the main search endpoint.
 
 For complete operator documentation, see the main search endpoint.
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -5354,15 +5363,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/invitations/maintenance/cleanup",
-    alias: "cleanupOldInvitations",
+    method: 'delete',
+    path: '/api/v1/invitations/maintenance/cleanup',
+    alias: 'cleanupOldInvitations',
     description: `System maintenance endpoint to delete old invitations that are expired, declined, or cancelled. This helps maintain database cleanliness by removing old invitation records.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "daysOld",
-        type: "Query",
+        name: 'daysOld',
+        type: 'Query',
         schema: z.number().int().optional().default(90),
       },
     ],
@@ -5381,11 +5390,11 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/invitations/maintenance/mark-expired",
-    alias: "markExpiredInvitations",
+    method: 'post',
+    path: '/api/v1/invitations/maintenance/mark-expired',
+    alias: 'markExpiredInvitations',
     description: `System maintenance endpoint to mark all expired pending invitations as expired. This is typically called by scheduled jobs to clean up expired invitations.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     response: z.void(),
     errors: [
       {
@@ -5401,15 +5410,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/invitations/maintenance/send-reminders",
-    alias: "sendExpiryReminders",
+    method: 'post',
+    path: '/api/v1/invitations/maintenance/send-reminders',
+    alias: 'sendExpiryReminders',
     description: `System maintenance endpoint to send reminder emails for invitations expiring soon. This is typically called by scheduled jobs to notify recipients about expiring invitations.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "hoursBeforeExpiry",
-        type: "Query",
+        name: 'hoursBeforeExpiry',
+        type: 'Query',
         schema: z.number().int().optional().default(24),
       },
     ],
@@ -5428,15 +5437,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/invitations/pending",
-    alias: "getPendingInvitationsForEmail",
+    method: 'get',
+    path: '/api/v1/invitations/pending',
+    alias: 'getPendingInvitationsForEmail',
     description: `Retrieves all pending invitations sent to a specific email address across all organizations and branches. This endpoint helps users see all outstanding invitations they have received. Only returns invitations with PENDING status that haven&#x27;t expired.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "email",
-        type: "Query",
+        name: 'email',
+        type: 'Query',
         schema: z.string(),
       },
     ],
@@ -5455,15 +5464,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/invitations/token/:token",
-    alias: "getInvitationByToken",
+    method: 'get',
+    path: '/api/v1/invitations/token/:token',
+    alias: 'getInvitationByToken',
     description: `Retrieves complete invitation information using the unique token from the invitation email. This endpoint is typically used by the invitation acceptance/decline pages to display invitation details before the user makes their decision. Includes organization, branch, and role information.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "token",
-        type: "Path",
+        name: 'token',
+        type: 'Path',
         schema: z.string(),
       },
     ],
@@ -5482,15 +5491,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/invitations/validate/:token",
-    alias: "validateInvitation",
+    method: 'get',
+    path: '/api/v1/invitations/validate/:token',
+    alias: 'validateInvitation',
     description: `Validates whether an invitation token is currently valid and can be accepted or declined. Checks if the invitation exists, is in PENDING status, and has not expired. This endpoint is useful for pre-validation before displaying acceptance/decline forms.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "token",
-        type: "Path",
+        name: 'token',
+        type: 'Path',
         schema: z.string(),
       },
     ],
@@ -5509,14 +5518,14 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations",
-    alias: "getAllOrganisations",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/organisations',
+    alias: 'getAllOrganisations',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -5535,14 +5544,14 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/organisations",
-    alias: "createOrganisation",
-    requestFormat: "json",
+    method: 'post',
+    path: '/api/v1/organisations',
+    alias: 'createOrganisation',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Organisation,
       },
     ],
@@ -5566,14 +5575,14 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/:uuid",
-    alias: "getOrganisationByUuid",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/organisations/:uuid',
+    alias: 'getOrganisationByUuid',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5592,19 +5601,19 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/organisations/:uuid",
-    alias: "updateOrganisation",
-    requestFormat: "json",
+    method: 'put',
+    path: '/api/v1/organisations/:uuid',
+    alias: 'updateOrganisation',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Organisation,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5628,14 +5637,14 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/organisations/:uuid",
-    alias: "deleteOrganisation",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/api/v1/organisations/:uuid',
+    alias: 'deleteOrganisation',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5654,15 +5663,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/:uuid/invitations",
-    alias: "getOrganizationInvitations",
+    method: 'get',
+    path: '/api/v1/organisations/:uuid/invitations',
+    alias: 'getOrganizationInvitations',
     description: `Retrieves all invitations (regardless of status) that have been sent for this specific organization. This includes organization-level invitations and branch-specific invitations within the organization. Results are ordered by creation date (most recent first) and include all invitation statuses.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5681,45 +5690,45 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/organisations/:uuid/invitations",
-    alias: "createOrganizationInvitation",
+    method: 'post',
+    path: '/api/v1/organisations/:uuid/invitations',
+    alias: 'createOrganizationInvitation',
     description: `Creates and sends an email invitation for a user to join this specific organization with a defined role. If a training branch UUID is provided, the invitation will be branch-specific within the organization. The invitation email will be sent to the recipient with acceptance and decline links containing the unique token.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "recipient_email",
-        type: "Query",
+        name: 'recipient_email',
+        type: 'Query',
         schema: z.string(),
       },
       {
-        name: "recipient_name",
-        type: "Query",
+        name: 'recipient_name',
+        type: 'Query',
         schema: z.string(),
       },
       {
-        name: "domain_name",
-        type: "Query",
+        name: 'domain_name',
+        type: 'Query',
         schema: z.string(),
       },
       {
-        name: "branch_uuid",
-        type: "Query",
+        name: 'branch_uuid',
+        type: 'Query',
         schema: z.string().uuid().optional(),
       },
       {
-        name: "inviter_uuid",
-        type: "Query",
+        name: 'inviter_uuid',
+        type: 'Query',
         schema: z.string().uuid(),
       },
       {
-        name: "notes",
-        type: "Query",
+        name: 'notes',
+        type: 'Query',
         schema: z.string().optional(),
       },
     ],
@@ -5743,25 +5752,25 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/organisations/:uuid/invitations/:invitationUuid",
-    alias: "cancelInvitation",
+    method: 'delete',
+    path: '/api/v1/organisations/:uuid/invitations/:invitationUuid',
+    alias: 'cancelInvitation',
     description: `Cancels a pending invitation within this organization, preventing it from being accepted or declined. Only the original inviter or an organization administrator can cancel invitations. This action is irreversible and the invitation cannot be reactivated.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "invitationUuid",
-        type: "Path",
+        name: 'invitationUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "canceller_uuid",
-        type: "Query",
+        name: 'canceller_uuid',
+        type: 'Query',
         schema: z.string().uuid(),
       },
     ],
@@ -5785,25 +5794,25 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/organisations/:uuid/invitations/:invitationUuid/resend",
-    alias: "resendInvitation",
+    method: 'post',
+    path: '/api/v1/organisations/:uuid/invitations/:invitationUuid/resend',
+    alias: 'resendInvitation',
     description: `Resends the invitation email to the recipient with a fresh expiration date. Only pending invitations can be resent. The invitation expiry date will be extended from the current time. Only the original inviter or an organization administrator can resend invitations.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "invitationUuid",
-        type: "Path",
+        name: 'invitationUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "resender_uuid",
-        type: "Query",
+        name: 'resender_uuid',
+        type: 'Query',
         schema: z.string().uuid(),
       },
     ],
@@ -5827,19 +5836,19 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/:uuid/training-branches",
-    alias: "getTrainingBranchesByOrganisation",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/organisations/:uuid/training-branches',
+    alias: 'getTrainingBranchesByOrganisation',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -5858,19 +5867,19 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/organisations/:uuid/training-branches",
-    alias: "createTrainingBranch_1",
-    requestFormat: "json",
+    method: 'post',
+    path: '/api/v1/organisations/:uuid/training-branches',
+    alias: 'createTrainingBranch_1',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: TrainingBranch,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5894,19 +5903,19 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid",
-    alias: "getTrainingBranchByUuid_1",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid',
+    alias: 'getTrainingBranchByUuid_1',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5925,24 +5934,24 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid",
-    alias: "updateTrainingBranch_1",
-    requestFormat: "json",
+    method: 'put',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid',
+    alias: 'updateTrainingBranch_1',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: TrainingBranch,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5966,19 +5975,19 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid",
-    alias: "deleteTrainingBranch_1",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid',
+    alias: 'deleteTrainingBranch_1',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -5997,20 +6006,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid/invitations",
-    alias: "getBranchInvitations",
+    method: 'get',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid/invitations',
+    alias: 'getBranchInvitations',
     description: `Retrieves all invitations (regardless of status) that have been sent specifically for this training branch. This only includes branch-specific invitations, not general organization invitations. Results are ordered by creation date (most recent first) and include all invitation statuses.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6029,45 +6038,45 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid/invitations",
-    alias: "createBranchInvitation",
+    method: 'post',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid/invitations',
+    alias: 'createBranchInvitation',
     description: `Creates and sends an email invitation for a user to join a specific training branch with a defined role. This is a specialized invitation that automatically determines the parent organization from the branch. The invitation email will include branch-specific information and location details.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "recipient_email",
-        type: "Query",
+        name: 'recipient_email',
+        type: 'Query',
         schema: z.string(),
       },
       {
-        name: "recipient_name",
-        type: "Query",
+        name: 'recipient_name',
+        type: 'Query',
         schema: z.string(),
       },
       {
-        name: "domain_name",
-        type: "Query",
+        name: 'domain_name',
+        type: 'Query',
         schema: z.string(),
       },
       {
-        name: "inviter_uuid",
-        type: "Query",
+        name: 'inviter_uuid',
+        type: 'Query',
         schema: z.string().uuid(),
       },
       {
-        name: "notes",
-        type: "Query",
+        name: 'notes',
+        type: 'Query',
         schema: z.string().optional(),
       },
     ],
@@ -6091,25 +6100,25 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid/poc/:pocUserUuid",
-    alias: "updatePointOfContact",
+    method: 'put',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid/poc/:pocUserUuid',
+    alias: 'updatePointOfContact',
     description: `Updates the point of contact user for a training branch. The POC must be either assigned to the branch or be a member of the parent organization.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pocUserUuid",
-        type: "Path",
+        name: 'pocUserUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6133,20 +6142,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid/users",
-    alias: "getBranchUsers",
+    method: 'get',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid/users',
+    alias: 'getBranchUsers',
     description: `Retrieves all users that are assigned to a specific training branch within the organization. This includes users with any role/domain within the branch.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6165,30 +6174,30 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid/users/:userUuid",
-    alias: "assignUserToBranch",
+    method: 'post',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid/users/:userUuid',
+    alias: 'assignUserToBranch',
     description: `Assigns a user to a specific training branch with a defined role. If the user is not already in the parent organization, creates organization membership first. If the user is already in the organization, updates their branch assignment.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "userUuid",
-        type: "Path",
+        name: 'userUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "domain_name",
-        type: "Query",
+        name: 'domain_name',
+        type: 'Query',
         schema: z.string(),
       },
     ],
@@ -6212,25 +6221,25 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid/users/:userUuid",
-    alias: "removeUserFromBranch",
+    method: 'delete',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid/users/:userUuid',
+    alias: 'removeUserFromBranch',
     description: `Removes a user from a training branch. The user remains in the parent organization but loses branch-specific assignment.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "userUuid",
-        type: "Path",
+        name: 'userUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6249,25 +6258,25 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/:uuid/training-branches/:branchUuid/users/domain/:domainName",
-    alias: "getBranchUsersByDomain",
+    method: 'get',
+    path: '/api/v1/organisations/:uuid/training-branches/:branchUuid/users/domain/:domainName',
+    alias: 'getBranchUsersByDomain',
     description: `Retrieves all users in the training branch filtered by their role/domain. This endpoint is useful for getting all instructors, students, or admins within a specific branch.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "branchUuid",
-        type: "Path",
+        name: 'branchUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "domainName",
-        type: "Path",
+        name: 'domainName',
+        type: 'Path',
         schema: z.string(),
       },
     ],
@@ -6291,19 +6300,19 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/:uuid/users",
-    alias: "getUsersByOrganisation",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/organisations/:uuid/users',
+    alias: 'getUsersByOrganisation',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -6322,20 +6331,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/:uuid/users/domain/:domainName",
-    alias: "getUsersByOrganisationAndDomain",
+    method: 'get',
+    path: '/api/v1/organisations/:uuid/users/domain/:domainName',
+    alias: 'getUsersByOrganisationAndDomain',
     description: `Retrieves all users in the organisation filtered by their role/domain. This endpoint is useful for getting all instructors, students, or admins within an organisation.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "domainName",
-        type: "Path",
+        name: 'domainName',
+        type: 'Path',
         schema: z.string(),
       },
     ],
@@ -6359,15 +6368,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/organisations/search",
-    alias: "search_2",
+    method: 'get',
+    path: '/api/v1/organisations/search',
+    alias: 'search_2',
     description: `Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -6386,15 +6395,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs",
-    alias: "getAllTrainingPrograms",
+    method: 'get',
+    path: '/api/v1/programs',
+    alias: 'getAllTrainingPrograms',
     description: `Retrieves paginated list of all training programs with filtering support.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -6413,11 +6422,11 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/programs",
-    alias: "createTrainingProgram",
+    method: 'post',
+    path: '/api/v1/programs',
+    alias: 'createTrainingProgram',
     description: `Creates a new training program with default DRAFT status and inactive state.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     response: z.void(),
     errors: [
       {
@@ -6438,20 +6447,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/:programUuid/certificates",
-    alias: "getProgramCertificates",
+    method: 'get',
+    path: '/api/v1/programs/:programUuid/certificates',
+    alias: 'getProgramCertificates',
     description: `Retrieves all certificates issued for program completions.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -6470,15 +6479,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/:programUuid/completion-rate",
-    alias: "getProgramCompletionRate",
+    method: 'get',
+    path: '/api/v1/programs/:programUuid/completion-rate',
+    alias: 'getProgramCompletionRate',
     description: `Returns the completion rate percentage for a program.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6497,15 +6506,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/:programUuid/courses",
-    alias: "getProgramCourses",
+    method: 'get',
+    path: '/api/v1/programs/:programUuid/courses',
+    alias: 'getProgramCourses',
     description: `Retrieves all courses in a program in sequence order with requirement status.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6524,20 +6533,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/programs/:programUuid/courses",
-    alias: "addProgramCourse",
+    method: 'post',
+    path: '/api/v1/programs/:programUuid/courses',
+    alias: 'addProgramCourse',
     description: `Associates a course with a program, setting sequence and requirement status.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ProgramCourse,
       },
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6556,25 +6565,25 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/programs/:programUuid/courses/:courseUuid",
-    alias: "updateProgramCourse",
+    method: 'put',
+    path: '/api/v1/programs/:programUuid/courses/:courseUuid',
+    alias: 'updateProgramCourse',
     description: `Updates course association settings within a program.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ProgramCourse,
       },
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6593,20 +6602,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/programs/:programUuid/courses/:courseUuid",
-    alias: "removeProgramCourse",
+    method: 'delete',
+    path: '/api/v1/programs/:programUuid/courses/:courseUuid',
+    alias: 'removeProgramCourse',
     description: `Removes the association between a course and program.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "courseUuid",
-        type: "Path",
+        name: 'courseUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6625,15 +6634,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/:programUuid/courses/optional",
-    alias: "getOptionalCourses",
+    method: 'get',
+    path: '/api/v1/programs/:programUuid/courses/optional',
+    alias: 'getOptionalCourses',
     description: `Retrieves only the optional courses for a program.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6652,15 +6661,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/:programUuid/courses/required",
-    alias: "getRequiredCourses",
+    method: 'get',
+    path: '/api/v1/programs/:programUuid/courses/required',
+    alias: 'getRequiredCourses',
     description: `Retrieves only the required courses for a program.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6679,20 +6688,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/:programUuid/enrollments",
-    alias: "getProgramEnrollments",
+    method: 'get',
+    path: '/api/v1/programs/:programUuid/enrollments',
+    alias: 'getProgramEnrollments',
     description: `Retrieves enrollment data for a specific program with completion analytics.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -6711,20 +6720,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/:programUuid/requirements",
-    alias: "getProgramRequirements",
+    method: 'get',
+    path: '/api/v1/programs/:programUuid/requirements',
+    alias: 'getProgramRequirements',
     description: `Retrieves all requirements for a specific program.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -6743,20 +6752,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/programs/:programUuid/requirements",
-    alias: "addProgramRequirement",
+    method: 'post',
+    path: '/api/v1/programs/:programUuid/requirements',
+    alias: 'addProgramRequirement',
     description: `Adds a new requirement or prerequisite to a program.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ProgramRequirement,
       },
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6775,25 +6784,25 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/programs/:programUuid/requirements/:requirementUuid",
-    alias: "updateProgramRequirement",
+    method: 'put',
+    path: '/api/v1/programs/:programUuid/requirements/:requirementUuid',
+    alias: 'updateProgramRequirement',
     description: `Updates a specific requirement for a program.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: ProgramRequirement,
       },
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "requirementUuid",
-        type: "Path",
+        name: 'requirementUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6812,20 +6821,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/programs/:programUuid/requirements/:requirementUuid",
-    alias: "deleteProgramRequirement",
+    method: 'delete',
+    path: '/api/v1/programs/:programUuid/requirements/:requirementUuid',
+    alias: 'deleteProgramRequirement',
     description: `Removes a requirement from a program.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "programUuid",
-        type: "Path",
+        name: 'programUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "requirementUuid",
-        type: "Path",
+        name: 'requirementUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6844,15 +6853,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/:uuid",
-    alias: "getTrainingProgramByUuid",
+    method: 'get',
+    path: '/api/v1/programs/:uuid',
+    alias: 'getTrainingProgramByUuid',
     description: `Retrieves a complete program profile including computed properties and analytics.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6871,15 +6880,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/programs/:uuid",
-    alias: "updateTrainingProgram",
+    method: 'put',
+    path: '/api/v1/programs/:uuid',
+    alias: 'updateTrainingProgram',
     description: `Updates an existing training program with selective field updates.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6898,15 +6907,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/programs/:uuid",
-    alias: "deleteTrainingProgram",
+    method: 'delete',
+    path: '/api/v1/programs/:uuid',
+    alias: 'deleteTrainingProgram',
     description: `Permanently removes a training program and its associated data.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6925,15 +6934,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/programs/:uuid/publish",
-    alias: "publishProgram",
+    method: 'post',
+    path: '/api/v1/programs/:uuid/publish',
+    alias: 'publishProgram',
     description: `Publishes a program making it available for enrollment.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -6957,15 +6966,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/active",
-    alias: "getActivePrograms",
+    method: 'get',
+    path: '/api/v1/programs/active',
+    alias: 'getActivePrograms',
     description: `Retrieves all currently active and published programs.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -6984,20 +6993,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/category/:categoryUuid",
-    alias: "getProgramsByCategory",
+    method: 'get',
+    path: '/api/v1/programs/category/:categoryUuid',
+    alias: 'getProgramsByCategory',
     description: `Retrieves all programs in a specific category.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "categoryUuid",
-        type: "Path",
+        name: 'categoryUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7016,9 +7025,9 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/courses/search",
-    alias: "searchProgramCourses",
+    method: 'get',
+    path: '/api/v1/programs/courses/search',
+    alias: 'searchProgramCourses',
     description: `Search course associations within programs.
 
 **Common Program Course Search Examples:**
@@ -7027,16 +7036,16 @@ For complete operator documentation, see the main search endpoint.
 - &#x60;isRequired&#x3D;true&#x60; - Only required course associations
 - &#x60;sequenceOrder_gte&#x3D;3&#x60; - Courses from sequence 3 onwards
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7055,9 +7064,9 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/enrollments/search",
-    alias: "searchProgramEnrollments",
+    method: 'get',
+    path: '/api/v1/programs/enrollments/search',
+    alias: 'searchProgramEnrollments',
     description: `Search enrollment records across all programs.
 
 **Common Program Enrollment Search Examples:**
@@ -7068,16 +7077,16 @@ For complete operator documentation, see the main search endpoint.
 - &#x60;enrollmentDate_gte&#x3D;2024-01-01T00:00:00&#x60; - Program enrollments from 2024
 - &#x60;finalGrade_gte&#x3D;85&#x60; - Program completions with grade 85+
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7096,15 +7105,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/free",
-    alias: "getFreePrograms",
+    method: 'get',
+    path: '/api/v1/programs/free',
+    alias: 'getFreePrograms',
     description: `Retrieves all programs available at no cost.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7123,20 +7132,20 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/instructor/:instructorUuid",
-    alias: "getProgramsByInstructor",
+    method: 'get',
+    path: '/api/v1/programs/instructor/:instructorUuid',
+    alias: 'getProgramsByInstructor',
     description: `Retrieves all programs created by a specific instructor.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "instructorUuid",
-        type: "Path",
+        name: 'instructorUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7155,15 +7164,15 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/published",
-    alias: "getPublishedPrograms",
+    method: 'get',
+    path: '/api/v1/programs/published',
+    alias: 'getPublishedPrograms',
     description: `Retrieves all published programs available for enrollment.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7182,9 +7191,9 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/requirements/search",
-    alias: "searchProgramRequirements",
+    method: 'get',
+    path: '/api/v1/programs/requirements/search',
+    alias: 'searchProgramRequirements',
     description: `Search program requirements and prerequisites.
 
 **Common Program Requirement Search Examples:**
@@ -7193,16 +7202,16 @@ For complete operator documentation, see the main search endpoint.
 - &#x60;isMandatory&#x3D;true&#x60; - Only mandatory requirements
 - &#x60;requirementText_like&#x3D;certification&#x60; - Requirements mentioning &quot;certification&quot;
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7221,9 +7230,9 @@ For complete operator documentation, see the main search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/programs/search",
-    alias: "searchTrainingPrograms",
+    method: 'get',
+    path: '/api/v1/programs/search',
+    alias: 'searchTrainingPrograms',
     description: `Advanced program search with flexible criteria and operators.
 
 **Common Program Search Examples:**
@@ -7246,16 +7255,16 @@ For complete operator documentation, see the main search endpoint.
 
 For complete operator documentation, see the instructor search endpoint.
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7274,15 +7283,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes",
-    alias: "getAllQuizzes",
+    method: 'get',
+    path: '/api/v1/quizzes',
+    alias: 'getAllQuizzes',
     description: `Retrieves paginated list of all quizzes with filtering support.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7301,15 +7310,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/quizzes",
-    alias: "createQuiz",
+    method: 'post',
+    path: '/api/v1/quizzes',
+    alias: 'createQuiz',
     description: `Creates a new quiz with default DRAFT status and inactive state.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Quiz,
       },
     ],
@@ -7333,20 +7342,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes/:quizUuid/attempts",
-    alias: "getQuizAttempts",
+    method: 'get',
+    path: '/api/v1/quizzes/:quizUuid/attempts',
+    alias: 'getQuizAttempts',
     description: `Retrieves all attempts for a specific quiz with scoring data.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7365,15 +7374,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes/:quizUuid/question-distribution",
-    alias: "getQuestionDistribution",
+    method: 'get',
+    path: '/api/v1/quizzes/:quizUuid/question-distribution',
+    alias: 'getQuestionDistribution',
     description: `Returns distribution of question types within a quiz.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7392,15 +7401,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes/:quizUuid/questions",
-    alias: "getQuizQuestions",
+    method: 'get',
+    path: '/api/v1/quizzes/:quizUuid/questions',
+    alias: 'getQuizQuestions',
     description: `Retrieves all questions for a quiz in display order with computed properties.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7419,20 +7428,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/quizzes/:quizUuid/questions",
-    alias: "addQuizQuestion",
+    method: 'post',
+    path: '/api/v1/quizzes/:quizUuid/questions',
+    alias: 'addQuizQuestion',
     description: `Creates a new question for the specified quiz with automatic ordering.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: QuizQuestion,
       },
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7451,25 +7460,25 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/quizzes/:quizUuid/questions/:questionUuid",
-    alias: "updateQuizQuestion",
+    method: 'put',
+    path: '/api/v1/quizzes/:quizUuid/questions/:questionUuid',
+    alias: 'updateQuizQuestion',
     description: `Updates a specific question within a quiz.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: QuizQuestion,
       },
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "questionUuid",
-        type: "Path",
+        name: 'questionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7488,20 +7497,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/quizzes/:quizUuid/questions/:questionUuid",
-    alias: "deleteQuizQuestion",
+    method: 'delete',
+    path: '/api/v1/quizzes/:quizUuid/questions/:questionUuid',
+    alias: 'deleteQuizQuestion',
     description: `Removes a question from a quiz including all options and responses.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "questionUuid",
-        type: "Path",
+        name: 'questionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7520,25 +7529,25 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes/:quizUuid/questions/:questionUuid/options",
-    alias: "getQuestionOptions",
+    method: 'get',
+    path: '/api/v1/quizzes/:quizUuid/questions/:questionUuid/options',
+    alias: 'getQuestionOptions',
     description: `Retrieves all options for a specific question.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "questionUuid",
-        type: "Path",
+        name: 'questionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7557,25 +7566,25 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/quizzes/:quizUuid/questions/:questionUuid/options",
-    alias: "addQuestionOption",
+    method: 'post',
+    path: '/api/v1/quizzes/:quizUuid/questions/:questionUuid/options',
+    alias: 'addQuestionOption',
     description: `Creates a new option for a multiple choice or true/false question.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: QuizQuestionOption,
       },
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "questionUuid",
-        type: "Path",
+        name: 'questionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7594,30 +7603,30 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/quizzes/:quizUuid/questions/:questionUuid/options/:optionUuid",
-    alias: "updateQuestionOption",
+    method: 'put',
+    path: '/api/v1/quizzes/:quizUuid/questions/:questionUuid/options/:optionUuid',
+    alias: 'updateQuestionOption',
     description: `Updates a specific option for a question.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: QuizQuestionOption,
       },
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "questionUuid",
-        type: "Path",
+        name: 'questionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "optionUuid",
-        type: "Path",
+        name: 'optionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7636,25 +7645,25 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/quizzes/:quizUuid/questions/:questionUuid/options/:optionUuid",
-    alias: "deleteQuestionOption",
+    method: 'delete',
+    path: '/api/v1/quizzes/:quizUuid/questions/:questionUuid/options/:optionUuid',
+    alias: 'deleteQuestionOption',
     description: `Removes an option from a question.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "questionUuid",
-        type: "Path",
+        name: 'questionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "optionUuid",
-        type: "Path",
+        name: 'optionUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7673,20 +7682,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/quizzes/:quizUuid/questions/reorder",
-    alias: "reorderQuizQuestions",
+    method: 'post',
+    path: '/api/v1/quizzes/:quizUuid/questions/reorder',
+    alias: 'reorderQuizQuestions',
     description: `Updates the display order of questions within a quiz.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: z.array(z.string().uuid()),
       },
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7705,15 +7714,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes/:quizUuid/total-points",
-    alias: "getQuizTotalPoints",
+    method: 'get',
+    path: '/api/v1/quizzes/:quizUuid/total-points',
+    alias: 'getQuizTotalPoints',
     description: `Returns the maximum possible points for a quiz.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "quizUuid",
-        type: "Path",
+        name: 'quizUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7732,15 +7741,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes/:uuid",
-    alias: "getQuizByUuid",
+    method: 'get',
+    path: '/api/v1/quizzes/:uuid',
+    alias: 'getQuizByUuid',
     description: `Retrieves a complete quiz including questions and computed properties.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7759,20 +7768,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/quizzes/:uuid",
-    alias: "updateQuiz",
+    method: 'put',
+    path: '/api/v1/quizzes/:uuid',
+    alias: 'updateQuiz',
     description: `Updates an existing quiz with selective field updates.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Quiz,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7791,15 +7800,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/quizzes/:uuid",
-    alias: "deleteQuiz",
+    method: 'delete',
+    path: '/api/v1/quizzes/:uuid',
+    alias: 'deleteQuiz',
     description: `Permanently removes a quiz and all associated data.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -7818,9 +7827,9 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes/attempts/search",
-    alias: "searchAttempts",
+    method: 'get',
+    path: '/api/v1/quizzes/attempts/search',
+    alias: 'searchAttempts',
     description: `Search quiz attempts across all quizzes.
 
 **Common Attempt Search Examples:**
@@ -7831,16 +7840,16 @@ For complete operator documentation, see the instructor search endpoint.
 - &#x60;percentage_gte&#x3D;85&#x60; - Attempts with 85%+ score
 - &#x60;startedAt_gte&#x3D;2024-01-01T00:00:00&#x60; - Attempts from 2024
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7859,9 +7868,9 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes/questions/search",
-    alias: "searchQuestions",
+    method: 'get',
+    path: '/api/v1/quizzes/questions/search',
+    alias: 'searchQuestions',
     description: `Search questions across all quizzes.
 
 **Common Question Search Examples:**
@@ -7870,16 +7879,16 @@ For complete operator documentation, see the instructor search endpoint.
 - &#x60;points_gte&#x3D;2&#x60; - Questions worth 2+ points
 - &#x60;questionText_like&#x3D;calculate&#x60; - Questions containing &quot;calculate&quot;
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7898,9 +7907,9 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/quizzes/search",
-    alias: "searchQuizzes",
+    method: 'get',
+    path: '/api/v1/quizzes/search',
+    alias: 'searchQuizzes',
     description: `Advanced quiz search with flexible criteria and operators.
 
 **Common Quiz Search Examples:**
@@ -7912,16 +7921,16 @@ For complete operator documentation, see the instructor search endpoint.
 - &#x60;attemptsAllowed_lte&#x3D;3&#x60; - Quizzes with 3 or fewer attempts allowed
 - &#x60;passingScore_gte&#x3D;70&#x60; - Quizzes with passing score 70%+
 `,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7940,15 +7949,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/students",
-    alias: "getAllStudents",
+    method: 'get',
+    path: '/api/v1/students',
+    alias: 'getAllStudents',
     description: `Fetches a paginated list of students.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -7967,15 +7976,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/students",
-    alias: "createStudent",
+    method: 'post',
+    path: '/api/v1/students',
+    alias: 'createStudent',
     description: `Saves a new student record in the system.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Student,
       },
     ],
@@ -7999,15 +8008,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/students/:uuid",
-    alias: "getStudentById",
+    method: 'get',
+    path: '/api/v1/students/:uuid',
+    alias: 'getStudentById',
     description: `Fetches a student by their UUID.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8026,20 +8035,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/students/:uuid",
-    alias: "updateStudent",
+    method: 'put',
+    path: '/api/v1/students/:uuid',
+    alias: 'updateStudent',
     description: `Updates an existing student record.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: Student,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8058,15 +8067,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/students/:uuid",
-    alias: "deleteStudent",
+    method: 'delete',
+    path: '/api/v1/students/:uuid',
+    alias: 'deleteStudent',
     description: `Removes a student record from the system.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8085,20 +8094,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/students/search",
-    alias: "searchStudents",
+    method: 'get',
+    path: '/api/v1/students/search',
+    alias: 'searchStudents',
     description: `Search for students based on criteria.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "searchParams",
-        type: "Query",
+        name: 'searchParams',
+        type: 'Query',
         schema: z.record(z.string()),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -8117,14 +8126,14 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/training-branches",
-    alias: "getAllTrainingBranches",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/training-branches',
+    alias: 'getAllTrainingBranches',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -8143,14 +8152,14 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/training-branches",
-    alias: "createTrainingBranch",
-    requestFormat: "json",
+    method: 'post',
+    path: '/api/v1/training-branches',
+    alias: 'createTrainingBranch',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: TrainingBranch,
       },
     ],
@@ -8174,14 +8183,14 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/training-branches/:uuid",
-    alias: "getTrainingBranchByUuid",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/training-branches/:uuid',
+    alias: 'getTrainingBranchByUuid',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8200,19 +8209,19 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/training-branches/:uuid",
-    alias: "updateTrainingBranch",
-    requestFormat: "json",
+    method: 'put',
+    path: '/api/v1/training-branches/:uuid',
+    alias: 'updateTrainingBranch',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: TrainingBranch,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8236,14 +8245,14 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/training-branches/:uuid",
-    alias: "deleteTrainingBranch",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/api/v1/training-branches/:uuid',
+    alias: 'deleteTrainingBranch',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8262,19 +8271,19 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/training-branches/organisation/:organisationUuid",
-    alias: "getTrainingBranchesByOrganisation_1",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/training-branches/organisation/:organisationUuid',
+    alias: 'getTrainingBranchesByOrganisation_1',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "organisationUuid",
-        type: "Path",
+        name: 'organisationUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -8293,15 +8302,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/training-branches/search",
-    alias: "search_1",
+    method: 'get',
+    path: '/api/v1/training-branches/search',
+    alias: 'search_1',
     description: `Fetches a paginated list of training branches based on optional filters. Supports pagination and sorting.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -8320,15 +8329,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/users",
-    alias: "getAllUsers",
+    method: 'get',
+    path: '/api/v1/users',
+    alias: 'getAllUsers',
     description: `Fetches a paginated list of all users in the system. Supports pagination and sorting by any user field.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -8347,20 +8356,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/users/:userUuid/profile-image",
-    alias: "uploadProfileImage",
-    requestFormat: "form-data",
+    method: 'post',
+    path: '/api/v1/users/:userUuid/profile-image',
+    alias: 'uploadProfileImage',
+    requestFormat: 'form-data',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         // schema: z.object({ profileImage: z.instanceof(File) }).passthrough(),
         schema: z.object({ profileImage: z.any() }).passthrough(),
       },
       {
-        name: "userUuid",
-        type: "Path",
+        name: 'userUuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8384,14 +8393,14 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/users/:uuid",
-    alias: "getUserByUuid",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/users/:uuid',
+    alias: 'getUserByUuid',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8410,19 +8419,19 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/users/:uuid",
-    alias: "updateUser",
-    requestFormat: "json",
+    method: 'put',
+    path: '/api/v1/users/:uuid',
+    alias: 'updateUser',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "body",
-        type: "Body",
+        name: 'body',
+        type: 'Body',
         schema: User,
       },
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8446,14 +8455,14 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "delete",
-    path: "/api/v1/users/:uuid",
-    alias: "deleteUser",
-    requestFormat: "json",
+    method: 'delete',
+    path: '/api/v1/users/:uuid',
+    alias: 'deleteUser',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8472,20 +8481,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/users/:uuid/invitations/accept",
-    alias: "acceptInvitation",
+    method: 'post',
+    path: '/api/v1/users/:uuid/invitations/accept',
+    alias: 'acceptInvitation',
     description: `Accepts a pending invitation for the specified user using the unique token from the invitation email. This creates the user-organization relationship with the specified role and sends confirmation emails. The invitation must be valid (not expired, not already accepted/declined) and the user email must match the invitation recipient.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "token",
-        type: "Query",
+        name: 'token',
+        type: 'Query',
         schema: z.string(),
       },
     ],
@@ -8509,20 +8518,20 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/users/:uuid/invitations/decline",
-    alias: "declineInvitation",
+    method: 'post',
+    path: '/api/v1/users/:uuid/invitations/decline',
+    alias: 'declineInvitation',
     description: `Declines a pending invitation for the specified user using the unique token from the invitation email. This marks the invitation as declined and sends notification emails to the inviter. The invitation must be valid (not expired, not already accepted/declined) and the user email must match the invitation recipient.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
       {
-        name: "token",
-        type: "Query",
+        name: 'token',
+        type: 'Query',
         schema: z.string(),
       },
     ],
@@ -8546,15 +8555,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/users/:uuid/invitations/pending",
-    alias: "getPendingInvitationsForUser",
+    method: 'get',
+    path: '/api/v1/users/:uuid/invitations/pending',
+    alias: 'getPendingInvitationsForUser',
     description: `Retrieves all pending invitations sent to a specific user&#x27;s email address across all organizations and branches. This endpoint helps users see all outstanding invitations they have received. Only returns invitations with PENDING status that haven&#x27;t expired.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8573,15 +8582,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/users/:uuid/invitations/sent",
-    alias: "getInvitationsSentByUser",
+    method: 'get',
+    path: '/api/v1/users/:uuid/invitations/sent',
+    alias: 'getInvitationsSentByUser',
     description: `Retrieves all invitations that have been sent by a specific user across all organizations and branches. This endpoint helps users track invitations they have created. Results are ordered by creation date (most recent first) and include all invitation statuses.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "uuid",
-        type: "Path",
+        name: 'uuid',
+        type: 'Path',
         schema: z.string().uuid(),
       },
     ],
@@ -8600,14 +8609,14 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/users/profile-image/:fileName",
-    alias: "getProfileImage",
-    requestFormat: "json",
+    method: 'get',
+    path: '/api/v1/users/profile-image/:fileName',
+    alias: 'getProfileImage',
+    requestFormat: 'json',
     parameters: [
       {
-        name: "fileName",
-        type: "Path",
+        name: 'fileName',
+        type: 'Path',
         schema: z.string(),
       },
     ],
@@ -8626,15 +8635,15 @@ For complete operator documentation, see the instructor search endpoint.
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/users/search",
-    alias: "search",
+    method: 'get',
+    path: '/api/v1/users/search',
+    alias: 'search',
     description: `Fetches a paginated list of users based on optional filters. Supports pagination and sorting.`,
-    requestFormat: "json",
+    requestFormat: 'json',
     parameters: [
       {
-        name: "pageable",
-        type: "Query",
+        name: 'pageable',
+        type: 'Query',
         schema: pageable,
       },
     ],
@@ -8652,10 +8661,10 @@ For complete operator documentation, see the instructor search endpoint.
       },
     ],
   },
-])
+]);
 
-export const api = new Zodios(endpoints)
+export const api = new Zodios(endpoints);
 
 export function createApiClient(baseUrl: string, options?: ZodiosOptions) {
-  return new Zodios(baseUrl, endpoints, options)
+  return new Zodios(baseUrl, endpoints, options);
 }

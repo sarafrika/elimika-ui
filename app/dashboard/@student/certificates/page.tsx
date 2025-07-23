@@ -1,10 +1,10 @@
-import React from "react"
+import React from 'react';
 
 export default function CertificatesPage() {
   return (
-    <div className="space-y-6 p-4 md:p-10">
-      <h1 className="text-2xl font-bold">My Certificates</h1>
+    <div className='space-y-6 p-4 md:p-10'>
+      <h1 className='text-2xl font-bold'>My Certificates</h1>
       <p>This page is under construction. Check back later for updates.</p>
     </div>
-  )
+  );
 }

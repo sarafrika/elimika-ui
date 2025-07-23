@@ -1,7 +1,7 @@
-"use client"
-import * as React from "react"
-import { LibraryBigIcon } from "lucide-react"
-import { NavUser } from "@/components/nav-user"
+'use client';
+import * as React from 'react';
+import { LibraryBigIcon } from 'lucide-react';
+import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -12,48 +12,46 @@ import {
   SidebarMenuItem,
   SidebarGroupLabel,
   SidebarGroupContent,
-} from "@/components/ui/sidebar"
-import Link from "next/link"
-import { useTrainingCenter } from "@/context/training-center-provider"
-import menu from "@/lib/menu"
-import { NavSecondary } from "@/components/nav-secondary"
-import { UserDomain } from "@/lib/types"
-import { usePathname } from "next/navigation"
-import { NavMain } from "./nav-main"
+} from '@/components/ui/sidebar';
+import Link from 'next/link';
+import { useTrainingCenter } from '@/context/training-center-provider';
+import menu from '@/lib/menu';
+import { NavSecondary } from '@/components/nav-secondary';
+import { UserDomain } from '@/lib/types';
+import { usePathname } from 'next/navigation';
+import { NavMain } from './nav-main';
 
 export function AppSidebar({
   activeDomain,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { activeDomain: UserDomain }) {
-  const { trainingCenter } = useTrainingCenter()
-  const pathname = usePathname()
+  const { trainingCenter } = useTrainingCenter();
+  const pathname = usePathname();
 
   // Helper to get menu items for a domain
-  const getMenuItems = (domain: UserDomain) => menu[domain] || []
+  const getMenuItems = (domain: UserDomain) => menu[domain] || [];
 
   // Label for the sidebar group
   const groupLabel =
-    activeDomain === "admin"
-      ? "Admin Panel"
-      : activeDomain === "student"
-        ? "Student Panel"
-        : activeDomain.charAt(0).toUpperCase() +
-          activeDomain.slice(1) +
-          " Panel"
+    activeDomain === 'admin'
+      ? 'Admin Panel'
+      : activeDomain === 'student'
+        ? 'Student Panel'
+        : activeDomain.charAt(0).toUpperCase() + activeDomain.slice(1) + ' Panel';
 
   return (
-    <Sidebar variant="inset" {...props}>
+    <Sidebar variant='inset' {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton size='lg' asChild>
               <Link href={`/dashboard/overview`}>
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <LibraryBigIcon className="size-4" />
+                <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
+                  <LibraryBigIcon className='size-4' />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium capitalize">
-                    {trainingCenter?.name || "Elimika"}
+                <div className='grid flex-1 text-left text-sm leading-tight'>
+                  <span className='truncate font-medium capitalize'>
+                    {trainingCenter?.name || 'Elimika'}
                   </span>
                 </div>
               </Link>
@@ -71,11 +69,11 @@ export function AppSidebar({
           />
         </SidebarGroupContent>
         {/* Secondary menu */}
-        <NavSecondary items={menu?.secondary ?? []} className="mt-auto" />
+        <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>
       <SidebarFooter>
         <NavUser items={menu?.user ?? []} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

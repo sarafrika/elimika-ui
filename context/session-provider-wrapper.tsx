@@ -1,31 +1,25 @@
-"use client"
-import { createContext, ReactNode, useContext } from "react"
-import { useSession } from "next-auth/react"
-import { Session } from "next-auth"
+'use client';
+import { createContext, ReactNode, useContext } from 'react';
+import { useSession } from 'next-auth/react';
+import { Session } from 'next-auth';
 
 interface SessionContextType {
-  session: Session | null
-  status: "loading" | "authenticated" | "unauthenticated"
+  session: Session | null;
+  status: 'loading' | 'authenticated' | 'unauthenticated';
 }
 
-const SessionContext = createContext<SessionContextType | null>(null)
+const SessionContext = createContext<SessionContextType | null>(null);
 
 export function SessionProviderWrapper({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession()
+  const { data: session, status } = useSession();
 
-  return (
-    <SessionContext.Provider value={{ session, status }}>
-      {children}
-    </SessionContext.Provider>
-  )
+  return <SessionContext.Provider value={{ session, status }}>{children}</SessionContext.Provider>;
 }
 
 export function useSessionWrapper() {
-  const context = useContext(SessionContext)
+  const context = useContext(SessionContext);
   if (!context) {
-    throw new Error(
-      "useSessionContext must be used within a SessionProviderWrapper",
-    )
+    throw new Error('useSessionContext must be used within a SessionProviderWrapper');
   }
-  return context
+  return context;
 }

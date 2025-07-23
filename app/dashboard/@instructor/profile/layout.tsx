@@ -1,7 +1,7 @@
-"use client"
+'use client';
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -10,76 +10,76 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { ReactNode, useEffect, useState } from "react"
-import { ChevronsLeft, ChevronsRight } from "lucide-react"
-import clsx from "clsx"
+} from '@/components/ui/sidebar';
+import { ReactNode, useEffect, useState } from 'react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
+import clsx from 'clsx';
 
 const sections = [
-  { name: "General", href: "/dashboard/profile/general" },
-  { name: "Education", href: "/dashboard/profile/education" },
-  { name: "Experience", href: "/dashboard/profile/experience" },
+  { name: 'General', href: '/dashboard/profile/general' },
+  { name: 'Education', href: '/dashboard/profile/education' },
+  { name: 'Experience', href: '/dashboard/profile/experience' },
   {
-    name: "Professional Memberships",
-    href: "/dashboard/profile/professional-membership",
+    name: 'Professional Memberships',
+    href: '/dashboard/profile/professional-membership',
   },
-  { name: "Skills", href: "/dashboard/profile/skills" },
-  { name: "Training Areas", href: "/dashboard/profile/training-areas" },
-  { name: "Availability & Rates", href: "/dashboard/profile/availability" },
-]
+  { name: 'Skills', href: '/dashboard/profile/skills' },
+  { name: 'Training Areas', href: '/dashboard/profile/training-areas' },
+  { name: 'Availability & Rates', href: '/dashboard/profile/availability' },
+];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
-  const [showSidebar, setShowSidebar] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const pathname = usePathname();
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 745)
+      setIsMobile(window.innerWidth <= 745);
       if (window.innerWidth > 745) {
-        setShowSidebar(true) // Always show sidebar on desktop
+        setShowSidebar(true); // Always show sidebar on desktop
       } else {
-        setShowSidebar(false) // Hide sidebar by default on mobile
+        setShowSidebar(false); // Hide sidebar by default on mobile
       }
-    }
+    };
 
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
-    <div className="relative flex min-h-screen p-0">
+    <div className='relative flex min-h-screen p-0'>
       {(showSidebar || !isMobile) && (
         <Sidebar
-          variant="inset"
+          variant='inset'
           className={clsx(
-            "z-50 border-r bg-white p-0 transition-all",
-            isMobile ? "fixed inset-y-0 right-0 w-64 pt-16 shadow-lg" : "relative w-64",
+            'z-50 border-r bg-white p-0 transition-all',
+            isMobile ? 'fixed inset-y-0 right-0 w-64 pt-16 shadow-lg' : 'relative w-64'
           )}
-          collapsible="none"
+          collapsible='none'
         >
-          <SidebarContent className="h-full border-none bg-white">
+          <SidebarContent className='h-full border-none bg-white'>
             <SidebarGroup>
-              <SidebarGroupLabel className="flex items-center justify-between px-4 py-2 text-sm text-gray-500">
+              <SidebarGroupLabel className='flex items-center justify-between px-4 py-2 text-sm text-gray-500'>
                 <span>PROFILE SETTINGS</span>
                 {isMobile && (
                   <button
                     onClick={() => setShowSidebar(false)}
-                    className="text-gray-500 hover:text-gray-800"
-                    aria-label="Close Sidebar"
+                    className='text-gray-500 hover:text-gray-800'
+                    aria-label='Close Sidebar'
                   >
                     <ChevronsLeft size={16} />
                   </button>
                 )}
               </SidebarGroupLabel>
-              <SidebarMenu className="space-y-1 px-2">
-                {sections.map((section) => (
+              <SidebarMenu className='space-y-1 px-2'>
+                {sections.map(section => (
                   <SidebarMenuItem key={section.href}>
                     <SidebarMenuButton
                       asChild
                       isActive={pathname === section.href}
-                      className="w-full rounded px-4 py-2 text-left transition hover:bg-gray-100"
+                      className='w-full rounded px-4 py-2 text-left transition hover:bg-gray-100'
                       onClick={() => isMobile && setShowSidebar(false)} // close sidebar on menu click in mobile
                     >
                       <Link href={section.href}>
@@ -94,15 +94,15 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
         </Sidebar>
       )}
 
-      <main className="relative flex-1 overflow-auto px-6 py-3">
+      <main className='relative flex-1 overflow-auto px-6 py-3'>
         {/* Show open button on mobile only when sidebar is closed */}
         {isMobile && !showSidebar && (
-          <div className="mb-4 flex w-fit items-center justify-between gap-2 text-sm text-gray-500">
+          <div className='mb-4 flex w-fit items-center justify-between gap-2 text-sm text-gray-500'>
             <span>PROFILE SETTINGS</span>
             <button
               onClick={() => setShowSidebar(true)}
-              className="text-gray-500 hover:text-gray-800"
-              aria-label="Open Sidebar"
+              className='text-gray-500 hover:text-gray-800'
+              aria-label='Open Sidebar'
             >
               <ChevronsRight size={20} />
             </button>
@@ -110,10 +110,10 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
         )}
 
         {/* Makeup for space when profile setting is shown on sidebar */}
-        {showSidebar && <div className="mb-4 h-5" />}
+        {showSidebar && <div className='mb-4 h-5' />}
 
         <div>{children}</div>
       </main>
     </div>
-  )
+  );
 }

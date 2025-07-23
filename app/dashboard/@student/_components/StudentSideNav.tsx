@@ -1,12 +1,5 @@
-import React from "react"
-import {
-  LayoutDashboard,
-  Book,
-  Calendar,
-  Award,
-  Star,
-  UserCircle,
-} from "lucide-react"
+import React from 'react';
+import { LayoutDashboard, Book, Calendar, Award, Star, UserCircle } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -15,41 +8,41 @@ import {
   SidebarMenuButton,
   SidebarGroupContent,
   SidebarGroupLabel,
-} from "@/components/ui/sidebar"
-import Link from "next/link"
+} from '@/components/ui/sidebar';
+import Link from 'next/link';
 
 const studentMenuItems = [
   {
-    title: "Overview",
-    url: "/dashboard/overview",
+    title: 'Overview',
+    url: '/dashboard/overview',
     icon: LayoutDashboard,
   },
   {
-    title: "My Courses",
-    url: "/dashboard/my-courses",
+    title: 'My Courses',
+    url: '/dashboard/my-courses',
     icon: Book,
   },
   {
-    title: "My Schedule",
-    url: "/dashboard/my-schedule",
+    title: 'My Schedule',
+    url: '/dashboard/my-schedule',
     icon: Calendar,
   },
   {
-    title: "My Grades",
-    url: "/dashboard/grades",
+    title: 'My Grades',
+    url: '/dashboard/grades',
     icon: Award,
   },
   {
-    title: "My Certificates",
-    url: "/dashboard/certificates",
+    title: 'My Certificates',
+    url: '/dashboard/certificates',
     icon: Star,
   },
   {
-    title: "Profile",
-    url: "/dashboard/profile",
+    title: 'Profile',
+    url: '/dashboard/profile',
     icon: UserCircle,
   },
-]
+];
 
 function StudentSidebar(): React.JSX.Element {
   return (
@@ -58,7 +51,7 @@ function StudentSidebar(): React.JSX.Element {
         <SidebarGroupLabel>Student Panel</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {studentMenuItems.map((item) => (
+            {studentMenuItems.map(item => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
                   <Link href={item.url}>
@@ -72,7 +65,7 @@ function StudentSidebar(): React.JSX.Element {
         </SidebarGroupContent>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
 
-export default StudentSidebar
+export default StudentSidebar;

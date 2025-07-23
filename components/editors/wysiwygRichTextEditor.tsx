@@ -1,39 +1,43 @@
-import draftToHtml from "draftjs-to-html"
-import htmlToDraft from "html-to-draftjs"
-import { Editor } from "react-draft-wysiwyg"
-import React, { useState } from "react"
-import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css"
-import { EditorState, ContentState, convertToRaw } from "draft-js"
+import draftToHtml from 'draftjs-to-html';
+import htmlToDraft from 'html-to-draftjs';
+import { Editor } from 'react-draft-wysiwyg';
+import React, { useState } from 'react';
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import { EditorState, ContentState, convertToRaw } from 'draft-js';
 
 interface RichTextEditorProps {
-  initialContent?: string
-  onChange?: (html: string) => void
-  readOnly?: boolean
+  initialContent?: string;
+  onChange?: (html: string) => void;
+  readOnly?: boolean;
 }
 
-const WysiwygRichTextEditor: React.FC<RichTextEditorProps> = ({ initialContent = "", onChange, readOnly = false }) => {
+const WysiwygRichTextEditor: React.FC<RichTextEditorProps> = ({
+  initialContent = '',
+  onChange,
+  readOnly = false,
+}) => {
   const [editorState, setEditorState] = useState(() => {
     if (initialContent) {
-      const contentBlock = htmlToDraft(initialContent)
-      const contentState = ContentState.createFromBlockArray(contentBlock.contentBlocks)
-      return EditorState.createWithContent(contentState)
+      const contentBlock = htmlToDraft(initialContent);
+      const contentState = ContentState.createFromBlockArray(contentBlock.contentBlocks);
+      return EditorState.createWithContent(contentState);
     }
-    return EditorState.createEmpty()
-  })
+    return EditorState.createEmpty();
+  });
 
   const handleEditorStateChange = (state: EditorState) => {
-    setEditorState(state)
-    const html = draftToHtml(convertToRaw(state.getCurrentContent()))
-    onChange?.(html)
-  }
+    setEditorState(state);
+    const html = draftToHtml(convertToRaw(state.getCurrentContent()));
+    onChange?.(html);
+  };
 
   return (
     <div>
       <Editor
         editorState={editorState}
-        wrapperClassName="rte-wrapper"
-        editorClassName="rte-editor"
-        toolbarClassName="rte-toolbar"
+        wrapperClassName='rte-wrapper'
+        editorClassName='rte-editor'
+        toolbarClassName='rte-toolbar'
         onEditorStateChange={handleEditorStateChange}
         readOnly={readOnly}
         toolbarHidden={readOnly}
@@ -45,7 +49,7 @@ const WysiwygRichTextEditor: React.FC<RichTextEditorProps> = ({ initialContent =
         // }}
       />
     </div>
-  )
-}
+  );
+};
 
-export default WysiwygRichTextEditor
+export default WysiwygRichTextEditor;

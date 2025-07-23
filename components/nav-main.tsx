@@ -1,26 +1,26 @@
-"use client"
+'use client';
 
-import { markActiveMenuItem, MenuItem } from "@/lib/menu"
-import { UserDomain } from "@/lib/types"
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "./ui/sidebar"
-import Link from "next/link"
+import { markActiveMenuItem, MenuItem } from '@/lib/menu';
+import { UserDomain } from '@/lib/types';
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from './ui/sidebar';
+import Link from 'next/link';
 
 export function NavMain({
   items,
   activeDomain,
   pathname,
 }: {
-  items: MenuItem[]
-  activeDomain: UserDomain | null
-  pathname: string
+  items: MenuItem[];
+  activeDomain: UserDomain | null;
+  pathname: string;
 }) {
-  const markedItems = markActiveMenuItem(items, pathname)
+  const markedItems = markActiveMenuItem(items, pathname);
 
   return (
     <SidebarMenu>
       {markedItems.map((item, index) => {
         if (item.domain && item.domain !== activeDomain) {
-          return null
+          return null;
         }
         return (
           <SidebarMenuItem key={index}>
@@ -31,8 +31,8 @@ export function NavMain({
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-        )
+        );
       })}
     </SidebarMenu>
-  )
+  );
 }

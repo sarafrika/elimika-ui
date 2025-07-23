@@ -1,8 +1,8 @@
-name: "Deploy to Server"
+name: 'Deploy to Server'
 
 on:
   workflow_run:
-    workflows: ["Setup Server"]
+    workflows: ['Setup Server']
     types:
       - completed
     branches:

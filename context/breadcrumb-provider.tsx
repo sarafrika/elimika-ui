@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import {
   createContext,
@@ -8,65 +8,62 @@ import {
   useEffect,
   useMemo,
   useState,
-} from "react"
-import { usePathname } from "next/navigation"
-import menu, { MenuItem } from "@/lib/menu"
+} from 'react';
+import { usePathname } from 'next/navigation';
+import menu, { MenuItem } from '@/lib/menu';
 
 export type BreadcrumbItem = {
-  id: string
-  title: string
-  url: string | null
-  isLast?: boolean
-}
+  id: string;
+  title: string;
+  url: string | null;
+  isLast?: boolean;
+};
 
 type BreadcrumbContextType = {
-  breadcrumbs: BreadcrumbItem[]
-  addBreadcrumb: (title: string, url?: string | null) => void
-  removeBreadcrumb: (id: string) => void
-  removeLastBreadcrumb: () => void
-  clearBreadcrumbs: () => void
-  replaceBreadcrumbs: (newBreadcrumbs: BreadcrumbItem[]) => void
-}
+  breadcrumbs: BreadcrumbItem[];
+  addBreadcrumb: (title: string, url?: string | null) => void;
+  removeBreadcrumb: (id: string) => void;
+  removeLastBreadcrumb: () => void;
+  clearBreadcrumbs: () => void;
+  replaceBreadcrumbs: (newBreadcrumbs: BreadcrumbItem[]) => void;
+};
 
-const BreadcrumbContext = createContext<BreadcrumbContextType | undefined>(
-  undefined,
-)
+const BreadcrumbContext = createContext<BreadcrumbContextType | undefined>(undefined);
 
-const generateId = () =>
-  `breadcrumb-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+const generateId = () => `breadcrumb-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
 const findMenuPathByUrlInSources = (
   sources: Record<string, MenuItem[]>,
-  url: string,
+  url: string
 ): MenuItem[] | null => {
   for (const sourceKey in sources) {
-    const result = findMenuPathByUrl(sources[sourceKey] || [], url)
-    if (result) return result
+    const result = findMenuPathByUrl(sources[sourceKey] || [], url);
+    if (result) return result;
   }
 
-  return null
-}
+  return null;
+};
 
 const findMenuPathByUrl = (
   menuItems: MenuItem[],
   url: string,
-  path: MenuItem[] = [],
+  path: MenuItem[] = []
 ): MenuItem[] | null => {
   for (const item of menuItems) {
-    const currentPath = [...path, item]
+    const currentPath = [...path, item];
 
     if (item.url === url) {
-      return currentPath
+      return currentPath;
     }
 
     if (item.items && item.items.length > 0) {
-      const foundPath = findMenuPathByUrl(item.items, url, currentPath)
-      if (foundPath) return foundPath
+      const foundPath = findMenuPathByUrl(item.items, url, currentPath);
+      if (foundPath) return foundPath;
     }
   }
 
-  return null
-}
+  return null;
+};
 
 const convertMenuToBreadcrumbs = (menuItems: MenuItem[]): BreadcrumbItem[] => {
   return menuItems.map((item, index) => ({
@@ -74,66 +71,63 @@ const convertMenuToBreadcrumbs = (menuItems: MenuItem[]): BreadcrumbItem[] => {
     title: item.title,
     url: item.url || null,
     isLast: index === menuItems.length - 1,
-  }))
-}
+  }));
+};
 
 export function BreadcrumbProvider({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
-  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([])
+  const pathname = usePathname();
+  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
 
   const replaceBreadcrumbs = useCallback((newBreadcrumbs: BreadcrumbItem[]) => {
     const dashboardBreadcrumb: BreadcrumbItem = {
-      id: "dashboard",
-      title: "Dashboard",
-      url: "/dashboard/overview",
+      id: 'dashboard',
+      title: 'Dashboard',
+      url: '/dashboard/overview',
       isLast: false,
+    };
+
+    if (newBreadcrumbs.length === 1 && newBreadcrumbs[0]?.url === '/dashboard/overview') {
+      setBreadcrumbs(newBreadcrumbs);
+      return;
     }
 
-    if (
-      newBreadcrumbs.length === 1 &&
-      newBreadcrumbs[0]?.url === "/dashboard/overview"
-    ) {
-      setBreadcrumbs(newBreadcrumbs)
-      return
+    if (newBreadcrumbs[0]?.id === 'dashboard') {
+      setBreadcrumbs(newBreadcrumbs);
+      return;
     }
 
-    if (newBreadcrumbs[0]?.id === "dashboard") {
-      setBreadcrumbs(newBreadcrumbs)
-      return
-    }
-
-    setBreadcrumbs([dashboardBreadcrumb, ...newBreadcrumbs])
-  }, [])
+    setBreadcrumbs([dashboardBreadcrumb, ...newBreadcrumbs]);
+  }, []);
 
   useEffect(() => {
     if (pathname) {
-      const menuPath = findMenuPathByUrlInSources(menu, pathname)
+      const menuPath = findMenuPathByUrlInSources(menu, pathname);
 
       if (menuPath && menuPath.length > 0) {
-        const newBreadcrumbs = convertMenuToBreadcrumbs(menuPath)
-        replaceBreadcrumbs(newBreadcrumbs)
-        return
+        const newBreadcrumbs = convertMenuToBreadcrumbs(menuPath);
+        replaceBreadcrumbs(newBreadcrumbs);
+        return;
       }
 
-      if (pathname.startsWith("/dashboard")) {
+      if (pathname.startsWith('/dashboard')) {
         replaceBreadcrumbs([
           {
-            id: "overview",
-            title: "Overview",
-            url: "/dashboard/overview",
+            id: 'overview',
+            title: 'Overview',
+            url: '/dashboard/overview',
             isLast: true,
           },
-        ])
+        ]);
       }
     }
-  }, [pathname, replaceBreadcrumbs])
+  }, [pathname, replaceBreadcrumbs]);
 
   const addBreadcrumb = useCallback((title: string, url?: string | null) => {
-    setBreadcrumbs((prev) => {
-      const updatedBreadcrumbs = prev.map((breadcrumb) => ({
+    setBreadcrumbs(prev => {
+      const updatedBreadcrumbs = prev.map(breadcrumb => ({
         ...breadcrumb,
         isLast: false,
-      }))
+      }));
 
       return [
         ...updatedBreadcrumbs,
@@ -143,52 +137,50 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
           url: url || null,
           isLast: true,
         },
-      ]
-    })
-  }, [])
+      ];
+    });
+  }, []);
 
   const removeBreadcrumb = useCallback((id: string) => {
-    setBreadcrumbs((prev) => {
-      const filteredBreadcrumbs = prev.filter(
-        (breadcrumb) => breadcrumb.id !== id,
-      )
+    setBreadcrumbs(prev => {
+      const filteredBreadcrumbs = prev.filter(breadcrumb => breadcrumb.id !== id);
 
       if (filteredBreadcrumbs.length > 0) {
         return filteredBreadcrumbs.map((breadcrumb, index) => ({
           ...breadcrumb,
           isLast: index === filteredBreadcrumbs.length - 1,
-        }))
+        }));
       }
 
-      return []
-    })
-  }, [])
+      return [];
+    });
+  }, []);
 
   const removeLastBreadcrumb = useCallback(() => {
-    setBreadcrumbs((prev) => {
+    setBreadcrumbs(prev => {
       if (prev.length > 0) {
-        const newBreadcrumbs = prev.slice(0, -1)
+        const newBreadcrumbs = prev.slice(0, -1);
 
         if (newBreadcrumbs.length > 0) {
-          const lastIndex = newBreadcrumbs.length - 1
-          const lastItem = newBreadcrumbs[lastIndex]
+          const lastIndex = newBreadcrumbs.length - 1;
+          const lastItem = newBreadcrumbs[lastIndex];
           if (lastItem) {
             newBreadcrumbs[lastIndex] = {
               ...lastItem,
               isLast: true,
-            }
+            };
           }
         }
 
-        return newBreadcrumbs
+        return newBreadcrumbs;
       }
-      return prev
-    })
-  }, [])
+      return prev;
+    });
+  }, []);
 
   const clearBreadcrumbs = useCallback(() => {
-    setBreadcrumbs([])
-  }, [])
+    setBreadcrumbs([]);
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -206,20 +198,16 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
       removeLastBreadcrumb,
       clearBreadcrumbs,
       replaceBreadcrumbs,
-    ],
-  )
+    ]
+  );
 
-  return (
-    <BreadcrumbContext.Provider value={value}>
-      {children}
-    </BreadcrumbContext.Provider>
-  )
+  return <BreadcrumbContext.Provider value={value}>{children}</BreadcrumbContext.Provider>;
 }
 
 export function useBreadcrumb() {
-  const context = useContext(BreadcrumbContext)
+  const context = useContext(BreadcrumbContext);
   if (!context) {
-    throw new Error("useBreadcrumb must be used within a BreadcrumbProvider")
+    throw new Error('useBreadcrumb must be used within a BreadcrumbProvider');
   }
-  return context
+  return context;
 }

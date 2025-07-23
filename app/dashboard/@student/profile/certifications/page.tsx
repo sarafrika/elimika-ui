@@ -1,7 +1,7 @@
-"use client"
+'use client';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Form,
   FormControl,
@@ -9,137 +9,115 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { PlusCircle, Trash2 } from "lucide-react"
-import * as z from "zod"
-import { useFieldArray, useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import { useBreadcrumb } from "@/context/breadcrumb-provider"
-import { useEffect } from "react"
-import { useProfileContext } from "@/context/profile-context"
-import type { UserProfile, StudentProfile } from "../types"
-import { Skeleton } from "@/components/ui/skeleton"
-import React, { Suspense } from "react"
+} from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import * as z from 'zod';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useEffect } from 'react';
+import { useProfileContext } from '@/context/profile-context';
+import type { UserProfile, StudentProfile } from '../types';
+import { Skeleton } from '@/components/ui/skeleton';
+import React, { Suspense } from 'react';
 
 const certificateSchema = z.object({
   id: z.string().optional(),
-  name: z.string().min(1, "Certificate name is required"),
-  issued_by: z.string().min(1, "Issuing organization is required"),
-  issued_date: z.date({ required_error: "Issue date is required" }),
-  certificate_url: z
-    .string()
-    .url("Please enter a valid URL")
-    .or(z.literal(""))
-    .optional(),
-})
+  name: z.string().min(1, 'Certificate name is required'),
+  issued_by: z.string().min(1, 'Issuing organization is required'),
+  issued_date: z.date({ required_error: 'Issue date is required' }),
+  certificate_url: z.string().url('Please enter a valid URL').or(z.literal('')).optional(),
+});
 
 const certificationsSchema = z.object({
   certifications: z.array(certificateSchema),
-})
+});
 
-type CertificationsFormValues = z.infer<typeof certificationsSchema>
+type CertificationsFormValues = z.infer<typeof certificationsSchema>;
 
 function CertificationsSettingsContent() {
-  const { replaceBreadcrumbs } = useBreadcrumb()
+  const { replaceBreadcrumbs } = useBreadcrumb();
   const { user, student, isLoading, refetch } = useProfileContext() as {
-    user: UserProfile
-    student: StudentProfile
-    isLoading: boolean
-    refetch: () => void
-  }
+    user: UserProfile;
+    student: StudentProfile;
+    isLoading: boolean;
+    refetch: () => void;
+  };
 
   useEffect(() => {
     replaceBreadcrumbs([
-      { id: "profile", title: "Profile", url: "/dashboard/profile" },
+      { id: 'profile', title: 'Profile', url: '/dashboard/profile' },
       {
-        id: "certifications",
-        title: "Certifications",
-        url: "/dashboard/profile/certifications",
+        id: 'certifications',
+        title: 'Certifications',
+        url: '/dashboard/profile/certifications',
         isLast: true,
       },
-    ])
-  }, [replaceBreadcrumbs])
+    ]);
+  }, [replaceBreadcrumbs]);
 
   const form = useForm<CertificationsFormValues>({
     resolver: zodResolver(certificationsSchema),
     defaultValues: {
       certifications: [],
     },
-  })
+  });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "certifications",
-  })
+    name: 'certifications',
+  });
 
   const onSubmit = async (data: CertificationsFormValues) => {
     // TODO: Add mutation to save certifications
-    await refetch()
-  }
+    await refetch();
+  };
 
-  if (isLoading) return <CertificationsSettingsSkeleton />
+  if (isLoading) return <CertificationsSettingsSkeleton />;
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       <div>
-        <h1 className="text-2xl font-semibold">Certifications</h1>
-        <p className="text-muted-foreground text-sm">
-          Add your professional certifications.
-        </p>
+        <h1 className='text-2xl font-semibold'>Certifications</h1>
+        <p className='text-muted-foreground text-sm'>Add your professional certifications.</p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
           <Card>
             <CardHeader>
               <CardTitle>Your Certifications</CardTitle>
-              <CardDescription>
-                List any certifications you have earned.
-              </CardDescription>
+              <CardDescription>List any certifications you have earned.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className='space-y-4'>
               {fields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className="group relative rounded-md border p-5"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-base font-medium">
+                <div key={field.id} className='group relative rounded-md border p-5'>
+                  <div className='flex items-start justify-between gap-4'>
+                    <div className='flex-1'>
+                      <h3 className='text-base font-medium'>
                         {form.watch(`certifications.${index}.name`)}
                       </h3>
-                      <p className="text-muted-foreground text-sm">
-                        Issued by:{" "}
-                        {form.watch(`certifications.${index}.issued_by`)}
+                      <p className='text-muted-foreground text-sm'>
+                        Issued by: {form.watch(`certifications.${index}.issued_by`)}
                       </p>
                     </div>
                     <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      className='h-8 w-8'
                       onClick={() => remove(index)}
                     >
-                      <Trash2 className="text-destructive h-4 w-4" />
+                      <Trash2 className='text-destructive h-4 w-4' />
                     </Button>
                   </div>
-                  <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div className='mt-5 grid grid-cols-1 gap-5 md:grid-cols-2'>
                     <FormField
                       control={form.control}
                       name={`certifications.${index}.name`}
@@ -167,43 +145,39 @@ function CertificationsSettingsContent() {
                       )}
                     />
                   </div>
-                  <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div className='mt-5 grid grid-cols-1 gap-5 md:grid-cols-2'>
                     <FormField
                       control={form.control}
                       name={`certifications.${index}.issued_date`}
                       render={({ field }) => (
-                        <FormItem className="flex flex-col">
+                        <FormItem className='flex flex-col'>
                           <FormLabel>Issue Date</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
-                                  variant={"outline"}
+                                  variant={'outline'}
                                   className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground",
+                                    'w-full pl-3 text-left font-normal',
+                                    !field.value && 'text-muted-foreground'
                                   )}
                                 >
                                   {field.value ? (
-                                    format(field.value, "PPP")
+                                    format(field.value, 'PPP')
                                   ) : (
                                     <span>Pick a date</span>
                                   )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent
-                              className="w-auto p-0"
-                              align="start"
-                            >
+                            <PopoverContent className='w-auto p-0' align='start'>
                               <Calendar
-                                mode="single"
+                                mode='single'
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date > new Date() ||
-                                  date < new Date("1900-01-01")
+                                disabled={date =>
+                                  date > new Date() || date < new Date('1900-01-01')
                                 }
                                 initialFocus
                               />
@@ -221,8 +195,8 @@ function CertificationsSettingsContent() {
                           <FormLabel>Certificate URL</FormLabel>
                           <FormControl>
                             <Input
-                              type="url"
-                              placeholder="https://example.com/certificate/123"
+                              type='url'
+                              placeholder='https://example.com/certificate/123'
                               {...field}
                             />
                           </FormControl>
@@ -234,50 +208,50 @@ function CertificationsSettingsContent() {
                 </div>
               ))}
               <Button
-                type="button"
-                variant="outline"
-                className="flex w-full items-center justify-center gap-2"
+                type='button'
+                variant='outline'
+                className='flex w-full items-center justify-center gap-2'
                 onClick={() =>
                   append({
-                    name: "",
-                    issued_by: "",
+                    name: '',
+                    issued_by: '',
                     issued_date: new Date(),
-                    certificate_url: "",
+                    certificate_url: '',
                   })
                 }
               >
-                <PlusCircle className="h-4 w-4" /> Add Certificate
+                <PlusCircle className='h-4 w-4' /> Add Certificate
               </Button>
             </CardContent>
           </Card>
 
-          <div className="flex justify-end pt-2">
-            <Button type="submit" className="px-6">
+          <div className='flex justify-end pt-2'>
+            <Button type='submit' className='px-6'>
               Save Changes
             </Button>
           </div>
         </form>
       </Form>
     </div>
-  )
+  );
 }
 
 function CertificationsSettingsSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       <div>
-        <Skeleton className="mb-2 h-8 w-48" />
-        <Skeleton className="h-4 w-64" />
+        <Skeleton className='mb-2 h-8 w-48' />
+        <Skeleton className='h-4 w-64' />
       </div>
-      <div className="space-y-8">
-        <Skeleton className="h-40 w-full rounded-lg" />
-        <Skeleton className="h-40 w-full rounded-lg" />
-        <div className="flex justify-end pt-2">
-          <Skeleton className="h-10 w-32" />
+      <div className='space-y-8'>
+        <Skeleton className='h-40 w-full rounded-lg' />
+        <Skeleton className='h-40 w-full rounded-lg' />
+        <div className='flex justify-end pt-2'>
+          <Skeleton className='h-10 w-32' />
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default function CertificationsSettings() {
@@ -285,5 +259,5 @@ export default function CertificationsSettings() {
     <Suspense fallback={<CertificationsSettingsSkeleton />}>
       <CertificationsSettingsContent />
     </Suspense>
-  )
+  );
 }

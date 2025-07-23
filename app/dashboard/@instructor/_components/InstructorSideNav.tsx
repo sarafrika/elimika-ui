@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -8,7 +8,7 @@ import {
   DollarSign,
   Star,
   UserCircle,
-} from "lucide-react"
+} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -17,51 +17,51 @@ import {
   SidebarMenuButton,
   SidebarGroupContent,
   SidebarGroupLabel,
-} from "@/components/ui/sidebar"
-import Link from "next/link"
+} from '@/components/ui/sidebar';
+import Link from 'next/link';
 
 const instructorMenuItems = [
   {
-    title: "Overview",
-    url: "/dashboard/overview",
+    title: 'Overview',
+    url: '/dashboard/overview',
     icon: LayoutDashboard,
   },
   {
-    title: "Course Management",
-    url: "/dashboard/course-management",
+    title: 'Course Management',
+    url: '/dashboard/course-management',
     icon: BookOpen,
   },
   {
-    title: "Classes",
-    url: "/dashboard/classes",
+    title: 'Classes',
+    url: '/dashboard/classes',
     icon: ClipboardList,
   },
   {
-    title: "Assignments",
-    url: "/dashboard/assignments",
+    title: 'Assignments',
+    url: '/dashboard/assignments',
     icon: Award,
   },
   {
-    title: "Students",
-    url: "/dashboard/students",
+    title: 'Students',
+    url: '/dashboard/students',
     icon: Users,
   },
   {
-    title: "Earnings",
-    url: "/dashboard/earnings",
+    title: 'Earnings',
+    url: '/dashboard/earnings',
     icon: DollarSign,
   },
   {
-    title: "Reviews",
-    url: "/dashboard/reviews",
+    title: 'Reviews',
+    url: '/dashboard/reviews',
     icon: Star,
   },
   {
-    title: "Profile",
-    url: "/dashboard/profile",
+    title: 'Profile',
+    url: '/dashboard/profile',
     icon: UserCircle,
   },
-]
+];
 
 function InstructorSidebar(): React.JSX.Element {
   return (
@@ -70,7 +70,7 @@ function InstructorSidebar(): React.JSX.Element {
         <SidebarGroupLabel>Instructor Panel</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {instructorMenuItems.map((item) => (
+            {instructorMenuItems.map(item => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
                   <Link href={item.url}>
@@ -84,7 +84,7 @@ function InstructorSidebar(): React.JSX.Element {
         </SidebarGroupContent>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
 
-export default InstructorSidebar
+export default InstructorSidebar;

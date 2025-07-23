@@ -1,9 +1,9 @@
-import React, { useEffect } from "react"
+import React, { useEffect } from 'react';
 
 interface HTMLTextPreviewProps {
-  htmlContent: string
-  className?: string
-  style?: React.CSSProperties
+  htmlContent: string;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 const defaultStyles = `
@@ -58,30 +58,30 @@ const defaultStyles = `
     color: #007bff;
     text-decoration: underline;
   }
-`
+`;
 
 const HTMLTextPreview: React.FC<HTMLTextPreviewProps> = ({ htmlContent, className, style }) => {
   // Inject styles only once
   useEffect(() => {
-    const styleTagId = "html-text-preview-styles"
+    const styleTagId = 'html-text-preview-styles';
     if (!document.getElementById(styleTagId)) {
-      const styleTag = document.createElement("style")
-      styleTag.id = styleTagId
-      styleTag.innerHTML = defaultStyles
-      document.head.appendChild(styleTag)
+      const styleTag = document.createElement('style');
+      styleTag.id = styleTagId;
+      styleTag.innerHTML = defaultStyles;
+      document.head.appendChild(styleTag);
     }
-  }, [])
+  }, []);
 
   return (
     <div
-      className={`html-text-preview ${className ?? ""}`}
+      className={`html-text-preview ${className ?? ''}`}
       style={{
-        whiteSpace: "normal",
+        whiteSpace: 'normal',
         ...style,
       }}
       dangerouslySetInnerHTML={{ __html: htmlContent }}
     />
-  )
-}
+  );
+};
 
-export default HTMLTextPreview
+export default HTMLTextPreview;

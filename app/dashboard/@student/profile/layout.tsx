@@ -1,7 +1,7 @@
-"use client"
+'use client';
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -10,22 +10,22 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { ReactNode } from "react"
-import { ProfileProvider } from "@/context/profile-context"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs"
+} from '@/components/ui/sidebar';
+import { ReactNode } from 'react';
+import { ProfileProvider } from '@/context/profile-context';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 
 const sections = [
-  { name: "General", href: "/dashboard/profile/general" },
-  { name: "Education", href: "/dashboard/profile/education" },
-  { name: "Certifications", href: "/dashboard/profile/certifications" },
-]
+  { name: 'General', href: '/dashboard/profile/general' },
+  { name: 'Education', href: '/dashboard/profile/education' },
+  { name: 'Certifications', href: '/dashboard/profile/certifications' },
+];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
-    <div className="relative min-h-screen p-0">
+    <div className='relative min-h-screen p-0'>
       {/* <Sidebar
         variant="inset"
         className="relative w-64 border-r bg-white p-0"
@@ -55,17 +55,17 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
         </SidebarContent>
       </Sidebar> */}
 
-      <main className="flex-1 overflow-auto px-6 py-3">
-
-        <ul className="flex gap-5">
-          {sections.map(sec => <Link key={sec.name} href={sec.href}>{sec.name}</Link>)}
+      <main className='flex-1 overflow-auto px-6 py-3'>
+        <ul className='flex gap-5'>
+          {sections.map(sec => (
+            <Link key={sec.name} href={sec.href}>
+              {sec.name}
+            </Link>
+          ))}
         </ul>
-        
-        <ProfileProvider>
-          {children}
-        </ProfileProvider>
 
+        <ProfileProvider>{children}</ProfileProvider>
       </main>
     </div>
-  )
+  );
 }

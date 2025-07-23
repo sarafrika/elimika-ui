@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -8,7 +8,7 @@ import {
   UserCog,
   Settings,
   Briefcase,
-} from "lucide-react"
+} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -17,51 +17,51 @@ import {
   SidebarMenuButton,
   SidebarGroupContent,
   SidebarGroupLabel,
-} from "@/components/ui/sidebar"
-import Link from "next/link"
+} from '@/components/ui/sidebar';
+import Link from 'next/link';
 
 const organizationMenuItems = [
   {
-    title: "Overview",
-    url: "/dashboard/overview",
+    title: 'Overview',
+    url: '/dashboard/overview',
     icon: LayoutDashboard,
   },
   {
-    title: "Instructors",
-    url: "/dashboard/instructors",
+    title: 'Instructors',
+    url: '/dashboard/instructors',
     icon: Briefcase,
   },
   {
-    title: "Students",
-    url: "/dashboard/students",
+    title: 'Students',
+    url: '/dashboard/students',
     icon: Users,
   },
   {
-    title: "Courses",
-    url: "/dashboard/courses",
+    title: 'Courses',
+    url: '/dashboard/courses',
     icon: BookOpen,
   },
   {
-    title: "Classes",
-    url: "/dashboard/classes",
+    title: 'Classes',
+    url: '/dashboard/classes',
     icon: ClipboardList,
   },
   {
-    title: "Branches",
-    url: "/dashboard/branches",
+    title: 'Branches',
+    url: '/dashboard/branches',
     icon: Building,
   },
   {
-    title: "Users",
-    url: "/dashboard/users",
+    title: 'Users',
+    url: '/dashboard/users',
     icon: UserCog,
   },
   {
-    title: "Account",
-    url: "/dashboard/account",
+    title: 'Account',
+    url: '/dashboard/account',
     icon: Settings,
   },
-]
+];
 
 function OrganizationSidebar(): React.JSX.Element {
   return (
@@ -70,7 +70,7 @@ function OrganizationSidebar(): React.JSX.Element {
         <SidebarGroupLabel>Organization Panel</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            {organizationMenuItems.map((item) => (
+            {organizationMenuItems.map(item => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
                   <Link href={item.url}>
@@ -84,7 +84,7 @@ function OrganizationSidebar(): React.JSX.Element {
         </SidebarGroupContent>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
 
-export default OrganizationSidebar
+export default OrganizationSidebar;

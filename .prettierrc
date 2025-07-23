@@ -1,24 +1,32 @@
+# Core formatting
 semi: true
 singleQuote: true
-printWidth: 120
+printWidth: 100
 tabWidth: 2
 useTabs: false
 trailingComma: es5
 
+# JSX/React specific
 jsxSingleQuote: true
 jsxBracketSameLine: false
 
+# General formatting
 bracketSpacing: true
 arrowParens: avoid
 endOfLine: lf
 quoteProps: as-needed
 
-parser: flow
-
+# Language formatting
 embeddedLanguageFormatting: auto
 htmlWhitespaceSensitivity: css
+
+# Pragma settings (usually false for most projects)
 insertPragma: false
 requirePragma: false
+
+# Prose (markdown, etc.)
 proseWrap: preserve
+
+# Plugins
 plugins:
   - prettier-plugin-tailwindcss

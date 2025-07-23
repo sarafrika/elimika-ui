@@ -1,82 +1,99 @@
-import { AllSchemaTypes, SchemaType } from "@/lib/types";
-import { paths } from "@/services/api/schema";
-import { ClientOptions } from "openapi-fetch";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { useUser } from "./user-context";
-import { fetchClient } from "@/services/api/fetch-client";
-import { ApiResponse } from "@/services/api/schema"
+import { AllSchemaTypes, SchemaType } from '@/lib/types';
+import { paths } from '@/services/api/schema';
+import { ClientOptions } from 'openapi-fetch';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { useUser } from './user-context';
+import { fetchClient } from '@/services/api/fetch-client';
+import { ApiResponse } from '@/services/api/schema';
 
-type DataType = { [key: string]: AllSchemaTypes | AllSchemaTypes[] | number } & { expires?: number };
+type DataType = { [key: string]: AllSchemaTypes | AllSchemaTypes[] | number } & {
+  expires?: number;
+};
 
 type DataStoreType = {
-    data: DataType,
-    get: (key: string) => AllSchemaTypes | AllSchemaTypes[],
-    has: (key: string) => boolean,
-    softUpdate: (key: string, newDate: AllSchemaTypes | AllSchemaTypes[] | null) => void,
-}
+  data: DataType;
+  get: (key: string) => AllSchemaTypes | AllSchemaTypes[];
+  has: (key: string) => boolean;
+  softUpdate: (key: string, newDate: AllSchemaTypes | AllSchemaTypes[] | null) => void;
+};
 
 const dataStore = create<DataStoreType>()(
-    persist((set) => ({
-        data: {},
-        get(key: string) {
-            return this.data[key] as AllSchemaTypes | AllSchemaTypes[];
-        },
-        has(key: string) {
-            return key in this.data
-        },
-        softUpdate(key: string, newData: AllSchemaTypes | AllSchemaTypes[] | null) {
-            set({ data: { ...this.data, [key]: newData } as DataType });
-        }
-    }), {
-        name: "data-store",
-        partialize: (state) => state.data
-    })
+  persist(
+    set => ({
+      data: {},
+      get(key: string) {
+        return this.data[key] as AllSchemaTypes | AllSchemaTypes[];
+      },
+      has(key: string) {
+        return key in this.data;
+      },
+      softUpdate(key: string, newData: AllSchemaTypes | AllSchemaTypes[] | null) {
+        set({ data: { ...this.data, [key]: newData } as DataType });
+      },
+    }),
+    {
+      name: 'data-store',
+      partialize: state => state.data,
+    }
+  )
 );
 
-type ConfigType = (schema: SchemaType, dataFethcer: () => Promise<AllSchemaTypes | AllSchemaTypes[] | null>, offline: boolean) => void;
+type ConfigType = (
+  schema: SchemaType,
+  dataFethcer: () => Promise<AllSchemaTypes | AllSchemaTypes[] | null>,
+  offline: boolean
+) => void;
 const UserDataStoreContext = createContext<{
-    data?: DataType,
-    configure?: ConfigType
+  data?: DataType;
+  configure?: ConfigType;
 }>({});
 export default function UserDataProvider({ children }: { children: ReactNode }) {
-    const store = dataStore();
-    // const user = useUser();
-    const [data, setData] = useState<DataType | undefined>(store.data);
+  const store = dataStore();
+  // const user = useUser();
+  const [data, setData] = useState<DataType | undefined>(store.data);
 
-    function configure<T>(schema: SchemaType, dataFethcer: () => Promise<AllSchemaTypes | AllSchemaTypes[] | null>, offline: boolean) {
-        const now = Date.now();
-        /* if (offline && data && data.expires && data.expires > now) {
+  function configure<T>(
+    schema: SchemaType,
+    dataFethcer: () => Promise<AllSchemaTypes | AllSchemaTypes[] | null>,
+    offline: boolean
+  ) {
+    const now = Date.now();
+    /* if (offline && data && data.expires && data.expires > now) {
             return data[key]
         }*/
 
-        // if(data && schema in data && data.expires && data.expires > now){
-        //     // setData(data.Student)
-        // }
-        if (!data || !(schema in data)) {
-            dataFethcer().then((newData) => {
-                if(offline){
-                    store.softUpdate(schema as string, newData)
-                }
-                setData({ ...data, expires: now + 36000, [schema]: newData } as DataType)
-            })
+    // if(data && schema in data && data.expires && data.expires > now){
+    //     // setData(data.Student)
+    // }
+    if (!data || !(schema in data)) {
+      dataFethcer().then(newData => {
+        if (offline) {
+          store.softUpdate(schema as string, newData);
         }
+        setData({ ...data, expires: now + 36000, [schema]: newData } as DataType);
+      });
     }
+  }
 
-    return (<>
-        <UserDataStoreContext.Provider value={{ data, configure }}>
-            {children}
-        </UserDataStoreContext.Provider>
-    </>);
+  return (
+    <>
+      <UserDataStoreContext.Provider value={{ data, configure }}>
+        {children}
+      </UserDataStoreContext.Provider>
+    </>
+  );
 }
 
-export function useUserData(...params: [SchemaType, () => Promise<AllSchemaTypes | AllSchemaTypes[] | null>, boolean]) {
-    const { data, configure } = useContext(UserDataStoreContext);
-    useEffect(() => {
-        if (configure) configure(...params);
-    }, [configure]);
-    return data;
+export function useUserData(
+  ...params: [SchemaType, () => Promise<AllSchemaTypes | AllSchemaTypes[] | null>, boolean]
+) {
+  const { data, configure } = useContext(UserDataStoreContext);
+  useEffect(() => {
+    if (configure) configure(...params);
+  }, [configure]);
+  return data;
 }
 
 /* type StoreDataType = { [key: string]: string | number | boolean | object | undefined }
@@ -154,4 +171,3 @@ export default function StoreContextProvider({
     return { StoreContext, StoreContextProvider }
 
 } */
-
