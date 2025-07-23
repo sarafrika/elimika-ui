@@ -1,5 +1,5 @@
 import LoginButton from '@/components/LoginButton';
-import { BookOpen, Users, Award } from 'lucide-react';
+import { Award, BookOpen, Users } from 'lucide-react';
 
 export default function Home() {
   return (

@@ -17,7 +17,7 @@ export async function search<P extends SearchEndpoints>(endpoint: P, searchParam
         page: 0,
         size: 10,
       },
-      query: { ...searchParams },
+      query: { ...searchParams }
     };
   }
   const resp = await fetchClient.GET(endpoint, init);
