@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Instructor } from '@/services/api/schema';
 import { Badge } from '@/components/ui/badge';
+import { Instructor } from '@/services/api/schema';
 import { useRouter } from 'next/navigation';
-import InstructorsList from './InstructorsList';
+import { useEffect, useState } from 'react';
 import InstructorDetailsPanel from './InstructorDetailsPanel';
 import InstructorMobileModal from './InstructorMobileModal';
+import InstructorsList from './InstructorsList';
 
 type Props = {
   instructors: Instructor[];
@@ -40,7 +40,7 @@ export default function InstructorsPage({ instructors }: Props) {
 
       router.refresh();
     } catch (error) {
-      console.error('Error approving instructor:', error);
+      //console.log('Error approving instructor:', error);
     }
   };
 
@@ -54,7 +54,7 @@ export default function InstructorsPage({ instructors }: Props) {
 
       router.refresh();
     } catch (error) {
-      console.error('Error rejecting instructor:', error);
+      //console.log('Error rejecting instructor:', error);
     }
   };
 
@@ -80,14 +80,14 @@ export default function InstructorsPage({ instructors }: Props) {
   const handleInstructorSelect = (instructor: Instructor) => {
     setSelectedInstructor(instructor);
     // Open modal on small screens
-    if (window.innerWidth < 1024) {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
       setIsModalOpen(true);
     }
   };
 
   const handleInstructorDelete = (instructor: Instructor) => {
     // Handle delete logic here
-    console.log('Delete instructor:', instructor.uuid);
+    //console.log('Delete instructor:', instructor.uuid);
   };
 
   // Filter and sort instructors

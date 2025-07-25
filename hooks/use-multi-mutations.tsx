@@ -11,7 +11,7 @@ export default function useMultiMutations<T extends MutationTuple>(mutations: T)
   const [datas, setDatas] = useState<AllSchemaTypes[]>();
   const [responses, setResponses] = useState<ResponseDtoVoid[]>();
 
-  mutations.reduce((a: any, b) => console.log(b.error), []);
+  //mutations.reduce((a: any, b) => console.log(b.error), []);
 
   useEffect(
     () => {

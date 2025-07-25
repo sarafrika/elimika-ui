@@ -1,16 +1,16 @@
 import { AppSidebar } from '@/components/app-sidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { TrainingCenterProvider } from '@/context/training-center-provider';
-import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
-import { redirect } from 'next/navigation';
-import { DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
-import DashboardLayoutContent from '@/components/dashboard-layout-content';
-import DashboardTopBar from '@/components/dashboard-top-bar';
 import DashboardMainContent from '@/components/dashboard-main-content';
-import { auth } from '@/services/auth';
-import { DashboardChildrenTypes } from './_types';
+import DashboardTopBar from '@/components/dashboard-top-bar';
+import { DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
+import { TrainingCenterProvider } from '@/context/training-center-provider';
 import { UserDomain } from '@/lib/types';
+import { auth } from '@/services/auth';
+import { redirect } from 'next/navigation';
 import { ReactNode } from 'react';
+import { getUserByEmail } from '../../services/user/actions';
+import { DashboardChildrenTypes } from './_types';
 
 type OrgDomainType = DashboardView | 'organisation_user';
 
@@ -22,7 +22,10 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       return redirect('/');
     }
 
-    const user = session.user;
+    const user = await getUserByEmail(session.user.email);
+    if (!user) {
+      return redirect('/');
+    }
 
     if (user.user_domain!.length === 0) {
       return redirect('/onboarding');
@@ -37,9 +40,9 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       {}
     );
     const currentDashboard = userDashboards[defaultDomain ?? 'student'] ?? props.children;
-    console.log('userDomains', currentDashboard);
+    //console.log('userDomains', currentDashboard);
 
-    // console.log(user);
+    // //console.log(user);
 
     if (orgAdminDomains.includes('organisation_user')) {
       return (

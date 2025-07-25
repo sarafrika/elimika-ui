@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -11,9 +9,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { ReactNode, useEffect, useState } from 'react';
-import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import clsx from 'clsx';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ReactNode, useEffect, useState } from 'react';
 
 const sections = [
   { name: 'General', href: '/dashboard/profile/general' },
@@ -35,8 +35,8 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 745);
-      if (window.innerWidth > 745) {
+      setIsMobile(typeof window !== "undefined" && window.innerWidth <= 745);
+      if (typeof window !== "undefined" && window.innerWidth > 745) {
         setShowSidebar(true); // Always show sidebar on desktop
       } else {
         setShowSidebar(false); // Hide sidebar by default on mobile
@@ -44,8 +44,10 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
     };
 
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    if (typeof window !== "undefined") {
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
   }, []);
 
   return (

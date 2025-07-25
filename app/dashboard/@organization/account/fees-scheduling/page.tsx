@@ -1,15 +1,15 @@
 'use client';
 
-import * as z from 'zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { PlusCircle, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 const feesSchedulingSchema = z.object({
   rateCard: z.array(
@@ -43,26 +43,26 @@ const rateCardHeaders: {
   key: keyof FeesSchedulingFormValues['rateCard'][0];
   label: string;
 }[] = [
-  { key: 'course', label: 'Course' },
-  { key: 'classType', label: 'Class Type' },
-  { key: 'method', label: 'Method' },
-  { key: 'rate', label: 'Rate/Hr (USD)' },
-];
+    { key: 'course', label: 'Course' },
+    { key: 'classType', label: 'Class Type' },
+    { key: 'method', label: 'Method' },
+    { key: 'rate', label: 'Rate/Hr (USD)' },
+  ];
 
 const scheduleHeaders: {
   key: keyof FeesSchedulingFormValues['schedule'][0];
   label: string;
 }[] = [
-  { key: 'course', label: 'Course/Program' },
-  { key: 'instructor', label: 'Instructor' },
-  { key: 'lessons', label: 'No. Lessons' },
-  { key: 'hours', label: '# Hrs' },
-  { key: 'hourlyFee', label: 'Hourly Fee' },
-  { key: 'totalFee', label: 'Total Fee' },
-  { key: 'materialFee', label: 'Material Fee' },
-  { key: 'academicPeriods', label: 'Acad. Periods' },
-  { key: 'feePerPeriod', label: 'Fee/Period' },
-];
+    { key: 'course', label: 'Course/Program' },
+    { key: 'instructor', label: 'Instructor' },
+    { key: 'lessons', label: 'No. Lessons' },
+    { key: 'hours', label: '# Hrs' },
+    { key: 'hourlyFee', label: 'Hourly Fee' },
+    { key: 'totalFee', label: 'Total Fee' },
+    { key: 'materialFee', label: 'Material Fee' },
+    { key: 'academicPeriods', label: 'Acad. Periods' },
+    { key: 'feePerPeriod', label: 'Fee/Period' },
+  ];
 
 export default function FeesSchedulingPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -119,7 +119,7 @@ export default function FeesSchedulingPage() {
 
   const onSubmit = (data: FeesSchedulingFormValues) => {
     // TODO: Implement submission logic
-    console.log(data);
+    //console.log(data);
   };
 
   const renderInput = (
