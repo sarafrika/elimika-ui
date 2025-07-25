@@ -80,7 +80,7 @@ export default function InstructorsPage({ instructors }: Props) {
   const handleInstructorSelect = (instructor: Instructor) => {
     setSelectedInstructor(instructor);
     // Open modal on small screens
-    if (window.innerWidth < 1024) {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
       setIsModalOpen(true);
     }
   };

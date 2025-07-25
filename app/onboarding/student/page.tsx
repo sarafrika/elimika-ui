@@ -1,20 +1,14 @@
 'use client';
 
-import React, { useCallback, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { toast } from 'sonner';
-import { StudentOnboardingForm } from './_components/student-onboarding-form';
 import Loading from '@/components/Loading';
-import { fetchClient } from '@/services/api/fetch-client';
-import { useUserStore } from '@/store/use-user-store';
-import { getAuthToken } from '@/services/auth/get-token';
-import { schemas } from '@/services/api/zod-client';
-import { z } from 'zod';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useUser } from '@/context/user-context';
+import { schemas } from '@/services/api/zod-client';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { StudentOnboardingForm } from './_components/student-onboarding-form';
 
 const ProfileSchema = z.object({
   user: schemas.User,
@@ -39,8 +33,8 @@ export default function StudentOnboardingPage() {
       user: {
         ...user,
         dob: new Date(user?.dob ?? Date.now()).toISOString(),
-        created_date: new Date(user!.created_date!).toISOString(),
-        updated_date: new Date(user!.created_date!).toISOString()
+        created_date: new Date(user!.created_date ?? Date.now()).toISOString(),
+        updated_date: new Date(user!.created_date ?? Date.now()).toISOString()
       },
       student: {
         user_uuid: user?.uuid,

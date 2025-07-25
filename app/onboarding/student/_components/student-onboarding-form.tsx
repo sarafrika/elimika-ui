@@ -67,8 +67,8 @@ export function StudentOnboardingForm() {
         phone_number: '',
         profile_image_url: '',
         updated_by: user!.updated_by ?? '',
-        created_date: (new Date(user!.created_date!)).toISOString(),
-        updated_date: (new Date(user!.updated_date!)).toISOString()
+        created_date: (new Date(user!.created_date ?? Date.now())).toISOString(),
+        updated_date: (new Date(user!.updated_date ?? Date.now())).toISOString()
       },
       student: {
         user_uuid: user!.uuid,
@@ -94,9 +94,9 @@ export function StudentOnboardingForm() {
       },
     }, {
       onSuccess: async (resp) => {
-        //console.log(resp)
-        const respData = resp.data as unknown as { data: { user: User } };
-        user?.updateSession(respData.data.user)
+        // console.log(resp)
+        // const respData = resp.data as unknown as { data: { user: User } };
+        user?.updateSession({ ...resp.data, dob: new Date(resp.data!.dob) }! as User)
         /* //console.log(resp)
         await session
           .update({ user: { ...session.data!.user, ...resp.data! } })
@@ -109,6 +109,10 @@ export function StudentOnboardingForm() {
 
     studentMutation.mutate({
       body: data.student
+    }, {
+      onError: (error) => {
+        // console.log(error)
+      }
     })
   }
 
@@ -194,34 +198,32 @@ export function StudentOnboardingForm() {
           {watchDob != null && (
             <>
               {/* Adult Phone Number Form */}
-              {isAdult && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Contact Information</CardTitle>
-                    <CardDescription>Please provide your contact information</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <FormField
-                      control={form.control}
-                      name='user.phone_number'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Phone Number <span className='text-red-500'>*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder='+1 234 567 8900' {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Include country code for international numbers
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              )}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Information</CardTitle>
+                  <CardDescription>Please provide your contact information</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name='user.phone_number'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Phone Number <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder='+1 234 567 8900' {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Include country code for international numbers
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
               {/* Guardian Information - Only show if under 18 */}
               {watchDob && !isAdult && (
