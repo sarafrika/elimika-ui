@@ -39,6 +39,8 @@ export default function StudentOnboardingPage() {
       user: {
         ...user,
         dob: new Date(user?.dob ?? Date.now()).toISOString(),
+        created_date: new Date(user!.created_date!).toISOString(),
+        updated_date: new Date(user!.created_date!).toISOString()
       },
       student: {
         user_uuid: user?.uuid,

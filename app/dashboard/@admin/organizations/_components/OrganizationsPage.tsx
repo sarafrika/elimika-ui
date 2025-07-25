@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
 import { Organisation as OrganisationDto } from '@/services/api/schema';
-import OrganizationsList from './OrganizationsList';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import OrganizationDetailsPanel from './OrganizationDetailsPanel';
 import OrganizationMobileModal from './OrganizationMobileModal';
+import OrganizationsList from './OrganizationsList';
 
 type Props = {
   organizations: OrganisationDto[];
@@ -45,7 +45,7 @@ export default function OrganizationsPage({ organizations }: Props) {
 
       router.refresh();
     } catch (error) {
-      console.error('Error approving organization:', error);
+      //console.log('Error approving organization:', error);
     }
   };
 
@@ -59,7 +59,7 @@ export default function OrganizationsPage({ organizations }: Props) {
 
       router.refresh();
     } catch (error) {
-      console.error('Error rejecting organization:', error);
+      //console.log('Error rejecting organization:', error);
     }
   };
 
@@ -103,7 +103,7 @@ export default function OrganizationsPage({ organizations }: Props) {
 
   const handleOrganizationDelete = (organization: OrganisationDto) => {
     // Handle delete logic here
-    console.log('Delete organization:', organization.uuid);
+    //console.log('Delete organization:', organization.uuid);
   };
 
   // Filter and sort organizations

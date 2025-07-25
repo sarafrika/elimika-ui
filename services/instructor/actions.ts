@@ -1,8 +1,8 @@
 'use server';
 
-import { getEnvironmentVariable } from '@/lib/utils';
 import { ApiResponse, ApiResponseWithPagination } from '@/lib/types';
 import { Instructor } from '@/lib/types/instructor';
+import { getEnvironmentVariable } from '@/lib/utils';
 
 const BASE_URL = getEnvironmentVariable('NEXT_PUBLIC_API_URL');
 const DEFAULT_PAGE_SIZE = '10';
@@ -24,7 +24,7 @@ export async function fetchInstructorProfile(page: number = 0, searchParams?: st
 
     return (await response.json()) as ApiResponseWithPagination<Instructor>;
   } catch (error) {
-    console.error('Error fetching instructor profile:', error);
+    //console.log('Error fetching instructor profile:', error);
     throw new Error(
       'Something went wrong while fetching instructor profile. Please contact support.'
     );
@@ -44,7 +44,7 @@ export async function updateInstructorProfile(instructor: Instructor) {
 
     return (await response.json()) as ApiResponse<Instructor>;
   } catch (error) {
-    console.error('Error creating instructor profile:', error);
+    //console.log('Error creating instructor profile:', error);
     throw new Error(
       'Something went wrong while creating instructor profile. Please contact support.'
     );

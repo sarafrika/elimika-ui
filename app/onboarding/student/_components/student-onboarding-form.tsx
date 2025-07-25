@@ -94,10 +94,10 @@ export function StudentOnboardingForm() {
       },
     }, {
       onSuccess: async (resp) => {
-        console.log(resp)
+        //console.log(resp)
         const respData = resp.data as unknown as { data: { user: User } };
         user?.updateSession(respData.data.user)
-        /* console.log(resp)
+        /* //console.log(resp)
         await session
           .update({ user: { ...session.data!.user, ...resp.data! } })
         // .then(() => getSession());
@@ -112,8 +112,8 @@ export function StudentOnboardingForm() {
     })
   }
 
-  // console.log('Validation errors', form.formState.errors);
-  console.log('API errors', errors);
+  // //console.log('Validation errors', form.formState.errors);
+  //console.log('API errors', errors);
   const watchDob = form.watch('user.dob');
 
   const isAdult = (() => {

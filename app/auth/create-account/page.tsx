@@ -1,9 +1,30 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Image from 'next/image';
+import {
+  createOrUpdateTrainingCenter,
+  createUser,
+  fetchTrainingCenters,
+} from '@/app/auth/create-account/_components/actions';
+import {
+  TrainingCenter,
+  TrainingCenterForm,
+} from '@/app/auth/create-account/_components/training-center-form';
+import { User, UserAccountForm } from '@/app/auth/create-account/_components/user-account-form';
 import illustration from '@/assets/illustration.jpg';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuthRealm } from '@/hooks/use-auth-realm';
+import { UserDomain } from '@/lib/types';
 import {
   AlertCircle,
   ArrowRight,
@@ -15,30 +36,9 @@ import {
   MailCheck,
 } from 'lucide-react';
 import { signIn } from 'next-auth/react';
+import Image from 'next/image';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  createOrUpdateTrainingCenter,
-  createUser,
-  fetchTrainingCenters,
-} from '@/app/auth/create-account/actions';
-import { User, UserAccountForm } from '@/app/auth/create-account/_components/user-account-form';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  TrainingCenter,
-  TrainingCenterForm,
-} from '@/app/auth/create-account/_components/training-center-form';
-import { useAuthRealm } from '@/hooks/use-auth-realm';
-import { UserDomain } from '@/lib/types';
 
 type AccountCreationStatus = 'idle' | 'submitting' | 'success' | 'error';
 

@@ -1,9 +1,8 @@
 'use client';
 
-import * as z from 'zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -12,14 +11,15 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { PlusCircle, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 const ageGroups = [
   'Kindergarten',
@@ -90,7 +90,7 @@ export default function BranchesPage() {
 
   const onSubmit = (data: BranchesFormValues) => {
     // TODO: Implement submission logic
-    console.log(data);
+    //console.log(data);
   };
 
   return (
@@ -282,8 +282,8 @@ export default function BranchesPage() {
                                               return checked
                                                 ? field.onChange([...(field.value ?? []), item])
                                                 : field.onChange(
-                                                    field.value?.filter(value => value !== item)
-                                                  );
+                                                  field.value?.filter(value => value !== item)
+                                                );
                                             }}
                                           />
                                         </FormControl>

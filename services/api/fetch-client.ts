@@ -1,8 +1,8 @@
+import { getAuthToken } from '@/services/auth/get-token';
+import { pluginToken } from '@zodios/plugins';
 import createClient, { Middleware } from 'openapi-fetch';
 import { paths } from './schema';
-import { getAuthToken } from '@/services/auth/get-token';
-import { api, createApiClient } from './zod-client';
-import { pluginToken } from '@zodios/plugins';
+import { createApiClient } from './zod-client';
 
 const authMiddleware: Middleware = {
   async onRequest({ request }) {
@@ -14,7 +14,7 @@ const authMiddleware: Middleware = {
         request.headers.set('Authorization', `Bearer ${accessToken}`);
       } else {
         // handle auth error
-        console.error('No access token');
+        //console.log('No access token');
       }
     }
     // (optional) add logic here to refresh token when it expires

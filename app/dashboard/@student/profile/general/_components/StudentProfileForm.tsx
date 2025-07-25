@@ -40,7 +40,7 @@ import * as z from 'zod';
 import { Student, User } from '../../../../../../services/client';
 import { zStudent, zUser } from '../../../../../../services/client/zod.gen';
 
-// console.log(Object.values(schemas))
+// //console.log(Object.values(schemas))
 
 const StudentProfileSchema = z.object({
   user: zUser.merge(z.object({
@@ -74,7 +74,7 @@ export default function StudentProfileGeneralForm({
   student?: Student
   // profilePicBlob?: Blob
 }) {
-  // console.log("student", student)
+  // //console.log("student", student)
 
   const session = useSession();
   const appSrore = appStore();
@@ -118,7 +118,7 @@ export default function StudentProfileGeneralForm({
     updateStudentMutation,
   ]); //, profilePicUpload
 
-  // console.log("Ma errors", errors);
+  // //console.log("Ma errors", errors);
   if (errors && errors.length > 0) {
     errors.forEach(error => {
       Object.keys(error.error).forEach(k => {
@@ -134,7 +134,7 @@ export default function StudentProfileGeneralForm({
   const onSubmit = useCallback(
     async (data: StudentProfileType) => {
       resetErrors([]);
-      // console.log(data)
+      // //console.log(data)
 
       /** Upload profile picture */
       if (profilePic.file) {
@@ -152,7 +152,7 @@ export default function StudentProfileGeneralForm({
         });
       }
 
-      // console.log("after profile pic upload", datas![1]);
+      // //console.log("after profile pic upload", datas![1]);
 
       /** update User */
       userMutation.mutate({
@@ -176,7 +176,7 @@ export default function StudentProfileGeneralForm({
         }
       });
 
-      // console.log(data.student)
+      // //console.log(data.student)
 
       /** Update student */
       updateStudentMutation.mutate({
@@ -202,7 +202,7 @@ export default function StudentProfileGeneralForm({
 
     } */
 
-  // console.log(form.formState.errors);
+  // //console.log(form.formState.errors);
   const ref = useRef(submitting);
   useEffect(() => {
     if (ref.current) {

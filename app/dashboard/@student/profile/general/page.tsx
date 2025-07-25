@@ -24,7 +24,7 @@ export default async function StudentProfileGeneralPage() {
 
   // Work around
   const searchResult = searchResponse.data as SearchResponse;
-  console.log(searchResult.data!.content);
+  //console.log(searchResult.data!.content);
 
   if (searchResult.data && searchResult.data.content && searchResult.data.content.length > 0) {
     student = searchResult.data!.content![0] as unknown as Student;

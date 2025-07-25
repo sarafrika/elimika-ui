@@ -40,9 +40,9 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       {}
     );
     const currentDashboard = userDashboards[defaultDomain ?? 'student'] ?? props.children;
-    console.log('userDomains', currentDashboard);
+    //console.log('userDomains', currentDashboard);
 
-    // console.log(user);
+    // //console.log(user);
 
     if (orgAdminDomains.includes('organisation_user')) {
       return (

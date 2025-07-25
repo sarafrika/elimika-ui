@@ -1,57 +1,8 @@
 'use client';
 
-import {
-  X,
-  Grip,
-  Clock,
-  Trash,
-  PenLine,
-  Youtube,
-  BookOpen,
-  FileIcon,
-  FileText,
-  LinkIcon,
-  FileAudio,
-  FileVideo,
-  VideoIcon,
-  PlusCircle,
-  MoreVertical,
-  ClipboardCheck,
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import * as z from 'zod';
-import { toast } from 'sonner';
-import { ReactNode, useEffect, useRef } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import Spinner from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { tanstackClient } from '@/services/api/tanstack-client';
 import RichTextRenderer from '@/components/editors/richTextRenders';
-import {
-  Control,
-  SubmitHandler,
-  useFieldArray,
-  useForm,
-  useFormContext,
-  useWatch,
-} from 'react-hook-form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -59,6 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Form,
   FormControl,
@@ -68,7 +26,48 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import React from 'react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import Spinner from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
+import { tanstackClient } from '@/services/api/tanstack-client';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  BookOpen,
+  ClipboardCheck,
+  Clock,
+  FileAudio,
+  FileIcon,
+  FileText,
+  FileVideo,
+  Grip,
+  LinkIcon,
+  MoreVertical,
+  PenLine,
+  PlusCircle,
+  Trash,
+  VideoIcon,
+  X,
+  Youtube,
+} from 'lucide-react';
+import React, { ReactNode } from 'react';
+import {
+  Control,
+  SubmitHandler,
+  useFieldArray,
+  useForm,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 
 import dynamic from 'next/dynamic';
 
@@ -226,7 +225,8 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   const { data } = tanstackClient.useQuery('get', '/api/v1/config/content-types', { params: {} });
 
   const contentTypeData = React.useMemo(() => {
-    return data?.data?.content ?? {};
+    const respdata = data!.data! as { content: any[] }
+    return respdata?.content ?? {};
   }, [data]);
 
   // Lookup type key from uuid (e.g., "VIDEO")
@@ -266,8 +266,8 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                 value={
                   contentTypeUuid
                     ? JSON.stringify(
-                        Object.values(contentTypeData).find((v: any) => v.uuid === contentTypeUuid)
-                      )
+                      Object.values(contentTypeData).find((v: any) => v.uuid === contentTypeUuid)
+                    )
                     : ''
                 }
               >
@@ -373,7 +373,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                   {/* @ts-ignore */}
                   <Input
                     type='url'
-                    placeholder={getContentPlaceholder(selectedTypeKey)}
+                    placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
                     {...field}
                   />
                 </FormControl>
@@ -1300,8 +1300,8 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
   // )
 
   const onSubmit = async (values: AssessmentFormValues) => {
-    console.log('✅ Assessment created:', values);
-    console.log('✅ Assessment created for courseID:', courseId);
+    //console.log('✅ Assessment created:', values);
+    //console.log('✅ Assessment created for courseID:', courseId);
 
     onCancel();
   };
@@ -1544,4 +1544,5 @@ function AssessmentDialog({
   );
 }
 
-export { LessonDialog, EditLessonDialog, AssessmentDialog, LessonList };
+export { AssessmentDialog, EditLessonDialog, LessonDialog, LessonList };
+

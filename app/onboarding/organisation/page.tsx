@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { toast } from 'sonner';
 import {
   SharedOnboardingForm,
   type SharedOnboardingFormData,
 } from '@/app/onboarding/_components/shared-onboarding-form';
-import { useUserStore } from '@/store/use-user-store';
+import Loading from '@/components/Loading';
 import { fetchClient } from '@/services/api/fetch-client';
 import { getAuthToken } from '@/services/auth/get-token';
-import Loading from '@/components/Loading';
+import { useUserStore } from '@/store/use-user-store';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function OrganisationOnboardingPage() {
   const router = useRouter();
@@ -73,7 +73,7 @@ export default function OrganisationOnboardingPage() {
       toast.success('Registration completed successfully!');
       router.replace('/dashboard/overview');
     } catch (error) {
-      console.error('Error during registration:', error);
+      //console.log('Error during registration:', error);
       toast.error(
         error instanceof Error
           ? error.message

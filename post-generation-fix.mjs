@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "fs"
 
 const filePath = "./api-client/@tanstack/react-query.gen.ts"
 
-console.log("🔧 Running post-generation fix for react-query...")
+//console.log("🔧 Running post-generation fix for react-query...")
 
 try {
   let content = readFileSync(filePath, "utf8")
@@ -39,6 +39,6 @@ try {
     `✅ Added ${ignoreCount} @ts-ignore comments for type errors in ${filePath}`,
   )
 } catch (error) {
-  console.error("❌ Error running post-generation fix:", error)
+  //console.log("❌ Error running post-generation fix:", error)
   process.exit(1)
 }

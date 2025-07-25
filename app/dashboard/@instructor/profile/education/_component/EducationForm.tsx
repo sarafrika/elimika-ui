@@ -1,13 +1,13 @@
 'use client';
 
-import * as z from 'zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
@@ -18,7 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Grip, PlusCircle, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -26,17 +26,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { schemas } from '@/services/api/zod-client';
+import Spinner from '@/components/ui/spinner';
+import useMultiMutations from '@/hooks/use-multi-mutations';
+import { fetchClient } from '@/services/api/fetch-client';
 import { Instructor, InstructorEducation } from '@/services/api/schema';
 import { tanstackClient } from '@/services/api/tanstack-client';
-import { useSession } from 'next-auth/react';
-import { fetchClient } from '@/services/api/fetch-client';
-import useMultiMutations from '@/hooks/use-multi-mutations';
-import Spinner from '@/components/ui/spinner';
-import useInstructor from '@/hooks/use-instructor';
+import { schemas } from '@/services/api/zod-client';
+import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUser } from '@/context/user-context';
 
 const DEGREE_OPTIONS = {
   'Ph.D.': 'Ph.D.',
@@ -127,7 +124,7 @@ export default function EducationSettings({
     name: 'educations',
   });
 
-  console.log(form.formState.errors);
+  //console.log(form.formState.errors);
 
   const addEdMutation = tanstackClient.useMutation(
     'post',
@@ -141,8 +138,8 @@ export default function EducationSettings({
 
   // const [submitting, setSubmitting] = useState(false);
   const onSubmit = async (data: EducationFormValues) => {
-    console.log('instructor', instructor);
-    console.log(data);
+    //console.log('instructor', instructor);
+    //console.log(data);
     // TODO: Implement submission logic
     // setSubmitting(true)
     data.educations.forEach(async (ed, index) => {
@@ -189,7 +186,7 @@ export default function EducationSettings({
           }
         );
         if (resp.error) {
-          console.log(resp.error);
+          //console.log(resp.error);
           return;
         }
       }
