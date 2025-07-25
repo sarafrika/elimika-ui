@@ -11,9 +11,9 @@ export default function InstructorProfilePage() {
   return <>{user && instructor ? <InstructorProfile {...{
     user: {
       ...user,
-      dob: user.dob.toISOString(),
-      created_date: new Date(user.created_date!).toISOString(),
-      updated_date: new Date(user.created_date!).toISOString()
+      dob: new Date(user.dob ?? Date.now()).toISOString(),
+      created_date: new Date(user.created_date ?? Date.now()).toISOString(),
+      updated_date: new Date(user.created_date ?? Date.now()).toISOString()
     },
     instructor
   }} /> : <Spinner />}</>;

@@ -10,7 +10,11 @@ export default function UserContextProvider({ children }: { children: ReactNode 
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    if (!sessionStorageUser || sessionStorageUser === "undefined") {
+    if (status === "unauthenticated") {
+      sessionStorage.removeItem("user");
+      setUser(null)
+    }
+    else if (session?.user && !sessionStorageUser || sessionStorageUser === "undefined") {
       (async () => {
         const resp = await search({ query: { searchParams: { email_eq: session?.user.email } } });
         if (!resp.error) {
@@ -20,14 +24,10 @@ export default function UserContextProvider({ children }: { children: ReactNode 
         }
       })()
     }
-    else {
+    else if (sessionStorageUser) {
       setUser(JSON.parse(sessionStorageUser))
     }
 
-    if (status === "unauthenticated") {
-      sessionStorage.removeItem("user");
-      setUser(null)
-    }
   }, [status]);
 
   function updateSession(userData: User) {

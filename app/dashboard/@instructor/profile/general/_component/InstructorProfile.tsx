@@ -115,6 +115,8 @@ export default function InstructorProfile({
     },
   });
 
+  // console.log(form.formState.errors)
+
   // Mutations
   const userMutation = tanstackClient.useMutation('put', '/api/v1/users/{uuid}');
   const instructorMutation = tanstackClient.useMutation('put', '/api/v1/instructors/{uuid}');
