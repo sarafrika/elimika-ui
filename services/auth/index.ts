@@ -1,7 +1,5 @@
 import NextAuth, { NextAuthConfig } from 'next-auth';
 import Keycloak from 'next-auth/providers/keycloak';
-import { search } from '../api/actions';
-import { User } from 'lucide-react';
 
 /**
  * Refresh the access token using the refresh token
@@ -89,7 +87,15 @@ const config: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, user }) {
+    async jwt({ token, account, user, session, trigger }) {
+
+      console.log("trigger", trigger);
+      console.log(token)
+      console.log(session)
+      if (trigger === "update") {
+        session.user = user;
+      }
+
       // Initial sign in
       if (account && user) {
         const decodedToken = decodeJWT(account.access_token!);

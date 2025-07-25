@@ -6394,9 +6394,9 @@ export const getPendingInvitationsForUser = <ThrowOnError extends boolean = fals
  * Fetches a paginated list of users based on optional filters. Supports pagination and sorting.
  */
 export const search = <ThrowOnError extends boolean = false>(
-  options?: Options<SearchData, ThrowOnError>
+  options: Options<SearchData, ThrowOnError>
 ) => {
-  return (options?.client ?? _heyApiClient).get<SearchResponses, SearchErrors, ThrowOnError>({
+  return (options.client ?? _heyApiClient).get<SearchResponses, SearchErrors, ThrowOnError>({
     responseTransformer: searchResponseTransformer,
     security: [
       {
@@ -6452,9 +6452,9 @@ export const getProfileImage = <ThrowOnError extends boolean = false>(
  * Fetches a paginated list of training branches based on optional filters. Supports pagination and sorting.
  */
 export const search1 = <ThrowOnError extends boolean = false>(
-  options?: Options<Search1Data, ThrowOnError>
+  options: Options<Search1Data, ThrowOnError>
 ) => {
-  return (options?.client ?? _heyApiClient).get<Search1Responses, Search1Errors, ThrowOnError>({
+  return (options.client ?? _heyApiClient).get<Search1Responses, Search1Errors, ThrowOnError>({
     responseTransformer: search1ResponseTransformer,
     security: [
       {
@@ -7371,9 +7371,9 @@ export const getBranchUsersByDomain = <ThrowOnError extends boolean = false>(
  * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting.
  */
 export const search2 = <ThrowOnError extends boolean = false>(
-  options?: Options<Search2Data, ThrowOnError>
+  options: Options<Search2Data, ThrowOnError>
 ) => {
-  return (options?.client ?? _heyApiClient).get<Search2Responses, Search2Errors, ThrowOnError>({
+  return (options.client ?? _heyApiClient).get<Search2Responses, Search2Errors, ThrowOnError>({
     responseTransformer: search2ResponseTransformer,
     security: [
       {

@@ -1,7 +1,11 @@
 'use client';
 
+import ImageSelector, { ImageType } from '@/components/image-selector';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -10,15 +14,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircleIcon, CalendarIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn, profilePicSvg } from '@/lib/utils';
-import { Calendar } from '@/components/ui/calendar';
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -26,37 +23,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import React from 'react';
-import { schemas } from '@/services/api/zod-client';
-import { UUID } from 'crypto';
-import ImageSelector, { ImageType } from '@/components/image-selector';
 import Spinner from '@/components/ui/spinner';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useSession } from 'next-auth/react';
 import useMultiMutations from '@/hooks/use-multi-mutations';
+import { cn, profilePicSvg } from '@/lib/utils';
+import { tanstackClient } from '@/services/api/tanstack-client';
+import { schemas } from '@/services/api/zod-client';
 import { appStore } from '@/store/app-store';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { UUID } from 'crypto';
+import { format } from 'date-fns';
+import { AlertCircleIcon, CalendarIcon } from 'lucide-react';
+import { getSession, useSession } from 'next-auth/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Student, User } from '../../../../../../services/client';
+import { zStudent, zUser } from '../../../../../../services/client/zod.gen';
 
 // console.log(Object.values(schemas))
 
 const StudentProfileSchema = z.object({
-  user: schemas.User.merge(
-    z.object({
-      created_date: z.string().optional().readonly(),
-      updated_date: z.string().optional().readonly(),
-      dob: z.date(),
-    })
+  user: zUser.merge(z.object({
+    created_date: z.string().optional().readonly(),
+    updated_date: z.string().optional().readonly(),
+    dob: z.date(),
+  })
   ),
 
-  student: schemas.Student.merge(
-    z.object({
-      created_date: z.string().optional().readonly(),
-      updated_date: z.string().optional().readonly(),
-      updated_by: z.string().optional().readonly(),
-      secondaryGuardianContact: z.string().optional(),
-    })
+  student: zStudent.merge(z.object({
+    created_date: z.string().optional().readonly(),
+    updated_date: z.string().optional().readonly(),
+    updated_by: z.string().optional().readonly(),
+    // secondaryGuardianContact: z.string().optional(),
+  })
   ),
 });
 
@@ -68,11 +67,11 @@ const UserFieldTypes = [];
 
 export default function StudentProfileGeneralForm({
   user,
-  student,
+  student
   // profilePicBlob
 }: {
-  user: z.infer<typeof schemas.User>;
-  student?: z.infer<typeof schemas.Student>;
+  user: User;
+  student?: Student
   // profilePicBlob?: Blob
 }) {
   // console.log("student", student)
@@ -94,6 +93,8 @@ export default function StudentProfileGeneralForm({
         ...user,
         dob: new Date(user.dob ?? Date.now()),
         profile_image_url: user.profile_image_url || profilePicSvg,
+        created_date: new Date(user.created_date!).toISOString(),
+        updated_date: new Date(user.updated_date!).toISOString()
       },
       /** Students guardian data to be refactored to array */
       student: {
@@ -101,6 +102,8 @@ export default function StudentProfileGeneralForm({
         updated_by: student?.updated_by ?? '',
         secondaryGuardianContact: student?.secondaryGuardianContact ?? '',
         user_uuid: user.uuid,
+        created_date: new Date(user.created_date!).toISOString(),
+        updated_date: new Date(user.updated_date!).toISOString()
       },
     },
   });
@@ -165,6 +168,12 @@ export default function StudentProfileGeneralForm({
             ...(user.user_domain ? new Set([...user.user_domain, 'student']) : ['student']),
           ] as ('student' | 'instructor' | 'admin' | 'organisation_user')[],
         },
+      }, {
+        onSuccess: async ({ data }) => {
+          await session
+            .update({ ...session.data, user: { ...data!, dob: new Date(data!.dob) } as User })
+            .then(() => getSession())
+        }
       });
 
       // console.log(data.student)

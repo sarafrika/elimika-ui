@@ -1,15 +1,32 @@
-import { User } from '@/services/api/schema';
 import { useSession } from 'next-auth/react';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { search, User } from '../services/client';
 
-const UserContext = createContext<User | null>(null);
+const UserContext = createContext<User & { updateSession: (usr: User) => void } | null>(null);
 export default function UserContextProvider({ children }: { children: ReactNode }) {
-  const session = useSession();
-  const [user, setUser] = useState(session.data?.user!);
+  const { data: session, status } = useSession();
+  const sessionStorageUser = window.sessionStorage ? sessionStorage.getItem("user") : null;
+  const [user, setUser] = useState(sessionStorageUser ? JSON.parse(sessionStorageUser) : null);
+
   useEffect(() => {
-    setUser(session.data?.user!);
-  }, [session.status]);
-  return <UserContext.Provider value={user!}>{children}</UserContext.Provider>;
+    if (!sessionStorageUser) {
+      (async () => {
+        const resp = await search({ query: { searchParams: { email_eq: session?.user.email } } });
+        if (!resp.error) {
+          const results = resp.data.data!.content!;
+          setUser(results[0])
+          sessionStorage.setItem("user", JSON.stringify(results[0]))
+        }
+      })()
+    }
+  }, [status]);
+
+  function updateSession(userData: User) {
+    sessionStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+  }
+
+  return <UserContext.Provider value={{ ...user!, updateSession }}>{children}</UserContext.Provider>;
 }
 
 export function useUser() {

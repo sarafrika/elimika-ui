@@ -1,8 +1,9 @@
 'use client';
 
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -13,22 +14,21 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Users, CheckCircle2 } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ReactNode, useState } from 'react';
-import { schemas } from '@/services/api/zod-client';
-import { useSession } from 'next-auth/react';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import useMultiMutations from '@/hooks/use-multi-mutations';
-import { UUID } from 'crypto';
 import { useUser } from '@/context/user-context';
+import useMultiMutations from '@/hooks/use-multi-mutations';
+import { cn } from '@/lib/utils';
+import { tanstackClient } from '@/services/api/tanstack-client';
+import { schemas } from '@/services/api/zod-client';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { UUID } from 'crypto';
+import { format } from 'date-fns';
+import { CalendarIcon, CheckCircle2, Users } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { User } from '../../../../services/client';
 
 const ProfileSchema = z.object({
   user: schemas.User.merge(
@@ -51,11 +51,11 @@ type UserSchema = z.infer<typeof schemas.User>;
 
 export function StudentOnboardingForm() {
   //StudentOnboardingFormProps
+  const router = useRouter()
 
-  /* const session = useSession()
-  const user = session.data?.user; */
+  const session = useSession()
+  /* const user = session.data?.user; */
   const user = useUser();
-  console.log('User', user);
 
   const form = useForm<ProfileType>({
     resolver: zodResolver(ProfileSchema),
@@ -64,9 +64,11 @@ export function StudentOnboardingForm() {
         ...user,
         dob: new Date(user?.dob ?? Date.now()),
         middle_name: '',
-        phone_number: '+254712345678',
+        phone_number: '',
         profile_image_url: '',
         updated_by: user!.updated_by ?? '',
+        created_date: (new Date(user!.created_date!)).toISOString(),
+        updated_date: (new Date(user!.updated_date!)).toISOString()
       },
       student: {
         user_uuid: user!.uuid,
@@ -90,15 +92,27 @@ export function StudentOnboardingForm() {
         dob: data.user.dob.toISOString(),
         user_domain: ['student'],
       },
+    }, {
+      onSuccess: async (resp) => {
+        console.log(resp)
+        const respData = resp.data as unknown as { data: { user: User } };
+        user?.updateSession(respData.data.user)
+        /* console.log(resp)
+        await session
+          .update({ user: { ...session.data!.user, ...resp.data! } })
+        // .then(() => getSession());
+        // await client.post({ url: "/api/update-sesssion", body: {} });
+
+        router.push("/dashboard"); */
+      }
     });
 
-    // Create Student
     studentMutation.mutate({
-      body: data.student,
-    });
+      body: data.student
+    })
   }
 
-  console.log('Validation errors', form.formState.errors);
+  // console.log('Validation errors', form.formState.errors);
   console.log('API errors', errors);
   const watchDob = form.watch('user.dob');
 

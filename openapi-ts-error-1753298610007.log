@@ -1,0 +1,8 @@
+[2025-07-23T19:23:30.007Z] Error: Request failed with status 404: Not Found
+Stack:
+Error: Request failed with status 404: Not Found
+    at ti (/home/njmwas/Documents/projects/sarafrika/elimika-ui/node_modules/.pnpm/@hey-api+openapi-ts@0.79.2_typescript@5.8.2/node_modules/@hey-api/openapi-ts/dist/index.cjs:42:8753)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 0)
+    at async PD (/home/njmwas/Documents/projects/sarafrika/elimika-ui/node_modules/.pnpm/@hey-api+openapi-ts@0.79.2_typescript@5.8.2/node_modules/@hey-api/openapi-ts/dist/index.cjs:1338:4639)
+    at async start (/home/njmwas/Documents/projects/sarafrika/elimika-ui/node_modules/.pnpm/@hey-api+openapi-ts@0.79.2_typescript@5.8.2/node_modules/@hey-api/openapi-ts/bin/index.cjs:139:21)
