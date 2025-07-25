@@ -1,9 +1,7 @@
 'use client';
 
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -13,11 +11,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { CalendarDays } from 'lucide-react';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CalendarDays } from 'lucide-react';
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 const availabilitySchema = z.object({
   calComLink: z.string().url().optional().or(z.literal('')),
@@ -74,7 +74,7 @@ export default function AvailabilitySettings() {
   });
 
   const onSubmit = (data: AvailabilityFormValues) => {
-    console.log(data);
+    //console.log(data);
     // TODO: Implement submission logic. The Instructor schema does not have fields for this data.
   };
 

@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import {
   SharedOnboardingForm,
   type SharedOnboardingFormData,
 } from '@/app/onboarding/_components/shared-onboarding-form';
-import { fetchClient } from '@/services/api/fetch-client';
-import { getAuthToken } from '@/services/auth/get-token';
 import Loading from '@/components/Loading';
 import { useUser } from '@/context/user-context';
+import { fetchClient } from '@/services/api/fetch-client';
+import { getAuthToken } from '@/services/auth/get-token';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function InstructorOnboardingPage() {
   const router = useRouter();
@@ -70,7 +70,7 @@ export default function InstructorOnboardingPage() {
       toast.success('Registration completed successfully!');
       router.replace('/dashboard/overview');
     } catch (error) {
-      console.error('Error during registration:', error);
+      //console.log('Error during registration:', error);
       toast.error(
         error instanceof Error
           ? error.message

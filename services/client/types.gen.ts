@@ -462,21 +462,21 @@ export type ProgramRequirement = {
    */
   readonly is_optional?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
-   */
-  readonly requirement_category?: string;
-  /**
    * **[READ-ONLY]** Priority level of the requirement based on type and mandatory status.
    */
   readonly requirement_priority?: string;
   /**
-   * **[READ-ONLY]** Compliance level indicating how strictly the requirement must be followed.
-   */
-  readonly compliance_level?: string;
-  /**
    * **[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.
    */
   readonly requirement_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
+   */
+  readonly requirement_category?: string;
+  /**
+   * **[READ-ONLY]** Compliance level indicating how strictly the requirement must be followed.
+   */
+  readonly compliance_level?: string;
 };
 
 export type ApiResponseProgramRequirement = {
@@ -533,13 +533,13 @@ export type ProgramCourse = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the course association based on requirement status.
-   */
-  readonly association_category?: string;
-  /**
    * **[READ-ONLY]** Indicates if this course has prerequisite requirements.
    */
   readonly has_prerequisites?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted category of the course association based on requirement status.
+   */
+  readonly association_category?: string;
   /**
    * **[READ-ONLY]** Formatted display of the course position within the program sequence.
    */
@@ -820,10 +820,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
@@ -853,6 +849,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -925,10 +925,6 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
@@ -957,6 +953,10 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1017,10 +1017,6 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1037,6 +1033,10 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2589,10 +2589,6 @@ export type QuizAttempt = {
    */
   readonly grade_display?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -2600,6 +2596,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   */
+  readonly time_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -9406,7 +9406,13 @@ export type GetPendingInvitationsForUserResponse =
 export type SearchData = {
   body?: never;
   path?: never;
-  query?: {
+  query: {
+    /**
+     * Optional search parameters for filtering
+     */
+    searchParams: {
+      [key: string]: unknown;
+    };
     /**
      * Zero-based page index (0..N)
      */
@@ -9482,7 +9488,13 @@ export type GetProfileImageResponse = GetProfileImageResponses[keyof GetProfileI
 export type Search1Data = {
   body?: never;
   path?: never;
-  query?: {
+  query: {
+    /**
+     * Optional search parameters for filtering
+     */
+    searchParams: {
+      [key: string]: unknown;
+    };
     /**
      * Zero-based page index (0..N)
      */
@@ -9571,8 +9583,11 @@ export type SearchStudentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -9725,8 +9740,11 @@ export type SearchQuizzesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -9770,8 +9788,11 @@ export type SearchQuestionsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -9815,8 +9836,11 @@ export type SearchAttemptsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10049,8 +10073,11 @@ export type SearchTrainingProgramsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10093,8 +10120,11 @@ export type SearchProgramRequirementsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10264,8 +10294,11 @@ export type SearchProgramEnrollmentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10311,8 +10344,11 @@ export type SearchProgramCoursesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10619,7 +10655,13 @@ export type GetBranchUsersByDomainResponse =
 export type Search2Data = {
   body?: never;
   path?: never;
-  query?: {
+  query: {
+    /**
+     * Optional search parameters for filtering
+     */
+    searchParams: {
+      [key: string]: unknown;
+    };
     /**
      * Zero-based page index (0..N)
      */
@@ -10769,8 +10811,11 @@ export type SearchSkillsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10814,8 +10859,11 @@ export type SearchInstructorsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10860,8 +10908,11 @@ export type SearchMembershipsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10906,8 +10957,11 @@ export type SearchExperienceData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10951,8 +11005,11 @@ export type SearchEducationData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10996,8 +11053,11 @@ export type SearchDocumentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11218,8 +11278,11 @@ export type SearchCoursesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11263,8 +11326,11 @@ export type SearchRequirementsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11386,8 +11452,11 @@ export type SearchLessonsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11477,8 +11546,11 @@ export type SearchEnrollmentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11523,8 +11595,11 @@ export type SearchLessonContentData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11615,8 +11690,11 @@ export type SearchCategoryMappingsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11662,8 +11740,11 @@ export type SearchAssessmentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11750,8 +11831,11 @@ export type SearchContentTypesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11891,8 +11975,11 @@ export type SearchCategoriesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11998,8 +12085,11 @@ export type SearchCertificateTemplatesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -12111,8 +12201,11 @@ export type SearchCertificatesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -12413,8 +12506,11 @@ export type SearchSubmissionsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -12459,8 +12555,11 @@ export type SearchAssignmentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)

@@ -1,14 +1,12 @@
 'use client';
 
-import * as z from 'zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
@@ -18,14 +16,16 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Grip, PlusCircle, Trash2 } from 'lucide-react';
-import { Instructor, InstructorExperience } from '@/services/api/schema';
-import { schemas } from '@/services/api/zod-client';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import useMultiMutations from '@/hooks/use-multi-mutations';
-import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
 import Spinner from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
+import useMultiMutations from '@/hooks/use-multi-mutations';
 import { fetchClient } from '@/services/api/fetch-client';
+import { Instructor, InstructorExperience } from '@/services/api/schema';
+import { tanstackClient } from '@/services/api/tanstack-client';
+import { schemas } from '@/services/api/zod-client';
+import { Grip, PlusCircle, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ExperienceSchema = schemas.InstructorExperience.merge(
   z.object({
@@ -48,7 +48,7 @@ export default function ProfessionalExperienceSettings({
   instructor: Instructor;
   instructorExperience: InstructorExperience[];
 }) {
-  console.log(instructorExperience);
+  //console.log(instructorExperience);
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -165,7 +165,7 @@ export default function ProfessionalExperienceSettings({
           }
         );
         if (resp.error) {
-          console.log(resp.error);
+          //console.log(resp.error);
           return;
         }
       }

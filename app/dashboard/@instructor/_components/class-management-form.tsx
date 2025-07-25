@@ -1,21 +1,6 @@
 'use client';
 
-import { z } from 'zod';
-import { ReactNode } from 'react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useForm } from 'react-hook-form';
-import { Textarea } from '@/components/ui/textarea';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ScrollArea } from '@radix-ui/react-scroll-area';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui/form';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +8,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ScrollArea } from '@radix-ui/react-scroll-area';
+import { ReactNode } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 interface FormSectionProps {
   title: string;
@@ -66,7 +66,7 @@ function ClassCreationForm({ onCancel, className }: ClassCreationFormProps) {
   });
 
   const onSubmit = (values: ClassFormValues) => {
-    console.log('✅ Create a class form submission:', values);
+    //console.log('✅ Create a class form submission:', values);
     onCancel();
   };
 
@@ -125,8 +125,8 @@ function ClassEditingForm({ onCancel, className, classId, initialValues }: Class
   });
 
   const onSubmit = (values: ClassFormValues) => {
-    console.log('Editing class ID:', classId);
-    console.log('✅ Create a class form submission:', values);
+    //console.log('Editing class ID:', classId);
+    //console.log('✅ Create a class form submission:', values);
     onCancel();
   };
 

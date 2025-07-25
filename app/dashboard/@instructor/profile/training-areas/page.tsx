@@ -1,9 +1,7 @@
 'use client';
 
-import * as z from 'zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -12,11 +10,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { PlusCircle, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 const trainingAreasSchema = z.object({
   areas: z.array(
@@ -58,7 +58,7 @@ export default function TrainingAreasSettings() {
   });
 
   const onSubmit = (data: TrainingAreasFormValues) => {
-    console.log(data);
+    //console.log(data);
     // TODO: Implement submission logic. The Instructor schema currently does not have a field for training areas.
   };
 

@@ -1,9 +1,7 @@
 'use client';
 
-import * as z from 'zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -12,11 +10,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { PlusCircle, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 const instructorPrefsSchema = z.object({
   revenueSplit: z
@@ -53,19 +53,19 @@ const preferenceHeaders: {
   key: keyof InstructorPrefsFormValues['preferences'][0];
   label: string;
 }[] = [
-  { key: 'course', label: 'Course' },
-  { key: 'type', label: 'Type' },
-  { key: 'gender', label: 'Gender' },
-  { key: 'classType', label: 'Class Type' },
-  { key: 'method', label: 'Method' },
-  { key: 'educationLevel', label: 'Edu. Level' },
-  { key: 'experienceYears', label: 'Exp. (Yrs)' },
-  { key: 'skills', label: 'Skills' },
-  { key: 'professionalBody', label: 'Pro. Body' },
-  { key: 'availabilityDay', label: 'Day' },
-  { key: 'availabilityTime', label: 'Time' },
-  { key: 'maxFee', label: 'Max Fee (USD)' },
-];
+    { key: 'course', label: 'Course' },
+    { key: 'type', label: 'Type' },
+    { key: 'gender', label: 'Gender' },
+    { key: 'classType', label: 'Class Type' },
+    { key: 'method', label: 'Method' },
+    { key: 'educationLevel', label: 'Edu. Level' },
+    { key: 'experienceYears', label: 'Exp. (Yrs)' },
+    { key: 'skills', label: 'Skills' },
+    { key: 'professionalBody', label: 'Pro. Body' },
+    { key: 'availabilityDay', label: 'Day' },
+    { key: 'availabilityTime', label: 'Time' },
+    { key: 'maxFee', label: 'Max Fee (USD)' },
+  ];
 
 export default function InstructorPreferencesPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -100,7 +100,7 @@ export default function InstructorPreferencesPage() {
 
   const onSubmit = (data: InstructorPrefsFormValues) => {
     // TODO: Implement submission logic
-    console.log(data);
+    //console.log(data);
   };
 
   const renderInput = (

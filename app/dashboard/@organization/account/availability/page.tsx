@@ -1,9 +1,7 @@
 'use client';
 
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -13,7 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -22,9 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CalendarDays } from 'lucide-react';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CalendarDays } from 'lucide-react';
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 const academicPeriods = ['Term', 'Semester', 'Trimester', 'Quarters', 'Non Term'] as const;
 
@@ -62,7 +62,7 @@ export default function AvailabilityPage() {
 
   const onSubmit = (data: AvailabilityFormValues) => {
     // TODO: Implement submission logic
-    console.log(data);
+    //console.log(data);
   };
 
   return (

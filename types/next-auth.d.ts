@@ -1,7 +1,7 @@
 // types/next-auth.d.ts
 import { DefaultSession } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
-import { User } from '@/services/api/schema';
+import { User } from '../services/client';
 
 declare module 'next-auth' {
   /**
@@ -31,10 +31,10 @@ declare module 'next-auth' {
           roles?: string[];
         };
         [key: string]:
-          | {
-              roles?: string[];
-            }
-          | undefined;
+        | {
+          roles?: string[];
+        }
+        | undefined;
       };
       /** User's organisation memberships */
       organisation?: string[];
@@ -71,10 +71,10 @@ declare module 'next-auth/jwt' {
         roles?: string[];
       };
       [key: string]:
-        | {
-            roles?: string[];
-          }
-        | undefined;
+      | {
+        roles?: string[];
+      }
+      | undefined;
     };
     /** User's organisation memberships */
     organisation?: string[];

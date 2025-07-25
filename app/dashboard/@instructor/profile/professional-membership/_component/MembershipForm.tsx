@@ -1,35 +1,34 @@
 'use client';
 
-import * as z from 'zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import * as z from 'zod';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form';
-import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
+import Spinner from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
+import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
 import { Instructor, InstructorProfessionalMembership } from '@/services/api/schema';
-import { schemas } from '@/services/api/zod-client';
 import { tanstackClient } from '@/services/api/tanstack-client';
-import useMultiMutations from '@/hooks/use-multi-mutations';
-import Spinner from '@/components/ui/spinner';
+import { schemas } from '@/services/api/zod-client';
+import { format } from 'date-fns';
+import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
 
 const InstructorMembershipSchema = schemas.InstructorProfessionalMembership.merge(
   z.object({
@@ -97,8 +96,8 @@ export default function ProfessionalBodySettings({
   });
 
   if (Object.keys(form.formState.errors).length !== 0) {
-    console.log('Errors', form.formState.errors);
-    console.log('values', form.getValues());
+    //console.log('Errors', form.formState.errors);
+    //console.log('values', form.getValues());
   }
 
   const { fields, append, remove } = useFieldArray({
@@ -117,7 +116,7 @@ export default function ProfessionalBodySettings({
   const { errors, submitting } = useMultiMutations([addMemMutation, updateMemMutation]);
 
   const onSubmit = (data: ProfessionalMembershipFormValues) => {
-    console.log(data);
+    //console.log(data);
     // TODO: Handle form submission
     data.professional_bodies.forEach(async (mem, index) => {
       const memData = {

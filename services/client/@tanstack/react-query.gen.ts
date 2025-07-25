@@ -7576,13 +7576,13 @@ export const getPendingInvitationsForUserOptions = (
   });
 };
 
-export const searchQueryKey = (options?: Options<SearchData>) => createQueryKey('search', options);
+export const searchQueryKey = (options: Options<SearchData>) => createQueryKey('search', options);
 
 /**
  * Search users
  * Fetches a paginated list of users based on optional filters. Supports pagination and sorting.
  */
-export const searchOptions = (options?: Options<SearchData>) => {
+export const searchOptions = (options: Options<SearchData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await search({
@@ -7598,14 +7598,14 @@ export const searchOptions = (options?: Options<SearchData>) => {
 };
 
 export const searchInfiniteQueryKey = (
-  options?: Options<SearchData>
+  options: Options<SearchData>
 ): QueryKey<Options<SearchData>> => createQueryKey('search', options, true);
 
 /**
  * Search users
  * Fetches a paginated list of users based on optional filters. Supports pagination and sorting.
  */
-export const searchInfiniteOptions = (options?: Options<SearchData>) => {
+export const searchInfiniteOptions = (options: Options<SearchData>) => {
   return infiniteQueryOptions<
     SearchResponse,
     SearchError,
@@ -7660,14 +7660,14 @@ export const getProfileImageOptions = (options: Options<GetProfileImageData>) =>
   });
 };
 
-export const search1QueryKey = (options?: Options<Search1Data>) =>
+export const search1QueryKey = (options: Options<Search1Data>) =>
   createQueryKey('search1', options);
 
 /**
  * Search training branches
  * Fetches a paginated list of training branches based on optional filters. Supports pagination and sorting.
  */
-export const search1Options = (options?: Options<Search1Data>) => {
+export const search1Options = (options: Options<Search1Data>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await search1({
@@ -7683,14 +7683,14 @@ export const search1Options = (options?: Options<Search1Data>) => {
 };
 
 export const search1InfiniteQueryKey = (
-  options?: Options<Search1Data>
+  options: Options<Search1Data>
 ): QueryKey<Options<Search1Data>> => createQueryKey('search1', options, true);
 
 /**
  * Search training branches
  * Fetches a paginated list of training branches based on optional filters. Supports pagination and sorting.
  */
-export const search1InfiniteOptions = (options?: Options<Search1Data>) => {
+export const search1InfiniteOptions = (options: Options<Search1Data>) => {
   return infiniteQueryOptions<
     Search1Response,
     Search1Error,
@@ -9303,14 +9303,14 @@ export const getBranchUsersByDomainOptions = (options: Options<GetBranchUsersByD
   });
 };
 
-export const search2QueryKey = (options?: Options<Search2Data>) =>
+export const search2QueryKey = (options: Options<Search2Data>) =>
   createQueryKey('search2', options);
 
 /**
  * Search organisations
  * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting.
  */
-export const search2Options = (options?: Options<Search2Data>) => {
+export const search2Options = (options: Options<Search2Data>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await search2({
@@ -9326,14 +9326,14 @@ export const search2Options = (options?: Options<Search2Data>) => {
 };
 
 export const search2InfiniteQueryKey = (
-  options?: Options<Search2Data>
+  options: Options<Search2Data>
 ): QueryKey<Options<Search2Data>> => createQueryKey('search2', options, true);
 
 /**
  * Search organisations
  * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting.
  */
-export const search2InfiniteOptions = (options?: Options<Search2Data>) => {
+export const search2InfiniteOptions = (options: Options<Search2Data>) => {
   return infiniteQueryOptions<
     Search2Response,
     Search2Error,

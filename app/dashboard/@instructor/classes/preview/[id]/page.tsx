@@ -1,10 +1,10 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, Users, Video } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, Clock, Users, Video } from 'lucide-react';
+import Image from 'next/image';
+import { useParams } from 'next/navigation';
 
 const cls = {
   uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
@@ -48,7 +48,7 @@ const cls = {
 export default function ClassPreviewPage() {
   const params = useParams();
   const classId = params?.id;
-  console.log(classId);
+  //console.log(classId);
 
   return (
     <div className='mx-auto mb-10 max-w-5xl space-y-10 sm:p-4'>
