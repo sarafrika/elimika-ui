@@ -1,31 +1,29 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogClose,
-  DialogTitle,
+  DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogContent,
+  DialogTitle,
   DialogTrigger,
-  DialogDescription,
 } from '@/components/ui/dialog';
-import * as z from 'zod';
-import React from 'react';
-import { toast } from 'sonner';
-import { XIcon } from 'lucide-react';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import Spinner from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useStepper } from '@/components/ui/stepper';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { useCreateCategory } from '@/services/category/req';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { ReactNode, forwardRef, useImperativeHandle, useState, useEffect, useRef } from 'react';
 import {
   Select,
   SelectContent,
@@ -33,18 +31,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormField,
-} from '@/components/ui/form';
+import Spinner from '@/components/ui/spinner';
+import { useStepper } from '@/components/ui/stepper';
 import { useInstructor } from '@/context/instructor-context';
-
+import { tanstackClient } from '@/services/api/tanstack-client';
+import {
+  createCategory,
+  createCourse,
+  getAllCategories,
+  getAllDifficultyLevels,
+  updateCourse,
+} from '@/services/client';
+import {
+  getAllCategoriesQueryKey,
+  getCoursesByInstructorQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { XIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import React, {
+  ReactNode,
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 
 // Dynamically import with SSR disabled
 const WysiwygRichTextEditor = dynamic(
@@ -116,9 +133,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     { showSubmitButton, initialValues, editingCourseId, courseId, onSuccess },
     ref
   ) {
-    const instructor = useInstructor();
-    const { setActiveStep } = useStepper();
-
     const dialogCloseRef = useRef<HTMLButtonElement>(null);
 
     const form = useForm<CourseCreationFormValues>({
@@ -130,12 +144,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         objectives: '',
         categories: [],
         class_limit: 30,
-        prerequisites: initialValues?.prerequisites,
+        prerequisites: '',
         age_lower_limit: '',
         age_upper_limit: '',
-        thumbnail_url: initialValues?.thumbnail_url,
-        banner_url: initialValues?.banner_url,
-        intro_video_url: initialValues?.intro_video_url,
+        thumbnail_url: '',
+        banner_url: '',
+        intro_video_url: '',
         ...initialValues,
       },
       mode: 'onChange',
@@ -150,27 +164,68 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       name: 'categories',
     });
 
+    type UploadKey = 'thumbnail' | 'banner' | 'intro_video';
+
+    type UploadOptions = {
+      key: UploadKey;
+      setPreview: (val: string) => void;
+      mutation: any;
+      onChange: (val: string) => void;
+    };
+
+    const queryClient = useQueryClient();
+    const instructor = useInstructor();
+    const { setActiveStep } = useStepper();
+
+    // states
     const [categoryInput, setCategoryInput] = useState('');
-    const { mutate: createCategory, isPending: createCategoryPending } = useCreateCategory();
+    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+    const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [videoPreview, setVideoPreview] = useState<string | null>(null);
+    const [uploadedUrls, setUploadedUrls] = useState<{
+      thumbnail?: string;
+      banner?: string;
+      intro_video?: string;
+    }>({});
 
-    const { data: difficultyLevels } = tanstackClient.useQuery(
-      'get',
-      '/api/v1/config/difficulty-levels',
-      {
-        params: {},
-      }
-    );
+    // Mutations
+    const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
+      mutationFn: ({ body }: { body: any }) => createCategory({ body }),
+      onSuccess: (data: any) => {
+        toast.success(data?.message);
+        dialogCloseRef.current?.click();
+        queryClient.invalidateQueries({ queryKey: [getAllCategoriesQueryKey] });
+        setCategoryInput('');
+      },
+    });
 
-    const { data: categories, refetch: refetchCategories } = tanstackClient.useQuery(
-      'get',
-      '/api/v1/config/categories',
-      {
-        params: { query: { pageable: {} } },
-      }
-    );
+    const { mutate: createCourseMutation, isPending: createCourseIsPending } = useMutation({
+      mutationFn: ({ body }: { body: any }) => createCourse({ body }),
+      onSuccess: (data: any) => {
+        toast.success(data?.data?.message);
+        setActiveStep(1);
 
-    const createCourseMutation = tanstackClient.useMutation('post', '/api/v1/courses');
-    const updateCourseMutation = tanstackClient.useMutation('put', '/api/v1/courses/{uuid}');
+        if (typeof onSuccess === 'function') {
+          onSuccess(data?.data);
+        }
+      },
+    });
+
+    const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation({
+      mutationFn: ({ body, uuid }: { body: any; uuid: string }) =>
+        updateCourse({ body, path: { uuid: uuid } }),
+      onSuccess: (data: any) => {
+        toast.success(data?.data?.message);
+        setActiveStep(1);
+        queryClient.invalidateQueries({
+          queryKey: [getCoursesByInstructorQueryKey, data?.data?.data?.uuid],
+        });
+
+        if (typeof onSuccess === 'function') {
+          onSuccess(data?.data);
+        }
+      },
+    });
 
     const courseBannerMutation = tanstackClient.useMutation(
       'post',
@@ -185,25 +240,25 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       '/api/v1/courses/{uuid}/intro-video'
     );
 
-    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-    const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-    const [videoPreview, setVideoPreview] = useState<string | null>(null);
+    // Queries
+    const { data: difficulty, isLoading: difficultyIsLoading } = useQuery({
+      queryKey: ['getAllDifficulties'],
+      queryFn: () => getAllDifficultyLevels({}).then(res => res.data),
+    });
+    const difficultyLevels = difficulty?.data;
 
-    const [uploadedUrls, setUploadedUrls] = useState<{
-      thumbnail?: string;
-      banner?: string;
-      intro_video?: string;
-    }>({});
+    const { data: categories, refetch: refetchCategories } = useQuery({
+      queryKey: ['getAllCategories'],
+      queryFn: () =>
+        getAllCategories({
+          query: {
+            page: 0,
+            size: 100,
+          },
+        }).then(res => res.data),
+    });
 
-    type UploadKey = 'thumbnail' | 'banner' | 'intro_video';
-
-    type UploadOptions = {
-      key: UploadKey;
-      setPreview: (val: string) => void;
-      mutation: any;
-      onChange: (val: string) => void;
-    };
-
+    // actions
     const handleFileUpload = async (
       e: React.ChangeEvent<HTMLInputElement>,
       { key, setPreview, mutation, onChange }: UploadOptions
@@ -284,64 +339,38 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           age_upper_limit: data?.age_upper_limit,
         };
 
-        updateCourseMutation.mutate(
-          { body: editBody as any, params: { path: { uuid: editingCourseId as string } } },
-          {
-            onSuccess: data => {
-              toast.success(data?.message);
-              setActiveStep(1);
-
-              if (typeof onSuccess === 'function') {
-                onSuccess(data?.data);
-              }
-            },
-          }
-        );
+        updateCourseMutation({ body: editBody as any, uuid: editingCourseId });
       }
 
       if (!editingCourseId) {
-        createCourseMutation.mutate(
-          {
-            body: {
-              total_duration_display: '',
-              updated_by: instructor?.full_name,
-              created_by: instructor?.full_name,
-              instructor_uuid: instructor?.uuid as string,
-              name: data?.name,
-              description: data?.description,
-              objectives: data?.objectives,
-              category_uuids: data?.categories,
-              difficulty_uuid: data?.difficulty,
-              prerequisites: data?.prerequisites,
-              duration_hours: 2,
-              duration_minutes: 0,
-              class_limit: data?.class_limit,
-              price: data?.price,
-              thumbnail_url: thumbnailPreview as any,
-              banner_url: bannerPreview as any,
-              intro_video_url: '',
-              status: 'draft',
-              active: false,
-              is_free: data?.is_free,
-              is_published: false,
-              is_draft: true,
-              age_lower_limit: data?.age_lower_limit,
-              age_upper_limit: data?.age_upper_limit,
-            },
-            params: {},
+        createCourseMutation({
+          body: {
+            total_duration_display: '',
+            updated_by: instructor?.full_name,
+            created_by: instructor?.full_name,
+            instructor_uuid: instructor?.uuid as string,
+            name: data?.name,
+            description: data?.description,
+            objectives: data?.objectives,
+            category_uuids: data?.categories,
+            difficulty_uuid: data?.difficulty,
+            prerequisites: data?.prerequisites,
+            duration_hours: 2,
+            duration_minutes: 0,
+            class_limit: data?.class_limit,
+            price: data?.price,
+            thumbnail_url: thumbnailPreview as any,
+            banner_url: bannerPreview as any,
+            intro_video_url: '',
+            status: 'draft',
+            active: false,
+            is_free: data?.is_free,
+            is_published: false,
+            is_draft: true,
+            age_lower_limit: data?.age_lower_limit,
+            age_upper_limit: data?.age_upper_limit,
           },
-          {
-            onSuccess: data => {
-              toast.success('Course created successfully');
-              setActiveStep(1);
-
-              if (typeof onSuccess === 'function') {
-                // @ts-ignore
-                onSuccess(data?.data);
-              }
-            },
-          }
-        );
+        });
       }
     };
 
@@ -477,9 +506,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                         />
                         {bannerPreview && (
                           <div className='h-32 w-48 overflow-hidden rounded border'>
-                            <img
+                            <Image
                               src={bannerPreview}
                               alt='Banner Preview'
+                              height={32}
+                              width={48}
                               className='h-full w-full object-cover'
                             />
                           </div>
@@ -520,8 +551,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                         />
                         {thumbnailPreview && (
                           <div className='h-32 w-48 overflow-hidden rounded border'>
-                            <img
+                            <Image
                               src={thumbnailPreview}
+                              width={48}
+                              height={32}
                               alt='Thumbnail Preview'
                               className='h-full w-full object-cover'
                             />
@@ -715,23 +748,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                         className='min-w-[75px]'
                         onClick={() => {
                           if (categoryInput?.trim()) {
-                            createCategory(
-                              { body: { name: categoryInput.trim() } },
-                              {
-                                onSuccess: data => {
-                                  toast.success(data?.message);
-                                  setCategoryInput('');
-                                  refetchCategories();
-                                  dialogCloseRef.current?.click();
-
-                                  // Optionally auto-append:
-                                  // appendCategory(newCategory.uuid)
-                                },
-                                onError: error => {
-                                  toast.error('Category already exists or is invalid.');
-                                },
-                              }
-                            );
+                            createCategoryMutation({ body: { name: categoryInput.trim() } });
                           }
                         }}
                       >
@@ -752,7 +769,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             <div className='flex flex-wrap gap-2'>
               {form.watch('categories').map((uuid: string, index: number) => {
                 //@ts-ignore
-                const cat = categories?.data?.content.find((c: any) => c.uuid === uuid);
+                const cat = categories?.data?.content?.find((c: any) => c.uuid === uuid);
                 if (!cat) return null;
                 return (
                   <Badge key={uuid} variant='secondary' className='flex items-center gap-1'>
@@ -771,7 +788,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             </div>
           </FormSection>
 
-          {/* Duration & Level */}
+          {/* Difficulty Level */}
           <FormSection
             title='Difficulty Level'
             description='Set the difficulty level of your course'
@@ -781,23 +798,26 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               name='difficulty'
               render={({ field }) => (
                 <FormItem>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value ?? ''} // use `value` instead of `defaultValue`
-                  >
+                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
                     <FormControl className='w-full'>
                       <SelectTrigger>
                         <SelectValue placeholder='Select difficulty level' />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      {difficultyLevels?.data?.map((level: any) => (
-                        <SelectItem key={level.uuid} value={level.uuid}>
-                          {/* ✅ string value */}
-                          {level.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                    {difficultyIsLoading ? (
+                      <SelectContent>
+                        <div>Loading...</div>
+                      </SelectContent>
+                    ) : (
+                      <SelectContent>
+                        {Array.isArray(difficultyLevels) &&
+                          difficultyLevels.map((level: any) => (
+                            <SelectItem key={level.uuid} value={level.uuid as string}>
+                              {level.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    )}
                   </Select>
                   <FormMessage />
                 </FormItem>
@@ -867,11 +887,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           {showSubmitButton && (
             <div className='flex justify-end gap-4 pt-6'>
               <Button type='submit' className='min-w-32'>
-                {createCourseMutation?.isPending || updateCourseMutation?.isPending ? (
-                  <Spinner />
-                ) : (
-                  'Save Course'
-                )}
+                {createCourseIsPending || updateCourseIsPending ? <Spinner /> : 'Save Course'}
               </Button>
               <Button
                 disabled={!editingCourseId}

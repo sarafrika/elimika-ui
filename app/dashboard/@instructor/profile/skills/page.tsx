@@ -1,11 +1,11 @@
 'use client';
 
-import { useInstructor } from '@/context/instructor-context';
-import SkillsSettings from './_component/InstructorSkillsForm';
-import { useEffect, useState } from 'react';
-import { InstructorSkill } from '@/services/api/schema';
-import { fetchClient } from '@/services/api/fetch-client';
 import Spinner from '@/components/ui/spinner';
+import { useInstructor } from '@/context/instructor-context';
+import { fetchClient } from '@/services/api/fetch-client';
+import { InstructorSkill } from '@/services/api/schema';
+import { useEffect, useState } from 'react';
+import SkillsSettings from './_component/InstructorSkillsForm';
 
 export default function InstructorSkillsPage() {
   const instructor = useInstructor();
@@ -44,7 +44,9 @@ export default function InstructorSkillsPage() {
           }}
         />
       ) : (
-        <Spinner />
+        <div className='flex items-center justify-center'>
+          <Spinner />
+        </div>
       )}
     </>
   );

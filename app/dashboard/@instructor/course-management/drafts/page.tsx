@@ -1,21 +1,17 @@
 'use client';
 
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import Link from 'next/link';
-import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
-import Spinner from '@/components/ui/spinner';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { CustomPagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatCourseDate } from '@/lib/format-course-date';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import Spinner from '@/components/ui/spinner';
 import {
   Table,
   TableBody,
@@ -25,26 +21,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import RichTextRenderer from '@/components/editors/richTextRenders';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { CustomPagination } from '@/components/pagination';
 import { useInstructor } from '@/context/instructor-context';
-
-type CourseSearchParams = {
-  instructor_uuid_eq: string;
-  status?: string;
-  page?: number;
-  size?: number;
-};
-
-const toQueryString = (params: Record<string, string | number | undefined>) => {
-  return Object.entries(params)
-    .filter(([, v]) => v !== undefined)
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
-    .join('&');
-};
+import { formatCourseDate } from '@/lib/format-course-date';
+import { deleteCourse, searchCourses } from '@/services/client';
+import {
+  getCourseByUuidQueryKey,
+  getCoursesByInstructorQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function CourseDraftsPage() {
+  const instructor = useInstructor();
+  const queryClient = useQueryClient();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -64,37 +58,33 @@ export default function CourseDraftsPage() {
     ]);
   }, [replaceBreadcrumbs]);
 
-  const instructor = useInstructor();
-  const [page, setPage] = useState(0);
   const size = 20;
+  const [page, setPage] = useState(0);
 
-  const queryParams: CourseSearchParams = {
-    page,
-    size,
-    status: 'draft',
-    instructor_uuid_eq: instructor?.uuid as string,
-  };
-
-  const queryString = toQueryString(queryParams);
-  const endpoint = `/api/v1/courses/search?${queryString}`;
-  const { data, isFetching, isLoading, refetch } = tanstackClient.useQuery('get', endpoint as any, {
-    params: {},
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: [getCoursesByInstructorQueryKey, instructor?.uuid, page, size],
+    queryFn: async () =>
+      await searchCourses({
+        query: {
+          page,
+          size,
+          // @ts-ignore
+          status: 'draft',
+          instructor_uuid_eq: instructor?.uuid as string,
+        },
+      }).then(res => res.data),
   });
 
-  const deleteCourseMutation = tanstackClient.useMutation('delete', '/api/v1/courses/{uuid}');
-  const handleDeleteCourse = (courseId: string) => {
-    deleteCourseMutation.mutate(
-      { params: { path: { uuid: courseId as string } } },
-      {
-        onSuccess: () => {
-          toast.success('Course deleted successfully');
-          refetch();
-        },
-      }
-    );
-  };
+  const { mutate: deleteCourseMutate, isPending } = useMutation({
+    mutationKey: [getCourseByUuidQueryKey],
+    mutationFn: ({ uuid }: { uuid: string }) => deleteCourse({ path: { uuid } }),
+    onSuccess: (data: any) => {
+      toast.success(data?.message || 'Course deleted');
+      queryClient.invalidateQueries({ queryKey: [getCourseByUuidQueryKey] });
+    },
+  });
 
-  const draftCourses = data?.data?.content;
+  const draftCourses = data?.data?.content || [];
   const paginationMetadata = data?.data?.metadata;
 
   return (
@@ -115,7 +105,7 @@ export default function CourseDraftsPage() {
         </Button>
       </div>
 
-      {draftCourses?.length === 0 ? (
+      {!isLoading && !isFetching && draftCourses?.length === 0 ? (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No draft courses</h3>
@@ -133,6 +123,7 @@ export default function CourseDraftsPage() {
           <TableCaption>A list of your course drafts</TableCaption>
           <TableHeader>
             <TableRow>
+              <TableHead></TableHead>
               <TableHead>Course Name</TableHead>
               <TableHead>Categories</TableHead>
               <TableHead>Class Limit</TableHead>
@@ -154,6 +145,10 @@ export default function CourseDraftsPage() {
               <>
                 {draftCourses?.map((course: any) => (
                   <TableRow key={course.uuid}>
+                    <TableCell>
+                      <Image src={course?.thumbnail_url as string} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
+                    </TableCell>
+
                     <TableCell className='font-medium'>
                       <div>
                         <div className='max-w-[270px] truncate'>{course.name}</div>
@@ -215,7 +210,7 @@ export default function CourseDraftsPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             variant='destructive'
-                            onClick={() => handleDeleteCourse(course.uuid)}
+                            onClick={() => deleteCourseMutate({ uuid: course?.uuid })}
                           >
                             <TrashIcon className='mr-2 h-4 w-4' />
                             Delete
@@ -231,9 +226,10 @@ export default function CourseDraftsPage() {
         </Table>
       )}
 
+      {/* @ts-ignore */}
       {paginationMetadata?.totalPages >= 1 && (
         <CustomPagination
-          totalPages={paginationMetadata?.totalPages}
+          totalPages={paginationMetadata?.totalPages as number}
           onPageChange={page => {
             setPage(page - 1);
           }}

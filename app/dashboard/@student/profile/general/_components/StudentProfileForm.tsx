@@ -198,8 +198,6 @@ export default function StudentProfileGeneralForm({
 
   /* async function onSubmit(data: StudentProfileType) {
 
-        
-
     } */
 
   // //console.log(form.formState.errors);

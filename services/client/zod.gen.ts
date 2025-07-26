@@ -2073,21 +2073,6 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
       .readonly()
       .optional(),
-    is_archived: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is archived and no longer available.')
-      .readonly()
-      .optional(),
-    is_in_review: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
-      .readonly()
-      .optional(),
-    is_draft: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
-      .readonly()
-      .optional(),
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total course duration.')
@@ -2116,6 +2101,21 @@ export const zCourse = z
       .describe(
         '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
       )
+      .readonly()
+      .optional(),
+    is_archived: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is archived and no longer available.')
+      .readonly()
+      .optional(),
+    is_in_review: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    is_draft: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
       .readonly()
       .optional(),
   })
