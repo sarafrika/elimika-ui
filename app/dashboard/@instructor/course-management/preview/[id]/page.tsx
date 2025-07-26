@@ -17,6 +17,7 @@ import {
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle, Clock, Users } from 'lucide-react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -65,15 +66,30 @@ export default function CoursePreviewPage() {
 
   if (isLoading)
     return (
-      <div className='mt-10 flex items-center justify-center'>
-        <Spinner />
+      <div className="flex flex-col gap-4 text-[12px] sm:text-[14px]">
+        <div className="h-20 bg-gray-200 rounded animate-pulse w-full"></div>
+        <div className='mt-10 flex items-center justify-center'>
+          <Spinner />
+        </div>
+        <div className="h-16 bg-gray-200 rounded animate-pulse w-full"></div>
+        <div className="h-12 bg-gray-200 rounded animate-pulse w-full"></div>
+
       </div>
+
     );
 
   return (
     <div className='mx-auto max-w-4xl space-y-8 p-4'>
+      <div>
+        <Image src={course?.banner_url as string} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
+      </div>
+
       <div className='space-y-4'>
-        <h1 className='text-4xl font-bold tracking-tight md:max-w-[90%]'>{course?.name}</h1>
+        <div className='flex flex-row gap-2 items-center' >
+          <Image src={course?.thumbnail_url as string} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
+
+          <h1 className='text-4xl font-bold tracking-tight md:max-w-[90%]'>{course?.name}</h1>
+        </div>
         <div className='px-4 py-4'>
           <HTMLTextPreview htmlContent={course?.description as string} />
         </div>

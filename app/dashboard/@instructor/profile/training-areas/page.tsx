@@ -58,11 +58,7 @@ export default function TrainingAreasSettings() {
   });
 
   const onSubmit = (data: TrainingAreasFormValues) => {
-<<<<<<< HEAD
-    // data;
-=======
     //console.log(data);
->>>>>>> main
     // TODO: Implement submission logic. The Instructor schema currently does not have a field for training areas.
   };
 

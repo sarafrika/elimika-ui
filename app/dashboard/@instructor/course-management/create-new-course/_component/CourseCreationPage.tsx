@@ -29,6 +29,7 @@ import {
 } from '@/services/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, Check, List } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -98,7 +99,7 @@ export default function CourseCreationPage() {
       enabled: !!uuid,
     });
   };
-  const { data: course, isLoading, refetch } = useCourseById(resolveId);
+  const { data: course, isLoading, refetch: refetchCourse } = useCourseById(resolveId);
 
   const [courseInitialValues, setCourseInitialValues] = useState<ICourse | undefined>(undefined);
 
@@ -148,7 +149,7 @@ export default function CourseCreationPage() {
       staleTime: 5 * 60 * 1000,
     });
   };
-  const { data: courseLessons } = useCourseLessons(resolveId);
+  const { data: courseLessons, refetch: refetchLessons } = useCourseLessons(resolveId);
 
   // GetLesssonById
   const useLessonById = (courseUuid?: string, lessonUuid?: string) => {
@@ -207,33 +208,33 @@ export default function CourseCreationPage() {
   const content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
-          const matchedType = Array.isArray(contentTypeList?.data)
-            ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-            : undefined;
+        const matchedType = Array.isArray(contentTypeList?.data)
+          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
+          : undefined;
 
-          const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
+        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
 
-          return {
-            contentType: typeName.toUpperCase() as
-              | 'AUDIO'
-              | 'VIDEO'
-              | 'TEXT'
-              | 'LINK'
-              | 'PDF'
-              | 'YOUTUBE',
-            title: item?.title || '',
-            uuid: item?.uuid || '',
-            value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-            duration:
-              typeof item?.estimated_duration === 'string'
-                ? parseInt(item.estimated_duration) || 0
-                : 0,
-            durationHours: item?.duration_hours || 0,
-            durationMinutes: item?.duration_minutes || 0,
-            contentUuid: item?.content_type || '',
-            contentCategory: matchedType?.upload_category ?? '',
-          };
-        })
+        return {
+          contentType: typeName.toUpperCase() as
+            | 'AUDIO'
+            | 'VIDEO'
+            | 'TEXT'
+            | 'LINK'
+            | 'PDF'
+            | 'YOUTUBE',
+          title: item?.title || '',
+          uuid: item?.uuid || '',
+          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
+          duration:
+            typeof item?.estimated_duration === 'string'
+              ? parseInt(item.estimated_duration) || 0
+              : 0,
+          durationHours: item?.duration_hours || 0,
+          durationMinutes: item?.duration_minutes || 0,
+          contentUuid: item?.content_type || '',
+          contentCategory: matchedType?.upload_category ?? '',
+        };
+      })
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
@@ -322,7 +323,7 @@ export default function CourseCreationPage() {
             initialValues={courseInitialValues as any}
             onSuccess={data => {
               setCreatedCourseId(data?.uuid);
-              // refetchCourse();
+              refetchCourse();
             }}
           />
         </StepperContent>
@@ -341,22 +342,21 @@ export default function CourseCreationPage() {
               isLoading={false}
               courseTitle={course?.data?.name as string}
               courseCategory={course?.data?.category_names}
-              // @ts-ignore
               lessons={courseLessons?.data}
               lessonItems={lessonContentData?.data}
               onAddLesson={openAddLessonModal}
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
               onAddAssessment={openAddAssessmentModal}
-              onEditAssessment={() => {}}
-              onReorderLessons={() => {}}
+              onEditAssessment={() => { }}
+              onReorderLessons={() => { }}
             />
 
             <LessonDialog
               isOpen={addLessonModalOpen}
               onOpenChange={setAddLessonModalOpen}
               courseId={createdCourseId ? createdCourseId : (courseId as string)}
-              // refetch={refetchLessons}
+              refetch={refetchLessons}
             />
 
             {editLessonModalOpen && selectedLesson && lesson && lessonContentData?.data && (
@@ -364,12 +364,11 @@ export default function CourseCreationPage() {
                 isOpen={editLessonModalOpen}
                 onOpenChange={setEditLessonModalOpen}
                 courseId={courseId as string}
-                // @ts-ignore
                 lessonId={selectedLesson?.uuid}
                 initialValues={lessonInitialValues}
                 onSuccess={data => {
                   setCreatedCourseId(data?.uuid);
-                  // refetchLessons();
+                  refetchLessons();
                   refetchLessonContent();
                 }}
               />
@@ -425,6 +424,10 @@ export default function CourseCreationPage() {
 
               {/* Course Information */}
               <section>
+                <div>
+                  <Image src={course?.data?.banner_url as string} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
+                </div>
+
                 <h3 className='mb-3 text-xl font-semibold text-gray-800'>📘 Course Information</h3>
                 <div className='space-y-3 text-gray-700'>
                   <p>

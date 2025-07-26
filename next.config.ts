@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '100mb',
     },
   },
+  images: {
+    domains: ['api.elimika.sarafrika.com'],
+  },
 };
 
 export default nextConfig;

@@ -31,6 +31,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -122,6 +123,7 @@ export default function CourseDraftsPage() {
           <TableCaption>A list of your course drafts</TableCaption>
           <TableHeader>
             <TableRow>
+              <TableHead></TableHead>
               <TableHead>Course Name</TableHead>
               <TableHead>Categories</TableHead>
               <TableHead>Class Limit</TableHead>
@@ -143,6 +145,10 @@ export default function CourseDraftsPage() {
               <>
                 {draftCourses?.map((course: any) => (
                   <TableRow key={course.uuid}>
+                    <TableCell>
+                      <Image src={course?.thumbnail_url as string} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
+                    </TableCell>
+
                     <TableCell className='font-medium'>
                       <div>
                         <div className='max-w-[270px] truncate'>{course.name}</div>

@@ -69,13 +69,13 @@ import {
 import { toast } from 'sonner';
 import * as z from 'zod';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import dynamic from 'next/dynamic';
-import { addCourseLesson, addLessonContent, getCourseByUuid } from '../../../../services/client';
+import { addCourseLesson, addLessonContent, getAllContentTypes, getCourseByUuid } from '@/services/client';
 import {
   addCourseLessonQueryKey,
-  getCourseByUuidQueryKey,
-} from '../../../../services/client/@tanstack/react-query.gen';
+  getAllContentTypesQueryKey
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
 
 // Dynamically import with SSR disabled
 const WysiwygRichTextEditor = dynamic(
@@ -227,13 +227,19 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   });
   const { setValue } = useFormContext();
 
-  // @ts-ignore
-  const { data } = tanstackClient.useQuery('get', '/api/v1/config/content-types', { params: {} });
+  // GetContentTypes
+  const useGetContentTypes = () => {
+    return useQuery({
+      queryKey: [getAllContentTypesQueryKey],
+      queryFn: () => getAllContentTypes().then(res => res.data),
+    });
+  };
+  const { data: contentTypeList } = useGetContentTypes();
 
   const contentTypeData = React.useMemo(() => {
-    const respdata = data!.data! as { content: any[] }
+    const respdata = contentTypeList!.data! as { content: any[] }
     return respdata?.content ?? {};
-  }, [data]);
+  }, [contentTypeList]);
 
   // Lookup type key from uuid (e.g., "VIDEO")
   const selectedTypeKey = React.useMemo(() => {
@@ -652,7 +658,7 @@ function LessonCreationForm({
 
   // QUERY
   const { data: courseDetail } = useQuery({
-    queryKey: [getCourseByUuidQueryKey],
+    queryKey: ["courses"],
     queryFn: () => getCourseByUuid({ path: { uuid: courseId as string } }),
     enabled: !!courseId,
   });
@@ -663,6 +669,13 @@ function LessonCreationForm({
     mutationKey: [addCourseLessonQueryKey],
     mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
       addCourseLesson({ body, path: { courseUuid: uuid } }),
+    // onSuccess: () => (queryClient.invalidateQueries({ queryKey: ["courses"] }))
+    onSuccess: (data) => {
+      queryClient.setQueryData(['courses'], (oldCourses = []) => {
+        return [data?.data?.data];
+      });
+    },
+
   });
 
   const { mutate: createLessonContentMutation, isPending: createLessonContentIsPending } =
@@ -673,7 +686,7 @@ function LessonCreationForm({
     });
 
   const onSubmitCreateLesson: SubmitHandler<LessonFormValues> = values => {
-    const createBodyLesson = {
+    const createLessonBody = {
       course_uuid: courseId as string,
       title: values?.title,
       description: values?.description as string,
@@ -690,7 +703,7 @@ function LessonCreationForm({
     };
 
     createLessonMutation(
-      { body: createBodyLesson, uuid: courseId as string },
+      { body: createLessonBody, uuid: courseId as string },
       {
         onSuccess: lessonResponse => {
           const lessonUuid = lessonResponse?.data?.data?.uuid as string;
@@ -734,7 +747,8 @@ function LessonCreationForm({
             }
           );
         },
-      }
+      },
+
     );
   };
 
@@ -1459,7 +1473,7 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
   );
 }
 
-interface AppLessonDialogProps {
+interface AddLessonDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   courseId: string | number;
@@ -1469,7 +1483,7 @@ interface AppLessonDialogProps {
   onSuccess?: (data: any) => void;
 }
 
-function LessonDialog({ isOpen, onOpenChange, courseId, refetch }: AppLessonDialogProps) {
+function LessonDialog({ isOpen, onOpenChange, courseId, refetch }: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
@@ -1502,7 +1516,7 @@ function EditLessonDialog({
   lessonId,
   refetch,
   onSuccess,
-}: AppLessonDialogProps) {
+}: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
@@ -1535,7 +1549,7 @@ function AssessmentDialog({
   courseId,
   initialValues,
   lessonId,
-}: AppLessonDialogProps) {
+}: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>

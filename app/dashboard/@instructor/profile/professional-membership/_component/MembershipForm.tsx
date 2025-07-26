@@ -96,13 +96,8 @@ export default function ProfessionalBodySettings({
   });
 
   if (Object.keys(form.formState.errors).length !== 0) {
-<<<<<<< HEAD
-    // form.formState.errors;
-    // form.getValues();
-=======
     //console.log('Errors', form.formState.errors);
     //console.log('values', form.getValues());
->>>>>>> main
   }
 
   const { fields, append, remove } = useFieldArray({
@@ -121,11 +116,7 @@ export default function ProfessionalBodySettings({
   const { errors, submitting } = useMultiMutations([addMemMutation, updateMemMutation]);
 
   const onSubmit = (data: ProfessionalMembershipFormValues) => {
-<<<<<<< HEAD
-    // data;
-=======
     //console.log(data);
->>>>>>> main
     // TODO: Handle form submission
     data.professional_bodies.forEach(async (mem, index) => {
       const memData = {
