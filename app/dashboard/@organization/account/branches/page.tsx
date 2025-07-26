@@ -90,7 +90,7 @@ export default function BranchesPage() {
 
   const onSubmit = (data: BranchesFormValues) => {
     // TODO: Implement submission logic
-    // data;
+    //console.log(data);
   };
 
   return (
@@ -282,8 +282,8 @@ export default function BranchesPage() {
                                               return checked
                                                 ? field.onChange([...(field.value ?? []), item])
                                                 : field.onChange(
-                                                    field.value?.filter(value => value !== item)
-                                                  );
+                                                  field.value?.filter(value => value !== item)
+                                                );
                                             }}
                                           />
                                         </FormControl>

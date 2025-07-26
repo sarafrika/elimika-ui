@@ -66,7 +66,7 @@ export default function TrainingCenterPage() {
 
   const onSubmit = (data: TrainingCenterFormValues) => {
     // TODO: Implement submission logic, including file upload for the logo
-    // data;
+    //console.log(data);
   };
 
   return (

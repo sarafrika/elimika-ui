@@ -231,7 +231,8 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   const { data } = tanstackClient.useQuery('get', '/api/v1/config/content-types', { params: {} });
 
   const contentTypeData = React.useMemo(() => {
-    return data?.data?.content ?? {};
+    const respdata = data!.data! as { content: any[] }
+    return respdata?.content ?? {};
   }, [data]);
 
   // Lookup type key from uuid (e.g., "VIDEO")
@@ -271,8 +272,8 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                 value={
                   contentTypeUuid
                     ? JSON.stringify(
-                        Object.values(contentTypeData).find((v: any) => v.uuid === contentTypeUuid)
-                      )
+                      Object.values(contentTypeData).find((v: any) => v.uuid === contentTypeUuid)
+                    )
                     : ''
                 }
               >
@@ -378,7 +379,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                   {/* @ts-ignore */}
                   <Input
                     type='url'
-                    placeholder={getContentPlaceholder(selectedTypeKey as string)}
+                    placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
                     {...field}
                   />
                 </FormControl>
@@ -1314,7 +1315,8 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
   // )
 
   const onSubmit = async (values: AssessmentFormValues) => {
-    // courseId; values;
+    //console.log('✅ Assessment created:', values);
+    //console.log('✅ Assessment created for courseID:', courseId);
 
     onCancel();
   };

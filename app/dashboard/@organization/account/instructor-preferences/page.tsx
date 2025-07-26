@@ -53,19 +53,19 @@ const preferenceHeaders: {
   key: keyof InstructorPrefsFormValues['preferences'][0];
   label: string;
 }[] = [
-  { key: 'course', label: 'Course' },
-  { key: 'type', label: 'Type' },
-  { key: 'gender', label: 'Gender' },
-  { key: 'classType', label: 'Class Type' },
-  { key: 'method', label: 'Method' },
-  { key: 'educationLevel', label: 'Edu. Level' },
-  { key: 'experienceYears', label: 'Exp. (Yrs)' },
-  { key: 'skills', label: 'Skills' },
-  { key: 'professionalBody', label: 'Pro. Body' },
-  { key: 'availabilityDay', label: 'Day' },
-  { key: 'availabilityTime', label: 'Time' },
-  { key: 'maxFee', label: 'Max Fee (USD)' },
-];
+    { key: 'course', label: 'Course' },
+    { key: 'type', label: 'Type' },
+    { key: 'gender', label: 'Gender' },
+    { key: 'classType', label: 'Class Type' },
+    { key: 'method', label: 'Method' },
+    { key: 'educationLevel', label: 'Edu. Level' },
+    { key: 'experienceYears', label: 'Exp. (Yrs)' },
+    { key: 'skills', label: 'Skills' },
+    { key: 'professionalBody', label: 'Pro. Body' },
+    { key: 'availabilityDay', label: 'Day' },
+    { key: 'availabilityTime', label: 'Time' },
+    { key: 'maxFee', label: 'Max Fee (USD)' },
+  ];
 
 export default function InstructorPreferencesPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -100,7 +100,7 @@ export default function InstructorPreferencesPage() {
 
   const onSubmit = (data: InstructorPrefsFormValues) => {
     // TODO: Implement submission logic
-    // data;
+    //console.log(data);
   };
 
   const renderInput = (

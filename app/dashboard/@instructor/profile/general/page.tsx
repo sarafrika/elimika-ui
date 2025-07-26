@@ -8,16 +8,13 @@ import InstructorProfile from './_component/InstructorProfile';
 export default function InstructorProfilePage() {
   const user = useUser();
   const instructor = useInstructor();
-
-  return (
-    <>
-      {user && instructor ? (
-        <InstructorProfile {...{ user, instructor }} />
-      ) : (
-        <div className='flex items-center justify-center'>
-          <Spinner />
-        </div>
-      )}
-    </>
-  );
+  return <>{user && instructor ? <InstructorProfile {...{
+    user: {
+      ...user,
+      dob: new Date(user.dob ?? Date.now()).toISOString(),
+      created_date: new Date(user.created_date ?? Date.now()).toISOString(),
+      updated_date: new Date(user.created_date ?? Date.now()).toISOString()
+    },
+    instructor
+  }} /> : <Spinner />}</>;
 }

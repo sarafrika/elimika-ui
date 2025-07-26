@@ -74,7 +74,7 @@ export default function AvailabilitySettings() {
   });
 
   const onSubmit = (data: AvailabilityFormValues) => {
-    // data;
+    //console.log(data);
     // TODO: Implement submission logic. The Instructor schema does not have fields for this data.
   };
 

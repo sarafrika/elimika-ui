@@ -9,6 +9,7 @@ import { UserDomain } from '@/lib/types';
 import { auth } from '@/services/auth';
 import { redirect } from 'next/navigation';
 import { ReactNode } from 'react';
+import { getUserByEmail } from '../../services/user/actions';
 import { DashboardChildrenTypes } from './_types';
 
 type OrgDomainType = DashboardView | 'organisation_user';
@@ -21,7 +22,10 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       return redirect('/');
     }
 
-    const user = session.user;
+    const user = await getUserByEmail(session.user.email);
+    if (!user) {
+      return redirect('/');
+    }
 
     if (user.user_domain!.length === 0) {
       return redirect('/onboarding');
@@ -36,6 +40,9 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       {}
     );
     const currentDashboard = userDashboards[defaultDomain ?? 'student'] ?? props.children;
+    //console.log('userDomains', currentDashboard);
+
+    // //console.log(user);
 
     if (orgAdminDomains.includes('organisation_user')) {
       return (

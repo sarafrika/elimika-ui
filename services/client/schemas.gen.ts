@@ -962,13 +962,6 @@ export const ProgramRequirementSchema = {
       example: false,
       readOnly: true,
     },
-    requirement_category: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.',
-      example: 'Mandatory Student Requirement',
-      readOnly: true,
-    },
     requirement_priority: {
       type: 'string',
       description:
@@ -976,18 +969,25 @@ export const ProgramRequirementSchema = {
       example: 'High Priority',
       readOnly: true,
     },
-    compliance_level: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Compliance level indicating how strictly the requirement must be followed.',
-      example: 'Mandatory Compliance',
-      readOnly: true,
-    },
     requirement_summary: {
       type: 'string',
       description:
         '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.',
       example: 'Student requirement with mandatory compliance',
+      readOnly: true,
+    },
+    requirement_category: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.',
+      example: 'Mandatory Student Requirement',
+      readOnly: true,
+    },
+    compliance_level: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Compliance level indicating how strictly the requirement must be followed.',
+      example: 'Mandatory Compliance',
       readOnly: true,
     },
   },
@@ -1103,17 +1103,17 @@ export const ProgramCourseSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    has_prerequisites: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this course has prerequisite requirements.',
+      example: true,
+      readOnly: true,
+    },
     association_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the course association based on requirement status.',
       example: 'Required Course',
-      readOnly: true,
-    },
-    has_prerequisites: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this course has prerequisite requirements.',
-      example: true,
       readOnly: true,
     },
     sequence_display: {
@@ -1683,13 +1683,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
@@ -1742,6 +1735,13 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1897,13 +1897,6 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     duration_in_months: {
       type: 'integer',
       format: 'int32',
@@ -1951,6 +1944,13 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -2082,13 +2082,6 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     is_recent_qualification: {
       type: 'boolean',
       description:
@@ -2117,6 +2110,13 @@ export const InstructorEducationSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
       example: 2020,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -5399,12 +5399,6 @@ export const QuizAttemptSchema = {
       example: 85,
       readOnly: true,
     },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: 1,
-      readOnly: true,
-    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -5415,6 +5409,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: 1,
       readOnly: true,
     },
   },

@@ -115,6 +115,8 @@ export default function InstructorProfile({
     },
   });
 
+  // console.log(form.formState.errors)
+
   // Mutations
   const userMutation = tanstackClient.useMutation('put', '/api/v1/users/{uuid}');
   const instructorMutation = tanstackClient.useMutation('put', '/api/v1/instructors/{uuid}');
@@ -139,9 +141,11 @@ export default function InstructorProfile({
 
       if (resp.error) {
         //@ts-ignore
+        //console.log(resp.error.error);
+        //@ts-ignore
         toast(resp.error.message);
       } else {
-        // resp.data;
+        //console.log('Image Upload Data', resp.data);
         // data!.user.profile_image_url = resp.data?.profile_image_url;
       }
     }

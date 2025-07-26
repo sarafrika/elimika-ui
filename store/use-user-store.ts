@@ -32,12 +32,13 @@ export const useUserStore = create<UserState>()(
         }),
       setActiveDomain: domain => set({ activeDomain: domain }),
       clearUser: () => set({ user: null, domains: [], activeDomain: null }),
+      //@ts-ignore
       fetchCurrentUser: async () => {
         try {
           set({ isLoading: true, error: null });
           const session = useSession();
           const userData = session.data?.user;
-
+          //@ts-ignore
           set({ user: userData, isLoading: false });
           if (userData && userData?.user_domain && userData?.user_domain?.length > 0) {
             set({

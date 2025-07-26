@@ -33,29 +33,29 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { UUID } from 'crypto';
 import { format } from 'date-fns';
 import { AlertCircleIcon, CalendarIcon } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { getSession, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { Student, User } from '../../../../../../services/client';
+import { zStudent, zUser } from '../../../../../../services/client/zod.gen';
 
-// console.log(Object.values(schemas))
+// //console.log(Object.values(schemas))
 
 const StudentProfileSchema = z.object({
-  user: schemas.User.merge(
-    z.object({
-      created_date: z.string().optional().readonly(),
-      updated_date: z.string().optional().readonly(),
-      dob: z.date(),
-    })
+  user: zUser.merge(z.object({
+    created_date: z.string().optional().readonly(),
+    updated_date: z.string().optional().readonly(),
+    dob: z.date(),
+  })
   ),
 
-  student: schemas.Student.merge(
-    z.object({
-      created_date: z.string().optional().readonly(),
-      updated_date: z.string().optional().readonly(),
-      updated_by: z.string().optional().readonly(),
-      secondaryGuardianContact: z.string().optional(),
-    })
+  student: zStudent.merge(z.object({
+    created_date: z.string().optional().readonly(),
+    updated_date: z.string().optional().readonly(),
+    updated_by: z.string().optional().readonly(),
+    // secondaryGuardianContact: z.string().optional(),
+  })
   ),
 });
 
@@ -67,14 +67,14 @@ const UserFieldTypes = [];
 
 export default function StudentProfileGeneralForm({
   user,
-  student,
+  student
   // profilePicBlob
 }: {
-  user: z.infer<typeof schemas.User>;
-  student?: z.infer<typeof schemas.Student>;
+  user: User;
+  student?: Student
   // profilePicBlob?: Blob
 }) {
-  // console.log("student", student)
+  // //console.log("student", student)
 
   const session = useSession();
   const appSrore = appStore();
@@ -93,6 +93,8 @@ export default function StudentProfileGeneralForm({
         ...user,
         dob: new Date(user.dob ?? Date.now()),
         profile_image_url: user.profile_image_url || profilePicSvg,
+        created_date: new Date(user.created_date!).toISOString(),
+        updated_date: new Date(user.updated_date!).toISOString()
       },
       /** Students guardian data to be refactored to array */
       student: {
@@ -100,6 +102,8 @@ export default function StudentProfileGeneralForm({
         updated_by: student?.updated_by ?? '',
         secondaryGuardianContact: student?.secondaryGuardianContact ?? '',
         user_uuid: user.uuid,
+        created_date: new Date(user.created_date!).toISOString(),
+        updated_date: new Date(user.updated_date!).toISOString()
       },
     },
   });
@@ -114,7 +118,7 @@ export default function StudentProfileGeneralForm({
     updateStudentMutation,
   ]); //, profilePicUpload
 
-  // console.log("Ma errors", errors);
+  // //console.log("Ma errors", errors);
   if (errors && errors.length > 0) {
     errors.forEach(error => {
       Object.keys(error.error).forEach(k => {
@@ -130,7 +134,7 @@ export default function StudentProfileGeneralForm({
   const onSubmit = useCallback(
     async (data: StudentProfileType) => {
       resetErrors([]);
-      // console.log(data)
+      // //console.log(data)
 
       /** Upload profile picture */
       if (profilePic.file) {
@@ -148,7 +152,7 @@ export default function StudentProfileGeneralForm({
         });
       }
 
-      // console.log("after profile pic upload", datas![1]);
+      // //console.log("after profile pic upload", datas![1]);
 
       /** update User */
       userMutation.mutate({
@@ -164,9 +168,15 @@ export default function StudentProfileGeneralForm({
             ...(user.user_domain ? new Set([...user.user_domain, 'student']) : ['student']),
           ] as ('student' | 'instructor' | 'admin' | 'organisation_user')[],
         },
+      }, {
+        onSuccess: async ({ data }) => {
+          await session
+            .update({ ...session.data, user: { ...data!, dob: new Date(data!.dob) } as User })
+            .then(() => getSession())
+        }
       });
 
-      // console.log(data.student)
+      // //console.log(data.student)
 
       /** Update student */
       updateStudentMutation.mutate({
@@ -190,7 +200,7 @@ export default function StudentProfileGeneralForm({
 
     } */
 
-  // console.log(form.formState.errors);
+  // //console.log(form.formState.errors);
   const ref = useRef(submitting);
   useEffect(() => {
     if (ref.current) {

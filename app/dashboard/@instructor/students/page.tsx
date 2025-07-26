@@ -131,6 +131,7 @@ export default function StudentsPage() {
       },
     },
   });
+  //console.log(data, 'students');
 
   const studentId = '';
   const { data: studentData } = tanstackClient.useQuery('get', '/api/v1/students/{uuid}', {
@@ -140,6 +141,7 @@ export default function StudentsPage() {
       },
     },
   });
+  //console.log(studentData, 'single student');
 
   return (
     <div className='space-y-6 p-4 md:p-10'>

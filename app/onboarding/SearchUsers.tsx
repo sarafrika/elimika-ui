@@ -14,6 +14,7 @@ export default function SearchUsers() {
       },
     },
   });
+  //console.log(resp?.data?.content);
   if (isPending) return <div>Loading...</div>;
   return <div>SearchUsers</div>;
 }

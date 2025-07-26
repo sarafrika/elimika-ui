@@ -198,10 +198,7 @@ export default function ClassesPage() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         variant='destructive'
-                        onClick={() =>
-                          // cls.uuid
-                          {}
-                        }
+                        onClick={() => { }} //console.log('deleting class with id:', cls.uuid)
                       >
                         <TrashIcon className='mr-2 h-4 w-4' />
                         Delete
@@ -213,7 +210,8 @@ export default function ClassesPage() {
             ))}
           </TableBody>
         </Table>
-      )}
+      )
+      }
 
       <CreateClassDialog isOpen={isCreateClassDialog} onOpenChange={closeCreateClassDialog} />
       <EditClassDialog
@@ -222,6 +220,6 @@ export default function ClassesPage() {
         initialValues={classInitialValues}
         classId={editClassId || ''}
       />
-    </div>
+    </div >
   );
 }

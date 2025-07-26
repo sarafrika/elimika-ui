@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Instructor } from '@/services/api/schema';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import InstructorDetailsPanel from './InstructorDetailsPanel';
 import InstructorMobileModal from './InstructorMobileModal';
 import InstructorsList from './InstructorsList';
@@ -41,7 +40,7 @@ export default function InstructorsPage({ instructors }: Props) {
 
       router.refresh();
     } catch (error) {
-      toast.error('Error approving instructor:', error as any);
+      //console.log('Error approving instructor:', error);
     }
   };
 
@@ -55,7 +54,7 @@ export default function InstructorsPage({ instructors }: Props) {
 
       router.refresh();
     } catch (error) {
-      toast.error('Error rejecting instructor:', error as any);
+      //console.log('Error rejecting instructor:', error);
     }
   };
 
@@ -81,14 +80,14 @@ export default function InstructorsPage({ instructors }: Props) {
   const handleInstructorSelect = (instructor: Instructor) => {
     setSelectedInstructor(instructor);
     // Open modal on small screens
-    if (window.innerWidth < 1024) {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
       setIsModalOpen(true);
     }
   };
 
   const handleInstructorDelete = (instructor: Instructor) => {
     // Handle delete logic here
-    // instructor.uuid;
+    //console.log('Delete instructor:', instructor.uuid);
   };
 
   // Filter and sort instructors

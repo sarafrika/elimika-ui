@@ -4,7 +4,6 @@ import { TrainingCenter } from '@/app/auth/create-account/_components/training-c
 import { User } from '@/app/auth/create-account/_components/user-account-form';
 import { ApiResponse, ApiResponseWithPagination, UserDomain } from '@/lib/types';
 import { getEnvironmentVariable } from '@/lib/utils';
-import { toast } from 'sonner';
 
 const DEFAULT_PAGE_SIZE = 10;
 const EVERY_THIRTY_MINUTES = 60 * 30; // 1,800 seconds
@@ -28,7 +27,7 @@ export async function createUser(user: User, userDomain: UserDomain, profileImag
 
     return (await response.json()) as ApiResponse<User>;
   } catch (error) {
-    toast.error('Error occurred while creating user', error as any);
+    //console.log('Error occurred while creating user', error);
     throw new Error('Something went wrong while creating user');
   }
 }
@@ -48,7 +47,7 @@ export async function updateUser(user: User) {
 
     return (await response.json()) as ApiResponse<User>;
   } catch (error) {
-    toast.error('Error occurred while updating user', error as any);
+    //console.log('Error occurred while updating user', error);
     throw new Error('Something went wrong while updating user');
   }
 }
@@ -71,7 +70,7 @@ export async function fetchUsers(page: number = 0, searchParams?: string) {
 
     return (await response.json()) as ApiResponseWithPagination<User>;
   } catch (error) {
-    toast.error('Error fetching users:', error as any);
+    //console.log('Error fetching users:', error);
     throw new Error('Something went wrong while fetching users. Please contact support.');
   }
 }
@@ -92,7 +91,7 @@ export async function fetchTrainingCenters(page: number, params?: string) {
 
     return (await response.json()) as ApiResponseWithPagination<TrainingCenter>;
   } catch (error) {
-    toast.error('Error fetching training centers:', error as any);
+    //console.log('Error fetching training centers:', error);
     throw new Error(
       'Something went wrong while fetching training centers. Please contact support.'
     );
@@ -110,7 +109,7 @@ export async function fetchTrainingCenter(trainingCenterId: string) {
 
     return (await response.json()) as ApiResponse<TrainingCenter>;
   } catch (error) {
-    toast.error('Error fetching training centers:', error as any);
+    //console.log('Error fetching training centers:', error);
     throw new Error(
       'Something went wrong while fetching training centers. Please contact support.'
     );
@@ -133,7 +132,7 @@ export async function createOrUpdateTrainingCenter(trainingCenter: TrainingCente
 
     return (await response.json()) as ApiResponse<TrainingCenter>;
   } catch (error) {
-    toast.error('Error creating or updating training center:', error as any);
+    //console.log('Error creating or updating training center:', error);
     throw new Error(
       'Something went wrong while persisting training center. Please contact support.'
     );

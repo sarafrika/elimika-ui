@@ -24,8 +24,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { UUID } from 'crypto';
 import { format } from 'date-fns';
 import { CalendarIcon, CheckCircle2, Users } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { User } from '../../../../services/client';
 
 const ProfileSchema = z.object({
   user: schemas.User.merge(
@@ -48,9 +51,10 @@ type UserSchema = z.infer<typeof schemas.User>;
 
 export function StudentOnboardingForm() {
   //StudentOnboardingFormProps
+  const router = useRouter()
 
-  /* const session = useSession()
-  const user = session.data?.user; */
+  const session = useSession()
+  /* const user = session.data?.user; */
   const user = useUser();
 
   const form = useForm<ProfileType>({
@@ -60,9 +64,11 @@ export function StudentOnboardingForm() {
         ...user,
         dob: new Date(user?.dob ?? Date.now()),
         middle_name: '',
-        phone_number: '+254712345678',
+        phone_number: '',
         profile_image_url: '',
         updated_by: user!.updated_by ?? '',
+        created_date: (new Date(user!.created_date ?? Date.now())).toISOString(),
+        updated_date: (new Date(user!.updated_date ?? Date.now())).toISOString()
       },
       student: {
         user_uuid: user!.uuid,
@@ -86,17 +92,32 @@ export function StudentOnboardingForm() {
         dob: data.user.dob.toISOString(),
         user_domain: ['student'],
       },
+    }, {
+      onSuccess: async (resp) => {
+        // console.log(resp)
+        // const respData = resp.data as unknown as { data: { user: User } };
+        user?.updateSession({ ...resp.data, dob: new Date(resp.data!.dob) }! as User)
+        /* //console.log(resp)
+        await session
+          .update({ user: { ...session.data!.user, ...resp.data! } })
+        // .then(() => getSession());
+        // await client.post({ url: "/api/update-sesssion", body: {} });
+
+        router.push("/dashboard"); */
+      }
     });
 
-    // Create Student
     studentMutation.mutate({
-      body: data.student,
-    });
+      body: data.student
+    }, {
+      onError: (error) => {
+        // console.log(error)
+      }
+    })
   }
 
-  // form.formState.errors;
-  // errors;
-
+  // //console.log('Validation errors', form.formState.errors);
+  //console.log('API errors', errors);
   const watchDob = form.watch('user.dob');
 
   const isAdult = (() => {
@@ -177,34 +198,32 @@ export function StudentOnboardingForm() {
           {watchDob != null && (
             <>
               {/* Adult Phone Number Form */}
-              {isAdult && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Contact Information</CardTitle>
-                    <CardDescription>Please provide your contact information</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <FormField
-                      control={form.control}
-                      name='user.phone_number'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Phone Number <span className='text-red-500'>*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder='+1 234 567 8900' {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Include country code for international numbers
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              )}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Information</CardTitle>
+                  <CardDescription>Please provide your contact information</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name='user.phone_number'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Phone Number <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder='+1 234 567 8900' {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Include country code for international numbers
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
               {/* Guardian Information - Only show if under 18 */}
               {watchDob && !isAdult && (

@@ -48,7 +48,7 @@ export default function ProfessionalExperienceSettings({
   instructor: Instructor;
   instructorExperience: InstructorExperience[];
 }) {
-  // instructorExperience;
+  //console.log(instructorExperience);
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -165,7 +165,7 @@ export default function ProfessionalExperienceSettings({
           }
         );
         if (resp.error) {
-          toast.error(resp.error as any);
+          //console.log(resp.error);
           return;
         }
       }

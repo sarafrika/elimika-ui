@@ -1,5 +1,8 @@
 'use client';
 
+import { fetchTrainingCenters } from '@/app/auth/create-account/_components/actions';
+import { TrainingCenter } from '@/app/auth/create-account/_components/training-center-form';
+import { useSession } from 'next-auth/react';
 import {
   createContext,
   ReactNode,
@@ -9,10 +12,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { fetchTrainingCenters } from '@/app/auth/create-account/actions';
 import { toast } from 'sonner';
-import { useSession } from 'next-auth/react';
-import { TrainingCenter } from '@/app/auth/create-account/_components/training-center-form';
 
 export interface UseTrainingCenterReturn {
   trainingCenter: TrainingCenter | null;

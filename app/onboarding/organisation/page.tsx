@@ -73,6 +73,7 @@ export default function OrganisationOnboardingPage() {
       toast.success('Registration completed successfully!');
       router.replace('/dashboard/overview');
     } catch (error) {
+      //console.log('Error during registration:', error);
       toast.error(
         error instanceof Error
           ? error.message

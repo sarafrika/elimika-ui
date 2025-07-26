@@ -14,6 +14,7 @@ export default async function Page() {
     },
   });
   if (response.error) {
+    //console.log(response.error);
     return (
       <ErrorPage
         message={response.error.message || 'Something went wrong while fetching organizations'}

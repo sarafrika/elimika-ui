@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
 import { Organisation as OrganisationDto } from '@/services/api/schema';
-import OrganizationsList from './OrganizationsList';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import OrganizationDetailsPanel from './OrganizationDetailsPanel';
 import OrganizationMobileModal from './OrganizationMobileModal';
+import OrganizationsList from './OrganizationsList';
 
 type Props = {
   organizations: OrganisationDto[];
@@ -44,7 +44,9 @@ export default function OrganizationsPage({ organizations }: Props) {
       setOrganizationStatuses(newStatuses);
 
       router.refresh();
-    } catch (error) {}
+    } catch (error) {
+      //console.log('Error approving organization:', error);
+    }
   };
 
   const handleRejectOrganization = async (organization: OrganisationDto) => {
@@ -56,7 +58,9 @@ export default function OrganizationsPage({ organizations }: Props) {
       setOrganizationStatuses(newStatuses);
 
       router.refresh();
-    } catch (error) {}
+    } catch (error) {
+      //console.log('Error rejecting organization:', error);
+    }
   };
 
   const getStatusBadge = (organizationId: string) => {
@@ -92,14 +96,14 @@ export default function OrganizationsPage({ organizations }: Props) {
   const handleOrganizationSelect = (organization: OrganisationDto) => {
     setSelectedOrganization(organization);
     // Open modal on small screens
-    if (window.innerWidth < 1024) {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
       setIsModalOpen(true);
     }
   };
 
   const handleOrganizationDelete = (organization: OrganisationDto) => {
     // Handle delete logic here
-    // organization.uuid
+    //console.log('Delete organization:', organization.uuid);
   };
 
   // Filter and sort organizations

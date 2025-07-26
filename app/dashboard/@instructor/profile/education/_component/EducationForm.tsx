@@ -124,7 +124,7 @@ export default function EducationSettings({
     name: 'educations',
   });
 
-  // form.formState.errors;
+  //console.log(form.formState.errors);
 
   const addEdMutation = tanstackClient.useMutation(
     'post',
@@ -138,6 +138,8 @@ export default function EducationSettings({
 
   // const [submitting, setSubmitting] = useState(false);
   const onSubmit = async (data: EducationFormValues) => {
+    //console.log('instructor', instructor);
+    //console.log(data);
     // TODO: Implement submission logic
     // setSubmitting(true)
     data.educations.forEach(async (ed, index) => {
@@ -184,7 +186,7 @@ export default function EducationSettings({
           }
         );
         if (resp.error) {
-          toast.error(resp.error as any);
+          //console.log(resp.error);
           return;
         }
       }

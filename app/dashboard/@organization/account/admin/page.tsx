@@ -71,7 +71,7 @@ export default function AdminProfile() {
   });
 
   function onSubmit(values: z.infer<typeof adminProfileSchema>) {
-    // values;
+    //console.log(values);
   }
 
   return (

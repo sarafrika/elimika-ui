@@ -66,7 +66,7 @@ function ClassCreationForm({ onCancel, className }: ClassCreationFormProps) {
   });
 
   const onSubmit = (values: ClassFormValues) => {
-    // values;
+    //console.log('✅ Create a class form submission:', values);
     onCancel();
   };
 
@@ -125,7 +125,8 @@ function ClassEditingForm({ onCancel, className, classId, initialValues }: Class
   });
 
   const onSubmit = (values: ClassFormValues) => {
-    // classId, values
+    //console.log('Editing class ID:', classId);
+    //console.log('✅ Create a class form submission:', values);
     onCancel();
   };
 

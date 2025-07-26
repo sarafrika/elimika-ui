@@ -87,8 +87,13 @@ export default function SkillsSettings({
   });
 
   if (form.formState.isDirty) {
+<<<<<<< HEAD
     // form.formState.errors;
     // form.getValues();
+=======
+    //console.log('Form Errors', form.formState.errors);
+    //console.log('Form values', form.getValues());
+>>>>>>> main
   }
 
   const addSkillMutation = tanstackClient.useMutation(
@@ -102,7 +107,11 @@ export default function SkillsSettings({
   const { submitting } = useMultiMutations([addSkillMutation, updateSkillMutation]);
 
   const onSubmit = (data: SkillsFormValues) => {
+<<<<<<< HEAD
     // data;
+=======
+    //console.log(data);
+>>>>>>> main
     // TODO: Implement submission logic. The Instructor schema currently does not have a field for skills.
 
     data.skills.forEach(async (skill, index) => {

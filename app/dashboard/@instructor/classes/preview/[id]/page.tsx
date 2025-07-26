@@ -48,6 +48,7 @@ const cls = {
 export default function ClassPreviewPage() {
   const params = useParams();
   const classId = params?.id;
+  //console.log(classId);
 
   return (
     <div className='mx-auto mb-10 max-w-5xl space-y-10 sm:p-4'>

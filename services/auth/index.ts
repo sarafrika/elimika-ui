@@ -1,7 +1,5 @@
 import NextAuth, { NextAuthConfig } from 'next-auth';
 import Keycloak from 'next-auth/providers/keycloak';
-import { search } from '../api/actions';
-import { User } from 'lucide-react';
 
 /**
  * Refresh the access token using the refresh token
@@ -34,7 +32,7 @@ import { User } from 'lucide-react';
 //       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
 //     }
 //   } catch (error) {
-//     console.error("Error refreshing access token:", error)
+//     //console.log("Error refreshing access token:", error)
 //     return {
 //       ...token,
 //       error: "RefreshAccessTokenError",
@@ -66,7 +64,7 @@ function decodeJWT(token: string) {
     );
     return JSON.parse(jsonPayload);
   } catch (error) {
-    console.error('Error decoding JWT:', error);
+    //console.log('Error decoding JWT:', error);
     return {};
   }
 }
@@ -89,7 +87,15 @@ const config: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, user }) {
+    async jwt({ token, account, user, session, trigger }) {
+
+      //console.log("trigger", trigger);
+      //console.log(token)
+      //console.log(session)
+      if (trigger === "update") {
+        session.user = user;
+      }
+
       // Initial sign in
       if (account && user) {
         const decodedToken = decodeJWT(account.access_token!);
@@ -121,7 +127,7 @@ const config: NextAuthConfig = {
     },
     async session({ session, token }) {
       if (session.user) {
-        // console.log(session, token)
+        // //console.log(session, token)
         // Include the user data from API
         const searchEndpoint = `${process.env.NEXT_PUBLIC_API_URL}/users/search`;
         try {
@@ -141,7 +147,7 @@ const config: NextAuthConfig = {
             id_token: token.id_token as string,
           };
         } catch (e) {
-          // console.log("fetching data error", e);
+          // //console.log("fetching data error", e);
           session.user.id = token.id as string;
           session.user.accessToken = token.accessToken as string;
           session.user.id_token = token.id_token as string;
@@ -202,7 +208,7 @@ const config: NextAuthConfig = {
             id_token_hint: idToken,
           }),
         });
-        console.log('✅ Keycloak session cleared.');
+        //console.log('✅ Keycloak session cleared.');
       } catch (err) {
         console.warn('⚠️ Failed to logout Keycloak session', err);
       }
