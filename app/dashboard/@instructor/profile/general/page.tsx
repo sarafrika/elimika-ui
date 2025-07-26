@@ -1,12 +1,23 @@
 'use client';
 
-import InstructorProfile from './_component/InstructorProfile';
 import Spinner from '@/components/ui/spinner';
-import { useUser } from '@/context/user-context';
 import { useInstructor } from '@/context/instructor-context';
+import { useUser } from '@/context/user-context';
+import InstructorProfile from './_component/InstructorProfile';
 
 export default function InstructorProfilePage() {
   const user = useUser();
   const instructor = useInstructor();
-  return <>{user && instructor ? <InstructorProfile {...{ user, instructor }} /> : <Spinner />}</>;
+
+  return (
+    <>
+      {user && instructor ? (
+        <InstructorProfile {...{ user, instructor }} />
+      ) : (
+        <div className='flex items-center justify-center'>
+          <Spinner />
+        </div>
+      )}
+    </>
+  );
 }

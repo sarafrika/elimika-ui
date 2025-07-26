@@ -1,7 +1,11 @@
 'use client';
 
+import ImageSelector, { ImageType } from '@/components/image-selector';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -10,15 +14,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircleIcon, CalendarIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn, profilePicSvg } from '@/lib/utils';
-import { Calendar } from '@/components/ui/calendar';
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -26,18 +23,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import React from 'react';
-import { schemas } from '@/services/api/zod-client';
-import { UUID } from 'crypto';
-import ImageSelector, { ImageType } from '@/components/image-selector';
 import Spinner from '@/components/ui/spinner';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useSession } from 'next-auth/react';
 import useMultiMutations from '@/hooks/use-multi-mutations';
+import { cn, profilePicSvg } from '@/lib/utils';
+import { tanstackClient } from '@/services/api/tanstack-client';
+import { schemas } from '@/services/api/zod-client';
 import { appStore } from '@/store/app-store';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { UUID } from 'crypto';
+import { format } from 'date-fns';
+import { AlertCircleIcon, CalendarIcon } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 // console.log(Object.values(schemas))
 
@@ -188,8 +187,6 @@ export default function StudentProfileGeneralForm({
   );
 
   /* async function onSubmit(data: StudentProfileType) {
-
-        
 
     } */
 

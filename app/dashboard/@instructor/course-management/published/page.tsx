@@ -1,25 +1,17 @@
 'use client';
 
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import Link from 'next/link';
-import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
-import Spinner from '@/components/ui/spinner';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { CustomPagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CustomPagination } from '@/components/pagination';
-import { formatCourseDate } from '@/lib/format-course-date';
-import { useInstructor } from '@/context/instructor-context';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { EyeIcon, FilePenIcon, TrashIcon } from 'lucide-react';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import RichTextRenderer from '@/components/editors/richTextRenders';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import Spinner from '@/components/ui/spinner';
 import {
   Table,
   TableBody,
@@ -29,22 +21,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-
-type CourseSearchParams = {
-  instructor_uuid_eq: string;
-  status?: string;
-  page?: number;
-  size?: number;
-};
-
-const toQueryString = (params: Record<string, string | number | undefined>) => {
-  return Object.entries(params)
-    .filter(([, v]) => v !== undefined)
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v!)}`)
-    .join('&');
-};
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useInstructor } from '@/context/instructor-context';
+import { formatCourseDate } from '@/lib/format-course-date';
+import { searchCourses, unpublishCourse } from '@/services/client';
+import {
+  getCourseByUuidQueryKey,
+  getCoursesByInstructorQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { EyeIcon, FilePenIcon, TrashIcon } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function PublishedCoursesPage() {
+  const queryClient = useQueryClient();
+  const instructor = useInstructor();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -64,39 +57,34 @@ export default function PublishedCoursesPage() {
     ]);
   }, [replaceBreadcrumbs]);
 
-  const instructor = useInstructor();
-  const [page, setPage] = useState(0);
   const size = 20;
+  const [page, setPage] = useState(0);
 
-  const queryParams: CourseSearchParams = {
-    page,
-    size,
-    status: 'published',
-    instructor_uuid_eq: instructor?.uuid as string,
-  };
-
-  const queryString = toQueryString(queryParams);
-  const endpoint = `/api/v1/courses/search?${queryString}`;
-  const { data, isFetching, isLoading, refetch } = tanstackClient.useQuery('get', endpoint as any, {
-    params: {},
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: [getCoursesByInstructorQueryKey, instructor?.uuid, page, size],
+    queryFn: () =>
+      searchCourses({
+        query: {
+          page,
+          size,
+          // @ts-ignore
+          status: 'published',
+          instructor_uuid_eq: instructor?.uuid as string,
+        },
+      }).then(res => res.data),
   });
 
-  const unpublishCourseMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/courses/{uuid}/unpublish'
-  );
-  const handleUnpublishCourse = (courseId: string) => {
-    unpublishCourseMutation.mutate(
-      { params: { path: { uuid: courseId } } },
-      {
-        onSuccess: data => toast.success(data?.message),
-        onError: error => toast.error(error?.message),
-      }
-    );
-  };
+  const { mutate: unpublishCourseMutation, isPending } = useMutation({
+    mutationKey: [getCourseByUuidQueryKey],
+    mutationFn: ({ uuid }: { uuid: string }) => unpublishCourse({ path: { uuid } }),
+    onSuccess: (data: any) => {
+      toast.success(data?.message || 'Course unpublished');
+      queryClient.invalidateQueries({ queryKey: [getCourseByUuidQueryKey] });
+    },
+  });
 
-  const publishedCourses = data?.data?.content;
-  const paginationMetadata = data?.data?.metadata;
+  const publishedCourses = data?.data?.content || [];
+  const paginationMetadata = data?.data?.metadata || {};
 
   return (
     <div className='space-y-6'>
@@ -110,7 +98,7 @@ export default function PublishedCoursesPage() {
         </div>
       </div>
 
-      {publishedCourses?.length === 0 ? (
+      {!isFetching && !isLoading && publishedCourses?.length === 0 ? (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No published courses</h3>
@@ -195,7 +183,7 @@ export default function PublishedCoursesPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             variant='destructive'
-                            onClick={() => handleUnpublishCourse(course.uuid)}
+                            onClick={() => unpublishCourseMutation({ uuid: course.uuid })}
                           >
                             <TrashIcon className='mr-2 h-4 w-4' />
                             Unpublish
@@ -211,9 +199,10 @@ export default function PublishedCoursesPage() {
         </Table>
       )}
 
+      {/*  @ts-ignore */}
       {paginationMetadata?.totalPages >= 1 && (
         <CustomPagination
-          totalPages={paginationMetadata?.totalPages}
+          totalPages={paginationMetadata?.totalPages as number}
           onPageChange={page => {
             setPage(page - 1);
           }}

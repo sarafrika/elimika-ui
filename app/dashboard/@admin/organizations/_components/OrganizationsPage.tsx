@@ -44,9 +44,7 @@ export default function OrganizationsPage({ organizations }: Props) {
       setOrganizationStatuses(newStatuses);
 
       router.refresh();
-    } catch (error) {
-      console.error('Error approving organization:', error);
-    }
+    } catch (error) {}
   };
 
   const handleRejectOrganization = async (organization: OrganisationDto) => {
@@ -58,9 +56,7 @@ export default function OrganizationsPage({ organizations }: Props) {
       setOrganizationStatuses(newStatuses);
 
       router.refresh();
-    } catch (error) {
-      console.error('Error rejecting organization:', error);
-    }
+    } catch (error) {}
   };
 
   const getStatusBadge = (organizationId: string) => {
@@ -103,7 +99,7 @@ export default function OrganizationsPage({ organizations }: Props) {
 
   const handleOrganizationDelete = (organization: OrganisationDto) => {
     // Handle delete logic here
-    console.log('Delete organization:', organization.uuid);
+    // organization.uuid
   };
 
   // Filter and sort organizations

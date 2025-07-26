@@ -1,57 +1,8 @@
 'use client';
 
-import {
-  X,
-  Grip,
-  Clock,
-  Trash,
-  PenLine,
-  Youtube,
-  BookOpen,
-  FileIcon,
-  FileText,
-  LinkIcon,
-  FileAudio,
-  FileVideo,
-  VideoIcon,
-  PlusCircle,
-  MoreVertical,
-  ClipboardCheck,
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import * as z from 'zod';
-import { toast } from 'sonner';
-import { ReactNode, useEffect, useRef } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import Spinner from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { tanstackClient } from '@/services/api/tanstack-client';
 import RichTextRenderer from '@/components/editors/richTextRenders';
-import {
-  Control,
-  SubmitHandler,
-  useFieldArray,
-  useForm,
-  useFormContext,
-  useWatch,
-} from 'react-hook-form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -59,6 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Form,
   FormControl,
@@ -68,9 +26,56 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import React from 'react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import Spinner from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
+import { tanstackClient } from '@/services/api/tanstack-client';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  BookOpen,
+  ClipboardCheck,
+  Clock,
+  FileAudio,
+  FileIcon,
+  FileText,
+  FileVideo,
+  Grip,
+  LinkIcon,
+  MoreVertical,
+  PenLine,
+  PlusCircle,
+  Trash,
+  VideoIcon,
+  X,
+  Youtube,
+} from 'lucide-react';
+import React, { ReactNode } from 'react';
+import {
+  Control,
+  SubmitHandler,
+  useFieldArray,
+  useForm,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
+import { addCourseLesson, addLessonContent, getCourseByUuid } from '../../../../services/client';
+import {
+  addCourseLessonQueryKey,
+  getCourseByUuidQueryKey,
+} from '../../../../services/client/@tanstack/react-query.gen';
 
 // Dynamically import with SSR disabled
 const WysiwygRichTextEditor = dynamic(
@@ -278,8 +283,8 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                 </FormControl>
                 <SelectContent>
                   {Object.entries(contentTypeData).map(([key, value]) => {
-                    // @ts-ignore
                     const Icon =
+                      // @ts-ignore
                       ContentTypeIcons[value?.name?.toUpperCase() as keyof typeof ContentTypeIcons];
 
                     return (
@@ -373,7 +378,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                   {/* @ts-ignore */}
                   <Input
                     type='url'
-                    placeholder={getContentPlaceholder(selectedTypeKey)}
+                    placeholder={getContentPlaceholder(selectedTypeKey as string)}
                     {...field}
                   />
                 </FormControl>
@@ -420,6 +425,7 @@ type LessonListProps = {
   courseCategory: any;
   // lessons: TLesson[]
   lessons: any;
+  lessonItems: any;
   isLoading: boolean;
   onAddLesson: () => void;
   onEditLesson: (lesson: any) => void;
@@ -433,6 +439,7 @@ function LessonList({
   courseTitle,
   courseCategory,
   lessons,
+  lessonItems,
   isLoading,
   onAddLesson,
   onEditLesson,
@@ -549,8 +556,7 @@ function LessonList({
                   <div className='flex items-center gap-1.5'>
                     <BookOpen className='h-4 w-4' />
                     <span>
-                      {lesson?.content?.length || '0'}{' '}
-                      {lesson?.content?.length === 1 ? 'item' : 'items'}
+                      {lessonItems?.length || '0'} {lessonItems?.length === 1 ? 'item' : 'items'}
                     </span>
                   </div>
 
@@ -641,73 +647,85 @@ function LessonCreationForm({
     name: 'resources',
   });
 
-  const { data: courseData } = tanstackClient.useQuery('get', '/api/v1/courses/{uuid}', {
-    // @ts-ignore
-    params: { path: { uuid: courseId } },
+  const queryClient = useQueryClient();
+
+  // QUERY
+  const { data: courseDetail } = useQuery({
+    queryKey: [getCourseByUuidQueryKey],
+    queryFn: () => getCourseByUuid({ path: { uuid: courseId as string } }),
+    enabled: !!courseId,
+  });
+  const course = courseDetail?.data?.data;
+
+  // MUTATION
+  const { mutate: createLessonMutation, isPending: createLessonIsPending } = useMutation({
+    mutationKey: [addCourseLessonQueryKey],
+    mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
+      addCourseLesson({ body, path: { courseUuid: uuid } }),
   });
 
-  const createLessonMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/courses/{courseUuid}/lessons'
-  );
-  const createLessonContentMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content'
-  );
+  const { mutate: createLessonContentMutation, isPending: createLessonContentIsPending } =
+    useMutation({
+      mutationKey: [addCourseLessonQueryKey],
+      mutationFn: ({ uuid, lessonUuid, body }: { uuid: string; lessonUuid: string; body: any }) =>
+        addLessonContent({ body, path: { courseUuid: uuid, lessonUuid: lessonUuid } }),
+    });
 
   const onSubmitCreateLesson: SubmitHandler<LessonFormValues> = values => {
-    createLessonMutation.mutate(
-      {
-        body: {
-          course_uuid: courseId as string,
-          title: values?.title,
-          description: values?.description as string,
-          learning_objectives: values?.objectives as string,
-          duration_hours: Number(values?.content[0]?.durationHours),
-          duration_minutes: Number(values?.content[0]?.durationMinutes),
-          duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
-          status: courseData?.data?.status as any,
-          active: courseData?.data?.active,
-          is_published: courseData?.data?.is_published,
-          created_by: courseData?.data?.instructor_uuid,
-          lesson_number: values?.number,
-          lesson_sequence: `Lesson ${values?.number}`,
-        },
-        params: { path: { courseUuid: courseId as string } },
-      },
+    const createBodyLesson = {
+      course_uuid: courseId as string,
+      title: values?.title,
+      description: values?.description as string,
+      learning_objectives: values?.objectives as string,
+      duration_hours: Number(values?.content[0]?.durationHours),
+      duration_minutes: Number(values?.content[0]?.durationMinutes),
+      duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
+      status: course?.status as any,
+      active: course?.active,
+      is_published: course?.is_published,
+      created_by: course?.instructor_uuid,
+      lesson_number: values?.number,
+      lesson_sequence: `Lesson ${values?.number}`,
+    };
+
+    createLessonMutation(
+      { body: createBodyLesson, uuid: courseId as string },
       {
         onSuccess: lessonResponse => {
-          const lessonUuid = lessonResponse?.data?.uuid;
+          const lessonUuid = lessonResponse?.data?.data?.uuid as string;
 
           if (!lessonUuid) {
             toast.error('Lesson uuid missing from response.');
             return;
           }
 
-          createLessonContentMutation.mutate(
+          const createContentBody = {
+            lesson_uuid: lessonUuid as string,
+            content_type_uuid: values.content[0]?.contentUuid ?? '',
+            title: values?.title,
+            description: values?.description ?? '',
+            content_text: values.content[0]?.value || '',
+            file_url: '',
+            file_size_bytes: 157200,
+            mime_type: values.content[0]?.value || '',
+            display_order: values?.number,
+            is_required: true,
+            created_by: 'instructor@sarafrika.com',
+            updated_by: 'instructor@sarafrika.com',
+            file_size_display: '',
+            // content_category: values.contentCategory,
+            // is_downloadable: true,
+            // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
+          };
+
+          createLessonContentMutation(
             {
-              body: {
-                lesson_uuid: lessonUuid as string,
-                content_type_uuid: values.content[0]?.contentUuid ?? '',
-                title: values?.title,
-                description: values?.description ?? '',
-                content_text: values.content[0]?.value || '',
-                file_url: '',
-                file_size_bytes: 157200,
-                mime_type: values.content[0]?.value || '',
-                display_order: values?.number,
-                is_required: true,
-                created_by: 'instructor@sarafrika.com',
-                updated_by: 'instructor@sarafrika.com',
-                file_size_display: '',
-                // content_category: values.contentCategory,
-                // is_downloadable: true,
-                // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
-              },
-              params: { path: { courseUuid: courseId as string, lessonUuid: lessonUuid } },
+              body: createContentBody,
+              uuid: courseId as string,
+              lessonUuid: lessonUuid,
             },
             {
-              onSuccess: data => {
+              onSuccess: (data: any) => {
                 toast.success('Lesson content created successfully.');
                 refetch();
                 onCancel();
@@ -889,11 +907,7 @@ function LessonCreationForm({
             Cancel
           </Button>
           <Button type='submit' className='w-[120px]'>
-            {createLessonMutation.isPending || createLessonContentMutation.isPending ? (
-              <Spinner />
-            ) : (
-              'Create Lesson'
-            )}
+            {createLessonIsPending || createLessonContentIsPending ? <Spinner /> : 'Create Lesson'}
           </Button>
         </div>
       </form>
@@ -933,14 +947,14 @@ function LessonEditingForm({
   //   resolver: zodResolver(lessonFormSchema),
   //   defaultValues: {
   //     // @ts-ignore
-  //     number: "",
-  //     title: "",
-  //     description: "",
-  //     content: [{ contentType: "TEXT", title: "" }],
+  //     number: '',
+  //     title: '',
+  //     description: '',
+  //     content: [{ contentType: 'TEXT', title: '' }],
   //     resources: [],
   //     ...initialValues,
   //   },
-  // })
+  // });
 
   const {
     fields: contentFields,
@@ -1300,8 +1314,7 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
   // )
 
   const onSubmit = async (values: AssessmentFormValues) => {
-    console.log('✅ Assessment created:', values);
-    console.log('✅ Assessment created for courseID:', courseId);
+    // courseId; values;
 
     onCancel();
   };
@@ -1544,4 +1557,4 @@ function AssessmentDialog({
   );
 }
 
-export { LessonDialog, EditLessonDialog, AssessmentDialog, LessonList };
+export { AssessmentDialog, EditLessonDialog, LessonDialog, LessonList };

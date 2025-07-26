@@ -2073,21 +2073,6 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
       .readonly()
       .optional(),
-    is_archived: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is archived and no longer available.')
-      .readonly()
-      .optional(),
-    is_in_review: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
-      .readonly()
-      .optional(),
-    is_draft: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
-      .readonly()
-      .optional(),
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total course duration.')
@@ -2116,6 +2101,21 @@ export const zCourse = z
       .describe(
         '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
       )
+      .readonly()
+      .optional(),
+    is_archived: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is archived and no longer available.')
+      .readonly()
+      .optional(),
+    is_in_review: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    is_draft: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
       .readonly()
       .optional(),
   })
@@ -7398,24 +7398,23 @@ export const zGetPendingInvitationsForUserResponse = zApiResponseListInvitation;
 export const zSearchData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
-  query: z
-    .object({
-      page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
-      size: z
-        .number()
-        .int()
-        .gte(1)
-        .describe('The size of the page to be returned')
-        .optional()
-        .default(20),
-      sort: z
-        .array(z.string())
-        .describe(
-          'Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
-        )
-        .optional(),
-    })
-    .optional(),
+  query: z.object({
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
+    size: z
+      .number()
+      .int()
+      .gte(1)
+      .describe('The size of the page to be returned')
+      .optional()
+      .default(20),
+    sort: z
+      .array(z.string())
+      .describe(
+        'Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+      )
+      .optional(),
+  }),
 });
 
 /**
@@ -7443,24 +7442,23 @@ export const zGetProfileImageResponse = z.string().describe('Profile image retri
 export const zSearch1Data = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
-  query: z
-    .object({
-      page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
-      size: z
-        .number()
-        .int()
-        .gte(1)
-        .describe('The size of the page to be returned')
-        .optional()
-        .default(20),
-      sort: z
-        .array(z.string())
-        .describe(
-          'Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
-        )
-        .optional(),
-    })
-    .optional(),
+  query: z.object({
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
+    size: z
+      .number()
+      .int()
+      .gte(1)
+      .describe('The size of the page to be returned')
+      .optional()
+      .default(20),
+    sort: z
+      .array(z.string())
+      .describe(
+        'Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+      )
+      .optional(),
+  }),
 });
 
 /**
@@ -7502,7 +7500,7 @@ export const zSearchStudentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -7585,7 +7583,7 @@ export const zSearchQuizzesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -7612,7 +7610,7 @@ export const zSearchQuestionsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -7639,7 +7637,7 @@ export const zSearchAttemptsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -7765,7 +7763,7 @@ export const zSearchTrainingProgramsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -7787,7 +7785,7 @@ export const zSearchProgramRequirementsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -7885,7 +7883,7 @@ export const zSearchProgramEnrollmentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -7912,7 +7910,7 @@ export const zSearchProgramCoursesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8097,24 +8095,23 @@ export const zGetBranchUsersByDomainResponse = zApiResponseListUser;
 export const zSearch2Data = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
-  query: z
-    .object({
-      page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
-      size: z
-        .number()
-        .int()
-        .gte(1)
-        .describe('The size of the page to be returned')
-        .optional()
-        .default(20),
-      sort: z
-        .array(z.string())
-        .describe(
-          'Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
-        )
-        .optional(),
-    })
-    .optional(),
+  query: z.object({
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
+    size: z
+      .number()
+      .int()
+      .gte(1)
+      .describe('The size of the page to be returned')
+      .optional()
+      .default(20),
+    sort: z
+      .array(z.string())
+      .describe(
+        'Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+      )
+      .optional(),
+  }),
 });
 
 /**
@@ -8177,7 +8174,7 @@ export const zSearchSkillsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8204,7 +8201,7 @@ export const zSearchInstructorsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8231,7 +8228,7 @@ export const zSearchMembershipsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8258,7 +8255,7 @@ export const zSearchExperienceData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8285,7 +8282,7 @@ export const zSearchEducationData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8312,7 +8309,7 @@ export const zSearchDocumentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8421,7 +8418,7 @@ export const zSearchCoursesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8448,7 +8445,7 @@ export const zSearchRequirementsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8520,7 +8517,7 @@ export const zSearchLessonsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8577,7 +8574,7 @@ export const zSearchEnrollmentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8604,7 +8601,7 @@ export const zSearchLessonContentData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8661,7 +8658,7 @@ export const zSearchCategoryMappingsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8688,7 +8685,7 @@ export const zSearchAssessmentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8743,7 +8740,7 @@ export const zSearchContentTypesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8807,7 +8804,7 @@ export const zSearchCategoriesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8858,7 +8855,7 @@ export const zSearchCertificateTemplatesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -8911,7 +8908,7 @@ export const zSearchCertificatesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -9036,7 +9033,7 @@ export const zSearchSubmissionsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()
@@ -9063,7 +9060,7 @@ export const zSearchAssignmentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.object({}).describe('Optional search parameters for filtering'),
     page: z.number().int().gte(0).describe('Zero-based page index (0..N)').optional().default(0),
     size: z
       .number()

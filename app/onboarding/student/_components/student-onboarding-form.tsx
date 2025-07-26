@@ -1,8 +1,9 @@
 'use client';
 
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -13,22 +14,18 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Users, CheckCircle2 } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ReactNode, useState } from 'react';
-import { schemas } from '@/services/api/zod-client';
-import { useSession } from 'next-auth/react';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import useMultiMutations from '@/hooks/use-multi-mutations';
-import { UUID } from 'crypto';
 import { useUser } from '@/context/user-context';
+import useMultiMutations from '@/hooks/use-multi-mutations';
+import { cn } from '@/lib/utils';
+import { tanstackClient } from '@/services/api/tanstack-client';
+import { schemas } from '@/services/api/zod-client';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { UUID } from 'crypto';
+import { format } from 'date-fns';
+import { CalendarIcon, CheckCircle2, Users } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 const ProfileSchema = z.object({
   user: schemas.User.merge(
@@ -55,7 +52,6 @@ export function StudentOnboardingForm() {
   /* const session = useSession()
   const user = session.data?.user; */
   const user = useUser();
-  console.log('User', user);
 
   const form = useForm<ProfileType>({
     resolver: zodResolver(ProfileSchema),
@@ -98,8 +94,9 @@ export function StudentOnboardingForm() {
     });
   }
 
-  console.log('Validation errors', form.formState.errors);
-  console.log('API errors', errors);
+  // form.formState.errors;
+  // errors;
+
   const watchDob = form.watch('user.dob');
 
   const isAdult = (() => {

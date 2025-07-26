@@ -1,8 +1,7 @@
-import React from 'react';
-import { fetchClient } from '@/services/api/fetch-client';
-import InstructorsPage from './_components/InstructorsPage';
 import ErrorPage from '@/components/ErrorPage';
+import { fetchClient } from '@/services/api/fetch-client';
 import { sampleInstructors } from '../overview/sample-admin-data';
+import InstructorsPage from './_components/InstructorsPage';
 
 export default async function Page() {
   const response = await fetchClient.GET('/api/v1/instructors', {
@@ -17,7 +16,6 @@ export default async function Page() {
   });
 
   if (response.error) {
-    console.error(response);
     return (
       <ErrorPage
         message={response.error.message || 'Something went wrong while fetching instructors'}

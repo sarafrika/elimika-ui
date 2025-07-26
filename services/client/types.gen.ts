@@ -1287,18 +1287,6 @@ export type Course = {
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the course is archived and no longer available.
-   */
-  readonly is_archived?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course is currently under review.
-   */
-  readonly is_in_review?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course is still in draft mode.
-   */
-  readonly is_draft?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
   readonly total_duration_display?: string;
@@ -1318,6 +1306,18 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is archived and no longer available.
+   */
+  readonly is_archived?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently under review.
+   */
+  readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is still in draft mode.
+   */
+  readonly is_draft?: boolean;
 };
 
 export type ApiResponseCourse = {
@@ -9406,7 +9406,13 @@ export type GetPendingInvitationsForUserResponse =
 export type SearchData = {
   body?: never;
   path?: never;
-  query?: {
+  query: {
+    /**
+     * Optional search parameters for filtering
+     */
+    searchParams: {
+      [key: string]: unknown;
+    };
     /**
      * Zero-based page index (0..N)
      */
@@ -9482,7 +9488,13 @@ export type GetProfileImageResponse = GetProfileImageResponses[keyof GetProfileI
 export type Search1Data = {
   body?: never;
   path?: never;
-  query?: {
+  query: {
+    /**
+     * Optional search parameters for filtering
+     */
+    searchParams: {
+      [key: string]: unknown;
+    };
     /**
      * Zero-based page index (0..N)
      */
@@ -9571,8 +9583,11 @@ export type SearchStudentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -9725,8 +9740,11 @@ export type SearchQuizzesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -9770,8 +9788,11 @@ export type SearchQuestionsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -9815,8 +9836,11 @@ export type SearchAttemptsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10049,8 +10073,11 @@ export type SearchTrainingProgramsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10093,8 +10120,11 @@ export type SearchProgramRequirementsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10264,8 +10294,11 @@ export type SearchProgramEnrollmentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10311,8 +10344,11 @@ export type SearchProgramCoursesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10619,7 +10655,13 @@ export type GetBranchUsersByDomainResponse =
 export type Search2Data = {
   body?: never;
   path?: never;
-  query?: {
+  query: {
+    /**
+     * Optional search parameters for filtering
+     */
+    searchParams: {
+      [key: string]: unknown;
+    };
     /**
      * Zero-based page index (0..N)
      */
@@ -10769,8 +10811,11 @@ export type SearchSkillsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10814,8 +10859,11 @@ export type SearchInstructorsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10860,8 +10908,11 @@ export type SearchMembershipsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10906,8 +10957,11 @@ export type SearchExperienceData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10951,8 +11005,11 @@ export type SearchEducationData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -10996,8 +11053,11 @@ export type SearchDocumentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11218,8 +11278,11 @@ export type SearchCoursesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11263,8 +11326,11 @@ export type SearchRequirementsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11386,8 +11452,11 @@ export type SearchLessonsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11477,8 +11546,11 @@ export type SearchEnrollmentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11523,8 +11595,11 @@ export type SearchLessonContentData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11615,8 +11690,11 @@ export type SearchCategoryMappingsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11662,8 +11740,11 @@ export type SearchAssessmentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11750,8 +11831,11 @@ export type SearchContentTypesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11891,8 +11975,11 @@ export type SearchCategoriesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -11998,8 +12085,11 @@ export type SearchCertificateTemplatesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -12111,8 +12201,11 @@ export type SearchCertificatesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -12413,8 +12506,11 @@ export type SearchSubmissionsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)
@@ -12459,8 +12555,11 @@ export type SearchAssignmentsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional search parameters for filtering
+     */
     searchParams: {
-      [key: string]: string;
+      [key: string]: unknown;
     };
     /**
      * Zero-based page index (0..N)

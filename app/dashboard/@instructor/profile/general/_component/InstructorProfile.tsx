@@ -1,15 +1,17 @@
 'use client';
 
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
+import ImageSelector, { ImageType } from '@/components/image-selector';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -19,13 +21,9 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarIcon } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn, profilePicSvg } from '@/lib/utils';
-import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -33,17 +31,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { schemas } from '@/services/api/zod-client';
-import { components, Instructor } from '@/services/api/schema';
-import { useMutation, UseMutationResult, useMutationState } from '@tanstack/react-query';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import useMultiMutations from '@/hooks/use-multi-mutations';
-import { UUID } from 'crypto';
 import Spinner from '@/components/ui/spinner';
-import { appStore } from '@/store/app-store';
-import { useSession } from 'next-auth/react';
-import ImageSelector, { ImageType } from '@/components/image-selector';
+import { Textarea } from '@/components/ui/textarea';
+import useMultiMutations from '@/hooks/use-multi-mutations';
+import { cn, profilePicSvg } from '@/lib/utils';
 import { fetchClient } from '@/services/api/fetch-client';
+import { Instructor } from '@/services/api/schema';
+import { tanstackClient } from '@/services/api/tanstack-client';
+import { schemas } from '@/services/api/zod-client';
+import { appStore } from '@/store/app-store';
+import { UUID } from 'crypto';
+import { CalendarIcon } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 const generalProfileSchema = z.object({
@@ -140,11 +139,9 @@ export default function InstructorProfile({
 
       if (resp.error) {
         //@ts-ignore
-        console.log(resp.error.error);
-        //@ts-ignore
         toast(resp.error.message);
       } else {
-        console.log('Image Upload Data', resp.data);
+        // resp.data;
         // data!.user.profile_image_url = resp.data?.profile_image_url;
       }
     }

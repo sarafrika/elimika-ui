@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Instructor } from '@/services/api/schema';
 import { Badge } from '@/components/ui/badge';
+import { Instructor } from '@/services/api/schema';
 import { useRouter } from 'next/navigation';
-import InstructorsList from './InstructorsList';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import InstructorDetailsPanel from './InstructorDetailsPanel';
 import InstructorMobileModal from './InstructorMobileModal';
+import InstructorsList from './InstructorsList';
 
 type Props = {
   instructors: Instructor[];
@@ -40,7 +41,7 @@ export default function InstructorsPage({ instructors }: Props) {
 
       router.refresh();
     } catch (error) {
-      console.error('Error approving instructor:', error);
+      toast.error('Error approving instructor:', error as any);
     }
   };
 
@@ -54,7 +55,7 @@ export default function InstructorsPage({ instructors }: Props) {
 
       router.refresh();
     } catch (error) {
-      console.error('Error rejecting instructor:', error);
+      toast.error('Error rejecting instructor:', error as any);
     }
   };
 
@@ -87,7 +88,7 @@ export default function InstructorsPage({ instructors }: Props) {
 
   const handleInstructorDelete = (instructor: Instructor) => {
     // Handle delete logic here
-    console.log('Delete instructor:', instructor.uuid);
+    // instructor.uuid;
   };
 
   // Filter and sort instructors

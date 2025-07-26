@@ -1,22 +1,14 @@
 'use client';
 
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import Link from 'next/link';
-import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from 'lucide-react';
 import {
-  ClassFormValues,
-  CreateClassDialog,
-  EditClassDialog,
-} from '../_components/class-management-form';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -26,6 +18,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import {
+  ClassFormValues,
+  CreateClassDialog,
+  EditClassDialog,
+} from '../_components/class-management-form';
 
 // Mock classes data
 const draftClasses = {
@@ -198,7 +198,10 @@ export default function ClassesPage() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         variant='destructive'
-                        onClick={() => console.log('deleting class with id:', cls.uuid)}
+                        onClick={() =>
+                          // cls.uuid
+                          {}
+                        }
                       >
                         <TrashIcon className='mr-2 h-4 w-4' />
                         Delete

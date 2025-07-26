@@ -1,7 +1,7 @@
-import { Instructor } from '@/services/api/schema';
-import { ReactNode, useEffect, useState, createContext, useContext } from 'react';
-import { useUser } from './user-context';
 import { search } from '@/services/api/actions';
+import { Instructor } from '@/services/api/schema';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { useUser } from './user-context';
 
 const InstructrorContext = createContext<Instructor | null>(null);
 export default function InstructorProvider({ children }: { children: ReactNode }) {

@@ -1,8 +1,7 @@
-import React from 'react';
-import OrganizationsPage from './_components/OrganizationsPage';
-import { fetchClient } from '@/services/api/fetch-client';
 import ErrorPage from '@/components/ErrorPage';
+import { fetchClient } from '@/services/api/fetch-client';
 import { sampleOrganizations } from '../overview/sample-admin-data';
+import OrganizationsPage from './_components/OrganizationsPage';
 
 export default async function Page() {
   const response = await fetchClient.GET('/api/v1/organisations', {
@@ -15,7 +14,6 @@ export default async function Page() {
     },
   });
   if (response.error) {
-    console.error(response.error);
     return (
       <ErrorPage
         message={response.error.message || 'Something went wrong while fetching organizations'}

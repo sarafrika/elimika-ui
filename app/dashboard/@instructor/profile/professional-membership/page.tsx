@@ -1,10 +1,10 @@
 'use client';
-import { useInstructor } from '@/context/instructor-context';
-import ProfessionalBodySettings from './_component/MembershipForm';
-import { useEffect, useState } from 'react';
-import { InstructorProfessionalMembership } from '@/services/api/schema';
-import { fetchClient } from '@/services/api/fetch-client';
 import Spinner from '@/components/ui/spinner';
+import { useInstructor } from '@/context/instructor-context';
+import { fetchClient } from '@/services/api/fetch-client';
+import { InstructorProfessionalMembership } from '@/services/api/schema';
+import { useEffect, useState } from 'react';
+import ProfessionalBodySettings from './_component/MembershipForm';
 
 export default function InstructorMemebershipPage() {
   const instructor = useInstructor();
@@ -39,7 +39,9 @@ export default function InstructorMemebershipPage() {
           }}
         />
       ) : (
-        <Spinner />
+        <div className='flex items-center justify-center'>
+          <Spinner />
+        </div>
       )}
     </>
   );

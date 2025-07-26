@@ -1,6 +1,8 @@
 'use client';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import {
   Table,
   TableBody,
@@ -9,8 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 import { tanstackClient } from '@/services/api/tanstack-client';
 
 const studentsData = [
@@ -131,7 +131,6 @@ export default function StudentsPage() {
       },
     },
   });
-  console.log(data, 'students');
 
   const studentId = '';
   const { data: studentData } = tanstackClient.useQuery('get', '/api/v1/students/{uuid}', {
@@ -141,7 +140,6 @@ export default function StudentsPage() {
       },
     },
   });
-  console.log(studentData, 'single student');
 
   return (
     <div className='space-y-6 p-4 md:p-10'>

@@ -94,7 +94,7 @@ export default function CoursesPage() {
 
   const onSubmit = (data: CoursesFormValues) => {
     // TODO: Implement submission logic
-    console.log(data);
+    // data;
   };
 
   return (
