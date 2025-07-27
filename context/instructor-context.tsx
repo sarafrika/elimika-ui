@@ -1,23 +1,11 @@
-import { search } from '@/services/api/actions';
 import { Instructor } from '@/services/api/schema';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { useUser } from './user-context';
+import { createContext, ReactNode, useContext } from 'react';
+import { useUserProfile } from './profile-context';
 
 const InstructrorContext = createContext<Instructor | null>(null);
 export default function InstructorProvider({ children }: { children: ReactNode }) {
-  const user = useUser();
-  const [instructor, setInstructor] = useState(null);
-
-  useEffect(() => {
-    if (user) {
-      search('/api/v1/instructors/search', { user_uuid_eq: user?.uuid }).then(result => {
-        if (result.length > 0) {
-          setInstructor(result[0]);
-        }
-      });
-    }
-  }, [user]);
-  return <InstructrorContext.Provider value={instructor}>{children}</InstructrorContext.Provider>;
+  const user = useUserProfile();
+  return <InstructrorContext.Provider value={user!.instructor as Instructor}>{children}</InstructrorContext.Provider>;
 }
 
 export function useInstructor() {

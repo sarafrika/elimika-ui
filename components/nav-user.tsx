@@ -4,6 +4,7 @@
 import { ChevronsUpDown, LogOut } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,11 +17,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { signOut, useSession } from 'next-auth/react';
-import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
 import { MenuItem } from '@/lib/menu';
 import { useUserStore } from '@/store/use-user-store';
+import { signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 type NavUserProps = {
   items: MenuItem[];
@@ -107,7 +107,7 @@ export function NavUser({ items }: NavUserProps) {
                 ))}
                 <div
                   className='flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600'
-                  onClick={async () => await signOut()}
+                  onClick={async () => await signOut().then(() => sessionStorage.removeItem("profile"))}
                 >
                   <LogOut className='size-4' />
                   <span>Log out</span>

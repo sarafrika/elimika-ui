@@ -24,17 +24,22 @@ import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
-import { Instructor, InstructorProfessionalMembership } from '@/services/api/schema';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { schemas } from '@/services/api/zod-client';
+import { useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
+import { useUserProfile } from '../../../../../../context/profile-context';
+import { InstructorProfessionalMembership } from '../../../../../../services/client';
+import { addInstructorMembershipMutation, updateInstructorMembershipMutation } from '../../../../../../services/client/@tanstack/react-query.gen';
+import { zInstructorProfessionalMembership } from '../../../../../../services/client/zod.gen';
 
-const InstructorMembershipSchema = schemas.InstructorProfessionalMembership.merge(
+const InstructorMembershipSchema = zInstructorProfessionalMembership.omit({
+  created_date: true,
+  updated_date: true,
+  updated_by: true
+}).merge(
   z.object({
     start_date: z.date(),
-    end_date: z.date(),
-    created_date: z.string().optional(),
+    end_date: z.date()
   })
 );
 const professionalMembershipSchema = z.object({
@@ -44,13 +49,7 @@ const professionalMembershipSchema = z.object({
 type InstructorMembershipType = z.infer<typeof InstructorMembershipSchema>;
 type ProfessionalMembershipFormValues = z.infer<typeof professionalMembershipSchema>;
 
-export default function ProfessionalBodySettings({
-  instructor,
-  instructorMembership,
-}: {
-  instructor: Instructor;
-  instructorMembership: InstructorProfessionalMembership[];
-}) {
+export default function ProfessionalBodySettings() {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -65,6 +64,10 @@ export default function ProfessionalBodySettings({
     ]);
   }, [replaceBreadcrumbs]);
 
+  const user = useUserProfile();
+  const { instructor, invalidateQuery } = user!;
+  const instructorMembership = instructor?.membership as Omit<InstructorProfessionalMembership, "created_date" | "updated_date" | "created_by">[]
+
   const defaultMemebership: InstructorMembershipType = {
     organization_name: 'Tech Experts Inc.',
     membership_number: 'MEM-12345',
@@ -73,7 +76,7 @@ export default function ProfessionalBodySettings({
     is_active: false,
     // certificate_url: "https://example.com/certificate",
     summary: 'Active member of the tech community.',
-    instructor_uuid: instructor.uuid!,
+    instructor_uuid: instructor!.uuid!,
   };
 
   const passMember = (mem: InstructorProfessionalMembership) => ({
@@ -105,14 +108,8 @@ export default function ProfessionalBodySettings({
     name: 'professional_bodies',
   });
 
-  const addMemMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/instructors/{instructorUuid}/memberships'
-  );
-  const updateMemMutation = tanstackClient.useMutation(
-    'put',
-    '/api/v1/instructors/{instructorUuid}/memberships/{membershipUuid}'
-  );
+  const addMemMutation = useMutation(addInstructorMembershipMutation());
+  const updateMemMutation = useMutation(updateInstructorMembershipMutation());
   const { errors, submitting } = useMultiMutations([addMemMutation, updateMemMutation]);
 
   const onSubmit = (data: ProfessionalMembershipFormValues) => {
@@ -125,29 +122,38 @@ export default function ProfessionalBodySettings({
         end_date: mem.end_date.toISOString(),
       };
       if (memData.uuid) {
-        updateMemMutation.mutate({
-          params: {
-            path: {
-              instructorUuid: instructor.uuid!,
-              membershipUuid: memData.uuid,
-            },
+        await updateMemMutation.mutateAsync({
+          path: {
+            instructorUuid: instructor!.uuid!,
+            membershipUuid: memData.uuid,
           },
-          body: memData,
+          body: {
+            ...memData,
+            start_date: new Date(memData.start_date),
+            end_date: new Date(memData.end_date)
+          },
         });
       } else {
         const resp = await addMemMutation.mutateAsync({
-          params: {
-            path: {
-              instructorUuid: instructor.uuid!,
-            },
+          path: {
+            instructorUuid: instructor!.uuid!,
           },
-          body: memData,
+          body: {
+            ...memData,
+            start_date: new Date(memData.start_date),
+            end_date: new Date(memData.end_date)
+          },
         });
 
         if (!resp.error) {
           const memberships = form.getValues('professional_bodies');
+          //@ts-ignore
           memberships[index] = passMember(resp.data!);
           form.setValue('professional_bodies', memberships);
+        }
+
+        if (index === data.professional_bodies.length - 1) {
+          invalidateQuery!()
         }
       }
     });

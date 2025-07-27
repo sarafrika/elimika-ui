@@ -27,7 +27,6 @@ export async function createUser(user: User, userDomain: UserDomain, profileImag
 
     return (await response.json()) as ApiResponse<User>;
   } catch (error) {
-    //console.log('Error occurred while creating user', error);
     throw new Error('Something went wrong while creating user');
   }
 }
@@ -47,7 +46,6 @@ export async function updateUser(user: User) {
 
     return (await response.json()) as ApiResponse<User>;
   } catch (error) {
-    //console.log('Error occurred while updating user', error);
     throw new Error('Something went wrong while updating user');
   }
 }
@@ -70,7 +68,6 @@ export async function fetchUsers(page: number = 0, searchParams?: string) {
 
     return (await response.json()) as ApiResponseWithPagination<User>;
   } catch (error) {
-    //console.log('Error fetching users:', error);
     throw new Error('Something went wrong while fetching users. Please contact support.');
   }
 }
@@ -91,7 +88,6 @@ export async function fetchTrainingCenters(page: number, params?: string) {
 
     return (await response.json()) as ApiResponseWithPagination<TrainingCenter>;
   } catch (error) {
-    //console.log('Error fetching training centers:', error);
     throw new Error(
       'Something went wrong while fetching training centers. Please contact support.'
     );
