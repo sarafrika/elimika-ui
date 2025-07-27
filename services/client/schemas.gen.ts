@@ -2660,24 +2660,6 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
-    is_archived: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is archived and no longer available.',
-      example: false,
-      readOnly: true,
-    },
-    is_in_review: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is currently under review.',
-      example: false,
-      readOnly: true,
-    },
-    is_draft: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
-      example: false,
-      readOnly: true,
-    },
     total_duration_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of total course duration.',
@@ -2709,6 +2691,24 @@ export const CourseSchema = {
       description:
         '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
       example: true,
+      readOnly: true,
+    },
+    is_archived: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course is archived and no longer available.',
+      example: false,
+      readOnly: true,
+    },
+    is_in_review: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course is currently under review.',
+      example: false,
+      readOnly: true,
+    },
+    is_draft: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
+      example: false,
       readOnly: true,
     },
   },

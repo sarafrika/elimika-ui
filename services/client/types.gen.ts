@@ -1290,18 +1290,6 @@ export type Course = {
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the course is archived and no longer available.
-   */
-  readonly is_archived?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course is currently under review.
-   */
-  readonly is_in_review?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course is still in draft mode.
-   */
-  readonly is_draft?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
   readonly total_duration_display?: string;
@@ -1321,6 +1309,18 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is archived and no longer available.
+   */
+  readonly is_archived?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently under review.
+   */
+  readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is still in draft mode.
+   */
+  readonly is_draft?: boolean;
 };
 
 export type ApiResponseCourse = {

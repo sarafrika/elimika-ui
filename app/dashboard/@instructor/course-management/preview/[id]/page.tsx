@@ -1,20 +1,25 @@
 'use client';
 
-import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
-import Spinner from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
-import { DialogTitle } from '@radix-ui/react-dialog';
-import { useParams, useRouter } from 'next/navigation';
-import { useInstructor } from '@/context/instructor-context';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { CheckCircle, Clock, Users, Video } from 'lucide-react';
-import RichTextRenderer from '@/components/editors/richTextRenders';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
-import { Dialog, DialogContent, DialogHeader, DialogFooter } from '@/components/ui/dialog';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog';
+import Spinner from '@/components/ui/spinner';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useInstructor } from '@/context/instructor-context';
+import { getCourseByUuid, getCourseLessons } from '@/services/client';
+import {
+  getCourseByUuidQueryKey,
+  getCourseLessonsQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
+import { DialogTitle } from '@radix-ui/react-dialog';
+import { useQuery } from '@tanstack/react-query';
+import { CheckCircle, Clock, Users } from 'lucide-react';
+import Image from 'next/image';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function CoursePreviewPage() {
   const params = useParams();
@@ -45,37 +50,46 @@ export default function CoursePreviewPage() {
     router.push(`/dashboard/course-management/create-new-course?id=${courseId}`);
   };
 
-  const { data: courseDetail, isLoading } = tanstackClient.useQuery(
-    'get',
-    '/api/v1/courses/{uuid}',
-    {
-      params: { path: { uuid: courseId as string } },
-      onSuccess: (data: any) => {
-        toast.success(data?.message);
-      },
-    }
-  );
-  const course = courseDetail?.data;
+  const { data: courseDetail, isLoading } = useQuery({
+    queryKey: [getCourseByUuidQueryKey],
+    queryFn: () => getCourseByUuid({ path: { uuid: courseId as string } }),
+    enabled: !!courseId,
+  });
+  // @ts-ignore
+  const course = courseDetail?.data?.data;
 
-  const { data: courseLessons } = tanstackClient.useQuery(
-    'get',
-    '/api/v1/courses/{courseUuid}/lessons',
-    {
-      params: { path: { courseUuid: courseId as string }, query: { pageable: {} } },
-    }
-  );
+  const { data: courseLessons } = useQuery({
+    queryKey: [getCourseLessonsQueryKey],
+    queryFn: () => getCourseLessons({ path: { courseUuid: courseId as string } }),
+    enabled: !!courseId,
+  });
 
   if (isLoading)
     return (
-      <div className='mt-10 flex items-center justify-center'>
-        <Spinner />
+      <div className="flex flex-col gap-4 text-[12px] sm:text-[14px]">
+        <div className="h-20 bg-gray-200 rounded animate-pulse w-full"></div>
+        <div className='mt-10 flex items-center justify-center'>
+          <Spinner />
+        </div>
+        <div className="h-16 bg-gray-200 rounded animate-pulse w-full"></div>
+        <div className="h-12 bg-gray-200 rounded animate-pulse w-full"></div>
+
       </div>
+
     );
 
   return (
     <div className='mx-auto max-w-4xl space-y-8 p-4'>
+      <div>
+        <Image src={course?.banner_url as string} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
+      </div>
+
       <div className='space-y-4'>
-        <h1 className='text-4xl font-bold tracking-tight md:max-w-[90%]'>{course?.name}</h1>
+        <div className='flex flex-row gap-2 items-center' >
+          <Image src={course?.thumbnail_url as string} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
+
+          <h1 className='text-4xl font-bold tracking-tight md:max-w-[90%]'>{course?.name}</h1>
+        </div>
         <div className='px-4 py-4'>
           <HTMLTextPreview htmlContent={course?.description as string} />
         </div>
@@ -100,10 +114,9 @@ export default function CoursePreviewPage() {
               <ul className='grid grid-cols-1'>
                 <li className='flex items-start gap-2'>
                   <span className='min-h-4 min-w-4'>
-                    🎯
-                    {/* <CheckCircle className="mt-1 h-4 w-4 text-green-500" /> */}
+                    <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
                   </span>
-                  <div className='-mt-[43px]'>
+                  <div className=''>
                     <HTMLTextPreview htmlContent={course?.objectives as string} />
                   </div>
                 </li>
@@ -115,7 +128,7 @@ export default function CoursePreviewPage() {
             </CardHeader>
             <CardContent>
               <div className='-mt-2 flex flex-col gap-2 space-y-4'>
-                {courseLessons?.data?.content
+                {courseLessons?.data?.data?.content
                   ?.slice()
                   ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
                   ?.map((lesson: any, i: any) => (
