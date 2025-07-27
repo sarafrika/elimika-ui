@@ -17,36 +17,38 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { schemas } from '@/services/api/zod-client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { UUID } from 'crypto';
 import { format } from 'date-fns';
 import { CalendarIcon, CheckCircle2, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { useUserProfile } from '../../../../context/profile-context';
+import { createStudentMutation, updateUserMutation } from '../../../../services/client/@tanstack/react-query.gen';
+import { zStudent, zUser } from '../../../../services/client/zod.gen';
 
 const ProfileSchema = z.object({
-  user: schemas.User.merge(
+  user: zUser.omit({
+    updated_date: true,
+    created_date: true,
+    middle_name: true,
+    profile_image_url: true
+  }).merge(
     z.object({
       dob: z.date(),
-      update_date: z.null().optional(),
-      phone_number: z.string().optional(),
-      middle_name: z.string().optional(),
-      profile_image_url: z.string().optional(),
-      updated_by: z.string().optional(),
-      created_date: z.string().optional(),
-      updated_date: z.string().optional(),
     })
   ),
-  student: schemas.Student,
+  student: zStudent.omit({
+    created_date: true,
+    updated_date: true
+  }),
 });
 
 type ProfileType = z.infer<typeof ProfileSchema>;
-type UserSchema = z.infer<typeof schemas.User>;
 
 export function StudentOnboardingForm() {
   //StudentOnboardingFormProps
@@ -61,13 +63,8 @@ export function StudentOnboardingForm() {
     defaultValues: {
       user: {
         ...user,
-        dob: new Date(user?.dob ?? Date.now()),
-        middle_name: '',
-        phone_number: '',
-        profile_image_url: '',
-        updated_by: user!.updated_by ?? '',
-        created_date: (new Date(user!.created_date ?? Date.now())).toISOString(),
-        updated_date: (new Date(user!.updated_date ?? Date.now())).toISOString()
+        dob: new Date(user!.dob ?? Date.now()),
+        phone_number: user!.phone_number ?? ""
       },
       student: {
         user_uuid: user!.uuid,
@@ -75,39 +72,36 @@ export function StudentOnboardingForm() {
     },
   });
 
-  const userMutaion = tanstackClient.useMutation('put', '/api/v1/users/{uuid}');
-  const studentMutation = tanstackClient.useMutation('post', '/api/v1/students');
+  const userMutaion = useMutation(updateUserMutation());
+  const studentMutation = useMutation(createStudentMutation());
   const { errors, submitting } = useMultiMutations([userMutaion, studentMutation]);
 
-  function onSubmit(data: ProfileType) {
+  async function onSubmit(data: ProfileType) {
     // Update user
-    userMutaion.mutate({
-      params: {
-        path: { uuid: user!.uuid as UUID },
-      },
+    const userResp = await userMutaion.mutateAsync({
+      path: { uuid: user!.uuid as UUID },
       body: {
-        phone_number: '',
         ...data.user,
-        dob: data.user.dob.toISOString(),
         user_domain: ['student'],
       },
-    }, {
-      onSuccess: async (resp) => {
-        user!.invalidateQuery!()
-      }
     });
 
-    studentMutation.mutate({
-      body: data.student
-    }, {
-      onError: (error) => {
+    if (userResp.error) {
+      const { error } = userResp.error! as unknown as { error: any }
+      //@ts-ignore
+      Object.keys(error).forEach(key => form.setError(`user.${key}`, error[key]));
+      return
+    }
 
-      }
-    })
+    await studentMutation.mutateAsync({
+      body: data.student
+    });
+
+    toast.success("Student created successfully");
+    await user!.invalidateQuery!();
+    router.push("/dashboard/overview")
   }
 
-  // //console.log('Validation errors', form.formState.errors);
-  //console.log('API errors', errors);
   const watchDob = form.watch('user.dob');
 
   const isAdult = (() => {
