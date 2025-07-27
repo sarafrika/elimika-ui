@@ -33,43 +33,31 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn, profilePicSvg } from '@/lib/utils';
-import { fetchClient } from '@/services/api/fetch-client';
-import { Instructor } from '@/services/api/schema';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { schemas } from '@/services/api/zod-client';
-import { appStore } from '@/store/app-store';
-import { UUID } from 'crypto';
+import { zInstructor, zUser } from "@/services/client/zod.gen";
 import { CalendarIcon } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import { useUserProfile } from '../../../../../../context/profile-context';
+import { createInstructor, updateInstructor, updateUser, uploadProfileImage } from '../../../../../../services/client';
+import { client } from '../../../../../../services/client/client.gen';
 
 const generalProfileSchema = z.object({
-  user: schemas.User.merge(
-    z.object({
-      dob: z.date(),
-      created_date: z.string().optional().readonly(),
-      updated_date: z.string().optional().readonly(),
-    })
-  ),
-  instructor: schemas.Instructor.merge(
-    z.object({
-      created_date: z.string().optional().readonly(),
-      updated_date: z.string().optional().readonly(),
-    })
-  ),
+  user: zUser.omit({
+    created_date: true,
+    updated_date: true,
+    updated_by: true,
+    user_domain: true
+  }).merge(z.object({ dob: z.date() })),
+  instructor: zInstructor.omit({
+    created_date: true,
+    updated_date: true,
+    updated_by: true
+  })
 });
 
-type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>;
+type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>
 
-export default function InstructorProfile({
-  user,
-  instructor,
-}: {
-  user: z.infer<typeof schemas.User>;
-  instructor?: Instructor | null;
-}) {
+export default function InstructorProfile() {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -84,98 +72,101 @@ export default function InstructorProfile({
     ]);
   }, [replaceBreadcrumbs]);
 
+  const user = useUserProfile();
+  const { instructor, invalidateQuery } = user!;
+
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
   const [profilePic, setProfilePic] = useState<ImageType>({
-    url: user.profile_image_url ?? profilePicSvg,
+    url: user!.profile_image_url ?? profilePicSvg,
   });
-
-  const { data: session, update } = useSession();
-  const updateSession = update;
-  const instructorStore = appStore();
 
   const form = useForm<GeneralProfileFormValues>({
     resolver: zodResolver(generalProfileSchema),
     defaultValues: {
       user: {
         ...user,
-        dob: new Date(user.dob ?? Date.now()),
-        user_domain: ['instructor'],
-        profile_image_url: user.profile_image_url || profilePicSvg,
+        dob: new Date(user!.dob ?? Date.now()),
+        profile_image_url: user!.profile_image_url ?? "https://profilepic.jpg"
       },
       instructor: {
         ...instructor,
         latitude: -1.2921,
         longitude: 36.8219,
-        full_name: `${user.first_name} ${user.last_name}`,
-        user_uuid: user.uuid,
-        updated_by: user.uuid,
+        full_name: `${user!.first_name} ${user!.last_name}`,
+        user_uuid: user!.uuid,
         formatted_location: '-1.292100, 36.821900',
       },
     },
   });
 
-  // console.log(form.formState.errors)
+  const [submitting, setSubmitting] = useState(false);
+  async function onSubmit(updatedProfileData: GeneralProfileFormValues) {
+    setSubmitting(true);
 
-  // Mutations
-  const userMutation = tanstackClient.useMutation('put', '/api/v1/users/{uuid}');
-  const instructorMutation = tanstackClient.useMutation('put', '/api/v1/instructors/{uuid}');
-  const { errors, submitting } = useMultiMutations([userMutation, instructorMutation]);
-
-  async function onSubmit(data: GeneralProfileFormValues) {
-    /** Upload profile picture */
+    let uploadProfilePicResp;
     if (profilePic.file) {
       const fd = new FormData();
       const fileName = `${crypto.randomUUID()}${profilePic.file.name}`;
       fd.append('profile_image', profilePic.file as Blob, fileName);
-      //@ts-ignore
-      const resp = await fetchClient.PUT('/api/v1/users/{uuid}/profile-image', {
-        params: {
-          path: {
-            uuid: user.uuid as UUID,
-          },
-        },
-        // @ts-ignore
-        body: fd,
-      });
 
-      if (resp.error) {
+      client.put({
+        url: ""
+      })
+      uploadProfilePicResp = await uploadProfileImage({
+        path: {
+          userUuid: user!.uuid!
+        },
         //@ts-ignore
-        //console.log(resp.error.error);
-        //@ts-ignore
-        toast(resp.error.message);
-      } else {
-        //console.log('Image Upload Data', resp.data);
-        // data!.user.profile_image_url = resp.data?.profile_image_url;
-      }
+        body: fd,
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      })
     }
 
-    userMutation.mutate({
-      params: {
+    const manageInstructor = () => instructor ?
+      updateInstructor({
         path: {
-          uuid: user.uuid as UUID,
+          uuid: instructor.uuid!
         },
-      },
-      body: {
-        ...data.user,
-        dob: data.user.dob.toISOString(),
-        user_domain: [
-          ...(user.user_domain ? new Set([...user.user_domain, 'instructor']) : ['instructor']),
-        ] as ('student' | 'instructor' | 'admin' | 'organisation_user')[],
-      },
-    });
+        body: updatedProfileData.instructor
+      }) : createInstructor({
+        body: updatedProfileData.instructor
+      })
 
-    instructorMutation.mutate({
-      params: {
+
+    const response = await Promise.all([
+      updateUser({
         path: {
-          uuid: instructor!.uuid as UUID,
+          uuid: user!.uuid!
         },
-      },
-      body: data.instructor,
-    });
+        body: {
+          ...updatedProfileData.user,
+          profile_image_url: uploadProfilePicResp && !uploadProfilePicResp.error ?
+            uploadProfilePicResp.data!.profile_image_url : user!.profile_image_url
+        }
+      }),
 
-    await updateSession({ ...session, user: { ...user, ...data.user } });
-    await instructorStore.softUpdate('instructor', { ...instructor, ...data.instructor });
+      manageInstructor()
+    ]);
+    setSubmitting(false);
+    let hasErrors = false;
+
+    response.forEach((resp, i) => {
+      if (resp.error) {
+        const { error } = resp.error as { error: any }
+        Object.keys(error).forEach(key => {
+          const fieldName = `${i === 0 ? 'user' : 'instructor'}.${key}` as any;
+          form.setError(fieldName, error[key])
+        });
+        hasErrors = true;
+      }
+    });
+    if (hasErrors) return;
+
+    toast.success("Profile updated successfully");
+    await invalidateQuery!();
   }
 
   return (
@@ -198,7 +189,7 @@ export default function InstructorProfile({
                   <Avatar className='bg-primary-50 h-24 w-24'>
                     <AvatarImage src={profilePic.url} alt='Avatar' />
                     <AvatarFallback className='bg-blue-50 text-xl text-blue-600'>
-                      {`${user.first_name[0]?.toUpperCase()}${user.last_name[0]?.toUpperCase()}`}
+                      {`${user!.first_name.length > 0 ? user!.first_name[0]?.toUpperCase() : ""}${user!.last_name.length > 0 ? user!.last_name[0]?.toUpperCase() : ""}`}
                     </AvatarFallback>
                   </Avatar>
                   <div className='space-y-2'>
@@ -365,7 +356,7 @@ export default function InstructorProfile({
                   />
                   <div className='flex-1 space-y-2'>
                     <Label>Email Address</Label>
-                    <Input placeholder='name@example.com' readOnly value={user.email} disabled />
+                    <Input placeholder='name@example.com' readOnly value={user!.email} disabled />
                     <p className='text-muted-foreground text-[0.8rem]'>
                       Contact support to change your email address
                     </p>

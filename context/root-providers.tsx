@@ -1,10 +1,11 @@
 'use client';
 
-import { SessionProvider, useSession } from 'next-auth/react';
-import { ReactNode, useEffect } from 'react';
+import { useUserStore } from '@/store/use-user-store';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { useUserStore } from '@/store/use-user-store';
+import { SessionProvider, useSession } from 'next-auth/react';
+import { ReactNode, useEffect } from 'react';
+import UserProfileProvider from './profile-context';
 import UserContextProvider from './user-context';
 
 function UserFetcher({ children }: { children: ReactNode }) {
@@ -36,7 +37,11 @@ export function RootProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         {/* <UserFetcher /> */}
-        <UserContextProvider>{children}</UserContextProvider>
+        <UserContextProvider>
+          <UserProfileProvider>
+            {children}
+          </UserProfileProvider>
+        </UserContextProvider>
       </SessionProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

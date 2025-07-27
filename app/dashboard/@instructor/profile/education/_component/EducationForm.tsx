@@ -27,11 +27,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
+import { useUserProfile } from '@/context/profile-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
-import { fetchClient } from '@/services/api/fetch-client';
-import { Instructor, InstructorEducation } from '@/services/api/schema';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { schemas } from '@/services/api/zod-client';
+import { InstructorEducation } from '@/services/api/schema';
+import { deleteInstructorEducation } from '@/services/client';
+import { addInstructorEducationMutation, updateInstructorEducationMutation } from '@/services/client/@tanstack/react-query.gen';
+import { zInstructorEducation } from "@/services/client/zod.gen";
+import { useMutation } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -45,19 +47,19 @@ const DEGREE_OPTIONS = {
   Other: 'Other',
 } as const;
 
-const edSchema = schemas.InstructorEducation.merge(
+const edSchema = zInstructorEducation.omit({
+  created_date: true,
+  updated_date: true,
+  updated_by: true
+}).merge(
   z.object({
     uuid: z.string().optional(),
     field_of_study: z.string(),
     year_started: z.string(),
-    year_completed: z.string().optional(),
-    current: z.boolean().optional(),
-    education_uuid: z.string().optional(),
-    created_date: z.string().optional().readonly(),
-    updated_date: z.string().optional().readonly(),
-    updated_by: z.string().optional().readonly(),
+    year_completed: z.string().optional()
   })
 );
+
 const educationSchema = z.object({
   educations: z.array(edSchema),
 });
@@ -65,13 +67,7 @@ const educationSchema = z.object({
 type EducationFormValues = z.infer<typeof educationSchema>;
 type EdType = z.infer<typeof edSchema>;
 
-export default function EducationSettings({
-  instructor,
-  instructorEducation,
-}: {
-  instructor: Instructor;
-  instructorEducation: InstructorEducation[];
-}) {
+export default function EducationSettings() {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -86,25 +82,27 @@ export default function EducationSettings({
     ]);
   }, [replaceBreadcrumbs]);
 
+  const user = useUserProfile();
+  const { instructor, invalidateQuery } = user!
+  const instructorEducation = instructor!.educations as Omit<InstructorEducation, "created_date" | "updated_date">[];
+
   const defaultEducation: EdType = {
     school_name: 'University of Nairobi',
     qualification: "Bachelor's",
     field_of_study: 'Computer Science',
     year_started: '2018',
-    year_completed: '2022',
-    current: false,
+    year_completed: "2022",
+    is_recent_qualification: false,
     full_description: 'Graduated with First Class Honours.',
     certificate_number: 'CERT12345',
     instructor_uuid: instructor ? (instructor.uuid as string) : crypto.randomUUID(),
   };
 
-  const passEducation = (ed: InstructorEducation) => ({
+  const passEducation = (ed: Omit<InstructorEducation, "created_date" | "updated_date">) => ({
     ...defaultEducation,
     ...ed,
-    updated_date: ed.updated_date ?? new Date().toISOString(),
-    updated_by: 'self',
     year_completed: ed.year_completed?.toString(),
-    instructor_uuid: instructor.uuid!,
+    instructor_uuid: instructor!.uuid!,
   });
 
   const form = useForm<EducationFormValues>({
@@ -126,25 +124,15 @@ export default function EducationSettings({
 
   //console.log(form.formState.errors);
 
-  const addEdMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/instructors/{instructorUuid}/education'
-  );
-  const updateMutation = tanstackClient.useMutation(
-    'put',
-    '/api/v1/instructors/{instructorUuid}/education/{educationUuid}'
-  );
+  const addEdMutation = useMutation(addInstructorEducationMutation());
+  const updateMutation = useMutation(updateInstructorEducationMutation());
   const { errors, submitting } = useMultiMutations([addEdMutation, updateMutation]);
 
-  // const [submitting, setSubmitting] = useState(false);
   const onSubmit = async (data: EducationFormValues) => {
-    //console.log('instructor', instructor);
-    //console.log(data);
-    // TODO: Implement submission logic
-    // setSubmitting(true)
+
     data.educations.forEach(async (ed, index) => {
       const options = {
-        params: { path: { instructorUuid: instructor!.uuid as string } },
+        path: { instructorUuid: instructor!.uuid as string },
         //@ts-ignore
         body: { ...ed, year_completed: Number(ed.year_completed) },
       };
@@ -155,16 +143,15 @@ export default function EducationSettings({
         eds[index] = passEducation(resp.data!);
         form.setValue('educations', eds);
       } else {
-        updateMutation.mutate({
+        updateMutation.mutateAsync({
           ...options,
-          params: {
-            path: {
-              ...options.params.path,
-              educationUuid: ed.uuid,
-            },
+          path: {
+            ...options.path,
+            educationUuid: ed.uuid,
           },
         });
       }
+      invalidateQuery!();
     });
   };
 
@@ -174,22 +161,16 @@ export default function EducationSettings({
       const edUUID = form.getValues('educations')[index]!.uuid;
       remove(index);
       if (edUUID) {
-        const resp = await fetchClient.DELETE(
-          '/api/v1/instructors/{instructorUuid}/education/{educationUuid}',
-          {
-            params: {
-              path: {
-                instructorUuid: instructor.uuid!,
-                educationUuid: edUUID,
-              },
-            },
+        const resp = await deleteInstructorEducation({
+          path: {
+            educationUuid: edUUID,
+            instructorUuid: instructor!.uuid!
           }
-        );
-        if (resp.error) {
-          //console.log(resp.error);
-          return;
-        }
+        });
+        if (resp.error) return;
       }
+
+      invalidateQuery!();
       toast('Education removed successfully');
     }
   }
@@ -349,7 +330,7 @@ export default function EducationSettings({
                               <div className='mt-2'>
                                 <FormField
                                   control={form.control}
-                                  name={`educations.${index}.is_complete`}
+                                  name={`educations.${index}.is_recent_qualification`}
                                   render={({ field }) => (
                                     <FormItem className='flex flex-row items-center space-x-2'>
                                       <FormControl>

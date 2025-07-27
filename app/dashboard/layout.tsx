@@ -23,6 +23,7 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
     }
 
     const user = await getUserByEmail(session.user.email);
+
     if (!user) {
       return redirect('/');
     }
@@ -40,9 +41,6 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       {}
     );
     const currentDashboard = userDashboards[defaultDomain ?? 'student'] ?? props.children;
-    //console.log('userDomains', currentDashboard);
-
-    // //console.log(user);
 
     if (orgAdminDomains.includes('organisation_user')) {
       return (
@@ -55,7 +53,7 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
                 {/* Main content area */}
                 <div className='flex w-full flex-1 flex-col'>
                   <DashboardTopBar showToggle={false} />
-                  {props.children}
+                  {props.organisation}
                 </div>
               </div>
             </BreadcrumbProvider>
