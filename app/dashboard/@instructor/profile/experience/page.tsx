@@ -1,10 +1,10 @@
 'use client';
 
-import { useInstructor } from '@/context/instructor-context';
-import { useEffect, useState } from 'react';
-import { InstructorEducation, InstructorExperience } from '@/services/api/schema';
 import Spinner from '@/components/ui/spinner';
+import { useInstructor } from '@/context/instructor-context';
 import { fetchClient } from '@/services/api/fetch-client';
+import { InstructorExperience } from '@/services/api/schema';
+import { useEffect, useState } from 'react';
 import ProfessionalExperienceSettings from './_component/InstructorExperienceForm';
 
 export default function InstructoEducationPage() {
@@ -39,7 +39,9 @@ export default function InstructoEducationPage() {
           }}
         />
       ) : (
-        <Spinner />
+        <div className='flex items-center justify-center'>
+          <Spinner />
+        </div>
       )}
     </>
   );
