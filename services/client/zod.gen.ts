@@ -20,13 +20,6 @@ export const zGenderEnum = z
   );
 
 /**
- * Domain roles that define the user's functional areas within the system
- */
-export const zItemsEnum = z
-  .enum(['student', 'instructor', 'admin', 'organisation_user'])
-  .describe("Domain roles that define the user's functional areas within the system");
-
-/**
  * Complete user profile information including personal details, authentication, and organizational data
  */
 export const zUser = z
@@ -104,7 +97,13 @@ export const zUser = z
       )
       .optional(),
     gender: zGenderEnum.optional(),
-    user_domain: z.array(zItemsEnum).optional(),
+    user_domain: z
+      .array(z.string())
+      .describe(
+        "**[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values."
+      )
+      .readonly()
+      .optional(),
     profile_image_url: z
       .string()
       .url()
@@ -730,20 +729,6 @@ export const zProgramRequirement = z
       .describe('**[READ-ONLY]** Indicates if the requirement is optional (not mandatory).')
       .readonly()
       .optional(),
-    requirement_priority: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Priority level of the requirement based on type and mandatory status.'
-      )
-      .readonly()
-      .optional(),
-    requirement_summary: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.'
-      )
-      .readonly()
-      .optional(),
     requirement_category: z
       .string()
       .describe(
@@ -751,10 +736,24 @@ export const zProgramRequirement = z
       )
       .readonly()
       .optional(),
+    requirement_priority: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Priority level of the requirement based on type and mandatory status.'
+      )
+      .readonly()
+      .optional(),
     compliance_level: z
       .string()
       .describe(
         '**[READ-ONLY]** Compliance level indicating how strictly the requirement must be followed.'
+      )
+      .readonly()
+      .optional(),
+    requirement_summary: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.'
       )
       .readonly()
       .optional(),
@@ -836,16 +835,16 @@ export const zProgramCourse = z
       )
       .readonly()
       .optional(),
-    has_prerequisites: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this course has prerequisite requirements.')
-      .readonly()
-      .optional(),
     association_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the course association based on requirement status.'
       )
+      .readonly()
+      .optional(),
+    has_prerequisites: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this course has prerequisite requirements.')
       .readonly()
       .optional(),
     sequence_display: z
@@ -1308,6 +1307,11 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
     formatted_duration: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
@@ -1346,11 +1350,6 @@ export const zInstructorProfessionalMembership = z
       .describe(
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -1472,6 +1471,11 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+      .readonly()
+      .optional(),
     duration_in_months: z
       .number()
       .int()
@@ -1509,11 +1513,6 @@ export const zInstructorExperience = z
     calculated_years: z
       .number()
       .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -1618,6 +1617,11 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .readonly()
+      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
@@ -1642,11 +1646,6 @@ export const zInstructorEducation = z
     formatted_completion: z
       .string()
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -3882,6 +3881,11 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
+    time_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .readonly()
+      .optional(),
     attempt_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
@@ -3890,11 +3894,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    time_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
       .readonly()
       .optional(),
   })
@@ -4027,14 +4026,14 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -4362,14 +4361,14 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z

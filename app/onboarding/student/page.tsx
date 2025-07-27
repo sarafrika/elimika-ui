@@ -1,7 +1,6 @@
 'use client';
 
 import Loading from '@/components/Loading';
-import { useUser } from '@/context/user-context';
 import { schemas } from '@/services/api/zod-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -9,6 +8,7 @@ import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { StudentOnboardingForm } from './_components/student-onboarding-form';
+import { useUserProfile } from '../../../context/profile-context';
 
 const ProfileSchema = z.object({
   user: schemas.User,
@@ -23,7 +23,7 @@ export default function StudentOnboardingPage() {
   // const { user, isLoading } = useUserStore()
   // const { data: session, status } = useSession()
   // const user = session?.user;
-  const user = useUser();
+  const user = useUserProfile();
 
   const [isPending, startTransition] = useTransition();
 

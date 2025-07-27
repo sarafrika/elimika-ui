@@ -1,113 +1,11 @@
-'use client';
-
 import {
-  SharedOnboardingForm,
-  type SharedOnboardingFormData,
+  SharedOnboardingForm
 } from '@/app/onboarding/_components/shared-onboarding-form';
-import Loading from '@/components/Loading';
-import { useUser } from '@/context/user-context';
-import { fetchClient } from '@/services/api/fetch-client';
-import { getAuthToken } from '@/services/auth/get-token';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 export default function InstructorOnboardingPage() {
-  const router = useRouter();
-  /* const { data: session, status } = useSession()
-  const user = session!.user; */
-  const user = useUser();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (data: SharedOnboardingFormData) => {
-    setIsSubmitting(true);
-    try {
-      if (!user?.uuid || !user.email) {
-        toast.error('User information is missing. Please try logging in again.');
-        setIsSubmitting(false);
-        return;
-      }
-      // Split name into first and last
-      const fullName = user.full_name;
-      const firstName = fullName!.split(' ')[0]!;
-      const lastName = fullName!.split(' ').slice(1).join(' ') || firstName;
-      // Prepare user data for PUT
-      const userData = {
-        first_name: firstName,
-        last_name: lastName,
-        email: user.email,
-        phone_number: data.phone_number,
-        dob: data.date_of_birth?.toISOString().split('T')[0] || '',
-        username: user.first_name,
-        active: true,
-        user_domain: ['instructor'] as Array<
-          'student' | 'instructor' | 'admin' | 'organisation_user'
-        >,
-        // ...(user.middle_name && { middle_name: user.middle_name }),
-        // ...(user.organisation_uuid! && {
-        //   organisation_uuid: user.organisation_uuid!,
-        // }),
-        gender: mapGender(data.gender),
-      };
-      const authToken = await getAuthToken();
-      const userUpdateResponse = await fetchClient.PUT('/api/v1/users/{uuid}', {
-        params: {
-          path: { uuid: user.uuid },
-        },
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`,
-        },
-        // @ts-ignore
-        body: {
-          ...userData,
-          gender: mapGender(data.gender),
-        },
-      });
-      if (userUpdateResponse.error) {
-        throw new Error(userUpdateResponse.error.message || 'Failed to update user');
-      }
-      toast.success('Registration completed successfully!');
-      router.replace('/dashboard/overview');
-    } catch (error) {
-      //console.log('Error during registration:', error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to complete registration. Please try again.'
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  function mapGender(gender: string) {
-    switch (gender) {
-      case 'Male':
-        return 'MALE';
-      case 'Female':
-        return 'FEMALE';
-      case 'Other':
-        return 'OTHER';
-      case 'Prefer not to say':
-        return 'PREFER_NOT_TO_SAY';
-      default:
-        return undefined;
-    }
-  }
-
-  if (!user?.uuid) {
-    return <Loading />;
-  }
-
   return (
     <div className='min-h-screen bg-gray-50 py-8'>
-      <SharedOnboardingForm
-        userUuid={user.uuid}
-        userType='instructor'
-        isSubmitting={isSubmitting}
-        onSubmit={handleSubmit}
-      />
+      <SharedOnboardingForm userType='instructor' />
     </div>
   );
 }

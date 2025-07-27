@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useUser } from '@/context/user-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
 import { tanstackClient } from '@/services/api/tanstack-client';
@@ -28,7 +27,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { User } from '../../../../services/client';
+import { useUserProfile } from '../../../../context/profile-context';
 
 const ProfileSchema = z.object({
   user: schemas.User.merge(
@@ -55,7 +54,7 @@ export function StudentOnboardingForm() {
 
   const session = useSession()
   /* const user = session.data?.user; */
-  const user = useUser();
+  const user = useUserProfile();
 
   const form = useForm<ProfileType>({
     resolver: zodResolver(ProfileSchema),
@@ -94,16 +93,7 @@ export function StudentOnboardingForm() {
       },
     }, {
       onSuccess: async (resp) => {
-        // console.log(resp)
-        // const respData = resp.data as unknown as { data: { user: User } };
-        user?.updateSession({ ...resp.data, dob: new Date(resp.data!.dob) }! as User)
-        /* //console.log(resp)
-        await session
-          .update({ user: { ...session.data!.user, ...resp.data! } })
-        // .then(() => getSession());
-        // await client.post({ url: "/api/update-sesssion", body: {} });
-
-        router.push("/dashboard"); */
+        user!.invalidateQuery!()
       }
     });
 
@@ -111,7 +101,7 @@ export function StudentOnboardingForm() {
       body: data.student
     }, {
       onError: (error) => {
-        // console.log(error)
+
       }
     })
   }

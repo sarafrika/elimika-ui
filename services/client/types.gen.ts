@@ -57,7 +57,10 @@ export type User = {
    */
   keycloak_id?: string;
   gender?: GenderEnum;
-  user_domain?: Array<ItemsEnum>;
+  /**
+   * **[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values.
+   */
+  readonly user_domain?: Array<string>;
   /**
    * **[READ-ONLY]** URL to the user's profile image/avatar. Automatically generated after image upload and cannot be directly modified.
    */
@@ -462,21 +465,21 @@ export type ProgramRequirement = {
    */
   readonly is_optional?: boolean;
   /**
-   * **[READ-ONLY]** Priority level of the requirement based on type and mandatory status.
-   */
-  readonly requirement_priority?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.
-   */
-  readonly requirement_summary?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
    */
   readonly requirement_category?: string;
   /**
+   * **[READ-ONLY]** Priority level of the requirement based on type and mandatory status.
+   */
+  readonly requirement_priority?: string;
+  /**
    * **[READ-ONLY]** Compliance level indicating how strictly the requirement must be followed.
    */
   readonly compliance_level?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.
+   */
+  readonly requirement_summary?: string;
 };
 
 export type ApiResponseProgramRequirement = {
@@ -533,13 +536,13 @@ export type ProgramCourse = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this course has prerequisite requirements.
-   */
-  readonly has_prerequisites?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the course association based on requirement status.
    */
   readonly association_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this course has prerequisite requirements.
+   */
+  readonly has_prerequisites?: boolean;
   /**
    * **[READ-ONLY]** Formatted display of the course position within the program sequence.
    */
@@ -820,6 +823,10 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
@@ -849,10 +856,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -925,6 +928,10 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
@@ -953,10 +960,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
-  /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1017,6 +1020,10 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1033,10 +1040,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2589,6 +2592,10 @@ export type QuizAttempt = {
    */
   readonly grade_display?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   */
+  readonly time_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -2596,10 +2603,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -2701,13 +2704,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -3033,13 +3036,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -3374,21 +3377,6 @@ export const GenderEnum = {
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
  */
 export type GenderEnum = (typeof GenderEnum)[keyof typeof GenderEnum];
-
-/**
- * Domain roles that define the user's functional areas within the system
- */
-export const ItemsEnum = {
-  STUDENT: 'student',
-  INSTRUCTOR: 'instructor',
-  ADMIN: 'admin',
-  ORGANISATION_USER: 'organisation_user',
-} as const;
-
-/**
- * Domain roles that define the user's functional areas within the system
- */
-export type ItemsEnum = (typeof ItemsEnum)[keyof typeof ItemsEnum];
 
 /**
  * **[REQUIRED]** Quiz publication status in the content workflow.

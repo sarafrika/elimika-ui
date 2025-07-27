@@ -4,9 +4,6 @@ import { ClientOptions } from 'openapi-fetch';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { useUser } from './user-context';
-import { fetchClient } from '@/services/api/fetch-client';
-import { ApiResponse } from '@/services/api/schema';
 
 type DataType = { [key: string]: AllSchemaTypes | AllSchemaTypes[] | number } & {
   expires?: number;
@@ -51,7 +48,6 @@ const UserDataStoreContext = createContext<{
 }>({});
 export default function UserDataProvider({ children }: { children: ReactNode }) {
   const store = dataStore();
-  // const user = useUser();
   const [data, setData] = useState<DataType | undefined>(store.data);
 
   function configure<T>(

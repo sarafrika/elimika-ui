@@ -28,35 +28,31 @@ import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn, profilePicSvg } from '@/lib/utils';
 import { tanstackClient } from '@/services/api/tanstack-client';
 import { schemas } from '@/services/api/zod-client';
-import { appStore } from '@/store/app-store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UUID } from 'crypto';
 import { format } from 'date-fns';
 import { AlertCircleIcon, CalendarIcon } from 'lucide-react';
-import { getSession, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Student, User } from '../../../../../../services/client';
+import { useUserProfile } from '../../../../../../context/profile-context';
 import { zStudent, zUser } from '../../../../../../services/client/zod.gen';
 
-// //console.log(Object.values(schemas))
-
 const StudentProfileSchema = z.object({
-  user: zUser.merge(z.object({
-    created_date: z.string().optional().readonly(),
-    updated_date: z.string().optional().readonly(),
+  user: zUser.omit({
+    user_domain: true,
+    created_date: true,
+    updated_date: true
+  }).merge(z.object({
     dob: z.date(),
   })
   ),
 
-  student: zStudent.merge(z.object({
-    created_date: z.string().optional().readonly(),
-    updated_date: z.string().optional().readonly(),
-    updated_by: z.string().optional().readonly(),
-    // secondaryGuardianContact: z.string().optional(),
+  student: zStudent.omit({
+    created_date: true,
+    updated_date: true,
+    updated_by: true
   })
-  ),
 });
 
 type StudentType = z.infer<typeof schemas.Student>;
@@ -65,24 +61,15 @@ type StudentProfileType = z.infer<typeof StudentProfileSchema>;
 
 const UserFieldTypes = [];
 
-export default function StudentProfileGeneralForm({
-  user,
-  student
-  // profilePicBlob
-}: {
-  user: User;
-  student?: Student
-  // profilePicBlob?: Blob
-}) {
-  // //console.log("student", student)
+export default function StudentProfileGeneralForm() {
 
-  const session = useSession();
-  const appSrore = appStore();
+  const user = useUserProfile();
+  const { student } = user!
 
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
   const [profilePic, setProfilePic] = useState<ImageType>({
-    url: user.profile_image_url ?? profilePicSvg,
+    url: user!.profile_image_url ?? profilePicSvg,
   });
 
   /** For handling form */
@@ -91,19 +78,14 @@ export default function StudentProfileGeneralForm({
     defaultValues: {
       user: {
         ...user,
-        dob: new Date(user.dob ?? Date.now()),
-        profile_image_url: user.profile_image_url || profilePicSvg,
-        created_date: new Date(user.created_date!).toISOString(),
-        updated_date: new Date(user.updated_date!).toISOString()
+        dob: new Date(user!.dob ?? Date.now()),
+        profile_image_url: user!.profile_image_url || profilePicSvg
       },
       /** Students guardian data to be refactored to array */
       student: {
         ...student,
-        updated_by: student?.updated_by ?? '',
         secondaryGuardianContact: student?.secondaryGuardianContact ?? '',
-        user_uuid: user.uuid,
-        created_date: new Date(user.created_date!).toISOString(),
-        updated_date: new Date(user.updated_date!).toISOString()
+        user_uuid: user!.uuid
       },
     },
   });
@@ -122,7 +104,7 @@ export default function StudentProfileGeneralForm({
   if (errors && errors.length > 0) {
     errors.forEach(error => {
       Object.keys(error.error).forEach(k => {
-        if (k in user) {
+        if (k in user!) {
           const fieldName = `user.${k}`;
           // @ts-ignore
           form.setError(fieldName, error.error[k]);
@@ -134,7 +116,6 @@ export default function StudentProfileGeneralForm({
   const onSubmit = useCallback(
     async (data: StudentProfileType) => {
       resetErrors([]);
-      // //console.log(data)
 
       /** Upload profile picture */
       if (profilePic.file) {
@@ -144,7 +125,7 @@ export default function StudentProfileGeneralForm({
         profilePicUpload.mutate({
           params: {
             path: {
-              uuid: user.uuid as UUID,
+              uuid: user!.uuid as UUID,
             },
           },
           // @ts-ignore
@@ -155,31 +136,20 @@ export default function StudentProfileGeneralForm({
       // //console.log("after profile pic upload", datas![1]);
 
       /** update User */
-      userMutation.mutate({
+      await userMutation.mutateAsync({
         params: {
           path: {
-            uuid: user.uuid as UUID,
+            uuid: user!.uuid as UUID,
           },
         },
         body: {
           ...data.user,
-          dob: new Date(data.user.dob!).toISOString(),
-          user_domain: [
-            ...(user.user_domain ? new Set([...user.user_domain, 'student']) : ['student']),
-          ] as ('student' | 'instructor' | 'admin' | 'organisation_user')[],
+          dob: new Date(data.user.dob!).toISOString()
         },
-      }, {
-        onSuccess: async ({ data }) => {
-          await session
-            .update({ ...session.data, user: { ...data!, dob: new Date(data!.dob) } as User })
-            .then(() => getSession())
-        }
       });
 
-      // //console.log(data.student)
-
       /** Update student */
-      updateStudentMutation.mutate({
+      await updateStudentMutation.mutateAsync({
         params: {
           path: {
             uuid: student!.uuid as UUID,
@@ -188,10 +158,7 @@ export default function StudentProfileGeneralForm({
         body: data.student,
       });
 
-      // update localstorage
-      appSrore.softUpdate('student', { ...student, ...data.student });
-      // update session
-      await session.update({ user: data.user });
+      user!.invalidateQuery!();
     },
     [errors, datas]
   );
