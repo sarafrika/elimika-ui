@@ -1,10 +1,8 @@
 'use client';
 
-import * as z from 'zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
@@ -15,7 +13,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Grip, PlusCircle, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -23,14 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CheckSquare, Lightbulb, CalendarDays, X } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useProfileContext } from '@/context/profile-context';
 import { Skeleton } from '@/components/ui/skeleton';
-import React, { Suspense } from 'react';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CalendarDays, CheckSquare, Grip, Lightbulb, PlusCircle, Trash2, X } from 'lucide-react';
+import { Suspense, useEffect, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { useUserProfile } from '../../../../../context/profile-context';
 
 // Sample skills - this list can be expanded or fetched from an API
 const availableSkills = [
@@ -79,7 +77,8 @@ type EducationFormValues = z.infer<typeof educationSchema>;
 
 function EducationSettingsContent() {
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const { user, student, isLoading, refetch } = useProfileContext();
+  const user = useUserProfile()
+  const { student, invalidateQuery } = user!
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -129,7 +128,7 @@ function EducationSettingsContent() {
 
   const onSubmit = async (data: EducationFormValues) => {
     // TODO: Add mutation to save data
-    await refetch();
+    invalidateQuery!();
   };
 
   const skillPillClassesBase =
@@ -138,8 +137,6 @@ function EducationSettingsContent() {
   const skillPillUnselectedClasses = 'border-gray-300 bg-white text-gray-700';
   const buttonPrimaryClasses =
     'inline-flex items-center justify-center rounded-md border border-transparent bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2';
-
-  if (isLoading) return <EducationSettingsSkeleton />;
 
   return (
     <div className='space-y-6'>
@@ -209,11 +206,10 @@ function EducationSettingsContent() {
                     type='button'
                     key={skill}
                     onClick={() => handleSkillToggle(skill)}
-                    className={`${skillPillClassesBase} ${
-                      selectedSkills.includes(skill)
-                        ? skillPillSelectedClasses
-                        : skillPillUnselectedClasses
-                    }`}
+                    className={`${skillPillClassesBase} ${selectedSkills.includes(skill)
+                      ? skillPillSelectedClasses
+                      : skillPillUnselectedClasses
+                      }`}
                   >
                     {selectedSkills.includes(skill) && (
                       <CheckSquare className='mr-2 inline-block h-4 w-4' />

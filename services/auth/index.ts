@@ -1,7 +1,9 @@
 import NextAuth, { NextAuthConfig } from 'next-auth';
 import Keycloak from 'next-auth/providers/keycloak';
-import { search, searchInstructors, searchStudents } from '@/services/client';
 
+/**
+ * Decode JWT token to extract claims
+ */
 function decodeJWT(token: string) {
   try {
     const parts = token.split('.');
@@ -23,6 +25,7 @@ function decodeJWT(token: string) {
     );
     return JSON.parse(jsonPayload);
   } catch (error) {
+    //console.log('Error decoding JWT:', error);
     return {};
   }
 }
@@ -46,10 +49,12 @@ const config: NextAuthConfig = {
   ],
   callbacks: {
     async jwt({ token, account, user, session, trigger }) {
-      if (trigger === 'update') {
+
+      if (trigger === "update") {
         session.user = user;
       }
 
+      // Initial sign in
       if (account && user) {
         const decodedToken = decodeJWT(account.access_token!);
 
@@ -69,83 +74,49 @@ const config: NextAuthConfig = {
         };
       }
 
+      // Return previous token if the access token has not expired yet
       if (Date.now() < (token.accessTokenExpires as number)) {
         return token;
       }
 
-      return token;
+      // Access token has expired, try to update it
+      // return refreshAccessToken(token)   <-- Commenting this out as per your request
+      return token; // Just return the existing token without refresh
     },
     async session({ session, token }) {
       if (session.user) {
+        
+        // Include the user data from API
+        const searchEndpoint = `${process.env.NEXT_PUBLIC_API_URL}/users/search`;
         try {
-          const searchResp = await search({
-            query: {
-              searchParams: {
-                email_eq: session.user?.email,
-              },
+          const searchResp = await fetch(`${searchEndpoint}?email_eq=${session.user.email}`, {
+            next: { revalidate: token.exp },
+            headers: {
+              Authorization: `Bearer ${token.accessToken}`,
             },
-          });
+          }).then(r => r.json());
 
-          const userData = searchResp?.data?.data?.content?.[0];
-
-          if (userData) {
-            session.user = {
-              ...session.user,
-              ...userData,
-              id: token.id as string,
-              accessToken: token.accessToken as string,
-              id_token: token.id_token as string,
-            };
-
-            const domains = userData?.user_domain;
-
-            if (domains) {
-              for (const domain of domains) {
-                if (domain === 'student') {
-                  const studentSearch = await searchStudents({
-                    query: {
-                      searchParams: {
-                        user_uuid_eq: userData.uuid,
-                      },
-                    },
-                  });
-
-                  const studentData = studentSearch?.data?.content?.[0];
-                  if (studentData) {
-                    (session.user as any).studentData = studentData;
-                  }
-                }
-
-                if (domain === 'instructor') {
-                  const instructorSearch = await searchInstructors({
-                    query: {
-                      searchParams: {
-                        user_uuid_eq: userData.uuid,
-                      },
-                    },
-                  });
-
-                  const instructorData = instructorSearch?.data?.content?.[0];
-                  if (instructorData) {
-                    (session.user as any).instructorData = instructorData;
-                  }
-                }
-              }
-            }
-
-            console.log(session.user);
-          } else {
-            session.user.id = token.id as string;
-            session.user.accessToken = token.accessToken as string;
-            session.user.id_token = token.id_token as string;
-          }
+          const userDataResults = searchResp.data.content;
+          session.user = {
+            ...session.user,
+            ...userDataResults[0],
+            id: token.id as string,
+            accessToken: token.accessToken as string,
+            id_token: token.id_token as string,
+          };
         } catch (e) {
+          // //console.log("fetching data error", e);
           session.user.id = token.id as string;
           session.user.accessToken = token.accessToken as string;
           session.user.id_token = token.id_token as string;
         }
+
+        /* session.user.id = token.id as string */
+        session.user.accessToken = token.accessToken as string;
+        session.user.id_token = token.id_token as string;
       }
 
+      // Include decoded token information in session
       session.decoded = {
         ...token,
         realm_access: token.realm_access,
@@ -154,6 +125,7 @@ const config: NextAuthConfig = {
         'organisation-slug': token['organisation-slug'],
       };
 
+      // Include error state if token refresh failed
       if (token.error) {
         session.error = token.error as 'RefreshAccessTokenError';
       }
@@ -163,10 +135,15 @@ const config: NextAuthConfig = {
   },
   events: {
     async signOut(event) {
+      // Try to get ID token from either source
       let idToken: string | undefined;
+
+      // Check if event has token property (JWT strategy)
       if ('token' in event && event.token?.id_token) {
         idToken = event.token.id_token as string;
-      } else if ('session' in event && event.session) {
+      }
+      // Check if event has session property (database strategy)
+      else if ('session' in event && event.session) {
         const customSession = event.session as any;
         idToken = customSession.user?.id_token;
       }
@@ -189,6 +166,7 @@ const config: NextAuthConfig = {
             id_token_hint: idToken,
           }),
         });
+        //console.log('✅ Keycloak session cleared.');
       } catch (err) {
         console.warn('⚠️ Failed to logout Keycloak session', err);
       }
@@ -196,4 +174,4 @@ const config: NextAuthConfig = {
   },
 };
 
-export const { auth, handlers } = NextAuth(config);
+export const { auth, handlers, signIn, signOut } = NextAuth(config);

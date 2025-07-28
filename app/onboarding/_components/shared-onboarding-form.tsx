@@ -1,8 +1,8 @@
 'use client';
 
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -13,9 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Phone } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -23,51 +21,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { CalendarIcon, Phone } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { useUserProfile } from '../../../context/profile-context';
+import { createInstructor, createOrganisation, updateUser } from '../../../services/client';
+import { zUser } from '../../../services/client/zod.gen';
 
 const genders = ['Male', 'Female', 'Other', 'Prefer not to say'] as const;
 
 // Base schema for shared onboarding
-export const SharedOnboardingSchema = z.object({
-  user_uuid: z.string(),
-  date_of_birth: z.date({ required_error: 'Please enter your date of birth' }),
-  phone_number: z
-    .string()
-    .min(10, 'Phone number must be at least 10 digits')
-    .regex(/^\+?[\d\s-()]+$/, 'Please enter a valid phone number'),
-  gender: z.enum(genders, {
-    required_error: 'Please select a gender',
-  }),
-});
+export const SharedOnboardingSchema = zUser.omit({
+  created_date: true,
+  updated_date: true,
+  updated_by: true,
+  middle_name: true,
+  profile_image_url: true,
+  user_domain: true
+}).merge(z.object({
+  dob: z.date()
+}));
 
 export type SharedOnboardingFormData = z.infer<typeof SharedOnboardingSchema>;
 
-type UserType = 'instructor' | 'organisation';
-
-interface SharedOnboardingFormProps {
-  userUuid: string;
-  userType: UserType;
-  isSubmitting: boolean;
-  onSubmit: (data: SharedOnboardingFormData) => Promise<void>;
-}
-
 export function SharedOnboardingForm({
-  userUuid,
-  userType,
-  isSubmitting,
-  onSubmit,
-}: SharedOnboardingFormProps) {
+  userType
+}: {
+  userType: "instructor" | "student" | "organisation"
+}) {
+
+  const router = useRouter();
+  const user = useUserProfile();
+
   const form = useForm<SharedOnboardingFormData>({
     resolver: zodResolver(SharedOnboardingSchema),
     defaultValues: {
-      user_uuid: userUuid,
-      date_of_birth: undefined,
-      phone_number: '',
-      gender: 'Prefer not to say',
+      ...user,
+      dob: new Date(user?.dob ?? Date.now())
     },
   });
 
@@ -81,6 +77,52 @@ export function SharedOnboardingForm({
       : 'Complete your organisation profile to start offering courses on our platform';
   };
 
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const handleSubmit = async (profData: SharedOnboardingFormData) => {
+    setIsSubmitting(true);
+    try {
+
+      let createInstructorResp;
+
+      if (userType === "instructor") {
+        createInstructorResp = await createInstructor({
+          body: {
+            user_uuid: user!.uuid!
+          }
+        });
+      }
+      else if (userType === "organisation") {
+
+        createInstructorResp = await createOrganisation({
+          body: {
+            user_uuid: user!.uuid!,
+            name: "",
+            active: true
+          }
+        });
+      }
+
+      const updateUserResp = await updateUser({
+        path: {
+          uuid: user!.uuid!
+        },
+        body: profData
+      });
+
+      if (updateUserResp.error) {
+        throw new Error(updateUserResp.error.message || 'Failed to update user');
+      }
+      toast.success('Registration completed successfully!');
+      await user!.invalidateQuery!()
+      router.replace('/dashboard/overview');
+
+    }
+    catch (e) {
+      toast.error("Error submitting form");
+    }
+  };
+
   return (
     <div className='mx-auto max-w-2xl p-6'>
       <div className='mb-8 text-center'>
@@ -89,7 +131,7 @@ export function SharedOnboardingForm({
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
           {/* Date of Birth */}
           <Card>
             <CardHeader>
@@ -99,7 +141,7 @@ export function SharedOnboardingForm({
             <CardContent>
               <FormField
                 control={form.control}
-                name='date_of_birth'
+                name='dob'
                 render={({ field }) => (
                   <FormItem className='flex flex-col'>
                     <FormLabel>
@@ -189,7 +231,7 @@ export function SharedOnboardingForm({
                       </FormControl>
                       <SelectContent>
                         {genders.map(gender => (
-                          <SelectItem key={gender} value={gender}>
+                          <SelectItem key={gender} value={gender.toUpperCase()}>
                             {gender}
                           </SelectItem>
                         ))}

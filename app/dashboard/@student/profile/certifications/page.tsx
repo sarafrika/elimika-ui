@@ -22,7 +22,6 @@ import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useEffect } from 'react';
-import { useProfileContext } from '@/context/profile-context';
 import type { UserProfile, StudentProfile } from '../types';
 import { Skeleton } from '@/components/ui/skeleton';
 import React, { Suspense } from 'react';
@@ -43,12 +42,6 @@ type CertificationsFormValues = z.infer<typeof certificationsSchema>;
 
 function CertificationsSettingsContent() {
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const { user, student, isLoading, refetch } = useProfileContext() as {
-    user: UserProfile;
-    student: StudentProfile;
-    isLoading: boolean;
-    refetch: () => void;
-  };
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -76,10 +69,7 @@ function CertificationsSettingsContent() {
 
   const onSubmit = async (data: CertificationsFormValues) => {
     // TODO: Add mutation to save certifications
-    await refetch();
   };
-
-  if (isLoading) return <CertificationsSettingsSkeleton />;
 
   return (
     <div className='space-y-6'>

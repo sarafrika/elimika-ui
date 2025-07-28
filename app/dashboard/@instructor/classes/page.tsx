@@ -198,7 +198,7 @@ export default function ClassesPage() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         variant='destructive'
-                        onClick={() => { }} //console.log('deleting class with id:', cls.uuid)
+                        onClick={() => { }}
                       >
                         <TrashIcon className='mr-2 h-4 w-4' />
                         Delete

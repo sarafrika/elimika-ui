@@ -12,7 +12,6 @@ export const createClientConfig: CreateClientConfig = config => ({
       .join('&');
 
     const queryString = serialize(qp as { [key: string]: any });
-    //console.log('[Custom query]', queryString);
     return queryString;
   }
 });
