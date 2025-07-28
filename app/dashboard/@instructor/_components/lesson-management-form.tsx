@@ -37,7 +37,6 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { tanstackClient } from '@/services/api/tanstack-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   BookOpen,
@@ -69,7 +68,7 @@ import {
 import { toast } from 'sonner';
 import * as z from 'zod';
 
-import { addCourseLesson, addLessonContent, getAllContentTypes, getCourseByUuid } from '@/services/client';
+import { addCourseLesson, addLessonContent, getAllContentTypes, getCourseByUuid, updateCourseLesson, updateLessonContent } from '@/services/client';
 import {
   addCourseLessonQueryKey,
   getAllContentTypesQueryKey
@@ -493,7 +492,7 @@ function LessonList({
                   <div className='flex flex-col items-start'>
                     <h3 className='text-lg font-medium'>{lesson.title}</h3>
                     <div className='text-muted-foreground text-sm'>
-                      <RichTextRenderer htmlString={lesson?.description} maxChars={400} />
+                      <RichTextRenderer htmlString={lesson?.description} maxChars={150} />
                     </div>
                   </div>
                   <DropdownMenu>
@@ -605,7 +604,7 @@ interface AppLessonCreationFormProps {
   lessonId?: string | number;
   initialValues?: Partial<LessonFormValues>;
   refetch: any;
-  onSuccess?: (data: any) => void;
+  editSuccessRespones?: (data: any) => void;
 }
 
 function LessonCreationForm({
@@ -669,13 +668,7 @@ function LessonCreationForm({
     mutationKey: [addCourseLessonQueryKey],
     mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
       addCourseLesson({ body, path: { courseUuid: uuid } }),
-    // onSuccess: () => (queryClient.invalidateQueries({ queryKey: ["courses"] }))
-    onSuccess: (data) => {
-      queryClient.setQueryData(['courses'], (oldCourses = []) => {
-        return [data?.data?.data];
-      });
-    },
-
+    onSuccess: () => (queryClient.invalidateQueries({ queryKey: ["courses"] }))
   });
 
   const { mutate: createLessonContentMutation, isPending: createLessonContentIsPending } =
@@ -936,7 +929,7 @@ function LessonEditingForm({
   courseId,
   initialValues,
   lessonId,
-  onSuccess,
+  editSuccessRespones,
 }: AppLessonCreationFormProps) {
   const normalizedInitialValues = {
     ...initialValues,
@@ -989,18 +982,25 @@ function LessonEditingForm({
     name: 'resources',
   });
 
-  const { data: courseData } = tanstackClient.useQuery('get', '/api/v1/courses/{uuid}', {
-    // @ts-ignore
-    params: { path: { uuid: courseId } },
+  const useGetCourseById = () => {
+    return useQuery({
+      queryKey: ["course-id"],
+      queryFn: () => getCourseByUuid({ path: { uuid: courseId as string } }).then(res => res.data),
+    });
+  };
+  const { data: courseData } = useGetCourseById();
+
+  const updateLessonMutation = useMutation({
+    mutationFn: ({ body, courseId, lessonId }: { body: any; courseId: string, lessonId: string }) =>
+      updateCourseLesson({ body, path: { courseUuid: courseId, lessonUuid: lessonId } }),
+
   });
-  const updateLessonMutation = tanstackClient.useMutation(
-    'put',
-    '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}'
-  );
-  const updateLessonContentMutation = tanstackClient.useMutation(
-    'put',
-    '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content/{contentUuid}'
-  );
+
+  const updateLessonContentMutation = useMutation({
+    mutationFn: ({ body, courseId, lessonId, contentId }: { body: any; courseId: string, lessonId: string, contentId: string }) =>
+      updateLessonContent({ body, path: { courseUuid: courseId, lessonUuid: lessonId, contentUuid: contentId } }),
+
+  });
 
   const onSubmitEditLesson = (values: LessonFormValues) => {
     updateLessonMutation.mutate(
@@ -1009,7 +1009,7 @@ function LessonEditingForm({
           course_uuid: courseId as string,
           title: values?.title,
           description: values?.description ?? '',
-          learning_objectives: courseData?.data?.objectives,
+          learning_objectives: "",
           duration_hours: Number(values?.content[0]?.durationHours),
           duration_minutes: Number(values?.content[0]?.durationMinutes),
           duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
@@ -1022,61 +1022,52 @@ function LessonEditingForm({
           lesson_number: values?.number,
           lesson_sequence: `Lesson ${values?.number}`,
         },
-
-        params: {
-          // @ts-ignore
-          path: { courseUuid: courseId, lessonUuid: lessonId },
-        },
+        courseId: courseId as string,
+        lessonId: lessonId as string
       },
       {
-        onSuccess: data => {
-          toast.success(data?.message);
+        onSuccess: (data) => {
+          toast.success(data?.data?.message);
           onCancel();
 
-          if (typeof onSuccess === 'function') {
-            onSuccess(data?.data);
+          if (typeof editSuccessRespones === 'function') {
+            editSuccessRespones(data?.data);
           }
-        },
-      }
-    );
 
-    updateLessonContentMutation.mutate(
-      {
-        body: {
-          lesson_uuid: lessonId as string,
-          content_type_uuid: values.content[0]?.contentUuid as string,
-          title: values?.title,
-          description: values?.description ?? '',
-          content_text: values.content[0]?.value || '',
-          file_url: '',
-          file_size_bytes: 157200,
-          mime_type: values.content[0]?.value || '',
-          display_order: values?.number,
-          is_required: true,
-          created_by: 'instructor@sarafrika.com',
-          updated_by: 'instructor@sarafrika.com',
-          file_size_display: '',
-          // content_category: values.contentCategory,
-          // is_downloadable: true,
-          // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
-        },
+          updateLessonContentMutation.mutate(
+            {
+              body: {
+                lesson_uuid: lessonId as string,
+                content_type_uuid: values.content[0]?.contentUuid as string,
+                title: values?.title,
+                description: values?.description ?? '',
+                content_text: values.content[0]?.value || '',
+                file_url: '',
+                file_size_bytes: 157200,
+                mime_type: values.content[0]?.value || '',
+                display_order: values?.number,
+                is_required: true,
+                created_by: 'instructor@sarafrika.com',
+                updated_by: 'instructor@sarafrika.com',
+                file_size_display: '',
+              },
+              courseId: courseId as string,
+              lessonId: lessonId as string,
+              // @ts-ignore
+              contentId: initialValues?.content[0]?.uuid as string,
 
-        params: {
-          path: {
-            courseUuid: courseId as string,
-            lessonUuid: lessonId as string,
-            contentUuid: values?.content[0]?.contentUuid as string,
-          },
-        },
-      },
-      {
-        onSuccess: data => {
-          toast.success(data?.message);
-          onCancel();
+            },
+            {
+              onSuccess: data => {
+                toast.success(data?.data?.message);
+                onCancel();
 
-          if (typeof onSuccess === 'function') {
-            onSuccess(data?.data);
-          }
+                if (typeof editSuccessRespones === 'function') {
+                  editSuccessRespones(data?.data);
+                }
+              },
+            }
+          );
         },
       }
     );
@@ -1535,7 +1526,7 @@ function EditLessonDialog({
             initialValues={initialValues}
             onCancel={() => onOpenChange(false)}
             refetch={refetch}
-            onSuccess={onSuccess}
+            editSuccessRespones={onSuccess}
           />
         </ScrollArea>
       </DialogContent>

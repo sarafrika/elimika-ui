@@ -78,10 +78,21 @@ export default function PublishedCoursesPage() {
   const { mutate: unpublishCourseMutation, isPending } = useMutation({
     mutationKey: [getCourseByUuidQueryKey],
     mutationFn: ({ uuid }: { uuid: string }) => unpublishCourse({ path: { uuid } }),
-    onSuccess: (data: any) => {
-      toast.success(data?.message || 'Course unpublished');
-      queryClient.invalidateQueries({ queryKey: [getCourseByUuidQueryKey] });
+    onSettled(data) {
+      const errorObj = data?.error
+      const dataObj = data?.data
+
+      if (errorObj) {
+        // @ts-ignore
+        toast.error(errorObj?.message, errorObj?.error)
+        return
+      }
+
+      if (dataObj) {
+        toast.success(dataObj?.message)
+      }
     },
+
   });
 
   const publishedCourses = data?.data?.content || [];

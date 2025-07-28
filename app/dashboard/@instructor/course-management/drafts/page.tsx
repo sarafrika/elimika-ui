@@ -61,7 +61,7 @@ export default function CourseDraftsPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: [getCoursesByInstructorQueryKey, instructor?.uuid, page, size],
     queryFn: async () =>
       await searchCourses({
@@ -78,9 +78,10 @@ export default function CourseDraftsPage() {
   const { mutate: deleteCourseMutate, isPending } = useMutation({
     mutationKey: [getCourseByUuidQueryKey],
     mutationFn: ({ uuid }: { uuid: string }) => deleteCourse({ path: { uuid } }),
-    onSuccess: (data: any) => {
-      toast.success(data?.message || 'Course deleted');
-      queryClient.invalidateQueries({ queryKey: [getCourseByUuidQueryKey] });
+    onSuccess: () => {
+      refetch()
+      toast.success('Course deleted succcessfully');
+      queryClient.invalidateQueries({ queryKey: ["getAllCourses", "getCourseByUuid"] });
     },
   });
 
@@ -146,7 +147,7 @@ export default function CourseDraftsPage() {
                 {draftCourses?.map((course: any) => (
                   <TableRow key={course.uuid}>
                     <TableCell>
-                      <Image src={course?.thumbnail_url as string} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
+                      <Image src={course?.thumbnail_url as string || "/illustration.png"} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
                     </TableCell>
 
                     <TableCell className='font-medium'>

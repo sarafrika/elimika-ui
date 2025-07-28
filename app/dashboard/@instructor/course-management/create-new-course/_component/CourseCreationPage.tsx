@@ -89,7 +89,7 @@ export default function CourseCreationPage() {
       queryFn: () => getAllContentTypes().then(res => res.data),
     });
   };
-  const { data: contentTypeList } = useGetContentTypes();
+  const { data: contentTypeList, refetch: refetchContentTypes } = useGetContentTypes();
 
   // GetCourseById
   const useCourseById = (uuid?: string) => {
@@ -149,7 +149,7 @@ export default function CourseCreationPage() {
       staleTime: 5 * 60 * 1000,
     });
   };
-  const { data: courseLessons, refetch: refetchLessons } = useCourseLessons(resolveId);
+  const { data: courseLessons, refetch: refetchLessons, isLoading: lessonsIsLoading } = useCourseLessons(resolveId);
 
   // GetLesssonById
   const useLessonById = (courseUuid?: string, lessonUuid?: string) => {
@@ -260,10 +260,13 @@ export default function CourseCreationPage() {
     publishCourseMutation.mutate(
       { params: { path: { uuid: course?.data?.uuid as string } } },
       {
-        onSuccess: data => {
-          toast.success(data?.message);
+        onSuccess(data, variables, context) {
+          toast.success(data?.message)
           router.push('/dashboard/course-management/published');
         },
+        onError(error) {
+          // console.log(error)
+        }
       }
     );
   };
@@ -284,6 +287,7 @@ export default function CourseCreationPage() {
         onSuccess: () => {
           toast.success('Lesson deleted successfully');
           queryClient.invalidateQueries();
+          refetchCourse()
         },
       }
     );
@@ -321,9 +325,10 @@ export default function CourseCreationPage() {
             courseId={createdCourseId as string}
             editingCourseId={courseId as string}
             initialValues={courseInitialValues as any}
-            onSuccess={data => {
+            successResponse={data => {
               setCreatedCourseId(data?.uuid);
               refetchCourse();
+              refetchContentTypes()
             }}
           />
         </StepperContent>
@@ -338,8 +343,7 @@ export default function CourseCreationPage() {
         >
           <div className='space-y-4'>
             <LessonList
-              // isLoading={lessonsIsLoading}
-              isLoading={false}
+              isLoading={lessonsIsLoading}
               courseTitle={course?.data?.name as string}
               courseCategory={course?.data?.category_names}
               lessons={courseLessons?.data}
@@ -425,7 +429,7 @@ export default function CourseCreationPage() {
               {/* Course Information */}
               <section>
                 <div>
-                  <Image src={course?.data?.banner_url as string} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
+                  <Image src={course?.data?.banner_url as string || '/illustration.png'} alt='upload-banner' width={128} height={128} className='w-full max-h-[250px] bg-stone-300 mb-8 text-sm' />
                 </div>
 
                 <h3 className='mb-3 text-xl font-semibold text-gray-800'>📘 Course Information</h3>
