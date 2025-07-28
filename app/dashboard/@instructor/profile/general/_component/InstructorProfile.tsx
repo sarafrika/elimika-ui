@@ -6,70 +6,71 @@ import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { useMutation } from '@tanstack/react-query';
 
 import ImageSelector, { ImageType } from '@/components/image-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn, profilePicSvg } from '@/lib/utils';
-import { fetchClient } from '@/services/api/fetch-client';
-import { Instructor } from '@/services/api/schema';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { schemas } from '@/services/api/zod-client';
 import { appStore } from '@/store/app-store';
 import { UUID } from 'crypto';
 import { CalendarIcon } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import { updateInstructorMutation, updateUserMutation } from '@/services/client/@tanstack/react-query.gen';
+import { zInstructor, zUser } from '@/services/client/zod.gen';
+import { Instructor, User } from '@/services/client/types.gen';
 
-const generalProfileSchema = z.object({
-  user: schemas.User.merge(
-    z.object({
-      dob: z.date(),
-      created_date: z.string().optional().readonly(),
-      updated_date: z.string().optional().readonly(),
-    })
-  ),
-  instructor: schemas.Instructor.merge(
-    z.object({
-      created_date: z.string().optional().readonly(),
-      updated_date: z.string().optional().readonly(),
-    })
-  ),
+const userFormSchema = zUser.omit({
+  uuid: true,
+  created_date: true,
+  updated_date: true,
+  created_by: true,
+  updated_by: true,
+  display_name: true,
+  full_name: true,
+  keycloak_id: true,
+}).merge(
+  z.object({
+    dob: z.date(),
+  })
+);
+
+const instructorFormSchema = zInstructor.omit({
+  uuid: true,
+  created_date: true,
+  updated_date: true,
+  created_by: true,
+  updated_by: true,
+  full_name: true,
+  admin_verified: true,
+  has_location_coordinates: true,
+  formatted_location: true,
+  is_profile_complete: true,
 });
 
-type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>;
+type UserFormValues = z.infer<typeof userFormSchema>;
+type InstructorFormValues = z.infer<typeof instructorFormSchema>;
 
-export default function InstructorProfile({
-  user,
-  instructor,
-}: {
-  user: z.infer<typeof schemas.User>;
+interface Props {
+  user: User & {
+    dob: string;
+    created_date: string;
+    updated_date: string;
+  };
   instructor?: Instructor | null;
-}) {
+}
+
+export default function InstructorProfile({ user, instructor }: Props) {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -84,7 +85,6 @@ export default function InstructorProfile({
     ]);
   }, [replaceBreadcrumbs]);
 
-  /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
   const [profilePic, setProfilePic] = useState<ImageType>({
     url: user.profile_image_url ?? profilePicSvg,
@@ -94,88 +94,88 @@ export default function InstructorProfile({
   const updateSession = update;
   const instructorStore = appStore();
 
-  const form = useForm<GeneralProfileFormValues>({
-    resolver: zodResolver(generalProfileSchema),
+  const userForm = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
     defaultValues: {
-      user: {
-        ...user,
-        dob: new Date(user.dob ?? Date.now()),
-        user_domain: ['instructor'],
-        profile_image_url: user.profile_image_url || profilePicSvg,
-      },
-      instructor: {
-        ...instructor,
-        latitude: -1.2921,
-        longitude: 36.8219,
-        full_name: `${user.first_name} ${user.last_name}`,
-        user_uuid: user.uuid,
-        updated_by: user.uuid,
-        formatted_location: '-1.292100, 36.821900',
-      },
+      first_name: user.first_name || '',
+      middle_name: user.middle_name || '',
+      last_name: user.last_name || '',
+      email: user.email || '',
+      username: user.username || '',
+      dob: new Date(user.dob),
+      phone_number: user.phone_number || '',
+      gender: user.gender || 'PREFER_NOT_TO_SAY',
+      active: true,
+      profile_image_url: user.profile_image_url || profilePicSvg,
     },
   });
 
-  // console.log(form.formState.errors)
+  const instructorForm = useForm<InstructorFormValues>({
+    resolver: zodResolver(instructorFormSchema),
+    defaultValues: {
+      user_uuid: user.uuid,
+      professional_headline: instructor?.professional_headline || '',
+      bio: instructor?.bio || '',
+      website: instructor?.website || '',
+      latitude: instructor?.latitude || -1.2921,
+      longitude: instructor?.longitude || 36.8219,
+    },
+  });
 
-  // Mutations
-  const userMutation = tanstackClient.useMutation('put', '/api/v1/users/{uuid}');
-  const instructorMutation = tanstackClient.useMutation('put', '/api/v1/instructors/{uuid}');
-  const { errors, submitting } = useMultiMutations([userMutation, instructorMutation]);
+  const userMutation = useMutation(updateUserMutation());
+  const instructorMutation = useMutation(updateInstructorMutation());
 
-  async function onSubmit(data: GeneralProfileFormValues) {
-    /** Upload profile picture */
-    if (profilePic.file) {
-      const fd = new FormData();
-      const fileName = `${crypto.randomUUID()}${profilePic.file.name}`;
-      fd.append('profile_image', profilePic.file as Blob, fileName);
-      //@ts-ignore
-      const resp = await fetchClient.PUT('/api/v1/users/{uuid}/profile-image', {
-        params: {
-          path: {
-            uuid: user.uuid as UUID,
-          },
-        },
-        // @ts-ignore
-        body: fd,
-      });
+  const submitting = userMutation.isPending || instructorMutation.isPending;
 
-      if (resp.error) {
-        //@ts-ignore
-        //console.log(resp.error.error);
-        //@ts-ignore
-        toast(resp.error.message);
-      } else {
-        //console.log('Image Upload Data', resp.data);
-        // data!.user.profile_image_url = resp.data?.profile_image_url;
-      }
-    }
+  const errors = [
+    userMutation.error,
+    instructorMutation.error,
+  ].filter(Boolean);
 
-    userMutation.mutate({
-      params: {
+  async function onSubmitUser(data: UserFormValues) {
+    try {
+      await userMutation.mutateAsync({
         path: {
           uuid: user.uuid as UUID,
         },
-      },
-      body: {
-        ...data.user,
-        dob: data.user.dob.toISOString(),
-        user_domain: [
-          ...(user.user_domain ? new Set([...user.user_domain, 'instructor']) : ['instructor']),
-        ] as ('student' | 'instructor' | 'admin' | 'organisation_user')[],
-      },
-    });
-
-    instructorMutation.mutate({
-      params: {
-        path: {
-          uuid: instructor!.uuid as UUID,
+        body: {
+          ...data,
+          dob: new Date(data.dob),
+          user_domain: [
+            ...(user.user_domain ? new Set([...user.user_domain, 'instructor']) : ['instructor']),
+          ] as ('student' | 'instructor' | 'admin' | 'organisation_user')[],
         },
-      },
-      body: data.instructor,
-    });
+      });
 
-    await updateSession({ ...session, user: { ...user, ...data.user } });
-    await instructorStore.softUpdate('instructor', { ...instructor, ...data.instructor });
+      await updateSession({ ...session, user: { ...user, ...data } });
+
+      toast.success('Personal information updated successfully!');
+    } catch (error: unknown) {
+      console.error('Error updating user:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update personal information';
+      toast.error(errorMessage);
+    }
+  }
+
+  async function onSubmitInstructor(data: InstructorFormValues) {
+    try {
+      if (instructor?.uuid) {
+        await instructorMutation.mutateAsync({
+          path: {
+            uuid: instructor.uuid as UUID,
+          },
+          body: data,
+        });
+
+        await instructorStore.softUpdate('instructor', { ...instructor, ...data });
+
+        toast.success('Professional information updated successfully!');
+      }
+    } catch (error: unknown) {
+      console.error('Error updating instructor:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update professional information';
+      toast.error(errorMessage);
+    }
   }
 
   return (
@@ -185,12 +185,24 @@ export default function InstructorProfile({
         <p className='text-muted-foreground text-sm'>Update your basic profile information</p>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+      {errors.length > 0 && (
+        <div className='rounded-md bg-red-50 p-4'>
+          <div className='text-sm text-red-800'>
+            {errors.map((error: unknown, index) => (
+              <div key={index}>
+                {error instanceof Error ? error.message : 'An error occurred'}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Form {...userForm}>
+        <form onSubmit={userForm.handleSubmit(onSubmitUser)} className='space-y-8'>
           <Card>
             <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>Your personal information displayed on your profile</CardDescription>
+              <CardTitle>Personal Information</CardTitle>
+              <CardDescription>Your basic personal details and profile picture</CardDescription>
             </CardHeader>
             <CardContent className='space-y-6'>
               <div className='flex flex-col items-start gap-8 sm:flex-row'>
@@ -198,7 +210,7 @@ export default function InstructorProfile({
                   <Avatar className='bg-primary-50 h-24 w-24'>
                     <AvatarImage src={profilePic.url} alt='Avatar' />
                     <AvatarFallback className='bg-blue-50 text-xl text-blue-600'>
-                      {`${user.first_name[0]?.toUpperCase()}${user.last_name[0]?.toUpperCase()}`}
+                      {`${user.first_name?.[0]?.toUpperCase() || ''}${user.last_name?.[0]?.toUpperCase() || ''}`}
                     </AvatarFallback>
                   </Avatar>
                   <div className='space-y-2'>
@@ -214,6 +226,7 @@ export default function InstructorProfile({
                           size='sm'
                           type='button'
                           onClick={() => fileElmentRef.current?.click()}
+                          disabled={submitting}
                         >
                           Change
                         </Button>
@@ -223,6 +236,8 @@ export default function InstructorProfile({
                         size='sm'
                         type='button'
                         className='text-destructive hover:text-destructive-foreground hover:bg-destructive hover:shadow-xs'
+                        disabled={submitting}
+                        onClick={() => setProfilePic({ url: profilePicSvg })}
                       >
                         Remove
                       </Button>
@@ -234,26 +249,26 @@ export default function InstructorProfile({
               <div className='grid gap-6'>
                 <div className='grid w-full grid-cols-1 items-start gap-8 sm:grid-cols-2'>
                   <FormField
-                    control={form.control}
-                    name='user.first_name'
+                    control={userForm.control}
+                    name='first_name'
                     render={({ field }) => (
                       <FormItem className='flex-1'>
                         <FormLabel>First Name</FormLabel>
                         <FormControl>
-                          <Input placeholder='e.g. Oliver' className='h-10' {...field} />
+                          <Input placeholder='e.g. Oliver' className='h-10' {...field} disabled={submitting} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
-                    control={form.control}
-                    name='user.last_name'
+                    control={userForm.control}
+                    name='last_name'
                     render={({ field }) => (
                       <FormItem className='flex-1'>
                         <FormLabel>Last Name</FormLabel>
                         <FormControl>
-                          <Input placeholder='e.g. Mwangi' className='h-10' {...field} />
+                          <Input placeholder='e.g. Mwangi' className='h-10' {...field} disabled={submitting} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -261,8 +276,8 @@ export default function InstructorProfile({
                   />
                 </div>
                 <FormField
-                  control={form.control}
-                  name='user.middle_name'
+                  control={userForm.control}
+                  name='middle_name'
                   render={({ field }) => (
                     <FormItem className='flex-1'>
                       <FormLabel>Middle Name</FormLabel>
@@ -272,6 +287,7 @@ export default function InstructorProfile({
                           className='h-10'
                           {...field}
                           value={field.value ?? ''}
+                          disabled={submitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -281,8 +297,8 @@ export default function InstructorProfile({
 
                 <div className='flex w-full flex-col items-start gap-8 sm:flex-row'>
                   <FormField
-                    control={form.control}
-                    name='user.phone_number'
+                    control={userForm.control}
+                    name='phone_number'
                     render={({ field }) => (
                       <FormItem className='flex-1'>
                         <FormLabel>Phone Number</FormLabel>
@@ -292,6 +308,7 @@ export default function InstructorProfile({
                             placeholder='e.g. +254712345678'
                             className='h-10'
                             {...field}
+                            disabled={submitting}
                           />
                         </FormControl>
                         <FormMessage />
@@ -300,8 +317,8 @@ export default function InstructorProfile({
                   />
 
                   <FormField
-                    control={form.control}
-                    name='user.dob'
+                    control={userForm.control}
+                    name='dob'
                     render={({ field }) => (
                       <FormItem className='flex flex-1 flex-col'>
                         <FormLabel>Date of Birth</FormLabel>
@@ -314,6 +331,7 @@ export default function InstructorProfile({
                                   'w-full pl-3 text-left font-normal',
                                   !field.value && 'text-muted-foreground'
                                 )}
+                                disabled={submitting}
                               >
                                 {field.value ? (
                                   format(field.value, 'PPP')
@@ -330,7 +348,7 @@ export default function InstructorProfile({
                               selected={field.value}
                               onSelect={field.onChange}
                               disabled={date => date > new Date() || date < new Date('1900-01-01')}
-                              initialFocus
+                              autoFocus
                             />
                           </PopoverContent>
                         </Popover>
@@ -341,12 +359,12 @@ export default function InstructorProfile({
                 </div>
                 <div className='flex w-full flex-col items-start gap-8 sm:flex-row'>
                   <FormField
-                    control={form.control}
-                    name='user.gender'
+                    control={userForm.control}
+                    name='gender'
                     render={({ field }) => (
                       <FormItem className='flex-1'>
                         <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value || ''}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value || ''} disabled={submitting}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder='Select a gender' />
@@ -372,93 +390,94 @@ export default function InstructorProfile({
                   </div>
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name='instructor.professional_headline'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Professional Headline</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder='e.g. Mathematics Professor with 10+ years experience'
-                          className='h-10'
-                          {...field}
-                          value={field.value ?? ''}
-                        />
-                      </FormControl>
-                      <FormDescription className='text-xs'>
-                        A short headline that appears under your name
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                  <FormField
-                    control={form.control}
-                    name='instructor.website'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Website</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='https://yourwebsite.com'
-                            className='h-10'
-                            {...field}
-                            value={field.value ?? ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* <FormField
-                                        control={form.control}
-                                        name="instructor.location"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Location</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        placeholder="e.g. Nairobi, Kenya"
-                                                        className="h-10"
-                                                        {...field} value={""}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    /> */}
+                <div className='flex justify-end pt-2'>
+                  <Button type='submit' className='cursor-pointer px-6' disabled={submitting}>
+                    {submitting ? <Spinner /> : 'Save Personal Info'}
+                  </Button>
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name='instructor.bio'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>About Me</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder='Tell us about yourself...'
-                          className='min-h-32 resize-y'
-                          {...field}
-                          value={field.value ?? ''}
-                        />
-                      </FormControl>
-                      <FormDescription className='text-xs'>
-                        Brief description that will appear on your public profile
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
+            </CardContent>
+          </Card>
+        </form>
+      </Form>
+
+      <Form {...instructorForm}>
+        <form onSubmit={instructorForm.handleSubmit(onSubmitInstructor)} className='space-y-8'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Professional Information</CardTitle>
+              <CardDescription>Your teaching experience and professional details</CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <FormField
+                control={instructorForm.control}
+                name='professional_headline'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Professional Headline</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder='e.g. Mathematics Professor with 10+ years experience'
+                        className='h-10'
+                        {...field}
+                        value={field.value ?? ''}
+                        disabled={submitting}
+                      />
+                    </FormControl>
+                    <FormDescription className='text-xs'>
+                      A short headline that appears under your name
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={instructorForm.control}
+                name='website'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder='https://yourwebsite.com'
+                        className='h-10'
+                        {...field}
+                        value={field.value ?? ''}
+                        disabled={submitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={instructorForm.control}
+                name='bio'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>About Me</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder='Tell us about yourself...'
+                        className='min-h-32 resize-y'
+                        {...field}
+                        value={field.value ?? ''}
+                        disabled={submitting}
+                      />
+                    </FormControl>
+                    <FormDescription className='text-xs'>
+                      Brief description that will appear on your public profile
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className='flex justify-end pt-2'>
                 <Button type='submit' className='cursor-pointer px-6' disabled={submitting}>
-                  {submitting ? <Spinner /> : 'Save Changes'}
+                  {submitting ? <Spinner /> : 'Save Professional Info'}
                 </Button>
               </div>
             </CardContent>

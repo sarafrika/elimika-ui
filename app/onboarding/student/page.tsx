@@ -1,58 +1,54 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { auth } from '@/services/auth';
+import { getUserByUuid } from '@/services/client/sdk.gen';
+import StudentOnboardingForm from '@/app/onboarding/_components/student-onboarding-form';
+import { User } from '@/services/client';
 
-import Loading from '@/components/Loading';
-import { useUser } from '@/context/user-context';
-import { schemas } from '@/services/api/zod-client';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { StudentOnboardingForm } from './_components/student-onboarding-form';
+interface PageProps {
+  searchParams: Promise<{
+    step?: string;
+    error?: string;
+    success?: string;
+  }>;
+}
 
-const ProfileSchema = z.object({
-  user: schemas.User,
-  student: schemas.Student,
-});
+export default async function StudentOnboardingPage({ searchParams }: PageProps) {
+  const session = await auth();
 
-type ProfileType = z.infer<typeof ProfileSchema>;
-type UserSchema = z.infer<typeof schemas.User>;
+  if (!session?.user?.uuid) {
+    redirect('/auth/signin');
+  }
 
-export default function StudentOnboardingPage() {
-  const router = useRouter();
-  // const { user, isLoading } = useUserStore()
-  // const { data: session, status } = useSession()
-  // const user = session?.user;
-  const user = useUser();
+  const params = await searchParams;
+  const currentStep = parseInt(params.step || '0');
+  const error = params.error;
+  const success = params.success;
 
-  const [isPending, startTransition] = useTransition();
+  let userData: User | null = null;
+  try {
+    const response = await getUserByUuid({
+      path: { uuid: session.user.uuid },
+    });
 
-  const form = useForm<ProfileType>({
-    resolver: zodResolver(ProfileSchema),
-    defaultValues: {
-      user: {
-        ...user,
-        dob: new Date(user?.dob ?? Date.now()).toISOString(),
-        created_date: new Date(user!.created_date ?? Date.now()).toISOString(),
-        updated_date: new Date(user!.created_date ?? Date.now()).toISOString()
-      },
-      student: {
-        user_uuid: user?.uuid,
-      },
-    },
-  });
+    if (response.data?.data) {
+      userData = response.data.data;
+    }
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    userData = null;
+  }
 
-  if (!user?.uuid) {
-    return <Loading />;
+  if (!userData?.uuid) {
+    redirect('/auth/signin');
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 py-8'>
-      <StudentOnboardingForm
-      // userUuid={user.uuid}
-      // isSubmitting={isPending}
-      // onSubmit={handleSubmit}
-      />
-    </div>
+    <StudentOnboardingForm
+      userUuid={userData.uuid}
+      initialStep={currentStep}
+      error={error}
+      success={success}
+      initialUserData={userData}
+    />
   );
 }

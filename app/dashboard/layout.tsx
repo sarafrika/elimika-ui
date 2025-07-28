@@ -7,9 +7,9 @@ import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { TrainingCenterProvider } from '@/context/training-center-provider';
 import { UserDomain } from '@/lib/types';
 import { auth } from '@/services/auth';
+import { search } from '@/services/client/sdk.gen';
 import { redirect } from 'next/navigation';
 import { ReactNode } from 'react';
-import { getUserByEmail } from '../../services/user/actions';
 import { DashboardChildrenTypes } from './_types';
 
 type OrgDomainType = DashboardView | 'organisation_user';
@@ -21,8 +21,19 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
     if (!session) {
       return redirect('/');
     }
+    
+    const response = await search({
+      query: {
+        //@ts-ignore
+        email_eq: session.user.email,
+      },
+    });
 
-    const user = await getUserByEmail(session.user.email);
+    const user =
+      response.data?.data?.content && response.data.data.content.length > 0
+        ? response.data.data.content[0]
+        : null;
+
     if (!user) {
       return redirect('/');
     }
@@ -40,9 +51,6 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       {}
     );
     const currentDashboard = userDashboards[defaultDomain ?? 'student'] ?? props.children;
-    //console.log('userDomains', currentDashboard);
-
-    // //console.log(user);
 
     if (orgAdminDomains.includes('organisation_user')) {
       return (

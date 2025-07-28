@@ -1,8 +1,8 @@
 import Spinner from '@/components/ui/spinner';
 import StudentProfileGeneralForm from './_components/StudentProfileForm';
 
-import { auth } from '../../../../../services/auth';
-import { SearchResponse, searchStudents, Student, User } from '../../../../../services/client';
+import { auth } from '@/services/auth';
+import { SearchResponse, searchStudents, Student, User } from '@/services/client';
 
 export default async function StudentProfileGeneralPage() {
   // const user = useUser();
@@ -14,12 +14,12 @@ export default async function StudentProfileGeneralPage() {
   const searchResponse = await searchStudents({
     query: {
       searchParams: {
-        user_uuid_eq: user.uuid!
-      }
+        user_uuid_eq: user.uuid!,
+      },
     },
     next: {
-      revalidate: session!.decoded.exp
-    }
+      revalidate: session!.decoded.exp,
+    },
   });
 
   // Work around

@@ -4,6 +4,7 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,11 +27,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import useMultiMutations from '@/hooks/use-multi-mutations';
-import { fetchClient } from '@/services/api/fetch-client';
-import { Instructor, InstructorEducation } from '@/services/api/schema';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { schemas } from '@/services/api/zod-client';
+import {
+  addInstructorEducationMutation,
+  deleteInstructorEducationMutation,
+  updateInstructorEducationMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { zInstructorEducation } from '@/services/client/zod.gen';
+import { InstructorEducation } from '@/services/client/types.gen';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,35 +45,44 @@ const DEGREE_OPTIONS = {
   Diploma: 'Diploma',
   Certificate: 'Certificate',
   Other: 'Other',
-} as const;
+};
 
-const edSchema = schemas.InstructorEducation.merge(
-  z.object({
-    uuid: z.string().optional(),
-    field_of_study: z.string(),
-    year_started: z.string(),
-    year_completed: z.string().optional(),
-    current: z.boolean().optional(),
-    education_uuid: z.string().optional(),
-    created_date: z.string().optional().readonly(),
-    updated_date: z.string().optional().readonly(),
-    updated_by: z.string().optional().readonly(),
-  })
-);
-const educationSchema = z.object({
-  educations: z.array(edSchema),
+const educationFormSchema = zInstructorEducation.omit({
+  uuid: true,
+  created_date: true,
+  updated_date: true,
+  created_by: true,
+  updated_by: true,
+  full_description: true,
+  is_recent_qualification: true,
+  years_since_completion: true,
+  education_level: true,
+  has_certificate_number: true,
+  formatted_completion: true,
+  is_complete: true,
 });
 
-type EducationFormValues = z.infer<typeof educationSchema>;
-type EdType = z.infer<typeof edSchema>;
+const formSchema = z.object({
+  educations: z.array(
+    educationFormSchema.extend({
+      uuid: z.string().optional(),
+      is_currently_studying: z.boolean().optional(),
+    })
+  ),
+});
 
-export default function EducationSettings({
-  instructor,
-  instructorEducation,
-}: {
-  instructor: Instructor;
-  instructorEducation: InstructorEducation[];
-}) {
+type EducationFormValues = z.infer<typeof formSchema>;
+type EdType = z.infer<typeof educationFormSchema> & {
+  uuid?: string;
+  is_currently_studying?: boolean;
+};
+
+interface Props {
+  instructor: { uuid: string };
+  instructorEducation: any[];
+}
+
+export default function EducationSettings({ instructor, instructorEducation }: Props) {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -87,111 +98,124 @@ export default function EducationSettings({
   }, [replaceBreadcrumbs]);
 
   const defaultEducation: EdType = {
-    school_name: 'University of Nairobi',
+    instructor_uuid: instructor.uuid,
+    school_name: '',
     qualification: "Bachelor's",
-    field_of_study: 'Computer Science',
-    year_started: '2018',
-    year_completed: '2022',
-    current: false,
-    full_description: 'Graduated with First Class Honours.',
-    certificate_number: 'CERT12345',
-    instructor_uuid: instructor ? (instructor.uuid as string) : crypto.randomUUID(),
+    year_completed: undefined,
+    certificate_number: undefined,
+    is_currently_studying: false,
   };
 
-  const passEducation = (ed: InstructorEducation) => ({
-    ...defaultEducation,
-    ...ed,
-    updated_date: ed.updated_date ?? new Date().toISOString(),
-    updated_by: 'self',
-    year_completed: ed.year_completed?.toString(),
-    instructor_uuid: instructor.uuid!,
-  });
-
   const form = useForm<EducationFormValues>({
-    resolver: zodResolver(educationSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      //@ts-ignore
-      educations:
-        instructorEducation.length > 0
-          ? instructorEducation.map(passEducation)
-          : [defaultEducation],
+      educations: [defaultEducation],
     },
     mode: 'onChange',
   });
+
+  useEffect(() => {
+    if (instructorEducation.length > 0) {
+      const formattedEducations = instructorEducation.map((ed: any) => ({
+        uuid: ed.uuid,
+        instructor_uuid: instructor.uuid,
+        school_name: ed.school_name || '',
+        qualification: ed.qualification || "Bachelor's",
+        year_completed: ed.year_completed,
+        certificate_number: ed.certificate_number,
+        is_currently_studying: !ed.year_completed,
+      }));
+
+      form.reset({ educations: formattedEducations });
+    }
+  }, [instructorEducation, instructor.uuid, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'educations',
   });
 
-  //console.log(form.formState.errors);
+  const addEducationMut = useMutation(addInstructorEducationMutation());
+  const updateEducationMut = useMutation(updateInstructorEducationMutation());
+  const deleteEducationMut = useMutation(deleteInstructorEducationMutation());
 
-  const addEdMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/instructors/{instructorUuid}/education'
-  );
-  const updateMutation = tanstackClient.useMutation(
-    'put',
-    '/api/v1/instructors/{instructorUuid}/education/{educationUuid}'
-  );
-  const { errors, submitting } = useMultiMutations([addEdMutation, updateMutation]);
+  const isSubmitting = addEducationMut.isPending || updateEducationMut.isPending;
 
-  // const [submitting, setSubmitting] = useState(false);
   const onSubmit = async (data: EducationFormValues) => {
-    //console.log('instructor', instructor);
-    //console.log(data);
-    // TODO: Implement submission logic
-    // setSubmitting(true)
-    data.educations.forEach(async (ed, index) => {
-      const options = {
-        params: { path: { instructorUuid: instructor!.uuid as string } },
-        //@ts-ignore
-        body: { ...ed, year_completed: Number(ed.year_completed) },
-      };
+    try {
+      const promises = data.educations.map(async (education, index) => {
+        const { is_currently_studying, uuid, ...apiData } = education;
 
-      if (!ed.uuid) {
-        const resp = await addEdMutation.mutateAsync(options);
-        const eds = form.getValues('educations');
-        eds[index] = passEducation(resp.data!);
-        form.setValue('educations', eds);
-      } else {
-        updateMutation.mutate({
-          ...options,
-          params: {
+        const finalData = {
+          ...apiData,
+          year_completed: is_currently_studying ? undefined : apiData.year_completed,
+        } as InstructorEducation;
+
+        if (uuid) {
+          return updateEducationMut.mutateAsync({
             path: {
-              ...options.params.path,
-              educationUuid: ed.uuid,
+              instructorUuid: instructor.uuid,
+              educationUuid: uuid,
             },
+            body: finalData,
+          });
+        } else {
+          const response = await addEducationMut.mutateAsync({
+            path: { instructorUuid: instructor.uuid },
+            body: finalData,
+          });
+
+          const updatedEducations = form.getValues('educations');
+          if (response.data?.uuid) {
+            updatedEducations[index] = {
+              ...education,
+              uuid: response.data.uuid,
+            };
+            form.setValue('educations', updatedEducations);
+          }
+
+          return response;
+        }
+      });
+
+      await Promise.all(promises);
+      toast.success('Education information saved successfully!');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to save education information');
+    }
+  };
+
+  const onRemove = async (index: number) => {
+    const education = form.getValues('educations')[index];
+
+    if (!education) return;
+
+    const shouldRemove = confirm('Are you sure you want to remove this education?');
+    if (!shouldRemove) return;
+
+    try {
+      if (education.uuid) {
+        await deleteEducationMut.mutateAsync({
+          path: {
+            instructorUuid: instructor.uuid,
+            educationUuid: education.uuid,
           },
         });
       }
-    });
+
+      remove(index);
+      toast.success('Education removed successfully');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to remove education');
+    }
   };
 
-  async function onRemove(index: number) {
-    const shouldRemove = confirm('Are you sure you want to remove?');
-    if (shouldRemove) {
-      const edUUID = form.getValues('educations')[index]!.uuid;
-      remove(index);
-      if (edUUID) {
-        const resp = await fetchClient.DELETE(
-          '/api/v1/instructors/{instructorUuid}/education/{educationUuid}',
-          {
-            params: {
-              path: {
-                instructorUuid: instructor.uuid!,
-                educationUuid: edUUID,
-              },
-            },
-          }
-        );
-        if (resp.error) {
-          //console.log(resp.error);
-          return;
-        }
-      }
-      toast('Education removed successfully');
-    }
+  if (!instructorEducation) {
+    return (
+      <div className='flex items-center justify-center p-8'>
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -214,7 +238,6 @@ export default function EducationSettings({
                     className='bg-card group hover:bg-accent/5 relative rounded-md border transition-all'
                   >
                     <div className='space-y-5 p-5'>
-                      {/* Header with institution and degree */}
                       <div className='flex items-start justify-between gap-4'>
                         <div className='flex items-start gap-2'>
                           <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-grabbing opacity-0 transition-opacity group-hover:opacity-100' />
@@ -222,12 +245,9 @@ export default function EducationSettings({
                             <h3 className='text-base font-medium'>
                               {form.watch(`educations.${index}.school_name`) || 'New Institution'}
                             </h3>
-                            <div className='flex items-center gap-2'>
-                              <p className='text-muted-foreground text-sm'>
-                                {form.watch(`educations.${index}.qualification`)} in{' '}
-                                {form.watch(`educations.${index}.field_of_study`)}
-                              </p>
-                            </div>
+                            <p className='text-muted-foreground text-sm'>
+                              {form.watch(`educations.${index}.qualification`)}
+                            </p>
                           </div>
                         </div>
 
@@ -237,19 +257,19 @@ export default function EducationSettings({
                           size='icon'
                           onClick={() => onRemove(index)}
                           className='hover:bg-destructive-foreground h-8 w-8 cursor-pointer transition-colors'
+                          disabled={deleteEducationMut.isPending}
                         >
                           <Trash2 className='text-destructive h-4 w-4' />
                         </Button>
                       </div>
 
-                      {/* Institution and Degree */}
                       <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
                         <FormField
                           control={form.control}
                           name={`educations.${index}.school_name`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Institution</FormLabel>
+                              <FormLabel>Institution *</FormLabel>
                               <FormControl>
                                 <Input placeholder='e.g. University of Nairobi' {...field} />
                               </FormControl>
@@ -262,8 +282,8 @@ export default function EducationSettings({
                           name={`educations.${index}.qualification`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Degree</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormLabel>Degree *</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder='Select degree' />
@@ -283,21 +303,7 @@ export default function EducationSettings({
                         />
                       </div>
 
-                      {/* Field of Study */}
                       <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-                        <FormField
-                          control={form.control}
-                          name={`educations.${index}.field_of_study`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Field of Study</FormLabel>
-                              <FormControl>
-                                <Input placeholder='e.g. Computer Science' {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
                         <FormField
                           control={form.control}
                           name={`educations.${index}.certificate_number`}
@@ -308,25 +314,8 @@ export default function EducationSettings({
                                 <Input
                                   placeholder='e.g. CERT12345'
                                   {...field}
-                                  value={field.value ?? ''}
+                                  value={field.value || ''}
                                 />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      {/* Year Range */}
-                      <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-                        <FormField
-                          control={form.control}
-                          name={`educations.${index}.year_started`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Start Year</FormLabel>
-                              <FormControl>
-                                <Input type='number' placeholder='YYYY' {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -337,19 +326,25 @@ export default function EducationSettings({
                           name={`educations.${index}.year_completed`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>End Year</FormLabel>
+                              <FormLabel>Year Completed</FormLabel>
                               <FormControl>
                                 <Input
                                   type='number'
                                   placeholder='YYYY'
-                                  disabled={form.watch(`educations.${index}.is_complete`)}
+                                  disabled={form.watch(`educations.${index}.is_currently_studying`)}
                                   {...field}
+                                  value={field.value || ''}
+                                  onChange={e =>
+                                    field.onChange(
+                                      e.target.value ? parseInt(e.target.value) : undefined
+                                    )
+                                  }
                                 />
                               </FormControl>
                               <div className='mt-2'>
                                 <FormField
                                   control={form.control}
-                                  name={`educations.${index}.is_complete`}
+                                  name={`educations.${index}.is_currently_studying`}
                                   render={({ field }) => (
                                     <FormItem className='flex flex-row items-center space-x-2'>
                                       <FormControl>
@@ -370,34 +365,11 @@ export default function EducationSettings({
                           )}
                         />
                       </div>
-
-                      {/* Description */}
-                      <FormField
-                        control={form.control}
-                        name={`educations.${index}.full_description`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Additional Information</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder='e.g. Honors, GPA, thesis title...'
-                                {...field}
-                                value={field.value ?? ''}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Add any notable achievements or specializations.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Add Education Button */}
               <Button
                 type='button'
                 variant='outline'
@@ -408,10 +380,9 @@ export default function EducationSettings({
                 Add Another Education
               </Button>
 
-              {/* Submit Button */}
               <div className='flex justify-end pt-2'>
-                <Button type='submit' className='px-6' disabled={submitting}>
-                  {submitting ? (
+                <Button type='submit' className='px-6' disabled={isSubmitting}>
+                  {isSubmitting ? (
                     <>
                       <Spinner /> Saving...
                     </>

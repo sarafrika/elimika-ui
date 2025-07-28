@@ -1,48 +1,49 @@
-'use client';
-
+import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
+import { getInstructorExperience } from '@/services/client/sdk.gen';
 import Spinner from '@/components/ui/spinner';
-import { useInstructor } from '@/context/instructor-context';
-import { fetchClient } from '@/services/api/fetch-client';
-import { InstructorExperience } from '@/services/api/schema';
-import { useEffect, useState } from 'react';
 import ProfessionalExperienceSettings from './_component/InstructorExperienceForm';
+import { auth } from '@/services/auth';
 
-export default function InstructoEducationPage() {
-  const instructor = useInstructor();
-  const [eperience, setEperience] = useState<InstructorExperience[] | null>(null);
+async function getInstructorData() {
+  const session = await auth();
 
-  useEffect(() => {
-    if (instructor) {
-      fetchClient
-        .GET('/api/v1/instructors/{instructorUuid}/experience', {
-          //@ts-ignore
-          params: {
-            path: {
-              instructorUuid: instructor.uuid!,
-            },
-          },
-        })
-        .then(resp => {
-          if (!resp.error) {
-            setEperience(resp.data!.data!.content as unknown as InstructorExperience[]);
-          }
-        });
-    }
-  }, [instructor]);
+  if (!session?.user?.id) {
+    redirect('/auth/login');
+  }
+
+  const instructorUuid = session.user.uuid;
+
+  if (!instructorUuid) {
+    redirect('/dashboard');
+  }
+
+  const experienceResponse = await getInstructorExperience({
+    path: { instructorUuid },
+    throwOnError: false
+  });
+
+  const experience = experienceResponse.data?.data?.content || [];
+
+  return {
+    instructor: { uuid: instructorUuid },
+    experience
+  };
+}
+
+export default async function InstructorExperiencePage() {
+  const { instructor, experience } = await getInstructorData();
+
   return (
-    <>
-      {instructor && eperience ? (
-        <ProfessionalExperienceSettings
-          {...{
-            instructor,
-            instructorExperience: eperience,
-          }}
-        />
-      ) : (
-        <div className='flex items-center justify-center'>
-          <Spinner />
-        </div>
-      )}
-    </>
+    <Suspense fallback={
+      <div className='flex items-center justify-center p-8'>
+        <Spinner />
+      </div>
+    }>
+      <ProfessionalExperienceSettings
+        instructor={instructor}
+        instructorExperience={experience}
+      />
+    </Suspense>
   );
 }

@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useUserStore } from '@/store/use-user-store';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { QueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { searchStudentsOptions } from '@/services/client/@tanstack/react-query.gen';
 
-// Define the context type
 interface ProfileContextType {
   user: any;
   student: any;
@@ -14,60 +13,56 @@ interface ProfileContextType {
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
-const queryClient = new QueryClient();
-
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoading: isUserLoading, fetchCurrentUser } = useUserStore();
-  const [student, setStudent] = useState<any>(null);
-  const [isStudentLoading, setIsStudentLoading] = useState(false);
-  const [studentError, setStudentError] = useState<any>(null);
+  const [isRefetching, setIsRefetching] = useState(false);
 
-  const fetchStudent = useCallback(async (userUuid?: string) => {
-    if (!userUuid) return null;
-    setIsStudentLoading(true);
-    setStudentError(null);
-    try {
-      const queryOptions = tanstackClient.queryOptions('get', '/api/v1/students/search', {
-        params: {
-          query: {
-            searchParams: { user_uuid_eq: String(userUuid) },
-            pageable: {},
-          },
-        },
-      });
-      const resp = await queryClient.fetchQuery(queryOptions);
-      setStudent(resp?.content?.[0] || null);
-      setIsStudentLoading(false);
-      return resp?.content?.[0] || null;
-    } catch (err) {
-      setStudentError(err);
-      setIsStudentLoading(false);
-      return null;
-    }
-  }, []);
+  const {
+    data: studentResponse,
+    isLoading: isStudentLoading,
+    error: studentError,
+    refetch: refetchStudent,
+  } = useQuery({
+    ...searchStudentsOptions({
+      query: {
+        //@ts-ignore
+        userUuid: user?.uuid || '',
+        page: 0,
+        size: 1,
+      },
+    }),
+    enabled: !!user?.uuid,
+    staleTime: 5 * 60 * 1000,
+    select: (data) => data?.content?.[0] || null,
+  });
 
-  // Fetch both user and student on mount or when user changes
-  useEffect(() => {
-    fetchCurrentUser().then(freshUser => {
-      const uuid = freshUser?.uuid || user?.uuid;
-      if (uuid) fetchStudent(uuid);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uuid]);
+  const student = studentResponse;
 
-  // Refetch both user and student
   const refetch = useCallback(async () => {
-    const freshUser = await fetchCurrentUser();
-    const uuid = freshUser?.uuid || user?.uuid;
-    if (uuid) await fetchStudent(uuid);
-  }, [fetchCurrentUser, fetchStudent, user?.uuid]);
+    setIsRefetching(true);
+    try {
+      await fetchCurrentUser();
+      await refetchStudent();
+    } catch (error) {
+      console.error('Error refetching profile data:', error);
+    } finally {
+      setIsRefetching(false);
+    }
+  }, [fetchCurrentUser, refetchStudent]);
+
+
+  useEffect(() => {
+    if (user?.uuid) {
+      refetchStudent();
+    }
+  }, [user?.uuid, refetchStudent]);
 
   return (
     <ProfileContext.Provider
       value={{
         user,
         student,
-        isLoading: isUserLoading || isStudentLoading,
+        isLoading: isUserLoading || isStudentLoading || isRefetching,
         error: studentError,
         refetch,
       }}

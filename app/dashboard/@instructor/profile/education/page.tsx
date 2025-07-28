@@ -1,46 +1,49 @@
-'use client';
-
+import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
+import { getInstructorEducation } from '@/services/client/sdk.gen';
 import Spinner from '@/components/ui/spinner';
-import { useInstructor } from '@/context/instructor-context';
-import { fetchClient } from '@/services/api/fetch-client';
-import { InstructorEducation } from '@/services/api/schema';
-import { useEffect, useState } from 'react';
 import EducationSettings from './_component/EducationForm';
+import { auth } from '@/services/auth';
 
-export default function InstructoEducationPage() {
-  const instructor = useInstructor();
-  const [education, setEducation] = useState<InstructorEducation[] | null>(null);
-  useEffect(() => {
-    if (instructor) {
-      fetchClient
-        .GET('/api/v1/instructors/{instructorUuid}/education', {
-          params: {
-            path: {
-              instructorUuid: instructor.uuid!,
-            },
-          },
-        })
-        .then(resp => {
-          if (!resp.error) {
-            setEducation(resp.data!.data! as unknown as InstructorEducation[]);
-          }
-        });
-    }
-  }, [instructor]);
+async function getInstructorData() {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect('/auth/login');
+  }
+
+  const instructorUuid = session.user.uuid;
+
+  if (!instructorUuid) {
+    redirect('/dashboard');
+  }
+
+  const educationResponse = await getInstructorEducation({
+    path: { instructorUuid },
+    throwOnError: false
+  });
+
+  const education = educationResponse.data?.data || [];
+
+  return {
+    instructor: { uuid: instructorUuid },
+    education
+  };
+}
+
+export default async function InstructorEducationPage() {
+  const { instructor, education } = await getInstructorData();
+
   return (
-    <>
-      {instructor && education ? (
-        <EducationSettings
-          {...{
-            instructor,
-            instructorEducation: education,
-          }}
-        />
-      ) : (
-        <div className='flex items-center justify-center'>
-          <Spinner />
-        </div>
-      )}
-    </>
+    <Suspense fallback={
+      <div className='flex items-center justify-center p-8'>
+        <Spinner />
+      </div>
+    }>
+      <EducationSettings
+        instructor={instructor}
+        instructorEducation={education}
+      />
+    </Suspense>
   );
 }

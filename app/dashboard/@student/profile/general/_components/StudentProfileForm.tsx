@@ -24,58 +24,63 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn, profilePicSvg } from '@/lib/utils';
-import { tanstackClient } from '@/services/api/tanstack-client';
-import { schemas } from '@/services/api/zod-client';
 import { appStore } from '@/store/app-store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UUID } from 'crypto';
 import { format } from 'date-fns';
 import { AlertCircleIcon, CalendarIcon } from 'lucide-react';
-import { getSession, useSession } from 'next-auth/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Student, User } from '../../../../../../services/client';
-import { zStudent, zUser } from '../../../../../../services/client/zod.gen';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Student, User } from '@/services/client';
+import { zStudent, zUser } from '@/services/client/zod.gen';
+import {
+  updateUserMutation,
+  updateStudentMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 
-// //console.log(Object.values(schemas))
-
-const StudentProfileSchema = z.object({
-  user: zUser.merge(z.object({
-    created_date: z.string().optional().readonly(),
-    updated_date: z.string().optional().readonly(),
+// User form schema
+const userFormSchema = zUser.omit({
+  uuid: true,
+  created_date: true,
+  updated_date: true,
+  created_by: true,
+  updated_by: true,
+  display_name: true,
+  full_name: true,
+  keycloak_id: true,
+}).merge(
+  z.object({
     dob: z.date(),
   })
-  ),
+);
 
-  student: zStudent.merge(z.object({
-    created_date: z.string().optional().readonly(),
-    updated_date: z.string().optional().readonly(),
-    updated_by: z.string().optional().readonly(),
-    // secondaryGuardianContact: z.string().optional(),
-  })
-  ),
+// Student form schema
+const studentFormSchema = zStudent.omit({
+  uuid: true,
+  created_date: true,
+  updated_date: true,
+  created_by: true,
+  updated_by: true,
+  secondaryGuardianContact: true,
+  primaryGuardianContact: true,
+  allGuardianContacts: true,
 });
 
-type StudentType = z.infer<typeof schemas.Student>;
-type UserType = z.infer<typeof schemas.User>;
-type StudentProfileType = z.infer<typeof StudentProfileSchema>;
-
-const UserFieldTypes = [];
+type UserFormValues = z.infer<typeof userFormSchema>;
+type StudentFormValues = z.infer<typeof studentFormSchema>;
 
 export default function StudentProfileGeneralForm({
-  user,
-  student
-  // profilePicBlob
-}: {
+                                                    user,
+                                                    student,
+                                                  }: {
   user: User;
-  student?: Student
-  // profilePicBlob?: Blob
+  student?: Student;
 }) {
-  // //console.log("student", student)
-
   const session = useSession();
   const appSrore = appStore();
 
@@ -85,127 +90,93 @@ export default function StudentProfileGeneralForm({
     url: user.profile_image_url ?? profilePicSvg,
   });
 
-  /** For handling form */
-  const form = useForm<StudentProfileType>({
-    resolver: zodResolver(StudentProfileSchema),
+  // User form
+  const userForm = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
     defaultValues: {
-      user: {
-        ...user,
-        dob: new Date(user.dob ?? Date.now()),
-        profile_image_url: user.profile_image_url || profilePicSvg,
-        created_date: new Date(user.created_date!).toISOString(),
-        updated_date: new Date(user.updated_date!).toISOString()
-      },
-      /** Students guardian data to be refactored to array */
-      student: {
-        ...student,
-        updated_by: student?.updated_by ?? '',
-        secondaryGuardianContact: student?.secondaryGuardianContact ?? '',
-        user_uuid: user.uuid,
-        created_date: new Date(user.created_date!).toISOString(),
-        updated_date: new Date(user.updated_date!).toISOString()
-      },
+      first_name: user.first_name || '',
+      middle_name: user.middle_name || '',
+      last_name: user.last_name || '',
+      email: user.email || '',
+      username: user.username || '',
+      dob: new Date(user.dob),
+      phone_number: user.phone_number || '',
+      gender: user.gender || 'PREFER_NOT_TO_SAY',
+      active: true,
+      user_domain: ['student'],
+      profile_image_url: user.profile_image_url || profilePicSvg,
     },
   });
 
-  /** User, student and profile picture mutation handlers */
-  const userMutation = tanstackClient.useMutation('put', '/api/v1/users/{uuid}');
-  const updateStudentMutation = tanstackClient.useMutation('put', '/api/v1/students/{uuid}');
-  //@ts-ignore
-  const profilePicUpload = tanstackClient.useMutation('put', '/api/v1/users/{uuid}/profile-image');
-  const { errors, datas, submitting, resetErrors } = useMultiMutations([
-    userMutation,
-    updateStudentMutation,
-  ]); //, profilePicUpload
+  // Student form
+  const studentForm = useForm<StudentFormValues>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      user_uuid: user.uuid,
+      first_guardian_name: student?.first_guardian_name || '',
+      first_guardian_mobile: student?.first_guardian_mobile || '',
+      second_guardian_name: student?.second_guardian_name || '',
+      second_guardian_mobile: student?.second_guardian_mobile || '',
+    },
+  });
 
-  // //console.log("Ma errors", errors);
-  if (errors && errors.length > 0) {
-    errors.forEach(error => {
-      Object.keys(error.error).forEach(k => {
-        if (k in user) {
-          const fieldName = `user.${k}`;
-          // @ts-ignore
-          form.setError(fieldName, error.error[k]);
-        }
-      });
-    });
-  }
+  // React Query Mutations
+  const userMutation = useMutation(updateUserMutation());
+  const updateStudentMut = useMutation(updateStudentMutation());
 
-  const onSubmit = useCallback(
-    async (data: StudentProfileType) => {
-      resetErrors([]);
-      // //console.log(data)
+  // Check if any mutation is loading
+  const submitting = userMutation.isPending || updateStudentMut.isPending;
 
-      /** Upload profile picture */
-      if (profilePic.file) {
-        const fd = new FormData();
-        const fileName = `${crypto.randomUUID()}${profilePic.file.name}`;
-        fd.append('profile_image', profilePic.file as Blob, fileName);
-        profilePicUpload.mutate({
-          params: {
-            path: {
-              uuid: user.uuid as UUID,
-            },
-          },
-          // @ts-ignore
-          body: fd,
-        });
-      }
+  // Collect all errors
+  const errors = [userMutation.error, updateStudentMut.error].filter(Boolean);
 
-      // //console.log("after profile pic upload", datas![1]);
-
-      /** update User */
-      userMutation.mutate({
-        params: {
-          path: {
-            uuid: user.uuid as UUID,
-          },
+  async function onSubmitUser(data: UserFormValues) {
+    try {
+      await userMutation.mutateAsync({
+        path: {
+          uuid: user.uuid as UUID,
         },
         body: {
-          ...data.user,
-          dob: new Date(data.user.dob!).toISOString(),
-          user_domain: [
-            ...(user.user_domain ? new Set([...user.user_domain, 'student']) : ['student']),
-          ] as ('student' | 'instructor' | 'admin' | 'organisation_user')[],
+          ...data,
+          dob: new Date(data.dob),
         },
-      }, {
-        onSuccess: async ({ data }) => {
-          await session
-            .update({ ...session.data, user: { ...data!, dob: new Date(data!.dob) } as User })
-            .then(() => getSession())
-        }
       });
 
-      // //console.log(data.student)
-
-      /** Update student */
-      updateStudentMutation.mutate({
-        params: {
-          path: {
-            uuid: student!.uuid as UUID,
-          },
-        },
-        body: data.student,
+      // Update session
+      await session.update({
+        ...session.data,
+        user: { ...user, ...data }
       });
 
-      // update localstorage
-      appSrore.softUpdate('student', { ...student, ...data.student });
-      // update session
-      await session.update({ user: data.user });
-    },
-    [errors, datas]
-  );
-
-  /* async function onSubmit(data: StudentProfileType) {
-
-    } */
-
-  // //console.log(form.formState.errors);
-  const ref = useRef(submitting);
-  useEffect(() => {
-    if (ref.current) {
+      toast.success('Personal information updated successfully!');
+    } catch (error: unknown) {
+      console.error('Error updating user:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update personal information';
+      toast.error(errorMessage);
     }
-  }, [submitting]);
+  }
+
+  async function onSubmitStudent(data: StudentFormValues) {
+    try {
+      if (student?.uuid) {
+        await updateStudentMut.mutateAsync({
+          path: {
+            uuid: student.uuid as UUID,
+          },
+          body: data,
+        });
+
+        // Update store
+        appSrore.softUpdate('student', { ...student, ...data });
+
+        toast.success('Guardian information updated successfully!');
+      }
+    } catch (error: unknown) {
+      console.error('Error updating student:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update guardian information';
+      toast.error(errorMessage);
+    }
+  }
 
   return (
     <div className='max-w-3/4'>
@@ -214,26 +185,30 @@ export default function StudentProfileGeneralForm({
         <p className='text-muted-foreground text-sm'>Update your basic profile information</p>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-          {errors && errors.length > 0 && (
-            <Alert variant={'destructive'} className='text-red-600'>
-              <AlertCircleIcon />
-              <AlertTitle>Error processing form</AlertTitle>
-              <AlertDescription className='text-red-600'>
-                <ul>
-                  {errors.map((error: any) => (
-                    <li className='text-red-600' key={`${error.message}`}>
-                      {error.message}
-                    </li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
+      {/* Display errors if any */}
+      {errors.length > 0 && (
+        <Alert variant={'destructive'} className='text-red-600 mb-6'>
+          <AlertCircleIcon />
+          <AlertTitle>Error processing form</AlertTitle>
+          <AlertDescription className='text-red-600'>
+            <ul>
+              {errors.map((error: unknown, index) => (
+                <li className='text-red-600' key={index}>
+                  {error instanceof Error ? error.message : 'An error occurred'}
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Personal Information Form */}
+      <Form {...userForm}>
+        <form onSubmit={userForm.handleSubmit(onSubmitUser)} className='space-y-8'>
           <Card>
             <CardHeader>
               <CardTitle>Personal Details</CardTitle>
+              <CardDescription>Your basic personal information</CardDescription>
             </CardHeader>
             <CardContent className='space-y-6'>
               <div className='flex flex-col items-start gap-8 sm:flex-row'>
@@ -241,8 +216,7 @@ export default function StudentProfileGeneralForm({
                   <Avatar className='bg-primary-50 h-24 w-24'>
                     <AvatarImage src={profilePic.url} alt='Avatar' />
                     <AvatarFallback className='bg-blue-50 text-xl text-blue-600'>
-                      {form.getValues('user').first_name?.[0]}
-                      {form.getValues('user').last_name?.[0]}
+                      {user.first_name?.[0]?.toUpperCase()}{user.last_name?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className='space-y-2'>
@@ -258,21 +232,18 @@ export default function StudentProfileGeneralForm({
                           size='sm'
                           type='button'
                           onClick={() => fileElmentRef.current?.click()}
+                          disabled={submitting}
                         >
                           Change
                         </Button>
                       </ImageSelector>
-
-                      {/* 
-                                            <Input type="file"
-                                                ref={fileElmentRef}
-                                                accept="image/*"
-                                                className="hidden" onChange={handProfilePicChange} /> */}
                       <Button
                         variant='outline'
                         size='sm'
                         type='button'
                         className='text-destructive hover:text-destructive-foreground hover:bg-destructive hover:shadow-xs'
+                        disabled={submitting}
+                        onClick={() => setProfilePic({ url: profilePicSvg })}
                       >
                         Remove
                       </Button>
@@ -280,83 +251,105 @@ export default function StudentProfileGeneralForm({
                   </div>
                 </div>
               </div>
+
               <div className='flex flex-col gap-5 md:flex-row'>
                 <FormField
-                  control={form.control}
-                  name='user.first_name'
+                  control={userForm.control}
+                  name='first_name'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder='John' {...field} />
+                        <Input placeholder='John' {...field} disabled={submitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <FormField
-                  control={form.control}
-                  name='user.middle_name'
+                  control={userForm.control}
+                  name='middle_name'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>Middle Name</FormLabel>
                       <FormControl>
-                        <Input placeholder='Adams' {...field} />
+                        <Input
+                          placeholder='Adams'
+                          {...field}
+                          value={field.value ?? ''}
+                          disabled={submitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <FormField
-                  control={form.control}
-                  name='user.last_name'
+                  control={userForm.control}
+                  name='last_name'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder='Adams' {...field} />
+                        <Input placeholder='Doe' {...field} disabled={submitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
               <div className='flex flex-col gap-5 md:flex-row'>
                 <FormField
-                  control={form.control}
-                  name='user.email'
+                  control={userForm.control}
+                  name='email'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>Email Address</FormLabel>
                       <FormControl>
-                        <Input type='email' placeholder='name@example.com' {...field} />
+                        <Input
+                          type='email'
+                          placeholder='name@example.com'
+                          {...field}
+                          disabled={submitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <FormField
-                  control={form.control}
-                  name='user.phone_number'
+                  control={userForm.control}
+                  name='phone_number'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input type='tel' placeholder='+254712345678' {...field} />
+                        <Input
+                          type='tel'
+                          placeholder='+254712345678'
+                          {...field}
+                          disabled={submitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
               <div className='flex flex-col gap-5 md:flex-row'>
                 <FormField
-                  control={form.control}
-                  name='user.gender'
+                  control={userForm.control}
+                  name='gender'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>Gender</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={submitting}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder='Select your gender' />
@@ -374,8 +367,8 @@ export default function StudentProfileGeneralForm({
                   )}
                 />
                 <FormField
-                  control={form.control}
-                  name='user.dob'
+                  control={userForm.control}
+                  name='dob'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>Date of Birth</FormLabel>
@@ -388,6 +381,7 @@ export default function StudentProfileGeneralForm({
                                 'w-full pl-3 text-left font-normal',
                                 !field.value && 'text-muted-foreground'
                               )}
+                              disabled={submitting}
                             >
                               {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
                               <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
@@ -397,10 +391,10 @@ export default function StudentProfileGeneralForm({
                         <PopoverContent className='w-auto p-0' align='start'>
                           <Calendar
                             mode='single'
-                            selected={new Date(field.value)}
+                            selected={field.value}
                             onSelect={field.onChange}
                             disabled={date => date > new Date() || date < new Date('1900-01-01')}
-                            initialFocus
+                            autoFocus
                           />
                         </PopoverContent>
                       </Popover>
@@ -409,24 +403,45 @@ export default function StudentProfileGeneralForm({
                   )}
                 />
               </div>
+
+              <div className='flex justify-end pt-2'>
+                <Button type='submit' className='px-6' disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Spinner /> Saving Personal Info
+                    </>
+                  ) : (
+                    'Save Personal Info'
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
+        </form>
+      </Form>
 
+      {/* Guardian Information Form */}
+      <Form {...studentForm}>
+        <form onSubmit={studentForm.handleSubmit(onSubmitStudent)} className='space-y-8'>
           <Card>
             <CardHeader>
               <CardTitle>Guardian Information</CardTitle>
-              <CardDescription>Add guardian details for students under 18</CardDescription>
+              <CardDescription>Add guardian details for emergency contact</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='flex w-full gap-10'>
                 <FormField
-                  control={form.control}
-                  name='student.first_guardian_name'
+                  control={studentForm.control}
+                  name='first_guardian_name'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>First Guardian Fullname</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          value={field.value ?? ''}
+                          disabled={submitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -434,13 +449,17 @@ export default function StudentProfileGeneralForm({
                 />
 
                 <FormField
-                  control={form.control}
-                  name='student.first_guardian_mobile'
+                  control={studentForm.control}
+                  name='first_guardian_mobile'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>First Guardian Mobile Number</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          value={field.value ?? ''}
+                          disabled={submitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -450,13 +469,17 @@ export default function StudentProfileGeneralForm({
 
               <div className='flex w-full gap-10'>
                 <FormField
-                  control={form.control}
-                  name='student.second_guardian_name'
+                  control={studentForm.control}
+                  name='second_guardian_name'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>Second Guardian Fullname</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          value={field.value ?? ''}
+                          disabled={submitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -464,33 +487,37 @@ export default function StudentProfileGeneralForm({
                 />
 
                 <FormField
-                  control={form.control}
-                  name='student.second_guardian_mobile'
+                  control={studentForm.control}
+                  name='second_guardian_mobile'
                   render={({ field }) => (
                     <FormItem className='flex-grow'>
                       <FormLabel>Second Guardian Mobile Number</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          {...field}
+                          value={field.value ?? ''}
+                          disabled={submitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              <div className='flex justify-end pt-2'>
+                <Button type='submit' className='px-6' disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Spinner /> Saving Guardian Info
+                    </>
+                  ) : (
+                    'Save Guardian Info'
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
-
-          <div className='flex justify-end pt-2'>
-            <Button type='submit' className='px-6' disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Spinner /> Saving Changes
-                </>
-              ) : (
-                'Save Changes'
-              )}
-            </Button>
-          </div>
         </form>
       </Form>
     </div>
