@@ -1,7 +1,9 @@
 import { QueryClientProvider, queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { createContext, ReactNode, useContext, useEffect } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, Student, User } from '../services/client';
+
+type DomainTypes = "instructor" | "student" | "organisation"
 
 export type UserProfileType = User & {
   student?: Student,
@@ -15,7 +17,11 @@ export type UserProfileType = User & {
 }
 
 const UserProfileContext = createContext<UserProfileType & {
-  isLoading: boolean, invalidateQuery?: () => void
+  isLoading: boolean,
+  invalidateQuery: () => void,
+  clearProfile: () => void,
+  setActiveDomain: (domain: DomainTypes) => void,
+  activeDomain: DomainTypes
 } | null>(null);
 
 export const useUserProfile = () => useContext(UserProfileContext);
@@ -32,13 +38,16 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
   }));
 
   const profile = { ...(sessionData ?? data), isLoading };
+  const [activeDomain, setActiveDomain] = useState<DomainTypes | null>(profile && profile.user_domain && profile.user_domain.length > 0 ? profile.user_domain[0] : null)
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      sessionStorage.removeItem("profile");
-      qc.invalidateQueries({ queryKey: ["profile"] })
-    }
+    if (status === "unauthenticated") clearProfile();
   }, [status]);
+
+  function clearProfile() {
+    sessionStorage.removeItem("profile");
+    qc.invalidateQueries({ queryKey: ["profile"] });
+  }
 
   if (data && !isError) sessionStorage.setItem("profile", JSON.stringify(data));
 
@@ -49,7 +58,10 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
         invalidateQuery: async () => {
           await qc.invalidateQueries({ queryKey: ["profile"] });
           await refetch();
-        }
+        },
+        clearProfile,
+        setActiveDomain: (domain: DomainTypes) => setActiveDomain(domain),
+        activeDomain
       }}>
       {children}
     </UserProfileContext.Provider>

@@ -6,7 +6,6 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { ReactNode, useEffect } from 'react';
 import UserProfileProvider from './profile-context';
-import UserContextProvider from './user-context';
 
 function UserFetcher({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
@@ -37,11 +36,9 @@ export function RootProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         {/* <UserFetcher /> */}
-        <UserContextProvider>
-          <UserProfileProvider>
-            {children}
-          </UserProfileProvider>
-        </UserContextProvider>
+        <UserProfileProvider>
+          {children}
+        </UserProfileProvider>
       </SessionProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
