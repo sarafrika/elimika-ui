@@ -2,45 +2,6 @@ import NextAuth, { NextAuthConfig } from 'next-auth';
 import Keycloak from 'next-auth/providers/keycloak';
 
 /**
- * Refresh the access token using the refresh token
- */
-// async function refreshAccessToken(token: any) {
-//   try {
-//     const response = await fetch(`${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/x-www-form-urlencoded",
-//       },
-//       body: new URLSearchParams({
-//         client_id: process.env.KEYCLOAK_CLIENT_ID!,
-//         client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
-//         grant_type: "refresh_token",
-//         refresh_token: token.refreshToken,
-//       }),
-//     })
-
-//     const refreshedTokens = await response.json()
-
-//     if (!response.ok) {
-//       throw refreshedTokens
-//     }
-
-//     return {
-//       ...token,
-//       accessToken: refreshedTokens.access_token,
-//       accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-//       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-//     }
-//   } catch (error) {
-//     //console.log("Error refreshing access token:", error)
-//     return {
-//       ...token,
-//       error: "RefreshAccessTokenError",
-//     }
-//   }
-// }
-
-/**
  * Decode JWT token to extract claims
  */
 function decodeJWT(token: string) {
@@ -89,9 +50,6 @@ const config: NextAuthConfig = {
   callbacks: {
     async jwt({ token, account, user, session, trigger }) {
 
-      //console.log("trigger", trigger);
-      //console.log(token)
-      //console.log(session)
       if (trigger === "update") {
         session.user = user;
       }
@@ -127,7 +85,7 @@ const config: NextAuthConfig = {
     },
     async session({ session, token }) {
       if (session.user) {
-        // //console.log(session, token)
+        
         // Include the user data from API
         const searchEndpoint = `${process.env.NEXT_PUBLIC_API_URL}/users/search`;
         try {

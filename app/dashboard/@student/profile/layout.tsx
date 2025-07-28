@@ -2,18 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar';
 import { ReactNode } from 'react';
-import { ProfileProvider } from '@/context/profile-context';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 
 const sections = [
   { name: 'General', href: '/dashboard/profile/general' },
@@ -64,7 +53,7 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
           ))}
         </ul>
 
-        <ProfileProvider>{children}</ProfileProvider>
+        {children}
       </main>
     </div>
   );
