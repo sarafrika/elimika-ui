@@ -119,7 +119,7 @@ export type CourseFormProps = {
   initialValues?: Partial<CourseCreationFormValues>;
   editingCourseId?: string;
   courseId?: string;
-  onSuccess?: (data: any) => void;
+  successResponse?: (data: any) => void;
 };
 
 export type CourseFormRef = {
@@ -128,7 +128,7 @@ export type CourseFormRef = {
 
 export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
   function CourseCreationForm(
-    { showSubmitButton, initialValues, editingCourseId, courseId, onSuccess },
+    { showSubmitButton, initialValues, editingCourseId, courseId, successResponse },
     ref
   ) {
     const dialogCloseRef = useRef<HTMLButtonElement>(null);
@@ -324,6 +324,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
             if (respObj) {
               toast.success(data?.data?.message)
+              if (typeof successResponse === "function") {
+                // @ts-ignore
+                successResponse(data?.data)
+              }
+
               setActiveStep(1)
               queryClient.invalidateQueries({ queryKey: ["getAllCourses", "getCourseByUuid"] });
               return
@@ -385,13 +390,17 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             onError(error, variables, context) {
               toast.error(error?.message)
             },
-            onSuccess(data: any, variables, context) {
-              toast.success(data?.message)
-              courseId = data?.data?.uuid
+            onSuccess: (data) => {
+              toast.success("Course created successfully")
               setActiveStep(1)
               queryClient.invalidateQueries({ queryKey: ["getAllCourses", "getCourseByUuid"] });
 
-            }
+
+              if (typeof successResponse === "function") {
+                // @ts-ignore
+                successResponse(data?.data)
+              }
+            },
           }
 
         );

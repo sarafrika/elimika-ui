@@ -325,7 +325,7 @@ export default function CourseCreationPage() {
             courseId={createdCourseId as string}
             editingCourseId={courseId as string}
             initialValues={courseInitialValues as any}
-            onSuccess={data => {
+            successResponse={data => {
               setCreatedCourseId(data?.uuid);
               refetchCourse();
               refetchContentTypes()
@@ -429,7 +429,7 @@ export default function CourseCreationPage() {
               {/* Course Information */}
               <section>
                 <div>
-                  <Image src={course?.data?.banner_url as string || '/illustration.png'} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
+                  <Image src={course?.data?.banner_url as string || '/illustration.png'} alt='upload-banner' width={128} height={128} className='w-full max-h-[250px] bg-stone-300 mb-8 text-sm' />
                 </div>
 
                 <h3 className='mb-3 text-xl font-semibold text-gray-800'>📘 Course Information</h3>

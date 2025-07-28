@@ -61,7 +61,7 @@ export default function CourseDraftsPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: [getCoursesByInstructorQueryKey, instructor?.uuid, page, size],
     queryFn: async () =>
       await searchCourses({
@@ -79,6 +79,7 @@ export default function CourseDraftsPage() {
     mutationKey: [getCourseByUuidQueryKey],
     mutationFn: ({ uuid }: { uuid: string }) => deleteCourse({ path: { uuid } }),
     onSuccess: () => {
+      refetch()
       toast.success('Course deleted succcessfully');
       queryClient.invalidateQueries({ queryKey: ["getAllCourses", "getCourseByUuid"] });
     },
