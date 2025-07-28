@@ -334,13 +334,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -823,10 +823,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
@@ -856,6 +852,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -928,10 +928,6 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
@@ -960,6 +956,10 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1020,10 +1020,6 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1040,6 +1036,10 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -1282,29 +1282,13 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the course is offered for free.
-   */
-  readonly is_free?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the course is archived and no longer available.
+   * **[READ-ONLY]** Indicates if the course is offered for free.
    */
-  readonly is_archived?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course is currently under review.
-   */
-  readonly is_in_review?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course is still in draft mode.
-   */
-  readonly is_draft?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
+  readonly is_free?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
    */
@@ -1321,6 +1305,22 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course is archived and no longer available.
+   */
+  readonly is_archived?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently under review.
+   */
+  readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is still in draft mode.
+   */
+  readonly is_draft?: boolean;
 };
 
 export type ApiResponseCourse = {
@@ -1765,14 +1765,6 @@ export type ContentType = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category for organizing uploads in the user interface.
-   */
-  readonly upload_category?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this content type is for media files.
-   */
-  readonly is_media_type?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable list of supported file formats.
    */
   readonly supported_formats?: string;
@@ -1780,6 +1772,14 @@ export type ContentType = {
    * **[READ-ONLY]** Human-readable format of maximum file size.
    */
   readonly size_limit_display?: string;
+  /**
+   * **[READ-ONLY]** Category for organizing uploads in the user interface.
+   */
+  readonly upload_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this content type is for media files.
+   */
+  readonly is_media_type?: boolean;
 };
 
 export type ApiResponseContentType = {
@@ -2588,14 +2588,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -2603,6 +2595,14 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   */
+  readonly time_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {

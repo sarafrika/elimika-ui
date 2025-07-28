@@ -535,14 +535,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
-      .readonly()
-      .optional(),
     question_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
   })
@@ -1307,11 +1307,6 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
-      .readonly()
-      .optional(),
     formatted_duration: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
@@ -1350,6 +1345,11 @@ export const zInstructorProfessionalMembership = z
       .describe(
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -1471,11 +1471,6 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
-      .readonly()
-      .optional(),
     duration_in_months: z
       .number()
       .int()
@@ -1513,6 +1508,11 @@ export const zInstructorExperience = z
     calculated_years: z
       .number()
       .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -1617,11 +1617,6 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
-      .readonly()
-      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
@@ -1646,6 +1641,11 @@ export const zInstructorEducation = z
     formatted_completion: z
       .string()
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -2062,34 +2062,14 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    is_free: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is offered for free.')
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
       .readonly()
       .optional(),
-    is_archived: z
+    is_free: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is archived and no longer available.')
-      .readonly()
-      .optional(),
-    is_in_review: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
-      .readonly()
-      .optional(),
-    is_draft: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
-      .readonly()
-      .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .describe('**[READ-ONLY]** Indicates if the course is offered for free.')
       .readonly()
       .optional(),
     has_multiple_categories: z
@@ -2115,6 +2095,26 @@ export const zCourse = z
       .describe(
         '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
       )
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
+    is_archived: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is archived and no longer available.')
+      .readonly()
+      .optional(),
+    is_in_review: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    is_draft: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
       .readonly()
       .optional(),
   })
@@ -2774,16 +2774,6 @@ export const zContentType = z
       )
       .readonly()
       .optional(),
-    upload_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category for organizing uploads in the user interface.')
-      .readonly()
-      .optional(),
-    is_media_type: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this content type is for media files.')
-      .readonly()
-      .optional(),
     supported_formats: z
       .string()
       .describe('**[READ-ONLY]** Human-readable list of supported file formats.')
@@ -2792,6 +2782,16 @@ export const zContentType = z
     size_limit_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of maximum file size.')
+      .readonly()
+      .optional(),
+    upload_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category for organizing uploads in the user interface.')
+      .readonly()
+      .optional(),
+    is_media_type: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this content type is for media files.')
       .readonly()
       .optional(),
   })
@@ -3876,16 +3876,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
-    time_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
-      .readonly()
-      .optional(),
     attempt_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
@@ -3894,6 +3884,16 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    time_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
