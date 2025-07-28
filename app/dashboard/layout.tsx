@@ -9,7 +9,7 @@ import { UserDomain } from '@/lib/types';
 import { auth } from '@/services/auth';
 import { redirect } from 'next/navigation';
 import { ReactNode } from 'react';
-import { getUserByEmail } from '../../services/user/actions';
+import { getUserByUuid } from '../../services/client';
 import { DashboardChildrenTypes } from './_types';
 
 type OrgDomainType = DashboardView | 'organisation_user';
@@ -22,11 +22,12 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       return redirect('/');
     }
 
-    const user = await getUserByEmail(session.user.email);
-
-    if (!user) {
+    const { data, error } = await getUserByUuid({ path: { uuid: session.user.uuid! } });
+    if (error || !data.data) {
       return redirect('/');
     }
+
+    const user = data?.data;
 
     if (user.user_domain!.length === 0) {
       return redirect('/onboarding');
