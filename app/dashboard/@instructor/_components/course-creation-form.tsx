@@ -37,14 +37,12 @@ import { useInstructor } from '@/context/instructor-context';
 import { tanstackClient } from '@/services/api/tanstack-client';
 import {
   createCategory,
-  createCourse,
   getAllCategories,
   getAllDifficultyLevels,
-  updateCourse,
+  updateCourse
 } from '@/services/client';
 import {
-  getAllCategoriesQueryKey,
-  getCoursesByInstructorQueryKey,
+  createCourseMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -78,7 +76,7 @@ const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
 const courseCreationSchema = z.object({
   name: z.string().min(1, 'Course name is required'),
   description: z.string().min(10, 'Course description is required'),
-  objectives: z.string().min(10, 'Course objectives is required'),
+  objectives: z.string().min(10, 'Course objectives is required').max(999, "Objectives must not exceed 1000 characters"),
   thumbnail_url: z.any().optional(),
   banner_url: z.any().optional(),
   intro_video_url: z.any().optional(),
@@ -86,12 +84,12 @@ const courseCreationSchema = z.object({
   price: z.coerce.number().optional(),
   sale_price: z.coerce.number().optional(),
   currency: z.string().optional(),
-  prerequisites: z.string().optional(),
+  prerequisites: z.string().max(999, "Objectives must not exceed 1000 characters"),
   categories: z.string().array(),
   difficulty: z.string().min(1, 'Please select a difficulty level'),
   class_limit: z.coerce.number().min(1, 'Class limit must be at least 1'),
-  age_lower_limit: z.any().optional(),
-  age_upper_limit: z.any().optional(),
+  age_lower_limit: z.coerce.number().min(1, 'Age lower limit must be at least 1'),
+  age_upper_limit: z.coerce.number().min(1, 'Age upper limit must be at least 1'),
 });
 
 type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any };
@@ -145,8 +143,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         categories: [],
         class_limit: 30,
         prerequisites: '',
-        age_lower_limit: '',
-        age_upper_limit: '',
+        age_lower_limit: 1,
+        age_upper_limit: 1,
         thumbnail_url: '',
         banner_url: '',
         intro_video_url: '',
@@ -194,37 +192,17 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       onSuccess: (data: any) => {
         toast.success(data?.message);
         dialogCloseRef.current?.click();
-        queryClient.invalidateQueries({ queryKey: [getAllCategoriesQueryKey] });
+        queryClient.invalidateQueries({ queryKey: ["getAllCategories"] });
         setCategoryInput('');
       },
     });
 
-    const { mutate: createCourseMutation, isPending: createCourseIsPending } = useMutation({
-      mutationFn: ({ body }: { body: any }) => createCourse({ body }),
-      onSuccess: (data: any) => {
-        toast.success(data?.data?.message);
-        setActiveStep(1);
-
-        if (typeof onSuccess === 'function') {
-          onSuccess(data?.data);
-        }
-      },
-    });
+    const { mutate: createCourse, isPending: createCourseIsPending } = useMutation(createCourseMutation())
 
     const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation({
       mutationFn: ({ body, uuid }: { body: any; uuid: string }) =>
         updateCourse({ body, path: { uuid: uuid } }),
-      onSuccess: (data: any) => {
-        toast.success(data?.data?.message);
-        setActiveStep(1);
-        queryClient.invalidateQueries({
-          queryKey: [getCoursesByInstructorQueryKey, data?.data?.data?.uuid],
-        });
 
-        if (typeof onSuccess === 'function') {
-          onSuccess(data?.data);
-        }
-      },
     });
 
     const courseBannerMutation = tanstackClient.useMutation(
@@ -326,7 +304,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           category_uuids: data?.categories,
           difficulty_uuid: data?.difficulty,
           prerequisites: data?.prerequisites,
-          duration_hours: 2,
+          duration_hours: 0,
           duration_minutes: 0,
           class_limit: data?.class_limit,
           price: data?.price,
@@ -339,11 +317,43 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           age_upper_limit: data?.age_upper_limit,
         };
 
-        updateCourseMutation({ body: editBody as any, uuid: editingCourseId });
+        updateCourseMutation({ body: editBody as any, uuid: editingCourseId }, {
+          onSuccess(data, variables, context) {
+            const respObj = data?.data;
+            const errorObj = data?.error
+
+            if (respObj) {
+              toast.success(data?.data?.message)
+              setActiveStep(1)
+              queryClient.invalidateQueries({ queryKey: ["getAllCourses", "getCourseByUuid"] });
+              return
+            }
+
+            if (errorObj && typeof errorObj === 'object') {
+              Object.values(errorObj).forEach((errorMsg) => {
+                if (typeof errorMsg === 'string') {
+                  toast.error(errorMsg);
+                }
+              });
+              return
+              // @ts-ignore
+            } else if (data?.message) {
+              // @ts-ignore
+              toast.error(data.message);
+              return
+            } else {
+              toast.error('An unknown error occurred.');
+              return
+            }
+
+
+          }
+
+        });
       }
 
       if (!editingCourseId) {
-        createCourseMutation({
+        createCourse({
           body: {
             total_duration_display: '',
             updated_by: instructor?.full_name,
@@ -355,7 +365,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             category_uuids: data?.categories,
             difficulty_uuid: data?.difficulty,
             prerequisites: data?.prerequisites,
-            duration_hours: 2,
+            duration_hours: 0,
             duration_minutes: 0,
             class_limit: data?.class_limit,
             price: data?.price,
@@ -370,7 +380,21 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             age_lower_limit: data?.age_lower_limit,
             age_upper_limit: data?.age_upper_limit,
           },
-        });
+        },
+          {
+            onError(error, variables, context) {
+              toast.error(error?.message)
+            },
+            onSuccess(data: any, variables, context) {
+              toast.success(data?.message)
+              courseId = data?.data?.uuid
+              setActiveStep(1)
+              queryClient.invalidateQueries({ queryKey: ["getAllCourses", "getCourseByUuid"] });
+
+            }
+          }
+
+        );
       }
     };
 

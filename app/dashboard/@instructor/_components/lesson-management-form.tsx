@@ -493,7 +493,7 @@ function LessonList({
                   <div className='flex flex-col items-start'>
                     <h3 className='text-lg font-medium'>{lesson.title}</h3>
                     <div className='text-muted-foreground text-sm'>
-                      <RichTextRenderer htmlString={lesson?.description} maxChars={400} />
+                      <RichTextRenderer htmlString={lesson?.description} maxChars={150} />
                     </div>
                   </div>
                   <DropdownMenu>
@@ -669,13 +669,7 @@ function LessonCreationForm({
     mutationKey: [addCourseLessonQueryKey],
     mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
       addCourseLesson({ body, path: { courseUuid: uuid } }),
-    // onSuccess: () => (queryClient.invalidateQueries({ queryKey: ["courses"] }))
-    onSuccess: (data) => {
-      queryClient.setQueryData(['courses'], (oldCourses = []) => {
-        return [data?.data?.data];
-      });
-    },
-
+    onSuccess: () => (queryClient.invalidateQueries({ queryKey: ["courses"] }))
   });
 
   const { mutate: createLessonContentMutation, isPending: createLessonContentIsPending } =
@@ -1009,7 +1003,8 @@ function LessonEditingForm({
           course_uuid: courseId as string,
           title: values?.title,
           description: values?.description ?? '',
-          learning_objectives: courseData?.data?.objectives,
+          // learning_objectives: courseData?.data?.objectives,
+          learning_objectives: "",
           duration_hours: Number(values?.content[0]?.durationHours),
           duration_minutes: Number(values?.content[0]?.durationMinutes),
           duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
@@ -1036,50 +1031,53 @@ function LessonEditingForm({
           if (typeof onSuccess === 'function') {
             onSuccess(data?.data);
           }
+
+          updateLessonContentMutation.mutate(
+            {
+              body: {
+                lesson_uuid: lessonId as string,
+                content_type_uuid: values.content[0]?.contentUuid as string,
+                title: values?.title,
+                description: values?.description ?? '',
+                content_text: values.content[0]?.value || '',
+                file_url: '',
+                file_size_bytes: 157200,
+                mime_type: values.content[0]?.value || '',
+                display_order: values?.number,
+                is_required: true,
+                created_by: 'instructor@sarafrika.com',
+                updated_by: 'instructor@sarafrika.com',
+                file_size_display: '',
+                // content_category: values.contentCategory,
+                // is_downloadable: true,
+                // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
+              },
+
+              params: {
+                path: {
+                  courseUuid: courseId as string,
+                  lessonUuid: lessonId as string,
+                  contentUuid: values?.content[0]?.contentUuid as string,
+                },
+              },
+            },
+            {
+              onSuccess: data => {
+                toast.success(data?.message);
+                onCancel();
+
+                if (typeof onSuccess === 'function') {
+                  onSuccess(data?.data);
+                }
+              },
+            }
+          );
         },
       }
     );
 
-    updateLessonContentMutation.mutate(
-      {
-        body: {
-          lesson_uuid: lessonId as string,
-          content_type_uuid: values.content[0]?.contentUuid as string,
-          title: values?.title,
-          description: values?.description ?? '',
-          content_text: values.content[0]?.value || '',
-          file_url: '',
-          file_size_bytes: 157200,
-          mime_type: values.content[0]?.value || '',
-          display_order: values?.number,
-          is_required: true,
-          created_by: 'instructor@sarafrika.com',
-          updated_by: 'instructor@sarafrika.com',
-          file_size_display: '',
-          // content_category: values.contentCategory,
-          // is_downloadable: true,
-          // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
-        },
 
-        params: {
-          path: {
-            courseUuid: courseId as string,
-            lessonUuid: lessonId as string,
-            contentUuid: values?.content[0]?.contentUuid as string,
-          },
-        },
-      },
-      {
-        onSuccess: data => {
-          toast.success(data?.message);
-          onCancel();
 
-          if (typeof onSuccess === 'function') {
-            onSuccess(data?.data);
-          }
-        },
-      }
-    );
   };
 
   return (
