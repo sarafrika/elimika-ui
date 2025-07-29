@@ -1,79 +1,71 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useUserStore } from '@/store/use-user-store';
-import { useQuery } from '@tanstack/react-query';
-import { searchStudentsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { QueryClientProvider, queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
+import { createContext, ReactNode, useContext, useEffect } from 'react';
+import { Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, Student, User } from '../services/client';
 
-interface ProfileContextType {
-  user: any;
-  student: any;
-  isLoading: boolean;
-  error: any;
-  refetch: () => Promise<void>;
+export type UserProfileType = User & {
+  student?: Student,
+  instructor?: Instructor & {
+    educations: InstructorEducation[],
+    experience: InstructorExperience[],
+    membership: InstructorProfessionalMembership[],
+    skills: InstructorSkill
+  },
+  organization?: Organisation
 }
 
-const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
+const UserProfileContext = createContext<UserProfileType & {
+  isLoading: boolean, invalidateQuery?: () => void
+} | null>(null);
 
-export function ProfileProvider({ children }: { children: React.ReactNode }) {
-  const { user, isLoading: isUserLoading, fetchCurrentUser } = useUserStore();
-  const [isRefetching, setIsRefetching] = useState(false);
+export const useUserProfile = () => useContext(UserProfileContext);
 
-  const {
-    data: studentResponse,
-    isLoading: isStudentLoading,
-    error: studentError,
-    refetch: refetchStudent,
-  } = useQuery({
-    ...searchStudentsOptions({
-      query: {
-        //@ts-ignore
-        userUuid: user?.uuid || '',
-        page: 0,
-        size: 1,
-      },
-    }),
-    enabled: !!user?.uuid,
-    staleTime: 5 * 60 * 1000,
-    select: (data) => data?.content?.[0] || null,
-  });
+export default function UserProfileProvider({ children }: { children: ReactNode }) {
 
-  const student = studentResponse;
+  const { status } = useSession();
+  const sessionData = typeof sessionStorage !== "undefined" ?
+    JSON.parse(sessionStorage.getItem("profile") ?? "null") : null;
 
-  const refetch = useCallback(async () => {
-    setIsRefetching(true);
-    try {
-      await fetchCurrentUser();
-      await refetchStudent();
-    } catch (error) {
-      console.error('Error refetching profile data:', error);
-    } finally {
-      setIsRefetching(false);
-    }
-  }, [fetchCurrentUser, refetchStudent]);
+  const qc = useQueryClient();
+  const { data, isLoading, isError, refetch } = useQuery(createQueryOptions({
+    enabled: sessionData === null
+  }));
 
+  const profile = { ...(sessionData ?? data), isLoading };
 
   useEffect(() => {
-    if (user?.uuid) {
-      refetchStudent();
+    if (status === "unauthenticated") {
+      sessionStorage.removeItem("profile");
+      qc.invalidateQueries({ queryKey: ["profile"] })
     }
-  }, [user?.uuid, refetchStudent]);
+  }, [status]);
 
-  return (
-    <ProfileContext.Provider
-      value={{
-        user,
-        student,
-        isLoading: isUserLoading || isStudentLoading || isRefetching,
-        error: studentError,
-        refetch,
-      }}
-    >
+  if (data && !isError) sessionStorage.setItem("profile", JSON.stringify(data));
+
+  return <QueryClientProvider client={qc}>
+    <UserProfileContext.Provider value={
+      {
+        ...profile,
+        invalidateQuery: async () => {
+          await qc.invalidateQueries({ queryKey: ["profile"] });
+          await refetch();
+        }
+      }}>
       {children}
-    </ProfileContext.Provider>
-  );
+    </UserProfileContext.Provider>
+  </QueryClientProvider>
 }
 
-export function useProfileContext() {
-  const ctx = useContext(ProfileContext);
-  if (!ctx) throw new Error('useProfileContext must be used within a ProfileProvider');
-  return ctx;
+function createQueryOptions(options?: Omit<UseQueryOptions, "queryKey" | "queryFn" | "staleTime">) {
+  return queryOptions({
+    ...options,
+    queryKey: ["profile"],
+    queryFn: () => fetch("/api/profile").then(response => {
+      if (response.status < 200 || response.status > 299)
+        throw new Error(response.statusText)
+
+      return response.json();
+    }),
+    staleTime: 1000 * 60 * 60 // 1hour
+  })
 }
