@@ -166,7 +166,7 @@ export default function CourseCreationPage() {
       staleTime: 5 * 60 * 1000,
     });
   };
-  const { data: lessonData } = useLessonById(resolveId, selectedLesson?.uuid as string);
+  const { data: lessonData, refetch: refetchLesson } = useLessonById(resolveId, selectedLesson?.uuid as string);
   // @ts-ignore
   const lesson = lessonData?.data;
 
@@ -231,7 +231,7 @@ export default function CourseCreationPage() {
               : 0,
           durationHours: item?.duration_hours || 0,
           durationMinutes: item?.duration_minutes || 0,
-          contentUuid: item?.content_type || '',
+          contentTypeUuid: item?.content_type || '',
           contentCategory: matchedType?.upload_category ?? '',
         };
       })
@@ -249,6 +249,7 @@ export default function CourseCreationPage() {
     // map content if multiple content upload is allowed
     content: content,
   };
+
 
   const publishCourseMutation = tanstackClient.useMutation(
     'post',
@@ -372,6 +373,7 @@ export default function CourseCreationPage() {
                 initialValues={lessonInitialValues}
                 onSuccess={data => {
                   setCreatedCourseId(data?.uuid);
+                  refetchLesson()
                   refetchLessons();
                   refetchLessonContent();
                 }}

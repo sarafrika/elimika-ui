@@ -33,13 +33,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeIcon, FilePenIcon, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function PublishedCoursesPage() {
   const queryClient = useQueryClient();
   const instructor = useInstructor();
+  const router = useRouter()
   const { replaceBreadcrumbs } = useBreadcrumb();
+
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -61,7 +64,7 @@ export default function PublishedCoursesPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: [getCoursesByInstructorQueryKey, instructor?.uuid, page, size],
     queryFn: () =>
       searchCourses({
@@ -78,7 +81,7 @@ export default function PublishedCoursesPage() {
   const { mutate: unpublishCourseMutation, isPending } = useMutation({
     mutationKey: [getCourseByUuidQueryKey],
     mutationFn: ({ uuid }: { uuid: string }) => unpublishCourse({ path: { uuid } }),
-    onSettled(data) {
+    onSuccess(data) {
       const errorObj = data?.error
       const dataObj = data?.data
 
@@ -90,6 +93,8 @@ export default function PublishedCoursesPage() {
 
       if (dataObj) {
         toast.success(dataObj?.message)
+        refetch()
+        router.push('/dashboard/course-management/drafts')
       }
     },
 
