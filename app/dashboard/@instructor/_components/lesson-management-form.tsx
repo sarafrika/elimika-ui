@@ -59,6 +59,7 @@ import {
 import React, { ReactNode } from 'react';
 import {
   Control,
+  FieldErrors,
   SubmitHandler,
   useFieldArray,
   useForm,
@@ -128,8 +129,8 @@ const lessonFormSchema = z.object({
   title: z.string().min(1, 'Lesson title is required'),
   content: z.array(contentItemSchema),
   resources: z.array(resourceSchema),
-  description: z.string().min(1, 'Lesson description is required'),
-  objectives: z.any(),
+  description: z.string().min(1, 'Lesson description is required').max(1000, "Description cannot exceed 1000 characters"),
+  objectives: z.string().max(500, "Objectives cannot exceed 500 characters").optional(),
   uuid: z.any(),
   duration_hours: z.any(),
   duration_minutes: z.any(),
@@ -635,6 +636,19 @@ function LessonCreationForm({
     },
   });
 
+  const handleSubmitError = (errors: FieldErrors<LessonFormValues>) => {
+    const firstFieldWithError = Object.keys(errors)[0];
+    // @ts-ignore
+    const firstError = errors[firstFieldWithError];
+
+    const message =
+      typeof firstError?.message === "string"
+        ? firstError.message
+        : "Please correct the form errors.";
+
+    toast.error(message);
+  };
+
   const {
     fields: contentFields,
     append: appendContent,
@@ -747,7 +761,7 @@ function LessonCreationForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitCreateLesson)} className={`space-y-8 ${className}`}>
+      <form onSubmit={form.handleSubmit(onSubmitCreateLesson, handleSubmitError)} className={`space-y-8 ${className}`}>
         <div className='space-y-4'>
           <FormField
             control={form.control}
@@ -951,6 +965,21 @@ function LessonEditingForm({
     },
   });
 
+  const handleSubmitError = (errors: FieldErrors<LessonFormValues>) => {
+    const firstFieldWithError = Object.keys(errors)[0];
+    // @ts-ignore
+    const firstError = errors[firstFieldWithError];
+
+    const message =
+      typeof firstError?.message === "string"
+        ? firstError.message
+        : "Please correct the form errors.";
+
+    toast.error(message);
+  };
+
+
+
   // const form = useForm<LessonFormValues>({
   //   resolver: zodResolver(lessonFormSchema),
   //   defaultValues: {
@@ -1075,7 +1104,7 @@ function LessonEditingForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitEditLesson)} className={`space-y-8 ${className}`}>
+      <form onSubmit={form.handleSubmit(onSubmitEditLesson, handleSubmitError)} className={`space-y-8 ${className}`}>
         <div className='space-y-4'>
           <FormField
             control={form.control}

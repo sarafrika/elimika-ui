@@ -81,7 +81,7 @@ export default function CoursePreviewPage() {
   return (
     <div className='mx-auto max-w-4xl space-y-8 p-4'>
       <div>
-        <Image src={course?.banner_url as string || "/illustration.png"} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
+        <Image src={course?.banner_url as string} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
       </div>
 
       <div className='space-y-4'>
