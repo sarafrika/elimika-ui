@@ -59,6 +59,7 @@ import {
 import React, { ReactNode } from 'react';
 import {
   Control,
+  FieldErrors,
   SubmitHandler,
   useFieldArray,
   useForm,
@@ -68,21 +69,13 @@ import {
 import { toast } from 'sonner';
 import * as z from 'zod';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { addCourseLesson, addLessonContent, getAllContentTypes, getCourseByUuid, updateCourseLesson, updateLessonContent } from '@/services/client';
 import {
   addCourseLessonQueryKey,
   getAllContentTypesQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import dynamic from 'next/dynamic';
-
-// Dynamically import with SSR disabled
-const WysiwygRichTextEditor = dynamic(
-  () => import('../../../../components/editors/wysiwygRichTextEditor'),
-  {
-    ssr: false,
-  }
-);
 
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
@@ -98,7 +91,7 @@ const contentItemSchema = z.object({
   contentType: z.enum(['AUDIO', 'VIDEO', 'TEXT', 'LINK', 'PDF', 'YOUTUBE'], {
     required_error: 'Content type is required',
   }),
-  contentUuid: z.string(),
+  contentTypeUuid: z.string(),
   contentCategory: z.string(),
   title: z.string().min(1, 'Title is required'),
   value: z.any().optional(),
@@ -128,8 +121,8 @@ const lessonFormSchema = z.object({
   title: z.string().min(1, 'Lesson title is required'),
   content: z.array(contentItemSchema),
   resources: z.array(resourceSchema),
-  description: z.string().min(1, 'Lesson description is required'),
-  objectives: z.any(),
+  description: z.string().min(1, 'Lesson description is required').max(1000, "Description cannot exceed 1000 characters"),
+  objectives: z.string().max(500, "Objectives cannot exceed 500 characters").optional(),
   uuid: z.any(),
   duration_hours: z.any(),
   duration_minutes: z.any(),
@@ -313,7 +306,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
 
         <FormField
           control={control}
-          name={`content.${index}.contentUuid`}
+          name={`content.${index}.contentTypeUuid`}
           render={({ field }) => <input type='hidden' {...field} />}
         ></FormField>
 
@@ -340,7 +333,10 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                <SimpleEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -624,7 +620,7 @@ function LessonCreationForm({
         {
           contentType: 'TEXT',
           title: '',
-          contentUuid: '',
+          contentTypeUuid: '',
           contentCategory: '',
           durationMinutes: 0,
           durationHours: 0,
@@ -634,6 +630,19 @@ function LessonCreationForm({
       resources: [],
     },
   });
+
+  const handleSubmitError = (errors: FieldErrors<LessonFormValues>) => {
+    const firstFieldWithError = Object.keys(errors)[0];
+    // @ts-ignore
+    const firstError = errors[firstFieldWithError];
+
+    const message =
+      typeof firstError?.message === "string"
+        ? firstError.message
+        : "Please correct the form errors.";
+
+    toast.error(message);
+  };
 
   const {
     fields: contentFields,
@@ -708,7 +717,7 @@ function LessonCreationForm({
 
           const createContentBody = {
             lesson_uuid: lessonUuid as string,
-            content_type_uuid: values.content[0]?.contentUuid ?? '',
+            content_type_uuid: values.content[0]?.contentTypeUuid ?? '',
             title: values?.title,
             description: values?.description ?? '',
             content_text: values.content[0]?.value || '',
@@ -747,7 +756,7 @@ function LessonCreationForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitCreateLesson)} className={`space-y-8 ${className}`}>
+      <form onSubmit={form.handleSubmit(onSubmitCreateLesson, handleSubmitError)} className={`space-y-8 ${className}`}>
         <div className='space-y-4'>
           <FormField
             control={form.control}
@@ -786,8 +795,8 @@ function LessonCreationForm({
               <FormItem>
                 <FormLabel>Lesson Description</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor
-                    initialContent={field.value ?? ''}
+                  <SimpleEditor
+                    value={field.value}
                     onChange={field.onChange}
                   />
                 </FormControl>
@@ -803,8 +812,8 @@ function LessonCreationForm({
               <FormItem>
                 <FormLabel>Lesson Objectives</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor
-                    initialContent={field.value ?? ''}
+                  <SimpleEditor
+                    value={field.value}
                     onChange={field.onChange}
                   />
                 </FormControl>
@@ -951,6 +960,21 @@ function LessonEditingForm({
     },
   });
 
+  const handleSubmitError = (errors: FieldErrors<LessonFormValues>) => {
+    const firstFieldWithError = Object.keys(errors)[0];
+    // @ts-ignore
+    const firstError = errors[firstFieldWithError];
+
+    const message =
+      typeof firstError?.message === "string"
+        ? firstError.message
+        : "Please correct the form errors.";
+
+    toast.error(message);
+  };
+
+
+
   // const form = useForm<LessonFormValues>({
   //   resolver: zodResolver(lessonFormSchema),
   //   defaultValues: {
@@ -1002,6 +1026,7 @@ function LessonEditingForm({
 
   });
 
+
   const onSubmitEditLesson = (values: LessonFormValues) => {
     updateLessonMutation.mutate(
       {
@@ -1038,7 +1063,7 @@ function LessonEditingForm({
             {
               body: {
                 lesson_uuid: lessonId as string,
-                content_type_uuid: values.content[0]?.contentUuid as string,
+                content_type_uuid: values.content[0]?.contentTypeUuid as string,
                 title: values?.title,
                 description: values?.description ?? '',
                 content_text: values.content[0]?.value || '',
@@ -1075,7 +1100,7 @@ function LessonEditingForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitEditLesson)} className={`space-y-8 ${className}`}>
+      <form onSubmit={form.handleSubmit(onSubmitEditLesson, handleSubmitError)} className={`space-y-8 ${className}`}>
         <div className='space-y-4'>
           <FormField
             control={form.control}
@@ -1114,10 +1139,11 @@ function LessonEditingForm({
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor
-                    initialContent={field.value ?? ''}
+                  <SimpleEditor
+                    value={field.value}
                     onChange={field.onChange}
                   />
+
                 </FormControl>
                 <FormMessage />
               </FormItem>

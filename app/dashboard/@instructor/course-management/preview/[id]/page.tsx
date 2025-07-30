@@ -81,7 +81,7 @@ export default function CoursePreviewPage() {
   return (
     <div className='mx-auto max-w-4xl space-y-8 p-4'>
       <div>
-        <Image src={course?.banner_url as string || "/illustration.png"} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
+        <Image src={course?.banner_url as string} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
       </div>
 
       <div className='space-y-4'>
@@ -132,13 +132,19 @@ export default function CoursePreviewPage() {
                   ?.slice()
                   ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
                   ?.map((lesson: any, i: any) => (
-                    <div key={i} className='flex flex-col gap-2 ml-4'>
-                      <h3 className='font-semibold'>{lesson.title}</h3>
-                      <RichTextRenderer
-                        htmlString={(lesson?.description as string) || 'No lesson provided'}
-                      />
+                    <div key={i} className='flex flex-row gap-2'>
+                      <div>
+                        <span className='min-h-4 min-w-4'>
+                          <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
+                        </span>
+                      </div>
+                      <div className='flex flex-col gap-2'>
+                        <h3 className='font-semibold'>{lesson.title}</h3>
+                        <RichTextRenderer
+                          htmlString={(lesson?.description as string) || 'No lesson provided'}
+                        />
 
-                      {/* <ul className="mt-2 space-y-2">
+                        {/* <ul className="mt-2 space-y-2">
                       {lesson.lectures.map((lecture, j) => (
                         <li key={j} className="flex items-center">
                           <Video className="mr-2 h-4 w-4" />
@@ -148,9 +154,11 @@ export default function CoursePreviewPage() {
                       ))}
                     </ul> */}
 
-                      <h3 className='font-semibold'>
-                        <span>📅 Duration:</span> {lesson.duration_display}
-                      </h3>
+                        <h3 className='font-semibold'>
+                          <span>📅 Duration:</span> {lesson.duration_display}
+                        </h3>
+                      </div>
+
                     </div>
                   ))}
               </div>

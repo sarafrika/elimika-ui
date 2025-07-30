@@ -1,5 +1,6 @@
 'use client';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -47,7 +48,6 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XIcon } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import React, {
   ReactNode,
@@ -60,14 +60,6 @@ import React, {
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-
-// Dynamically import with SSR disabled
-const WysiwygRichTextEditor = dynamic(
-  () => import('../../../../components/editors/wysiwygRichTextEditor'),
-  {
-    ssr: false,
-  }
-);
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 4MB
 const MAX_VIDEO_SIZE_MB = 150; // Adjust according to your backend limit
@@ -88,8 +80,8 @@ const courseCreationSchema = z.object({
   categories: z.string().array(),
   difficulty: z.string().min(1, 'Please select a difficulty level'),
   class_limit: z.coerce.number().min(1, 'Class limit must be at least 1'),
-  age_lower_limit: z.coerce.number().min(1, 'Age lower limit must be at least 1'),
-  age_upper_limit: z.coerce.number().min(1, 'Age upper limit must be at least 1'),
+  age_lower_limit: z.coerce.number().min(5, 'Age lower limit must be at least 1'),
+  age_upper_limit: z.coerce.number().min(70, 'Age upper limit must be at least 1'),
 });
 
 type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any };
@@ -143,8 +135,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         categories: [],
         class_limit: 30,
         prerequisites: '',
-        age_lower_limit: 1,
-        age_upper_limit: 1,
+        age_lower_limit: 5,
+        age_upper_limit: 70,
         thumbnail_url: '',
         banner_url: '',
         intro_video_url: '',
@@ -464,13 +456,17 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                    <SimpleEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </FormSection>
+
 
           {/* Intro Video */}
           {editingCourseId && (
@@ -613,7 +609,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                    <SimpleEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -632,7 +631,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                    <SimpleEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
