@@ -6,10 +6,12 @@ import {
 } from '@/app/dashboard/@instructor/_components/course-creation-form';
 import {
   AssessmentDialog,
+  AssessmentList,
   EditLessonDialog,
   LessonDialog,
   LessonFormValues,
   LessonList,
+  RubricDialog,
 } from '@/app/dashboard/@instructor/_components/lesson-management-form';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
@@ -18,26 +20,28 @@ import { Button } from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
 import { StepperContent, StepperList, StepperRoot, StepperTrigger } from '@/components/ui/stepper';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { tanstackClient } from '@/services/api/tanstack-client';
 import {
-  deleteCourseLesson,
   getAllContentTypes,
   getCourseByUuid,
   getCourseLesson,
   getCourseLessons,
-  getLessonContent,
+  getLessonContent
 } from '@/services/client';
+import {
+  deleteCourseLessonMutation,
+  getAllContentTypesQueryKey,
+  getCourseByUuidQueryKey,
+  getCourseLessonQueryKey,
+  publishCourseMutation,
+  publishCourseQueryKey,
+  searchAssessmentsOptions
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Check, List } from 'lucide-react';
+import { BookOpen, BookOpenCheck, Check, CheckCircle, List } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  getAllContentTypesQueryKey,
-  getCourseByUuidQueryKey,
-  getCourseLessonQueryKey,
-} from '../../../../../../services/client/@tanstack/react-query.gen';
 import { ICourse, TLesson } from '../../../_components/instructor-type';
 
 export default function CourseCreationPage() {
@@ -82,11 +86,14 @@ export default function CourseCreationPage() {
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
 
+  const [addRubricModalOpen, setAddRubricModalOpen] = useState(false);
+  const openAddRubricModal = () => setAddRubricModalOpen(true);
+
   // GetContentTypes
   const useGetContentTypes = () => {
     return useQuery({
       queryKey: [getAllContentTypesQueryKey],
-      queryFn: () => getAllContentTypes().then(res => res.data),
+      queryFn: () => getAllContentTypes({ query: {} }).then(res => res.data),
     });
   };
   const { data: contentTypeList, refetch: refetchContentTypes } = useGetContentTypes();
@@ -144,7 +151,7 @@ export default function CourseCreationPage() {
   const useCourseLessons = (courseUuid?: string) => {
     return useQuery({
       queryKey: ['course-lessons', courseUuid],
-      queryFn: () => getCourseLessons({ path: { courseUuid: courseUuid! } }).then(res => res.data),
+      queryFn: () => getCourseLessons({ path: { courseUuid: courseUuid! }, query: {} }).then(res => res.data),
       enabled: !!courseUuid,
       staleTime: 5 * 60 * 1000,
     });
@@ -251,47 +258,46 @@ export default function CourseCreationPage() {
   };
 
 
-  const publishCourseMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/courses/{uuid}/publish'
-  );
+  // GET COURSE ASSESSMENTS
+  const { data: assessmentData, isLoading: assessmentLoading } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: resolveId }, } }));
 
-  const handlePublishCourse = () => {
+  // PUBLISH COURSE MUTATION
+  const PublishCourse = useMutation(publishCourseMutation());
+  const handlePublishCourse = async () => {
     if (!course?.data?.uuid) return;
-    publishCourseMutation.mutate(
-      { params: { path: { uuid: course?.data?.uuid as string } } },
-      {
+
+    try {
+      await PublishCourse.mutateAsync({
+        path: { uuid: course?.data?.uuid as string }
+      }, {
         onSuccess(data, variables, context) {
           toast.success(data?.message)
+          queryClient.invalidateQueries({
+            queryKey: publishCourseQueryKey({ path: { uuid: course?.data?.uuid as string } })
+          });
           router.push('/dashboard/course-management/published');
         },
-        onError(error) {
-          // console.log(error)
-        }
-      }
-    );
+      });
+    } catch (err) { }
   };
 
-  // MUTATE
-  const { mutate: deleteLessonMutation, isPending: deleteLessonIsPending } = useMutation({
-    mutationKey: [getCourseLessonQueryKey],
-    mutationFn: ({ uuid, lessonUuid }: { uuid: string; lessonUuid: string }) =>
-      deleteCourseLesson({ path: { courseUuid: uuid, lessonUuid: lessonUuid } }),
-  });
-
-  const handleDeleteLesson = (lessonId: string) => {
+  // DELETE LESSON MUTATION
+  const DeleteLesson = useMutation(deleteCourseLessonMutation());
+  const handleDeleteLesson = async (lessonId: string) => {
     if (!course?.data?.uuid) return;
 
-    deleteLessonMutation(
-      { lessonUuid: lessonId as string, uuid: course?.data?.uuid as string },
-      {
+    try {
+      await DeleteLesson.mutateAsync({
+        path: { courseUuid: course?.data?.uuid as string, lessonUuid: lessonId }
+      }, {
         onSuccess: () => {
           toast.success('Lesson deleted successfully');
-          queryClient.invalidateQueries();
-          refetchCourse()
+          queryClient.invalidateQueries({
+            queryKey: getCourseLessonQueryKey({ path: { courseUuid: course?.data?.uuid as string, lessonUuid: lessonId } })
+          });
         },
-      }
-    );
+      });
+    } catch (err) { }
   };
 
   if (courseId && !courseInitialValues) {
@@ -308,7 +314,8 @@ export default function CourseCreationPage() {
         <StepperList>
           <StepperTrigger step={0} title='Course Details' icon={BookOpen} />
           <StepperTrigger step={1} title='Content' icon={List} />
-          <StepperTrigger step={2} title='Review' icon={Check} />
+          <StepperTrigger step={2} title='Assessment' icon={BookOpenCheck} />
+          <StepperTrigger step={3} title='Review' icon={Check} />
         </StepperList>
 
         <StepperContent
@@ -339,7 +346,7 @@ export default function CourseCreationPage() {
           title='Course Content'
           description='Add lessons and content to your course'
           showNavigation
-          nextButtonText='Continue to Review'
+          nextButtonText='Continue to Assessment'
           previousButtonText='Back to Details'
         >
           <div className='space-y-4'>
@@ -353,7 +360,7 @@ export default function CourseCreationPage() {
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
               onAddAssessment={openAddAssessmentModal}
-              onEditAssessment={() => { }}
+              onAddRubrics={openAddRubricModal}
               onReorderLessons={() => { }}
             />
 
@@ -385,11 +392,37 @@ export default function CourseCreationPage() {
               onOpenChange={setAddAssessmentModalOpen}
               courseId={createdCourseId ? createdCourseId : (courseId as string)}
             />
+
+            <RubricDialog
+              isOpen={addRubricModalOpen}
+              onOpenChange={setAddRubricModalOpen}
+              courseId={""}
+              lessonId={""}
+            />
           </div>
         </StepperContent>
 
         <StepperContent
           step={2}
+          title='Assessment'
+          description='Manage the assessments created for your lessons'
+          showNavigation
+          nextButtonText='Continue to Review'
+          previousButtonText='Back to Content'
+        >
+          <div className='space-y-4'>
+            <AssessmentList
+              isLoading={assessmentLoading}
+              assessments={assessmentData?.data}
+              lessonItems={lessonContentData?.data}
+              onEditAssessment={openAddAssessmentModal}
+              courseId={resolveId}
+            />
+          </div>
+        </StepperContent>
+
+        <StepperContent
+          step={3}
           title='Review Course'
           description='Review your course before publishing'
           showNavigation
@@ -397,7 +430,7 @@ export default function CourseCreationPage() {
           hideNextButton={true}
           customButton={
             <Button onClick={handlePublishCourse} disabled={!course} className='min-w-[150px]'>
-              {publishCourseMutation.isPending ? <Spinner /> : 'Publish Course'}
+              {PublishCourse.isPending ? <Spinner /> : 'Publish Course'}
             </Button>
           }
         >
@@ -463,8 +496,8 @@ export default function CourseCreationPage() {
               </p>
 
               {/* Categories */}
-              <section>
-                <h3 className='mb-3 text-xl font-semibold text-gray-800'>🏷️ Categories</h3>
+              <section className='flex flex-row gap-4 items-center ' >
+                <h3 className='text-xl font-semibold text-gray-800'>🏷️ Categories</h3>
                 <div className='flex flex-wrap gap-2'>
                   {course?.data?.category_names?.map((category: string, idx: number) => (
                     <span
@@ -474,6 +507,69 @@ export default function CourseCreationPage() {
                       {category}
                     </span>
                   ))}
+                </div>
+              </section>
+
+              {/* course content */}
+              <div className='mt-4'>
+                <h3 className='mb-3 text-xl font-semibold text-gray-800'>Course Content</h3>
+              </div>
+              <section>
+                <div className='-mt-2 flex flex-col gap-2 space-y-4'>
+                  {courseLessons?.data?.content
+                    ?.slice()
+                    ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
+                    ?.map((lesson: any, i: any) => (
+                      <div key={i} className='flex flex-row gap-2'>
+                        <div>
+                          <span className='min-h-4 min-w-4'>
+                            <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
+                          </span>
+                        </div>
+                        <div className='flex flex-col gap-2'>
+                          <h3 className='font-semibold'>{lesson.title}</h3>
+                          <RichTextRenderer
+                            htmlString={(lesson?.description as string) || 'No lesson provided'}
+                          />
+
+                          <h3 className='font-semibold'>
+                            <span>📅 Duration:</span> {lesson.duration_display}
+                          </h3>
+                        </div>
+
+                      </div>
+                    ))}
+                </div>
+              </section>
+
+              {/* assessments */}
+              <div className='mt-4'>
+                <h3 className='mb-3 text-xl font-semibold text-gray-800'>Assessments</h3>
+              </div>
+              <section>
+                <div className='-mt-2 flex flex-col gap-2 space-y-4'>
+                  {assessmentData?.data?.content
+                    ?.slice()
+                    ?.map((assessment: any, i: any) => (
+                      <div key={i} className='flex flex-row gap-2'>
+                        <div>
+                          <span className='min-h-4 min-w-4'>
+                            <BookOpenCheck className='mt-1 h-4 w-4' />
+                          </span>
+                        </div>
+                        <div className='flex flex-col gap-2'>
+                          <h3 className='font-semibold'>{assessment.title}</h3>
+                          <RichTextRenderer
+                            htmlString={(assessment?.description as string) || 'No assessment provided'}
+                          />
+
+                          <h3 className='font-semibold'>
+                            <span>📅 Duration:</span> {assessment.duration_display}
+                          </h3>
+                        </div>
+
+                      </div>
+                    ))}
                 </div>
               </section>
             </div>
