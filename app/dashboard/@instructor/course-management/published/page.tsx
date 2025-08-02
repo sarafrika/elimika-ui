@@ -24,10 +24,11 @@ import {
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { formatCourseDate } from '@/lib/format-course-date';
-import { searchCourses, unpublishCourse } from '@/services/client';
+import { searchCourses } from '@/services/client';
 import {
-  getCourseByUuidQueryKey,
   getCoursesByInstructorQueryKey,
+  unpublishCourseMutation,
+  unpublishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeIcon, FilePenIcon, TrashIcon } from 'lucide-react';
@@ -78,27 +79,33 @@ export default function PublishedCoursesPage() {
       }).then(res => res.data),
   });
 
-  const { mutate: unpublishCourseMutation, isPending } = useMutation({
-    mutationKey: [getCourseByUuidQueryKey],
-    mutationFn: ({ uuid }: { uuid: string }) => unpublishCourse({ path: { uuid } }),
-    onSuccess(data) {
-      const errorObj = data?.error
-      const dataObj = data?.data
 
-      if (errorObj) {
-        // @ts-ignore
-        toast.error(errorObj?.message, errorObj?.error)
-        return
-      }
+  // UNPUBLISH COURSE MUTATION
+  const unpublishCourse = useMutation(unpublishCourseMutation());
+  const handleUnpublish = (uuid: string) => {
+    unpublishCourse.mutate({
+      path: { uuid: uuid }
+    }, {
+      onSuccess(data) {
+        if (!data?.success) {
+          toast.error(
+            typeof data?.error === 'string'
+              ? data.error
+              : 'An error occurred while unpublishing the course.'
+          )
+          return
+        }
 
-      if (dataObj) {
-        toast.success(dataObj?.message)
-        refetch()
-        router.push('/dashboard/course-management/drafts')
-      }
-    },
-
-  });
+        if (data?.success) {
+          toast.success(data?.message)
+          queryClient.invalidateQueries({
+            queryKey: unpublishCourseQueryKey({ path: { uuid: data?.data?.uuid as string } })
+          });
+          router.push('/dashboard/course-management/drafts')
+        }
+      },
+    });
+  };
 
   const publishedCourses = data?.data?.content || [];
   const paginationMetadata = data?.data?.metadata || {};
@@ -204,7 +211,7 @@ export default function PublishedCoursesPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             variant='destructive'
-                            onClick={() => unpublishCourseMutation({ uuid: course.uuid })}
+                            onClick={() => handleUnpublish(course.uuid)}
                           >
                             <TrashIcon className='mr-2 h-4 w-4' />
                             Unpublish

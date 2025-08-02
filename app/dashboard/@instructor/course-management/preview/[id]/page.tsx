@@ -11,11 +11,12 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { getCourseByUuid, getCourseLessons } from '@/services/client';
 import {
-  getCourseByUuidQueryKey
+  getCourseByUuidQueryKey,
+  searchAssessmentsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle, Clock, Users } from 'lucide-react';
+import { BookOpenCheck, CheckCircle, Clock, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -62,6 +63,10 @@ export default function CoursePreviewPage() {
     queryFn: () => getCourseLessons({ path: { courseUuid: courseId as string } }),
     enabled: !!courseId,
   });
+
+  // GET COURSE ASSESSMENTS
+  const { data: assessmentData, isLoading: assessmentLoading } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: courseId as string }, } }));
+
 
 
   if (isLoading)
@@ -156,6 +161,36 @@ export default function CoursePreviewPage() {
 
                         <h3 className='font-semibold'>
                           <span>📅 Duration:</span> {lesson.duration_display}
+                        </h3>
+                      </div>
+
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+
+            <CardHeader className='mt-4'>
+              <CardTitle>Course Assessments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className='-mt-2 flex flex-col gap-2 space-y-4'>
+                {assessmentData?.data?.content
+                  ?.slice()
+                  ?.map((assessment: any, i: any) => (
+                    <div key={i} className='flex flex-row gap-2'>
+                      <div>
+                        <span className='min-h-4 min-w-4'>
+                          <BookOpenCheck className='mt-1 h-4 w-4' />
+                        </span>
+                      </div>
+                      <div className='flex flex-col gap-2'>
+                        <h3 className='font-semibold'>{assessment.title}</h3>
+                        <RichTextRenderer
+                          htmlString={(assessment?.description as string) || 'No assessment provided'}
+                        />
+
+                        <h3 className='font-semibold'>
+                          <span>📅 Duration:</span> {assessment.duration_display}
                         </h3>
                       </div>
 

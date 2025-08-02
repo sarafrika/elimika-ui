@@ -44,6 +44,7 @@ import {
   Clock,
   FileAudio,
   FileIcon,
+  FilePlus,
   FileText,
   FileVideo,
   Grip,
@@ -54,9 +55,9 @@ import {
   Trash,
   VideoIcon,
   X,
-  Youtube,
+  Youtube
 } from 'lucide-react';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import {
   Control,
   FieldErrors,
@@ -70,10 +71,13 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
-import { addCourseLesson, addLessonContent, getAllContentTypes, getCourseByUuid, updateCourseLesson, updateLessonContent } from '@/services/client';
+import { addCourseAssessment, addCourseLesson, addLessonContent, getAllContentTypes, getCourseByUuid, updateCourseLesson, updateLessonContent } from '@/services/client';
 import {
   addCourseLessonQueryKey,
-  getAllContentTypesQueryKey
+  deleteCourseAssessmentMutation,
+  getAllContentTypesQueryKey,
+  searchAssessmentsQueryKey,
+  updateCourseAssessmentMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -223,7 +227,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   const useGetContentTypes = () => {
     return useQuery({
       queryKey: [getAllContentTypesQueryKey],
-      queryFn: () => getAllContentTypes().then(res => res.data),
+      queryFn: () => getAllContentTypes({ query: {} }).then(res => res.data),
     });
   };
   const { data: contentTypeList } = useGetContentTypes();
@@ -434,7 +438,7 @@ type LessonListProps = {
   onDeleteLesson: (lessonId: string) => void;
   onReorderLessons: (newLessons: any[]) => void;
   onAddAssessment: (lesson: any) => void;
-  onEditAssessment: () => void;
+  onAddRubrics: (lesson: any) => void
 };
 
 function LessonList({
@@ -448,7 +452,7 @@ function LessonList({
   onDeleteLesson,
   onReorderLessons,
   onAddAssessment,
-  onEditAssessment,
+  onAddRubrics,
 }: LessonListProps) {
   const getTotalDuration = (lesson: any) => {
     const hours = lesson.duration_hours || 0;
@@ -503,20 +507,20 @@ function LessonList({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align='end'>
                       <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-                        <PenLine className='mr-2 h-4 w-4' />
+                        <PenLine className='mr-1 h-4 w-4' />
                         Edit Lesson
                       </DropdownMenuItem>
-                      {lesson.hasAssessment ? (
-                        <DropdownMenuItem onClick={() => onEditAssessment()}>
-                          <ClipboardCheck className='mr-2 h-4 w-4' />
-                          Edit Assessment
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
-                          <ClipboardCheck className='mr-2 h-4 w-4' />
-                          Add Assessment
-                        </DropdownMenuItem>
-                      )}
+
+                      <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
+                        <ClipboardCheck className='mr-1 h-4 w-4' />
+                        Add Assessment
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem onClick={() => onAddRubrics(lesson)}>
+                        <FilePlus className='mr-1 h-4 w-4' />
+                        Add Rubrics
+                      </DropdownMenuItem>
+
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className='text-red-600'
@@ -526,7 +530,7 @@ function LessonList({
                           }
                         }}
                       >
-                        <Trash className='mr-2 h-4 w-4' />
+                        <Trash className='mr-1 h-4 w-4' />
                         Delete Lesson
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -1276,8 +1280,10 @@ function LessonEditingForm({
 
 interface AssessmentCreationFormProps {
   courseId: string | number;
+  assessmentId?: string | number;
   onCancel: () => void;
   className?: string;
+  initialValues?: any
 }
 
 // defaultValues: {
@@ -1290,6 +1296,8 @@ interface AssessmentCreationFormProps {
 const assessmentFormSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
+  assessment_type: z.string().optional(),
+  weight_percentage: z.any().optional(),
   questions: z.array(
     z.object({
       prompt: z.string().min(1),
@@ -1311,16 +1319,30 @@ const assessmentFormSchema = z.object({
   ),
 });
 
-function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCreationFormProps) {
+function AssessmentCreationForm({
+  courseId,
+  onCancel,
+  className,
+  assessmentId,
+  initialValues,
+}: AssessmentCreationFormProps) {
   const form = useForm<AssessmentFormValues>({
     resolver: zodResolver(assessmentFormSchema),
-    defaultValues: {
+    defaultValues: initialValues ?? {
       title: '',
       description: '',
+      assessment_type: '',
+      weight_percentage: '',
       questions: [{ prompt: '' }],
       resources: [],
     },
   });
+
+  useEffect(() => {
+    if (initialValues) {
+      form.reset(initialValues);
+    }
+  }, [initialValues]);
 
   const {
     fields: questionFields,
@@ -1340,21 +1362,99 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
     name: 'resources',
   });
 
-  // const createAssessmentMutation = tanstackClient.useMutation(
-  //   "post",
-  //   "/api/v1/courses/{uuid}/assessments"
-  // )
+  const queryClient = useQueryClient();
+
+  // CREATE MUTATION
+  const createAssessmentMutation = useMutation({
+    mutationKey: ['create-assessment'],
+    mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
+      addCourseAssessment({ body, path: { courseUuid: uuid } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assessments'] });
+    },
+  });
 
   const onSubmit = async (values: AssessmentFormValues) => {
-    //console.log('✅ Assessment created:', values);
-    //console.log('✅ Assessment created for courseID:', courseId);
+    createAssessmentMutation.mutate(
+      {
+        uuid: courseId as string,
+        body: {
+          course_uuid: courseId,
+          assessment_type: values.assessment_type,
+          title: values.title,
+          description: values.description,
+          weight_percentage: values.weight_percentage,
+          rubric_uuid: '',
+          is_required: true,
+          created_by: 'instructor@sarafrika.com',
+          updated_by: 'instructor@sarafrika.com',
+          assessment_category: 'Participation Component',
+          weight_display: `${values.weight_percentage}% of final grade`,
+          is_major_assessment: false,
+          contribution_level: 'Standard Contribution',
+        },
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.data?.message || 'Assessment created successfully!');
+          queryClient.invalidateQueries({
+            queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+          });
+          onCancel();
+        },
+      }
+    );
+  };
 
-    onCancel();
+  // UPDATE MUTATION
+  const updateAssessment = useMutation(updateCourseAssessmentMutation());
+  const handleSubmitUpdate = async () => {
+    const values = form.getValues();
+    try {
+      await updateAssessment.mutateAsync(
+        {
+          path: {
+            courseUuid: courseId as string,
+            assessmentUuid: assessmentId as string,
+          },
+          body: {
+            course_uuid: courseId as string,
+            assessment_type: values.assessment_type as string,
+            title: values.title,
+            description: values.description,
+            weight_percentage: values.weight_percentage,
+            rubric_uuid: '',
+            is_required: true,
+            created_by: 'instructor@sarafrika.com',
+            updated_by: 'instructor@sarafrika.com',
+            assessment_category: 'Participation Component',
+            weight_display: `${values.weight_percentage}% of final grade`,
+            is_major_assessment: false,
+            contribution_level: 'Standard Contribution',
+          },
+        },
+        {
+          onSuccess: (data) => {
+            toast.success(data?.message || 'Assessment updated successfully!');
+            queryClient.invalidateQueries({
+              queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+            });
+            onCancel();
+          },
+          onError: (error) => {
+            toast.error(error?.message || 'Failed to update assessment.');
+          },
+        }
+      );
+    } catch (err) { }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
+      <form
+        onSubmit={form.handleSubmit(assessmentId ? handleSubmitUpdate : onSubmit)}
+        className={`space-y-8 ${className}`}
+      >
         <div className='space-y-4'>
           <FormField
             control={form.control}
@@ -1377,16 +1477,53 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea placeholder='Optional description' className='resize-none' {...field} />
+                  <Textarea
+                    placeholder='Optional: brief description of the assessment (e.g., Midterm exam covering units 1–5)'
+                    className='resize-none'
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          <div className='flex flex-row items-center justify-between'>
+            <FormField
+              control={form.control}
+              name='assessment_type'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assessment Type</FormLabel>
+                  <FormControl>
+                    <Input placeholder='e.g. attendance, test' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='weight_percentage'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Weight Percentage</FormLabel>
+                  <FormControl>
+                    <Input placeholder=' e.g. 20 for 20%' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <div className='space-y-4'>
-          <FormSection title='Questions' description='Add one or more questions to this assessment'>
+          <FormSection
+            title='Questions'
+            description='Add one or more questions to this assessment'
+          >
             {questionFields.map((field, index) => (
               <div key={field.id} className='flex items-center gap-2'>
                 <FormField
@@ -1471,7 +1608,6 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
           <Button
             type='button'
             variant='outline'
-            // onClick={() => appendResource({ title: "", url: "" })}
             onClick={() => toast.message('Cannot add resource at the moment')}
           >
             <PlusCircle className='mr-2 h-4 w-4' />
@@ -1483,7 +1619,330 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
           <Button type='button' variant='outline' onClick={onCancel}>
             Cancel
           </Button>
-          <Button type='submit'>Create Assessment</Button>
+          <Button type='submit' className='min-w-[154px]'>
+            {assessmentId
+              ? updateAssessment.isPending
+                ? <Spinner />
+                : 'Update Assessment'
+              : createAssessmentMutation.isPending
+                ? <Spinner />
+                : 'Create Assessment'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+
+type AssessmentListProps = {
+  assessments: any;
+  lessonItems: any;
+  isLoading: boolean;
+  courseId?: string;
+  onEditAssessment: (assessment: any) => void;
+};
+
+function AssessmentList({
+  assessments,
+  lessonItems,
+  isLoading,
+  courseId
+}: AssessmentListProps) {
+  const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const getTotalDuration = (lesson: any) => {
+    const hours = lesson.duration_hours || 0;
+    const minutes = lesson.duration_minutes || 0;
+    return hours * 60 + minutes;
+  };
+
+  const handleEditAssessment = (assessment: any) => {
+    setSelectedAssessment(assessment);
+    setIsModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setSelectedAssessment(null);
+  };
+
+  // DELETE ASSESSMENT MUTATION
+  const queryClient = useQueryClient();
+  const deleteAssessment = useMutation(deleteCourseAssessmentMutation());
+  const handleDelete = (assessmentUuid: string) => {
+    if (!assessmentUuid) return
+
+    deleteAssessment.mutate({
+      path: { courseUuid: courseId as string, assessmentUuid }
+    }, {
+      onSuccess: () => {
+        toast.success('Assessment deleted successfully');
+        queryClient.invalidateQueries({
+          queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+        });
+      },
+      onError: (error: any) => {
+        toast.error(error?.message || 'Failed to delete assessment')
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-row items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-muted-foreground text-sm">
+            You have {assessments?.content?.length}{" "}
+            {assessments?.content?.length === 1 ? "assessment" : "assessments"} created under this course.
+          </p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <Spinner />
+      ) : (
+        <div className="space-y-3">
+          {assessments?.content.map((assessment: any, index: any) => (
+            <div
+              key={assessment?.uuid || index}
+              className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
+            >
+              <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
+
+              <div className='flex-1 space-y-3'>
+                <div className='flex items-start justify-between'>
+                  <div className='flex flex-col items-start'>
+                    <h3 className='text-lg font-medium'>{assessment.title}</h3>
+                    <div className='text-muted-foreground text-sm'>
+                      <RichTextRenderer htmlString={assessment?.description} maxChars={400} />
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditAssessment(assessment)}>
+                        <ClipboardCheck className="mr-2 h-4 w-4" />
+                        Edit Assessment
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => {
+                          if (assessment.uuid) {
+                            handleDelete(assessment?.uuid as string);
+                          }
+                        }}
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete Assessment
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div className='text-muted-foreground flex items-center gap-4 text-sm'>
+                  <div className='flex items-center gap-1.5'>
+                    <Clock className='h-4 w-4' />
+                    <span>{getTotalDuration(assessment)} minutes</span>
+                  </div>
+
+                  <div className='flex items-center gap-1.5'>
+                    <BookOpen className='h-4 w-4' />
+                    <span>
+                      {lessonItems?.length || '0'} {lessonItems?.length === 1 ? 'item' : 'items'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+
+      <Dialog open={isModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          handleCancel();
+        }
+      }}>
+        <DialogContent className='flex max-w-6xl flex-col p-0'>
+          <DialogHeader className='border-b px-6 py-4'>
+            <DialogTitle className='text-xl'>Edit Assessment</DialogTitle>
+            <DialogDescription className='text-muted-foreground text-sm'>
+              Edit assessment message here
+            </DialogDescription>
+          </DialogHeader>
+
+          <ScrollArea className='h-auto'>
+            {selectedAssessment && (
+              <AssessmentCreationForm
+                courseId={selectedAssessment.course_uuid}
+                assessmentId={selectedAssessment.uuid}
+                initialValues={selectedAssessment}
+                className='px-6 pb-6'
+                onCancel={handleCancel}
+              />
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+    </div>
+  );
+}
+
+
+const rubricFormSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  criteria: z.array(
+    z.object({
+      name: z.string().min(1, 'Criterion is required'),
+      points: z.number().min(0, 'Points must be positive'),
+    })
+  ).min(1, 'At least one criterion is required'),
+});
+
+type RubricFormValues = z.infer<typeof rubricFormSchema>;
+
+interface AddRubricFormProps {
+  courseId: string;
+  lessonId: string;
+  onCancel: () => void;
+  onSubmitSuccess?: () => void;
+  className: any
+}
+
+function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, className }: AddRubricFormProps) {
+  const form = useForm<RubricFormValues>({
+    resolver: zodResolver(rubricFormSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      criteria: [{ name: '', points: 0 }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'criteria',
+  });
+
+  const onSubmit = async (values: RubricFormValues) => {
+    try {
+      // TODO: implement add rubric here
+
+      // console.log('Submitting rubric:', values);
+      toast.success('Rubric created successfully');
+      onSubmitSuccess?.();
+      onCancel();
+    } catch (error) {
+      toast.error('Failed to create rubric');
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}
+        className={`space-y-8 ${className}`}
+      >
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Rubric Title</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter rubric title" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input placeholder="Optional rubric description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Criteria</h3>
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-4">
+              <FormField
+                control={form.control}
+                name={`criteria.${index}.name`}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Criterion</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Criterion name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`criteria.${index}.points`}
+                render={({ field }) => (
+                  <FormItem className="w-[100px]">
+                    <FormLabel>Points</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => remove(index)}
+                disabled={fields.length === 1}
+              >
+                <X className="h-4 w-4 text-red-600" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => append({ name: '', points: 0 })}
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Criterion
+          </Button>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-6">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" className="min-w-[120px]">
+            Create Rubric
+          </Button>
         </div>
       </form>
     </Form>
@@ -1564,8 +2023,6 @@ function AssessmentDialog({
   isOpen,
   onOpenChange,
   courseId,
-  initialValues,
-  lessonId,
 }: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -1573,12 +2030,11 @@ function AssessmentDialog({
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>Add Assessment</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Create a new assessment by providing its title, description, questions, and any helpful
-            resources.
+            Create a new assessment by providing its title, description, questions, and any helpful resources
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className='min-h-auto'>
+        <ScrollArea className='h-[calc(90vh-8rem)]'>
           <AssessmentCreationForm
             onCancel={() => onOpenChange(false)}
             className='px-6 pb-6'
@@ -1590,4 +2046,35 @@ function AssessmentDialog({
   );
 }
 
-export { AssessmentDialog, EditLessonDialog, LessonDialog, LessonList };
+function RubricDialog({
+  isOpen,
+  onOpenChange,
+  courseId,
+  lessonId
+}: AddLessonDialogProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className='flex max-w-6xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 py-4'>
+          <DialogTitle className='text-xl'>Add Rubric</DialogTitle>
+          <DialogDescription className='text-muted-foreground text-sm'>
+            Create a new assessment by providing its title, description, questions, and any helpful resources
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className='h-auto'>
+          <AddRubricForm
+            onCancel={() => onOpenChange(false)}
+            className='px-6 pb-6'
+            courseId=''
+            lessonId=''
+            onSubmitSuccess={() => { }}
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export { AssessmentDialog, AssessmentList, EditLessonDialog, LessonDialog, LessonList, RubricDialog };
+
