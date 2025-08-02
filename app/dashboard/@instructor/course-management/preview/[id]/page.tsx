@@ -9,14 +9,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
-import { getCourseByUuid, getCourseLessons } from '@/services/client';
 import {
-  getCourseByUuidQueryKey,
+  getCourseByUuidOptions,
+  getCourseLessonsOptions,
   searchAssessmentsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenCheck, CheckCircle, Clock, Users } from 'lucide-react';
+import { BookOpen, BookOpenCheck, CheckCircle, Clock, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -50,23 +50,22 @@ export default function CoursePreviewPage() {
     router.push(`/dashboard/course-management/create-new-course?id=${courseId}`);
   };
 
+  // GET COURSE BY ID 
   const { data: courseDetail, isLoading } = useQuery({
-    queryKey: [getCourseByUuidQueryKey],
-    queryFn: () => getCourseByUuid({ path: { uuid: courseId as string } }),
-    enabled: !!courseId,
+    ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
+    enabled: !!courseId
   });
   // @ts-ignore
-  const course = courseDetail?.data?.data;
+  const course = courseDetail?.data;
 
-  const { data: courseLessons, isLoading: lessonIsLoading } = useQuery({
-    queryKey: ["course-lessons"],
-    queryFn: () => getCourseLessons({ path: { courseUuid: courseId as string } }),
+  // GET COURSE LESSONS
+  const { data: courseLessons } = useQuery({
+    ...getCourseLessonsOptions({ path: { courseUuid: courseId as string }, query: {} }),
     enabled: !!courseId,
   });
 
   // GET COURSE ASSESSMENTS
-  const { data: assessmentData, isLoading: assessmentLoading } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: courseId as string }, } }));
-
+  const { data: assessmentData } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: courseId as string }, } }));
 
 
   if (isLoading)
@@ -90,7 +89,7 @@ export default function CoursePreviewPage() {
       </div>
 
       <div className='space-y-4'>
-        <div className='flex flex-row gap-2 items-center' >
+        <div className='flex flex-row gap-4 items-center' >
           <Image src={course?.thumbnail_url as string || "/illustration.png"} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
 
           <h1 className='text-4xl font-bold tracking-tight md:max-w-[90%]'>{course?.name}</h1>
@@ -133,7 +132,7 @@ export default function CoursePreviewPage() {
             </CardHeader>
             <CardContent>
               <div className='-mt-2 flex flex-col gap-2 space-y-4'>
-                {courseLessons?.data?.data?.content
+                {courseLessons?.data?.content
                   ?.slice()
                   ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
                   ?.map((lesson: any, i: any) => (
@@ -166,6 +165,19 @@ export default function CoursePreviewPage() {
 
                     </div>
                   ))}
+
+                {courseLessons?.data?.content?.length === 0 && (
+                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+                    <BookOpen className="mb-2 h-8 w-8 text-muted-foreground" />
+                    <p className="font-medium">No lessons available</p>
+                    <p className="mt-1 text-sm">Start by adding your first lesson to this course.</p>
+                    <Button variant="outline" className="mt-4" onClick={() =>
+                      router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
+                    }>
+                      + Add Lesson
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
 
@@ -196,6 +208,19 @@ export default function CoursePreviewPage() {
 
                     </div>
                   ))}
+
+                {assessmentData?.data?.content?.length === 0 && (
+                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+                    <BookOpenCheck className="mb-2 h-8 w-8 text-muted-foreground" />
+                    <p className="font-medium">No assessment available</p>
+                    <p className="mt-1 text-sm">Start by adding lessons to your course, then add assessments under each lesson.</p>
+                    <Button variant="outline" className="mt-4" onClick={() =>
+                      router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
+                    }>
+                      + Add Lesson
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
 

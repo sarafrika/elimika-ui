@@ -40,6 +40,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   BookOpen,
+  BookOpenCheck,
   ClipboardCheck,
   Clock,
   FileAudio,
@@ -71,11 +72,12 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
-import { addCourseAssessment, addCourseLesson, addLessonContent, getAllContentTypes, getCourseByUuid, updateCourseLesson, updateLessonContent } from '@/services/client';
+import { addCourseAssessment, addCourseLesson, addLessonContent, getCourseByUuid, updateCourseLesson, updateLessonContent } from '@/services/client';
 import {
   addCourseLessonQueryKey,
   deleteCourseAssessmentMutation,
-  getAllContentTypesQueryKey,
+  getAllContentTypesOptions,
+  getCourseLessonsQueryKey,
   searchAssessmentsQueryKey,
   updateCourseAssessmentMutation
 } from '@/services/client/@tanstack/react-query.gen';
@@ -223,14 +225,8 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   });
   const { setValue } = useFormContext();
 
-  // GetContentTypes
-  const useGetContentTypes = () => {
-    return useQuery({
-      queryKey: [getAllContentTypesQueryKey],
-      queryFn: () => getAllContentTypes({ query: {} }).then(res => res.data),
-    });
-  };
-  const { data: contentTypeList } = useGetContentTypes();
+  // GET COURSE CONTENT TYPES
+  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ query: {} }));
 
   const contentTypeData = React.useMemo(() => {
     const respdata = contentTypeList!.data! as { content: any[] }
@@ -260,7 +256,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <FormField
           control={control}
-          name={`content.${index}.contentType`}
+          name={`content.${index}.contentTypeUuid`}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Content Type</FormLabel>
@@ -268,7 +264,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                 onValueChange={val => {
                   const parsed = JSON.parse(val);
                   setValue(`content.${index}.contentType`, parsed.name.toUpperCase());
-                  setValue(`content.${index}.contentUuid`, parsed.uuid);
+                  setValue(`content.${index}.contentTypeUuid`, parsed.uuid);
                   setValue(`content.${index}.contentCategory`, parsed.upload_category);
                 }}
                 value={
@@ -462,7 +458,7 @@ function LessonList({
 
   return (
     <div className='space-y-6'>
-      <div className='flex flex-row items-center justify-between'>
+      <div className='flex flex-row items-center justify-between gap-4'>
         <div className='space-y-1'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
           <p className='text-muted-foreground text-sm'>
@@ -478,6 +474,12 @@ function LessonList({
 
       {isLoading ? (
         <Spinner />
+      ) : lessons?.content?.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+          <BookOpen className='text-muted-foreground mx-auto h-12 w-12' />
+          <h3 className='mt-4 text-lg font-medium'>No lessons found for this course.</h3>
+          <p className='text-muted-foreground mt-2'>You can create a new lesson to get started.</p>
+        </div>
       ) : (
         <div className='space-y-3'>
           {lessons?.content.map((lesson: any, index: any) => (
@@ -712,6 +714,10 @@ function LessonCreationForm({
       { body: createLessonBody, uuid: courseId as string },
       {
         onSuccess: lessonResponse => {
+          queryClient.invalidateQueries({
+            queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+          });
+
           const lessonUuid = lessonResponse?.data?.data?.uuid as string;
 
           if (!lessonUuid) {
@@ -747,7 +753,9 @@ function LessonCreationForm({
             {
               onSuccess: (data: any) => {
                 toast.success('Lesson content created successfully.');
-                refetch();
+                queryClient.invalidateQueries({
+                  queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                });
                 onCancel();
               },
             }
@@ -960,6 +968,7 @@ function LessonEditingForm({
       title: '',
       description: '',
       resources: [],
+      // content: [{ contentType: 'TEXT', title: '' }],
       ...normalizedInitialValues,
     },
   });
@@ -976,21 +985,6 @@ function LessonEditingForm({
 
     toast.error(message);
   };
-
-
-
-  // const form = useForm<LessonFormValues>({
-  //   resolver: zodResolver(lessonFormSchema),
-  //   defaultValues: {
-  //     // @ts-ignore
-  //     number: '',
-  //     title: '',
-  //     description: '',
-  //     content: [{ contentType: 'TEXT', title: '' }],
-  //     resources: [],
-  //     ...initialValues,
-  //   },
-  // });
 
   const {
     fields: contentFields,
@@ -1009,6 +1003,8 @@ function LessonEditingForm({
     control: form.control,
     name: 'resources',
   });
+
+  const queryClient = useQueryClient()
 
   const useGetCourseById = () => {
     return useQuery({
@@ -1093,6 +1089,9 @@ function LessonEditingForm({
 
                 if (typeof editSuccessRespones === 'function') {
                   editSuccessRespones(data?.data);
+                  queryClient.invalidateQueries({
+                    queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                  });
                 }
               },
             }
@@ -1286,13 +1285,6 @@ interface AssessmentCreationFormProps {
   initialValues?: any
 }
 
-// defaultValues: {
-//   title: "",
-//   description: "",
-//   questions: [{ prompt: "", options: [{ text: "", isCorrect: false }] }],
-//   resources: [],
-// }
-
 const assessmentFormSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -1334,6 +1326,7 @@ function AssessmentCreationForm({
       assessment_type: '',
       weight_percentage: '',
       questions: [{ prompt: '' }],
+      // questions: [{ prompt: "", options: [{ text: "", isCorrect: false }] }],
       resources: [],
     },
   });
@@ -1364,7 +1357,7 @@ function AssessmentCreationForm({
 
   const queryClient = useQueryClient();
 
-  // CREATE MUTATION
+  // CREATE ASSESSMENT MUTATION
   const createAssessmentMutation = useMutation({
     mutationKey: ['create-assessment'],
     mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
@@ -1406,7 +1399,7 @@ function AssessmentCreationForm({
     );
   };
 
-  // UPDATE MUTATION
+  // UPDATE ASSESSMENT MUTATION
   const updateAssessment = useMutation(updateCourseAssessmentMutation());
   const handleSubmitUpdate = async () => {
     const values = form.getValues();
@@ -1488,15 +1481,19 @@ function AssessmentCreationForm({
             )}
           />
 
-          <div className='flex flex-row items-center justify-between'>
+          <div className="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
             <FormField
               control={form.control}
-              name='assessment_type'
+              name="assessment_type"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="w-full sm:w-auto">
                   <FormLabel>Assessment Type</FormLabel>
                   <FormControl>
-                    <Input placeholder='e.g. attendance, test' {...field} />
+                    <Input
+                      placeholder="e.g. attendance, test"
+                      {...field}
+                      className="w-full"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -1505,12 +1502,16 @@ function AssessmentCreationForm({
 
             <FormField
               control={form.control}
-              name='weight_percentage'
+              name="weight_percentage"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="w-full sm:w-auto">
                   <FormLabel>Weight Percentage</FormLabel>
                   <FormControl>
-                    <Input placeholder=' e.g. 20 for 20%' {...field} />
+                    <Input
+                      placeholder="e.g. 20 for 20%"
+                      {...field}
+                      className="w-full"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -1703,6 +1704,12 @@ function AssessmentList({
 
       {isLoading ? (
         <Spinner />
+      ) : assessments?.content?.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+          <BookOpenCheck className='text-muted-foreground mx-auto h-12 w-12' />
+          <h3 className='mt-4 text-lg font-medium'>No assessments found for this course.</h3>
+          <p className='text-muted-foreground mt-2'>You can create new assessments under lessons.</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {assessments?.content.map((assessment: any, index: any) => (
@@ -1771,7 +1778,6 @@ function AssessmentList({
         </div>
       )}
 
-
       <Dialog open={isModalOpen} onOpenChange={(open) => {
         if (!open) {
           handleCancel();
@@ -1785,7 +1791,7 @@ function AssessmentList({
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className='h-auto'>
+          <ScrollArea className='h-[calc(90vh-16rem)]'>
             {selectedAssessment && (
               <AssessmentCreationForm
                 courseId={selectedAssessment.course_uuid}
@@ -1957,9 +1963,10 @@ interface AddLessonDialogProps {
   initialValues?: Partial<LessonFormValues>;
   refetch?: () => any;
   onSuccess?: (data: any) => void;
+  onCancel: () => any
 }
 
-function LessonDialog({ isOpen, onOpenChange, courseId, refetch }: AddLessonDialogProps) {
+function LessonDialog({ isOpen, onOpenChange, courseId, refetch, onCancel }: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
@@ -1973,7 +1980,7 @@ function LessonDialog({ isOpen, onOpenChange, courseId, refetch }: AddLessonDial
 
         <ScrollArea className='h-[calc(90vh-8rem)]'>
           <LessonCreationForm
-            onCancel={() => onOpenChange(false)}
+            onCancel={onCancel}
             className='px-6 pb-6'
             courseId={courseId}
             refetch={refetch}
@@ -2034,7 +2041,7 @@ function AssessmentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className='h-[calc(90vh-8rem)]'>
+        <ScrollArea className='h-[calc(90vh-12rem)]'>
           <AssessmentCreationForm
             onCancel={() => onOpenChange(false)}
             className='px-6 pb-6'
@@ -2062,7 +2069,7 @@ function RubricDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className='h-auto'>
+        <ScrollArea className='h-[calc(90vh-8rem)]'>
           <AddRubricForm
             onCancel={() => onOpenChange(false)}
             className='px-6 pb-6'
