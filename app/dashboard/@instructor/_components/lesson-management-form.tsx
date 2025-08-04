@@ -458,7 +458,7 @@ function LessonList({
 
   return (
     <div className='space-y-6'>
-      <div className='flex flex-row items-center justify-between gap-4'>
+      <div className='flex flex-col md:flex-row items-center justify-between gap-4'>
         <div className='space-y-1'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
           <p className='text-muted-foreground text-sm'>
@@ -466,7 +466,7 @@ function LessonList({
             {lessons?.content?.length === 1 ? 'lesson' : 'lessons'} created under this course.
           </p>
         </div>
-        <Button onClick={onAddLesson}>
+        <Button onClick={onAddLesson} className='self-start sm:self-end lg:self-center'>
           <PlusCircle className='mr-2 h-4 w-4' />
           Add Lesson
         </Button>

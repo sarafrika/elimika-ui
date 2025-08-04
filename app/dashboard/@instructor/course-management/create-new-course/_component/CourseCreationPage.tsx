@@ -481,7 +481,7 @@ export default function CourseCreationPage() {
               </p>
 
               {/* Categories */}
-              <section className='flex flex-row gap-4 items-center ' >
+              <section className='flex flex-col sm:flex-row gap-4 items-start sm:items-center ' >
                 <h3 className='text-xl font-semibold text-gray-800'>🏷️ Categories</h3>
                 <div className='flex flex-wrap gap-2'>
                   {course?.data?.category_names?.map((category: string, idx: number) => (

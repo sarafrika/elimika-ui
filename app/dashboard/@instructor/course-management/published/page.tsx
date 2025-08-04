@@ -24,9 +24,8 @@ import {
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { formatCourseDate } from '@/lib/format-course-date';
-import { searchCourses } from '@/services/client';
 import {
-  getCoursesByInstructorQueryKey,
+  searchCoursesOptions,
   unpublishCourseMutation,
   unpublishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
@@ -65,20 +64,8 @@ export default function PublishedCoursesPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: [getCoursesByInstructorQueryKey, instructor?.uuid, page, size],
-    queryFn: () =>
-      searchCourses({
-        query: {
-          page,
-          size,
-          // @ts-ignore
-          status: 'published',
-          instructor_uuid_eq: instructor?.uuid as string,
-        },
-      }).then(res => res.data),
-  });
-
+  // GET PUBLISHED INSTRUCTOR'S COURSES
+  const { data, isLoading, isFetching, } = useQuery(searchCoursesOptions({ query: { page, size, searchParams: { status: 'published', instructor_uuid_eq: instructor?.uuid as string, } } }))
 
   // UNPUBLISH COURSE MUTATION
   const unpublishCourse = useMutation(unpublishCourseMutation());
