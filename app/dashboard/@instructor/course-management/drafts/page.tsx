@@ -24,10 +24,10 @@ import {
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { formatCourseDate } from '@/lib/format-course-date';
-import { deleteCourse, searchCourses } from '@/services/client';
 import {
-  getCourseByUuidQueryKey,
-  getCoursesByInstructorQueryKey,
+  deleteCourseMutation,
+  searchCoursesOptions,
+  searchCoursesQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from 'lucide-react';
@@ -61,29 +61,29 @@ export default function CourseDraftsPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: [getCoursesByInstructorQueryKey, instructor?.uuid, page, size],
-    queryFn: async () =>
-      await searchCourses({
-        query: {
-          page,
-          size,
-          // @ts-ignore
-          status: 'draft',
-          instructor_uuid_eq: instructor?.uuid as string,
-        },
-      }).then(res => res.data),
-  });
 
-  const { mutate: deleteCourseMutate, isPending } = useMutation({
-    mutationKey: [getCourseByUuidQueryKey],
-    mutationFn: ({ uuid }: { uuid: string }) => deleteCourse({ path: { uuid } }),
-    onSuccess: () => {
-      refetch()
-      toast.success('Course deleted succcessfully');
-      queryClient.invalidateQueries({ queryKey: ["getAllCourses", "getCourseByUuid"] });
-    },
-  });
+  // GET PUBLISHED INSTRUCTOR'S COURSES
+  const { data, isLoading, isFetching, } = useQuery(searchCoursesOptions({ query: { page, size, searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, } } }))
+
+
+  // DELETE COURSE MUTATION
+  const DeleteCourse = useMutation(deleteCourseMutation());
+  const handleDeleteCourse = async (courseId: string) => {
+    if (!courseId) return;
+
+    try {
+      await DeleteCourse.mutateAsync({
+        path: { uuid: courseId }
+      }, {
+        onSuccess: () => {
+          toast.success('Course deleted succcessfully');
+          queryClient.invalidateQueries({
+            queryKey: searchCoursesQueryKey({ query: { page, size, searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, } } })
+          });
+        },
+      });
+    } catch (err) { }
+  };
 
   const draftCourses = data?.data?.content || [];
   const paginationMetadata = data?.data?.metadata;
@@ -106,7 +106,7 @@ export default function CourseDraftsPage() {
         </Button>
       </div>
 
-      {!isLoading && !isFetching && draftCourses?.length === 0 ? (
+      {draftCourses?.length === 0 ? (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No draft courses</h3>
@@ -211,7 +211,7 @@ export default function CourseDraftsPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             variant='destructive'
-                            onClick={() => deleteCourseMutate({ uuid: course?.uuid })}
+                            onClick={() => handleDeleteCourse(course?.uuid)}
                           >
                             <TrashIcon className='mr-2 h-4 w-4' />
                             Delete

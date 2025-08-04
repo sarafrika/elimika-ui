@@ -47,7 +47,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { XIcon } from 'lucide-react';
+import { Plus, XIcon } from 'lucide-react';
 import Image from 'next/image';
 import React, {
   ReactNode,
@@ -758,7 +758,14 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 {/* Dialog to add new category */}
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant='outline'>Add new</Button>
+                    <div>
+                      <Button variant="outline" className="sm:hidden">
+                        <Plus />
+                      </Button>
+                      <Button variant="outline" className="hidden sm:flex">
+                        Add new
+                      </Button>
+                    </div>
                   </DialogTrigger>
                   <DialogContent className='w-full sm:max-w-[350px]'>
                     <DialogHeader>
@@ -920,7 +927,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection>
 
           {showSubmitButton && (
-            <div className='flex justify-end gap-4 pt-6'>
+            <div className='flex flex-col xxs:flex-col sm:flex-row justify-center sm:justify-end gap-4 pt-6'>
               <Button type='submit' className='min-w-32'>
                 {createCourseIsPending || updateCourseIsPending ? <Spinner /> : 'Save Course'}
               </Button>
@@ -932,6 +939,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 {'Continue →'}
               </Button>
             </div>
+
           )}
         </form>
       </Form>

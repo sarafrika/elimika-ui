@@ -80,9 +80,9 @@ body,
   background-color: white;
 }
 
-@media screen and (max-width: 350px) {
+@media screen and (max-width: 490px) {
   .simple-editor-content .tiptap.ProseMirror.simple-editor {
-    padding: 1rem 1rem 20vh;
+    padding: 3rem 1rem 20vh;
     background-color: aliceblue;
   }
 }
@@ -93,10 +93,22 @@ body,
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: 1rem;
+  padding: 1rem; /* reduced from 7rem */
 
   width: 100%;
   background-color: transparent;
+
+  box-sizing: border-box;
+}
+
+/* Fix toolbar overflow below 490px */
+@media screen and (max-width: 490px) {
+  .toolbar {
+    max-width: 100%;
+    overflow-x: hidden;
+    padding: 5rem;
+    box-sizing: border-box;
+  }
 }
 
 /* 📱 Mobile toolbar style */
@@ -107,6 +119,8 @@ body,
     position: sticky;
     top: 0;
     z-index: 1000;
+    padding: 1rem 1rem 1.5rem; /* added bottom padding for spacing */
+    margin-bottom: 1rem; /* adds space below toolbar */
   }
 }
 
@@ -116,11 +130,17 @@ body,
   gap: 1rem;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 320px) {
   .menu {
-    background-color: #f0f4ff;
-    flex-direction: column;
-    padding: 0.5rem 1rem;
+    max-width: 280px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .toolbar {
+    max-width: 100%;
+    padding: 1rem 1rem 1.5rem;
+    margin-bottom: 1rem;
   }
 }
 
