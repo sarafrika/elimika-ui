@@ -1028,25 +1028,27 @@ function LessonEditingForm({
 
 
   const onSubmitEditLesson = (values: LessonFormValues) => {
+    const updateLessonBody = {
+      course_uuid: courseId as string,
+      title: values?.title,
+      description: values?.description ?? '',
+      learning_objectives: "",
+      duration_hours: Number(values?.content[0]?.durationHours),
+      duration_minutes: Number(values?.content[0]?.durationMinutes),
+      duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
+      status: courseData?.data?.status as any,
+      active: courseData?.data?.active,
+      // @ts-ignore
+      is_published: courseData?.data?.is_published,
+      // @ts-ignore
+      created_by: courseData?.data?.instructor_uuid,
+      lesson_number: values?.number,
+      lesson_sequence: `Lesson ${values?.number}`,
+    }
+
     updateLessonMutation.mutate(
       {
-        body: {
-          course_uuid: courseId as string,
-          title: values?.title,
-          description: values?.description ?? '',
-          learning_objectives: "",
-          duration_hours: Number(values?.content[0]?.durationHours),
-          duration_minutes: Number(values?.content[0]?.durationMinutes),
-          duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
-          status: courseData?.data?.status as any,
-          active: courseData?.data?.active,
-          // @ts-ignore
-          is_published: courseData?.data?.is_published,
-          // @ts-ignore
-          created_by: courseData?.data?.instructor_uuid,
-          lesson_number: values?.number,
-          lesson_sequence: `Lesson ${values?.number}`,
-        },
+        body: updateLessonBody,
         courseId: courseId as string,
         lessonId: lessonId as string
       },
@@ -1059,23 +1061,25 @@ function LessonEditingForm({
             editSuccessRespones(data?.data);
           }
 
+          const updateLessonContentBody = {
+            lesson_uuid: lessonId as string,
+            content_type_uuid: values.content[0]?.contentTypeUuid as string,
+            title: values?.title,
+            description: values?.description ?? '',
+            content_text: values.content[0]?.value || '',
+            file_url: '',
+            file_size_bytes: 157200,
+            mime_type: values.content[0]?.value || '',
+            display_order: values?.number,
+            is_required: true,
+            created_by: 'instructor@sarafrika.com',
+            updated_by: 'instructor@sarafrika.com',
+            file_size_display: '',
+          }
+
           updateLessonContentMutation.mutate(
             {
-              body: {
-                lesson_uuid: lessonId as string,
-                content_type_uuid: values.content[0]?.contentTypeUuid as string,
-                title: values?.title,
-                description: values?.description ?? '',
-                content_text: values.content[0]?.value || '',
-                file_url: '',
-                file_size_bytes: 157200,
-                mime_type: values.content[0]?.value || '',
-                display_order: values?.number,
-                is_required: true,
-                created_by: 'instructor@sarafrika.com',
-                updated_by: 'instructor@sarafrika.com',
-                file_size_display: '',
-              },
+              body: updateLessonContentBody,
               courseId: courseId as string,
               lessonId: lessonId as string,
               // @ts-ignore
@@ -1189,18 +1193,18 @@ function LessonEditingForm({
           <Button
             type='button'
             variant='outline'
-            // onClick={() =>
-            //   appendContent({
-            //     contentType: "TEXT",
-            //     title: "",
-            //     value: "",
-            //     contentCategory: "",
-            //     contentUuid: "",
-            //     durationHours: 0,
-            //     durationMinutes: 0,
-            //   })
-            // }
-            onClick={() => toast.message('Cannot add more contents at the moment')}
+            onClick={() =>
+              appendContent({
+                contentType: "TEXT",
+                title: "",
+                value: "",
+                contentCategory: "",
+                contentTypeUuid: "",
+                durationHours: 0,
+                durationMinutes: 0,
+              })
+            }
+          // onClick={() => toast.message('Cannot add more contents at the moment')}
           >
             <PlusCircle className='mr-2 h-4 w-4' />
             Add Content Item

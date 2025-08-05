@@ -106,7 +106,7 @@ export default function CourseDraftsPage() {
         </Button>
       </div>
 
-      {draftCourses?.length === 0 ? (
+      {draftCourses?.length === 0 && !isFetching ? (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No draft courses</h3>
@@ -134,7 +134,7 @@ export default function CourseDraftsPage() {
           </TableHeader>
 
           <TableBody>
-            {isFetching || isLoading ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell colSpan={5} className='py-6'>
                   <div className='flex w-full items-center justify-center'>

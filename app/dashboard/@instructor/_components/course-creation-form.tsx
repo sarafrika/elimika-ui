@@ -38,12 +38,12 @@ import { useInstructor } from '@/context/instructor-context';
 import { tanstackClient } from '@/services/api/tanstack-client';
 import {
   createCategory,
-  getAllCategories,
-  getAllDifficultyLevels,
   updateCourse
 } from '@/services/client';
 import {
-  createCourseMutation
+  createCourseMutation,
+  getAllCategoriesOptions,
+  getAllDifficultyLevelsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -178,10 +178,23 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       intro_video?: string;
     }>({});
 
-    // Mutations
+    // MUTATION
     const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
       mutationFn: ({ body }: { body: any }) => createCategory({ body }),
       onSuccess: (data: any) => {
+        console.log(data, "data here")
+
+        if (data?.error) {
+          if (data.error.error?.toLowerCase().includes('duplicate key')) {
+            toast.error('Category already exists');
+          } else {
+            toast.error('Failed to add category');
+          }
+          dialogCloseRef.current?.click();
+          setCategoryInput('');
+          return
+        }
+
         toast.success(data?.message);
         dialogCloseRef.current?.click();
         queryClient.invalidateQueries({ queryKey: ["getAllCategories"] });
@@ -210,23 +223,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       '/api/v1/courses/{uuid}/intro-video'
     );
 
-    // Queries
-    const { data: difficulty, isLoading: difficultyIsLoading } = useQuery({
-      queryKey: ['getAllDifficulties'],
-      queryFn: () => getAllDifficultyLevels({}).then(res => res.data),
-    });
+    // GET COURSE DIFFICULTY LEVEL
+    const { data: difficulty, isLoading: difficultyIsLoading } = useQuery(getAllDifficultyLevelsOptions());
     const difficultyLevels = difficulty?.data;
 
-    const { data: categories, refetch: refetchCategories } = useQuery({
-      queryKey: ['getAllCategories'],
-      queryFn: () =>
-        getAllCategories({
-          query: {
-            page: 0,
-            size: 100,
-          },
-        }).then(res => res.data),
-    });
+    // GET COURSE CATEGORIES
+    const { data: categories } = useQuery(getAllCategoriesOptions());
 
     // actions
     const handleFileUpload = async (
@@ -316,10 +318,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
             if (respObj) {
               toast.success(data?.data?.message)
-              if (typeof successResponse === "function") {
-                // @ts-ignore
-                successResponse(data?.data)
-              }
+              // if (typeof successResponse === "function") {
+              //   // @ts-ignore
+              //   successResponse(data?.data)
+              // }
 
               setActiveStep(1)
               queryClient.invalidateQueries({ queryKey: ["getAllCourses", "getCourseByUuid"] });
@@ -757,16 +759,18 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 </Select>
                 {/* Dialog to add new category */}
                 <Dialog>
-                  <DialogTrigger asChild>
-                    <div>
-                      <Button variant="outline" className="sm:hidden">
-                        <Plus />
-                      </Button>
-                      <Button variant="outline" className="hidden sm:flex">
-                        Add new
-                      </Button>
-                    </div>
+                  <DialogTrigger className="hidden sm:flex" asChild>
+                    <Button variant="outline" className="hidden sm:flex">
+                      Add new
+                    </Button>
                   </DialogTrigger>
+
+                  <DialogTrigger className="flex sm:hidden" asChild>
+                    <Button variant="outline" className="flex sm:hidden">
+                      <Plus />
+                    </Button>
+                  </DialogTrigger>
+
                   <DialogContent className='w-full sm:max-w-[350px]'>
                     <DialogHeader>
                       <DialogTitle>Add new category</DialogTitle>
@@ -803,6 +807,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       </DialogClose>
                     </DialogFooter>
                   </DialogContent>
+
+
                 </Dialog>
               </div>
             </FormItem>

@@ -23,9 +23,7 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
   deleteCourseLessonMutation,
   getAllContentTypesOptions,
-  getAllContentTypesQueryKey,
   getCourseByUuidOptions,
-  getCourseByUuidQueryKey,
   getCourseLessonOptions,
   getCourseLessonQueryKey,
   getCourseLessonsOptions,
@@ -301,13 +299,13 @@ export default function CourseCreationPage() {
             successResponse={data => {
               setCreatedCourseId(data?.uuid);
 
-              queryClient.invalidateQueries({
-                queryKey: getCourseByUuidQueryKey({ path: { uuid: resolveId } })
-              });
+              // queryClient.invalidateQueries({
+              //   queryKey: getCourseByUuidQueryKey({ path: { uuid: resolveId } })
+              // });
 
-              queryClient.invalidateQueries({
-                queryKey: getAllContentTypesQueryKey({ query: {} })
-              });
+              // queryClient.invalidateQueries({
+              //   queryKey: getAllContentTypesQueryKey({ query: {} })
+              // });
             }}
           />
         </StepperContent>

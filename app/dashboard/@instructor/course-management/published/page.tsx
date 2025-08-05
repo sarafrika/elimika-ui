@@ -109,7 +109,7 @@ export default function PublishedCoursesPage() {
         </div>
       </div>
 
-      {!isFetching && !isLoading && publishedCourses?.length === 0 ? (
+      {!isFetching && publishedCourses?.length === 0 ? (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No published courses</h3>
