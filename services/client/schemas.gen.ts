@@ -699,16 +699,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: 2,
-      readOnly: true,
-    },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: 2,
       readOnly: true,
     },
   },
@@ -1425,6 +1425,13 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    has_location_coordinates: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
+      example: true,
+      readOnly: true,
+    },
     formatted_location: {
       type: 'string',
       description:
@@ -1436,13 +1443,6 @@ export const InstructorSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
-      readOnly: true,
-    },
-    has_location_coordinates: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
       readOnly: true,
     },
@@ -1681,17 +1681,20 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
+      example: 'IEEE Member (4 years, 3 months) - Active',
+      readOnly: true,
+    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: 4,
       readOnly: true,
     },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
-      example: 'IEEE Member (4 years, 3 months) - Active',
-      readOnly: true,
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     membership_period: {
       type: 'string',
@@ -1737,9 +1740,6 @@ export const InstructorProfessionalMembershipSchema = {
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
       readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     is_complete: {
       type: 'boolean',
@@ -1895,6 +1895,26 @@ export const InstructorExperienceSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
+      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
+      readOnly: true,
+    },
+    duration_in_months: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: 5,
+      readOnly: true,
+    },
     employment_period: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
@@ -1928,26 +1948,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    duration_in_months: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: 5,
-      readOnly: true,
-    },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
-      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
     is_complete: {
@@ -2648,21 +2648,15 @@ export const CourseSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    is_free: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is offered for free.',
-      example: false,
-      readOnly: true,
-    },
     is_published: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is published and discoverable.',
       example: true,
       readOnly: true,
     },
-    is_archived: {
+    is_free: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is archived and no longer available.',
+      description: '**[READ-ONLY]** Indicates if the course is offered for free.',
       example: false,
       readOnly: true,
     },
@@ -2693,6 +2687,18 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: 40,
+      readOnly: true,
+    },
+    is_archived: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course is archived and no longer available.',
+      example: false,
+      readOnly: true,
+    },
     is_in_review: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is currently under review.',
@@ -2703,12 +2709,6 @@ export const CourseSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
       example: false,
-      readOnly: true,
-    },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: 40,
       readOnly: true,
     },
   },
@@ -3639,18 +3639,6 @@ export const ContentTypeSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    upload_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category for organizing uploads in the user interface.',
-      example: 'Large Media Files',
-      readOnly: true,
-    },
-    is_media_type: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this content type is for media files.',
-      example: true,
-      readOnly: true,
-    },
     supported_formats: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable list of supported file formats.',
@@ -3661,6 +3649,18 @@ export const ContentTypeSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of maximum file size.',
       example: 500,
+      readOnly: true,
+    },
+    upload_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category for organizing uploads in the user interface.',
+      example: 'Large Media Files',
+      readOnly: true,
+    },
+    is_media_type: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this content type is for media files.',
+      example: true,
       readOnly: true,
     },
   },
@@ -5397,18 +5397,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: 1,
-      readOnly: true,
-    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -5419,6 +5407,18 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: 1,
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
       readOnly: true,
     },
   },
@@ -7117,6 +7117,14 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
+  readOnly: true,
+} as const;
+
 export const OrganizationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organization type based on name keywords.',
@@ -7129,14 +7137,6 @@ export const OrganizationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
-  readOnly: true,
-} as const;
-
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
   readOnly: true,
 } as const;
 

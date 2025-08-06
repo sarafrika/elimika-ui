@@ -1,29 +1,29 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import {
-  CheckCircle2,
-  FileText,
-  Search,
-  ThumbsUp,
-  GraduationCap,
-  Info,
-  ArrowRight,
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
-  DialogTrigger,
+  DialogClose,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  ArrowRight,
+  CheckCircle2,
+  FileText,
+  GraduationCap,
+  Info,
+  Search,
+  ThumbsUp,
+} from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 export default function StudentOverviewPage() {
   // TODO: Replace this with actual data from the backend
@@ -121,13 +121,12 @@ export default function StudentOverviewPage() {
                             style={{ minWidth: 90 }}
                           >
                             <div
-                              className={`mb-2 flex size-10 items-center justify-center rounded-full border-2 shadow-sm transition-all duration-300 ${
-                                isCompleted
+                              className={`mb-2 flex size-10 items-center justify-center rounded-full border-2 shadow-sm transition-all duration-300 ${isCompleted
                                   ? 'border-green-500 bg-green-500 text-white'
                                   : isCurrent
                                     ? 'bg-primary/90 text-primary-foreground border-primary'
                                     : 'bg-muted text-muted-foreground border-muted'
-                              }`}
+                                }`}
                               aria-label={stage.tooltip}
                             >
                               {isCompleted ? (
@@ -269,7 +268,7 @@ export default function StudentOverviewPage() {
                 </p>
               </div>
               <Button asChild className='mt-2'>
-                <Link href='/dashboard/profile/general'>
+                <Link prefetch href='/dashboard/profile/general'>
                   Update Profile Now <ArrowRight className='ml-2 h-4 w-4' />
                 </Link>
               </Button>

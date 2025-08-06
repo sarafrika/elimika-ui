@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "../../../../components/ui/input";
 import { Textarea } from "../../../../components/ui/textarea";
 import { useUserProfile } from "../../../../context/profile-context";
-import { updateUser } from "../../../../services/client";
+import { updateUser, User } from "../../../../services/client";
 import { createOrganisationMutation } from "../../../../services/client/@tanstack/react-query.gen";
 import { zOrganisation } from "../../../../services/client/zod.gen";
 
@@ -57,7 +57,7 @@ export default function OrganisationForm() {
                 uuid: user!.uuid!
             },
             body: {
-                ...user!,
+                ...user! as User,
                 user_domain: [...new Set([...user!.user_domain!, "organisation"])] as Array<'student' | 'instructor' | 'admin' | 'organisation_user'>
             }
         })
