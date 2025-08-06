@@ -375,13 +375,7 @@ export default function CourseCreationPage() {
               onCancel={() => { }}
             />
 
-            <RubricDialog
-              isOpen={addRubricModalOpen}
-              onOpenChange={setAddRubricModalOpen}
-              courseId={""}
-              lessonId={""}
-              onCancel={() => { }}
-            />
+
           </div>
         </StepperContent>
 
@@ -400,6 +394,15 @@ export default function CourseCreationPage() {
               lessonItems={lessonContentData?.data}
               onEditAssessment={openAddAssessmentModal}
               courseId={resolveId}
+              onAddRubrics={openAddRubricModal}
+            />
+
+            <RubricDialog
+              isOpen={addRubricModalOpen}
+              onOpenChange={setAddRubricModalOpen}
+              courseId={""}
+              lessonId={""}
+              onCancel={() => { }}
             />
           </div>
         </StepperContent>

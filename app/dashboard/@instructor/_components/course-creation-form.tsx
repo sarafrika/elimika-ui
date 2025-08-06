@@ -182,7 +182,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
       mutationFn: ({ body }: { body: any }) => createCategory({ body }),
       onSuccess: (data: any) => {
-        console.log(data, "data here")
 
         if (data?.error) {
           if (data.error.error?.toLowerCase().includes('duplicate key')) {
