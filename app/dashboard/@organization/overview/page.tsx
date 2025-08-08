@@ -1,12 +1,13 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, FileText } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, FileText } from 'lucide-react';
 
 export default function OrganisationOverviewPage() {
+  console.log("Organization dani")
   // TODO: Replace this with actual data from the backend
   const isProfileComplete = false;
 

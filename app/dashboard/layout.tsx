@@ -5,16 +5,16 @@ import { DashboardView, DashboardViewProvider } from '@/components/dashboard-vie
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { TrainingCenterProvider } from '@/context/training-center-provider';
-import { UserDomain } from '@/lib/types';
+import { DashboardChildrenTypes, UserDomain } from '@/lib/types';
 import { redirect } from 'next/navigation';
 import { ReactNode } from 'react';
 import { auth } from '../../services/auth';
 import { search } from '../../services/client';
-import { DashboardChildrenTypes } from './_types';
 
 type OrgDomainType = DashboardView | 'organisation_user';
 
 export default async function DashboardLayout(props: DashboardChildrenTypes) {
+
   try {
     const session = await auth();
 
@@ -56,9 +56,8 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
                 <AppSidebar activeDomain='organisation_user' />
                 {/* Main content area */}
                 <div className='flex w-full flex-1 flex-col'>
-                  Nice try
                   <DashboardTopBar showToggle={false} />
-                  {props.organisation}
+                  {props.organization}
                 </div>
               </div>
             </BreadcrumbProvider>

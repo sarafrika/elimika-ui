@@ -1,20 +1,9 @@
 import { queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, Student, User } from '../services/client';
+import { UserProfileType } from '@/lib/types';
 
 type DomainTypes = "instructor" | "student" | "organisation"
-
-export type UserProfileType = User & {
-  student?: Student,
-  instructor?: Instructor & {
-    educations: InstructorEducation[],
-    experience: InstructorExperience[],
-    membership: InstructorProfessionalMembership[],
-    skills: InstructorSkill
-  },
-  organization?: Organisation
-}
 
 const UserProfileContext = createContext<Partial<UserProfileType> & {
   isLoading: boolean,
