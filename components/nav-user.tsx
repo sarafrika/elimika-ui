@@ -31,7 +31,7 @@ export function NavUser({ items }: NavUserProps) {
   const user = useUserProfile();
   const { isMobile } = useSidebar();
   // const { data: session } = useSession();
-  const activeDomain = user!.activeDomain;
+  const activeDomain = user!.activeDomain ?? (user && user.user_domain && user.user_domain.length > 0 ? user.user_domain[0] : "");
 
   const userInitials =
     user!.full_name

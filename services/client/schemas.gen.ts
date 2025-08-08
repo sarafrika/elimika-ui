@@ -699,16 +699,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: 2,
-      readOnly: true,
-    },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: 2,
       readOnly: true,
     },
   },
@@ -1687,13 +1687,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
@@ -1746,6 +1739,13 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1901,13 +1901,6 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     duration_in_months: {
       type: 'integer',
       format: 'int32',
@@ -1955,6 +1948,13 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -2086,13 +2086,6 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     is_recent_qualification: {
       type: 'boolean',
       description:
@@ -2121,6 +2114,13 @@ export const InstructorEducationSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
       example: 2020,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -2648,40 +2648,16 @@ export const CourseSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    is_free: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is offered for free.',
-      example: false,
-      readOnly: true,
-    },
     is_published: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is published and discoverable.',
       example: true,
       readOnly: true,
     },
-    is_archived: {
+    is_free: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is archived and no longer available.',
+      description: '**[READ-ONLY]** Indicates if the course is offered for free.',
       example: false,
-      readOnly: true,
-    },
-    is_in_review: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is currently under review.',
-      example: false,
-      readOnly: true,
-    },
-    is_draft: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
-      example: false,
-      readOnly: true,
-    },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: 40,
       readOnly: true,
     },
     has_multiple_categories: {
@@ -2709,6 +2685,30 @@ export const CourseSchema = {
       description:
         '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
       example: true,
+      readOnly: true,
+    },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: 40,
+      readOnly: true,
+    },
+    is_archived: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course is archived and no longer available.',
+      example: false,
+      readOnly: true,
+    },
+    is_in_review: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course is currently under review.',
+      example: false,
+      readOnly: true,
+    },
+    is_draft: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
+      example: false,
       readOnly: true,
     },
   },
@@ -3639,18 +3639,6 @@ export const ContentTypeSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    upload_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category for organizing uploads in the user interface.',
-      example: 'Large Media Files',
-      readOnly: true,
-    },
-    is_media_type: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this content type is for media files.',
-      example: true,
-      readOnly: true,
-    },
     supported_formats: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable list of supported file formats.',
@@ -3661,6 +3649,18 @@ export const ContentTypeSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of maximum file size.',
       example: 500,
+      readOnly: true,
+    },
+    upload_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category for organizing uploads in the user interface.',
+      example: 'Large Media Files',
+      readOnly: true,
+    },
+    is_media_type: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this content type is for media files.',
+      example: true,
       readOnly: true,
     },
   },
@@ -5397,18 +5397,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: 1,
-      readOnly: true,
-    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -5419,6 +5407,18 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: 1,
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
       readOnly: true,
     },
   },

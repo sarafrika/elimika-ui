@@ -24,22 +24,25 @@ import {
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { formatCourseDate } from '@/lib/format-course-date';
-import { searchCourses, unpublishCourse } from '@/services/client';
 import {
-  getCourseByUuidQueryKey,
-  getCoursesByInstructorQueryKey,
+  searchCoursesOptions,
+  unpublishCourseMutation,
+  unpublishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeIcon, FilePenIcon, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function PublishedCoursesPage() {
   const queryClient = useQueryClient();
   const instructor = useInstructor();
+  const router = useRouter()
   const { replaceBreadcrumbs } = useBreadcrumb();
+
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -61,28 +64,35 @@ export default function PublishedCoursesPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: [getCoursesByInstructorQueryKey, instructor?.uuid, page, size],
-    queryFn: () =>
-      searchCourses({
-        query: {
-          page,
-          size,
-          // @ts-ignore
-          status: 'published',
-          instructor_uuid_eq: instructor?.uuid as string,
-        },
-      }).then(res => res.data),
-  });
+  // GET PUBLISHED INSTRUCTOR'S COURSES
+  const { data, isLoading, isFetching, } = useQuery(searchCoursesOptions({ query: { page, size, searchParams: { status: 'published', instructor_uuid_eq: instructor?.uuid as string, } } }))
 
-  const { mutate: unpublishCourseMutation, isPending } = useMutation({
-    mutationKey: [getCourseByUuidQueryKey],
-    mutationFn: ({ uuid }: { uuid: string }) => unpublishCourse({ path: { uuid } }),
-    onSuccess: (data: any) => {
-      toast.success(data?.message || 'Course unpublished');
-      queryClient.invalidateQueries({ queryKey: [getCourseByUuidQueryKey] });
-    },
-  });
+  // UNPUBLISH COURSE MUTATION
+  const unpublishCourse = useMutation(unpublishCourseMutation());
+  const handleUnpublish = (uuid: string) => {
+    unpublishCourse.mutate({
+      path: { uuid: uuid }
+    }, {
+      onSuccess(data) {
+        if (!data?.success) {
+          toast.error(
+            typeof data?.error === 'string'
+              ? data.error
+              : 'An error occurred while unpublishing the course.'
+          )
+          return
+        }
+
+        if (data?.success) {
+          toast.success(data?.message)
+          queryClient.invalidateQueries({
+            queryKey: unpublishCourseQueryKey({ path: { uuid: data?.data?.uuid as string } })
+          });
+          router.push('/dashboard/course-management/drafts')
+        }
+      },
+    });
+  };
 
   const publishedCourses = data?.data?.content || [];
   const paginationMetadata = data?.data?.metadata || {};
@@ -188,7 +198,7 @@ export default function PublishedCoursesPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             variant='destructive'
-                            onClick={() => unpublishCourseMutation({ uuid: course.uuid })}
+                            onClick={() => handleUnpublish(course.uuid)}
                           >
                             <TrashIcon className='mr-2 h-4 w-4' />
                             Unpublish

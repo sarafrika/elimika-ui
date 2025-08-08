@@ -37,14 +37,15 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { tanstackClient } from '@/services/api/tanstack-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   BookOpen,
+  BookOpenCheck,
   ClipboardCheck,
   Clock,
   FileAudio,
   FileIcon,
+  FilePlus,
   FileText,
   FileVideo,
   Grip,
@@ -55,11 +56,12 @@ import {
   Trash,
   VideoIcon,
   X,
-  Youtube,
+  Youtube
 } from 'lucide-react';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import {
   Control,
+  FieldErrors,
   SubmitHandler,
   useFieldArray,
   useForm,
@@ -69,21 +71,17 @@ import {
 import { toast } from 'sonner';
 import * as z from 'zod';
 
-import { addCourseLesson, addLessonContent, getAllContentTypes, getCourseByUuid } from '@/services/client';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { addCourseAssessment, addCourseLesson, addLessonContent, getCourseByUuid, updateCourseLesson, updateLessonContent } from '@/services/client';
 import {
   addCourseLessonQueryKey,
-  getAllContentTypesQueryKey
+  deleteCourseAssessmentMutation,
+  getAllContentTypesOptions,
+  getCourseLessonsQueryKey,
+  searchAssessmentsQueryKey,
+  updateCourseAssessmentMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import dynamic from 'next/dynamic';
-
-// Dynamically import with SSR disabled
-const WysiwygRichTextEditor = dynamic(
-  () => import('../../../../components/editors/wysiwygRichTextEditor'),
-  {
-    ssr: false,
-  }
-);
 
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
@@ -99,7 +97,7 @@ const contentItemSchema = z.object({
   contentType: z.enum(['AUDIO', 'VIDEO', 'TEXT', 'LINK', 'PDF', 'YOUTUBE'], {
     required_error: 'Content type is required',
   }),
-  contentUuid: z.string(),
+  contentTypeUuid: z.string(),
   contentCategory: z.string(),
   title: z.string().min(1, 'Title is required'),
   value: z.any().optional(),
@@ -129,8 +127,8 @@ const lessonFormSchema = z.object({
   title: z.string().min(1, 'Lesson title is required'),
   content: z.array(contentItemSchema),
   resources: z.array(resourceSchema),
-  description: z.string().min(1, 'Lesson description is required'),
-  objectives: z.any(),
+  description: z.string().min(1, 'Lesson description is required').max(1000, "Description cannot exceed 1000 characters"),
+  objectives: z.string().max(500, "Objectives cannot exceed 500 characters").optional(),
   uuid: z.any(),
   duration_hours: z.any(),
   duration_minutes: z.any(),
@@ -227,14 +225,8 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   });
   const { setValue } = useFormContext();
 
-  // GetContentTypes
-  const useGetContentTypes = () => {
-    return useQuery({
-      queryKey: [getAllContentTypesQueryKey],
-      queryFn: () => getAllContentTypes().then(res => res.data),
-    });
-  };
-  const { data: contentTypeList } = useGetContentTypes();
+  // GET COURSE CONTENT TYPES
+  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ query: {} }));
 
   const contentTypeData = React.useMemo(() => {
     const respdata = contentTypeList!.data! as { content: any[] }
@@ -264,7 +256,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <FormField
           control={control}
-          name={`content.${index}.contentType`}
+          name={`content.${index}.contentTypeUuid`}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Content Type</FormLabel>
@@ -272,7 +264,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                 onValueChange={val => {
                   const parsed = JSON.parse(val);
                   setValue(`content.${index}.contentType`, parsed.name.toUpperCase());
-                  setValue(`content.${index}.contentUuid`, parsed.uuid);
+                  setValue(`content.${index}.contentTypeUuid`, parsed.uuid);
                   setValue(`content.${index}.contentCategory`, parsed.upload_category);
                 }}
                 value={
@@ -314,7 +306,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
 
         <FormField
           control={control}
-          name={`content.${index}.contentUuid`}
+          name={`content.${index}.contentTypeUuid`}
           render={({ field }) => <input type='hidden' {...field} />}
         ></FormField>
 
@@ -341,7 +333,10 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                <SimpleEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -439,7 +434,7 @@ type LessonListProps = {
   onDeleteLesson: (lessonId: string) => void;
   onReorderLessons: (newLessons: any[]) => void;
   onAddAssessment: (lesson: any) => void;
-  onEditAssessment: () => void;
+  onAddRubrics: (lesson: any) => void
 };
 
 function LessonList({
@@ -453,7 +448,7 @@ function LessonList({
   onDeleteLesson,
   onReorderLessons,
   onAddAssessment,
-  onEditAssessment,
+  onAddRubrics,
 }: LessonListProps) {
   const getTotalDuration = (lesson: any) => {
     const hours = lesson.duration_hours || 0;
@@ -463,7 +458,7 @@ function LessonList({
 
   return (
     <div className='space-y-6'>
-      <div className='flex flex-row items-center justify-between'>
+      <div className='flex flex-col md:flex-row items-center justify-between gap-4'>
         <div className='space-y-1'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
           <p className='text-muted-foreground text-sm'>
@@ -471,7 +466,7 @@ function LessonList({
             {lessons?.content?.length === 1 ? 'lesson' : 'lessons'} created under this course.
           </p>
         </div>
-        <Button onClick={onAddLesson}>
+        <Button onClick={onAddLesson} className='self-start sm:self-end lg:self-center'>
           <PlusCircle className='mr-2 h-4 w-4' />
           Add Lesson
         </Button>
@@ -479,6 +474,12 @@ function LessonList({
 
       {isLoading ? (
         <Spinner />
+      ) : lessons?.content?.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+          <BookOpen className='text-muted-foreground mx-auto h-12 w-12' />
+          <h3 className='mt-4 text-lg font-medium'>No lessons found for this course.</h3>
+          <p className='text-muted-foreground mt-2'>You can create a new lesson to get started.</p>
+        </div>
       ) : (
         <div className='space-y-3'>
           {lessons?.content.map((lesson: any, index: any) => (
@@ -493,7 +494,7 @@ function LessonList({
                   <div className='flex flex-col items-start'>
                     <h3 className='text-lg font-medium'>{lesson.title}</h3>
                     <div className='text-muted-foreground text-sm'>
-                      <RichTextRenderer htmlString={lesson?.description} maxChars={400} />
+                      <RichTextRenderer htmlString={lesson?.description} maxChars={150} />
                     </div>
                   </div>
                   <DropdownMenu>
@@ -508,20 +509,20 @@ function LessonList({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align='end'>
                       <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-                        <PenLine className='mr-2 h-4 w-4' />
+                        <PenLine className='mr-1 h-4 w-4' />
                         Edit Lesson
                       </DropdownMenuItem>
-                      {lesson.hasAssessment ? (
-                        <DropdownMenuItem onClick={() => onEditAssessment()}>
-                          <ClipboardCheck className='mr-2 h-4 w-4' />
-                          Edit Assessment
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
-                          <ClipboardCheck className='mr-2 h-4 w-4' />
-                          Add Assessment
-                        </DropdownMenuItem>
-                      )}
+
+                      <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
+                        <ClipboardCheck className='mr-1 h-4 w-4' />
+                        Add Assessment
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem onClick={() => onAddRubrics(lesson)}>
+                        <FilePlus className='mr-1 h-4 w-4' />
+                        Add Rubrics
+                      </DropdownMenuItem>
+
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className='text-red-600'
@@ -531,7 +532,7 @@ function LessonList({
                           }
                         }}
                       >
-                        <Trash className='mr-2 h-4 w-4' />
+                        <Trash className='mr-1 h-4 w-4' />
                         Delete Lesson
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -605,7 +606,7 @@ interface AppLessonCreationFormProps {
   lessonId?: string | number;
   initialValues?: Partial<LessonFormValues>;
   refetch: any;
-  onSuccess?: (data: any) => void;
+  editSuccessRespones?: (data: any) => void;
 }
 
 function LessonCreationForm({
@@ -625,7 +626,7 @@ function LessonCreationForm({
         {
           contentType: 'TEXT',
           title: '',
-          contentUuid: '',
+          contentTypeUuid: '',
           contentCategory: '',
           durationMinutes: 0,
           durationHours: 0,
@@ -635,6 +636,19 @@ function LessonCreationForm({
       resources: [],
     },
   });
+
+  const handleSubmitError = (errors: FieldErrors<LessonFormValues>) => {
+    const firstFieldWithError = Object.keys(errors)[0];
+    // @ts-ignore
+    const firstError = errors[firstFieldWithError];
+
+    const message =
+      typeof firstError?.message === "string"
+        ? firstError.message
+        : "Please correct the form errors.";
+
+    toast.error(message);
+  };
 
   const {
     fields: contentFields,
@@ -669,13 +683,7 @@ function LessonCreationForm({
     mutationKey: [addCourseLessonQueryKey],
     mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
       addCourseLesson({ body, path: { courseUuid: uuid } }),
-    // onSuccess: () => (queryClient.invalidateQueries({ queryKey: ["courses"] }))
-    onSuccess: (data) => {
-      queryClient.setQueryData(['courses'], (oldCourses = []) => {
-        return [data?.data?.data];
-      });
-    },
-
+    onSuccess: () => (queryClient.invalidateQueries({ queryKey: ["courses"] }))
   });
 
   const { mutate: createLessonContentMutation, isPending: createLessonContentIsPending } =
@@ -706,6 +714,10 @@ function LessonCreationForm({
       { body: createLessonBody, uuid: courseId as string },
       {
         onSuccess: lessonResponse => {
+          queryClient.invalidateQueries({
+            queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+          });
+
           const lessonUuid = lessonResponse?.data?.data?.uuid as string;
 
           if (!lessonUuid) {
@@ -715,7 +727,7 @@ function LessonCreationForm({
 
           const createContentBody = {
             lesson_uuid: lessonUuid as string,
-            content_type_uuid: values.content[0]?.contentUuid ?? '',
+            content_type_uuid: values.content[0]?.contentTypeUuid ?? '',
             title: values?.title,
             description: values?.description ?? '',
             content_text: values.content[0]?.value || '',
@@ -741,7 +753,9 @@ function LessonCreationForm({
             {
               onSuccess: (data: any) => {
                 toast.success('Lesson content created successfully.');
-                refetch();
+                queryClient.invalidateQueries({
+                  queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                });
                 onCancel();
               },
             }
@@ -754,7 +768,7 @@ function LessonCreationForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitCreateLesson)} className={`space-y-8 ${className}`}>
+      <form onSubmit={form.handleSubmit(onSubmitCreateLesson, handleSubmitError)} className={`space-y-8 ${className}`}>
         <div className='space-y-4'>
           <FormField
             control={form.control}
@@ -793,8 +807,8 @@ function LessonCreationForm({
               <FormItem>
                 <FormLabel>Lesson Description</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor
-                    initialContent={field.value ?? ''}
+                  <SimpleEditor
+                    value={field.value}
                     onChange={field.onChange}
                   />
                 </FormControl>
@@ -810,8 +824,8 @@ function LessonCreationForm({
               <FormItem>
                 <FormLabel>Lesson Objectives</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor
-                    initialContent={field.value ?? ''}
+                  <SimpleEditor
+                    value={field.value}
                     onChange={field.onChange}
                   />
                 </FormControl>
@@ -936,7 +950,7 @@ function LessonEditingForm({
   courseId,
   initialValues,
   lessonId,
-  onSuccess,
+  editSuccessRespones,
 }: AppLessonCreationFormProps) {
   const normalizedInitialValues = {
     ...initialValues,
@@ -954,22 +968,23 @@ function LessonEditingForm({
       title: '',
       description: '',
       resources: [],
+      // content: [{ contentType: 'TEXT', title: '' }],
       ...normalizedInitialValues,
     },
   });
 
-  // const form = useForm<LessonFormValues>({
-  //   resolver: zodResolver(lessonFormSchema),
-  //   defaultValues: {
-  //     // @ts-ignore
-  //     number: '',
-  //     title: '',
-  //     description: '',
-  //     content: [{ contentType: 'TEXT', title: '' }],
-  //     resources: [],
-  //     ...initialValues,
-  //   },
-  // });
+  const handleSubmitError = (errors: FieldErrors<LessonFormValues>) => {
+    const firstFieldWithError = Object.keys(errors)[0];
+    // @ts-ignore
+    const firstError = errors[firstFieldWithError];
+
+    const message =
+      typeof firstError?.message === "string"
+        ? firstError.message
+        : "Please correct the form errors.";
+
+    toast.error(message);
+  };
 
   const {
     fields: contentFields,
@@ -989,18 +1004,28 @@ function LessonEditingForm({
     name: 'resources',
   });
 
-  const { data: courseData } = tanstackClient.useQuery('get', '/api/v1/courses/{uuid}', {
-    // @ts-ignore
-    params: { path: { uuid: courseId } },
+  const queryClient = useQueryClient()
+
+  const useGetCourseById = () => {
+    return useQuery({
+      queryKey: ["course-id"],
+      queryFn: () => getCourseByUuid({ path: { uuid: courseId as string } }).then(res => res.data),
+    });
+  };
+  const { data: courseData } = useGetCourseById();
+
+  const updateLessonMutation = useMutation({
+    mutationFn: ({ body, courseId, lessonId }: { body: any; courseId: string, lessonId: string }) =>
+      updateCourseLesson({ body, path: { courseUuid: courseId, lessonUuid: lessonId } }),
+
   });
-  const updateLessonMutation = tanstackClient.useMutation(
-    'put',
-    '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}'
-  );
-  const updateLessonContentMutation = tanstackClient.useMutation(
-    'put',
-    '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content/{contentUuid}'
-  );
+
+  const updateLessonContentMutation = useMutation({
+    mutationFn: ({ body, courseId, lessonId, contentId }: { body: any; courseId: string, lessonId: string, contentId: string }) =>
+      updateLessonContent({ body, path: { courseUuid: courseId, lessonUuid: lessonId, contentUuid: contentId } }),
+
+  });
+
 
   const onSubmitEditLesson = (values: LessonFormValues) => {
     updateLessonMutation.mutate(
@@ -1009,7 +1034,7 @@ function LessonEditingForm({
           course_uuid: courseId as string,
           title: values?.title,
           description: values?.description ?? '',
-          learning_objectives: courseData?.data?.objectives,
+          learning_objectives: "",
           duration_hours: Number(values?.content[0]?.durationHours),
           duration_minutes: Number(values?.content[0]?.durationMinutes),
           duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
@@ -1022,61 +1047,55 @@ function LessonEditingForm({
           lesson_number: values?.number,
           lesson_sequence: `Lesson ${values?.number}`,
         },
-
-        params: {
-          // @ts-ignore
-          path: { courseUuid: courseId, lessonUuid: lessonId },
-        },
+        courseId: courseId as string,
+        lessonId: lessonId as string
       },
       {
-        onSuccess: data => {
-          toast.success(data?.message);
+        onSuccess: (data) => {
+          toast.success(data?.data?.message);
           onCancel();
 
-          if (typeof onSuccess === 'function') {
-            onSuccess(data?.data);
+          if (typeof editSuccessRespones === 'function') {
+            editSuccessRespones(data?.data);
           }
-        },
-      }
-    );
 
-    updateLessonContentMutation.mutate(
-      {
-        body: {
-          lesson_uuid: lessonId as string,
-          content_type_uuid: values.content[0]?.contentUuid as string,
-          title: values?.title,
-          description: values?.description ?? '',
-          content_text: values.content[0]?.value || '',
-          file_url: '',
-          file_size_bytes: 157200,
-          mime_type: values.content[0]?.value || '',
-          display_order: values?.number,
-          is_required: true,
-          created_by: 'instructor@sarafrika.com',
-          updated_by: 'instructor@sarafrika.com',
-          file_size_display: '',
-          // content_category: values.contentCategory,
-          // is_downloadable: true,
-          // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
-        },
+          updateLessonContentMutation.mutate(
+            {
+              body: {
+                lesson_uuid: lessonId as string,
+                content_type_uuid: values.content[0]?.contentTypeUuid as string,
+                title: values?.title,
+                description: values?.description ?? '',
+                content_text: values.content[0]?.value || '',
+                file_url: '',
+                file_size_bytes: 157200,
+                mime_type: values.content[0]?.value || '',
+                display_order: values?.number,
+                is_required: true,
+                created_by: 'instructor@sarafrika.com',
+                updated_by: 'instructor@sarafrika.com',
+                file_size_display: '',
+              },
+              courseId: courseId as string,
+              lessonId: lessonId as string,
+              // @ts-ignore
+              contentId: initialValues?.content[0]?.uuid as string,
 
-        params: {
-          path: {
-            courseUuid: courseId as string,
-            lessonUuid: lessonId as string,
-            contentUuid: values?.content[0]?.contentUuid as string,
-          },
-        },
-      },
-      {
-        onSuccess: data => {
-          toast.success(data?.message);
-          onCancel();
+            },
+            {
+              onSuccess: data => {
+                toast.success(data?.data?.message);
+                onCancel();
 
-          if (typeof onSuccess === 'function') {
-            onSuccess(data?.data);
-          }
+                if (typeof editSuccessRespones === 'function') {
+                  editSuccessRespones(data?.data);
+                  queryClient.invalidateQueries({
+                    queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                  });
+                }
+              },
+            }
+          );
         },
       }
     );
@@ -1084,7 +1103,7 @@ function LessonEditingForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitEditLesson)} className={`space-y-8 ${className}`}>
+      <form onSubmit={form.handleSubmit(onSubmitEditLesson, handleSubmitError)} className={`space-y-8 ${className}`}>
         <div className='space-y-4'>
           <FormField
             control={form.control}
@@ -1123,10 +1142,11 @@ function LessonEditingForm({
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor
-                    initialContent={field.value ?? ''}
+                  <SimpleEditor
+                    value={field.value}
                     onChange={field.onChange}
                   />
+
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -1259,20 +1279,17 @@ function LessonEditingForm({
 
 interface AssessmentCreationFormProps {
   courseId: string | number;
+  assessmentId?: string | number;
   onCancel: () => void;
   className?: string;
+  initialValues?: any
 }
-
-// defaultValues: {
-//   title: "",
-//   description: "",
-//   questions: [{ prompt: "", options: [{ text: "", isCorrect: false }] }],
-//   resources: [],
-// }
 
 const assessmentFormSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
+  assessment_type: z.string().optional(),
+  weight_percentage: z.any().optional(),
   questions: z.array(
     z.object({
       prompt: z.string().min(1),
@@ -1294,16 +1311,31 @@ const assessmentFormSchema = z.object({
   ),
 });
 
-function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCreationFormProps) {
+function AssessmentCreationForm({
+  courseId,
+  onCancel,
+  className,
+  assessmentId,
+  initialValues,
+}: AssessmentCreationFormProps) {
   const form = useForm<AssessmentFormValues>({
     resolver: zodResolver(assessmentFormSchema),
-    defaultValues: {
+    defaultValues: initialValues ?? {
       title: '',
       description: '',
+      assessment_type: '',
+      weight_percentage: '',
       questions: [{ prompt: '' }],
+      // questions: [{ prompt: "", options: [{ text: "", isCorrect: false }] }],
       resources: [],
     },
   });
+
+  useEffect(() => {
+    if (initialValues) {
+      form.reset(initialValues);
+    }
+  }, [initialValues]);
 
   const {
     fields: questionFields,
@@ -1323,21 +1355,99 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
     name: 'resources',
   });
 
-  // const createAssessmentMutation = tanstackClient.useMutation(
-  //   "post",
-  //   "/api/v1/courses/{uuid}/assessments"
-  // )
+  const queryClient = useQueryClient();
+
+  // CREATE ASSESSMENT MUTATION
+  const createAssessmentMutation = useMutation({
+    mutationKey: ['create-assessment'],
+    mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
+      addCourseAssessment({ body, path: { courseUuid: uuid } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assessments'] });
+    },
+  });
 
   const onSubmit = async (values: AssessmentFormValues) => {
-    //console.log('✅ Assessment created:', values);
-    //console.log('✅ Assessment created for courseID:', courseId);
+    createAssessmentMutation.mutate(
+      {
+        uuid: courseId as string,
+        body: {
+          course_uuid: courseId,
+          assessment_type: values.assessment_type,
+          title: values.title,
+          description: values.description,
+          weight_percentage: values.weight_percentage,
+          rubric_uuid: '',
+          is_required: true,
+          created_by: 'instructor@sarafrika.com',
+          updated_by: 'instructor@sarafrika.com',
+          assessment_category: 'Participation Component',
+          weight_display: `${values.weight_percentage}% of final grade`,
+          is_major_assessment: false,
+          contribution_level: 'Standard Contribution',
+        },
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.data?.message || 'Assessment created successfully!');
+          queryClient.invalidateQueries({
+            queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+          });
+          onCancel();
+        },
+      }
+    );
+  };
 
-    onCancel();
+  // UPDATE ASSESSMENT MUTATION
+  const updateAssessment = useMutation(updateCourseAssessmentMutation());
+  const handleSubmitUpdate = async () => {
+    const values = form.getValues();
+    try {
+      await updateAssessment.mutateAsync(
+        {
+          path: {
+            courseUuid: courseId as string,
+            assessmentUuid: assessmentId as string,
+          },
+          body: {
+            course_uuid: courseId as string,
+            assessment_type: values.assessment_type as string,
+            title: values.title,
+            description: values.description,
+            weight_percentage: values.weight_percentage,
+            rubric_uuid: '',
+            is_required: true,
+            created_by: 'instructor@sarafrika.com',
+            updated_by: 'instructor@sarafrika.com',
+            assessment_category: 'Participation Component',
+            weight_display: `${values.weight_percentage}% of final grade`,
+            is_major_assessment: false,
+            contribution_level: 'Standard Contribution',
+          },
+        },
+        {
+          onSuccess: (data) => {
+            toast.success(data?.message || 'Assessment updated successfully!');
+            queryClient.invalidateQueries({
+              queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+            });
+            onCancel();
+          },
+          onError: (error) => {
+            toast.error(error?.message || 'Failed to update assessment.');
+          },
+        }
+      );
+    } catch (err) { }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
+      <form
+        onSubmit={form.handleSubmit(assessmentId ? handleSubmitUpdate : onSubmit)}
+        className={`space-y-8 ${className}`}
+      >
         <div className='space-y-4'>
           <FormField
             control={form.control}
@@ -1360,16 +1470,61 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea placeholder='Optional description' className='resize-none' {...field} />
+                  <Textarea
+                    placeholder='Optional: brief description of the assessment (e.g., Midterm exam covering units 1–5)'
+                    className='resize-none'
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          <div className="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
+            <FormField
+              control={form.control}
+              name="assessment_type"
+              render={({ field }) => (
+                <FormItem className="w-full sm:w-auto">
+                  <FormLabel>Assessment Type</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. attendance, test"
+                      {...field}
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="weight_percentage"
+              render={({ field }) => (
+                <FormItem className="w-full sm:w-auto">
+                  <FormLabel>Weight Percentage</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. 20 for 20%"
+                      {...field}
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <div className='space-y-4'>
-          <FormSection title='Questions' description='Add one or more questions to this assessment'>
+          <FormSection
+            title='Questions'
+            description='Add one or more questions to this assessment'
+          >
             {questionFields.map((field, index) => (
               <div key={field.id} className='flex items-center gap-2'>
                 <FormField
@@ -1454,7 +1609,6 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
           <Button
             type='button'
             variant='outline'
-            // onClick={() => appendResource({ title: "", url: "" })}
             onClick={() => toast.message('Cannot add resource at the moment')}
           >
             <PlusCircle className='mr-2 h-4 w-4' />
@@ -1466,7 +1620,335 @@ function AssessmentCreationForm({ courseId, onCancel, className }: AssessmentCre
           <Button type='button' variant='outline' onClick={onCancel}>
             Cancel
           </Button>
-          <Button type='submit'>Create Assessment</Button>
+          <Button type='submit' className='min-w-[154px]'>
+            {assessmentId
+              ? updateAssessment.isPending
+                ? <Spinner />
+                : 'Update Assessment'
+              : createAssessmentMutation.isPending
+                ? <Spinner />
+                : 'Create Assessment'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+
+type AssessmentListProps = {
+  assessments: any;
+  lessonItems: any;
+  isLoading: boolean;
+  courseId?: string;
+  onEditAssessment: (assessment: any) => void;
+};
+
+function AssessmentList({
+  assessments,
+  lessonItems,
+  isLoading,
+  courseId
+}: AssessmentListProps) {
+  const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const getTotalDuration = (lesson: any) => {
+    const hours = lesson.duration_hours || 0;
+    const minutes = lesson.duration_minutes || 0;
+    return hours * 60 + minutes;
+  };
+
+  const handleEditAssessment = (assessment: any) => {
+    setSelectedAssessment(assessment);
+    setIsModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setSelectedAssessment(null);
+  };
+
+  // DELETE ASSESSMENT MUTATION
+  const queryClient = useQueryClient();
+  const deleteAssessment = useMutation(deleteCourseAssessmentMutation());
+  const handleDelete = (assessmentUuid: string) => {
+    if (!assessmentUuid) return
+
+    deleteAssessment.mutate({
+      path: { courseUuid: courseId as string, assessmentUuid }
+    }, {
+      onSuccess: () => {
+        toast.success('Assessment deleted successfully');
+        queryClient.invalidateQueries({
+          queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+        });
+      },
+      onError: (error: any) => {
+        toast.error(error?.message || 'Failed to delete assessment')
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-row items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-muted-foreground text-sm">
+            You have {assessments?.content?.length}{" "}
+            {assessments?.content?.length === 1 ? "assessment" : "assessments"} created under this course.
+          </p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <Spinner />
+      ) : assessments?.content?.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+          <BookOpenCheck className='text-muted-foreground mx-auto h-12 w-12' />
+          <h3 className='mt-4 text-lg font-medium'>No assessments found for this course.</h3>
+          <p className='text-muted-foreground mt-2'>You can create new assessments under lessons.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {assessments?.content.map((assessment: any, index: any) => (
+            <div
+              key={assessment?.uuid || index}
+              className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
+            >
+              <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
+
+              <div className='flex-1 space-y-3'>
+                <div className='flex items-start justify-between'>
+                  <div className='flex flex-col items-start'>
+                    <h3 className='text-lg font-medium'>{assessment.title}</h3>
+                    <div className='text-muted-foreground text-sm'>
+                      <RichTextRenderer htmlString={assessment?.description} maxChars={400} />
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditAssessment(assessment)}>
+                        <ClipboardCheck className="mr-2 h-4 w-4" />
+                        Edit Assessment
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => {
+                          if (assessment.uuid) {
+                            handleDelete(assessment?.uuid as string);
+                          }
+                        }}
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete Assessment
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div className='text-muted-foreground flex items-center gap-4 text-sm'>
+                  <div className='flex items-center gap-1.5'>
+                    <Clock className='h-4 w-4' />
+                    <span>{getTotalDuration(assessment)} minutes</span>
+                  </div>
+
+                  <div className='flex items-center gap-1.5'>
+                    <BookOpen className='h-4 w-4' />
+                    <span>
+                      {lessonItems?.length || '0'} {lessonItems?.length === 1 ? 'item' : 'items'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={isModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          handleCancel();
+        }
+      }}>
+        <DialogContent className='flex max-w-6xl flex-col p-0'>
+          <DialogHeader className='border-b px-6 py-4'>
+            <DialogTitle className='text-xl'>Edit Assessment</DialogTitle>
+            <DialogDescription className='text-muted-foreground text-sm'>
+              Edit assessment message here
+            </DialogDescription>
+          </DialogHeader>
+
+          <ScrollArea className='h-[calc(90vh-16rem)]'>
+            {selectedAssessment && (
+              <AssessmentCreationForm
+                courseId={selectedAssessment.course_uuid}
+                assessmentId={selectedAssessment.uuid}
+                initialValues={selectedAssessment}
+                className='px-6 pb-6'
+                onCancel={handleCancel}
+              />
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+    </div>
+  );
+}
+
+
+const rubricFormSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  criteria: z.array(
+    z.object({
+      name: z.string().min(1, 'Criterion is required'),
+      points: z.number().min(0, 'Points must be positive'),
+    })
+  ).min(1, 'At least one criterion is required'),
+});
+
+type RubricFormValues = z.infer<typeof rubricFormSchema>;
+
+interface AddRubricFormProps {
+  courseId: string;
+  lessonId: string;
+  onCancel: () => void;
+  onSubmitSuccess?: () => void;
+  className: any
+}
+
+function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, className }: AddRubricFormProps) {
+  const form = useForm<RubricFormValues>({
+    resolver: zodResolver(rubricFormSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      criteria: [{ name: '', points: 0 }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'criteria',
+  });
+
+  const onSubmit = async (values: RubricFormValues) => {
+    try {
+      // TODO: implement add rubric here
+
+      // console.log('Submitting rubric:', values);
+      toast.success('Rubric created successfully');
+      onSubmitSuccess?.();
+      onCancel();
+    } catch (error) {
+      toast.error('Failed to create rubric');
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}
+        className={`space-y-8 ${className}`}
+      >
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Rubric Title</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter rubric title" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input placeholder="Optional rubric description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Criteria</h3>
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-4">
+              <FormField
+                control={form.control}
+                name={`criteria.${index}.name`}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Criterion</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Criterion name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`criteria.${index}.points`}
+                render={({ field }) => (
+                  <FormItem className="w-[100px]">
+                    <FormLabel>Points</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => remove(index)}
+                disabled={fields.length === 1}
+              >
+                <X className="h-4 w-4 text-red-600" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => append({ name: '', points: 0 })}
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Criterion
+          </Button>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-6">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" className="min-w-[120px]">
+            Create Rubric
+          </Button>
         </div>
       </form>
     </Form>
@@ -1481,9 +1963,10 @@ interface AddLessonDialogProps {
   initialValues?: Partial<LessonFormValues>;
   refetch?: () => any;
   onSuccess?: (data: any) => void;
+  onCancel: () => any
 }
 
-function LessonDialog({ isOpen, onOpenChange, courseId, refetch }: AddLessonDialogProps) {
+function LessonDialog({ isOpen, onOpenChange, courseId, refetch, onCancel }: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
@@ -1497,7 +1980,7 @@ function LessonDialog({ isOpen, onOpenChange, courseId, refetch }: AddLessonDial
 
         <ScrollArea className='h-[calc(90vh-8rem)]'>
           <LessonCreationForm
-            onCancel={() => onOpenChange(false)}
+            onCancel={onCancel}
             className='px-6 pb-6'
             courseId={courseId}
             refetch={refetch}
@@ -1535,7 +2018,7 @@ function EditLessonDialog({
             initialValues={initialValues}
             onCancel={() => onOpenChange(false)}
             refetch={refetch}
-            onSuccess={onSuccess}
+            editSuccessRespones={onSuccess}
           />
         </ScrollArea>
       </DialogContent>
@@ -1547,8 +2030,6 @@ function AssessmentDialog({
   isOpen,
   onOpenChange,
   courseId,
-  initialValues,
-  lessonId,
 }: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -1556,12 +2037,11 @@ function AssessmentDialog({
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>Add Assessment</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Create a new assessment by providing its title, description, questions, and any helpful
-            resources.
+            Create a new assessment by providing its title, description, questions, and any helpful resources
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className='min-h-auto'>
+        <ScrollArea className='h-[calc(90vh-12rem)]'>
           <AssessmentCreationForm
             onCancel={() => onOpenChange(false)}
             className='px-6 pb-6'
@@ -1573,4 +2053,35 @@ function AssessmentDialog({
   );
 }
 
-export { AssessmentDialog, EditLessonDialog, LessonDialog, LessonList };
+function RubricDialog({
+  isOpen,
+  onOpenChange,
+  courseId,
+  lessonId
+}: AddLessonDialogProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className='flex max-w-6xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 py-4'>
+          <DialogTitle className='text-xl'>Add Rubric</DialogTitle>
+          <DialogDescription className='text-muted-foreground text-sm'>
+            Create a new assessment by providing its title, description, questions, and any helpful resources
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className='h-[calc(90vh-8rem)]'>
+          <AddRubricForm
+            onCancel={() => onOpenChange(false)}
+            className='px-6 pb-6'
+            courseId=''
+            lessonId=''
+            onSubmitSuccess={() => { }}
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export { AssessmentDialog, AssessmentList, EditLessonDialog, LessonDialog, LessonList, RubricDialog };
+
