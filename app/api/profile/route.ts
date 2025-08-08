@@ -28,7 +28,11 @@ export async function GET(request: NextRequest) {
         return new NextResponse(JSON.stringify({ error: "User not found" }), { status: 404 })
     }
 
-    const user = { ...userResp, dob: new Date(userResp.dob ?? Date.now()) } as UserProfileType;
+    const user = {
+        ...userResp,
+        ...session.user,
+        dob: new Date(userResp.dob ?? Date.now())
+    } as UserProfileType;
 
     if (user.user_domain && user.user_domain.length > 0) {
         // Add student data in profile
