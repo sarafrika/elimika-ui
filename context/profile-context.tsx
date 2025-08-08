@@ -42,20 +42,24 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
 
   if (data && !isError) sessionStorage.setItem("profile", JSON.stringify(data));
 
-  useEffect(() => {
-    if (status === "unauthenticated") clearProfile();
-    else if (status === "authenticated" && data && !isError && !profile) {
-      setProfile(data);
+  if (status === "authenticated" && data && !isError && !profile) {
+    setProfile(data!);
 
-      if (!activeDomain && data.user_domain && data.user_domain.length > 0) {
-        const domain = data.user_domain[0];
-        if (domain === "instructor" || domain === "student" || domain === "organisation") {
-          setActiveDomain(domain);
-        }
-        else setActiveDomain(null);
+    if (!activeDomain && data!.user_domain && data!.user_domain.length > 0) {
+      const domain = data!.user_domain[0];
+      if (domain === "instructor" || domain === "student" || domain === "organisation") {
+        setActiveDomain(domain);
       }
+      else setActiveDomain(null);
     }
-  }, [status, isLoading]);
+  }
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      clearProfile();
+      setActiveDomain(null);
+    }
+  }, [status]);
 
   function clearProfile() {
     sessionStorage.removeItem("profile");

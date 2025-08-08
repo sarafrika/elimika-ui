@@ -56,6 +56,7 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
                 <AppSidebar activeDomain='organisation_user' />
                 {/* Main content area */}
                 <div className='flex w-full flex-1 flex-col'>
+                  Nice try
                   <DashboardTopBar showToggle={false} />
                   {props.organisation}
                 </div>
