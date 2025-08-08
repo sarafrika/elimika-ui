@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
 export default function OrganisationOverviewPage() {
-  console.log("Organization dani")
+
   // TODO: Replace this with actual data from the backend
   const isProfileComplete = false;
 

@@ -1,8 +1,7 @@
 'use client';
-import { useDashboardView } from '@/components/dashboard-view-context';
 import DashboardTopBar from '@/components/dashboard-top-bar';
-import React, { ReactNode } from 'react';
-import { DashboardChildrenTypes } from '@/app/dashboard/_types';
+import { useDashboardView } from '@/components/dashboard-view-context';
+import { ReactNode } from 'react';
 
 export default function DashboardMainContent({ children }: { children: ReactNode }) {
   const { view } = useDashboardView();
