@@ -334,13 +334,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -697,6 +697,10 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   */
+  readonly has_location_coordinates?: boolean;
+  /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
@@ -704,10 +708,6 @@ export type Instructor = {
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
   readonly is_profile_complete?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
-   */
-  readonly has_location_coordinates?: boolean;
 };
 
 /**
@@ -819,13 +819,14 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_valid?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
-   */
-  readonly formatted_duration?: string;
-  /**
    * **[READ-ONLY]** Brief summary of the membership for display in listings.
    */
   readonly summary?: string;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string;
+  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -851,7 +852,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
-  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
@@ -924,6 +924,18 @@ export type InstructorExperience = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Brief summary of the experience for display in listings.
+   */
+  readonly summary?: string;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string;
+  /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
   readonly employment_period?: string;
@@ -944,18 +956,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string;
-  /**
-   * **[READ-ONLY]** Brief summary of the experience for display in listings.
-   */
-  readonly summary?: string;
   /**
    * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
@@ -1282,17 +1282,13 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the course is offered for free.
-   */
-  readonly is_free?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the course is archived and no longer available.
+   * **[READ-ONLY]** Indicates if the course is offered for free.
    */
-  readonly is_archived?: boolean;
+  readonly is_free?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
    */
@@ -1310,6 +1306,14 @@ export type Course = {
    */
   readonly accepts_new_enrollments?: boolean;
   /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course is archived and no longer available.
+   */
+  readonly is_archived?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
@@ -1317,10 +1321,6 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is still in draft mode.
    */
   readonly is_draft?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
 };
 
 export type ApiResponseCourse = {
@@ -1765,14 +1765,6 @@ export type ContentType = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category for organizing uploads in the user interface.
-   */
-  readonly upload_category?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this content type is for media files.
-   */
-  readonly is_media_type?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable list of supported file formats.
    */
   readonly supported_formats?: string;
@@ -1780,6 +1772,14 @@ export type ContentType = {
    * **[READ-ONLY]** Human-readable format of maximum file size.
    */
   readonly size_limit_display?: string;
+  /**
+   * **[READ-ONLY]** Category for organizing uploads in the user interface.
+   */
+  readonly upload_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this content type is for media files.
+   */
+  readonly is_media_type?: boolean;
 };
 
 export type ApiResponseContentType = {
@@ -2588,14 +2588,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -2603,6 +2595,14 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   */
+  readonly time_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -3438,6 +3438,21 @@ export const ProficiencyLevelEnum = {
 export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
 
 /**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
+
+/**
  * **[READ-ONLY]** Classification of organization type based on name keywords.
  */
 export const OrganizationTypeEnum = {
@@ -3453,21 +3468,6 @@ export const OrganizationTypeEnum = {
  * **[READ-ONLY]** Classification of organization type based on name keywords.
  */
 export type OrganizationTypeEnum = (typeof OrganizationTypeEnum)[keyof typeof OrganizationTypeEnum];
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.

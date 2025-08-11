@@ -1,24 +1,24 @@
 'use client';
-import * as React from 'react';
-import { LibraryBigIcon } from 'lucide-react';
+import { NavSecondary } from '@/components/nav-secondary';
 import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarGroupLabel,
-  SidebarGroupContent,
 } from '@/components/ui/sidebar';
-import Link from 'next/link';
 import { useTrainingCenter } from '@/context/training-center-provider';
 import menu from '@/lib/menu';
-import { NavSecondary } from '@/components/nav-secondary';
 import { UserDomain } from '@/lib/types';
+import { LibraryBigIcon } from 'lucide-react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import * as React from 'react';
 import { NavMain } from './nav-main';
 
 export function AppSidebar({
@@ -45,7 +45,7 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size='lg' asChild>
-              <Link href={`/dashboard/overview`}>
+              <Link prefetch href={`/dashboard/overview`}>
                 <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
                   <LibraryBigIcon className='size-4' />
                 </div>

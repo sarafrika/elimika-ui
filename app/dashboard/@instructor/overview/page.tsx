@@ -1,10 +1,10 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, FileText } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, FileText } from 'lucide-react';
 
 export default function InstructorOverviewPage() {
   // TODO: Replace this with actual data from the backend
@@ -51,7 +51,7 @@ export default function InstructorOverviewPage() {
                 </p>
               </div>
               <Button asChild className='mt-2'>
-                <Link href='/dashboard/profile/general'>
+                <Link prefetch href='/dashboard/profile/general'>
                   Update Profile Now <ArrowRight className='ml-2 h-4 w-4' />
                 </Link>
               </Button>
