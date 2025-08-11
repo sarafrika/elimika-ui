@@ -126,17 +126,19 @@ export default function CoursePreviewPage() {
                 </li>
               </ul>
             </CardContent>
+          </Card>
 
+          <Card>
             <CardHeader className='mt-4'>
               <CardTitle>Course Content</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='-mt-2 flex flex-col gap-2 space-y-4'>
+              <div className='mt-2 flex flex-col gap-2 space-y-4'>
                 {courseLessons?.data?.content
                   ?.slice()
                   ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
                   ?.map((lesson: any, i: any) => (
-                    <div key={i} className='flex flex-row gap-2'>
+                    <div key={i} className='flex flex-row gap-2 border-b pb-4 last:border-none last:pb-4'>
                       <div>
                         <span className='min-h-4 min-w-4'>
                           <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
@@ -180,16 +182,18 @@ export default function CoursePreviewPage() {
                 )}
               </div>
             </CardContent>
+          </Card>
 
+          <Card>
             <CardHeader className='mt-4'>
               <CardTitle>Course Assessments</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='-mt-2 flex flex-col gap-2 space-y-4'>
+              <div className='mt-2 flex flex-col gap-2 space-y-4'>
                 {assessmentData?.data?.content
                   ?.slice()
                   ?.map((assessment: any, i: any) => (
-                    <div key={i} className='flex flex-row gap-2'>
+                    <div key={i} className='flex flex-row gap-2 border-b pb-4 last:border-none last:pb-4'>
                       <div>
                         <span className='min-h-4 min-w-4'>
                           <BookOpenCheck className='mt-1 h-4 w-4' />
