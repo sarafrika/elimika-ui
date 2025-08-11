@@ -517,11 +517,11 @@ function LessonList({
                         <ClipboardCheck className='mr-1 h-4 w-4' />
                         Add Assessment
                       </DropdownMenuItem>
-
+                      {/* 
                       <DropdownMenuItem onClick={() => onAddRubrics(lesson)}>
                         <FilePlus className='mr-1 h-4 w-4' />
-                        Add Rubrics
-                      </DropdownMenuItem>
+                        Add Rubric
+                      </DropdownMenuItem> */}
 
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -1028,25 +1028,27 @@ function LessonEditingForm({
 
 
   const onSubmitEditLesson = (values: LessonFormValues) => {
+    const updateLessonBody = {
+      course_uuid: courseId as string,
+      title: values?.title,
+      description: values?.description ?? '',
+      learning_objectives: "",
+      duration_hours: Number(values?.content[0]?.durationHours),
+      duration_minutes: Number(values?.content[0]?.durationMinutes),
+      duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
+      status: courseData?.data?.status as any,
+      active: courseData?.data?.active,
+      // @ts-ignore
+      is_published: courseData?.data?.is_published,
+      // @ts-ignore
+      created_by: courseData?.data?.instructor_uuid,
+      lesson_number: values?.number,
+      lesson_sequence: `Lesson ${values?.number}`,
+    }
+
     updateLessonMutation.mutate(
       {
-        body: {
-          course_uuid: courseId as string,
-          title: values?.title,
-          description: values?.description ?? '',
-          learning_objectives: "",
-          duration_hours: Number(values?.content[0]?.durationHours),
-          duration_minutes: Number(values?.content[0]?.durationMinutes),
-          duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
-          status: courseData?.data?.status as any,
-          active: courseData?.data?.active,
-          // @ts-ignore
-          is_published: courseData?.data?.is_published,
-          // @ts-ignore
-          created_by: courseData?.data?.instructor_uuid,
-          lesson_number: values?.number,
-          lesson_sequence: `Lesson ${values?.number}`,
-        },
+        body: updateLessonBody,
         courseId: courseId as string,
         lessonId: lessonId as string
       },
@@ -1059,23 +1061,25 @@ function LessonEditingForm({
             editSuccessRespones(data?.data);
           }
 
+          const updateLessonContentBody = {
+            lesson_uuid: lessonId as string,
+            content_type_uuid: values.content[0]?.contentTypeUuid as string,
+            title: values?.title,
+            description: values?.description ?? '',
+            content_text: values.content[0]?.value || '',
+            file_url: '',
+            file_size_bytes: 157200,
+            mime_type: values.content[0]?.value || '',
+            display_order: values?.number,
+            is_required: true,
+            created_by: 'instructor@sarafrika.com',
+            updated_by: 'instructor@sarafrika.com',
+            file_size_display: '',
+          }
+
           updateLessonContentMutation.mutate(
             {
-              body: {
-                lesson_uuid: lessonId as string,
-                content_type_uuid: values.content[0]?.contentTypeUuid as string,
-                title: values?.title,
-                description: values?.description ?? '',
-                content_text: values.content[0]?.value || '',
-                file_url: '',
-                file_size_bytes: 157200,
-                mime_type: values.content[0]?.value || '',
-                display_order: values?.number,
-                is_required: true,
-                created_by: 'instructor@sarafrika.com',
-                updated_by: 'instructor@sarafrika.com',
-                file_size_display: '',
-              },
+              body: updateLessonContentBody,
               courseId: courseId as string,
               lessonId: lessonId as string,
               // @ts-ignore
@@ -1189,18 +1193,18 @@ function LessonEditingForm({
           <Button
             type='button'
             variant='outline'
-            // onClick={() =>
-            //   appendContent({
-            //     contentType: "TEXT",
-            //     title: "",
-            //     value: "",
-            //     contentCategory: "",
-            //     contentUuid: "",
-            //     durationHours: 0,
-            //     durationMinutes: 0,
-            //   })
-            // }
-            onClick={() => toast.message('Cannot add more contents at the moment')}
+            onClick={() =>
+              appendContent({
+                contentType: "TEXT",
+                title: "",
+                value: "",
+                contentCategory: "",
+                contentTypeUuid: "",
+                durationHours: 0,
+                durationMinutes: 0,
+              })
+            }
+          // onClick={() => toast.message('Cannot add more contents at the moment')}
           >
             <PlusCircle className='mr-2 h-4 w-4' />
             Add Content Item
@@ -1642,13 +1646,15 @@ type AssessmentListProps = {
   isLoading: boolean;
   courseId?: string;
   onEditAssessment: (assessment: any) => void;
+  onAddRubrics: (assessment: any) => void;
 };
 
 function AssessmentList({
   assessments,
   lessonItems,
   isLoading,
-  courseId
+  courseId,
+  onAddRubrics
 }: AssessmentListProps) {
   const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
 
@@ -1743,6 +1749,12 @@ function AssessmentList({
                         Edit Assessment
                       </DropdownMenuItem>
 
+
+                      <DropdownMenuItem onClick={() => onAddRubrics(assessment)}>
+                        <FilePlus className='mr-2 h-4 w-4' />
+                        Add Rubrics
+                      </DropdownMenuItem>
+
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-red-600"
@@ -1809,16 +1821,36 @@ function AssessmentList({
   );
 }
 
+// RUBRICS
+export enum RubricType {
+  Assignment = 'Assignment',
+  Exam = 'Exam',
+  ClassAttendance = 'Class Attendance',
+  Auditions = 'Auditions',
+  Competition = 'Competition',
+  Performance = 'Performance',
+  Project = 'Project',
+  Quiz = 'Quiz',
+  Reading = 'Reading',
+}
+
+export enum Visibility {
+  Public = 'Public',
+  Private = 'Private',
+}
 
 const rubricFormSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  criteria: z.array(
+  type: z.nativeEnum(RubricType),
+  visibility: z.nativeEnum(Visibility),
+  grading: z.array(
     z.object({
       name: z.string().min(1, 'Criterion is required'),
+      description: z.string().optional(),
       points: z.number().min(0, 'Points must be positive'),
     })
-  ).min(1, 'At least one criterion is required'),
+  ).min(1, 'At least one grading criterion is required'),
 });
 
 type RubricFormValues = z.infer<typeof rubricFormSchema>;
@@ -1828,8 +1860,10 @@ interface AddRubricFormProps {
   lessonId: string;
   onCancel: () => void;
   onSubmitSuccess?: () => void;
-  className: any
+  className?: string;
+  defaultValues?: Partial<RubricFormValues>; // <-- useful for editing or pre-filling
 }
+
 
 function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, className }: AddRubricFormProps) {
   const form = useForm<RubricFormValues>({
@@ -1837,19 +1871,20 @@ function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, classNam
     defaultValues: {
       title: '',
       description: '',
-      criteria: [{ name: '', points: 0 }],
+      type: RubricType.Assignment,
+      visibility: Visibility.Public,
+      grading: [{ name: '', description: '', points: 0 }],
     },
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'criteria',
+    name: 'grading',
   });
 
   const onSubmit = async (values: RubricFormValues) => {
     try {
-      // TODO: implement add rubric here
-
+      // TODO: implement add rubric logic
       // console.log('Submitting rubric:', values);
       toast.success('Rubric created successfully');
       onSubmitSuccess?.();
@@ -1861,9 +1896,7 @@ function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, classNam
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}
-        className={`space-y-8 ${className}`}
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
         <FormField
           control={form.control}
           name="title"
@@ -1892,53 +1925,126 @@ function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, classNam
           )}
         />
 
+        <div className="flex flex-col sm:flex-row items-start gap-6">
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem className="flex-1 w-full">
+                <FormLabel>Rubric Type</FormLabel>
+                <Select {...field} onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select rubric type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(RubricType).map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="visibility"
+            render={({ field }) => (
+              <FormItem className="w-full sm:w-[150px] flex-shrink-0">
+                <FormLabel>Rubric Visibility</FormLabel>
+                <Select {...field} onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select visibility" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(Visibility).map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Criteria</h3>
+          <h3 className="text-lg font-medium">Grading Criteria</h3>
           {fields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-4">
-              <FormField
-                control={form.control}
-                name={`criteria.${index}.name`}
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Criterion</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Criterion name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name={`criteria.${index}.points`}
-                render={({ field }) => (
-                  <FormItem className="w-[100px]">
-                    <FormLabel>Points</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div
+              key={field.id}
+              className="flex items-start border border-gray-300 rounded-md p-4 pr-2"
+            >
+              <div className="flex flex-col flex-1 gap-4">
+                <div className="flex gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`grading.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Criterion</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Criterion name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`grading.${index}.points`}
+                    render={({ field }) => (
+                      <FormItem className="w-[100px]">
+                        <FormLabel>Points</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name={`grading.${index}.description`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Optional description" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => remove(index)}
                 disabled={fields.length === 1}
+                className="self-start"
               >
                 <X className="h-4 w-4 text-red-600" />
               </Button>
             </div>
           ))}
+
           <Button
             type="button"
             variant="outline"
-            onClick={() => append({ name: '', points: 0 })}
+            onClick={() => append({ name: '', description: '', points: 0 })}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
-            Add Criterion
+            Add Grading Criterion
           </Button>
         </div>
 
@@ -1955,6 +2061,7 @@ function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, classNam
   );
 }
 
+// ADD LESSON
 interface AddLessonDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -2065,7 +2172,7 @@ function RubricDialog({
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>Add Rubric</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Create a new assessment by providing its title, description, questions, and any helpful resources
+            Create a new rubric by providing its title, description, and grading criteria
           </DialogDescription>
         </DialogHeader>
 

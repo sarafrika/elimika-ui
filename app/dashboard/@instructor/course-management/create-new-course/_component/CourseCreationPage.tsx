@@ -23,9 +23,7 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
   deleteCourseLessonMutation,
   getAllContentTypesOptions,
-  getAllContentTypesQueryKey,
   getCourseByUuidOptions,
-  getCourseByUuidQueryKey,
   getCourseLessonOptions,
   getCourseLessonQueryKey,
   getCourseLessonsOptions,
@@ -301,13 +299,13 @@ export default function CourseCreationPage() {
             successResponse={data => {
               setCreatedCourseId(data?.uuid);
 
-              queryClient.invalidateQueries({
-                queryKey: getCourseByUuidQueryKey({ path: { uuid: resolveId } })
-              });
+              // queryClient.invalidateQueries({
+              //   queryKey: getCourseByUuidQueryKey({ path: { uuid: resolveId } })
+              // });
 
-              queryClient.invalidateQueries({
-                queryKey: getAllContentTypesQueryKey({ query: {} })
-              });
+              // queryClient.invalidateQueries({
+              //   queryKey: getAllContentTypesQueryKey({ query: {} })
+              // });
             }}
           />
         </StepperContent>
@@ -377,13 +375,7 @@ export default function CourseCreationPage() {
               onCancel={() => { }}
             />
 
-            <RubricDialog
-              isOpen={addRubricModalOpen}
-              onOpenChange={setAddRubricModalOpen}
-              courseId={""}
-              lessonId={""}
-              onCancel={() => { }}
-            />
+
           </div>
         </StepperContent>
 
@@ -402,6 +394,15 @@ export default function CourseCreationPage() {
               lessonItems={lessonContentData?.data}
               onEditAssessment={openAddAssessmentModal}
               courseId={resolveId}
+              onAddRubrics={openAddRubricModal}
+            />
+
+            <RubricDialog
+              isOpen={addRubricModalOpen}
+              onOpenChange={setAddRubricModalOpen}
+              courseId={""}
+              lessonId={""}
+              onCancel={() => { }}
             />
           </div>
         </StepperContent>
