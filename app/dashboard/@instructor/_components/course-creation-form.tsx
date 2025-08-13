@@ -80,8 +80,11 @@ const courseCreationSchema = z.object({
   categories: z.string().array(),
   difficulty: z.string().min(1, 'Please select a difficulty level'),
   class_limit: z.coerce.number().min(1, 'Class limit must be at least 1'),
-  age_lower_limit: z.coerce.number().min(5, 'Age lower limit must be at least 1'),
-  age_upper_limit: z.coerce.number().min(70, 'Age upper limit must be at least 1'),
+  age_lower_limit: z.coerce.number().optional(),
+  age_upper_limit: z.coerce.number().optional(),
+  duration_hours: z.coerce.number().optional(),
+  duration_minutes: z.coerce.number().min(1, 'minutes must be between 1 and 59'),
+
 });
 
 type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any };
@@ -140,6 +143,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         thumbnail_url: '',
         banner_url: '',
         intro_video_url: '',
+        duration_hours: 0,
+        duration_minutes: 1,
         ...initialValues,
       },
       mode: 'onChange',
@@ -297,8 +302,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           category_uuids: data?.categories,
           difficulty_uuid: data?.difficulty,
           prerequisites: data?.prerequisites,
-          duration_hours: 0,
-          duration_minutes: 0,
+          duration_hours: data?.duration_hours,
+          duration_minutes: data?.duration_minutes,
           class_limit: data?.class_limit,
           price: data?.price,
           status: 'draft',
@@ -363,8 +368,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             category_uuids: data?.categories,
             difficulty_uuid: data?.difficulty,
             prerequisites: data?.prerequisites,
-            duration_hours: 0,
-            duration_minutes: 0,
+            duration_hours: data?.duration_hours || 0,
+            duration_minutes: data?.duration_minutes,
             class_limit: data?.class_limit,
             price: data?.price,
             thumbnail_url: thumbnailPreview as any,
@@ -920,6 +925,41 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Age Upper Limit</FormLabel>
+                      <FormControl>
+                        <Input type='number' min='0' step='1' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </FormSection>
+
+          {/* Course Duration */}
+          <FormSection title='Course Duration' description='Set the time duration for your course'>
+            <div className='space-y-0'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+                <FormField
+                  control={form.control}
+                  name='duration_hours'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration Hours</FormLabel>
+                      <FormControl>
+                        <Input type='number' min='0' step='1' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='duration_minutes'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration Minutes</FormLabel>
                       <FormControl>
                         <Input type='number' min='0' step='1' {...field} />
                       </FormControl>

@@ -1,24 +1,25 @@
-import React from 'react';
-import {
-  LayoutDashboard,
-  Users,
-  BookOpen,
-  ClipboardList,
-  Award,
-  DollarSign,
-  Star,
-  UserCircle,
-} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import {
+  Award,
+  BookOpen,
+  ClipboardList,
+  DollarSign,
+  Layers,
+  LayoutDashboard,
+  Star,
+  UserCircle,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
+import React from 'react';
 
 const instructorMenuItems = [
   {
@@ -32,8 +33,13 @@ const instructorMenuItems = [
     icon: BookOpen,
   },
   {
-    title: 'Classes',
-    url: '/dashboard/classes',
+    title: 'Programs',
+    url: '/dashboard/programs',
+    icon: Layers,
+  },
+  {
+    title: 'Trainings',
+    url: '/dashboard/trainings',
     icon: ClipboardList,
   },
   {
