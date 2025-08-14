@@ -1402,7 +1402,12 @@ function AssessmentCreationForm({
         onSuccess: (data) => {
           toast.success(data?.data?.message || 'Assessment created successfully!');
           queryClient.invalidateQueries({
-            queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+            queryKey: searchAssessmentsQueryKey({ 
+              query: { 
+                searchParams: { courseUuid: courseId },
+                pageable: { page: 0, size: 100 }
+              } 
+            })
           });
           onCancel();
         },
@@ -1441,7 +1446,12 @@ function AssessmentCreationForm({
           onSuccess: (data) => {
             toast.success(data?.message || 'Assessment updated successfully!');
             queryClient.invalidateQueries({
-              queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+              queryKey: searchAssessmentsQueryKey({ 
+              query: { 
+                searchParams: { courseUuid: courseId },
+                pageable: { page: 0, size: 100 }
+              } 
+            })
             });
             onCancel();
           },
@@ -1694,7 +1704,12 @@ function AssessmentList({
       onSuccess: () => {
         toast.success('Assessment deleted successfully');
         queryClient.invalidateQueries({
-          queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+          queryKey: searchAssessmentsQueryKey({ 
+            query: { 
+              searchParams: { courseUuid: courseId },
+              pageable: { page: 0, size: 100 }
+            } 
+          })
         });
       },
       onError: (error: any) => {

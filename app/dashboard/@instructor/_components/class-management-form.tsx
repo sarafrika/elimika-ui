@@ -133,7 +133,7 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
   const createTrainingProgram = useMutation(createTrainingProgramMutation())
   const updateTrainingProgram = useMutation(updateTrainingProgramMutation());
 
-  const onSubmit = (values: ClassFormValues, initialValues: any) => {
+  const onSubmit = (values: ClassFormValues) => {
     const isEditing = !!initialValues?.uuid || !!classId; // Use either one depending on your data shape
 
     const trainingProgramBody = {
