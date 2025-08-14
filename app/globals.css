@@ -58,13 +58,11 @@
   --popover: oklch(1 0 0); /* White */
   --popover-foreground: oklch(0.2 0.01 265); /* Dark gray */
 
-  /* Elimika blue as primary color */
-  --primary: oklch(0.55 0.2 264); /* Elimika blue */
+  /* Elimika blue as primary color - #0061ED */
+  --primary: #0061ED; /* Elimika blue fallback */
+  --primary: oklch(0.527 0.2 258.4); /* Elimika blue #0061ED */
+  --primary-foreground: #ffffff; /* White fallback */
   --primary-foreground: oklch(1 0 0); /* White text on blue */
-  --success: oklch(0.55 0.2 264); /* Elimika blue */
-  --success-foreground: oklch(1 0 0); /* White text on blue */
-  --warning: oklch(0.55 0.2 264); /* Elimika blue */
-  --warning-foreground: oklch(1 0 0); /* White text on blue */
 
   --destructive: oklch(0.65 0.25 27);
   --destructive-foreground: oklch(1 0 0);
@@ -72,7 +70,7 @@
   --success-foreground: oklch(1 0 0);
   --warning: oklch(0.8 0.15 85);
   --warning-foreground: oklch(0.2 0.05 85);
-  --info: oklch(0.65 0.25 264);
+  --info: oklch(0.527 0.2 258.4); /* Elimika blue for info */
   --info-foreground: oklch(1 0 0);
 
   /* Light blue for secondary colors */
@@ -83,15 +81,16 @@
   --muted-foreground: oklch(0.5 0.05 265); /* Medium gray */
 
   /* Accent colors - slightly darker blue */
-  --accent: oklch(0.5 0.18 264); /* Slightly darker blue */
+  --accent: oklch(0.45 0.18 258.4); /* Slightly darker Elimika blue */
   --accent-foreground: oklch(1 0 0); /* White */
 
   --border: oklch(0.9 0.03 250); /* Light blue border */
   --input: oklch(0.9 0.03 250); /* Light blue input */
-  --ring: oklch(0.5 0.2 264); /* Elimika blue for focus rings */
+  --ring: #0061ED; /* Elimika blue fallback */
+  --ring: oklch(0.527 0.2 258.4); /* Elimika blue for focus rings */
 
   /* Chart colors */
-  --chart-1: oklch(0.55 0.2 264); /* Elimika blue */
+  --chart-1: oklch(0.527 0.2 258.4); /* Elimika blue */
   --chart-2: oklch(0.6 0.15 220); /* Light blue */
   --chart-3: oklch(0.65 0.12 200); /* Cyan-ish */
   --chart-4: oklch(0.7 0.1 180); /* Teal-ish */
@@ -102,12 +101,12 @@
   /* Sidebar - using light gray like in the first image */
   --sidebar: oklch(0.97 0.003 250); /* Light gray */
   --sidebar-foreground: oklch(0.2 0.01 265); /* Dark gray text */
-  --sidebar-primary: oklch(0.55 0.2 264); /* Elimika blue for accents only */
+  --sidebar-primary: oklch(0.527 0.2 258.4); /* Elimika blue for accents only */
   --sidebar-primary-foreground: oklch(1 0 0); /* White */
   --sidebar-accent: oklch(0.92 0.01 250); /* Light gray accent */
   --sidebar-accent-foreground: oklch(0.2 0.01 265); /* Dark gray */
   --sidebar-border: oklch(0.92 0.01 250); /* Light gray border */
-  --sidebar-ring: oklch(0.55 0.2 264); /* Elimika blue for focus */
+  --sidebar-ring: oklch(0.527 0.2 258.4); /* Elimika blue for focus */
 }
 
 .dark {
@@ -119,8 +118,10 @@
   --popover-foreground: oklch(0.98 0.005 250); /* Almost white */
 
   /* Keep Elimika blue as primary, but slightly brighter in dark mode */
-  --primary: oklch(0.6 0.22 264); /* Brighter Elimika blue */
-  --primary-foreground: oklch(0.15 0.01 265); /* Very dark */
+  --primary: #1a73ff; /* Brighter blue fallback */
+  --primary: oklch(0.58 0.22 258.4); /* Brighter Elimika blue */
+  --primary-foreground: #ffffff; /* White fallback */
+  --primary-foreground: oklch(1 0 0); /* White text */
 
   --secondary: oklch(0.25 0.05 264); /* Dark blue */
   --secondary-foreground: oklch(0.98 0.005 250); /* Almost white */
@@ -128,7 +129,7 @@
   --muted: oklch(0.25 0.05 264); /* Dark blue */
   --muted-foreground: oklch(0.7 0.05 250); /* Lighter gray */
 
-  --accent: oklch(0.35 0.1 264); /* Medium-dark blue */
+  --accent: oklch(0.35 0.1 258.4); /* Medium-dark Elimika blue */
   --accent-foreground: oklch(0.98 0.005 250); /* Almost white */
 
   --destructive: oklch(0.25 0.15 27);
@@ -137,15 +138,15 @@
   --success-foreground: oklch(0.6 0.2 142);
   --warning: oklch(0.35 0.15 65);
   --warning-foreground: oklch(0.85 0.15 65);
-  --info: oklch(0.35 0.15 264);
-  --info-foreground: oklch(0.85 0.15 264);
+  --info: oklch(0.35 0.15 258.4); /* Elimika blue for info */
+  --info-foreground: oklch(0.85 0.15 258.4);
 
   --border: oklch(0.25 0.05 264); /* Dark blue */
   --input: oklch(0.25 0.05 264); /* Dark blue */
-  --ring: oklch(0.6 0.22 264); /* Elimika blue */
+  --ring: oklch(0.58 0.22 258.4); /* Brighter Elimika blue */
 
   /* Chart colors for dark mode */
-  --chart-1: oklch(0.6 0.22 264); /* Elimika blue */
+  --chart-1: oklch(0.58 0.22 258.4); /* Elimika blue */
   --chart-2: oklch(0.65 0.15 220); /* Light blue */
   --chart-3: oklch(0.7 0.18 60); /* Gold/orange */
   --chart-4: oklch(0.65 0.25 300); /* Purple */
@@ -154,12 +155,12 @@
   /* Sidebar colors for dark mode - more subtle */
   --sidebar: oklch(0.2 0.01 265); /* Dark gray */
   --sidebar-foreground: oklch(0.98 0.005 250); /* Almost white */
-  --sidebar-primary: oklch(0.6 0.22 264); /* Elimika blue for accents only */
+  --sidebar-primary: oklch(0.58 0.22 258.4); /* Elimika blue for accents only */
   --sidebar-primary-foreground: oklch(0.98 0.005 250); /* Almost white */
   --sidebar-accent: oklch(0.25 0.01 265); /* Slightly lighter dark gray */
   --sidebar-accent-foreground: oklch(0.98 0.005 250); /* Almost white */
   --sidebar-border: oklch(0.25 0.01 265); /* Slightly lighter dark gray */
-  --sidebar-ring: oklch(0.6 0.22 264); /* Elimika blue for focus */
+  --sidebar-ring: oklch(0.58 0.22 258.4); /* Elimika blue for focus */
 }
 
 @layer base {
