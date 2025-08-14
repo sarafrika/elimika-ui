@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { addProgramCourseMutation, createTrainingProgramMutation, getAllCategoriesOptions, getAllTrainingProgramsQueryKey, getProgramCoursesQueryKey, searchCoursesOptions, updateTrainingProgramMutation } from '@/services/client/@tanstack/react-query.gen';
+import { SchemaEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Badge } from '@/components/ui/badge';
@@ -154,7 +155,7 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
       is_published: false,
       published: false,
       active: false,
-      status: "draft",
+      status: SchemaEnum.DRAFT,
     };
 
     const commonOnSuccess = (data: any) => {
@@ -530,7 +531,17 @@ function AddCourseToProgramForm({
   const instructor = useInstructor()
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data: allCourses } = useQuery(searchCoursesOptions({ query: { searchParams: { instructor_uuid_eq: instructor?.uuid as string, } } }))
+  const { data: allCourses } = useQuery(searchCoursesOptions({ 
+    query: { 
+      searchParams: { 
+        instructor_uuid_eq: instructor?.uuid as string 
+      },
+      pageable: {
+        page: 0,
+        size: 100
+      }
+    } 
+  }))
 
   const addProgramCourses = useMutation(addProgramCourseMutation())
 
