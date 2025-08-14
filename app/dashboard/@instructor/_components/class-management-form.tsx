@@ -137,7 +137,7 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
 
     const trainingProgramBody = {
       title: values.title,
-      instructor_uuid: instructor?.uuid,
+      instructor_uuid: instructor?.uuid || '',
       category_uuid: values.categories,
       description: values.description,
       objectives: values.objectives,
@@ -152,8 +152,9 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
       created_by: session?.user?.email,
       updated_by: session?.user?.email,
       is_published: false,
+      published: false,
       active: false,
-      status: "DRAFT",
+      status: "draft",
     };
 
     const commonOnSuccess = (data: any) => {
