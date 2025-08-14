@@ -223,12 +223,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     // GET COURSE DIFFICULTY LEVEL
     const { data: difficulty, isLoading: difficultyIsLoading } = useQuery(
-      getAllDifficultyLevelsOptions({
-        pageable: {
-          page: 0,
-          size: 100,
-        },
-      })
+      getAllDifficultyLevelsOptions()
     );
     const difficultyLevels = difficulty?.data;
 
