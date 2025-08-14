@@ -157,7 +157,7 @@ export default function StudentProfileGeneralForm() {
 
       user!.invalidateQuery!();
     },
-    [errors, datas]
+    [profilePic.file, profilePicUpload, resetErrors, student, updateStudentMutation, user, userMutation]
   );
 
   /* async function onSubmit(data: StudentProfileType) {
