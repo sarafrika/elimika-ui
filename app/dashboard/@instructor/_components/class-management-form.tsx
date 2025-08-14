@@ -97,7 +97,14 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
   const { data: session } = useSession()
 
   // GET COURSE CATEGORIES
-  const { data: categories } = useQuery(getAllCategoriesOptions());
+  const { data: categories } = useQuery(getAllCategoriesOptions({ 
+    query: { 
+      pageable: { 
+        page: 0, 
+        size: 100 
+      } 
+    } 
+  }));
 
   // MUTATION
   const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
@@ -150,12 +157,18 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
     };
 
     const commonOnSuccess = (data: any) => {
-      // @ts-ignore
       toast.success(data?.message || (isEditing ? "Training program updated successfully" : "Training program created successfully"));
       onCancel();
 
       queryClient.invalidateQueries({
-        queryKey: getAllTrainingProgramsQueryKey({ query: {} }),
+        queryKey: getAllTrainingProgramsQueryKey({ 
+          query: { 
+            pageable: { 
+              page: 0, 
+              size: 100 
+            } 
+          } 
+        }),
       });
     };
 

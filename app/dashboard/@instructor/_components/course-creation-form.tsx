@@ -223,11 +223,25 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     );
 
     // GET COURSE DIFFICULTY LEVEL
-    const { data: difficulty, isLoading: difficultyIsLoading } = useQuery(getAllDifficultyLevelsOptions());
+    const { data: difficulty, isLoading: difficultyIsLoading } = useQuery(getAllDifficultyLevelsOptions({ 
+      query: { 
+        pageable: { 
+          page: 0, 
+          size: 100 
+        } 
+      } 
+    }));
     const difficultyLevels = difficulty?.data;
 
     // GET COURSE CATEGORIES
-    const { data: categories } = useQuery(getAllCategoriesOptions());
+    const { data: categories } = useQuery(getAllCategoriesOptions({ 
+      query: { 
+        pageable: { 
+          page: 0, 
+          size: 100 
+        } 
+      } 
+    }));
 
     // actions
     const handleFileUpload = async (
