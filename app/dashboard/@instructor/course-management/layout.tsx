@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
-import { usePathname } from 'next/navigation';
-import { Separator } from '@/components/ui/separator';
 import { buttonVariants } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface CourseManagementLayoutProps {
   children: React.ReactNode;
@@ -53,7 +53,7 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
             ))}
           </nav>
         </aside>
-        <div className='flex-1 lg:max-w-4xl'>{children}</div>
+        <div className='flex-1 lg:max-w-5xl'>{children}</div>
       </div>
     </div>
   );

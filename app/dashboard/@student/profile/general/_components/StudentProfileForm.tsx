@@ -55,11 +55,7 @@ const StudentProfileSchema = z.object({
   })
 });
 
-type StudentType = z.infer<typeof schemas.Student>;
-type UserType = z.infer<typeof schemas.User>;
 type StudentProfileType = z.infer<typeof StudentProfileSchema>;
-
-const UserFieldTypes = [];
 
 export default function StudentProfileGeneralForm() {
 

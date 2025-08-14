@@ -1,5 +1,7 @@
 import { schemas } from '@/services/api/zod-client';
 import { z } from 'zod';
+import { ReactNode } from 'react';
+import { Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, Student, User } from '@/services/client';
 
 export type UserDomain = 'student' | 'instructor' | 'admin' | 'organisation_user';
 
@@ -34,3 +36,18 @@ export type AllSchemaTypes = {
 }[keyof AllSchemas];
 
 export type ApiResponseWithPagination<T> = ApiResponse<PagedData<T>>;
+
+export type DashboardChildrenTypes = {
+  [key: string]: ReactNode;
+};
+
+export type UserProfileType = User & {
+  student?: Student,
+  instructor?: Instructor & {
+    educations: InstructorEducation[],
+    experience: InstructorExperience[],
+    membership: InstructorProfessionalMembership[],
+    skills: InstructorSkill
+  },
+  organization?: Organisation
+}

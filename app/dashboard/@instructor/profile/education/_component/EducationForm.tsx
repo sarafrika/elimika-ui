@@ -84,7 +84,7 @@ export default function EducationSettings() {
 
   const user = useUserProfile();
   const { instructor, invalidateQuery } = user!
-  const instructorEducation = instructor!.educations as Omit<InstructorEducation, "created_date" | "updated_date">[];
+  const instructorEducation = instructor!.educations ?? [] as Omit<InstructorEducation, "created_date" | "updated_date">[];
 
   const defaultEducation: EdType = {
     school_name: 'University of Nairobi',

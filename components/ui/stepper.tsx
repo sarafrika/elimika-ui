@@ -99,7 +99,7 @@ export function StepperRoot({ children }: { children: ReactNode }) {
 }
 
 export function StepperList({ children }: { children: ReactNode }) {
-  return <TabsList>{children}</TabsList>;
+  return <TabsList className='flex flex-row' >{children}</TabsList>;
 }
 
 export interface TriggerProps {
@@ -173,7 +173,7 @@ export function StepperContent({
         <CardContent className='flex grow flex-col gap-10'>
           <div className='grow'>{children}</div>
           {showNavigation && (
-            <div className='inline-flex gap-2 self-end'>
+            <div className='flex flex-col sm:flex-row gap-2 self-center sm:self-end '>
               {!hidePreviousButton && (
                 <Button
                   type='button'

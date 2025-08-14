@@ -24,13 +24,13 @@ import {
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { formatCourseDate } from '@/lib/format-course-date';
-import { deleteCourse, searchCourses } from '@/services/client';
 import {
-  getCourseByUuidQueryKey,
-  getCoursesByInstructorQueryKey,
+  deleteCourseMutation,
+  searchCoursesOptions,
+  searchCoursesQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import { EyeIcon, FilePenIcon, FilePlus, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -61,28 +61,29 @@ export default function CourseDraftsPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: [getCoursesByInstructorQueryKey, instructor?.uuid, page, size],
-    queryFn: async () =>
-      await searchCourses({
-        query: {
-          page,
-          size,
-          // @ts-ignore
-          status: 'draft',
-          instructor_uuid_eq: instructor?.uuid as string,
-        },
-      }).then(res => res.data),
-  });
 
-  const { mutate: deleteCourseMutate, isPending } = useMutation({
-    mutationKey: [getCourseByUuidQueryKey],
-    mutationFn: ({ uuid }: { uuid: string }) => deleteCourse({ path: { uuid } }),
-    onSuccess: (data: any) => {
-      toast.success(data?.message || 'Course deleted');
-      queryClient.invalidateQueries({ queryKey: [getCourseByUuidQueryKey] });
-    },
-  });
+  // GET PUBLISHED INSTRUCTOR'S COURSES
+  const { data, isLoading, isFetching, } = useQuery(searchCoursesOptions({ query: { page, size, searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, } } }))
+
+
+  // DELETE COURSE MUTATION
+  const DeleteCourse = useMutation(deleteCourseMutation());
+  const handleDeleteCourse = async (courseId: string) => {
+    if (!courseId) return;
+
+    try {
+      await DeleteCourse.mutateAsync({
+        path: { uuid: courseId }
+      }, {
+        onSuccess: () => {
+          toast.success('Course deleted succcessfully');
+          queryClient.invalidateQueries({
+            queryKey: searchCoursesQueryKey({ query: { page, size, searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, } } })
+          });
+        },
+      });
+    } catch (err) { }
+  };
 
   const draftCourses = data?.data?.content || [];
   const paginationMetadata = data?.data?.metadata;
@@ -105,7 +106,7 @@ export default function CourseDraftsPage() {
         </Button>
       </div>
 
-      {!isLoading && !isFetching && draftCourses?.length === 0 ? (
+      {draftCourses?.length === 0 && !isFetching ? (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No draft courses</h3>
@@ -119,111 +120,129 @@ export default function CourseDraftsPage() {
           </Button>
         </div>
       ) : (
-        <Table>
-          <TableCaption>A list of your course drafts</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead></TableHead>
-              <TableHead>Course Name</TableHead>
-              <TableHead>Categories</TableHead>
-              <TableHead>Class Limit</TableHead>
-              <TableHead>Last Updated</TableHead>
-              <TableHead className='text-right'>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {isFetching || isLoading ? (
+        <div className="rounded-t-lg border border-gray-200 overflow-hidden">
+          <Table>
+            <TableCaption className='py-4'>A list of your course drafts</TableCaption>
+            <TableHeader className='bg-gray-200'>
               <TableRow>
-                <TableCell colSpan={5} className='py-6'>
-                  <div className='flex w-full items-center justify-center'>
-                    <Spinner />
-                  </div>
-                </TableCell>
+                <TableHead>
+                  <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
+                </TableHead>
+                <TableHead></TableHead>
+                <TableHead>Course Name</TableHead>
+                <TableHead>Categories</TableHead>
+                <TableHead>Class Limit</TableHead>
+                <TableHead>Last Updated</TableHead>
+                <TableHead className='mx-auto text-center'>Actions</TableHead>
               </TableRow>
-            ) : (
-              <>
-                {draftCourses?.map((course: any) => (
-                  <TableRow key={course.uuid}>
-                    <TableCell>
-                      <Image src={course?.thumbnail_url as string} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
-                    </TableCell>
+            </TableHeader>
 
-                    <TableCell className='font-medium'>
-                      <div>
-                        <div className='max-w-[270px] truncate'>{course.name}</div>
-                        <RichTextRenderer htmlString={course?.description} maxChars={42} />{' '}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex max-w-[250px] flex-wrap gap-1'>
-                        {course.category_names.map((i: any) => (
-                          <Badge key={i} variant='default' className='capitalize'>
-                            {i}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
-                    <TableCell>{formatCourseDate(course.updated_date)}</TableCell>
-                    <TableCell className='text-right'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='icon'>
-                            <span className='sr-only'>Open menu</span>
-                            <svg
-                              width='15'
-                              height='15'
-                              viewBox='0 0 15 15'
-                              fill='none'
-                              xmlns='http://www.w3.org/2000/svg'
-                              className='h-4 w-4'
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={10} className='py-6'>
+                    <div className='flex w-full items-center justify-center'>
+                      <Spinner />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                <>
+                  {draftCourses?.map((course: any) => (
+                    <TableRow key={course.uuid}>
+                      <TableHead>
+                        <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
+                      </TableHead>
+
+                      <TableCell className='py-4'>
+                        <Image src={course?.thumbnail_url as string || "/illustration.png"} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
+                      </TableCell>
+
+                      <TableCell className='font-medium'>
+                        <div>
+                          <div className='max-w-[270px] truncate'>{course.name}</div>
+                          <RichTextRenderer htmlString={course?.description} maxChars={42} />{' '}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex max-w-[250px] flex-wrap gap-1'>
+                          {course.category_names.map((i: any) => (
+                            <Badge key={i} variant='default' className='capitalize'>
+                              {i}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>{course.class_limit || 'Unlimited'}</TableCell>
+                      <TableCell>{formatCourseDate(course.updated_date)}</TableCell>
+                      <TableCell className='text-center'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' size='icon'>
+                              <span className='sr-only'>Open menu</span>
+                              <svg
+                                width='15'
+                                height='15'
+                                viewBox='0 0 15 15'
+                                fill='none'
+                                xmlns='http://www.w3.org/2000/svg'
+                                className='h-4 w-4'
+                              >
+                                <path
+                                  d='M8.625 2.5C8.625 3.12132 8.12132 3.625 7.5 3.625C6.87868 3.625 6.375 3.12132 6.375 2.5C6.375 1.87868 6.87868 1.375 7.5 1.375C8.12132 1.375 8.625 1.87868 8.625 2.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM7.5 13.625C8.12132 13.625 8.625 13.1213 8.625 12.5C8.625 11.8787 8.12132 11.375 7.5 11.375C6.87868 11.375 6.375 11.8787 6.375 12.5C6.375 13.1213 6.87868 13.625 7.5 13.625Z'
+                                  fill='currentColor'
+                                  fillRule='evenodd'
+                                  clipRule='evenodd'
+                                ></path>
+                              </svg>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem>
+                              <Link
+                                href={`/dashboard/course-management/create-new-course?id=${course.uuid}`}
+                                className='flex w-full items-center'
+                              >
+                                <PenIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
+                                Edit
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Link
+                                href={`/dashboard/course-management/preview/${course.uuid}`}
+                                className='flex w-full items-center'
+                              >
+                                <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
+                                Preview
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Link
+                                href={`/dashboard/course-management/manage-rubrics/?id=${course.uuid}`}
+                                className='flex w-full items-center'
+                              >
+                                <FilePlus className='focus:text-primary-foreground mr-2 h-4 w-4' />
+                                Manage Rubrics
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant='destructive'
+                              onClick={() => handleDeleteCourse(course?.uuid)}
                             >
-                              <path
-                                d='M8.625 2.5C8.625 3.12132 8.12132 3.625 7.5 3.625C6.87868 3.625 6.375 3.12132 6.375 2.5C6.375 1.87868 6.87868 1.375 7.5 1.375C8.12132 1.375 8.625 1.87868 8.625 2.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM7.5 13.625C8.12132 13.625 8.625 13.1213 8.625 12.5C8.625 11.8787 8.12132 11.375 7.5 11.375C6.87868 11.375 6.375 11.8787 6.375 12.5C6.375 13.1213 6.87868 13.625 7.5 13.625Z'
-                                fill='currentColor'
-                                fillRule='evenodd'
-                                clipRule='evenodd'
-                              ></path>
-                            </svg>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem>
-                            <Link
-                              href={`/dashboard/course-management/create-new-course?id=${course.uuid}`}
-                              className='flex w-full items-center'
-                            >
-                              <PenIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Link
-                              href={`/dashboard/course-management/preview/${course.uuid}`}
-                              className='flex w-full items-center'
-                            >
-                              <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
-                              Preview
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            variant='destructive'
-                            onClick={() => deleteCourseMutate({ uuid: course?.uuid })}
-                          >
-                            <TrashIcon className='mr-2 h-4 w-4' />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </>
-            )}
-          </TableBody>
-        </Table>
+                              <TrashIcon className='mr-2 h-4 w-4' />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* @ts-ignore */}

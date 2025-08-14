@@ -189,7 +189,7 @@ export default function InstructorProfile() {
                   <Avatar className='bg-primary-50 h-24 w-24'>
                     <AvatarImage src={profilePic.url} alt='Avatar' />
                     <AvatarFallback className='bg-blue-50 text-xl text-blue-600'>
-                      {`${user!.first_name.length > 0 ? user!.first_name[0]?.toUpperCase() : ""}${user!.last_name.length > 0 ? user!.last_name[0]?.toUpperCase() : ""}`}
+                      {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ""}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ""}`}
                     </AvatarFallback>
                   </Avatar>
                   <div className='space-y-2'>

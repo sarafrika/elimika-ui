@@ -6,10 +6,12 @@ import {
 } from '@/app/dashboard/@instructor/_components/course-creation-form';
 import {
   AssessmentDialog,
+  AssessmentList,
   EditLessonDialog,
   LessonDialog,
   LessonFormValues,
   LessonList,
+  RubricDialog,
 } from '@/app/dashboard/@instructor/_components/lesson-management-form';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
@@ -18,26 +20,26 @@ import { Button } from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
 import { StepperContent, StepperList, StepperRoot, StepperTrigger } from '@/components/ui/stepper';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { tanstackClient } from '@/services/api/tanstack-client';
 import {
-  deleteCourseLesson,
-  getAllContentTypes,
-  getCourseByUuid,
-  getCourseLesson,
-  getCourseLessons,
-  getLessonContent,
-} from '@/services/client';
+  deleteCourseLessonMutation,
+  getAllContentTypesOptions,
+  getCourseByUuidOptions,
+  getCourseLessonOptions,
+  getCourseLessonQueryKey,
+  getCourseLessonsOptions,
+  getCourseLessonsQueryKey,
+  getLessonContentOptions,
+  getLessonContentQueryKey,
+  publishCourseMutation,
+  publishCourseQueryKey,
+  searchAssessmentsOptions
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Check, List } from 'lucide-react';
+import { BookOpen, BookOpenCheck, Check, CheckCircle, List } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  getAllContentTypesQueryKey,
-  getCourseByUuidQueryKey,
-  getCourseLessonQueryKey,
-} from '../../../../../../services/client/@tanstack/react-query.gen';
 import { ICourse, TLesson } from '../../../_components/instructor-type';
 
 export default function CourseCreationPage() {
@@ -82,24 +84,17 @@ export default function CourseCreationPage() {
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
 
-  // GetContentTypes
-  const useGetContentTypes = () => {
-    return useQuery({
-      queryKey: [getAllContentTypesQueryKey],
-      queryFn: () => getAllContentTypes().then(res => res.data),
-    });
-  };
-  const { data: contentTypeList } = useGetContentTypes();
+  const [addRubricModalOpen, setAddRubricModalOpen] = useState(false);
+  const openAddRubricModal = () => setAddRubricModalOpen(true);
 
-  // GetCourseById
-  const useCourseById = (uuid?: string) => {
-    return useQuery({
-      queryKey: [getCourseByUuidQueryKey, uuid],
-      queryFn: () => getCourseByUuid({ path: { uuid: uuid! } }).then(res => res.data),
-      enabled: !!uuid,
-    });
-  };
-  const { data: course, isLoading, refetch: refetchCourse } = useCourseById(resolveId);
+  // GET COURSE CONTENT TYPES
+  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ query: {} }));
+
+  // GET COURSE BY ID 
+  const { data: course } = useQuery({
+    ...getCourseByUuidOptions({ path: { uuid: resolveId } }),
+    enabled: !!resolveId
+  });
 
   const [courseInitialValues, setCourseInitialValues] = useState<ICourse | undefined>(undefined);
 
@@ -140,55 +135,30 @@ export default function CourseCreationPage() {
     });
   }, [courseId, course]);
 
-  // GetLessons
-  const useCourseLessons = (courseUuid?: string) => {
-    return useQuery({
-      queryKey: ['course-lessons', courseUuid],
-      queryFn: () => getCourseLessons({ path: { courseUuid: courseUuid! } }).then(res => res.data),
-      enabled: !!courseUuid,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
-  const { data: courseLessons, refetch: refetchLessons } = useCourseLessons(resolveId);
 
-  // GetLesssonById
-  const useLessonById = (courseUuid?: string, lessonUuid?: string) => {
-    return useQuery({
-      queryKey: ['lesson', courseUuid, lessonUuid],
-      queryFn: () =>
-        getCourseLesson({
-          path: {
-            courseUuid: courseUuid!,
-            lessonUuid: lessonUuid!,
-          },
-        }).then(res => res?.data),
-      enabled: !!courseUuid && !!lessonUuid,
-      staleTime: 5 * 60 * 1000,
-    });
-  };
-  const { data: lessonData } = useLessonById(resolveId, selectedLesson?.uuid as string);
+  // GET COURSE LESSONS
+  const { data: courseLessons, isLoading: lessonsIsLoading } = useQuery({
+    ...getCourseLessonsOptions({ path: { courseUuid: resolveId }, query: {} }),
+    enabled: !!resolveId,
+  });
+
+  // GET COURSE LESSON BY ID 
+  const { data: lessonData } = useQuery({
+    ...getCourseLessonOptions({
+      path: { courseUuid: resolveId, lessonUuid: selectedLesson?.uuid as string },
+    }),
+    enabled: !!resolveId && !!selectedLesson?.uuid,
+  });
   // @ts-ignore
-  const lesson = lessonData?.data;
+  const lesson = lessonData?.data
 
-  // GetLessonContent
-  const useLessonContent = (courseUuid?: string, lessonUuid?: string) => {
-    return useQuery({
-      queryKey: ['lesson-content', courseUuid, lessonUuid],
-      queryFn: () =>
-        getLessonContent({
-          path: {
-            courseUuid: courseUuid!,
-            lessonUuid: lessonUuid!,
-          },
-        }).then(res => res.data),
-      enabled: !!courseUuid && !!lessonUuid,
-      staleTime: 5 * 60 * 1000, // Optional: cache duration
-    });
-  };
-  const { data: lessonContentData, refetch: refetchLessonContent } = useLessonContent(
-    resolveId,
-    selectedLesson?.uuid as string
-  );
+  // GET COURSE LESSON CONTENT 
+  const { data: lessonContentData } = useQuery({
+    ...getLessonContentOptions({
+      path: { courseUuid: resolveId, lessonUuid: selectedLesson?.uuid as string },
+    }),
+    enabled: !!resolveId && !!selectedLesson?.uuid,
+  });
 
   // const contentData = lessonContentData?.data?.[0];
   const lessonContent = lessonContentData?.data?.map((item: any) => ({
@@ -231,7 +201,7 @@ export default function CourseCreationPage() {
               : 0,
           durationHours: item?.duration_hours || 0,
           durationMinutes: item?.duration_minutes || 0,
-          contentUuid: item?.content_type || '',
+          contentTypeUuid: item?.content_type || '',
           contentCategory: matchedType?.upload_category ?? '',
         };
       })
@@ -250,43 +220,47 @@ export default function CourseCreationPage() {
     content: content,
   };
 
-  const publishCourseMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/courses/{uuid}/publish'
-  );
 
-  const handlePublishCourse = () => {
+  // GET COURSE ASSESSMENTS
+  const { data: assessmentData, isLoading: assessmentLoading } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: resolveId }, } }));
+
+  // PUBLISH COURSE MUTATION
+  const PublishCourse = useMutation(publishCourseMutation());
+  const handlePublishCourse = async () => {
     if (!course?.data?.uuid) return;
-    publishCourseMutation.mutate(
-      { params: { path: { uuid: course?.data?.uuid as string } } },
-      {
-        onSuccess: data => {
-          toast.success(data?.message);
+
+    try {
+      await PublishCourse.mutateAsync({
+        path: { uuid: course?.data?.uuid as string }
+      }, {
+        onSuccess(data, variables, context) {
+          toast.success(data?.message)
+          queryClient.invalidateQueries({
+            queryKey: publishCourseQueryKey({ path: { uuid: course?.data?.uuid as string } })
+          });
           router.push('/dashboard/course-management/published');
         },
-      }
-    );
+      });
+    } catch (err) { }
   };
 
-  // MUTATE
-  const { mutate: deleteLessonMutation, isPending: deleteLessonIsPending } = useMutation({
-    mutationKey: [getCourseLessonQueryKey],
-    mutationFn: ({ uuid, lessonUuid }: { uuid: string; lessonUuid: string }) =>
-      deleteCourseLesson({ path: { courseUuid: uuid, lessonUuid: lessonUuid } }),
-  });
-
-  const handleDeleteLesson = (lessonId: string) => {
+  // DELETE LESSON MUTATION
+  const DeleteLesson = useMutation(deleteCourseLessonMutation());
+  const handleDeleteLesson = async (lessonId: string) => {
     if (!course?.data?.uuid) return;
 
-    deleteLessonMutation(
-      { lessonUuid: lessonId as string, uuid: course?.data?.uuid as string },
-      {
+    try {
+      await DeleteLesson.mutateAsync({
+        path: { courseUuid: course?.data?.uuid as string, lessonUuid: lessonId }
+      }, {
         onSuccess: () => {
           toast.success('Lesson deleted successfully');
-          queryClient.invalidateQueries();
+          queryClient.invalidateQueries({
+            queryKey: getCourseLessonsQueryKey({ path: { courseUuid: course?.data?.uuid as string } })
+          });
         },
-      }
-    );
+      });
+    } catch (err) { }
   };
 
   if (courseId && !courseInitialValues) {
@@ -303,7 +277,8 @@ export default function CourseCreationPage() {
         <StepperList>
           <StepperTrigger step={0} title='Course Details' icon={BookOpen} />
           <StepperTrigger step={1} title='Content' icon={List} />
-          <StepperTrigger step={2} title='Review' icon={Check} />
+          <StepperTrigger step={2} title='Assessment' icon={BookOpenCheck} />
+          <StepperTrigger step={3} title='Review' icon={Check} />
         </StepperList>
 
         <StepperContent
@@ -321,9 +296,16 @@ export default function CourseCreationPage() {
             courseId={createdCourseId as string}
             editingCourseId={courseId as string}
             initialValues={courseInitialValues as any}
-            onSuccess={data => {
+            successResponse={data => {
               setCreatedCourseId(data?.uuid);
-              refetchCourse();
+
+              // queryClient.invalidateQueries({
+              //   queryKey: getCourseByUuidQueryKey({ path: { uuid: resolveId } })
+              // });
+
+              // queryClient.invalidateQueries({
+              //   queryKey: getAllContentTypesQueryKey({ query: {} })
+              // });
             }}
           />
         </StepperContent>
@@ -333,13 +315,12 @@ export default function CourseCreationPage() {
           title='Course Content'
           description='Add lessons and content to your course'
           showNavigation
-          nextButtonText='Continue to Review'
+          nextButtonText='Continue to Assessment'
           previousButtonText='Back to Details'
         >
           <div className='space-y-4'>
             <LessonList
-              // isLoading={lessonsIsLoading}
-              isLoading={false}
+              isLoading={lessonsIsLoading}
               courseTitle={course?.data?.name as string}
               courseCategory={course?.data?.category_names}
               lessons={courseLessons?.data}
@@ -348,7 +329,7 @@ export default function CourseCreationPage() {
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
               onAddAssessment={openAddAssessmentModal}
-              onEditAssessment={() => { }}
+              onAddRubrics={openAddRubricModal}
               onReorderLessons={() => { }}
             />
 
@@ -356,7 +337,7 @@ export default function CourseCreationPage() {
               isOpen={addLessonModalOpen}
               onOpenChange={setAddLessonModalOpen}
               courseId={createdCourseId ? createdCourseId : (courseId as string)}
-              refetch={refetchLessons}
+              onCancel={() => setAddLessonModalOpen(false)}
             />
 
             {editLessonModalOpen && selectedLesson && lesson && lessonContentData?.data && (
@@ -366,10 +347,23 @@ export default function CourseCreationPage() {
                 courseId={courseId as string}
                 lessonId={selectedLesson?.uuid}
                 initialValues={lessonInitialValues}
+                onCancel={() => { }}
                 onSuccess={data => {
                   setCreatedCourseId(data?.uuid);
-                  refetchLessons();
-                  refetchLessonContent();
+
+                  queryClient.invalidateQueries({
+                    queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                  });
+
+                  queryClient.invalidateQueries({
+                    queryKey: getCourseLessonQueryKey({ path: { courseUuid: courseId as string, lessonUuid: selectedLesson?.uuid as string } })
+                  });
+
+                  queryClient.invalidateQueries({
+                    queryKey: getLessonContentQueryKey({ path: { courseUuid: courseId as string, lessonUuid: selectedLesson?.uuid as string } })
+                  });
+
+                  // refetchLessonContent();
                 }}
               />
             )}
@@ -378,12 +372,43 @@ export default function CourseCreationPage() {
               isOpen={addAssessmentModalOpen}
               onOpenChange={setAddAssessmentModalOpen}
               courseId={createdCourseId ? createdCourseId : (courseId as string)}
+              onCancel={() => { }}
             />
+
+
           </div>
         </StepperContent>
 
         <StepperContent
           step={2}
+          title='Assessment'
+          description='Manage the assessments created for your lessons'
+          showNavigation
+          nextButtonText='Continue to Review'
+          previousButtonText='Back to Content'
+        >
+          <div className='space-y-4'>
+            <AssessmentList
+              isLoading={assessmentLoading}
+              assessments={assessmentData?.data}
+              lessonItems={lessonContentData?.data}
+              onEditAssessment={openAddAssessmentModal}
+              courseId={resolveId}
+              onAddRubrics={openAddRubricModal}
+            />
+
+            <RubricDialog
+              isOpen={addRubricModalOpen}
+              onOpenChange={setAddRubricModalOpen}
+              courseId={""}
+              lessonId={""}
+              onCancel={() => { }}
+            />
+          </div>
+        </StepperContent>
+
+        <StepperContent
+          step={3}
           title='Review Course'
           description='Review your course before publishing'
           showNavigation
@@ -391,7 +416,7 @@ export default function CourseCreationPage() {
           hideNextButton={true}
           customButton={
             <Button onClick={handlePublishCourse} disabled={!course} className='min-w-[150px]'>
-              {publishCourseMutation.isPending ? <Spinner /> : 'Publish Course'}
+              {PublishCourse.isPending ? <Spinner /> : 'Publish Course'}
             </Button>
           }
         >
@@ -425,7 +450,7 @@ export default function CourseCreationPage() {
               {/* Course Information */}
               <section>
                 <div>
-                  <Image src={course?.data?.banner_url as string} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
+                  <Image src={course?.data?.banner_url as string || '/illustration.png'} alt='upload-banner' width={128} height={128} className='w-full max-h-[250px] bg-stone-300 mb-8 text-sm' />
                 </div>
 
                 <h3 className='mb-3 text-xl font-semibold text-gray-800'>📘 Course Information</h3>
@@ -457,8 +482,8 @@ export default function CourseCreationPage() {
               </p>
 
               {/* Categories */}
-              <section>
-                <h3 className='mb-3 text-xl font-semibold text-gray-800'>🏷️ Categories</h3>
+              <section className='flex flex-col sm:flex-row gap-4 items-start sm:items-center ' >
+                <h3 className='text-xl font-semibold text-gray-800'>🏷️ Categories</h3>
                 <div className='flex flex-wrap gap-2'>
                   {course?.data?.category_names?.map((category: string, idx: number) => (
                     <span
@@ -468,6 +493,83 @@ export default function CourseCreationPage() {
                       {category}
                     </span>
                   ))}
+                </div>
+              </section>
+
+              {/* course content */}
+              <div className='mt-4'>
+                <h3 className='mb-3 text-xl font-semibold text-gray-800'>Course Content</h3>
+              </div>
+              <section>
+                <div className='-mt-2 flex flex-col gap-2 space-y-4'>
+                  {courseLessons?.data?.content
+                    ?.slice()
+                    ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
+                    ?.map((lesson: any, i: any) => (
+                      <div key={i} className='flex flex-row gap-2'>
+                        <div>
+                          <span className='min-h-4 min-w-4'>
+                            <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
+                          </span>
+                        </div>
+                        <div className='flex flex-col gap-2'>
+                          <h3 className='font-semibold'>{lesson.title}</h3>
+                          <RichTextRenderer
+                            htmlString={(lesson?.description as string) || 'No lesson provided'}
+                          />
+
+                          <h3 className='font-semibold'>
+                            <span>📅 Duration:</span> {lesson.duration_display}
+                          </h3>
+                        </div>
+
+                      </div>
+                    ))}
+
+                  {courseLessons?.data?.content?.length === 0 && (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+                      <BookOpen className="mb-2 h-8 w-8 text-muted-foreground" />
+                      <p className="font-medium">No lessons available</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* assessments */}
+              <div className='mt-4'>
+                <h3 className='mb-3 text-xl font-semibold text-gray-800'>Assessments</h3>
+              </div>
+              <section>
+                <div className='-mt-2 flex flex-col gap-2 space-y-4'>
+                  {assessmentData?.data?.content
+                    ?.slice()
+                    ?.map((assessment: any, i: any) => (
+                      <div key={i} className='flex flex-row gap-2'>
+                        <div>
+                          <span className='min-h-4 min-w-4'>
+                            <BookOpenCheck className='mt-1 h-4 w-4' />
+                          </span>
+                        </div>
+                        <div className='flex flex-col gap-2'>
+                          <h3 className='font-semibold'>{assessment.title}</h3>
+                          <RichTextRenderer
+                            htmlString={(assessment?.description as string) || 'No assessment provided'}
+                          />
+
+                          <h3 className='font-semibold'>
+                            <span>📅 Duration:</span> {assessment.duration_display}
+                          </h3>
+                        </div>
+
+                      </div>
+                    ))}
+
+                  {assessmentData?.data?.content?.length === 0 && (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+                      <BookOpenCheck className="mb-2 h-8 w-8 text-muted-foreground" />
+                      <p className="font-medium">No assessments available</p>
+                    </div>
+                  )}
                 </div>
               </section>
             </div>

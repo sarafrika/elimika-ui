@@ -5,16 +5,16 @@ import { DashboardView, DashboardViewProvider } from '@/components/dashboard-vie
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { TrainingCenterProvider } from '@/context/training-center-provider';
-import { UserDomain } from '@/lib/types';
-import { auth } from '@/services/auth';
+import { DashboardChildrenTypes, UserDomain } from '@/lib/types';
 import { redirect } from 'next/navigation';
 import { ReactNode } from 'react';
-import { getUserByEmail } from '../../services/user/actions';
-import { DashboardChildrenTypes } from './_types';
+import { auth } from '../../services/auth';
+import { search } from '../../services/client';
 
 type OrgDomainType = DashboardView | 'organisation_user';
 
 export default async function DashboardLayout(props: DashboardChildrenTypes) {
+
   try {
     const session = await auth();
 
@@ -22,15 +22,19 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       return redirect('/');
     }
 
-    const user = await getUserByEmail(session.user.email);
+    const { data, error } = await search({
+      query: {
+        searchParams: {
+          email_eq: session.user.email
+        }
+      }
+    });
 
-    if (!user) {
+    if (error || !data.data || !data.data.content || data.data.content.length === 0) {
       return redirect('/');
     }
 
-    if (user.user_domain!.length === 0) {
-      return redirect('/onboarding');
-    }
+    const user = data.data.content[0];
 
     const userDomains = user?.user_domain as DashboardView[];
     const orgAdminDomains = userDomains as OrgDomainType[];
@@ -53,7 +57,7 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
                 {/* Main content area */}
                 <div className='flex w-full flex-1 flex-col'>
                   <DashboardTopBar showToggle={false} />
-                  {props.organisation}
+                  {props.organization}
                 </div>
               </div>
             </BreadcrumbProvider>

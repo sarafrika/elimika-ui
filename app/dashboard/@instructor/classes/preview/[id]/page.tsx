@@ -1,10 +1,17 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Clock, Users, Video } from 'lucide-react';
-import Image from 'next/image';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import Spinner from '@/components/ui/spinner';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { getProgramCoursesOptions, getProgramCoursesQueryKey, getTrainingProgramByUuidOptions, removeProgramCourseMutation } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BookOpen, CheckCircle, Clock, Trash, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const cls = {
   uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
@@ -47,40 +54,110 @@ const cls = {
 
 export default function ClassPreviewPage() {
   const params = useParams();
-  const classId = params?.id;
-  //console.log(classId);
+  const classId = params?.id as string;
+  const queryClient = useQueryClient()
+
+  // GET TRAINING PROGRAM BY ID
+  const { data, isLoading, isFetching, } = useQuery(getTrainingProgramByUuidOptions({ path: { uuid: classId } }))
+  // @ts-ignore
+  const classData = data?.data
+
+  // GET TRAINING PROGRAM COURSES
+  const { data: programCourses, } = useQuery(getProgramCoursesOptions({ path: { programUuid: classId } }))
+
+  const { replaceBreadcrumbs } = useBreadcrumb();
+  useEffect(() => {
+    const title = isLoading || isFetching || !classData?.title
+      ? 'Preview - ...'
+      : `Preview - ${classData.title}`;
+
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+      { id: 'classes', title: 'Classes', url: '/dashboard/classes' },
+      {
+        id: 'preview',
+        title,
+        url: `/dashboard/classes/preview/${classId}`,
+        isLast: true,
+      },
+    ]);
+  }, [replaceBreadcrumbs, classId, classData?.title, isLoading, isFetching]);
+
+  const [courseToDelete, setCourseToDelete] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const confirmDelete = (course: any) => {
+    setCourseToDelete(course);
+    setIsDialogOpen(true);
+  };
+
+  // MUTATION
+  const removeProgramCourse = useMutation(removeProgramCourseMutation())
+
+  const handleConfirm = () => {
+    if (courseToDelete) {
+      removeProgramCourse.mutate({ path: { courseUuid: courseToDelete?.uuid, programUuid: classId } }, {
+        onSuccess: () => {
+          toast.success("")
+          setIsDialogOpen(false);
+          setCourseToDelete(null);
+          queryClient.invalidateQueries({
+            queryKey: getProgramCoursesQueryKey({ path: { programUuid: classId } })
+          });
+        },
+        onError: (error) => {
+          toast.error(error?.message)
+        }
+      })
+    }
+  };
+
+
+  if (isLoading)
+    return (
+      <div className="flex flex-col gap-4 text-[12px] sm:text-[14px]">
+        <div className="h-20 bg-gray-200 rounded animate-pulse w-full"></div>
+        <div className='mt-10 flex items-center justify-center'>
+          <Spinner />
+        </div>
+        <div className="h-16 bg-gray-200 rounded animate-pulse w-full"></div>
+        <div className="h-12 bg-gray-200 rounded animate-pulse w-full"></div>
+
+      </div>
+    );
 
   return (
     <div className='mx-auto mb-10 max-w-5xl space-y-10 sm:p-4'>
       {/* Banner */}
-      {cls.banner_url && (
+      {/* {cls.banner_url && (
         <div className='overflow-hidden rounded-md shadow-md'>
           <Image
-            src={cls.banner_url}
+            src={"https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg"}
             alt={`${cls.name} banner`}
             className='h-64 w-full bg-stone-200 object-cover'
+            width={64}
+            height={64}
           />
         </div>
-      )}
+      )} */}
 
       {/* Header section */}
       <div className='space-y-2'>
-        <h1 className='text-4xl font-bold tracking-tight'>{cls.name}</h1>
-        <p className='text-muted-foreground text-lg'>{cls.description}</p>
+        <h1 className='text-4xl font-bold tracking-tight'>{classData?.title}</h1>
+        <p className='text-muted-foreground text-lg'>{classData?.description}</p>
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>
           <span>Instructor:</span>
-          <Badge variant='outline'>{cls.instructor.name}</Badge>
-          <span className='text-xs text-gray-500'>({cls.instructor.title})</span>
+          <Badge variant='outline'>{classData?.instructor_uuid}</Badge>
+          <span className='text-xs text-gray-500'>({classData?.instructor_uuid})</span>
         </div>
       </div>
 
-      {/* Right column - no card, clean layout */}
       <div className='flex flex-col gap-4'>
         <div className='flex items-center gap-2 text-sm text-gray-700'>
           <span className='font-medium'>Class Size:</span>
           <span className='flex items-center gap-1'>
             <Users className='h-5 w-5 text-gray-600' />
-            {cls.class_limit === 0 ? 'Unlimited students' : `Up to ${cls.class_limit} students`}
+            {classData?.class_limit === 0 ? 'Unlimited students' : `Up to ${classData?.class_limit} students`}
           </span>
         </div>
 
@@ -88,7 +165,7 @@ export default function ClassPreviewPage() {
           <span className='font-medium'>Duration:</span>
           <span className='flex items-center gap-1'>
             <Clock className='h-5 w-5 text-gray-600' />
-            Approx. {cls.total_duration_display}
+            Approx. {classData?.total_duration_display}
           </span>
         </div>
       </div>
@@ -102,14 +179,43 @@ export default function ClassPreviewPage() {
             <CardDescription>Key learning outcomes of this class</CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className='grid grid-cols-1 gap-2'>
-              {cls.objectives.map((item, i) => (
-                <li key={i} className='flex items-start'>
-                  <CheckCircle className='mt-1 mr-2 h-4 w-4 text-green-500' />
-                  <span>{item}</span>
-                </li>
+            <CheckCircle className='mt-1 mr-2 h-4 w-4 text-green-500' />
+            {classData?.objectives}
+          </CardContent>
+        </Card>
+
+        {/* Courses */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Course Content</CardTitle>
+            <CardDescription>A breakdown of courses in this program</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className='space-y-6'>
+              {programCourses?.data?.map((c, i) => (
+                <div key={i} className='border-b pb-4 last:border-none last:pb-0'>
+                  <div className='flex items-center justify-between'>
+                    <h3 className='flex items-center gap-2 text-base font-semibold'>
+                      <BookOpen className='h-4 w-4 text-blue-500' />
+                      {c?.name}
+                    </h3>
+                    <button
+                      onClick={() => confirmDelete(c as any)}
+                      className='text-red-500 hover:text-red-700 mx-2 cursor-pointer'
+                      aria-label='Remove course'
+                    >
+                      <Trash className='h-4 w-4' />
+                    </button>
+                  </div>
+                  <p className="w-[95%] text-muted-foreground text-sm line-clamp-3">
+                    {c?.description}
+                  </p>
+                  <Badge className='mt-1' variant='secondary'>
+                    {c?.total_duration_display}
+                  </Badge>
+                </div>
               ))}
-            </ul>
+            </div>
           </CardContent>
         </Card>
 
@@ -120,7 +226,7 @@ export default function ClassPreviewPage() {
             <CardDescription>A breakdown of lessons in this class</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className='space-y-6'>
+            {/* <div className='space-y-6'>
               {cls.lessons.map((lesson, i) => (
                 <div key={i} className='border-b pb-4 last:border-none last:pb-0'>
                   <h3 className='flex items-center gap-2 text-base font-semibold'>
@@ -133,9 +239,33 @@ export default function ClassPreviewPage() {
                   </Badge>
                 </div>
               ))}
-            </div>
+            </div> */}
           </CardContent>
         </Card>
+
+
+        {/* Confirm Remove Program Course Modal */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className='flex max-w-2xl flex-col' >
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription className='py-3' >
+                Are you sure you want to remove{' '}
+                <span className='font-semibold'>&quot;{courseToDelete?.name}&quot;</span>{' '}
+                from this program? This action cannot be undone.
+              </DialogDescription>
+
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant='secondary' onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant='destructive' onClick={handleConfirm} className='min-w-[80px]' >
+                {removeProgramCourse?.isPending ? <Spinner /> : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
