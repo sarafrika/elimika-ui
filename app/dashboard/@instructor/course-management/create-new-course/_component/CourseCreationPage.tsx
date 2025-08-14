@@ -256,7 +256,10 @@ export default function CourseCreationPage() {
         onSuccess: () => {
           toast.success('Lesson deleted successfully');
           queryClient.invalidateQueries({
-            queryKey: getCourseLessonsQueryKey({ path: { courseUuid: course?.data?.uuid as string } })
+            queryKey: getCourseLessonsQueryKey({ 
+              path: { courseUuid: course?.data?.uuid as string },
+              query: { pageable: { page: 0, size: 100 } }
+            })
           });
         },
       });
@@ -352,7 +355,10 @@ export default function CourseCreationPage() {
                   setCreatedCourseId(data?.uuid);
 
                   queryClient.invalidateQueries({
-                    queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                    queryKey: getCourseLessonsQueryKey({ 
+                      path: { courseUuid: courseId as string },
+                      query: { pageable: { page: 0, size: 100 } }
+                    })
                   });
 
                   queryClient.invalidateQueries({

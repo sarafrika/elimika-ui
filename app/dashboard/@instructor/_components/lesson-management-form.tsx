@@ -717,7 +717,10 @@ function LessonCreationForm({
       {
         onSuccess: lessonResponse => {
           queryClient.invalidateQueries({
-            queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+            queryKey: getCourseLessonsQueryKey({ 
+              path: { courseUuid: courseId as string },
+              query: { pageable: { page: 0, size: 100 } }
+            })
           });
 
           const lessonUuid = lessonResponse?.data?.data?.uuid as string;
@@ -756,7 +759,10 @@ function LessonCreationForm({
               onSuccess: (data: any) => {
                 toast.success('Lesson content created successfully.');
                 queryClient.invalidateQueries({
-                  queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                  queryKey: getCourseLessonsQueryKey({ 
+                    path: { courseUuid: courseId as string },
+                    query: { pageable: { page: 0, size: 100 } }
+                  })
                 });
                 onCancel();
               },
@@ -1092,7 +1098,10 @@ function LessonEditingForm({
                 if (typeof editSuccessRespones === 'function') {
                   editSuccessRespones(data?.data);
                   queryClient.invalidateQueries({
-                    queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                    queryKey: getCourseLessonsQueryKey({ 
+                    path: { courseUuid: courseId as string },
+                    query: { pageable: { page: 0, size: 100 } }
+                  })
                   });
                 }
               },
