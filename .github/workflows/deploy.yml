@@ -23,15 +23,13 @@ jobs:
           ssh -i private_key -o StrictHostKeyChecking=no "${{ secrets.SERVER_SSH_USER }}@${{ secrets.SERVER_IP }}" <<'EOF'
             set -e  # Exit script on error
 
-            echo "🔑 Logging in to GitHub Container Registry..."
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-
             echo "🛑 Stopping and removing existing containers..."
-            cd ~/products/elimika-ui/docker
-            docker compose -f compose.yaml down --remove-orphans
+            # Adjust these commands if the container name is different on your server
+            docker stop elimika-ui || true
+            docker rm elimika-ui || true
 
-            echo "🚀 Pulling latest Docker image..."
-            docker compose -f compose.yaml pull
+            echo "🚀 Pulling latest Docker image from Docker Hub..."
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/elimika-ui:latest
 
             echo "🚀 Starting the application with latest image..."
             docker compose -f compose.yaml up -d
