@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit --project tsconfig.build.json"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.15",

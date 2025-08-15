@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noEmitOnError": false
+  },
+  "exclude": [
+    "node_modules",
+    "hey-client/**/*",
+    "services/client/**/*"
+  ]
+}

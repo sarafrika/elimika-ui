@@ -66,7 +66,7 @@ export default function ClassesPage() {
   const [page, setPage] = useState(0);
 
   // GET INSTRUCTOR'S PROGRAMS
-  const { data, isLoading, isFetching, } = useQuery(searchTrainingProgramsOptions({ query: { page, size, searchParams: { instructorUuid: instructor?.uuid } } }))
+  const { data, isLoading, isFetching, } = useQuery(searchTrainingProgramsOptions({ query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: { page, size } } }))
 
   // @ts-ignore
   const trainingPrograms = data?.data?.content || [];
@@ -86,7 +86,7 @@ export default function ClassesPage() {
         onSuccess: () => {
           toast.success('Training program deleted succcessfully');
           queryClient.invalidateQueries({
-            queryKey: getAllTrainingProgramsQueryKey({ query: { page, size } })
+            queryKey: getAllTrainingProgramsQueryKey({ query: { pageable: { page, size } } })
           });
         },
       });

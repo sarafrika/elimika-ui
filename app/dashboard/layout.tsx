@@ -26,6 +26,10 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       query: {
         searchParams: {
           email_eq: session.user.email
+        },
+        pageable: {
+          page: 0,
+          size: 100
         }
       }
     });

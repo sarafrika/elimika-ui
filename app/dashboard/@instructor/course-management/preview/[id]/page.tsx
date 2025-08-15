@@ -60,12 +60,12 @@ export default function CoursePreviewPage() {
 
   // GET COURSE LESSONS
   const { data: courseLessons } = useQuery({
-    ...getCourseLessonsOptions({ path: { courseUuid: courseId as string }, query: {} }),
+    ...getCourseLessonsOptions({ path: { courseUuid: courseId as string }, query: { pageable: { page: 0, size: 100 } } }),
     enabled: !!courseId,
   });
 
   // GET COURSE ASSESSMENTS
-  const { data: assessmentData } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: courseId as string }, } }));
+  const { data: assessmentData } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: courseId as string }, pageable: { page: 0, size: 100 } } }));
 
 
   if (isLoading)

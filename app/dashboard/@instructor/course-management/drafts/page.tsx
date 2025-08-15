@@ -63,7 +63,7 @@ export default function CourseDraftsPage() {
 
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data, isLoading, isFetching, } = useQuery(searchCoursesOptions({ query: { page, size, searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, } } }))
+  const { data, isLoading, isFetching, } = useQuery(searchCoursesOptions({ query: { searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, }, pageable: { page, size } } }))
 
 
   // DELETE COURSE MUTATION
@@ -78,7 +78,7 @@ export default function CourseDraftsPage() {
         onSuccess: () => {
           toast.success('Course deleted succcessfully');
           queryClient.invalidateQueries({
-            queryKey: searchCoursesQueryKey({ query: { page, size, searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, } } })
+            queryKey: searchCoursesQueryKey({ query: { searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, }, pageable: { page, size } } })
           });
         },
       });
