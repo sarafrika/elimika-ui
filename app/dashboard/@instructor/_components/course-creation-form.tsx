@@ -239,6 +239,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       })
     );
 
+
     // actions
     const handleFileUpload = async (
       e: React.ChangeEvent<HTMLInputElement>,
