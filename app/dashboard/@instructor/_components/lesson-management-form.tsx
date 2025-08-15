@@ -182,7 +182,7 @@ function FormSection({ title, description, children }: FormSectionProps) {
 
 const ACCEPTED_FILE_TYPES = {
   [CONTENT_TYPES.AUDIO]: '.mp3,.wav,audio/*',
-  [CONTENT_TYPES.VIDEO]: '.mp4,.webm,video/!*',
+  [CONTENT_TYPES.VIDEO]: '.mp4,.webm,video/*',
   [CONTENT_TYPES.PDF]: '.pdf',
 };
 
@@ -226,7 +226,14 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   const { setValue } = useFormContext();
 
   // GET COURSE CONTENT TYPES
-  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ query: {} }));
+  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ 
+    query: {
+      pageable: {
+        page: 0,
+        size: 100
+      }
+    } 
+  }));
 
   const contentTypeData = React.useMemo(() => {
     const respdata = contentTypeList!.data! as { content: any[] }
@@ -282,17 +289,14 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                 </FormControl>
                 <SelectContent>
                   {Object.entries(contentTypeData).map(([key, value]) => {
-                    const Icon =
-                      // @ts-ignore
-                      ContentTypeIcons[value?.name?.toUpperCase() as keyof typeof ContentTypeIcons];
+                    const typedValue = value as { uuid: string; name: string; upload_category: string };
+                    const Icon = ContentTypeIcons[typedValue?.name?.toUpperCase() as keyof typeof ContentTypeIcons];
 
                     return (
-                      // @ts-ignore
-                      <SelectItem key={value.uuid} value={JSON.stringify(value)}>
+                      <SelectItem key={typedValue.uuid} value={JSON.stringify(typedValue)}>
                         <div className='flex items-center gap-2'>
                           {Icon && <Icon className='h-4 w-4' />}
-                          {/*  @ts-ignore */}
-                          <span>{value.name}</span>
+                          <span>{typedValue.name}</span>
                         </div>
                       </SelectItem>
                     );
@@ -325,7 +329,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
         />
       </div>
 
-      {contentTypeUuid === 'TEXT' ? (
+      {selectedTypeKey === 'TEXT' ? (
         <FormField
           control={control}
           name={`content.${index}.value`}
@@ -344,7 +348,7 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
         />
       ) : (
         <>
-          {['PDF', 'AUDIO', 'IMAGE', 'VIDEO'].includes(contentTypeUuid || '') && (
+          {['PDF', 'AUDIO', 'IMAGE', 'VIDEO'].includes(selectedTypeKey || '') && (
             <FormField
               control={control}
               name={`content.${index}.value`}
@@ -377,7 +381,6 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
                     : 'URL'}
                 </FormLabel>
                 <FormControl>
-                  {/* @ts-ignore */}
                   <Input
                     type='url'
                     placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
@@ -638,8 +641,7 @@ function LessonCreationForm({
   });
 
   const handleSubmitError = (errors: FieldErrors<LessonFormValues>) => {
-    const firstFieldWithError = Object.keys(errors)[0];
-    // @ts-ignore
+    const firstFieldWithError = Object.keys(errors)[0] as keyof LessonFormValues;
     const firstError = errors[firstFieldWithError];
 
     const message =
@@ -715,7 +717,10 @@ function LessonCreationForm({
       {
         onSuccess: lessonResponse => {
           queryClient.invalidateQueries({
-            queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+            queryKey: getCourseLessonsQueryKey({ 
+              path: { courseUuid: courseId as string },
+              query: { pageable: { page: 0, size: 100 } }
+            })
           });
 
           const lessonUuid = lessonResponse?.data?.data?.uuid as string;
@@ -754,7 +759,10 @@ function LessonCreationForm({
               onSuccess: (data: any) => {
                 toast.success('Lesson content created successfully.');
                 queryClient.invalidateQueries({
-                  queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                  queryKey: getCourseLessonsQueryKey({ 
+                    path: { courseUuid: courseId as string },
+                    query: { pageable: { page: 0, size: 100 } }
+                  })
                 });
                 onCancel();
               },
@@ -974,8 +982,7 @@ function LessonEditingForm({
   });
 
   const handleSubmitError = (errors: FieldErrors<LessonFormValues>) => {
-    const firstFieldWithError = Object.keys(errors)[0];
-    // @ts-ignore
+    const firstFieldWithError = Object.keys(errors)[0] as keyof LessonFormValues;
     const firstError = errors[firstFieldWithError];
 
     const message =
@@ -1036,11 +1043,9 @@ function LessonEditingForm({
       duration_hours: Number(values?.content[0]?.durationHours),
       duration_minutes: Number(values?.content[0]?.durationMinutes),
       duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
-      status: courseData?.data?.status as any,
+      status: courseData?.data?.status,
       active: courseData?.data?.active,
-      // @ts-ignore
       is_published: courseData?.data?.is_published,
-      // @ts-ignore
       created_by: courseData?.data?.instructor_uuid,
       lesson_number: values?.number,
       lesson_sequence: `Lesson ${values?.number}`,
@@ -1082,8 +1087,7 @@ function LessonEditingForm({
               body: updateLessonContentBody,
               courseId: courseId as string,
               lessonId: lessonId as string,
-              // @ts-ignore
-              contentId: initialValues?.content[0]?.uuid as string,
+              contentId: (initialValues?.content as any)?.[0]?.uuid as string,
 
             },
             {
@@ -1094,7 +1098,10 @@ function LessonEditingForm({
                 if (typeof editSuccessRespones === 'function') {
                   editSuccessRespones(data?.data);
                   queryClient.invalidateQueries({
-                    queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string } })
+                    queryKey: getCourseLessonsQueryKey({ 
+                    path: { courseUuid: courseId as string },
+                    query: { pageable: { page: 0, size: 100 } }
+                  })
                   });
                 }
               },
@@ -1339,7 +1346,7 @@ function AssessmentCreationForm({
     if (initialValues) {
       form.reset(initialValues);
     }
-  }, [initialValues]);
+  }, [initialValues, form]);
 
   const {
     fields: questionFields,
@@ -1395,7 +1402,12 @@ function AssessmentCreationForm({
         onSuccess: (data) => {
           toast.success(data?.data?.message || 'Assessment created successfully!');
           queryClient.invalidateQueries({
-            queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+            queryKey: searchAssessmentsQueryKey({ 
+              query: { 
+                searchParams: { courseUuid: courseId },
+                pageable: { page: 0, size: 100 }
+              } 
+            })
           });
           onCancel();
         },
@@ -1434,7 +1446,12 @@ function AssessmentCreationForm({
           onSuccess: (data) => {
             toast.success(data?.message || 'Assessment updated successfully!');
             queryClient.invalidateQueries({
-              queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+              queryKey: searchAssessmentsQueryKey({ 
+              query: { 
+                searchParams: { courseUuid: courseId },
+                pageable: { page: 0, size: 100 }
+              } 
+            })
             });
             onCancel();
           },
@@ -1645,7 +1662,6 @@ type AssessmentListProps = {
   lessonItems: any;
   isLoading: boolean;
   courseId?: string;
-  onEditAssessment: (assessment: any) => void;
   onAddRubrics: (assessment: any) => void;
 };
 
@@ -1688,7 +1704,12 @@ function AssessmentList({
       onSuccess: () => {
         toast.success('Assessment deleted successfully');
         queryClient.invalidateQueries({
-          queryKey: searchAssessmentsQueryKey({ query: { searchParams: { courseUuid: courseId }, } })
+          queryKey: searchAssessmentsQueryKey({ 
+            query: { 
+              searchParams: { courseUuid: courseId },
+              pageable: { page: 0, size: 100 }
+            } 
+          })
         });
       },
       onError: (error: any) => {

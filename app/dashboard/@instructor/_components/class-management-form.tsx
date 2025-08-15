@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { addProgramCourseMutation, createTrainingProgramMutation, getAllCategoriesOptions, getAllTrainingProgramsQueryKey, getProgramCoursesQueryKey, searchCoursesOptions, updateTrainingProgramMutation } from '@/services/client/@tanstack/react-query.gen';
+import { SchemaEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Badge } from '@/components/ui/badge';
@@ -97,7 +98,14 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
   const { data: session } = useSession()
 
   // GET COURSE CATEGORIES
-  const { data: categories } = useQuery(getAllCategoriesOptions());
+  const { data: categories } = useQuery(getAllCategoriesOptions({ 
+    query: { 
+      pageable: { 
+        page: 0, 
+        size: 100 
+      } 
+    } 
+  }));
 
   // MUTATION
   const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
@@ -125,12 +133,12 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
   const createTrainingProgram = useMutation(createTrainingProgramMutation())
   const updateTrainingProgram = useMutation(updateTrainingProgramMutation());
 
-  const onSubmit = (values: ClassFormValues, initialValues: any) => {
+  const onSubmit = (values: ClassFormValues) => {
     const isEditing = !!initialValues?.uuid || !!classId; // Use either one depending on your data shape
 
     const trainingProgramBody = {
       title: values.title,
-      instructor_uuid: instructor?.uuid,
+      instructor_uuid: instructor?.uuid || '',
       category_uuid: values.categories,
       description: values.description,
       objectives: values.objectives,
@@ -145,17 +153,24 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
       created_by: session?.user?.email,
       updated_by: session?.user?.email,
       is_published: false,
+      published: false,
       active: false,
-      status: "DRAFT",
+      status: SchemaEnum.DRAFT,
     };
 
     const commonOnSuccess = (data: any) => {
-      // @ts-ignore
       toast.success(data?.message || (isEditing ? "Training program updated successfully" : "Training program created successfully"));
       onCancel();
 
       queryClient.invalidateQueries({
-        queryKey: getAllTrainingProgramsQueryKey({ query: {} }),
+        queryKey: getAllTrainingProgramsQueryKey({ 
+          query: { 
+            pageable: { 
+              page: 0, 
+              size: 100 
+            } 
+          } 
+        }),
       });
     };
 
@@ -516,7 +531,17 @@ function AddCourseToProgramForm({
   const instructor = useInstructor()
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data: allCourses } = useQuery(searchCoursesOptions({ query: { searchParams: { instructor_uuid_eq: instructor?.uuid as string, } } }))
+  const { data: allCourses } = useQuery(searchCoursesOptions({ 
+    query: { 
+      searchParams: { 
+        instructor_uuid_eq: instructor?.uuid as string 
+      },
+      pageable: {
+        page: 0,
+        size: 100
+      }
+    } 
+  }))
 
   const addProgramCourses = useMutation(addProgramCourseMutation())
 

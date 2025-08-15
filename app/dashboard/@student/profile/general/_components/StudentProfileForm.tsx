@@ -27,7 +27,6 @@ import Spinner from '@/components/ui/spinner';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn, profilePicSvg } from '@/lib/utils';
 import { tanstackClient } from '@/services/api/tanstack-client';
-import { schemas } from '@/services/api/zod-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UUID } from 'crypto';
 import { format } from 'date-fns';
@@ -39,28 +38,30 @@ import { useUserProfile } from '../../../../../../context/profile-context';
 import { zStudent, zUser } from '../../../../../../services/client/zod.gen';
 
 const StudentProfileSchema = z.object({
-  user: zUser.omit({
-    user_domain: true,
-    created_date: true,
-    updated_date: true
-  }).merge(z.object({
-    dob: z.date(),
-  })
-  ),
+  user: zUser
+    .omit({
+      user_domain: true,
+      created_date: true,
+      updated_date: true,
+    })
+    .merge(
+      z.object({
+        dob: z.date(),
+      })
+    ),
 
   student: zStudent.omit({
     created_date: true,
     updated_date: true,
-    updated_by: true
-  })
+    updated_by: true,
+  }),
 });
 
 type StudentProfileType = z.infer<typeof StudentProfileSchema>;
 
 export default function StudentProfileGeneralForm() {
-
   const user = useUserProfile();
-  const { student } = user!
+  const { student } = user!;
 
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
@@ -75,13 +76,13 @@ export default function StudentProfileGeneralForm() {
       user: {
         ...user,
         dob: new Date(user!.dob ?? Date.now()),
-        profile_image_url: user!.profile_image_url || profilePicSvg
+        profile_image_url: user!.profile_image_url || profilePicSvg,
       },
       /** Students guardian data to be refactored to array */
       student: {
         ...student,
         secondaryGuardianContact: student?.secondaryGuardianContact ?? '',
-        user_uuid: user!.uuid
+        user_uuid: user!.uuid,
       },
     },
   });
@@ -140,7 +141,7 @@ export default function StudentProfileGeneralForm() {
         },
         body: {
           ...data.user,
-          dob: new Date(data.user.dob!).toISOString()
+          dob: new Date(data.user.dob!).toISOString(),
         },
       });
 
@@ -156,7 +157,7 @@ export default function StudentProfileGeneralForm() {
 
       user!.invalidateQuery!();
     },
-    [errors, datas]
+    [profilePic.file, profilePicUpload, resetErrors, student, updateStudentMutation, user, userMutation]
   );
 
   /* async function onSubmit(data: StudentProfileType) {
