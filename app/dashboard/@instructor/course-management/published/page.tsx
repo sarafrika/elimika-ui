@@ -65,7 +65,7 @@ export default function PublishedCoursesPage() {
   const [page, setPage] = useState(0);
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data, isLoading, isFetching, } = useQuery(searchCoursesOptions({ query: { page, size, searchParams: { status: 'published', instructor_uuid_eq: instructor?.uuid as string, } } }))
+  const { data, isLoading, isFetching, } = useQuery(searchCoursesOptions({ query: { searchParams: { status: 'published', instructor_uuid_eq: instructor?.uuid as string, }, pageable: { page, size } } }))
 
   // UNPUBLISH COURSE MUTATION
   const unpublishCourse = useMutation(unpublishCourseMutation());

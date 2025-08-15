@@ -1,7 +1,7 @@
 "use client"
 import { useSession } from 'next-auth/react';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { search, User } from '../services/client';
+import { search, User } from '@/services/client';
 
 const UserContext = createContext<User & { updateSession: (usr: User) => void } | null>(null);
 export default function UserContextProvider({ children }: { children: ReactNode }) {
@@ -16,7 +16,7 @@ export default function UserContextProvider({ children }: { children: ReactNode 
     }
     else if (session?.user && !sessionStorageUser || sessionStorageUser === "undefined") {
       (async () => {
-        const resp = await search({ query: { searchParams: { email_eq: session?.user.email } } });
+        const resp = await search({ query: { searchParams: { email_eq: session?.user.email }, pageable: { page: 0, size: 100 } } });
         if (!resp.error) {
           const results = resp.data.data!.content!;
           setUser(results[0]!)

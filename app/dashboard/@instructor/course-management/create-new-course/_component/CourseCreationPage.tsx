@@ -88,7 +88,7 @@ export default function CourseCreationPage() {
   const openAddRubricModal = () => setAddRubricModalOpen(true);
 
   // GET COURSE CONTENT TYPES
-  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ query: {} }));
+  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }));
 
   // GET COURSE BY ID 
   const { data: course } = useQuery({
@@ -138,7 +138,7 @@ export default function CourseCreationPage() {
 
   // GET COURSE LESSONS
   const { data: courseLessons, isLoading: lessonsIsLoading } = useQuery({
-    ...getCourseLessonsOptions({ path: { courseUuid: resolveId }, query: {} }),
+    ...getCourseLessonsOptions({ path: { courseUuid: resolveId }, query: { pageable: { page: 0, size: 100 } } }),
     enabled: !!resolveId,
   });
 
@@ -222,7 +222,7 @@ export default function CourseCreationPage() {
 
 
   // GET COURSE ASSESSMENTS
-  const { data: assessmentData, isLoading: assessmentLoading } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: resolveId }, } }));
+  const { data: assessmentData, isLoading: assessmentLoading } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: resolveId }, pageable: { page: 0, size: 100 } } }));
 
   // PUBLISH COURSE MUTATION
   const PublishCourse = useMutation(publishCourseMutation());
@@ -398,7 +398,6 @@ export default function CourseCreationPage() {
               isLoading={assessmentLoading}
               assessments={assessmentData?.data}
               lessonItems={lessonContentData?.data}
-              onEditAssessment={openAddAssessmentModal}
               courseId={resolveId}
               onAddRubrics={openAddRubricModal}
             />

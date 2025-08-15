@@ -65,7 +65,7 @@ interface ClassCreationFormProps {
   onCancel: () => void;
   className?: string;
   classId?: string | number;
-  initialValues?: Partial<ClassFormValues>;
+  initialValues?: Partial<ClassFormValues> & { uuid?: string };
 }
 
 function ClassCreationForm({ onCancel, className, classId, initialValues }: ClassCreationFormProps) {
@@ -178,7 +178,7 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
       updateTrainingProgram.mutate(
         {
           body: trainingProgramBody,
-          path: { uuid: classId || initialValues.uuid },
+          path: { uuid: (classId || initialValues?.uuid) as string },
         },
         {
           onSuccess: commonOnSuccess,
