@@ -8,13 +8,12 @@ import { TrainingCenterProvider } from '@/context/training-center-provider';
 import { DashboardChildrenTypes, UserDomain } from '@/lib/types';
 import { redirect } from 'next/navigation';
 import { ReactNode } from 'react';
-import { auth } from '../../services/auth';
-import { search } from '../../services/client';
+import { auth } from '@/services/auth';
+import { search } from '@/services/client';
 
 type OrgDomainType = DashboardView | 'organisation_user';
 
 export default async function DashboardLayout(props: DashboardChildrenTypes) {
-
   try {
     const session = await auth();
 
@@ -25,13 +24,13 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
     const { data, error } = await search({
       query: {
         searchParams: {
-          email_eq: session.user.email
+          email_eq: session.user.email,
         },
         pageable: {
           page: 0,
-          size: 100
-        }
-      }
+          size: 20,
+        },
+      },
     });
 
     if (error || !data.data || !data.data.content || data.data.content.length === 0) {
@@ -40,15 +39,16 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
 
     const user = data.data.content[0];
 
-    const userDomains = user?.user_domain as DashboardView[];
+    const userDomains = user?.user_domain as DashboardView[] || [];
+
     const orgAdminDomains = userDomains as OrgDomainType[];
-    const defaultDomain = orgAdminDomains[0];
+    const activeDomain = orgAdminDomains[0];
     const userDashboards = Object.keys(props).reduce(
       (a: { [key: string]: ReactNode }, b: string) =>
         orgAdminDomains.includes(b as OrgDomainType) ? { ...a, [b]: props[b] } : a,
       {}
     );
-    const currentDashboard = userDashboards[defaultDomain ?? 'student'] ?? props.children;
+    const currentDashboard = activeDomain ? userDashboards[activeDomain] : props.children;
 
     if (orgAdminDomains.includes('organisation_user')) {
       return (
@@ -74,13 +74,13 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
       <TrainingCenterProvider>
         <SidebarProvider>
           <DashboardViewProvider
-            initialView={defaultDomain as DashboardView}
+            initialView={activeDomain as DashboardView}
             availableViews={userDomains}
           >
             <BreadcrumbProvider>
               <div className='flex min-h-screen w-full'>
                 {/* Sidebar */}
-                <AppSidebar activeDomain={defaultDomain as UserDomain} />
+                <AppSidebar activeDomain={activeDomain as UserDomain} />
                 {/* Main content area */}
                 <div className='flex w-full flex-1 flex-col'>
                   <DashboardMainContent>{currentDashboard}</DashboardMainContent>
