@@ -26,12 +26,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { CalendarIcon, Phone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useUserProfile } from '../../../context/profile-context';
-import { createInstructor, createOrganisation, updateUser } from '../../../services/client';
+import { createInstructor, createOrganisation, createStudent, updateUser } from '../../../services/client';
 import { zUser } from '../../../services/client/zod.gen';
 
 const genders = ['Male', 'Female', 'Other', 'Prefer not to say'] as const;
@@ -68,40 +68,74 @@ export function SharedOnboardingForm({
   });
 
   const getTitle = () => {
-    return userType === 'instructor' ? 'Instructor Registration' : 'Organisation Registration';
+    return 'Organisation Registration';
   };
 
   const getDescription = () => {
-    return userType === 'instructor'
-      ? 'Complete your profile to start teaching on our platform'
-      : 'Complete your organisation profile to start offering courses on our platform';
+    return 'Complete your organisation profile to start offering courses on our platform';
   };
 
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAutoCreating, setIsAutoCreating] = useState(false);
+
+  // Auto-create student/instructor accounts in background
+  useEffect(() => {
+    const autoCreateAccount = async () => {
+      if (userType === 'organisation' || !user?.uuid || isAutoCreating) return;
+      
+      setIsAutoCreating(true);
+      try {
+        if (userType === 'student') {
+          await createStudent({
+            body: {
+              user_uuid: user.uuid
+            }
+          });
+        } else if (userType === 'instructor') {
+          await createInstructor({
+            body: {
+              user_uuid: user.uuid
+            }
+          });
+        }
+        
+        await user.invalidateQuery?.();
+        toast.success('Account created successfully!');
+        router.replace('/dashboard/overview');
+      } catch (error) {
+        toast.error('Failed to create account');
+        setIsAutoCreating(false);
+      }
+    };
+
+    autoCreateAccount();
+  }, [userType, user?.uuid, router, user, isAutoCreating]);
+
+  // Show loading state for student/instructor auto-creation
+  if (userType !== 'organisation' && isAutoCreating) {
+    return (
+      <div className='mx-auto max-w-2xl p-6'>
+        <div className='flex flex-col items-center justify-center py-12 text-center'>
+          <div className='mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent'></div>
+          <h2 className='mb-2 text-xl font-semibold'>Setting up your account...</h2>
+          <p className='text-gray-600'>Please wait while we create your {userType} profile.</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (profData: SharedOnboardingFormData) => {
     setIsSubmitting(true);
     try {
-
-      let createInstructorResp;
-
-      if (userType === "instructor") {
-        createInstructorResp = await createInstructor({
-          body: {
-            user_uuid: user!.uuid!
-          }
-        });
-      }
-      else if (userType === "organisation") {
-
-        createInstructorResp = await createOrganisation({
-          body: {
-            user_uuid: user!.uuid!,
-            name: "",
-            active: true
-          }
-        });
-      }
+      // Only handle organization creation since student/instructor are handled automatically
+      await createOrganisation({
+        body: {
+          user_uuid: user!.uuid!,
+          name: "",
+          active: true
+        }
+      });
 
       const updateUserResp = await updateUser({
         path: {
@@ -120,6 +154,7 @@ export function SharedOnboardingForm({
     }
     catch (e) {
       toast.error("Error submitting form");
+      setIsSubmitting(false);
     }
   };
 
