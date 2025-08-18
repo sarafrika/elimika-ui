@@ -32,7 +32,7 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/elimika-ui:latest
 
             echo "🚀 Starting the application with latest image..."
-            docker compose -f compose.yaml up -d
+            docker compose -f ~/products/elimika-ui/docker/compose.yaml up -d
 
             echo "✅ Deployment complete!"
           EOF
