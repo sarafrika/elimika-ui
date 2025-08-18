@@ -1,6 +1,5 @@
 import { queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useRouter, usePathname } from 'next/navigation';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { UserProfileType } from '@/lib/types';
 import { 
@@ -43,45 +42,22 @@ export const useUserProfile = () => useContext(UserProfileContext);
 export default function UserProfileProvider({ children }: { children: ReactNode }) {
 
   const { data: session, status } = useSession();
-  const sessionData = typeof sessionStorage !== "undefined" ?
-    JSON.parse(sessionStorage.getItem("profile") ?? "null") : null;
-
   const qc = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery(createQueryOptions(session?.user?.email, {
-    enabled: sessionData === null && !!session?.user?.email
+    enabled: !!session?.user?.email
   }));
 
-  const [profile, setProfile] = useState<UserProfileType | null>(sessionData ?? data);
   const [activeDomain, setActiveDomain] = useState<DomainTypes | null>(null);
 
-  // Update profile and session storage when data changes
+  // Update active domain when profile data changes
   useEffect(() => {
-    if (data && !isError) {
-      sessionStorage.setItem("profile", JSON.stringify(data));
-      setProfile(data);
-
-      // Update active domain when profile changes
-      if (data.user_domain && data.user_domain.length > 0) {
-        const domain = data.user_domain[0];
-        if (domain === "instructor" || domain === "student" || domain === "organisation") {
-          setActiveDomain(domain);
-        }
-      }
-    }
-  }, [data, isError]);
-
-  // Initialize profile on authentication
-  if (status === "authenticated" && data && !isError && !profile) {
-    setProfile(data!);
-
-    if (!activeDomain && data!.user_domain && data!.user_domain.length > 0) {
-      const domain = data!.user_domain[0];
+    if (data && !isError && data.user_domain && data.user_domain.length > 0) {
+      const domain = data.user_domain[0];
       if (domain === "instructor" || domain === "student" || domain === "organisation") {
         setActiveDomain(domain);
       }
-      else setActiveDomain(null);
     }
-  }
+  }, [data, isError]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -90,15 +66,13 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
     }
   }, [status]);
 
-
   function clearProfile() {
-    sessionStorage.removeItem("profile");
     void qc.invalidateQueries({ queryKey: ["profile"] });
   }
 
   return <UserProfileContext.Provider value={
     {
-      ...(profile ?? {}),
+      ...(data ?? {}),
       isLoading,
       invalidateQuery: async () => {
         await qc.invalidateQueries({ queryKey: ["profile"] });
@@ -271,6 +245,8 @@ function createQueryOptions(email?: string, options?: Omit<UseQueryOptions<UserP
       }
       return await fetchUserProfile(email);
     },
-    staleTime: 1000 * 60 * 60 // 1hour
+    staleTime: 1000 * 60 * 15,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true
   })
 }
