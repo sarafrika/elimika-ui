@@ -39,6 +39,11 @@ export default async function DashboardLayout(props: DashboardChildrenTypes) {
 
     const user = data.data.content[0];
 
+    // Redirect to onboarding if user doesn't have a domain assigned
+    if (!user.user_domain || user.user_domain.length === 0) {
+      return redirect('/onboarding');
+    }
+
     const userDomains = user?.user_domain as DashboardView[] || [];
 
     const orgAdminDomains = userDomains as OrgDomainType[];
