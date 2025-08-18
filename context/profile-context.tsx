@@ -54,9 +54,23 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
   const [profile, setProfile] = useState<UserProfileType | null>(sessionData ?? data);
   const [activeDomain, setActiveDomain] = useState<DomainTypes | null>(null);
 
+  // Update profile and session storage when data changes
+  useEffect(() => {
+    if (data && !isError) {
+      sessionStorage.setItem("profile", JSON.stringify(data));
+      setProfile(data);
 
-  if (data && !isError) sessionStorage.setItem("profile", JSON.stringify(data));
+      // Update active domain when profile changes
+      if (data.user_domain && data.user_domain.length > 0) {
+        const domain = data.user_domain[0];
+        if (domain === "instructor" || domain === "student" || domain === "organisation") {
+          setActiveDomain(domain);
+        }
+      }
+    }
+  }, [data, isError]);
 
+  // Initialize profile on authentication
   if (status === "authenticated" && data && !isError && !profile) {
     setProfile(data!);
 
