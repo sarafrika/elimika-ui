@@ -218,7 +218,7 @@ export function OrganizationOnboardingForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Provide additional context about your organization's purpose and activities
+                      Provide additional context about your organization&apos;s purpose and activities
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -230,7 +230,7 @@ export function OrganizationOnboardingForm() {
           <div className='rounded-lg bg-yellow-50 p-4'>
             <h3 className='font-medium text-yellow-900'>Next Steps</h3>
             <p className='mt-1 text-sm text-yellow-700'>
-              After registration, you'll be able to create training branches, invite instructors and students, 
+              After registration, you&apos;ll be able to create training branches, invite instructors and students,
               and start offering courses through your organization.
             </p>
           </div>
