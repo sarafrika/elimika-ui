@@ -174,7 +174,7 @@ export function InstructorOnboardingForm() {
           </Card>
 
           <div className='rounded-lg bg-blue-50 p-4'>
-            <h3 className='font-medium text-blue-900'>What's Next?</h3>
+            <h3 className='font-medium text-blue-900'>What&apos;s Next?</h3>
             <p className='mt-1 text-sm text-blue-700'>
               After registration, you can add your education, experience, skills, and professional memberships 
               in your instructor profile to attract more students.
