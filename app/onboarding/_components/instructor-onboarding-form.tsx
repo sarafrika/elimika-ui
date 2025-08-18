@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -35,6 +35,15 @@ const InstructorOnboardingSchema = zInstructor.omit({
   formatted_location: true,
   is_profile_complete: true,
   has_location_coordinates: true,
+}).extend({
+  // Make website optional and allow empty string or valid URL
+  website: z.union([
+    z.string().url(),
+    z.literal(''),
+    z.undefined()
+  ]).optional(),
+  bio: z.string().max(2000).optional(),
+  professional_headline: z.string().max(150).optional()
 });
 
 type InstructorOnboardingFormData = z.infer<typeof InstructorOnboardingSchema>;
@@ -48,7 +57,7 @@ export function InstructorOnboardingForm() {
   const form = useForm<InstructorOnboardingFormData>({
     resolver: zodResolver(InstructorOnboardingSchema),
     defaultValues: {
-      user_uuid: user?.uuid || '',
+      user_uuid: '',
       latitude: undefined,
       longitude: undefined,
       website: '',
@@ -57,17 +66,41 @@ export function InstructorOnboardingForm() {
     },
   });
 
+  // Update user_uuid when user profile loads
+  useEffect(() => {
+    if (user?.uuid && !form.getValues('user_uuid')) {
+      form.setValue('user_uuid', user.uuid);
+    }
+  }, [user?.uuid, form]);
+
   const handleSubmit = async (data: InstructorOnboardingFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
       return;
     }
 
+    // Ensure user_uuid is set
+    if (!data.user_uuid) {
+      data.user_uuid = user.uuid;
+    }
+
+    // Clean up optional fields - remove empty strings
+    const cleanedData = {
+      ...data,
+      website: data.website === '' ? undefined : data.website,
+      bio: data.bio === '' ? undefined : data.bio,
+      professional_headline: data.professional_headline === '' ? undefined : data.professional_headline,
+    };
+
     setIsSubmitting(true);
     try {
-      await createInstructor({
-        body: data
+      const response = await createInstructor({
+        body: cleanedData
       });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create instructor account');
+      }
 
       // Invalidate instructor-related queries
       await queryClient.invalidateQueries({ queryKey: ['instructors'] });
@@ -75,12 +108,17 @@ export function InstructorOnboardingForm() {
       
       // Invalidate and refetch user profile to get updated user_domain
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
-      await user.invalidateQuery?.();
+      if (user.invalidateQuery) {
+        await user.invalidateQuery();
+      }
 
       toast.success('Instructor account created successfully!');
       router.replace('/dashboard/overview');
-    } catch (error) {
-      toast.error('Failed to create instructor account. Please try again.');
+    } catch (error: any) {
+      console.error('Error creating instructor:', error);
+      const errorMessage = error?.message || 'Failed to create instructor account. Please try again.';
+      toast.error(errorMessage);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -102,6 +140,35 @@ export function InstructorOnboardingForm() {
     }
   };
 
+  // Show loading state while user profile is loading
+  if (user?.isLoading) {
+    return (
+      <div className='mx-auto max-w-2xl p-6'>
+        <div className='flex h-64 items-center justify-center'>
+          <div className='flex animate-pulse flex-col items-center'>
+            <div className='mb-3 h-12 w-12 rounded-full bg-gray-200'></div>
+            <div className='h-4 w-32 rounded bg-gray-200'></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if no user
+  if (!user?.uuid) {
+    return (
+      <div className='mx-auto max-w-2xl p-6'>
+        <div className='flex h-64 flex-col items-center justify-center'>
+          <div className='mb-4 text-red-600'>
+            <BookOpen className='h-16 w-16' />
+          </div>
+          <h2 className='mb-2 text-xl font-semibold text-gray-900'>Unable to Load Profile</h2>
+          <p className='text-gray-600'>Please refresh the page or contact support if the issue persists.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='mx-auto max-w-2xl p-6'>
       <div className='mb-8 text-center'>
@@ -114,6 +181,79 @@ export function InstructorOnboardingForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+          {/* Professional Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Professional Information</CardTitle>
+              <CardDescription>
+                Tell students about your expertise and teaching background
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-4'>
+              <FormField
+                control={form.control}
+                name='professional_headline'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Professional Headline</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder='e.g. Software Engineer & Python Expert'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      A brief title that summarizes your expertise (max 150 characters)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name='bio'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bio</FormLabel>
+                    <FormControl>
+                      <textarea 
+                        className='flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+                        placeholder='Tell students about your background, expertise, and teaching philosophy...'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Professional biography describing your expertise and teaching approach (max 2000 characters)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='website'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type='url'
+                        placeholder='https://your-portfolio.com'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Professional website or portfolio URL
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
           {/* Location Information */}
           <Card>
             <CardHeader>
