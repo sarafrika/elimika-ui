@@ -11,12 +11,17 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useInstructor } from '@/context/instructor-context';
+import { addRubricCriterionMutation, addRubricScoringMutation, createAssessmentRubricMutation, getAllGradingLevelsOptions, updateAssessmentRubricMutation, updateRubricCriterionMutation, updateRubricScoringMutation } from '@/services/client/@tanstack/react-query.gen';
+import { StatusEnum, WeightUnitEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { PlusCircle, Trash, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { useFieldArray, useForm, useFormContext } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import Spinner from '../../../../components/ui/spinner';
 
 // RUBRICS
 export enum RubricType {
@@ -44,6 +49,7 @@ type ComponentBlockProps = {
 
 export const ComponentBlock = ({ index, remove, isOnlyOne }: ComponentBlockProps) => {
     const { register, control } = useFormContext();
+    const { data: gradingLevels } = useQuery(getAllGradingLevelsOptions({ query: { pageable: {} } }))
 
     const { fields, append, remove: removeGrading } = useFieldArray({
         control,
@@ -87,7 +93,7 @@ export const ComponentBlock = ({ index, remove, isOnlyOne }: ComponentBlockProps
                                     placeholder="Description"
                                 />
                             </td>
-                            <td className="p-1.5">
+                            {/* <td className="p-1.5">
                                 <Input
                                     type="number"
                                     {...register(
@@ -95,7 +101,21 @@ export const ComponentBlock = ({ index, remove, isOnlyOne }: ComponentBlockProps
                                         { valueAsNumber: true }
                                     )}
                                 />
+                            </td> */}
+                            <td className="p-1.5">
+                                <select
+                                    {...register(`components.${index}.grading.${gradingIndex}.gradingLevelUuid`)}
+                                    className="border border-gray-300 rounded px-2 py-1 w-full"
+                                >
+                                    <option value="">Select Grading Level</option>
+                                    {gradingLevels?.data?.content?.map((level) => (
+                                        <option key={level.uuid} value={level.uuid}>
+                                            {level.grade_display}
+                                        </option>
+                                    ))}
+                                </select>
                             </td>
+
                             <td className="p-1.5">
                                 <Button
                                     type="button"
@@ -160,14 +180,14 @@ export type RubricFormValues = z.infer<typeof rubricFormSchema>;
 
 interface AddRubricFormProps {
     courseId: string;
-    lessonId: string;
+    rubricId: string;
     onCancel: () => void;
     onSubmitSuccess?: () => void;
     className?: string;
     defaultValues?: RubricFormValues;
 }
 
-export function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, className, defaultValues }: AddRubricFormProps) {
+export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, className, defaultValues }: AddRubricFormProps) {
     const form = useForm<RubricFormValues>({
         resolver: zodResolver(rubricFormSchema),
         defaultValues: defaultValues ?? {
@@ -206,18 +226,120 @@ export function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, c
         name: 'components',
     });
 
+    const instructor = useInstructor();
+
+    // MUTATIONS
+    const createRubric = useMutation(createAssessmentRubricMutation());
+    const createRubricComponent = useMutation(addRubricCriterionMutation())
+    const createRubricScores = useMutation(addRubricScoringMutation())
+
+    const updateRubric = useMutation(updateAssessmentRubricMutation());
+    const updateRubricComponent = useMutation(updateRubricCriterionMutation())
+    const updateRubricScores = useMutation(updateRubricScoringMutation())
+
+    const createRubricIsPending = createRubric.isPending || createRubricComponent.isPending || createRubricScores.isPending;
+    const updateRubricIsPending = updateRubric.isPending || updateRubricComponent.isPending || updateRubricScores.isPending;
+
     const onSubmit = async (values: RubricFormValues) => {
         try {
-            // TODO: implement add rubric logic
-            // console.log('Submitting rubric:', values);
-            // console.log('cid rubric:', courseId);
-            // console.log('lid rubric:', lessonId);
+            const rubricBody = {
+                title: values.title,
+                description: values.description,
+                course_uuid: courseId,
+                rubric_type: values.type,
+                instructor_uuid: instructor?.uuid as string,
+                is_public: values.visibility === "Public",
+                status: StatusEnum.DRAFT,
+                active: false,
+                total_weight: 100,
+                weight_unit: WeightUnitEnum.PERCENTAGE,
+                is_weighted: true,
+                created_by: "instructor@sarafrika.com",
+                updated_by: "instructor@sarafrika.com",
+                rubric_category: `${values.type} Assessment`,
+                is_published: true,
+                assessment_scope: "Course-Specific",
+                usage_status: "Active Public Rubric"
+            };
 
-            toast.success('Rubric created successfully');
-            onSubmitSuccess?.();
-            onCancel();
+            if (rubricId) {
+                updateRubric.mutate(
+                    {
+                        path: { uuid: rubricId },
+                        body: rubricBody
+                    },
+                    {
+                        onSuccess: () => {
+                            toast.success("Rubric updated successfully");
+                            onSubmitSuccess?.();
+                            onCancel();
+                        },
+                        onError: () => {
+                            toast.error("Failed to update rubric");
+                        }
+                    }
+                );
+            } else {
+                createRubric.mutate(
+                    { body: rubricBody },
+                    {
+                        onSuccess: (data) => {
+                            const rubricUuid = data?.data?.uuid as string
+                            // toast.success("Rubric created successfully");
+
+                            console.log("Components?>>>>all", values?.components);
+
+                            console.log("Components?>>>>first", values?.components[0]);
+
+                            const rubricComponentBody = {
+                                rubric_uuid: rubricUuid,
+                                component_name: values.components[0]?.name || "",
+                                description: "Technical proficiency and skill execution in performance",
+                                display_order: 1,
+                                weight: 25,
+                                created_by: "instructor@sarafrika.com",
+                                updated_by: "instructor@sarafrika.com",
+                                criteria_category: "Performance Component",
+                                is_primary_criteria: true,
+                                weight_suggestion: "High Priority",
+                                criteria_number: "Criteria 1"
+                            }
+
+                            createRubricComponent.mutate({ path: { rubricUuid }, body: rubricComponentBody }, {
+                                onSuccess: (data) => {
+                                    const rubricUuid = data?.data?.rubric_uuid;
+                                    const criteriaUuid = data?.data?.uuid as string;
+
+                                    const rubricScoringBody = {
+                                        criteria_uuid: criteriaUuid as string,
+                                        grading_level_uuid: "457a3055-ee0d-4eed-8960-39ac9092f784",
+                                        description: "Highly confident and fluent techniques given consistently throughout",
+                                        created_by: "instructor@sarafrika.com",
+                                        updated_by: "instructor@sarafrika.com",
+                                        performance_expectation: "Exceptional Performance",
+                                        score_range: "5 points",
+                                        is_passing_level: true,
+                                        feedback_category: "Excellence"
+                                    }
+
+                                    createRubricScores.mutate({ path: { rubricUuid: rubricUuid as string, criteriaUuid: criteriaUuid as string }, body: rubricScoringBody as any }, {
+                                        onSuccess: () => {
+                                            toast.success("Rubric created successfully");
+                                            onSubmitSuccess?.();
+                                            onCancel();
+                                        }
+                                    })
+                                }
+                            })
+
+                        },
+                        onError: () => toast.error("Failed to create rubric")
+                    }
+                );
+            }
         } catch (error) {
-            toast.error('Failed to create rubric');
+            console.error(error);
+            toast.error("An unexpected error occurred");
         }
     };
 
@@ -332,11 +454,19 @@ export function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, c
                     <Button type="button" variant="outline" onClick={onCancel}>
                         Cancel
                     </Button>
-                    <Button type="submit" className="min-w-[120px]">
+
+                    <Button
+                        type="submit"
+                        className="min-w-[120px] flex items-center justify-center gap-2"
+                        disabled={createRubricIsPending || updateRubricIsPending}
+                    >
+                        {(createRubricIsPending || updateRubricIsPending) && (
+                            <Spinner />
+                        )}
                         {defaultValues ? 'Update Rubric' : 'Create Rubric'}
                     </Button>
-
                 </div>
+
             </form>
         </Form>
     );

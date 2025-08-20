@@ -7,10 +7,19 @@ import type {
   UpdateTrainingBranchResponse,
   GetStudentByIdResponse,
   UpdateStudentResponse,
+  GetAssessmentRubricByUuidResponse,
+  UpdateAssessmentRubricResponse,
+  GetScoringLevelResponse,
+  UpdateScoringLevelResponse,
+  UpdateMatrixCellResponse,
+  UpdateRubricCriterionResponse,
+  UpdateRubricScoringResponse,
   GetQuizByUuidResponse,
   UpdateQuizResponse,
   UpdateQuizQuestionResponse,
   UpdateQuestionOptionResponse,
+  GetTrainingProgramByUuidResponse,
+  UpdateTrainingProgramResponse,
   UpdateProgramRequirementResponse,
   UpdateProgramCourseResponse,
   GetOrganisationByUuidResponse,
@@ -26,6 +35,8 @@ import type {
   UpdateInstructorDocumentResponse,
   GetCourseByUuidResponse,
   UpdateCourseResponse,
+  SetPrimaryRubricResponse,
+  UpdateAssociationResponse,
   UpdateCourseRequirementResponse,
   GetCourseLessonResponse,
   UpdateCourseLessonResponse,
@@ -47,12 +58,27 @@ import type {
   CreateTrainingBranchResponse,
   GetAllStudentsResponse,
   CreateStudentResponse,
+  GetAllAssessmentRubricsResponse,
+  CreateAssessmentRubricResponse,
+  GetScoringLevelsByRubricResponse,
+  CreateRubricScoringLevelResponse,
+  CreateDefaultScoringLevelsResponse,
+  RecalculateScoresResponse,
+  InitializeRubricMatrixResponse,
+  InitializeMatrixResponse,
+  GetRubricCriteriaResponse,
+  AddRubricCriterionResponse,
+  GetRubricScoringResponse,
+  AddRubricScoringResponse,
   GetAllQuizzesResponse,
   CreateQuizResponse,
   GetQuizQuestionsResponse,
   AddQuizQuestionResponse,
   GetQuestionOptionsResponse,
   AddQuestionOptionResponse,
+  GetAllTrainingProgramsResponse,
+  CreateTrainingProgramResponse,
+  PublishProgramResponse,
   GetProgramRequirementsResponse,
   AddProgramRequirementResponse,
   GetProgramCoursesResponse,
@@ -86,6 +112,8 @@ import type {
   UploadCourseIntroVideoResponse,
   UploadCourseBannerResponse,
   ArchiveCourseResponse,
+  GetCourseRubricsResponse,
+  AssociateRubricResponse,
   GetCourseRequirementsResponse,
   AddCourseRequirementResponse,
   GetCourseLessonsResponse,
@@ -121,6 +149,18 @@ import type {
   Search1Response,
   GetTrainingBranchesByOrganisation1Response,
   SearchStudentsResponse,
+  GetPassingScoringLevelsResponse,
+  GetHighestScoringLevelResponse,
+  GetRubricMatrixResponse,
+  GetRubricMatrixViewResponse,
+  SearchAssessmentRubricsResponse,
+  GetRubricsByTypeResponse,
+  GetRubricsByStatusResponse,
+  SearchPublicRubricsResponse,
+  GetPublicRubricsResponse,
+  GetPopularRubricsResponse,
+  GetInstructorRubricsResponse,
+  GetGeneralRubricsResponse,
   GetQuizAttemptsResponse,
   SearchQuizzesResponse,
   SearchQuestionsResponse,
@@ -129,9 +169,15 @@ import type {
   GetRequiredCoursesResponse,
   GetOptionalCoursesResponse,
   GetProgramCertificatesResponse,
+  SearchTrainingProgramsResponse,
   SearchProgramRequirementsResponse,
+  GetPublishedProgramsResponse,
+  GetProgramsByInstructorResponse,
+  GetFreeProgramsResponse,
   SearchProgramEnrollmentsResponse,
   SearchProgramCoursesResponse,
+  GetProgramsByCategoryResponse,
+  GetActiveProgramsResponse,
   GetUsersByOrganisationResponse,
   GetUsersByOrganisationAndDomainResponse,
   GetBranchUsersResponse,
@@ -145,6 +191,8 @@ import type {
   SearchExperienceResponse,
   SearchEducationResponse,
   SearchDocumentsResponse,
+  GetPrimaryRubricResponse,
+  GetRubricsByContextResponse,
   GetCourseEnrollmentsResponse,
   GetCourseCategoriesResponse,
   SearchCoursesResponse,
@@ -263,6 +311,141 @@ export const updateStudentResponseTransformer = async (
   return data;
 };
 
+const assessmentRubricSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseAssessmentRubricSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = assessmentRubricSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAssessmentRubricByUuidResponseTransformer = async (
+  data: any
+): Promise<GetAssessmentRubricByUuidResponse> => {
+  data = apiResponseAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateAssessmentRubricResponseTransformer = async (
+  data: any
+): Promise<UpdateAssessmentRubricResponse> => {
+  data = apiResponseAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+const rubricScoringLevelSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseRubricScoringLevelSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = rubricScoringLevelSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getScoringLevelResponseTransformer = async (
+  data: any
+): Promise<GetScoringLevelResponse> => {
+  data = apiResponseRubricScoringLevelSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateScoringLevelResponseTransformer = async (
+  data: any
+): Promise<UpdateScoringLevelResponse> => {
+  data = apiResponseRubricScoringLevelSchemaResponseTransformer(data);
+  return data;
+};
+
+const rubricCriteriaSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const rubricMatrixSchemaResponseTransformer = (data: any) => {
+  data.rubric = assessmentRubricSchemaResponseTransformer(data.rubric);
+  data.scoring_levels = data.scoring_levels.map((item: any) => {
+    return rubricScoringLevelSchemaResponseTransformer(item);
+  });
+  data.criteria = data.criteria.map((item: any) => {
+    return rubricCriteriaSchemaResponseTransformer(item);
+  });
+  return data;
+};
+
+const apiResponseRubricMatrixSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = rubricMatrixSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateMatrixCellResponseTransformer = async (
+  data: any
+): Promise<UpdateMatrixCellResponse> => {
+  data = apiResponseRubricMatrixSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseRubricCriteriaSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = rubricCriteriaSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateRubricCriterionResponseTransformer = async (
+  data: any
+): Promise<UpdateRubricCriterionResponse> => {
+  data = apiResponseRubricCriteriaSchemaResponseTransformer(data);
+  return data;
+};
+
+const rubricScoringSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseRubricScoringSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = rubricScoringSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateRubricScoringResponseTransformer = async (
+  data: any
+): Promise<UpdateRubricScoringResponse> => {
+  data = apiResponseRubricScoringSchemaResponseTransformer(data);
+  return data;
+};
+
 const quizSchemaResponseTransformer = (data: any) => {
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
@@ -337,6 +520,37 @@ export const updateQuestionOptionResponseTransformer = async (
   data: any
 ): Promise<UpdateQuestionOptionResponse> => {
   data = apiResponseQuizQuestionOptionSchemaResponseTransformer(data);
+  return data;
+};
+
+const trainingProgramSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseTrainingProgramSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = trainingProgramSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getTrainingProgramByUuidResponseTransformer = async (
+  data: any
+): Promise<GetTrainingProgramByUuidResponse> => {
+  data = apiResponseTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateTrainingProgramResponseTransformer = async (
+  data: any
+): Promise<UpdateTrainingProgramResponse> => {
+  data = apiResponseTrainingProgramSchemaResponseTransformer(data);
   return data;
 };
 
@@ -627,6 +841,40 @@ export const getCourseByUuidResponseTransformer = async (
 
 export const updateCourseResponseTransformer = async (data: any): Promise<UpdateCourseResponse> => {
   data = apiResponseCourseSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseRubricAssociationSchemaResponseTransformer = (data: any) => {
+  if (data.association_date) {
+    data.association_date = new Date(data.association_date);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseRubricAssociationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseRubricAssociationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const setPrimaryRubricResponseTransformer = async (
+  data: any
+): Promise<SetPrimaryRubricResponse> => {
+  data = apiResponseCourseRubricAssociationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateAssociationResponseTransformer = async (
+  data: any
+): Promise<UpdateAssociationResponse> => {
+  data = apiResponseCourseRubricAssociationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -1022,6 +1270,166 @@ export const createStudentResponseTransformer = async (
   return data;
 };
 
+const pagedDtoAssessmentRubricSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return assessmentRubricSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoAssessmentRubricSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAllAssessmentRubricsResponseTransformer = async (
+  data: any
+): Promise<GetAllAssessmentRubricsResponse> => {
+  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createAssessmentRubricResponseTransformer = async (
+  data: any
+): Promise<CreateAssessmentRubricResponse> => {
+  data = apiResponseAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoRubricScoringLevelSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return rubricScoringLevelSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoRubricScoringLevelSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoRubricScoringLevelSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getScoringLevelsByRubricResponseTransformer = async (
+  data: any
+): Promise<GetScoringLevelsByRubricResponse> => {
+  data = apiResponsePagedDtoRubricScoringLevelSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createRubricScoringLevelResponseTransformer = async (
+  data: any
+): Promise<CreateRubricScoringLevelResponse> => {
+  data = apiResponseRubricScoringLevelSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createDefaultScoringLevelsResponseTransformer = async (
+  data: any
+): Promise<CreateDefaultScoringLevelsResponse> => {
+  data = apiResponsePagedDtoRubricScoringLevelSchemaResponseTransformer(data);
+  return data;
+};
+
+export const recalculateScoresResponseTransformer = async (
+  data: any
+): Promise<RecalculateScoresResponse> => {
+  data = apiResponseRubricMatrixSchemaResponseTransformer(data);
+  return data;
+};
+
+export const initializeRubricMatrixResponseTransformer = async (
+  data: any
+): Promise<InitializeRubricMatrixResponse> => {
+  data = apiResponseRubricMatrixSchemaResponseTransformer(data);
+  return data;
+};
+
+export const initializeMatrixResponseTransformer = async (
+  data: any
+): Promise<InitializeMatrixResponse> => {
+  data = apiResponseRubricMatrixSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoRubricCriteriaSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return rubricCriteriaSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoRubricCriteriaSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoRubricCriteriaSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getRubricCriteriaResponseTransformer = async (
+  data: any
+): Promise<GetRubricCriteriaResponse> => {
+  data = apiResponsePagedDtoRubricCriteriaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addRubricCriterionResponseTransformer = async (
+  data: any
+): Promise<AddRubricCriterionResponse> => {
+  data = apiResponseRubricCriteriaSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoRubricScoringSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return rubricScoringSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoRubricScoringSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoRubricScoringSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getRubricScoringResponseTransformer = async (
+  data: any
+): Promise<GetRubricScoringResponse> => {
+  data = apiResponsePagedDtoRubricScoringSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addRubricScoringResponseTransformer = async (
+  data: any
+): Promise<AddRubricScoringResponse> => {
+  data = apiResponseRubricScoringSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoQuizSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -1106,6 +1514,46 @@ export const addQuestionOptionResponseTransformer = async (
   data: any
 ): Promise<AddQuestionOptionResponse> => {
   data = apiResponseQuizQuestionOptionSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoTrainingProgramSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return trainingProgramSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoTrainingProgramSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoTrainingProgramSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAllTrainingProgramsResponseTransformer = async (
+  data: any
+): Promise<GetAllTrainingProgramsResponse> => {
+  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createTrainingProgramResponseTransformer = async (
+  data: any
+): Promise<CreateTrainingProgramResponse> => {
+  data = trainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
+export const publishProgramResponseTransformer = async (
+  data: any
+): Promise<PublishProgramResponse> => {
+  data = apiResponseTrainingProgramSchemaResponseTransformer(data);
   return data;
 };
 
@@ -1532,6 +1980,39 @@ export const archiveCourseResponseTransformer = async (
   data: any
 ): Promise<ArchiveCourseResponse> => {
   data = apiResponseCourseSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoCourseRubricAssociationSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseRubricAssociationSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseRubricAssociationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseRubricAssociationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseRubricsResponseTransformer = async (
+  data: any
+): Promise<GetCourseRubricsResponse> => {
+  data = apiResponsePagedDtoCourseRubricAssociationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const associateRubricResponseTransformer = async (
+  data: any
+): Promise<AssociateRubricResponse> => {
+  data = apiResponseCourseRubricAssociationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2022,6 +2503,90 @@ export const searchStudentsResponseTransformer = async (
   return data;
 };
 
+export const getPassingScoringLevelsResponseTransformer = async (
+  data: any
+): Promise<GetPassingScoringLevelsResponse> => {
+  data = apiResponsePagedDtoRubricScoringLevelSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getHighestScoringLevelResponseTransformer = async (
+  data: any
+): Promise<GetHighestScoringLevelResponse> => {
+  data = apiResponseRubricScoringLevelSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getRubricMatrixResponseTransformer = async (
+  data: any
+): Promise<GetRubricMatrixResponse> => {
+  data = apiResponseRubricMatrixSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getRubricMatrixViewResponseTransformer = async (
+  data: any
+): Promise<GetRubricMatrixViewResponse> => {
+  data = apiResponseRubricMatrixSchemaResponseTransformer(data);
+  return data;
+};
+
+export const searchAssessmentRubricsResponseTransformer = async (
+  data: any
+): Promise<SearchAssessmentRubricsResponse> => {
+  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getRubricsByTypeResponseTransformer = async (
+  data: any
+): Promise<GetRubricsByTypeResponse> => {
+  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getRubricsByStatusResponseTransformer = async (
+  data: any
+): Promise<GetRubricsByStatusResponse> => {
+  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+export const searchPublicRubricsResponseTransformer = async (
+  data: any
+): Promise<SearchPublicRubricsResponse> => {
+  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getPublicRubricsResponseTransformer = async (
+  data: any
+): Promise<GetPublicRubricsResponse> => {
+  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getPopularRubricsResponseTransformer = async (
+  data: any
+): Promise<GetPopularRubricsResponse> => {
+  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getInstructorRubricsResponseTransformer = async (
+  data: any
+): Promise<GetInstructorRubricsResponse> => {
+  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getGeneralRubricsResponseTransformer = async (
+  data: any
+): Promise<GetGeneralRubricsResponse> => {
+  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
+  return data;
+};
+
 const quizAttemptSchemaResponseTransformer = (data: any) => {
   if (data.started_at) {
     data.started_at = new Date(data.started_at);
@@ -2167,10 +2732,38 @@ export const getProgramCertificatesResponseTransformer = async (
   return data;
 };
 
+export const searchTrainingProgramsResponseTransformer = async (
+  data: any
+): Promise<SearchTrainingProgramsResponse> => {
+  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
 export const searchProgramRequirementsResponseTransformer = async (
   data: any
 ): Promise<SearchProgramRequirementsResponse> => {
   data = apiResponsePagedDtoProgramRequirementSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getPublishedProgramsResponseTransformer = async (
+  data: any
+): Promise<GetPublishedProgramsResponse> => {
+  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getProgramsByInstructorResponseTransformer = async (
+  data: any
+): Promise<GetProgramsByInstructorResponse> => {
+  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getFreeProgramsResponseTransformer = async (
+  data: any
+): Promise<GetFreeProgramsResponse> => {
+  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2204,6 +2797,20 @@ export const searchProgramCoursesResponseTransformer = async (
   data: any
 ): Promise<SearchProgramCoursesResponse> => {
   data = apiResponsePagedDtoProgramCourseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getProgramsByCategoryResponseTransformer = async (
+  data: any
+): Promise<GetProgramsByCategoryResponse> => {
+  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getActiveProgramsResponseTransformer = async (
+  data: any
+): Promise<GetActiveProgramsResponse> => {
+  data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2338,6 +2945,20 @@ export const searchDocumentsResponseTransformer = async (
   data: any
 ): Promise<SearchDocumentsResponse> => {
   data = apiResponsePagedDtoInstructorDocumentSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getPrimaryRubricResponseTransformer = async (
+  data: any
+): Promise<GetPrimaryRubricResponse> => {
+  data = apiResponseCourseRubricAssociationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getRubricsByContextResponseTransformer = async (
+  data: any
+): Promise<GetRubricsByContextResponse> => {
+  data = apiResponsePagedDtoCourseRubricAssociationSchemaResponseTransformer(data);
   return data;
 };
 
