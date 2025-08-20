@@ -1,7 +1,7 @@
+import { UserProfileType } from '@/lib/types';
 import { queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { UserProfileType } from '@/lib/types';
 
 type DomainTypes = "instructor" | "student" | "organisation"
 
@@ -10,7 +10,8 @@ const UserProfileContext = createContext<Partial<UserProfileType> & {
   invalidateQuery: () => void,
   clearProfile: () => void,
   setActiveDomain: (domain: DomainTypes) => void,
-  activeDomain: string | null
+  activeDomain: string | null,
+  updateProfile: (data: UserProfileType) => void
 } | null>(null);
 
 export const useUserProfile = () => useContext(UserProfileContext);
@@ -32,6 +33,7 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
   if (data && !isError) sessionStorage.setItem("profile", JSON.stringify(data));
 
   if (status === "authenticated" && data && !isError && !profile) {
+    console.log(data)
     setProfile(data!);
 
     if (!activeDomain && data!.user_domain && data!.user_domain.length > 0) {
@@ -65,7 +67,13 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
       },
       clearProfile,
       setActiveDomain: (domain: DomainTypes) => setActiveDomain(domain),
-      activeDomain
+      activeDomain,
+      updateProfile: async (data) => {
+        setProfile(data);
+        sessionStorage.setItem("profile", JSON.stringify(data));
+        await qc.invalidateQueries({ queryKey: ["profile"] });
+        await refetch();
+      }
     }}>
     {children}
   </UserProfileContext.Provider>

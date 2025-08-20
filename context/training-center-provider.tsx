@@ -1,18 +1,16 @@
 'use client';
 
-import { fetchTrainingCenters } from '@/app/auth/create-account/_components/actions';
-import { TrainingCenter } from '@/app/auth/create-account/_components/training-center-form';
-import { useSession } from 'next-auth/react';
+import { useQueries } from '@tanstack/react-query';
 import {
   createContext,
   ReactNode,
-  useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useState
 } from 'react';
-import { toast } from 'sonner';
+import { TrainingCenter } from '../lib/types';
+import { ApiResponse, getTrainingBranchesByOrganisation, getUsersByOrganisation, TrainingBranch, User } from '../services/client';
+import { useUserProfile } from './profile-context';
 
 export interface UseTrainingCenterReturn {
   trainingCenter: TrainingCenter | null;
@@ -27,7 +25,8 @@ const initialState: Omit<UseTrainingCenterReturn, 'refetchTrainingCenter'> = {
   error: null,
 };
 
-export function useTrainingCenter(): UseTrainingCenterReturn {
+/* export function useTrainingCenter(): UseTrainingCenterReturn {
+
   const [state, setState] = useState(initialState);
   const { data: session } = useSession();
 
@@ -84,15 +83,69 @@ export function useTrainingCenter(): UseTrainingCenterReturn {
   }, [fetchTrainingCenter]);
 
   return { ...state, refetchTrainingCenter: fetchTrainingCenter };
+} */
+
+// const TrainingCenterContext = createContext<UseTrainingCenterReturn | null>(null);
+
+export function useTrainingCenter() {
+  return useContext(TrainingCenterContext);
 }
 
-const TrainingCenterContext = createContext<UseTrainingCenterReturn | null>(null);
+const TrainingCenterContext = createContext<TrainingCenter | null>(null);
 
 export function TrainingCenterProvider({ children }: { children: ReactNode }) {
-  const trainingCenterData = useTrainingCenter();
+  // const trainingCenterData = useTrainingCenter();
+  const user = useUserProfile();
+  const [organization, setOrganization] = useState<TrainingCenter | null>(
+    (user && user.organizations && user.organizations.length > 0 ?
+      user.organizations[0]! : null) as TrainingCenter | null
+  );
+
+  const [branchesQuery, usersQuery] = useQueries({
+    queries: [
+      {
+        queryFn: () => getTrainingBranchesByOrganisation({
+          path: {
+            uuid: organization!.uuid!
+          }
+        }),
+        queryKey: ["training-branches"],
+        enabled: !organization || !organization.branches || organization.branches.length === 0
+      },
+
+      {
+        queryFn: () => getUsersByOrganisation({
+          path: {
+            uuid: organization!.uuid!
+          }
+        }),
+        queryKey: ["training-users"],
+        enabled: !organization || !organization.branches || organization.branches.length === 0
+      }
+    ]
+  })
+
+  useMemo(() => {
+    if (organization) {
+      let branches: TrainingBranch[] = [], users: User[] = []
+      if (!branchesQuery.isError && branchesQuery.data) {
+        const branchResp = branchesQuery.data.data as ApiResponse
+        branches = (branchResp.data!.content ?? []) as TrainingBranch[]
+      }
+      if (!usersQuery.isError && usersQuery.data) {
+        const orgUsresResp = usersQuery.data.data as ApiResponse;
+        users = (orgUsresResp.data!.content ?? []) as User[]
+      }
+      setOrganization({
+        ...organization,
+        branches,
+        users
+      });
+    }
+  }, [branchesQuery.isSuccess, usersQuery.isSuccess])
 
   return (
-    <TrainingCenterContext.Provider value={trainingCenterData}>
+    <TrainingCenterContext.Provider value={organization}>
       {children}
     </TrainingCenterContext.Provider>
   );

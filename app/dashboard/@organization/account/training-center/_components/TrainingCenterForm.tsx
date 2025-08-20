@@ -6,22 +6,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
+    FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
+import { useUserProfile } from '../../../../../../context/profile-context';
+import { UserProfileType } from '../../../../../../lib/types';
+import { Organisation, updateOrganisation, updateUser, User } from '../../../../../../services/client';
 import { zOrganisation } from '../../../../../../services/client/zod.gen';
 
-const trainingCenterSchema = zOrganisation.merge(z.object({
+const trainingCenterSchema = zOrganisation.omit({
+    created_date: true,
+    updated_date: true
+}).merge(z.object({
     logoUrl: z.string().url().optional().or(z.literal('')),
     contactPersonEmail: z.string(),
     contactPersonPhone: z.string(),
@@ -46,13 +53,64 @@ export default function TrainingCenterForm() {
         ]);
     }, [replaceBreadcrumbs]);
 
+    const userProfile = useUserProfile();
+    const organizations = userProfile!.organizations || [] as any[];
+    let organisation = {} as any;
+    if (organizations && organizations.length > 0) {
+        organisation = Object.keys(organizations[0]).reduce((a, b) => ({
+            ...a,
+            [b]: organizations[0][b] ?? ""
+        }), {}) as Organisation;
+    }
+
     const form = useForm<TrainingCenterFormValues>({
-        resolver: zodResolver(trainingCenterSchema)
+        resolver: zodResolver(trainingCenterSchema),
+        defaultValues: {
+            ...(organisation ?? {}),
+            contactPersonEmail: userProfile!.email,
+            contactPersonPhone: userProfile!.phone_number,
+            user_uuid: userProfile!.uuid,
+            active: true
+        }
     });
 
-    const onSubmit = (data: TrainingCenterFormValues) => {
+    console.log(form.formState.errors)
+
+    const onSubmit = async (orgData: TrainingCenterFormValues) => {
         // TODO: Implement submission logic, including file upload for the logo
-        //console.log(data);
+        console.log(orgData);
+        const updateResponse = await updateOrganisation({
+            path: {
+                uuid: organisation.uuid
+            },
+            body: orgData
+        });
+
+        // console.log(updateResponse);
+        if (updateResponse.error) {
+            toast.error("Error while updateing institution");
+            const error = updateResponse.error as any;
+            Object.keys(error).forEach((key: any) => form.setError(key, error[key]));
+            return;
+        }
+
+        if (!userProfile!.phone_number)
+            await updateUser({
+                path: {
+                    uuid: userProfile!.uuid!
+                },
+                body: {
+                    ...(userProfile as User),
+                    phone_number: orgData.contactPersonPhone
+                }
+            })
+
+        await userProfile!.updateProfile({
+            ...userProfile,
+            phone_number: orgData.contactPersonPhone,
+            organizations: [...userProfile!.organizations!].map(org => org.uuid! === orgData.uuid! ? orgData : org)
+        } as UserProfileType);
+        toast.success("Saved successfully");
     };
 
     return (
@@ -66,6 +124,7 @@ export default function TrainingCenterForm() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className='space-y-8'>
+
                         <FormField
                             control={form.control}
                             name='logoUrl'
@@ -100,19 +159,35 @@ export default function TrainingCenterForm() {
                             )}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name='name'
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Organisation Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder='Elimika' {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <div className="flex gap-4">
+                            <FormField
+                                control={form.control}
+                                name='name'
+                                render={({ field }) => (
+                                    <FormItem className='flex-grow'>
+                                        <FormLabel>Organisation Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder='Elimika' {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name='licence_no'
+                                render={({ field }) => (
+                                    <FormItem className='flex-grow'>
+                                        <FormLabel>Licence Number</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
                         <FormField
                             control={form.control}
@@ -133,6 +208,15 @@ export default function TrainingCenterForm() {
                             )}
                         />
 
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Contact Person</CardTitle>
+                        <CardDescription>The person to contact regarding the institution</CardDescription>
+                    </CardHeader>
+                    <CardContent>
                         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
                             <FormField
                                 control={form.control}
@@ -162,15 +246,25 @@ export default function TrainingCenterForm() {
                             />
                         </div>
 
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Location</CardTitle>
+                        <CardDescription>Where the instituion is located</CardDescription>
+                    </CardHeader>
+                    <CardContent className='flex flex-col gap-5'>
+
                         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
                             <FormField
                                 control={form.control}
-                                name='website'
+                                name='country'
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Website</FormLabel>
+                                        <FormLabel>Country</FormLabel>
                                         <FormControl>
-                                            <Input placeholder='https://elimika.org' {...field} />
+                                            <Input {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -194,42 +288,39 @@ export default function TrainingCenterForm() {
                         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
                             <FormField
                                 control={form.control}
-                                name='domain'
+                                name='website'
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Domain</FormLabel>
+                                        <FormLabel>Website</FormLabel>
                                         <FormControl>
-                                            <Input placeholder='elimika.org' {...field} />
+                                            <Input placeholder='https://elimika.org' {...field} />
                                         </FormControl>
-                                        <FormDescription>
-                                            Your organisation&apos;s primary domain for students and instructors.
-                                        </FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                             <FormField
                                 control={form.control}
-                                name='code'
+                                name='domain'
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Organisation Code</FormLabel>
+                                        <FormLabel>Institution Domain</FormLabel>
                                         <FormControl>
-                                            <Input placeholder='ELK-001' {...field} />
+                                            <Input {...field} />
                                         </FormControl>
-                                        <FormDescription>
-                                            An internal or unique code for your organisation.
-                                        </FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </div>
+
                     </CardContent>
                 </Card>
 
                 <div className='flex justify-end'>
-                    <Button type='submit'>Update Profile</Button>
+                    <Button type='submit' disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? <><Loader2 /> Updating....</> : "Update Profile"}
+                    </Button>
                 </div>
             </form>
         </Form>

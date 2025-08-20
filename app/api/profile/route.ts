@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "../../../services/auth";
-import { getInstructorEducation, getInstructorExperience, getInstructorMemberships, getInstructorSkills, Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, searchInstructors, SearchResponse, searchStudents, Student, User } from "../../../services/client";
-import { getUserByEmail } from "../../../services/user/actions";
+import { ApiResponse, getInstructorEducation, getInstructorExperience, getInstructorMemberships, getInstructorSkills, Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, search, searchInstructors, SearchResponse, searchStudents, Student, User } from "../../../services/client";
+import { client } from "../../../services/client/client.gen";
 
 type InstructorProfileType = Instructor & {
     educations: InstructorEducation[],
@@ -13,7 +13,7 @@ type InstructorProfileType = Instructor & {
 type UserProfileType = User & {
     student?: Student,
     instructor?: InstructorProfileType
-    organization?: Organisation
+    organizations?: Organisation[]
 }
 
 export async function GET(request: NextRequest) {
@@ -23,15 +23,33 @@ export async function GET(request: NextRequest) {
         return new NextResponse(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
     }
 
-    const userResp = await getUserByEmail(session.user.email);
+    /* const userResp = await getUserByEmail(session.user.email);
     if (!userResp) {
+        return new NextResponse(JSON.stringify({ error: "User not found" }), { status: 404 })
+    } */
+
+    const userResp = await search({
+        query: {
+            searchParams: {
+                email_eq: session.user.email
+            }
+        }
+    });
+    const userDataResp = userResp.data as SearchResponse
+    console.log(userDataResp);
+
+    if (
+        userDataResp.error || !userDataResp.data || !userDataResp.data.content ||
+        userDataResp.data.content.length === 0
+    ) {
         return new NextResponse(JSON.stringify({ error: "User not found" }), { status: 404 })
     }
 
+    const userData = userDataResp.data.content[0] as User;
     const user = {
-        ...userResp,
         ...session.user,
-        dob: new Date(userResp.dob ?? Date.now())
+        ...userData,
+        dob: new Date(userData.dob ?? Date.now())
     } as UserProfileType;
 
     if (user.user_domain && user.user_domain.length > 0) {
@@ -144,7 +162,36 @@ export async function GET(request: NextRequest) {
         }
 
 
-        // TODO: Add organisation data in profile
+        // Include User Organizations data in profile
+        console.log("user.uuid", user.uuid)
+        if (user.user_domain.includes("organisation_user")) {
+            const organizationSearchResult = await client.get({
+                url: "/api/v1/organisations/search",
+                query: {
+                    searchParams: {
+                        user_uuid_eq: user.uuid
+                    },
+                    pagination: {
+                        page: 0,
+                        size: 10
+                    }
+                },
+                headers: {
+                    Authorization: `Bearer ${session.decoded.id_token}`
+                }
+            }) as ApiResponse;
+
+            const responseData = organizationSearchResult.data as SearchResponse;
+
+            if (
+                !responseData.error &&
+                responseData.data &&
+                responseData.data.content &&
+                responseData.data.content.length > 0
+            ) {
+                user.organizations = responseData.data.content as unknown as Organisation[];
+            }
+        }
     }
 
     return new NextResponse(JSON.stringify(user))

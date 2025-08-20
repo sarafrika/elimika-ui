@@ -57,7 +57,7 @@ const config: NextAuthConfig = {
       // Initial sign in
       if (account && user) {
         const decodedToken = decodeJWT(account.access_token!);
-
+        console.log(token)
         return {
           ...token,
           id: account.providerAccountId,

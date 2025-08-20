@@ -1,7 +1,7 @@
 import { schemas } from '@/services/api/zod-client';
-import { z } from 'zod';
+import { Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, Student, TrainingBranch, User } from '@/services/client';
 import { ReactNode } from 'react';
-import { Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, Student, User } from '@/services/client';
+import { z } from 'zod';
 
 export type UserDomain = 'student' | 'instructor' | 'admin' | 'organisation_user';
 
@@ -41,6 +41,11 @@ export type DashboardChildrenTypes = {
   [key: string]: ReactNode;
 };
 
+export type TrainingCenter = Organisation & {
+  branches: TrainingBranch[],
+  users: User[]
+}
+
 export type UserProfileType = User & {
   student?: Student,
   instructor?: Instructor & {
@@ -49,5 +54,5 @@ export type UserProfileType = User & {
     membership: InstructorProfessionalMembership[],
     skills: InstructorSkill
   },
-  organization?: Organisation
+  organizations?: TrainingCenter[]
 }

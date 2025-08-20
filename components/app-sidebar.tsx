@@ -25,7 +25,7 @@ export function AppSidebar({
   activeDomain,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { activeDomain: UserDomain }) {
-  const { trainingCenter } = useTrainingCenter();
+  const trainingCenter = useTrainingCenter();
   const pathname = usePathname();
 
   // Helper to get menu items for a domain
