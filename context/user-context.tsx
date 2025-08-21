@@ -1,43 +1,19 @@
+// DEPRECATED: This context has been replaced by TanStack Query-based user management
+// Use useUserProfile() from profile-context.tsx instead
+
 "use client"
-import { useSession } from 'next-auth/react';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { search, User } from '@/services/client';
+import { useUserProfile } from './profile-context';
 
-const UserContext = createContext<User & { updateSession: (usr: User) => void } | null>(null);
-export default function UserContextProvider({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession();
-  const sessionStorageUser = typeof window !== "undefined" ? sessionStorage.getItem("user") : null;
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      sessionStorage.removeItem("user");
-      setUser(null)
-    }
-    else if (session?.user && !sessionStorageUser || sessionStorageUser === "undefined") {
-      (async () => {
-        const resp = await search({ query: { searchParams: { email_eq: session?.user.email }, pageable: { page: 0, size: 100 } } });
-        if (!resp.error) {
-          const results = resp.data.data!.content!;
-          setUser(results[0]!)
-          sessionStorage.setItem("user", JSON.stringify(results[0]))
-        }
-      })()
-    }
-    else if (sessionStorageUser) {
-      setUser(JSON.parse(sessionStorageUser))
-    }
-
-  }, [status]);
-
-  function updateSession(userData: User) {
-    sessionStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-  }
-
-  return <UserContext.Provider value={{ ...user!, updateSession }}>{children}</UserContext.Provider>;
-}
-
+// Legacy compatibility export - redirects to new system
 export function useUser() {
-  return useContext(UserContext);
+  const profile = useUserProfile();
+  
+  return {
+    ...profile,
+    updateSession: (userData: any) => {
+      // This is now handled automatically by TanStack Query
+      // You can use profile.invalidateQuery() to refresh user data
+      profile?.invalidateQuery?.();
+    }
+  };
 }
