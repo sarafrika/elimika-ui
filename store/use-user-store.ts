@@ -1,67 +1,49 @@
+// DEPRECATED: This store has been replaced by TanStack Query-based user management
+// Use useUserProfile() or useUserQuery() hooks instead
+
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { User } from '@/services/api/schema';
-import { useSession } from 'next-auth/react';
+import { useUserProfile } from '@/context/profile-context';
 
 export type UserState = {
-  user: User | null;
-  domains: string[];
   activeDomain: string | null;
-  isLoading: boolean;
-  error: string | null;
-  setUser: (user: User | null) => void;
-  setDomains: (domains: string[]) => void;
   setActiveDomain: (domain: string) => void;
-  clearUser: () => void;
-  fetchCurrentUser: () => Promise<User | undefined>;
+  clearActiveDomain: () => void;
 };
 
-export const useUserStore = create<UserState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      domains: [],
-      activeDomain: null,
-      isLoading: false,
-      error: null,
-      setUser: user => set({ user }),
-      setDomains: domains =>
-        set({
-          domains,
-          activeDomain: domains.length > 0 ? domains[0] : null,
-        }),
-      setActiveDomain: domain => set({ activeDomain: domain }),
-      clearUser: () => set({ user: null, domains: [], activeDomain: null }),
-      //@ts-ignore
-      fetchCurrentUser: async () => {
-        try {
-          set({ isLoading: true, error: null });
-          const session = useSession();
-          const userData = session.data?.user;
-          //@ts-ignore
-          set({ user: userData, isLoading: false });
-          if (userData && userData?.user_domain && userData?.user_domain?.length > 0) {
-            set({
-              domains: userData.user_domain,
-              activeDomain: userData.user_domain[0],
-            });
-          }
-          return userData;
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : 'An unknown error occurred',
-            isLoading: false,
-          });
-          return undefined;
-        }
-      },
-    }),
-    {
-      name: 'user-storage', // unique name for localStorage
-      partialize: state => ({
-        user: state.user,
-        activeDomain: state.activeDomain,
-      }),
-    }
-  )
-);
+// Simplified store that only manages UI state, not user data
+export const useUserStore = create<UserState>((set) => ({
+  activeDomain: null,
+  setActiveDomain: (domain: string) => set({ activeDomain: domain }),
+  clearActiveDomain: () => set({ activeDomain: null }),
+}));
+
+// Legacy compatibility functions that redirect to new TanStack Query system
+export const useLegacyUserStore = () => {
+  const profile = useUserProfile();
+  const { activeDomain, setActiveDomain, clearActiveDomain } = useUserStore();
+
+  return {
+    user: profile,
+    domains: profile?.user_domain || [],
+    activeDomain: activeDomain || profile?.user_domain?.[0] || null,
+    isLoading: profile?.isLoading || false,
+    error: null,
+    setUser: () => {
+      // User data is now managed by TanStack Query
+      console.warn('setUser is deprecated. Use profile.invalidateQuery() instead');
+    },
+    setDomains: () => {
+      // Domains are now derived from user data
+      console.warn('setDomains is deprecated. Domains are derived from user profile');
+    },
+    setActiveDomain,
+    clearUser: () => {
+      profile?.clearProfile?.();
+      clearActiveDomain();
+    },
+    fetchCurrentUser: async () => {
+      await profile?.invalidateQuery?.();
+      return profile;
+    },
+  };
+};
