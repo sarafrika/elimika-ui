@@ -1058,15 +1058,13 @@ export type QueryKey<TOptions extends Options> = [
   Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
     _id: string;
     _infinite?: boolean;
-    tags?: ReadonlyArray<string>;
   },
 ];
 
 const createQueryKey = <TOptions extends Options>(
   id: string,
   options?: TOptions,
-  infinite?: boolean,
-  tags?: ReadonlyArray<string>
+  infinite?: boolean
 ): [QueryKey<TOptions>[0]] => {
   const params: QueryKey<TOptions>[0] = {
     _id: id,
@@ -1074,9 +1072,6 @@ const createQueryKey = <TOptions extends Options>(
   } as QueryKey<TOptions>[0];
   if (infinite) {
     params._infinite = infinite;
-  }
-  if (tags) {
-    params.tags = tags;
   }
   if (options?.body) {
     params.body = options.body;

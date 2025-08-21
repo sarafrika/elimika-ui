@@ -6,12 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { getProgramCoursesOptions, getProgramCoursesQueryKey, getTrainingProgramByUuidOptions, removeProgramCourseMutation } from '@/services/client/@tanstack/react-query.gen';
+import { getProgramCoursesOptions, getProgramCoursesQueryKey, getTrainingProgramByUuidOptions, publishProgramMutation, removeProgramCourseMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, CheckCircle, Clock, Trash, Users } from 'lucide-react';
+import { BookOpen, Clock, Trash, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
+import { AddProgramCourseDialog } from '../../../_components/program-management-form';
 
 const cls = {
   uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
@@ -52,36 +54,44 @@ const cls = {
   ],
 };
 
-export default function ClassPreviewPage() {
+export default function ProgramPreviewPage() {
   const params = useParams();
-  const classId = params?.id as string;
+  const programId = params?.id as string;
   const queryClient = useQueryClient()
 
   // GET TRAINING PROGRAM BY ID
-  const { data, isLoading, isFetching, } = useQuery(getTrainingProgramByUuidOptions({ path: { uuid: classId } }))
+  const { data, isLoading, isFetching, } = useQuery(getTrainingProgramByUuidOptions({ path: { uuid: programId } }))
   // @ts-ignore
-  const classData = data?.data
+  const programData = data?.data
 
   // GET TRAINING PROGRAM COURSES
-  const { data: programCourses, } = useQuery(getProgramCoursesOptions({ path: { programUuid: classId } }))
+  const { data: programCourses, refetch } = useQuery(getProgramCoursesOptions({ path: { programUuid: programId } }))
 
   const { replaceBreadcrumbs } = useBreadcrumb();
   useEffect(() => {
-    const title = isLoading || isFetching || !classData?.title
+    const title = isLoading || isFetching || !programData?.title
       ? 'Preview - ...'
-      : `Preview - ${classData.title}`;
+      : `Preview - ${programData.title}`;
 
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      { id: 'classes', title: 'Classes', url: '/dashboard/classes' },
+      { id: 'programs', title: 'Programs', url: '/dashboard/programs' },
       {
         id: 'preview',
         title,
-        url: `/dashboard/classes/preview/${classId}`,
+        url: `/dashboard/programs/preview/${programId}`,
         isLast: true,
       },
     ]);
-  }, [replaceBreadcrumbs, classId, classData?.title, isLoading, isFetching]);
+  }, [replaceBreadcrumbs, programId, programData?.title, isLoading, isFetching]);
+
+
+
+  const [isAddClassCourseDialog, setIsAddClassCourseDialog] = useState(false);
+  const openAddClassCourseDialog = () => {
+    setIsAddClassCourseDialog(true)
+  }
+
 
   const [courseToDelete, setCourseToDelete] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -96,13 +106,13 @@ export default function ClassPreviewPage() {
 
   const handleConfirm = () => {
     if (courseToDelete) {
-      removeProgramCourse.mutate({ path: { courseUuid: courseToDelete?.uuid, programUuid: classId } }, {
+      removeProgramCourse.mutate({ path: { courseUuid: courseToDelete?.uuid, programUuid: programId } }, {
         onSuccess: () => {
           toast.success("")
           setIsDialogOpen(false);
           setCourseToDelete(null);
           queryClient.invalidateQueries({
-            queryKey: getProgramCoursesQueryKey({ path: { programUuid: classId } })
+            queryKey: getProgramCoursesQueryKey({ path: { programUuid: programId } })
           });
         },
         onError: (error) => {
@@ -112,13 +122,29 @@ export default function ClassPreviewPage() {
     }
   };
 
+  const publishProgram = useMutation(publishProgramMutation())
+
+  const handlePublishProgram = () => {
+    if (!programId) return
+
+    publishProgram.mutate({ path: { uuid: programId } }, {
+      onSuccess: (data) => {
+        // @ts-ignore
+        toast.success(data?.message)
+      },
+      onError: (error) => {
+        // @ts-ignore
+        toast.error(error?.message)
+      }
+    })
+  }
 
   if (isLoading)
     return (
       <div className="flex flex-col gap-4 text-[12px] sm:text-[14px]">
         <div className="h-20 bg-gray-200 rounded animate-pulse w-full"></div>
         <div className='mt-10 flex items-center justify-center'>
-          <Spinner />
+          {/* <Spinner /> */}
         </div>
         <div className="h-16 bg-gray-200 rounded animate-pulse w-full"></div>
         <div className="h-12 bg-gray-200 rounded animate-pulse w-full"></div>
@@ -143,21 +169,23 @@ export default function ClassPreviewPage() {
 
       {/* Header section */}
       <div className='space-y-2'>
-        <h1 className='text-4xl font-bold tracking-tight'>{classData?.title}</h1>
-        <p className='text-muted-foreground text-lg'>{classData?.description}</p>
+        <h1 className='text-4xl font-bold tracking-tight'>{programData?.title}</h1>
+        <div className='text-muted-foreground text-sm' >
+          <HTMLTextPreview htmlContent={programData?.description as string} />
+        </div>
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>
           <span>Instructor:</span>
-          <Badge variant='outline'>{classData?.instructor_uuid}</Badge>
-          <span className='text-xs text-gray-500'>({classData?.instructor_uuid})</span>
+          <Badge variant='outline'>{programData?.instructor_uuid}</Badge>
+          <span className='text-xs text-gray-500'>({programData?.instructor_uuid})</span>
         </div>
       </div>
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center gap-2 text-sm text-gray-700'>
-          <span className='font-medium'>Class Size:</span>
+          <span className='font-medium'>Program Size:</span>
           <span className='flex items-center gap-1'>
             <Users className='h-5 w-5 text-gray-600' />
-            {classData?.class_limit === 0 ? 'Unlimited students' : `Up to ${classData?.class_limit} students`}
+            {programData?.class_limit === 0 ? 'Unlimited students' : `Up to ${programData?.class_limit} students`}
           </span>
         </div>
 
@@ -165,7 +193,7 @@ export default function ClassPreviewPage() {
           <span className='font-medium'>Duration:</span>
           <span className='flex items-center gap-1'>
             <Clock className='h-5 w-5 text-gray-600' />
-            Approx. {classData?.total_duration_display}
+            Approx. {programData?.total_duration_display}
           </span>
         </div>
       </div>
@@ -176,11 +204,10 @@ export default function ClassPreviewPage() {
         <Card>
           <CardHeader>
             <CardTitle>What You’ll Learn</CardTitle>
-            <CardDescription>Key learning outcomes of this class</CardDescription>
+            <CardDescription>Key learning outcomes of this program</CardDescription>
           </CardHeader>
           <CardContent>
-            <CheckCircle className='mt-1 mr-2 h-4 w-4 text-green-500' />
-            {classData?.objectives}
+            <HTMLTextPreview htmlContent={programData?.objectives as string} />
           </CardContent>
         </Card>
 
@@ -192,29 +219,47 @@ export default function ClassPreviewPage() {
           </CardHeader>
           <CardContent>
             <div className='space-y-6'>
-              {programCourses?.data?.map((c, i) => (
-                <div key={i} className='border-b pb-4 last:border-none last:pb-0'>
-                  <div className='flex items-center justify-between'>
-                    <h3 className='flex items-center gap-2 text-base font-semibold'>
-                      <BookOpen className='h-4 w-4 text-blue-500' />
-                      {c?.name}
-                    </h3>
-                    <button
-                      onClick={() => confirmDelete(c as any)}
-                      className='text-red-500 hover:text-red-700 mx-2 cursor-pointer'
-                      aria-label='Remove course'
-                    >
-                      <Trash className='h-4 w-4' />
-                    </button>
-                  </div>
-                  <p className="w-[95%] text-muted-foreground text-sm line-clamp-3">
-                    {c?.description}
+              {programCourses?.data?.length === 0 ?
+                <div className='bg-muted/20 rounded-md border py-4 text-center'>
+                  <BookOpen className='text-muted-foreground mx-auto h-8 w-8' />
+                  <h3 className='mt-4 text-base font-medium'>No added courses</h3>
+                  <p className='text-muted-foreground text-sm mt-2'>
+                    You don&apos;t have any courses added to this program.
                   </p>
-                  <Badge className='mt-1' variant='secondary'>
-                    {c?.total_duration_display}
-                  </Badge>
+                  <Button className='mt-4' onClick={openAddClassCourseDialog} asChild>
+                    <p>
+                      Add Your First Course
+                    </p>
+                  </Button>
                 </div>
-              ))}
+                : <>
+                  {programCourses?.data?.map((c, i) => (
+                    <div key={i} className='border-b pb-4 last:border-none last:pb-0'>
+                      <div className='flex items-center justify-between'>
+                        <h3 className='flex items-center gap-2 text-base font-semibold'>
+                          <BookOpen className='h-4 w-4 text-blue-500' />
+                          {c?.name}
+                        </h3>
+                        <button
+                          onClick={() => confirmDelete(c as any)}
+                          className='text-red-500 hover:text-red-700 mx-2 cursor-pointer'
+                          aria-label='Remove course'
+                        >
+                          <Trash className='h-4 w-4' />
+                        </button>
+                      </div>
+
+                      <div className='w-[95%] line-clamp-3 text-muted-foreground text-sm' >
+                        <HTMLTextPreview htmlContent={c?.description as string} />
+                      </div>
+
+                      <Badge className='mt-1' variant='secondary'>
+                        {c?.total_duration_display}
+                      </Badge>
+                    </div>
+                  ))}
+                </>
+              }
             </div>
           </CardContent>
         </Card>
@@ -223,7 +268,7 @@ export default function ClassPreviewPage() {
         <Card>
           <CardHeader>
             <CardTitle>Class Content</CardTitle>
-            <CardDescription>A breakdown of lessons in this class</CardDescription>
+            <CardDescription>A breakdown of lessons in this program</CardDescription>
           </CardHeader>
           <CardContent>
             {/* <div className='space-y-6'>
@@ -243,6 +288,14 @@ export default function ClassPreviewPage() {
           </CardContent>
         </Card>
 
+        <div className="w-full flex justify-end">
+          <Button onClick={handlePublishProgram} className='min-w-30'>
+            {publishProgram?.isPending ? <Spinner /> : "Publish Program"}
+          </Button>
+        </div>
+
+
+        <AddProgramCourseDialog isOpen={isAddClassCourseDialog} onOpenChange={setIsAddClassCourseDialog} programId={programId} onSuccess={() => refetch()} />
 
         {/* Confirm Remove Program Course Modal */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

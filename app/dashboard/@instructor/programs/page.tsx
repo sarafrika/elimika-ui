@@ -1,5 +1,7 @@
 'use client';
 
+import HTMLTextPreview from '@/components/editors/html-text-preview';
+import { CustomPagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,62 +21,63 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useInstructor } from '@/context/instructor-context';
 import { formatCourseDate } from '@/lib/format-course-date';
-import { deleteTrainingProgramMutation, getAllTrainingProgramsQueryKey, searchTrainingProgramsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { deleteTrainingProgramMutation, getAllCategoriesOptions, searchTrainingProgramsOptions, searchTrainingProgramsQueryKey } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, EyeIcon, FilePenIcon, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { CustomPagination } from '../../../../components/pagination';
-import { useInstructor } from '../../../../context/instructor-context';
 import {
   AddProgramCourseDialog,
-  ClassFormValues,
-  CreateClassDialog,
-  EditClassDialog
-} from '../_components/class-management-form';
+  CreateProgramDialog,
+  EditProgramDialog,
+  ProgramFormValues
+} from '../_components/program-management-form';
 
 export default function ClassesPage() {
   const queryClient = useQueryClient()
   const instructor = useInstructor()
 
-  const [isCreateClassDialog, setIsCreateClassDialog] = useState(false);
-  const openCreateClassDialog = () => setIsCreateClassDialog(true);
-  const closeCreateClassDialog = () => setIsCreateClassDialog(false);
+  const [isCreateProgramDialog, setIsCreateProgramDialog] = useState(false);
+  const openCreateProgramDialog = () => setIsCreateProgramDialog(true);
+  const closeCreateProgramDialog = () => setIsCreateProgramDialog(false);
 
-  const [isEditClassDialog, setIsEditClassDialog] = useState(false);
-  const [editClassId, setEditClassId] = useState<string | null>(null);
+  const [isEditProgramDialog, setIsEditProgramDialog] = useState(false);
+  const [editProgramId, setEditProgramId] = useState<string | null>(null);
 
-  const openEditClassDialog = (id: string) => {
-    setEditClassId(id);
-    setIsEditClassDialog(true);
+  const openEditProgramDialog = (id: string) => {
+    setEditProgramId(id);
+    setIsEditProgramDialog(true);
   };
-  const closeEditClassDialog = () => {
-    setEditClassId(null);
-    setIsEditClassDialog(false);
+  const closeEditProgramDialog = () => {
+    setEditProgramId(null);
+    setIsEditProgramDialog(false);
   };
 
+  const [isAddProgramCourseDialog, setIsAddProgramCourseDialog] = useState(false);
+  const openAddProgramCourseDialog = (id: string) => {
+    setEditProgramId(id);
+    setIsAddProgramCourseDialog(true);
+  };
 
-  const [isAddClassCourseDialog, setIsAddClassCourseDialog] = useState(false);
-  const openAddClassCourseDialog = (id: string) => {
-    setEditClassId(id);
-    setIsAddClassCourseDialog(true)
-  }
 
   const size = 20;
   const [page, setPage] = useState(0);
+
+  const { data: categories } = useQuery(getAllCategoriesOptions({ query: { pageable: {} } }));
 
   // GET INSTRUCTOR'S PROGRAMS
   const { data, isLoading, isFetching, } = useQuery(searchTrainingProgramsOptions({ query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: { page, size } } }))
 
   // @ts-ignore
-  const trainingPrograms = data?.data?.content || [];
+  const programs = data?.data?.content || [];
   //@ts-ignore
   const paginationMetadata = data?.data?.metadata;
 
 
-  // DELETE TRAINING PROGRAM
+  // DELETE PROGRAM
   const deleteTrainingProgram = useMutation(deleteTrainingProgramMutation());
   const handleDelete = async (classId: string) => {
     if (!classId) return;
@@ -86,60 +89,62 @@ export default function ClassesPage() {
         onSuccess: () => {
           toast.success('Training program deleted succcessfully');
           queryClient.invalidateQueries({
-            queryKey: getAllTrainingProgramsQueryKey({ query: { pageable: { page, size } } })
+            queryKey: searchTrainingProgramsQueryKey({ query: { pageable: { page, size }, searchParams: { instructorUuid: instructor?.uuid } } })
           });
         },
       });
     } catch (err) { }
   };
 
-  const selectedClass = trainingPrograms.find((cls: any) => cls.uuid === editClassId);
-  const classInitialValues: Partial<ClassFormValues> = {
-    title: selectedClass?.title || '',
-    description: selectedClass?.description || '',
-    ...selectedClass
+  const selectedProgram = programs.find((program: any) => program.uuid === editProgramId);
+
+  const programInitialValues: Partial<ProgramFormValues> = {
+    title: selectedProgram?.title || '',
+    description: selectedProgram?.description || '',
+    ...selectedProgram
   };
+
 
   return (
     <div className='space-y-6'>
       <div className='flex justify-end'>
         <Button
-          onClick={openCreateClassDialog}
+          onClick={openCreateProgramDialog}
           type='button'
           className='cursor-pointer px-4 py-2 text-sm'
           asChild
         >
           <div>
             <PlusIcon className='mr-1 h-4 w-4' />
-            New Class
+            New Program
           </div>
         </Button>
       </div>
 
-      {/* Classes Table or Empty State */}
-      {trainingPrograms?.length === 0 && !isFetching ? (
+      {/* Programs Table or Empty State */}
+      {programs?.length === 0 && !isFetching ? (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
-          <h3 className='mt-4 text-lg font-medium'>No classes found</h3>
+          <h3 className='mt-4 text-lg font-medium'>No programs found</h3>
           <p className='text-muted-foreground mt-2'>
-            You don&apos;t have any classes yet. Start by creating a new class.
+            You don&apos;t have any progras yet. Start by creating a new program.
           </p>
-          <Button onClick={openCreateClassDialog} className='mt-4' asChild>
-            <div>Create Your First Class</div>
+          <Button onClick={openCreateProgramDialog} className='mt-4' asChild>
+            <div>Create Your First Program</div>
           </Button>
         </div>
       ) : (
         <div className="rounded-t-lg border border-gray-200 overflow-hidden">
           <Table>
-            <TableCaption className='py-4'>A list of your classes</TableCaption>
+            <TableCaption className='py-4'>A list of your programs</TableCaption>
             <TableHeader className='bg-muted'>
               <TableRow>
                 <TableHead>
                   <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
                 </TableHead>
-                <TableHead className='w-[300px]'>Class Name</TableHead>
+                <TableHead className='w-[300px]'>Program Name</TableHead>
                 <TableHead>Categories</TableHead>
-                <TableHead>Class Limit</TableHead>
+                <TableHead>Program Limit</TableHead>
                 <TableHead>Last Updated</TableHead>
                 <TableHead className='mx-auto text-center'>Actions</TableHead>
               </TableRow>
@@ -156,28 +161,33 @@ export default function ClassesPage() {
                 </TableRow>
               ) : (
                 <>
-                  {trainingPrograms.map((cls: any) => (
-                    <TableRow key={cls.uuid}>
+                  {programs.map((program: any) => (
+                    <TableRow key={program.uuid}>
                       <TableHead>
                         <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
                       </TableHead>
                       <TableCell className='font-medium'>
                         <div>
-                          <div>{cls.title}</div>
-                          <div className='text-muted-foreground max-w-[250px] truncate text-sm'>
-                            {cls.description}
+                          <div>{program.title}</div>
+                          <div className='max-w-[250px] line-clamp-1 truncate text-muted-foreground text-sm' >
+                            <HTMLTextPreview htmlContent={program?.description as string} />
                           </div>
+
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className='flex flex-wrap gap-1'>
                           <Badge variant='outline' className='capitalize'>
-                            {cls.cat}
+                            {
+                              categories?.data?.content?.find((p: any) => p.uuid === program.category_uuid)?.name
+                              || 'Unknown'
+                            }
                           </Badge>
+
                         </div>
                       </TableCell>
-                      <TableCell>{cls.class_limit || 'Unlimited'}</TableCell>
-                      <TableCell>{formatCourseDate(cls.updated_date)}</TableCell>
+                      <TableCell>{program.class_limit || 'Unlimited'}</TableCell>
+                      <TableCell>{formatCourseDate(program.updated_date)}</TableCell>
                       <TableCell className='text-center'>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -202,7 +212,7 @@ export default function ClassesPage() {
                           <DropdownMenuContent align='end'>
                             <DropdownMenuItem asChild>
                               <div
-                                onClick={() => openEditClassDialog(cls.uuid)}
+                                onClick={() => openEditProgramDialog(program.uuid)}
                                 className='flex w-full items-center'
                               >
                                 <PenIcon className='mr-2 h-4 w-4' />
@@ -211,7 +221,7 @@ export default function ClassesPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link
-                                href={`/dashboard/classes/preview/${cls.uuid}`}
+                                href={`/dashboard/programs/preview/${program.uuid}`}
                                 className='flex w-full items-center'
                               >
                                 <EyeIcon className='mr-2 h-4 w-4' />
@@ -219,7 +229,7 @@ export default function ClassesPage() {
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => openAddClassCourseDialog(cls.uuid)}
+                              onClick={() => openAddProgramCourseDialog(program.uuid)}
                             >
                               <BookOpen className='mr-2 h-4 w-4' />
                               Add Course
@@ -227,7 +237,7 @@ export default function ClassesPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               variant='destructive'
-                              onClick={() => handleDelete(cls.uuid)}
+                              onClick={() => handleDelete(program.uuid)}
                             >
                               <TrashIcon className='mr-2 h-4 w-4' />
                               Delete
@@ -254,20 +264,20 @@ export default function ClassesPage() {
         />
       )}
 
-      <CreateClassDialog
-        isOpen={isCreateClassDialog}
-        onOpenChange={closeCreateClassDialog} />
+      <CreateProgramDialog
+        isOpen={isCreateProgramDialog}
+        onOpenChange={closeCreateProgramDialog} />
 
-      {isEditClassDialog && selectedClass && (
-        <EditClassDialog
-          isOpen={isEditClassDialog}
-          onOpenChange={closeEditClassDialog}
-          initialValues={classInitialValues}
-          classId={editClassId || ''}
+      {isEditProgramDialog && selectedProgram && (
+        <EditProgramDialog
+          isOpen={isEditProgramDialog}
+          onOpenChange={closeEditProgramDialog}
+          initialValues={programInitialValues}
+          programId={editProgramId || ''}
         />
       )}
 
-      <AddProgramCourseDialog isOpen={isAddClassCourseDialog} onOpenChange={setIsAddClassCourseDialog} classId={editClassId || ''} />
+      <AddProgramCourseDialog isOpen={isAddProgramCourseDialog} onOpenChange={setIsAddProgramCourseDialog} programId={editProgramId || ''} />
 
     </div >
   );

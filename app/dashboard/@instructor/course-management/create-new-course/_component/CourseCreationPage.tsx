@@ -10,8 +10,7 @@ import {
   EditLessonDialog,
   LessonDialog,
   LessonFormValues,
-  LessonList,
-  RubricDialog,
+  LessonList
 } from '@/app/dashboard/@instructor/_components/lesson-management-form';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
@@ -402,13 +401,13 @@ export default function CourseCreationPage() {
               onAddRubrics={openAddRubricModal}
             />
 
-            <RubricDialog
+            {/* <RubricDialog
               isOpen={addRubricModalOpen}
               onOpenChange={setAddRubricModalOpen}
-              courseId={""}
-              lessonId={""}
+              courseId={resolveId}
+              lessonId={selectedLesson?.uuid}
               onCancel={() => { }}
-            />
+            /> */}
           </div>
         </StepperContent>
 

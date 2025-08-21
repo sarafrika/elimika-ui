@@ -23,10 +23,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { addProgramCourseMutation, createTrainingProgramMutation, getAllCategoriesOptions, getAllTrainingProgramsQueryKey, getProgramCoursesQueryKey, searchCoursesOptions, updateTrainingProgramMutation } from '@/services/client/@tanstack/react-query.gen';
+import { addProgramCourseMutation, createTrainingProgramMutation, getAllCategoriesOptions, getProgramCoursesQueryKey, searchCoursesOptions, searchTrainingProgramsQueryKey, updateTrainingProgramMutation } from '@/services/client/@tanstack/react-query.gen';
 import { SchemaEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -41,10 +42,9 @@ import { useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { SimpleEditor } from '../../../../components/tiptap-templates/simple/simple-editor';
 
 
-const classFormSchema = z.object({
+const programFormSchema = z.object({
   title: z.string().min(1, 'Class title is required'),
   description: z.string().optional(),
   objectives: z.string().optional(),
@@ -59,18 +59,18 @@ const classFormSchema = z.object({
   initialValues: z.any()
 });
 
-export type ClassFormValues = z.infer<typeof classFormSchema>;
+export type ProgramFormValues = z.infer<typeof programFormSchema>;
 
-interface ClassCreationFormProps {
+interface ProgramCreationFormProps {
   onCancel: () => void;
   className?: string;
-  classId?: string | number;
-  initialValues?: Partial<ClassFormValues> & { uuid?: string };
+  programId?: string | number;
+  initialValues?: Partial<ProgramFormValues>;
 }
 
-function ClassCreationForm({ onCancel, className, classId, initialValues }: ClassCreationFormProps) {
-  const form = useForm<ClassFormValues>({
-    resolver: zodResolver(classFormSchema),
+function ProgramCreationForm({ onCancel, className, programId, initialValues }: ProgramCreationFormProps) {
+  const form = useForm<ProgramFormValues>({
+    resolver: zodResolver(programFormSchema),
     defaultValues: {
       title: '',
       description: '',
@@ -98,13 +98,13 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
   const { data: session } = useSession()
 
   // GET COURSE CATEGORIES
-  const { data: categories } = useQuery(getAllCategoriesOptions({ 
-    query: { 
-      pageable: { 
-        page: 0, 
-        size: 100 
-      } 
-    } 
+  const { data: categories } = useQuery(getAllCategoriesOptions({
+    query: {
+      pageable: {
+        page: 0,
+        size: 100
+      }
+    }
   }));
 
   // MUTATION
@@ -133,8 +133,8 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
   const createTrainingProgram = useMutation(createTrainingProgramMutation())
   const updateTrainingProgram = useMutation(updateTrainingProgramMutation());
 
-  const onSubmit = (values: ClassFormValues) => {
-    const isEditing = !!initialValues?.uuid || !!classId; // Use either one depending on your data shape
+  const onSubmit = (values: ProgramFormValues, initialValues: any) => {
+    const isEditing = !!initialValues?.uuid || !!programId;
 
     const trainingProgramBody = {
       title: values.title,
@@ -163,14 +163,7 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
       onCancel();
 
       queryClient.invalidateQueries({
-        queryKey: getAllTrainingProgramsQueryKey({ 
-          query: { 
-            pageable: { 
-              page: 0, 
-              size: 100 
-            } 
-          } 
-        }),
+        queryKey: searchTrainingProgramsQueryKey({ query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: {} }, }),
       });
     };
 
@@ -178,7 +171,7 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
       updateTrainingProgram.mutate(
         {
           body: trainingProgramBody,
-          path: { uuid: (classId || initialValues?.uuid) as string },
+          path: { uuid: programId || initialValues.uuid },
         },
         {
           onSuccess: commonOnSuccess,
@@ -204,9 +197,9 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
           name='title'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Class Title</FormLabel>
+              <FormLabel>Program Title</FormLabel>
               <FormControl>
-                <Input placeholder='Enter class title' {...field} />
+                <Input placeholder='Enter program title' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -259,7 +252,7 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
             <FormItem>
               <FormLabel>Prerequisites</FormLabel>
               <FormControl>
-                <Textarea placeholder='What should students know before this course?' className='resize-none' {...field} />
+                <Textarea placeholder='What should students know before taking this program?' className='resize-none' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -440,8 +433,8 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
                   <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
                 <div className='space-y-1 leading-none'>
-                  <FormLabel>Free Course</FormLabel>
-                  <FormDescription>Make this course available for free</FormDescription>
+                  <FormLabel>Free Program</FormLabel>
+                  <FormDescription>Make this program available for free</FormDescription>
                 </div>
               </FormItem>
             )}
@@ -489,7 +482,7 @@ function ClassCreationForm({ onCancel, className, classId, initialValues }: Clas
           <Button type='submit' className='min-w-[115px]'>
             {(createTrainingProgram.isPending || updateTrainingProgram.isPending)
               ? <Spinner />
-              : classId ? 'Update Class' : 'Create Class'}
+              : programId ? 'Update Program' : 'Create Program'}
           </Button>
 
         </div>
@@ -531,16 +524,16 @@ function AddCourseToProgramForm({
   const instructor = useInstructor()
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data: allCourses } = useQuery(searchCoursesOptions({ 
-    query: { 
-      searchParams: { 
-        instructor_uuid_eq: instructor?.uuid as string 
+  const { data: allCourses } = useQuery(searchCoursesOptions({
+    query: {
+      searchParams: {
+        instructor_uuid_eq: instructor?.uuid as string
       },
       pageable: {
         page: 0,
         size: 100
       }
-    } 
+    }
   }))
 
   const addProgramCourses = useMutation(addProgramCourseMutation())
@@ -702,47 +695,48 @@ function AddCourseToProgramForm({
 }
 
 
-interface CreateClassDialogProps {
+interface CreateProgramDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  classId?: string | number;
-  initialValues?: Partial<ClassFormValues>;
+  programId?: string | number;
+  initialValues?: Partial<ProgramFormValues>;
 }
 
-function CreateClassDialog({ isOpen, onOpenChange }: CreateClassDialogProps) {
+function CreateProgramDialog({ isOpen, onOpenChange }: CreateProgramDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
         <DialogHeader className='border-b px-6 pt-8 pb-4'>
-          <DialogTitle className='text-xl'>Create New Class</DialogTitle>
+          <DialogTitle className='text-xl'>Create New Program</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Fill in the class details below. You&apos;ll be able to make changes after you&apos;ve
-            created the class.
+            Fill in the program details below. You&apos;ll be able to make changes after you&apos;ve
+            created the program.
           </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className='h-[calc(90vh-8rem)]'>
-          <ClassCreationForm onCancel={() => onOpenChange(false)} className='px-6 pb-6' />
+          <ProgramCreationForm onCancel={() => onOpenChange(false)} className='px-6 pb-6'
+          />
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
 }
 
-function EditClassDialog({ isOpen, onOpenChange, classId, initialValues }: CreateClassDialogProps) {
+function EditProgramDialog({ isOpen, onOpenChange, programId, initialValues }: CreateProgramDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
         <DialogHeader className='border-b px-6 pt-8 pb-4'>
-          <DialogTitle className='text-xl'>Edit Class</DialogTitle>
+          <DialogTitle className='text-xl'>Edit Program</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Modify the class details as needed. You can update them again later.
+            Modify the program details as needed. You can update them again later.
           </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className='h-[calc(90vh-8rem)]'>
-          <ClassCreationForm
-            classId={classId}
+          <ProgramCreationForm
+            programId={programId}
             className='px-6 pb-6'
             initialValues={initialValues}
             onCancel={() => onOpenChange(false)}
@@ -757,10 +751,11 @@ function EditClassDialog({ isOpen, onOpenChange, classId, initialValues }: Creat
 interface AddProgramCourseDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  classId?: string
+  programId?: string
+  onSuccess?: () => any
 }
 
-function AddProgramCourseDialog({ isOpen, onOpenChange, classId }: AddProgramCourseDialogProps) {
+function AddProgramCourseDialog({ isOpen, onOpenChange, programId, onSuccess }: AddProgramCourseDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
@@ -769,14 +764,14 @@ function AddProgramCourseDialog({ isOpen, onOpenChange, classId }: AddProgramCou
           <DialogDescription className='text-muted-foreground text-sm'>
             Select a course to add to this program. You can define its position, prerequisites, and whether it’s required.
           </DialogDescription>
-
         </DialogHeader>
 
         <ScrollArea className='h-auto py-6'>
           <AddCourseToProgramForm
-            programUuid={classId as string}
+            programUuid={programId as string}
             onCancel={() => onOpenChange(false)}
             className='px-6 pb-6'
+            onSuccess={onSuccess}
           />
         </ScrollArea>
       </DialogContent>
@@ -784,5 +779,5 @@ function AddProgramCourseDialog({ isOpen, onOpenChange, classId }: AddProgramCou
   );
 }
 
-export { AddProgramCourseDialog, CreateClassDialog, EditClassDialog };
+export { AddProgramCourseDialog, CreateProgramDialog, EditProgramDialog };
 
