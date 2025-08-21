@@ -20,9 +20,12 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import CustomLoader from '../../../../../../components/custom-loader';
+import LocationInput from '../../../../../../components/locationInput';
+import { useOrganization } from '../../../../../../context/organization-context';
 import { useUserProfile } from '../../../../../../context/profile-context';
-import { UserProfileType } from '../../../../../../lib/types';
-import { Organisation, updateOrganisation, updateUser, User } from '../../../../../../services/client';
+import { queryClient } from '../../../../../../lib/query-client';
+import { updateOrganisation, updateUser, User } from '../../../../../../services/client';
 import { zOrganisation } from '../../../../../../services/client/zod.gen';
 
 const trainingCenterSchema = zOrganisation.omit({
@@ -54,14 +57,9 @@ export default function TrainingCenterForm() {
     }, [replaceBreadcrumbs]);
 
     const userProfile = useUserProfile();
-    const organizations = userProfile!.organizations || [] as any[];
-    let organisation = {} as any;
-    if (organizations && organizations.length > 0) {
-        organisation = Object.keys(organizations[0]).reduce((a, b) => ({
-            ...a,
-            [b]: organizations[0][b] ?? ""
-        }), {}) as Organisation;
-    }
+    if (userProfile?.isLoading) return <CustomLoader />
+
+    let organisation = useOrganization();
 
     const form = useForm<TrainingCenterFormValues>({
         resolver: zodResolver(trainingCenterSchema),
@@ -74,14 +72,11 @@ export default function TrainingCenterForm() {
         }
     });
 
-    console.log(form.formState.errors)
-
     const onSubmit = async (orgData: TrainingCenterFormValues) => {
-        // TODO: Implement submission logic, including file upload for the logo
-        console.log(orgData);
+
         const updateResponse = await updateOrganisation({
             path: {
-                uuid: organisation.uuid
+                uuid: organisation!.uuid!
             },
             body: orgData
         });
@@ -105,11 +100,7 @@ export default function TrainingCenterForm() {
                 }
             })
 
-        await userProfile!.updateProfile({
-            ...userProfile,
-            phone_number: orgData.contactPersonPhone,
-            organizations: [...userProfile!.organizations!].map(org => org.uuid! === orgData.uuid! ? orgData : org)
-        } as UserProfileType);
+        queryClient.invalidateQueries({ queryKey: ["organization"] });
         toast.success("Saved successfully");
     };
 
@@ -256,34 +247,37 @@ export default function TrainingCenterForm() {
                     </CardHeader>
                     <CardContent className='flex flex-col gap-5'>
 
-                        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                            <FormField
+                        {/* <div className='grid grid-cols-1 gap-6 md:grid-cols-2'> */}
+                        <FormField
+                            control={form.control}
+                            name='location'
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Physical Address</FormLabel>
+                                    <FormControl>
+                                        <LocationInput {...field} onRetrieve={(d) => {
+                                            form.setValue("country", d.properties.context.country?.name)
+                                            return d;
+                                        }} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {/* <FormField
                                 control={form.control}
                                 name='country'
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Country</FormLabel>
                                         <FormControl>
-                                            <Input {...field} />
+                                            <Input {...field} readOnly />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name='address'
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Physical Address</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder='123 Elimika St, Nairobi' {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                            /> */}
+                        {/* </div> */}
 
                         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
                             <FormField
