@@ -29,7 +29,11 @@ export function AppSidebar({
   const pathname = usePathname();
 
   // Helper to get menu items for a domain
-  const getMenuItems = (domain: UserDomain) => menu[domain] || [];
+  const getMenuItems = (domain: UserDomain) => {
+    // Map 'organisation' domain to 'organisation_user' menu items
+    const menuKey = domain === 'organisation' ? 'organisation_user' : domain;
+    return (menu as any)[menuKey] || [];
+  };
 
   // Label for the sidebar group
   const groupLabel =
