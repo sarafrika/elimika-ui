@@ -20,10 +20,15 @@ export default function DashboardLayout(props: DashboardChildrenTypes) {
 
   useEffect(() => {
     if (!profile?.isLoading && profile) {
-      // Only redirect to onboarding if profile is loaded but has no domains
-      // This prevents redirect during initial load when data is persisted
-      if (profile.user_domain && profile.user_domain.length === 0) {
+      // Redirect to onboarding if no domains
+      if (!profile.user_domain || profile.user_domain.length === 0) {
         router.push('/onboarding');
+        return;
+      }
+      
+      // Redirect to domain selection if multiple domains and no active domain selected
+      if (profile.hasMultipleDomains && !profile.activeDomain) {
+        router.push('/domain-selection?redirectTo=/dashboard/overview');
         return;
       }
     }
@@ -61,7 +66,8 @@ export default function DashboardLayout(props: DashboardChildrenTypes) {
 
   const userDomains = profile.user_domain as DashboardView[] || [];
   const orgAdminDomains = userDomains as OrgDomainType[];
-  const activeDomain = orgAdminDomains[0];
+  // Use the actively selected domain from profile context
+  const activeDomain = profile.activeDomain || orgAdminDomains[0];
   const userDashboards = Object.keys(props).reduce(
     (a: { [key: string]: ReactNode }, b: string) =>
       orgAdminDomains.includes(b as OrgDomainType) ? { ...a, [b]: props[b] } : a,
@@ -69,7 +75,7 @@ export default function DashboardLayout(props: DashboardChildrenTypes) {
   );
   const currentDashboard = activeDomain ? userDashboards[activeDomain] : props.children;
 
-  if (orgAdminDomains.includes('organisation_user')) {
+  if (activeDomain === 'organisation_user' || orgAdminDomains.includes('organisation_user')) {
     return (
       <TrainingCenterProvider>
         <SidebarProvider>

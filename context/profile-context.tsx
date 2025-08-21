@@ -1,7 +1,7 @@
 import { queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { UserProfileType } from '@/lib/types';
+import { UserProfileType, UserDomain } from '@/lib/types';
 import { 
   search, 
   searchStudents, 
@@ -20,7 +20,7 @@ import {
   InstructorSkill
 } from '@/services/client';
 
-type DomainTypes = "instructor" | "student" | "organisation"
+type DomainTypes = UserDomain
 
 type ExtendedInstructor = Instructor & {
   educations: InstructorEducation[];
@@ -33,8 +33,9 @@ const UserProfileContext = createContext<Partial<UserProfileType> & {
   isLoading: boolean,
   invalidateQuery: () => void,
   clearProfile: () => void,
-  setActiveDomain: (domain: DomainTypes) => void,
-  activeDomain: string | null
+  setActiveDomain: (domain: UserDomain) => void,
+  activeDomain: UserDomain | null,
+  hasMultipleDomains: boolean
 } | null>(null);
 
 export const useUserProfile = () => useContext(UserProfileContext);
@@ -47,22 +48,36 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
     enabled: !!session?.user?.email
   }));
 
-  const [activeDomain, setActiveDomain] = useState<DomainTypes | null>(null);
+  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(() => {
+    // Try to get saved domain from localStorage
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('selectedDomain');
+      return saved as UserDomain || null;
+    }
+    return null;
+  });
 
-  // Update active domain when profile data changes
+  // Update active domain when profile data changes, but only if no domain is already selected
   useEffect(() => {
     if (data && !isError && data.user_domain && data.user_domain.length > 0) {
-      const domain = data.user_domain[0];
-      if (domain === "instructor" || domain === "student" || domain === "organisation") {
-        setActiveDomain(domain);
+      // If no active domain is set, use the first available domain
+      if (!activeDomain || !data.user_domain.includes(activeDomain)) {
+        const validDomain = data.user_domain[0] as UserDomain;
+        setActiveDomain(validDomain);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('selectedDomain', validDomain);
+        }
       }
     }
-  }, [data, isError]);
+  }, [data, isError, activeDomain]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       clearProfile();
       setActiveDomain(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('selectedDomain');
+      }
     }
   }, [status]);
 
@@ -79,8 +94,14 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
         await refetch();
       },
       clearProfile,
-      setActiveDomain: (domain: DomainTypes) => setActiveDomain(domain),
-      activeDomain
+      setActiveDomain: (domain: UserDomain) => {
+        setActiveDomain(domain);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('selectedDomain', domain);
+        }
+      },
+      activeDomain,
+      hasMultipleDomains: (data?.user_domain?.length || 0) > 1
     }}>
     {children}
   </UserProfileContext.Provider>
