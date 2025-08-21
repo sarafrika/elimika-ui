@@ -76,7 +76,7 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
             Welcome back{userName ? `, ${userName}` : ''}!
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-lg">
-            You have access to multiple dashboards. Choose which one you'd like to enter.
+            You have access to multiple dashboards. Choose which one you&apos;d like to enter.
           </p>
         </div>
 
