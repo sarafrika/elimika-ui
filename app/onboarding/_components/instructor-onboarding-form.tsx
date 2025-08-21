@@ -115,7 +115,6 @@ export function InstructorOnboardingForm() {
       toast.success('Instructor account created successfully!');
       router.replace('/dashboard/overview');
     } catch (error: any) {
-      console.error('Error creating instructor:', error);
       const errorMessage = error?.message || 'Failed to create instructor account. Please try again.';
       toast.error(errorMessage);
     } finally {
