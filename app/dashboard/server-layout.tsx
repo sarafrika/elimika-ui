@@ -20,7 +20,7 @@ export default async function DashboardServerLayout(props: DashboardChildrenType
       profileData = profileResponse.data.content[0];
     }
   } catch (error) {
-    console.error('Failed to fetch profile server-side:', error);
+    throw new Error(error)
   }
 
   // Handle redirects server-side when possible
