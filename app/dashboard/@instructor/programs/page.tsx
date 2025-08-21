@@ -66,10 +66,10 @@ export default function ClassesPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data: categories } = useQuery(getAllCategoriesOptions());
+  const { data: categories } = useQuery(getAllCategoriesOptions({ query: { pageable: {} } }));
 
   // GET INSTRUCTOR'S PROGRAMS
-  const { data, isLoading, isFetching, } = useQuery(searchTrainingProgramsOptions({ query: { page, size, searchParams: { instructorUuid: instructor?.uuid } } }))
+  const { data, isLoading, isFetching, } = useQuery(searchTrainingProgramsOptions({ query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: { page, size } } }))
 
   // @ts-ignore
   const programs = data?.data?.content || [];
@@ -89,7 +89,7 @@ export default function ClassesPage() {
         onSuccess: () => {
           toast.success('Training program deleted succcessfully');
           queryClient.invalidateQueries({
-            queryKey: searchTrainingProgramsQueryKey({ query: { page, size, searchParams: { instructorUuid: instructor?.uuid } } })
+            queryKey: searchTrainingProgramsQueryKey({ query: { pageable: { page, size }, searchParams: { instructorUuid: instructor?.uuid } } })
           });
         },
       });

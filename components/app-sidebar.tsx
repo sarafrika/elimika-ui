@@ -37,7 +37,9 @@ export function AppSidebar({
       ? 'Admin Panel'
       : activeDomain === 'student'
         ? 'Student Panel'
-        : activeDomain.charAt(0).toUpperCase() + activeDomain.slice(1) + ' Panel';
+        : activeDomain
+          ? activeDomain.charAt(0).toUpperCase() + activeDomain.slice(1) + ' Panel'
+          : 'Panel';
 
   return (
     <Sidebar variant='inset' {...props}>

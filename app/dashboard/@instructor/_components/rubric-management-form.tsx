@@ -276,8 +276,6 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
     const updateRubricIsPending = updateRubric.isPending || updateRubricComponent.isPending || updateRubricScores.isPending;
 
     const onSubmit = async (values: RubricFormValues) => {
-        console.log(values, "values here?")
-
         try {
             const rubricBody = {
                 title: values.title,
@@ -465,7 +463,7 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
                 );
             }
         } catch (error) {
-            console.error(error);
+            // console.error(error);
             toast.error("An unexpected error occurred");
         }
     };

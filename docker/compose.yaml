@@ -1,7 +1,7 @@
 services:
   app:
     container_name: elimika-ui
-    image: ghcr.io/sarafrika/elimika-ui:latest
+    image: sarafrika/elimika-ui:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile

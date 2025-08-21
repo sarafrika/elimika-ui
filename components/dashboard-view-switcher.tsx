@@ -24,7 +24,7 @@ export default function DashboardViewSwitcher({ className }: DashboardViewSwitch
     return null;
 
   return (
-    <div className={className + ' flex items-center gap-2'}>
+    <div className={`${className || ''} flex items-center gap-2`}>
       <span className='text-sm font-medium'>Dashboard View:</span>
       {availableViews.map(v => (
         <Button
@@ -34,7 +34,7 @@ export default function DashboardViewSwitcher({ className }: DashboardViewSwitch
           onClick={() => setView(v)}
           className={view === v ? 'font-bold' : ''}
         >
-          {LABELS[v] || String(v).charAt(0).toUpperCase() + String(v).slice(1)}
+          {LABELS[v] || (v ? String(v).charAt(0).toUpperCase() + String(v).slice(1) : '')}
         </Button>
       ))}
     </div>

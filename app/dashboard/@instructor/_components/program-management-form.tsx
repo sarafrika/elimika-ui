@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { addProgramCourseMutation, createTrainingProgramMutation, getAllCategoriesOptions, getProgramCoursesQueryKey, searchCoursesOptions, searchTrainingProgramsQueryKey, updateTrainingProgramMutation } from '@/services/client/@tanstack/react-query.gen';
+import { SchemaEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
@@ -97,7 +98,14 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
   const { data: session } = useSession()
 
   // GET COURSE CATEGORIES
-  const { data: categories } = useQuery(getAllCategoriesOptions());
+  const { data: categories } = useQuery(getAllCategoriesOptions({
+    query: {
+      pageable: {
+        page: 0,
+        size: 100
+      }
+    }
+  }));
 
   // MUTATION
   const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
@@ -130,7 +138,7 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
 
     const trainingProgramBody = {
       title: values.title,
-      instructor_uuid: instructor?.uuid,
+      instructor_uuid: instructor?.uuid || '',
       category_uuid: values.categories,
       description: values.description,
       objectives: values.objectives,
@@ -145,17 +153,17 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
       created_by: session?.user?.email,
       updated_by: session?.user?.email,
       is_published: false,
+      published: false,
       active: false,
-      status: "DRAFT",
+      status: SchemaEnum.DRAFT,
     };
 
     const commonOnSuccess = (data: any) => {
-      // @ts-ignore
       toast.success(data?.message || (isEditing ? "Training program updated successfully" : "Training program created successfully"));
       onCancel();
 
       queryClient.invalidateQueries({
-        queryKey: searchTrainingProgramsQueryKey({ query: { searchParams: { instructorUuid: instructor?.uuid } } }),
+        queryKey: searchTrainingProgramsQueryKey({ query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: {} }, }),
       });
     };
 
@@ -516,7 +524,17 @@ function AddCourseToProgramForm({
   const instructor = useInstructor()
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data: allCourses } = useQuery(searchCoursesOptions({ query: { searchParams: { instructor_uuid_eq: instructor?.uuid as string, } } }))
+  const { data: allCourses } = useQuery(searchCoursesOptions({
+    query: {
+      searchParams: {
+        instructor_uuid_eq: instructor?.uuid as string
+      },
+      pageable: {
+        page: 0,
+        size: 100
+      }
+    }
+  }))
 
   const addProgramCourses = useMutation(addProgramCourseMutation())
 
