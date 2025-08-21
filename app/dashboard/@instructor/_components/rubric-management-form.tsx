@@ -12,10 +12,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useInstructor } from '@/context/instructor-context';
-import { addRubricCriterionMutation, addRubricScoringMutation, createAssessmentRubricMutation, getAllGradingLevelsOptions, updateAssessmentRubricMutation, updateRubricCriterionMutation, updateRubricScoringMutation } from '@/services/client/@tanstack/react-query.gen';
+import { addRubricCriterionMutation, addRubricScoringMutation, createAssessmentRubricMutation, getAllGradingLevelsOptions, getRubricCriteriaQueryKey, getRubricScoringQueryKey, searchAssessmentRubricsQueryKey, updateAssessmentRubricMutation, updateRubricCriterionMutation, updateRubricScoringMutation } from '@/services/client/@tanstack/react-query.gen';
 import { StatusEnum, WeightUnitEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusCircle, Trash, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { useFieldArray, useForm, useFormContext } from 'react-hook-form';
@@ -45,16 +45,25 @@ type ComponentBlockProps = {
     index: number;
     remove: (index: number) => void;
     isOnlyOne: boolean;
+    defaultValues?: RubricFormValues;
 };
 
-export const ComponentBlock = ({ index, remove, isOnlyOne }: ComponentBlockProps) => {
-    const { register, control } = useFormContext();
-    const { data: gradingLevels } = useQuery(getAllGradingLevelsOptions({ query: { pageable: {} } }))
+
+export const ComponentBlock = ({ index, remove, isOnlyOne, defaultValues }: ComponentBlockProps) => {
+    const { register, control, setValue } = useFormContext();
+    const { data: gradingLevels } = useQuery(getAllGradingLevelsOptions({ query: { pageable: {} } }));
 
     const { fields, append, remove: removeGrading } = useFieldArray({
         control,
         name: `components.${index}.grading`,
     });
+
+    useEffect(() => {
+        fields.forEach((_, gradingIndex) => {
+            register(`components.${index}.grading.${gradingIndex}.points`);
+            register(`components.${index}.grading.${gradingIndex}.uuid`);
+        });
+    }, [fields, index, register]);
 
     return (
         <div className="border border-gray-300 p-2 rounded space-y-4">
@@ -63,6 +72,11 @@ export const ComponentBlock = ({ index, remove, isOnlyOne }: ComponentBlockProps
                 placeholder="Assessment Component Name"
                 {...register(`components.${index}.name`)}
             />
+
+            <Input type="hidden" {...register(`components.${index}.uuid`)} />
+            <Input type="hidden" {...register(`components.${index}.scoring_uuid`)} />
+            <Input type="hidden" {...register(`components.${index}.grading_level_uuid`)} />
+
 
             {/* Grading Table */}
             <table className="w-full border text-sm">
@@ -79,43 +93,56 @@ export const ComponentBlock = ({ index, remove, isOnlyOne }: ComponentBlockProps
                         <tr key={field.id}>
                             <td className="p-1.5">
                                 <Input
-                                    {...register(
-                                        `components.${index}.grading.${gradingIndex}.name`
-                                    )}
+                                    {...register(`components.${index}.grading.${gradingIndex}.name`)}
                                     placeholder="Name"
                                 />
                             </td>
                             <td className="p-1.5">
                                 <Input
-                                    {...register(
-                                        `components.${index}.grading.${gradingIndex}.description`
-                                    )}
+                                    {...register(`components.${index}.grading.${gradingIndex}.description`)}
                                     placeholder="Description"
                                 />
                             </td>
-                            {/* <td className="p-1.5">
-                                <Input
-                                    type="number"
-                                    {...register(
-                                        `components.${index}.grading.${gradingIndex}.points`,
-                                        { valueAsNumber: true }
-                                    )}
-                                />
-                            </td> */}
                             <td className="p-1.5">
-                                <select
-                                    {...register(`components.${index}.grading.${gradingIndex}.gradingLevelUuid`)}
-                                    className="border border-gray-300 rounded px-2 py-1 w-full"
-                                >
-                                    <option value="">Select Grading Level</option>
-                                    {gradingLevels?.data?.content?.map((level) => (
-                                        <option key={level.uuid} value={level.uuid}>
-                                            {level.grade_display}
-                                        </option>
-                                    ))}
-                                </select>
-                            </td>
+                                <div className="flex flex-col gap-1">
+                                    {/* UUID Select */}
+                                    <select
+                                        className="border border-gray-300 rounded px-2 py-1 w-full"
+                                        {...register(`components.${index}.grading.${gradingIndex}.uuid`)}
+                                        onChange={(e) => {
+                                            const selectedUuid = e.target.value;
+                                            const selectedLevel = gradingLevels?.data?.content?.find(
+                                                (level) => level.uuid === selectedUuid
+                                            );
 
+                                            if (selectedLevel) {
+                                                setValue(`components.${index}.grading.${gradingIndex}.points`, selectedLevel?.points);
+                                                setValue(`components.${index}.grading.${gradingIndex}.uuid`, selectedLevel?.uuid);
+                                            } else {
+                                                setValue(`components.${index}.grading.${gradingIndex}.points`, 0);
+                                                setValue(`components.${index}.grading.${gradingIndex}.uuid`, '');
+                                            }
+                                        }}
+                                    >
+                                        <option value="">Select Grading Level</option>
+                                        {gradingLevels?.data?.content?.map((level) => (
+                                            <option key={level.uuid} value={level.uuid}>
+                                                {level.points} - {level.name}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    {/* Hidden Inputs for tracking */}
+                                    <Input
+                                        type="hidden"
+                                        {...register(`components.${index}.grading.${gradingIndex}.uuid`)}
+                                    />
+                                    <Input
+                                        type="hidden"
+                                        {...register(`components.${index}.grading.${gradingIndex}.points`, { valueAsNumber: true })}
+                                    />
+                                </div>
+                            </td>
                             <td className="p-1.5">
                                 <Button
                                     type="button"
@@ -131,17 +158,19 @@ export const ComponentBlock = ({ index, remove, isOnlyOne }: ComponentBlockProps
                 </tbody>
             </table>
 
+            {/* Add Grading Criterion */}
             <Button
                 type="button"
                 variant="outline"
                 onClick={() =>
-                    append({ name: '', description: '', points: 0 })
+                    append({ name: '', description: '', points: 0, uuid: '' })
                 }
             >
                 <PlusCircle className="mr-2 w-4 h-4" />
                 Add Grading Criterion
             </Button>
 
+            {/* Remove Component */}
             <div className="text-right">
                 <Button
                     type="button"
@@ -165,11 +194,15 @@ export const rubricFormSchema = z.object({
     components: z.array(
         z.object({
             name: z.string().min(1, 'Component name is required'),
+            uuid: z.string(),
             grading: z.array(
                 z.object({
                     name: z.string().min(1, 'Grading name is required'),
                     description: z.string().optional(),
                     points: z.number().min(0, 'Points must be positive'),
+                    uuid: z.string(),
+                    scoring_uuid: z.string(),
+                    grading_level_uuid: z.string()
                 })
             ).min(1, 'Each component must have at least one grading criterion'),
         })
@@ -198,7 +231,8 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
             components: [
                 {
                     name: '',
-                    grading: [{ name: '', description: '', points: 0 }],
+                    uuid: '',
+                    grading: [{ name: '', description: '', points: 0, uuid: '', grading_level_uuid: '', scoring_uuid: '' }],
                 },
             ],
         },
@@ -227,6 +261,7 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
     });
 
     const instructor = useInstructor();
+    const queryClient = useQueryClient()
 
     // MUTATIONS
     const createRubric = useMutation(createAssessmentRubricMutation());
@@ -241,6 +276,8 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
     const updateRubricIsPending = updateRubric.isPending || updateRubricComponent.isPending || updateRubricScores.isPending;
 
     const onSubmit = async (values: RubricFormValues) => {
+        console.log(values, "values here?")
+
         try {
             const rubricBody = {
                 title: values.title,
@@ -270,9 +307,87 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
                     },
                     {
                         onSuccess: () => {
-                            toast.success("Rubric updated successfully");
-                            onSubmitSuccess?.();
-                            onCancel();
+                            const component = values.components[0];
+                            const criterionId = component?.uuid;
+
+                            const grading = component?.grading[0];
+                            const gradingId = grading?.uuid;
+                            const gradingLevelUuid = grading?.grading_level_uuid;
+
+                            const rubricComponentBody = {
+                                rubric_uuid: rubricId,
+                                component_name: component?.name || "",
+                                criteria_category: component?.name || "",
+                                description: "",
+                                display_order: 1,
+                                criteria_number: "Criteria 1",
+                                weight_suggestion: "High Priority",
+                                is_primary_criteria: true,
+                                weight: 25,
+                                created_by: "instructor@sarafrika.com",
+                                updated_by: "instructor@sarafrika.com",
+                            };
+
+                            updateRubricComponent.mutate(
+                                {
+                                    path: { rubricUuid: rubricId, criteriaUuid: criterionId as string },
+                                    body: rubricComponentBody
+                                },
+                                {
+                                    onSuccess: () => {
+                                        const rubricScoringBody = {
+                                            criteria_uuid: criterionId,
+                                            grading_level_uuid: gradingLevelUuid,
+                                            description: grading?.description,
+                                            created_by: "instructor@sarafrika.com",
+                                            updated_by: "instructor@sarafrika.com",
+                                            score_range: `${grading?.points} points`,
+                                            is_passing_level: true,
+                                            performance_expectation: grading?.name,
+                                            feedback_category: grading?.description,
+                                        };
+
+                                        updateRubricScores.mutate(
+                                            {
+                                                path: { rubricUuid: rubricId, criteriaUuid: criterionId as string, scoringUuid: grading?.scoring_uuid as string },
+                                                body: rubricScoringBody as any
+                                            },
+                                            {
+                                                onSuccess: () => {
+                                                    queryClient.invalidateQueries({
+                                                        queryKey: searchAssessmentRubricsQueryKey({
+                                                            query: {
+                                                                searchParams: { instructor_uuid_eq: instructor?.uuid as string },
+                                                                pageable: {}
+                                                            }
+                                                        })
+                                                    });
+
+                                                    queryClient.invalidateQueries({
+                                                        queryKey: getRubricCriteriaQueryKey({
+                                                            path: { rubricUuid: rubricId as string },
+                                                            query: { pageable: {} }
+                                                        })
+                                                    });
+
+                                                    queryClient.invalidateQueries({
+                                                        queryKey: getRubricScoringQueryKey({
+                                                            path: { rubricUuid: rubricId as string, criteriaUuid: criterionId as string },
+                                                            query: { pageable: {} }
+
+                                                        })
+                                                    });
+                                                    toast.success("Rubric updated successfully");
+                                                    onSubmitSuccess?.();
+                                                    onCancel();
+                                                },
+                                                onError: () => toast.error("Failed to update rubric scoring"),
+                                            }
+                                        );
+                                    },
+                                    onError: () => toast.error("Failed to update rubric component"),
+                                }
+                            );
                         },
                         onError: () => {
                             toast.error("Failed to update rubric");
@@ -280,58 +395,70 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
                     }
                 );
             } else {
+                // Create logic remains unchanged
                 createRubric.mutate(
                     { body: rubricBody },
                     {
                         onSuccess: (data) => {
-                            const rubricUuid = data?.data?.uuid as string
-                            // toast.success("Rubric created successfully");
-
-                            console.log("Components?>>>>all", values?.components);
-
-                            console.log("Components?>>>>first", values?.components[0]);
+                            const rubricUuid = data?.data?.uuid as string;
+                            const component = values.components[0];
+                            const grading = component?.grading[0];
 
                             const rubricComponentBody = {
                                 rubric_uuid: rubricUuid,
-                                component_name: values.components[0]?.name || "",
-                                description: "Technical proficiency and skill execution in performance",
+                                component_name: component?.name || "",
+                                criteria_category: component?.name || "",
+                                description: "",
                                 display_order: 1,
+                                criteria_number: "Criteria 1",
+                                weight_suggestion: "High Priority",
+                                is_primary_criteria: true,
                                 weight: 25,
                                 created_by: "instructor@sarafrika.com",
                                 updated_by: "instructor@sarafrika.com",
-                                criteria_category: "Performance Component",
-                                is_primary_criteria: true,
-                                weight_suggestion: "High Priority",
-                                criteria_number: "Criteria 1"
-                            }
+                            };
 
-                            createRubricComponent.mutate({ path: { rubricUuid }, body: rubricComponentBody }, {
-                                onSuccess: (data) => {
-                                    const rubricUuid = data?.data?.rubric_uuid;
-                                    const criteriaUuid = data?.data?.uuid as string;
+                            createRubricComponent.mutate(
+                                { path: { rubricUuid }, body: rubricComponentBody },
+                                {
+                                    onSuccess: (data) => {
+                                        const criteriaUuid = data?.data?.uuid as string;
 
-                                    const rubricScoringBody = {
-                                        criteria_uuid: criteriaUuid as string,
-                                        grading_level_uuid: "457a3055-ee0d-4eed-8960-39ac9092f784",
-                                        description: "Highly confident and fluent techniques given consistently throughout",
-                                        created_by: "instructor@sarafrika.com",
-                                        updated_by: "instructor@sarafrika.com",
-                                        performance_expectation: "Exceptional Performance",
-                                        score_range: "5 points",
-                                        is_passing_level: true,
-                                        feedback_category: "Excellence"
-                                    }
+                                        const rubricScoringBody = {
+                                            criteria_uuid: criteriaUuid,
+                                            grading_level_uuid: grading?.uuid,
+                                            description: grading?.description,
+                                            created_by: "instructor@sarafrika.com",
+                                            updated_by: "instructor@sarafrika.com",
+                                            score_range: `${grading?.points} points`,
+                                            is_passing_level: true,
+                                            performance_expectation: grading?.name,
+                                            feedback_category: grading?.description,
+                                        };
 
-                                    createRubricScores.mutate({ path: { rubricUuid: rubricUuid as string, criteriaUuid: criteriaUuid as string }, body: rubricScoringBody as any }, {
-                                        onSuccess: () => {
-                                            toast.success("Rubric created successfully");
-                                            onSubmitSuccess?.();
-                                            onCancel();
-                                        }
-                                    })
+                                        createRubricScores.mutate(
+                                            { path: { rubricUuid, criteriaUuid }, body: rubricScoringBody as any },
+                                            {
+                                                onSuccess: () => {
+                                                    queryClient.invalidateQueries({
+                                                        queryKey: searchAssessmentRubricsQueryKey({
+                                                            query: {
+                                                                searchParams: { instructor_uuid_eq: instructor?.uuid as string },
+                                                                pageable: {}
+                                                            }
+                                                        })
+                                                    });
+                                                    toast.success("Rubric created successfully");
+                                                    onSubmitSuccess?.();
+                                                    onCancel();
+                                                },
+                                                onError: () => toast.error("Failed to create rubric scoring")
+                                            }
+                                        );
+                                    },
+                                    onError: () => toast.error("Failed to create rubric component"),
                                 }
-                            })
-
+                            );
                         },
                         onError: () => toast.error("Failed to create rubric")
                     }
@@ -342,6 +469,7 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
             toast.error("An unexpected error occurred");
         }
     };
+
 
     return (
         <Form {...form}>
@@ -431,6 +559,7 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
                             index={index}
                             remove={removeComponent}
                             isOnlyOne={componentFields.length === 1}
+                            defaultValues={defaultValues}
                         />
                     ))}
 
@@ -441,7 +570,8 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
                         onClick={() =>
                             appendComponent({
                                 name: '',
-                                grading: [{ name: '', description: '', points: 0 }],
+                                uuid: '',
+                                grading: [{ name: '', description: '', points: 0, uuid: '', grading_level_uuid: '', scoring_uuid: '' }],
                             })
                         }
                     >

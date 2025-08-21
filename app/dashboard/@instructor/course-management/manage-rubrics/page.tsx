@@ -15,7 +15,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PenIcon, Square, TrashIcon } from 'lucide-react';
+import { PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -51,10 +51,7 @@ export default function RubricsCreationPage() {
     }, [courseId, replaceBreadcrumbs]);
 
 
-    const { rubricsWithDetails, isLoading: rubricDataIsLoading, isError } = useRubricsWithCriteriaAndScoring(instructor?.uuid);
-
-    console.log('rubricsWithDetails', rubricsWithDetails);
-
+    const { rubricsWithDetails, isLoading: rubricDataIsLoading } = useRubricsWithCriteriaAndScoring(instructor?.uuid);
 
     const [rubrics, setRubrics] = useState(rubricsWithDetails || []);
     const [modalOpen, setModalOpen] = useState(false);
@@ -81,10 +78,14 @@ export default function RubricsCreationPage() {
             visibility: rubric.is_public ? Visibility.Public : Visibility.Private,
             components: criteria.map((c) => ({
                 name: c.component_name,
+                uuid: c.uuid,
                 grading: c.scoring.map((s: any) => ({
                     name: s.performance_expectation,
                     description: s.description,
                     points: parseInt(s.score_range),
+                    uuid: s.uuid,
+                    grading_level_uuid: s.grading_level_uuid,
+                    scoring_uuid: s.uuid
                 })),
             })),
         });
@@ -112,7 +113,6 @@ export default function RubricsCreationPage() {
             { path: { uuid: rubricToDelete } },
             {
                 onSuccess: () => {
-                    toast.success('Rubric deleted successfully.');
                     queryClient.invalidateQueries({
                         queryKey: searchAssessmentRubricsQueryKey({
                             query: {
@@ -120,6 +120,7 @@ export default function RubricsCreationPage() {
                             }
                         })
                     });
+                    toast.success('Rubric deleted successfully.');
                 },
                 onError: () => {
                     toast.error('Failed to delete rubric.');
@@ -155,7 +156,15 @@ export default function RubricsCreationPage() {
         setModalOpen(false);
     };
 
-    const isLoading = false
+    if (rubricDataIsLoading) {
+        return <div className="flex flex-col gap-4 text-[12px] sm:text-[14px]">
+            <div className="h-20 bg-gray-200 rounded animate-pulse w-full"></div>
+
+            <div className="h-16 bg-gray-200 rounded animate-pulse w-full"></div>
+            <div className="h-12 bg-gray-200 rounded animate-pulse w-full"></div>
+
+        </div>
+    }
 
     return (
         <div className="space-y-6">
@@ -163,13 +172,13 @@ export default function RubricsCreationPage() {
                 <div>
                     <h1 className="text-2xl font-semibold">Your Rubrics</h1>
                     <p className="text-muted-foreground mt-1 text-base">
-                        You have {rubrics.length} rubric{rubrics.length !== 1 ? 's' : ''} created.
+                        You have {rubricsWithDetails.length} rubric{rubricsWithDetails.length !== 1 ? 's' : ''} created.
                     </p>
                 </div>
-                {/* <Button type="button" onClick={openAddModal} className="px-4 py-2 text-sm cursor-pointer">
+                <Button type="button" onClick={openAddModal} className="px-4 py-2 text-sm cursor-pointer">
                     <PlusIcon className="h-4 w-4 mr-1" />
                     New Rubric
-                </Button> */}
+                </Button>
             </div>
 
             {rubricsWithDetails.length === 0 ? (
@@ -201,7 +210,7 @@ export default function RubricsCreationPage() {
                         </TableHeader>
 
                         <TableBody>
-                            {isLoading ? (
+                            {rubricDataIsLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={10} className="py-6">
                                         <div className="flex w-full items-center justify-center">
@@ -246,9 +255,12 @@ export default function RubricsCreationPage() {
                                                                     </div>
                                                                     {score.description && (
                                                                         <div className="text-sm text-muted-foreground">
-                                                                            {score.description}
+                                                                            {score.description.length > 45
+                                                                                ? `${score.description.slice(0, 45)}...`
+                                                                                : score.description}
                                                                         </div>
                                                                     )}
+
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -336,14 +348,17 @@ export default function RubricsCreationPage() {
                             {editingRubricId ? 'Edit Rubric' : 'Add New Rubric'}
                         </DialogTitle>
                         <DialogDescription className="text-muted-foreground text-sm">
-                            Create a new rubric by providing its title, description, and grading criteria
+                            {editingRubric
+                                ? "Update the existing rubric's title, description, and grading criteria."
+                                : "Create a new rubric by providing its title, description, and grading criteria."}
                         </DialogDescription>
+
                     </DialogHeader>
 
                     <ScrollArea className="h-[calc(90vh-8rem)]">
                         <AddRubricForm
                             onCancel={() => setModalOpen(false)}
-                            // onSubmitSuccess={handleFormSubmit}
+                            onSubmitSuccess={() => handleFormSubmit}
                             defaultValues={editingRubric || undefined}
                             className="px-6 pb-6"
                             courseId={courseId as string}
