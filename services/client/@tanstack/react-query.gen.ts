@@ -11,6 +11,17 @@ import {
   deleteStudent,
   getStudentById,
   updateStudent,
+  deleteAssessmentRubric,
+  getAssessmentRubricByUuid,
+  updateAssessmentRubric,
+  deleteScoringLevel,
+  getScoringLevel,
+  updateScoringLevel,
+  updateMatrixCell,
+  deleteRubricCriterion,
+  updateRubricCriterion,
+  deleteRubricScoring,
+  updateRubricScoring,
   deleteQuiz,
   getQuizByUuid,
   updateQuiz,
@@ -48,6 +59,8 @@ import {
   deleteCourse,
   getCourseByUuid,
   updateCourse,
+  setPrimaryRubric,
+  updateAssociation,
   deleteCourseRequirement,
   updateCourseRequirement,
   deleteCourseLesson,
@@ -81,6 +94,18 @@ import {
   createTrainingBranch,
   getAllStudents,
   createStudent,
+  getAllAssessmentRubrics,
+  createAssessmentRubric,
+  getScoringLevelsByRubric,
+  createRubricScoringLevel,
+  createDefaultScoringLevels,
+  recalculateScores,
+  initializeRubricMatrix,
+  initializeMatrix,
+  getRubricCriteria,
+  addRubricCriterion,
+  getRubricScoring,
+  addRubricScoring,
   getAllQuizzes,
   createQuiz,
   getQuizQuestions,
@@ -129,6 +154,8 @@ import {
   uploadCourseIntroVideo,
   uploadCourseBanner,
   archiveCourse,
+  getCourseRubrics,
+  associateRubric,
   getCourseRequirements,
   addCourseRequirement,
   getCourseLessons,
@@ -160,6 +187,7 @@ import {
   submitAssignment,
   returnSubmission,
   gradeSubmission,
+  reorderScoringLevels,
   getAllUsers,
   getInvitationsSentByUser,
   getPendingInvitationsForUser,
@@ -168,6 +196,24 @@ import {
   search1,
   getTrainingBranchesByOrganisation1,
   searchStudents,
+  validateMatrix,
+  getPassingScoringLevels,
+  getHighestScoringLevel,
+  getRubricMatrix,
+  validateMatrix1,
+  getMatrixStatistics,
+  checkMatrixReadiness,
+  getRubricMatrixView,
+  searchAssessmentRubrics,
+  getRubricsByType,
+  getRubricsByStatus,
+  getRubricStatistics,
+  getInstructorRubricStatistics,
+  searchPublicRubrics,
+  getPublicRubrics,
+  getPopularRubrics,
+  getInstructorRubrics,
+  getGeneralRubrics,
   getQuizTotalPoints,
   getQuestionDistribution,
   getQuizAttempts,
@@ -203,6 +249,9 @@ import {
   searchEducation,
   searchDocuments,
   getStatusTransitions,
+  checkRubricAssociation,
+  getPrimaryRubric,
+  getRubricsByContext,
   getCourseEnrollments,
   getCourseCompletionRate,
   removeAllCategoriesFromCourse,
@@ -243,6 +292,8 @@ import {
   getPendingGrading,
   cancelInvitation,
   cleanupOldInvitations,
+  dissociateRubric,
+  dissociateRubricByContext,
   removeCategoryFromCourse,
 } from '../sdk.gen';
 import {
@@ -273,6 +324,32 @@ import type {
   UpdateStudentData,
   UpdateStudentError,
   UpdateStudentResponse,
+  DeleteAssessmentRubricData,
+  DeleteAssessmentRubricError,
+  GetAssessmentRubricByUuidData,
+  UpdateAssessmentRubricData,
+  UpdateAssessmentRubricError,
+  UpdateAssessmentRubricResponse,
+  DeleteScoringLevelData,
+  DeleteScoringLevelError,
+  DeleteScoringLevelResponse,
+  GetScoringLevelData,
+  UpdateScoringLevelData,
+  UpdateScoringLevelError,
+  UpdateScoringLevelResponse,
+  UpdateMatrixCellData,
+  UpdateMatrixCellError,
+  UpdateMatrixCellResponse,
+  DeleteRubricCriterionData,
+  DeleteRubricCriterionError,
+  UpdateRubricCriterionData,
+  UpdateRubricCriterionError,
+  UpdateRubricCriterionResponse,
+  DeleteRubricScoringData,
+  DeleteRubricScoringError,
+  UpdateRubricScoringData,
+  UpdateRubricScoringError,
+  UpdateRubricScoringResponse,
   DeleteQuizData,
   DeleteQuizError,
   DeleteQuizResponse,
@@ -296,6 +373,7 @@ import type {
   GetTrainingProgramByUuidData,
   UpdateTrainingProgramData,
   UpdateTrainingProgramError,
+  UpdateTrainingProgramResponse,
   DeleteProgramRequirementData,
   DeleteProgramRequirementError,
   UpdateProgramRequirementData,
@@ -362,6 +440,12 @@ import type {
   UpdateCourseData,
   UpdateCourseError,
   UpdateCourseResponse,
+  SetPrimaryRubricData,
+  SetPrimaryRubricError,
+  SetPrimaryRubricResponse,
+  UpdateAssociationData,
+  UpdateAssociationError,
+  UpdateAssociationResponse,
   DeleteCourseRequirementData,
   DeleteCourseRequirementError,
   UpdateCourseRequirementData,
@@ -447,6 +531,42 @@ import type {
   CreateStudentData,
   CreateStudentError,
   CreateStudentResponse,
+  GetAllAssessmentRubricsData,
+  GetAllAssessmentRubricsError,
+  GetAllAssessmentRubricsResponse,
+  CreateAssessmentRubricData,
+  CreateAssessmentRubricError,
+  CreateAssessmentRubricResponse,
+  GetScoringLevelsByRubricData,
+  GetScoringLevelsByRubricError,
+  GetScoringLevelsByRubricResponse,
+  CreateRubricScoringLevelData,
+  CreateRubricScoringLevelError,
+  CreateRubricScoringLevelResponse,
+  CreateDefaultScoringLevelsData,
+  CreateDefaultScoringLevelsError,
+  CreateDefaultScoringLevelsResponse,
+  RecalculateScoresData,
+  RecalculateScoresError,
+  RecalculateScoresResponse,
+  InitializeRubricMatrixData,
+  InitializeRubricMatrixError,
+  InitializeRubricMatrixResponse,
+  InitializeMatrixData,
+  InitializeMatrixError,
+  InitializeMatrixResponse,
+  GetRubricCriteriaData,
+  GetRubricCriteriaError,
+  GetRubricCriteriaResponse,
+  AddRubricCriterionData,
+  AddRubricCriterionError,
+  AddRubricCriterionResponse,
+  GetRubricScoringData,
+  GetRubricScoringError,
+  GetRubricScoringResponse,
+  AddRubricScoringData,
+  AddRubricScoringError,
+  AddRubricScoringResponse,
   GetAllQuizzesData,
   GetAllQuizzesError,
   GetAllQuizzesResponse,
@@ -468,11 +588,13 @@ import type {
   ReorderQuizQuestionsResponse,
   GetAllTrainingProgramsData,
   GetAllTrainingProgramsError,
+  GetAllTrainingProgramsResponse,
   CreateTrainingProgramData,
   CreateTrainingProgramError,
   CreateTrainingProgramResponse,
   PublishProgramData,
   PublishProgramError,
+  PublishProgramResponse,
   GetProgramRequirementsData,
   GetProgramRequirementsError,
   GetProgramRequirementsResponse,
@@ -577,6 +699,12 @@ import type {
   ArchiveCourseData,
   ArchiveCourseError,
   ArchiveCourseResponse,
+  GetCourseRubricsData,
+  GetCourseRubricsError,
+  GetCourseRubricsResponse,
+  AssociateRubricData,
+  AssociateRubricError,
+  AssociateRubricResponse,
   GetCourseRequirementsData,
   GetCourseRequirementsError,
   GetCourseRequirementsResponse,
@@ -666,6 +794,9 @@ import type {
   GradeSubmissionData,
   GradeSubmissionError,
   GradeSubmissionResponse,
+  ReorderScoringLevelsData,
+  ReorderScoringLevelsError,
+  ReorderScoringLevelsResponse,
   GetAllUsersData,
   GetAllUsersError,
   GetAllUsersResponse,
@@ -684,6 +815,42 @@ import type {
   SearchStudentsData,
   SearchStudentsError,
   SearchStudentsResponse,
+  ValidateMatrixData,
+  GetPassingScoringLevelsData,
+  GetPassingScoringLevelsError,
+  GetPassingScoringLevelsResponse,
+  GetHighestScoringLevelData,
+  GetRubricMatrixData,
+  ValidateMatrix1Data,
+  GetMatrixStatisticsData,
+  CheckMatrixReadinessData,
+  GetRubricMatrixViewData,
+  SearchAssessmentRubricsData,
+  SearchAssessmentRubricsError,
+  SearchAssessmentRubricsResponse,
+  GetRubricsByTypeData,
+  GetRubricsByTypeError,
+  GetRubricsByTypeResponse,
+  GetRubricsByStatusData,
+  GetRubricsByStatusError,
+  GetRubricsByStatusResponse,
+  GetRubricStatisticsData,
+  GetInstructorRubricStatisticsData,
+  SearchPublicRubricsData,
+  SearchPublicRubricsError,
+  SearchPublicRubricsResponse,
+  GetPublicRubricsData,
+  GetPublicRubricsError,
+  GetPublicRubricsResponse,
+  GetPopularRubricsData,
+  GetPopularRubricsError,
+  GetPopularRubricsResponse,
+  GetInstructorRubricsData,
+  GetInstructorRubricsError,
+  GetInstructorRubricsResponse,
+  GetGeneralRubricsData,
+  GetGeneralRubricsError,
+  GetGeneralRubricsResponse,
   GetQuizTotalPointsData,
   GetQuestionDistributionData,
   GetQuizAttemptsData,
@@ -709,15 +876,19 @@ import type {
   GetProgramCertificatesResponse,
   SearchTrainingProgramsData,
   SearchTrainingProgramsError,
+  SearchTrainingProgramsResponse,
   SearchProgramRequirementsData,
   SearchProgramRequirementsError,
   SearchProgramRequirementsResponse,
   GetPublishedProgramsData,
   GetPublishedProgramsError,
+  GetPublishedProgramsResponse,
   GetProgramsByInstructorData,
   GetProgramsByInstructorError,
+  GetProgramsByInstructorResponse,
   GetFreeProgramsData,
   GetFreeProgramsError,
+  GetFreeProgramsResponse,
   SearchProgramEnrollmentsData,
   SearchProgramEnrollmentsError,
   SearchProgramEnrollmentsResponse,
@@ -726,8 +897,10 @@ import type {
   SearchProgramCoursesResponse,
   GetProgramsByCategoryData,
   GetProgramsByCategoryError,
+  GetProgramsByCategoryResponse,
   GetActiveProgramsData,
   GetActiveProgramsError,
+  GetActiveProgramsResponse,
   GetUsersByOrganisationData,
   GetUsersByOrganisationError,
   GetUsersByOrganisationResponse,
@@ -759,6 +932,11 @@ import type {
   SearchDocumentsError,
   SearchDocumentsResponse,
   GetStatusTransitionsData,
+  CheckRubricAssociationData,
+  GetPrimaryRubricData,
+  GetRubricsByContextData,
+  GetRubricsByContextError,
+  GetRubricsByContextResponse,
   GetCourseEnrollmentsData,
   GetCourseEnrollmentsError,
   GetCourseEnrollmentsResponse,
@@ -841,6 +1019,12 @@ import type {
   CleanupOldInvitationsData,
   CleanupOldInvitationsError,
   CleanupOldInvitationsResponse,
+  DissociateRubricData,
+  DissociateRubricError,
+  DissociateRubricResponse,
+  DissociateRubricByContextData,
+  DissociateRubricByContextError,
+  DissociateRubricByContextResponse,
   RemoveCategoryFromCourseData,
   RemoveCategoryFromCourseError,
   RemoveCategoryFromCourseResponse,
@@ -874,13 +1058,15 @@ export type QueryKey<TOptions extends Options> = [
   Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
     _id: string;
     _infinite?: boolean;
+    tags?: ReadonlyArray<string>;
   },
 ];
 
 const createQueryKey = <TOptions extends Options>(
   id: string,
   options?: TOptions,
-  infinite?: boolean
+  infinite?: boolean,
+  tags?: ReadonlyArray<string>
 ): [QueryKey<TOptions>[0]] => {
   const params: QueryKey<TOptions>[0] = {
     _id: id,
@@ -888,6 +1074,9 @@ const createQueryKey = <TOptions extends Options>(
   } as QueryKey<TOptions>[0];
   if (infinite) {
     params._infinite = infinite;
+  }
+  if (tags) {
+    params.tags = tags;
   }
   if (options?.body) {
     params.body = options.body;
@@ -1083,6 +1272,297 @@ export const updateStudentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateStudent({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete an assessment rubric
+ * Deletes an assessment rubric and all its associated criteria and scoring levels.
+ */
+export const deleteAssessmentRubricMutation = (
+  options?: Partial<Options<DeleteAssessmentRubricData>>
+): UseMutationOptions<
+  unknown,
+  DeleteAssessmentRubricError,
+  Options<DeleteAssessmentRubricData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteAssessmentRubricError,
+    Options<DeleteAssessmentRubricData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteAssessmentRubric({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getAssessmentRubricByUuidQueryKey = (
+  options: Options<GetAssessmentRubricByUuidData>
+) => createQueryKey('getAssessmentRubricByUuid', options);
+
+/**
+ * Get an assessment rubric by UUID
+ * Retrieves a single assessment rubric by its unique identifier.
+ */
+export const getAssessmentRubricByUuidOptions = (
+  options: Options<GetAssessmentRubricByUuidData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAssessmentRubricByUuid({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAssessmentRubricByUuidQueryKey(options),
+  });
+};
+
+/**
+ * Update an assessment rubric
+ * Updates an existing assessment rubric.
+ */
+export const updateAssessmentRubricMutation = (
+  options?: Partial<Options<UpdateAssessmentRubricData>>
+): UseMutationOptions<
+  UpdateAssessmentRubricResponse,
+  UpdateAssessmentRubricError,
+  Options<UpdateAssessmentRubricData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateAssessmentRubricResponse,
+    UpdateAssessmentRubricError,
+    Options<UpdateAssessmentRubricData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateAssessmentRubric({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a scoring level
+ * Removes a scoring level from the specified rubric. This will also remove any associated matrix cells.
+ */
+export const deleteScoringLevelMutation = (
+  options?: Partial<Options<DeleteScoringLevelData>>
+): UseMutationOptions<
+  DeleteScoringLevelResponse,
+  DeleteScoringLevelError,
+  Options<DeleteScoringLevelData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteScoringLevelResponse,
+    DeleteScoringLevelError,
+    Options<DeleteScoringLevelData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteScoringLevel({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getScoringLevelQueryKey = (options: Options<GetScoringLevelData>) =>
+  createQueryKey('getScoringLevel', options);
+
+/**
+ * Get a specific scoring level
+ * Retrieves a specific scoring level by its UUID within the context of the rubric.
+ */
+export const getScoringLevelOptions = (options: Options<GetScoringLevelData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getScoringLevel({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getScoringLevelQueryKey(options),
+  });
+};
+
+/**
+ * Update a scoring level
+ * Updates an existing scoring level within the specified rubric.
+ */
+export const updateScoringLevelMutation = (
+  options?: Partial<Options<UpdateScoringLevelData>>
+): UseMutationOptions<
+  UpdateScoringLevelResponse,
+  UpdateScoringLevelError,
+  Options<UpdateScoringLevelData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateScoringLevelResponse,
+    UpdateScoringLevelError,
+    Options<UpdateScoringLevelData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateScoringLevel({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update matrix cell
+ * Updates the description for a specific matrix cell (criteria-scoring level intersection).
+ */
+export const updateMatrixCellMutation = (
+  options?: Partial<Options<UpdateMatrixCellData>>
+): UseMutationOptions<
+  UpdateMatrixCellResponse,
+  UpdateMatrixCellError,
+  Options<UpdateMatrixCellData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateMatrixCellResponse,
+    UpdateMatrixCellError,
+    Options<UpdateMatrixCellData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateMatrixCell({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a rubric criterion
+ * Deletes a criterion from a rubric.
+ */
+export const deleteRubricCriterionMutation = (
+  options?: Partial<Options<DeleteRubricCriterionData>>
+): UseMutationOptions<unknown, DeleteRubricCriterionError, Options<DeleteRubricCriterionData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteRubricCriterionError,
+    Options<DeleteRubricCriterionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteRubricCriterion({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update a rubric criterion
+ * Updates an existing criterion within a rubric.
+ */
+export const updateRubricCriterionMutation = (
+  options?: Partial<Options<UpdateRubricCriterionData>>
+): UseMutationOptions<
+  UpdateRubricCriterionResponse,
+  UpdateRubricCriterionError,
+  Options<UpdateRubricCriterionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateRubricCriterionResponse,
+    UpdateRubricCriterionError,
+    Options<UpdateRubricCriterionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateRubricCriterion({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a scoring level
+ * Deletes a scoring level from a criterion.
+ */
+export const deleteRubricScoringMutation = (
+  options?: Partial<Options<DeleteRubricScoringData>>
+): UseMutationOptions<unknown, DeleteRubricScoringError, Options<DeleteRubricScoringData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteRubricScoringError,
+    Options<DeleteRubricScoringData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteRubricScoring({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update a scoring level
+ * Updates an existing scoring level for a criterion.
+ */
+export const updateRubricScoringMutation = (
+  options?: Partial<Options<UpdateRubricScoringData>>
+): UseMutationOptions<
+  UpdateRubricScoringResponse,
+  UpdateRubricScoringError,
+  Options<UpdateRubricScoringData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateRubricScoringResponse,
+    UpdateRubricScoringError,
+    Options<UpdateRubricScoringData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateRubricScoring({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -1323,9 +1803,13 @@ export const getTrainingProgramByUuidOptions = (options: Options<GetTrainingProg
  */
 export const updateTrainingProgramMutation = (
   options?: Partial<Options<UpdateTrainingProgramData>>
-): UseMutationOptions<unknown, UpdateTrainingProgramError, Options<UpdateTrainingProgramData>> => {
+): UseMutationOptions<
+  UpdateTrainingProgramResponse,
+  UpdateTrainingProgramError,
+  Options<UpdateTrainingProgramData>
+> => {
   const mutationOptions: UseMutationOptions<
-    unknown,
+    UpdateTrainingProgramResponse,
     UpdateTrainingProgramError,
     Options<UpdateTrainingProgramData>
   > = {
@@ -2056,6 +2540,62 @@ export const updateCourseMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCourse({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Set primary rubric for a course
+ * Designates a specific rubric as the primary rubric for the course.
+ */
+export const setPrimaryRubricMutation = (
+  options?: Partial<Options<SetPrimaryRubricData>>
+): UseMutationOptions<
+  SetPrimaryRubricResponse,
+  SetPrimaryRubricError,
+  Options<SetPrimaryRubricData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SetPrimaryRubricResponse,
+    SetPrimaryRubricError,
+    Options<SetPrimaryRubricData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await setPrimaryRubric({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update rubric association
+ * Updates an existing rubric association, allowing changes to context, primary status, etc.
+ */
+export const updateAssociationMutation = (
+  options?: Partial<Options<UpdateAssociationData>>
+): UseMutationOptions<
+  UpdateAssociationResponse,
+  UpdateAssociationError,
+  Options<UpdateAssociationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateAssociationResponse,
+    UpdateAssociationError,
+    Options<UpdateAssociationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateAssociation({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -2923,13 +3463,13 @@ export const uploadProfileImageMutation = (
   return mutationOptions;
 };
 
-export const getAllTrainingBranchesQueryKey = (options?: Options<GetAllTrainingBranchesData>) =>
+export const getAllTrainingBranchesQueryKey = (options: Options<GetAllTrainingBranchesData>) =>
   createQueryKey('getAllTrainingBranches', options);
 
 /**
  * Get all training branches
  */
-export const getAllTrainingBranchesOptions = (options?: Options<GetAllTrainingBranchesData>) => {
+export const getAllTrainingBranchesOptions = (options: Options<GetAllTrainingBranchesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllTrainingBranches({
@@ -2981,7 +3521,7 @@ const createInfiniteParams = <
 };
 
 export const getAllTrainingBranchesInfiniteQueryKey = (
-  options?: Options<GetAllTrainingBranchesData>
+  options: Options<GetAllTrainingBranchesData>
 ): QueryKey<Options<GetAllTrainingBranchesData>> =>
   createQueryKey('getAllTrainingBranches', options, true);
 
@@ -2989,7 +3529,7 @@ export const getAllTrainingBranchesInfiniteQueryKey = (
  * Get all training branches
  */
 export const getAllTrainingBranchesInfiniteOptions = (
-  options?: Options<GetAllTrainingBranchesData>
+  options: Options<GetAllTrainingBranchesData>
 ) => {
   return infiniteQueryOptions<
     GetAllTrainingBranchesResponse,
@@ -3011,7 +3551,7 @@ export const getAllTrainingBranchesInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -3076,14 +3616,14 @@ export const createTrainingBranchMutation = (
   return mutationOptions;
 };
 
-export const getAllStudentsQueryKey = (options?: Options<GetAllStudentsData>) =>
+export const getAllStudentsQueryKey = (options: Options<GetAllStudentsData>) =>
   createQueryKey('getAllStudents', options);
 
 /**
  * Get all students
  * Fetches a paginated list of students.
  */
-export const getAllStudentsOptions = (options?: Options<GetAllStudentsData>) => {
+export const getAllStudentsOptions = (options: Options<GetAllStudentsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllStudents({
@@ -3099,14 +3639,14 @@ export const getAllStudentsOptions = (options?: Options<GetAllStudentsData>) => 
 };
 
 export const getAllStudentsInfiniteQueryKey = (
-  options?: Options<GetAllStudentsData>
+  options: Options<GetAllStudentsData>
 ): QueryKey<Options<GetAllStudentsData>> => createQueryKey('getAllStudents', options, true);
 
 /**
  * Get all students
  * Fetches a paginated list of students.
  */
-export const getAllStudentsInfiniteOptions = (options?: Options<GetAllStudentsData>) => {
+export const getAllStudentsInfiniteOptions = (options: Options<GetAllStudentsData>) => {
   return infiniteQueryOptions<
     GetAllStudentsResponse,
     GetAllStudentsError,
@@ -3126,7 +3666,7 @@ export const getAllStudentsInfiniteOptions = (options?: Options<GetAllStudentsDa
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -3189,14 +3729,749 @@ export const createStudentMutation = (
   return mutationOptions;
 };
 
-export const getAllQuizzesQueryKey = (options?: Options<GetAllQuizzesData>) =>
+export const getAllAssessmentRubricsQueryKey = (options: Options<GetAllAssessmentRubricsData>) =>
+  createQueryKey('getAllAssessmentRubrics', options);
+
+/**
+ * Get all assessment rubrics
+ * Retrieves a paginated list of all assessment rubrics.
+ */
+export const getAllAssessmentRubricsOptions = (options: Options<GetAllAssessmentRubricsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAllAssessmentRubrics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAllAssessmentRubricsQueryKey(options),
+  });
+};
+
+export const getAllAssessmentRubricsInfiniteQueryKey = (
+  options: Options<GetAllAssessmentRubricsData>
+): QueryKey<Options<GetAllAssessmentRubricsData>> =>
+  createQueryKey('getAllAssessmentRubrics', options, true);
+
+/**
+ * Get all assessment rubrics
+ * Retrieves a paginated list of all assessment rubrics.
+ */
+export const getAllAssessmentRubricsInfiniteOptions = (
+  options: Options<GetAllAssessmentRubricsData>
+) => {
+  return infiniteQueryOptions<
+    GetAllAssessmentRubricsResponse,
+    GetAllAssessmentRubricsError,
+    InfiniteData<GetAllAssessmentRubricsResponse>,
+    QueryKey<Options<GetAllAssessmentRubricsData>>,
+    | number
+    | Pick<QueryKey<Options<GetAllAssessmentRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetAllAssessmentRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllAssessmentRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllAssessmentRubricsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const createAssessmentRubricQueryKey = (options: Options<CreateAssessmentRubricData>) =>
+  createQueryKey('createAssessmentRubric', options);
+
+/**
+ * Create a new assessment rubric
+ * Creates a new assessment rubric. The rubric can be associated with a specific course or be a general-purpose rubric.
+ */
+export const createAssessmentRubricOptions = (options: Options<CreateAssessmentRubricData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createAssessmentRubric({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createAssessmentRubricQueryKey(options),
+  });
+};
+
+/**
+ * Create a new assessment rubric
+ * Creates a new assessment rubric. The rubric can be associated with a specific course or be a general-purpose rubric.
+ */
+export const createAssessmentRubricMutation = (
+  options?: Partial<Options<CreateAssessmentRubricData>>
+): UseMutationOptions<
+  CreateAssessmentRubricResponse,
+  CreateAssessmentRubricError,
+  Options<CreateAssessmentRubricData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateAssessmentRubricResponse,
+    CreateAssessmentRubricError,
+    Options<CreateAssessmentRubricData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createAssessmentRubric({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getScoringLevelsByRubricQueryKey = (options: Options<GetScoringLevelsByRubricData>) =>
+  createQueryKey('getScoringLevelsByRubric', options);
+
+/**
+ * Get all scoring levels for a rubric
+ * Retrieves all custom scoring levels for the specified rubric, ordered by level order.
+ */
+export const getScoringLevelsByRubricOptions = (options: Options<GetScoringLevelsByRubricData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getScoringLevelsByRubric({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getScoringLevelsByRubricQueryKey(options),
+  });
+};
+
+export const getScoringLevelsByRubricInfiniteQueryKey = (
+  options: Options<GetScoringLevelsByRubricData>
+): QueryKey<Options<GetScoringLevelsByRubricData>> =>
+  createQueryKey('getScoringLevelsByRubric', options, true);
+
+/**
+ * Get all scoring levels for a rubric
+ * Retrieves all custom scoring levels for the specified rubric, ordered by level order.
+ */
+export const getScoringLevelsByRubricInfiniteOptions = (
+  options: Options<GetScoringLevelsByRubricData>
+) => {
+  return infiniteQueryOptions<
+    GetScoringLevelsByRubricResponse,
+    GetScoringLevelsByRubricError,
+    InfiniteData<GetScoringLevelsByRubricResponse>,
+    QueryKey<Options<GetScoringLevelsByRubricData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetScoringLevelsByRubricData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetScoringLevelsByRubricData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getScoringLevelsByRubric({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getScoringLevelsByRubricInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const createRubricScoringLevelQueryKey = (options: Options<CreateRubricScoringLevelData>) =>
+  createQueryKey('createRubricScoringLevel', options);
+
+/**
+ * Create a new scoring level for a rubric
+ * Creates a new custom scoring level (e.g., Excellent, Good, Fair) within the specified rubric for matrix-based assessment.
+ */
+export const createRubricScoringLevelOptions = (options: Options<CreateRubricScoringLevelData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createRubricScoringLevel({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createRubricScoringLevelQueryKey(options),
+  });
+};
+
+/**
+ * Create a new scoring level for a rubric
+ * Creates a new custom scoring level (e.g., Excellent, Good, Fair) within the specified rubric for matrix-based assessment.
+ */
+export const createRubricScoringLevelMutation = (
+  options?: Partial<Options<CreateRubricScoringLevelData>>
+): UseMutationOptions<
+  CreateRubricScoringLevelResponse,
+  CreateRubricScoringLevelError,
+  Options<CreateRubricScoringLevelData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateRubricScoringLevelResponse,
+    CreateRubricScoringLevelError,
+    Options<CreateRubricScoringLevelData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createRubricScoringLevel({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const createDefaultScoringLevelsQueryKey = (
+  options: Options<CreateDefaultScoringLevelsData>
+) => createQueryKey('createDefaultScoringLevels', options);
+
+/**
+ * Create default scoring levels
+ * Creates a set of default scoring levels for the rubric based on the specified template (standard, simple, advanced).
+ */
+export const createDefaultScoringLevelsOptions = (
+  options: Options<CreateDefaultScoringLevelsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createDefaultScoringLevels({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createDefaultScoringLevelsQueryKey(options),
+  });
+};
+
+export const createDefaultScoringLevelsInfiniteQueryKey = (
+  options: Options<CreateDefaultScoringLevelsData>
+): QueryKey<Options<CreateDefaultScoringLevelsData>> =>
+  createQueryKey('createDefaultScoringLevels', options, true);
+
+/**
+ * Create default scoring levels
+ * Creates a set of default scoring levels for the rubric based on the specified template (standard, simple, advanced).
+ */
+export const createDefaultScoringLevelsInfiniteOptions = (
+  options: Options<CreateDefaultScoringLevelsData>
+) => {
+  return infiniteQueryOptions<
+    CreateDefaultScoringLevelsResponse,
+    CreateDefaultScoringLevelsError,
+    InfiniteData<CreateDefaultScoringLevelsResponse>,
+    QueryKey<Options<CreateDefaultScoringLevelsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<CreateDefaultScoringLevelsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<CreateDefaultScoringLevelsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await createDefaultScoringLevels({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: createDefaultScoringLevelsInfiniteQueryKey(options),
+    }
+  );
+};
+
+/**
+ * Create default scoring levels
+ * Creates a set of default scoring levels for the rubric based on the specified template (standard, simple, advanced).
+ */
+export const createDefaultScoringLevelsMutation = (
+  options?: Partial<Options<CreateDefaultScoringLevelsData>>
+): UseMutationOptions<
+  CreateDefaultScoringLevelsResponse,
+  CreateDefaultScoringLevelsError,
+  Options<CreateDefaultScoringLevelsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateDefaultScoringLevelsResponse,
+    CreateDefaultScoringLevelsError,
+    Options<CreateDefaultScoringLevelsData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createDefaultScoringLevels({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const recalculateScoresQueryKey = (options: Options<RecalculateScoresData>) =>
+  createQueryKey('recalculateScores', options);
+
+/**
+ * Recalculate rubric scores
+ * Recalculates maximum and minimum passing scores based on current matrix configuration and weights.
+ */
+export const recalculateScoresOptions = (options: Options<RecalculateScoresData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await recalculateScores({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: recalculateScoresQueryKey(options),
+  });
+};
+
+/**
+ * Recalculate rubric scores
+ * Recalculates maximum and minimum passing scores based on current matrix configuration and weights.
+ */
+export const recalculateScoresMutation = (
+  options?: Partial<Options<RecalculateScoresData>>
+): UseMutationOptions<
+  RecalculateScoresResponse,
+  RecalculateScoresError,
+  Options<RecalculateScoresData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RecalculateScoresResponse,
+    RecalculateScoresError,
+    Options<RecalculateScoresData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await recalculateScores({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const initializeRubricMatrixQueryKey = (options: Options<InitializeRubricMatrixData>) =>
+  createQueryKey('initializeRubricMatrix', options);
+
+/**
+ * Initialize rubric matrix
+ * Initializes a rubric matrix with default scoring levels and structure. Creates default levels if none exist.
+ */
+export const initializeRubricMatrixOptions = (options: Options<InitializeRubricMatrixData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await initializeRubricMatrix({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: initializeRubricMatrixQueryKey(options),
+  });
+};
+
+/**
+ * Initialize rubric matrix
+ * Initializes a rubric matrix with default scoring levels and structure. Creates default levels if none exist.
+ */
+export const initializeRubricMatrixMutation = (
+  options?: Partial<Options<InitializeRubricMatrixData>>
+): UseMutationOptions<
+  InitializeRubricMatrixResponse,
+  InitializeRubricMatrixError,
+  Options<InitializeRubricMatrixData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    InitializeRubricMatrixResponse,
+    InitializeRubricMatrixError,
+    Options<InitializeRubricMatrixData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await initializeRubricMatrix({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const initializeMatrixQueryKey = (options: Options<InitializeMatrixData>) =>
+  createQueryKey('initializeMatrix', options);
+
+/**
+ * Initialize rubric matrix
+ * Sets up the rubric matrix with default scoring levels and prepares it for use.
+ */
+export const initializeMatrixOptions = (options: Options<InitializeMatrixData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await initializeMatrix({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: initializeMatrixQueryKey(options),
+  });
+};
+
+/**
+ * Initialize rubric matrix
+ * Sets up the rubric matrix with default scoring levels and prepares it for use.
+ */
+export const initializeMatrixMutation = (
+  options?: Partial<Options<InitializeMatrixData>>
+): UseMutationOptions<
+  InitializeMatrixResponse,
+  InitializeMatrixError,
+  Options<InitializeMatrixData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    InitializeMatrixResponse,
+    InitializeMatrixError,
+    Options<InitializeMatrixData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await initializeMatrix({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getRubricCriteriaQueryKey = (options: Options<GetRubricCriteriaData>) =>
+  createQueryKey('getRubricCriteria', options);
+
+/**
+ * Get all criteria for a rubric
+ * Retrieves a paginated list of all criteria for a specific assessment rubric.
+ */
+export const getRubricCriteriaOptions = (options: Options<GetRubricCriteriaData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRubricCriteria({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRubricCriteriaQueryKey(options),
+  });
+};
+
+export const getRubricCriteriaInfiniteQueryKey = (
+  options: Options<GetRubricCriteriaData>
+): QueryKey<Options<GetRubricCriteriaData>> => createQueryKey('getRubricCriteria', options, true);
+
+/**
+ * Get all criteria for a rubric
+ * Retrieves a paginated list of all criteria for a specific assessment rubric.
+ */
+export const getRubricCriteriaInfiniteOptions = (options: Options<GetRubricCriteriaData>) => {
+  return infiniteQueryOptions<
+    GetRubricCriteriaResponse,
+    GetRubricCriteriaError,
+    InfiniteData<GetRubricCriteriaResponse>,
+    QueryKey<Options<GetRubricCriteriaData>>,
+    | number
+    | Pick<QueryKey<Options<GetRubricCriteriaData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetRubricCriteriaData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricCriteria({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricCriteriaInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const addRubricCriterionQueryKey = (options: Options<AddRubricCriterionData>) =>
+  createQueryKey('addRubricCriterion', options);
+
+/**
+ * Add a criterion to a rubric
+ * Adds a new criterion to an existing assessment rubric.
+ */
+export const addRubricCriterionOptions = (options: Options<AddRubricCriterionData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addRubricCriterion({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addRubricCriterionQueryKey(options),
+  });
+};
+
+/**
+ * Add a criterion to a rubric
+ * Adds a new criterion to an existing assessment rubric.
+ */
+export const addRubricCriterionMutation = (
+  options?: Partial<Options<AddRubricCriterionData>>
+): UseMutationOptions<
+  AddRubricCriterionResponse,
+  AddRubricCriterionError,
+  Options<AddRubricCriterionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddRubricCriterionResponse,
+    AddRubricCriterionError,
+    Options<AddRubricCriterionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addRubricCriterion({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getRubricScoringQueryKey = (options: Options<GetRubricScoringData>) =>
+  createQueryKey('getRubricScoring', options);
+
+/**
+ * Get all scoring levels for a criterion
+ * Retrieves a paginated list of all scoring levels for a specific rubric criterion.
+ */
+export const getRubricScoringOptions = (options: Options<GetRubricScoringData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRubricScoring({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRubricScoringQueryKey(options),
+  });
+};
+
+export const getRubricScoringInfiniteQueryKey = (
+  options: Options<GetRubricScoringData>
+): QueryKey<Options<GetRubricScoringData>> => createQueryKey('getRubricScoring', options, true);
+
+/**
+ * Get all scoring levels for a criterion
+ * Retrieves a paginated list of all scoring levels for a specific rubric criterion.
+ */
+export const getRubricScoringInfiniteOptions = (options: Options<GetRubricScoringData>) => {
+  return infiniteQueryOptions<
+    GetRubricScoringResponse,
+    GetRubricScoringError,
+    InfiniteData<GetRubricScoringResponse>,
+    QueryKey<Options<GetRubricScoringData>>,
+    number | Pick<QueryKey<Options<GetRubricScoringData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetRubricScoringData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricScoring({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricScoringInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const addRubricScoringQueryKey = (options: Options<AddRubricScoringData>) =>
+  createQueryKey('addRubricScoring', options);
+
+/**
+ * Add a scoring level to a criterion
+ * Adds a new scoring level to an existing rubric criterion.
+ */
+export const addRubricScoringOptions = (options: Options<AddRubricScoringData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addRubricScoring({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addRubricScoringQueryKey(options),
+  });
+};
+
+/**
+ * Add a scoring level to a criterion
+ * Adds a new scoring level to an existing rubric criterion.
+ */
+export const addRubricScoringMutation = (
+  options?: Partial<Options<AddRubricScoringData>>
+): UseMutationOptions<
+  AddRubricScoringResponse,
+  AddRubricScoringError,
+  Options<AddRubricScoringData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddRubricScoringResponse,
+    AddRubricScoringError,
+    Options<AddRubricScoringData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addRubricScoring({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getAllQuizzesQueryKey = (options: Options<GetAllQuizzesData>) =>
   createQueryKey('getAllQuizzes', options);
 
 /**
  * Get all quizzes
  * Retrieves paginated list of all quizzes with filtering support.
  */
-export const getAllQuizzesOptions = (options?: Options<GetAllQuizzesData>) => {
+export const getAllQuizzesOptions = (options: Options<GetAllQuizzesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllQuizzes({
@@ -3212,14 +4487,14 @@ export const getAllQuizzesOptions = (options?: Options<GetAllQuizzesData>) => {
 };
 
 export const getAllQuizzesInfiniteQueryKey = (
-  options?: Options<GetAllQuizzesData>
+  options: Options<GetAllQuizzesData>
 ): QueryKey<Options<GetAllQuizzesData>> => createQueryKey('getAllQuizzes', options, true);
 
 /**
  * Get all quizzes
  * Retrieves paginated list of all quizzes with filtering support.
  */
-export const getAllQuizzesInfiniteOptions = (options?: Options<GetAllQuizzesData>) => {
+export const getAllQuizzesInfiniteOptions = (options: Options<GetAllQuizzesData>) => {
   return infiniteQueryOptions<
     GetAllQuizzesResponse,
     GetAllQuizzesError,
@@ -3239,7 +4514,7 @@ export const getAllQuizzesInfiniteOptions = (options?: Options<GetAllQuizzesData
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -3425,7 +4700,7 @@ export const getQuestionOptionsInfiniteOptions = (options: Options<GetQuestionOp
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -3542,14 +4817,14 @@ export const reorderQuizQuestionsMutation = (
   return mutationOptions;
 };
 
-export const getAllTrainingProgramsQueryKey = (options?: Options<GetAllTrainingProgramsData>) =>
+export const getAllTrainingProgramsQueryKey = (options: Options<GetAllTrainingProgramsData>) =>
   createQueryKey('getAllTrainingPrograms', options);
 
 /**
  * Get all programs
  * Retrieves paginated list of all training programs with filtering support.
  */
-export const getAllTrainingProgramsOptions = (options?: Options<GetAllTrainingProgramsData>) => {
+export const getAllTrainingProgramsOptions = (options: Options<GetAllTrainingProgramsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllTrainingPrograms({
@@ -3565,7 +4840,7 @@ export const getAllTrainingProgramsOptions = (options?: Options<GetAllTrainingPr
 };
 
 export const getAllTrainingProgramsInfiniteQueryKey = (
-  options?: Options<GetAllTrainingProgramsData>
+  options: Options<GetAllTrainingProgramsData>
 ): QueryKey<Options<GetAllTrainingProgramsData>> =>
   createQueryKey('getAllTrainingPrograms', options, true);
 
@@ -3574,12 +4849,12 @@ export const getAllTrainingProgramsInfiniteQueryKey = (
  * Retrieves paginated list of all training programs with filtering support.
  */
 export const getAllTrainingProgramsInfiniteOptions = (
-  options?: Options<GetAllTrainingProgramsData>
+  options: Options<GetAllTrainingProgramsData>
 ) => {
   return infiniteQueryOptions<
-    unknown,
+    GetAllTrainingProgramsResponse,
     GetAllTrainingProgramsError,
-    InfiniteData<unknown>,
+    InfiniteData<GetAllTrainingProgramsResponse>,
     QueryKey<Options<GetAllTrainingProgramsData>>,
     | number
     | Pick<QueryKey<Options<GetAllTrainingProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
@@ -3596,7 +4871,7 @@ export const getAllTrainingProgramsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -3691,9 +4966,9 @@ export const publishProgramOptions = (options: Options<PublishProgramData>) => {
  */
 export const publishProgramMutation = (
   options?: Partial<Options<PublishProgramData>>
-): UseMutationOptions<unknown, PublishProgramError, Options<PublishProgramData>> => {
+): UseMutationOptions<PublishProgramResponse, PublishProgramError, Options<PublishProgramData>> => {
   const mutationOptions: UseMutationOptions<
-    unknown,
+    PublishProgramResponse,
     PublishProgramError,
     Options<PublishProgramData>
   > = {
@@ -3763,7 +5038,7 @@ export const getProgramRequirementsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -3902,13 +5177,13 @@ export const addProgramCourseMutation = (
   return mutationOptions;
 };
 
-export const getAllOrganisationsQueryKey = (options?: Options<GetAllOrganisationsData>) =>
+export const getAllOrganisationsQueryKey = (options: Options<GetAllOrganisationsData>) =>
   createQueryKey('getAllOrganisations', options);
 
 /**
  * Get all organisations
  */
-export const getAllOrganisationsOptions = (options?: Options<GetAllOrganisationsData>) => {
+export const getAllOrganisationsOptions = (options: Options<GetAllOrganisationsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllOrganisations({
@@ -3924,14 +5199,14 @@ export const getAllOrganisationsOptions = (options?: Options<GetAllOrganisations
 };
 
 export const getAllOrganisationsInfiniteQueryKey = (
-  options?: Options<GetAllOrganisationsData>
+  options: Options<GetAllOrganisationsData>
 ): QueryKey<Options<GetAllOrganisationsData>> =>
   createQueryKey('getAllOrganisations', options, true);
 
 /**
  * Get all organisations
  */
-export const getAllOrganisationsInfiniteOptions = (options?: Options<GetAllOrganisationsData>) => {
+export const getAllOrganisationsInfiniteOptions = (options: Options<GetAllOrganisationsData>) => {
   return infiniteQueryOptions<
     GetAllOrganisationsResponse,
     GetAllOrganisationsError,
@@ -3952,7 +5227,7 @@ export const getAllOrganisationsInfiniteOptions = (options?: Options<GetAllOrgan
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -4075,7 +5350,7 @@ export const getTrainingBranchesByOrganisationInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -4518,14 +5793,14 @@ export const markExpiredInvitationsMutation = (
   return mutationOptions;
 };
 
-export const getAllInstructorsQueryKey = (options?: Options<GetAllInstructorsData>) =>
+export const getAllInstructorsQueryKey = (options: Options<GetAllInstructorsData>) =>
   createQueryKey('getAllInstructors', options);
 
 /**
  * Get all instructors
  * Fetches a paginated list of instructors.
  */
-export const getAllInstructorsOptions = (options?: Options<GetAllInstructorsData>) => {
+export const getAllInstructorsOptions = (options: Options<GetAllInstructorsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllInstructors({
@@ -4541,14 +5816,14 @@ export const getAllInstructorsOptions = (options?: Options<GetAllInstructorsData
 };
 
 export const getAllInstructorsInfiniteQueryKey = (
-  options?: Options<GetAllInstructorsData>
+  options: Options<GetAllInstructorsData>
 ): QueryKey<Options<GetAllInstructorsData>> => createQueryKey('getAllInstructors', options, true);
 
 /**
  * Get all instructors
  * Fetches a paginated list of instructors.
  */
-export const getAllInstructorsInfiniteOptions = (options?: Options<GetAllInstructorsData>) => {
+export const getAllInstructorsInfiniteOptions = (options: Options<GetAllInstructorsData>) => {
   return infiniteQueryOptions<
     GetAllInstructorsResponse,
     GetAllInstructorsError,
@@ -4569,7 +5844,7 @@ export const getAllInstructorsInfiniteOptions = (options?: Options<GetAllInstruc
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -4688,7 +5963,7 @@ export const getInstructorSkillsInfiniteOptions = (options: Options<GetInstructo
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -4812,7 +6087,7 @@ export const getInstructorMembershipsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -4933,7 +6208,7 @@ export const getInstructorExperienceInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -5190,14 +6465,14 @@ export const verifyDocumentMutation = (
   return mutationOptions;
 };
 
-export const getAllCoursesQueryKey = (options?: Options<GetAllCoursesData>) =>
+export const getAllCoursesQueryKey = (options: Options<GetAllCoursesData>) =>
   createQueryKey('getAllCourses', options);
 
 /**
  * Get all courses
  * Retrieves paginated list of all courses with category information and filtering support.
  */
-export const getAllCoursesOptions = (options?: Options<GetAllCoursesData>) => {
+export const getAllCoursesOptions = (options: Options<GetAllCoursesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllCourses({
@@ -5213,14 +6488,14 @@ export const getAllCoursesOptions = (options?: Options<GetAllCoursesData>) => {
 };
 
 export const getAllCoursesInfiniteQueryKey = (
-  options?: Options<GetAllCoursesData>
+  options: Options<GetAllCoursesData>
 ): QueryKey<Options<GetAllCoursesData>> => createQueryKey('getAllCourses', options, true);
 
 /**
  * Get all courses
  * Retrieves paginated list of all courses with category information and filtering support.
  */
-export const getAllCoursesInfiniteOptions = (options?: Options<GetAllCoursesData>) => {
+export const getAllCoursesInfiniteOptions = (options: Options<GetAllCoursesData>) => {
   return infiniteQueryOptions<
     GetAllCoursesResponse,
     GetAllCoursesError,
@@ -5240,7 +6515,7 @@ export const getAllCoursesInfiniteOptions = (options?: Options<GetAllCoursesData
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -5795,6 +7070,123 @@ export const archiveCourseMutation = (
   return mutationOptions;
 };
 
+export const getCourseRubricsQueryKey = (options: Options<GetCourseRubricsData>) =>
+  createQueryKey('getCourseRubrics', options);
+
+/**
+ * Get all rubrics associated with a course
+ * Retrieves all rubrics that are associated with the specified course, including usage context.
+ */
+export const getCourseRubricsOptions = (options: Options<GetCourseRubricsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseRubrics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseRubricsQueryKey(options),
+  });
+};
+
+export const getCourseRubricsInfiniteQueryKey = (
+  options: Options<GetCourseRubricsData>
+): QueryKey<Options<GetCourseRubricsData>> => createQueryKey('getCourseRubrics', options, true);
+
+/**
+ * Get all rubrics associated with a course
+ * Retrieves all rubrics that are associated with the specified course, including usage context.
+ */
+export const getCourseRubricsInfiniteOptions = (options: Options<GetCourseRubricsData>) => {
+  return infiniteQueryOptions<
+    GetCourseRubricsResponse,
+    GetCourseRubricsError,
+    InfiniteData<GetCourseRubricsResponse>,
+    QueryKey<Options<GetCourseRubricsData>>,
+    number | Pick<QueryKey<Options<GetCourseRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetCourseRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseRubricsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const associateRubricQueryKey = (options: Options<AssociateRubricData>) =>
+  createQueryKey('associateRubric', options);
+
+/**
+ * Associate a rubric with a course
+ * Creates an association between a rubric and a course, allowing the rubric to be used for assessments in that course.
+ */
+export const associateRubricOptions = (options: Options<AssociateRubricData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await associateRubric({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: associateRubricQueryKey(options),
+  });
+};
+
+/**
+ * Associate a rubric with a course
+ * Creates an association between a rubric and a course, allowing the rubric to be used for assessments in that course.
+ */
+export const associateRubricMutation = (
+  options?: Partial<Options<AssociateRubricData>>
+): UseMutationOptions<
+  AssociateRubricResponse,
+  AssociateRubricError,
+  Options<AssociateRubricData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AssociateRubricResponse,
+    AssociateRubricError,
+    Options<AssociateRubricData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await associateRubric({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getCourseRequirementsQueryKey = (options: Options<GetCourseRequirementsData>) =>
   createQueryKey('getCourseRequirements', options);
 
@@ -5849,7 +7241,7 @@ export const getCourseRequirementsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -5966,7 +7358,7 @@ export const getCourseLessonsInfiniteOptions = (options: Options<GetCourseLesson
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -6207,7 +7599,7 @@ export const getCourseAssessmentsInfiniteOptions = (options: Options<GetCourseAs
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -6274,14 +7666,14 @@ export const addCourseAssessmentMutation = (
   return mutationOptions;
 };
 
-export const getAllGradingLevelsQueryKey = (options?: Options<GetAllGradingLevelsData>) =>
+export const getAllGradingLevelsQueryKey = (options: Options<GetAllGradingLevelsData>) =>
   createQueryKey('getAllGradingLevels', options);
 
 /**
  * Get all grading levels
  * Retrieves paginated list of all grading levels.
  */
-export const getAllGradingLevelsOptions = (options?: Options<GetAllGradingLevelsData>) => {
+export const getAllGradingLevelsOptions = (options: Options<GetAllGradingLevelsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllGradingLevels({
@@ -6297,7 +7689,7 @@ export const getAllGradingLevelsOptions = (options?: Options<GetAllGradingLevels
 };
 
 export const getAllGradingLevelsInfiniteQueryKey = (
-  options?: Options<GetAllGradingLevelsData>
+  options: Options<GetAllGradingLevelsData>
 ): QueryKey<Options<GetAllGradingLevelsData>> =>
   createQueryKey('getAllGradingLevels', options, true);
 
@@ -6305,7 +7697,7 @@ export const getAllGradingLevelsInfiniteQueryKey = (
  * Get all grading levels
  * Retrieves paginated list of all grading levels.
  */
-export const getAllGradingLevelsInfiniteOptions = (options?: Options<GetAllGradingLevelsData>) => {
+export const getAllGradingLevelsInfiniteOptions = (options: Options<GetAllGradingLevelsData>) => {
   return infiniteQueryOptions<
     GetAllGradingLevelsResponse,
     GetAllGradingLevelsError,
@@ -6326,7 +7718,7 @@ export const getAllGradingLevelsInfiniteOptions = (options?: Options<GetAllGradi
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -6515,14 +7907,14 @@ export const reorderDifficultyLevelsMutation = (
   return mutationOptions;
 };
 
-export const getAllContentTypesQueryKey = (options?: Options<GetAllContentTypesData>) =>
+export const getAllContentTypesQueryKey = (options: Options<GetAllContentTypesData>) =>
   createQueryKey('getAllContentTypes', options);
 
 /**
  * Get all content types
  * Retrieves paginated list of all content types.
  */
-export const getAllContentTypesOptions = (options?: Options<GetAllContentTypesData>) => {
+export const getAllContentTypesOptions = (options: Options<GetAllContentTypesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllContentTypes({
@@ -6538,14 +7930,14 @@ export const getAllContentTypesOptions = (options?: Options<GetAllContentTypesDa
 };
 
 export const getAllContentTypesInfiniteQueryKey = (
-  options?: Options<GetAllContentTypesData>
+  options: Options<GetAllContentTypesData>
 ): QueryKey<Options<GetAllContentTypesData>> => createQueryKey('getAllContentTypes', options, true);
 
 /**
  * Get all content types
  * Retrieves paginated list of all content types.
  */
-export const getAllContentTypesInfiniteOptions = (options?: Options<GetAllContentTypesData>) => {
+export const getAllContentTypesInfiniteOptions = (options: Options<GetAllContentTypesData>) => {
   return infiniteQueryOptions<
     GetAllContentTypesResponse,
     GetAllContentTypesError,
@@ -6566,7 +7958,7 @@ export const getAllContentTypesInfiniteOptions = (options?: Options<GetAllConten
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -6633,14 +8025,14 @@ export const createContentTypeMutation = (
   return mutationOptions;
 };
 
-export const getAllCategoriesQueryKey = (options?: Options<GetAllCategoriesData>) =>
+export const getAllCategoriesQueryKey = (options: Options<GetAllCategoriesData>) =>
   createQueryKey('getAllCategories', options);
 
 /**
  * Get all categories
  * Retrieves paginated list of all categories.
  */
-export const getAllCategoriesOptions = (options?: Options<GetAllCategoriesData>) => {
+export const getAllCategoriesOptions = (options: Options<GetAllCategoriesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllCategories({
@@ -6656,14 +8048,14 @@ export const getAllCategoriesOptions = (options?: Options<GetAllCategoriesData>)
 };
 
 export const getAllCategoriesInfiniteQueryKey = (
-  options?: Options<GetAllCategoriesData>
+  options: Options<GetAllCategoriesData>
 ): QueryKey<Options<GetAllCategoriesData>> => createQueryKey('getAllCategories', options, true);
 
 /**
  * Get all categories
  * Retrieves paginated list of all categories.
  */
-export const getAllCategoriesInfiniteOptions = (options?: Options<GetAllCategoriesData>) => {
+export const getAllCategoriesInfiniteOptions = (options: Options<GetAllCategoriesData>) => {
   return infiniteQueryOptions<
     GetAllCategoriesResponse,
     GetAllCategoriesError,
@@ -6683,7 +8075,7 @@ export const getAllCategoriesInfiniteOptions = (options?: Options<GetAllCategori
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -6746,14 +8138,14 @@ export const createCategoryMutation = (
   return mutationOptions;
 };
 
-export const getAllCertificatesQueryKey = (options?: Options<GetAllCertificatesData>) =>
+export const getAllCertificatesQueryKey = (options: Options<GetAllCertificatesData>) =>
   createQueryKey('getAllCertificates', options);
 
 /**
  * Get all certificates
  * Retrieves paginated list of all certificates with filtering support.
  */
-export const getAllCertificatesOptions = (options?: Options<GetAllCertificatesData>) => {
+export const getAllCertificatesOptions = (options: Options<GetAllCertificatesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllCertificates({
@@ -6769,14 +8161,14 @@ export const getAllCertificatesOptions = (options?: Options<GetAllCertificatesDa
 };
 
 export const getAllCertificatesInfiniteQueryKey = (
-  options?: Options<GetAllCertificatesData>
+  options: Options<GetAllCertificatesData>
 ): QueryKey<Options<GetAllCertificatesData>> => createQueryKey('getAllCertificates', options, true);
 
 /**
  * Get all certificates
  * Retrieves paginated list of all certificates with filtering support.
  */
-export const getAllCertificatesInfiniteOptions = (options?: Options<GetAllCertificatesData>) => {
+export const getAllCertificatesInfiniteOptions = (options: Options<GetAllCertificatesData>) => {
   return infiniteQueryOptions<
     GetAllCertificatesResponse,
     GetAllCertificatesError,
@@ -6797,7 +8189,7 @@ export const getAllCertificatesInfiniteOptions = (options?: Options<GetAllCertif
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -6964,14 +8356,14 @@ export const generateCertificateUrlMutation = (
   return mutationOptions;
 };
 
-export const getCertificateTemplatesQueryKey = (options?: Options<GetCertificateTemplatesData>) =>
+export const getCertificateTemplatesQueryKey = (options: Options<GetCertificateTemplatesData>) =>
   createQueryKey('getCertificateTemplates', options);
 
 /**
  * Get certificate templates
  * Retrieves all available certificate templates.
  */
-export const getCertificateTemplatesOptions = (options?: Options<GetCertificateTemplatesData>) => {
+export const getCertificateTemplatesOptions = (options: Options<GetCertificateTemplatesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getCertificateTemplates({
@@ -6987,7 +8379,7 @@ export const getCertificateTemplatesOptions = (options?: Options<GetCertificateT
 };
 
 export const getCertificateTemplatesInfiniteQueryKey = (
-  options?: Options<GetCertificateTemplatesData>
+  options: Options<GetCertificateTemplatesData>
 ): QueryKey<Options<GetCertificateTemplatesData>> =>
   createQueryKey('getCertificateTemplates', options, true);
 
@@ -6996,7 +8388,7 @@ export const getCertificateTemplatesInfiniteQueryKey = (
  * Retrieves all available certificate templates.
  */
 export const getCertificateTemplatesInfiniteOptions = (
-  options?: Options<GetCertificateTemplatesData>
+  options: Options<GetCertificateTemplatesData>
 ) => {
   return infiniteQueryOptions<
     GetCertificateTemplatesResponse,
@@ -7018,7 +8410,7 @@ export const getCertificateTemplatesInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -7194,14 +8586,14 @@ export const generateCourseCertificateMutation = (
   return mutationOptions;
 };
 
-export const getAllAssignmentsQueryKey = (options?: Options<GetAllAssignmentsData>) =>
+export const getAllAssignmentsQueryKey = (options: Options<GetAllAssignmentsData>) =>
   createQueryKey('getAllAssignments', options);
 
 /**
  * Get all assignments
  * Retrieves paginated list of all assignments with filtering support.
  */
-export const getAllAssignmentsOptions = (options?: Options<GetAllAssignmentsData>) => {
+export const getAllAssignmentsOptions = (options: Options<GetAllAssignmentsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllAssignments({
@@ -7217,14 +8609,14 @@ export const getAllAssignmentsOptions = (options?: Options<GetAllAssignmentsData
 };
 
 export const getAllAssignmentsInfiniteQueryKey = (
-  options?: Options<GetAllAssignmentsData>
+  options: Options<GetAllAssignmentsData>
 ): QueryKey<Options<GetAllAssignmentsData>> => createQueryKey('getAllAssignments', options, true);
 
 /**
  * Get all assignments
  * Retrieves paginated list of all assignments with filtering support.
  */
-export const getAllAssignmentsInfiniteOptions = (options?: Options<GetAllAssignmentsData>) => {
+export const getAllAssignmentsInfiniteOptions = (options: Options<GetAllAssignmentsData>) => {
   return infiniteQueryOptions<
     GetAllAssignmentsResponse,
     GetAllAssignmentsError,
@@ -7245,7 +8637,7 @@ export const getAllAssignmentsInfiniteOptions = (options?: Options<GetAllAssignm
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -7462,14 +8854,42 @@ export const gradeSubmissionMutation = (
   return mutationOptions;
 };
 
-export const getAllUsersQueryKey = (options?: Options<GetAllUsersData>) =>
+/**
+ * Reorder scoring levels
+ * Updates the display order of scoring levels within the rubric. Provide a map of level UUIDs to their new order values.
+ */
+export const reorderScoringLevelsMutation = (
+  options?: Partial<Options<ReorderScoringLevelsData>>
+): UseMutationOptions<
+  ReorderScoringLevelsResponse,
+  ReorderScoringLevelsError,
+  Options<ReorderScoringLevelsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReorderScoringLevelsResponse,
+    ReorderScoringLevelsError,
+    Options<ReorderScoringLevelsData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await reorderScoringLevels({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getAllUsersQueryKey = (options: Options<GetAllUsersData>) =>
   createQueryKey('getAllUsers', options);
 
 /**
  * Get all users
  * Fetches a paginated list of all users in the system. Supports pagination and sorting by any user field.
  */
-export const getAllUsersOptions = (options?: Options<GetAllUsersData>) => {
+export const getAllUsersOptions = (options: Options<GetAllUsersData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getAllUsers({
@@ -7485,14 +8905,14 @@ export const getAllUsersOptions = (options?: Options<GetAllUsersData>) => {
 };
 
 export const getAllUsersInfiniteQueryKey = (
-  options?: Options<GetAllUsersData>
+  options: Options<GetAllUsersData>
 ): QueryKey<Options<GetAllUsersData>> => createQueryKey('getAllUsers', options, true);
 
 /**
  * Get all users
  * Fetches a paginated list of all users in the system. Supports pagination and sorting by any user field.
  */
-export const getAllUsersInfiniteOptions = (options?: Options<GetAllUsersData>) => {
+export const getAllUsersInfiniteOptions = (options: Options<GetAllUsersData>) => {
   return infiniteQueryOptions<
     GetAllUsersResponse,
     GetAllUsersError,
@@ -7512,7 +8932,7 @@ export const getAllUsersInfiniteOptions = (options?: Options<GetAllUsersData>) =
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -7622,7 +9042,7 @@ export const searchInfiniteOptions = (options: Options<SearchData>) => {
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -7707,7 +9127,7 @@ export const search1InfiniteOptions = (options: Options<Search1Data>) => {
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -7782,7 +9202,7 @@ export const getTrainingBranchesByOrganisation1InfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -7849,7 +9269,7 @@ export const searchStudentsInfiniteOptions = (options: Options<SearchStudentsDat
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -7862,6 +9282,825 @@ export const searchStudentsInfiniteOptions = (options: Options<SearchStudentsDat
         return data;
       },
       queryKey: searchStudentsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const validateMatrixQueryKey = (options: Options<ValidateMatrixData>) =>
+  createQueryKey('validateMatrix', options);
+
+/**
+ * Validate rubric matrix
+ * Validates the matrix for completeness and consistency before use in assessments.
+ */
+export const validateMatrixOptions = (options: Options<ValidateMatrixData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await validateMatrix({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: validateMatrixQueryKey(options),
+  });
+};
+
+export const getPassingScoringLevelsQueryKey = (options: Options<GetPassingScoringLevelsData>) =>
+  createQueryKey('getPassingScoringLevels', options);
+
+/**
+ * Get passing scoring levels
+ * Retrieves only the scoring levels that are marked as passing for the specified rubric.
+ */
+export const getPassingScoringLevelsOptions = (options: Options<GetPassingScoringLevelsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPassingScoringLevels({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPassingScoringLevelsQueryKey(options),
+  });
+};
+
+export const getPassingScoringLevelsInfiniteQueryKey = (
+  options: Options<GetPassingScoringLevelsData>
+): QueryKey<Options<GetPassingScoringLevelsData>> =>
+  createQueryKey('getPassingScoringLevels', options, true);
+
+/**
+ * Get passing scoring levels
+ * Retrieves only the scoring levels that are marked as passing for the specified rubric.
+ */
+export const getPassingScoringLevelsInfiniteOptions = (
+  options: Options<GetPassingScoringLevelsData>
+) => {
+  return infiniteQueryOptions<
+    GetPassingScoringLevelsResponse,
+    GetPassingScoringLevelsError,
+    InfiniteData<GetPassingScoringLevelsResponse>,
+    QueryKey<Options<GetPassingScoringLevelsData>>,
+    | number
+    | Pick<QueryKey<Options<GetPassingScoringLevelsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetPassingScoringLevelsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPassingScoringLevels({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPassingScoringLevelsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getHighestScoringLevelQueryKey = (options: Options<GetHighestScoringLevelData>) =>
+  createQueryKey('getHighestScoringLevel', options);
+
+/**
+ * Get highest scoring level
+ * Retrieves the highest performance scoring level (level_order = 1) for the specified rubric.
+ */
+export const getHighestScoringLevelOptions = (options: Options<GetHighestScoringLevelData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getHighestScoringLevel({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getHighestScoringLevelQueryKey(options),
+  });
+};
+
+export const getRubricMatrixQueryKey = (options: Options<GetRubricMatrixData>) =>
+  createQueryKey('getRubricMatrix', options);
+
+/**
+ * Get complete rubric matrix
+ * Retrieves the complete rubric matrix including all criteria, scoring levels, matrix cells, and statistics.
+ */
+export const getRubricMatrixOptions = (options: Options<GetRubricMatrixData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRubricMatrix({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRubricMatrixQueryKey(options),
+  });
+};
+
+export const validateMatrix1QueryKey = (options: Options<ValidateMatrix1Data>) =>
+  createQueryKey('validateMatrix1', options);
+
+/**
+ * Validate rubric matrix
+ * Validates the rubric matrix for completeness, weight consistency, and readiness for use.
+ */
+export const validateMatrix1Options = (options: Options<ValidateMatrix1Data>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await validateMatrix1({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: validateMatrix1QueryKey(options),
+  });
+};
+
+export const getMatrixStatisticsQueryKey = (options: Options<GetMatrixStatisticsData>) =>
+  createQueryKey('getMatrixStatistics', options);
+
+/**
+ * Get matrix statistics
+ * Retrieves statistical information about the matrix including completion percentage and score calculations.
+ */
+export const getMatrixStatisticsOptions = (options: Options<GetMatrixStatisticsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMatrixStatistics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMatrixStatisticsQueryKey(options),
+  });
+};
+
+export const checkMatrixReadinessQueryKey = (options: Options<CheckMatrixReadinessData>) =>
+  createQueryKey('checkMatrixReadiness', options);
+
+/**
+ * Check matrix readiness
+ * Quick check to determine if the rubric matrix is ready for use in assessments.
+ */
+export const checkMatrixReadinessOptions = (options: Options<CheckMatrixReadinessData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await checkMatrixReadiness({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: checkMatrixReadinessQueryKey(options),
+  });
+};
+
+export const getRubricMatrixViewQueryKey = (options: Options<GetRubricMatrixViewData>) =>
+  createQueryKey('getRubricMatrixView', options);
+
+/**
+ * Get rubric matrix view
+ * Retrieves the complete rubric matrix with all criteria, scoring levels, and cell intersections.
+ */
+export const getRubricMatrixViewOptions = (options: Options<GetRubricMatrixViewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRubricMatrixView({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRubricMatrixViewQueryKey(options),
+  });
+};
+
+export const searchAssessmentRubricsQueryKey = (options: Options<SearchAssessmentRubricsData>) =>
+  createQueryKey('searchAssessmentRubrics', options);
+
+/**
+ * Search for assessment rubrics
+ * Searches for assessment rubrics based on a set of filter criteria.
+ */
+export const searchAssessmentRubricsOptions = (options: Options<SearchAssessmentRubricsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchAssessmentRubrics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchAssessmentRubricsQueryKey(options),
+  });
+};
+
+export const searchAssessmentRubricsInfiniteQueryKey = (
+  options: Options<SearchAssessmentRubricsData>
+): QueryKey<Options<SearchAssessmentRubricsData>> =>
+  createQueryKey('searchAssessmentRubrics', options, true);
+
+/**
+ * Search for assessment rubrics
+ * Searches for assessment rubrics based on a set of filter criteria.
+ */
+export const searchAssessmentRubricsInfiniteOptions = (
+  options: Options<SearchAssessmentRubricsData>
+) => {
+  return infiniteQueryOptions<
+    SearchAssessmentRubricsResponse,
+    SearchAssessmentRubricsError,
+    InfiniteData<SearchAssessmentRubricsResponse>,
+    QueryKey<Options<SearchAssessmentRubricsData>>,
+    | number
+    | Pick<QueryKey<Options<SearchAssessmentRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchAssessmentRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchAssessmentRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchAssessmentRubricsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getRubricsByTypeQueryKey = (options: Options<GetRubricsByTypeData>) =>
+  createQueryKey('getRubricsByType', options);
+
+/**
+ * Browse rubrics by type
+ * Retrieves public rubrics filtered by a specific rubric type.
+ */
+export const getRubricsByTypeOptions = (options: Options<GetRubricsByTypeData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRubricsByType({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRubricsByTypeQueryKey(options),
+  });
+};
+
+export const getRubricsByTypeInfiniteQueryKey = (
+  options: Options<GetRubricsByTypeData>
+): QueryKey<Options<GetRubricsByTypeData>> => createQueryKey('getRubricsByType', options, true);
+
+/**
+ * Browse rubrics by type
+ * Retrieves public rubrics filtered by a specific rubric type.
+ */
+export const getRubricsByTypeInfiniteOptions = (options: Options<GetRubricsByTypeData>) => {
+  return infiniteQueryOptions<
+    GetRubricsByTypeResponse,
+    GetRubricsByTypeError,
+    InfiniteData<GetRubricsByTypeResponse>,
+    QueryKey<Options<GetRubricsByTypeData>>,
+    number | Pick<QueryKey<Options<GetRubricsByTypeData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetRubricsByTypeData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricsByType({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricsByTypeInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getRubricsByStatusQueryKey = (options: Options<GetRubricsByStatusData>) =>
+  createQueryKey('getRubricsByStatus', options);
+
+/**
+ * Get rubrics by status
+ * Retrieves rubrics filtered by their content status (e.g., DRAFT, PUBLISHED, ARCHIVED).
+ */
+export const getRubricsByStatusOptions = (options: Options<GetRubricsByStatusData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRubricsByStatus({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRubricsByStatusQueryKey(options),
+  });
+};
+
+export const getRubricsByStatusInfiniteQueryKey = (
+  options: Options<GetRubricsByStatusData>
+): QueryKey<Options<GetRubricsByStatusData>> => createQueryKey('getRubricsByStatus', options, true);
+
+/**
+ * Get rubrics by status
+ * Retrieves rubrics filtered by their content status (e.g., DRAFT, PUBLISHED, ARCHIVED).
+ */
+export const getRubricsByStatusInfiniteOptions = (options: Options<GetRubricsByStatusData>) => {
+  return infiniteQueryOptions<
+    GetRubricsByStatusResponse,
+    GetRubricsByStatusError,
+    InfiniteData<GetRubricsByStatusResponse>,
+    QueryKey<Options<GetRubricsByStatusData>>,
+    | number
+    | Pick<QueryKey<Options<GetRubricsByStatusData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetRubricsByStatusData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricsByStatus({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricsByStatusInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getRubricStatisticsQueryKey = (options?: Options<GetRubricStatisticsData>) =>
+  createQueryKey('getRubricStatistics', options);
+
+/**
+ * Get rubric usage statistics
+ * Retrieves overall statistics about rubric usage, including counts of public rubrics, total rubrics, etc.
+ */
+export const getRubricStatisticsOptions = (options?: Options<GetRubricStatisticsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRubricStatistics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRubricStatisticsQueryKey(options),
+  });
+};
+
+export const getInstructorRubricStatisticsQueryKey = (
+  options: Options<GetInstructorRubricStatisticsData>
+) => createQueryKey('getInstructorRubricStatistics', options);
+
+/**
+ * Get instructor's rubric statistics
+ * Retrieves statistics about a specific instructor's rubrics, including counts by visibility and status.
+ */
+export const getInstructorRubricStatisticsOptions = (
+  options: Options<GetInstructorRubricStatisticsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorRubricStatistics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorRubricStatisticsQueryKey(options),
+  });
+};
+
+export const searchPublicRubricsQueryKey = (options: Options<SearchPublicRubricsData>) =>
+  createQueryKey('searchPublicRubrics', options);
+
+/**
+ * Search public rubrics
+ * Searches public rubrics by title, description, and optionally by rubric type.
+ */
+export const searchPublicRubricsOptions = (options: Options<SearchPublicRubricsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchPublicRubrics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchPublicRubricsQueryKey(options),
+  });
+};
+
+export const searchPublicRubricsInfiniteQueryKey = (
+  options: Options<SearchPublicRubricsData>
+): QueryKey<Options<SearchPublicRubricsData>> =>
+  createQueryKey('searchPublicRubrics', options, true);
+
+/**
+ * Search public rubrics
+ * Searches public rubrics by title, description, and optionally by rubric type.
+ */
+export const searchPublicRubricsInfiniteOptions = (options: Options<SearchPublicRubricsData>) => {
+  return infiniteQueryOptions<
+    SearchPublicRubricsResponse,
+    SearchPublicRubricsError,
+    InfiniteData<SearchPublicRubricsResponse>,
+    QueryKey<Options<SearchPublicRubricsData>>,
+    | number
+    | Pick<QueryKey<Options<SearchPublicRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchPublicRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchPublicRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchPublicRubricsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getPublicRubricsQueryKey = (options: Options<GetPublicRubricsData>) =>
+  createQueryKey('getPublicRubrics', options);
+
+/**
+ * Browse all public rubrics
+ * Retrieves all public rubrics available for reuse across courses, ordered by creation date.
+ */
+export const getPublicRubricsOptions = (options: Options<GetPublicRubricsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPublicRubrics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPublicRubricsQueryKey(options),
+  });
+};
+
+export const getPublicRubricsInfiniteQueryKey = (
+  options: Options<GetPublicRubricsData>
+): QueryKey<Options<GetPublicRubricsData>> => createQueryKey('getPublicRubrics', options, true);
+
+/**
+ * Browse all public rubrics
+ * Retrieves all public rubrics available for reuse across courses, ordered by creation date.
+ */
+export const getPublicRubricsInfiniteOptions = (options: Options<GetPublicRubricsData>) => {
+  return infiniteQueryOptions<
+    GetPublicRubricsResponse,
+    GetPublicRubricsError,
+    InfiniteData<GetPublicRubricsResponse>,
+    QueryKey<Options<GetPublicRubricsData>>,
+    number | Pick<QueryKey<Options<GetPublicRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetPublicRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPublicRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPublicRubricsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getPopularRubricsQueryKey = (options: Options<GetPopularRubricsData>) =>
+  createQueryKey('getPopularRubrics', options);
+
+/**
+ * Get popular rubrics
+ * Retrieves the most popular public rubrics based on usage across multiple courses.
+ */
+export const getPopularRubricsOptions = (options: Options<GetPopularRubricsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPopularRubrics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPopularRubricsQueryKey(options),
+  });
+};
+
+export const getPopularRubricsInfiniteQueryKey = (
+  options: Options<GetPopularRubricsData>
+): QueryKey<Options<GetPopularRubricsData>> => createQueryKey('getPopularRubrics', options, true);
+
+/**
+ * Get popular rubrics
+ * Retrieves the most popular public rubrics based on usage across multiple courses.
+ */
+export const getPopularRubricsInfiniteOptions = (options: Options<GetPopularRubricsData>) => {
+  return infiniteQueryOptions<
+    GetPopularRubricsResponse,
+    GetPopularRubricsError,
+    InfiniteData<GetPopularRubricsResponse>,
+    QueryKey<Options<GetPopularRubricsData>>,
+    | number
+    | Pick<QueryKey<Options<GetPopularRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetPopularRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPopularRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPopularRubricsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getInstructorRubricsQueryKey = (options: Options<GetInstructorRubricsData>) =>
+  createQueryKey('getInstructorRubrics', options);
+
+/**
+ * Get instructor's rubrics
+ * Retrieves rubrics created by a specific instructor, with option to include private rubrics.
+ */
+export const getInstructorRubricsOptions = (options: Options<GetInstructorRubricsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorRubrics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorRubricsQueryKey(options),
+  });
+};
+
+export const getInstructorRubricsInfiniteQueryKey = (
+  options: Options<GetInstructorRubricsData>
+): QueryKey<Options<GetInstructorRubricsData>> =>
+  createQueryKey('getInstructorRubrics', options, true);
+
+/**
+ * Get instructor's rubrics
+ * Retrieves rubrics created by a specific instructor, with option to include private rubrics.
+ */
+export const getInstructorRubricsInfiniteOptions = (options: Options<GetInstructorRubricsData>) => {
+  return infiniteQueryOptions<
+    GetInstructorRubricsResponse,
+    GetInstructorRubricsError,
+    InfiniteData<GetInstructorRubricsResponse>,
+    QueryKey<Options<GetInstructorRubricsData>>,
+    | number
+    | Pick<QueryKey<Options<GetInstructorRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetInstructorRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getInstructorRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getInstructorRubricsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getGeneralRubricsQueryKey = (options: Options<GetGeneralRubricsData>) =>
+  createQueryKey('getGeneralRubrics', options);
+
+/**
+ * Get general rubrics
+ * Retrieves general-purpose rubrics that are not tied to any specific course.
+ */
+export const getGeneralRubricsOptions = (options: Options<GetGeneralRubricsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getGeneralRubrics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getGeneralRubricsQueryKey(options),
+  });
+};
+
+export const getGeneralRubricsInfiniteQueryKey = (
+  options: Options<GetGeneralRubricsData>
+): QueryKey<Options<GetGeneralRubricsData>> => createQueryKey('getGeneralRubrics', options, true);
+
+/**
+ * Get general rubrics
+ * Retrieves general-purpose rubrics that are not tied to any specific course.
+ */
+export const getGeneralRubricsInfiniteOptions = (options: Options<GetGeneralRubricsData>) => {
+  return infiniteQueryOptions<
+    GetGeneralRubricsResponse,
+    GetGeneralRubricsError,
+    InfiniteData<GetGeneralRubricsResponse>,
+    QueryKey<Options<GetGeneralRubricsData>>,
+    | number
+    | Pick<QueryKey<Options<GetGeneralRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetGeneralRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getGeneralRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getGeneralRubricsInfiniteQueryKey(options),
     }
   );
 };
@@ -7960,7 +10199,7 @@ export const getQuizAttemptsInfiniteOptions = (options: Options<GetQuizAttemptsD
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8047,7 +10286,7 @@ export const searchQuizzesInfiniteOptions = (options: Options<SearchQuizzesData>
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8128,7 +10367,7 @@ export const searchQuestionsInfiniteOptions = (options: Options<SearchQuestionsD
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8213,7 +10452,7 @@ export const searchAttemptsInfiniteOptions = (options: Options<SearchAttemptsDat
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8284,7 +10523,7 @@ export const getProgramEnrollmentsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8421,7 +10660,7 @@ export const getProgramCertificatesInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8515,9 +10754,9 @@ export const searchTrainingProgramsInfiniteOptions = (
   options: Options<SearchTrainingProgramsData>
 ) => {
   return infiniteQueryOptions<
-    unknown,
+    SearchTrainingProgramsResponse,
     SearchTrainingProgramsError,
-    InfiniteData<unknown>,
+    InfiniteData<SearchTrainingProgramsResponse>,
     QueryKey<Options<SearchTrainingProgramsData>>,
     | number
     | Pick<QueryKey<Options<SearchTrainingProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
@@ -8534,7 +10773,7 @@ export const searchTrainingProgramsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8625,7 +10864,7 @@ export const searchProgramRequirementsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8642,14 +10881,14 @@ export const searchProgramRequirementsInfiniteOptions = (
   );
 };
 
-export const getPublishedProgramsQueryKey = (options?: Options<GetPublishedProgramsData>) =>
+export const getPublishedProgramsQueryKey = (options: Options<GetPublishedProgramsData>) =>
   createQueryKey('getPublishedPrograms', options);
 
 /**
  * Get published programs
  * Retrieves all published programs available for enrollment.
  */
-export const getPublishedProgramsOptions = (options?: Options<GetPublishedProgramsData>) => {
+export const getPublishedProgramsOptions = (options: Options<GetPublishedProgramsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getPublishedPrograms({
@@ -8665,7 +10904,7 @@ export const getPublishedProgramsOptions = (options?: Options<GetPublishedProgra
 };
 
 export const getPublishedProgramsInfiniteQueryKey = (
-  options?: Options<GetPublishedProgramsData>
+  options: Options<GetPublishedProgramsData>
 ): QueryKey<Options<GetPublishedProgramsData>> =>
   createQueryKey('getPublishedPrograms', options, true);
 
@@ -8673,13 +10912,11 @@ export const getPublishedProgramsInfiniteQueryKey = (
  * Get published programs
  * Retrieves all published programs available for enrollment.
  */
-export const getPublishedProgramsInfiniteOptions = (
-  options?: Options<GetPublishedProgramsData>
-) => {
+export const getPublishedProgramsInfiniteOptions = (options: Options<GetPublishedProgramsData>) => {
   return infiniteQueryOptions<
-    unknown,
+    GetPublishedProgramsResponse,
     GetPublishedProgramsError,
-    InfiniteData<unknown>,
+    InfiniteData<GetPublishedProgramsResponse>,
     QueryKey<Options<GetPublishedProgramsData>>,
     | number
     | Pick<QueryKey<Options<GetPublishedProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
@@ -8696,7 +10933,7 @@ export const getPublishedProgramsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8748,9 +10985,9 @@ export const getProgramsByInstructorInfiniteOptions = (
   options: Options<GetProgramsByInstructorData>
 ) => {
   return infiniteQueryOptions<
-    unknown,
+    GetProgramsByInstructorResponse,
     GetProgramsByInstructorError,
-    InfiniteData<unknown>,
+    InfiniteData<GetProgramsByInstructorResponse>,
     QueryKey<Options<GetProgramsByInstructorData>>,
     | number
     | Pick<QueryKey<Options<GetProgramsByInstructorData>>[0], 'body' | 'headers' | 'path' | 'query'>
@@ -8767,7 +11004,7 @@ export const getProgramsByInstructorInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8784,14 +11021,14 @@ export const getProgramsByInstructorInfiniteOptions = (
   );
 };
 
-export const getFreeProgramsQueryKey = (options?: Options<GetFreeProgramsData>) =>
+export const getFreeProgramsQueryKey = (options: Options<GetFreeProgramsData>) =>
   createQueryKey('getFreePrograms', options);
 
 /**
  * Get free programs
  * Retrieves all programs available at no cost.
  */
-export const getFreeProgramsOptions = (options?: Options<GetFreeProgramsData>) => {
+export const getFreeProgramsOptions = (options: Options<GetFreeProgramsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getFreePrograms({
@@ -8807,18 +11044,18 @@ export const getFreeProgramsOptions = (options?: Options<GetFreeProgramsData>) =
 };
 
 export const getFreeProgramsInfiniteQueryKey = (
-  options?: Options<GetFreeProgramsData>
+  options: Options<GetFreeProgramsData>
 ): QueryKey<Options<GetFreeProgramsData>> => createQueryKey('getFreePrograms', options, true);
 
 /**
  * Get free programs
  * Retrieves all programs available at no cost.
  */
-export const getFreeProgramsInfiniteOptions = (options?: Options<GetFreeProgramsData>) => {
+export const getFreeProgramsInfiniteOptions = (options: Options<GetFreeProgramsData>) => {
   return infiniteQueryOptions<
-    unknown,
+    GetFreeProgramsResponse,
     GetFreeProgramsError,
-    InfiniteData<unknown>,
+    InfiniteData<GetFreeProgramsResponse>,
     QueryKey<Options<GetFreeProgramsData>>,
     number | Pick<QueryKey<Options<GetFreeProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
   >(
@@ -8834,7 +11071,7 @@ export const getFreeProgramsInfiniteOptions = (options?: Options<GetFreePrograms
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -8926,7 +11163,7 @@ export const searchProgramEnrollmentsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9009,7 +11246,7 @@ export const searchProgramCoursesInfiniteOptions = (options: Options<SearchProgr
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9061,9 +11298,9 @@ export const getProgramsByCategoryInfiniteOptions = (
   options: Options<GetProgramsByCategoryData>
 ) => {
   return infiniteQueryOptions<
-    unknown,
+    GetProgramsByCategoryResponse,
     GetProgramsByCategoryError,
-    InfiniteData<unknown>,
+    InfiniteData<GetProgramsByCategoryResponse>,
     QueryKey<Options<GetProgramsByCategoryData>>,
     | number
     | Pick<QueryKey<Options<GetProgramsByCategoryData>>[0], 'body' | 'headers' | 'path' | 'query'>
@@ -9080,7 +11317,7 @@ export const getProgramsByCategoryInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9097,14 +11334,14 @@ export const getProgramsByCategoryInfiniteOptions = (
   );
 };
 
-export const getActiveProgramsQueryKey = (options?: Options<GetActiveProgramsData>) =>
+export const getActiveProgramsQueryKey = (options: Options<GetActiveProgramsData>) =>
   createQueryKey('getActivePrograms', options);
 
 /**
  * Get active programs
  * Retrieves all currently active and published programs.
  */
-export const getActiveProgramsOptions = (options?: Options<GetActiveProgramsData>) => {
+export const getActiveProgramsOptions = (options: Options<GetActiveProgramsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getActivePrograms({
@@ -9120,18 +11357,18 @@ export const getActiveProgramsOptions = (options?: Options<GetActiveProgramsData
 };
 
 export const getActiveProgramsInfiniteQueryKey = (
-  options?: Options<GetActiveProgramsData>
+  options: Options<GetActiveProgramsData>
 ): QueryKey<Options<GetActiveProgramsData>> => createQueryKey('getActivePrograms', options, true);
 
 /**
  * Get active programs
  * Retrieves all currently active and published programs.
  */
-export const getActiveProgramsInfiniteOptions = (options?: Options<GetActiveProgramsData>) => {
+export const getActiveProgramsInfiniteOptions = (options: Options<GetActiveProgramsData>) => {
   return infiniteQueryOptions<
-    unknown,
+    GetActiveProgramsResponse,
     GetActiveProgramsError,
-    InfiniteData<unknown>,
+    InfiniteData<GetActiveProgramsResponse>,
     QueryKey<Options<GetActiveProgramsData>>,
     | number
     | Pick<QueryKey<Options<GetActiveProgramsData>>[0], 'body' | 'headers' | 'path' | 'query'>
@@ -9148,7 +11385,7 @@ export const getActiveProgramsInfiniteOptions = (options?: Options<GetActiveProg
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9217,7 +11454,7 @@ export const getUsersByOrganisationInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9350,7 +11587,7 @@ export const search2InfiniteOptions = (options: Options<Search2Data>) => {
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9520,7 +11757,7 @@ export const searchSkillsInfiniteOptions = (options: Options<SearchSkillsData>) 
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9680,7 +11917,7 @@ export const searchInstructorsInfiniteOptions = (options: Options<SearchInstruct
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9780,7 +12017,7 @@ export const searchMembershipsInfiniteOptions = (options: Options<SearchMembersh
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9881,7 +12118,7 @@ export const searchExperienceInfiniteOptions = (options: Options<SearchExperienc
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -9970,7 +12207,7 @@ export const searchEducationInfiniteOptions = (options: Options<SearchEducationD
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10073,7 +12310,7 @@ export const searchDocumentsInfiniteOptions = (options: Options<SearchDocumentsD
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10117,6 +12354,119 @@ export const getStatusTransitionsOptions = (options: Options<GetStatusTransition
     },
     queryKey: getStatusTransitionsQueryKey(options),
   });
+};
+
+export const checkRubricAssociationQueryKey = (options: Options<CheckRubricAssociationData>) =>
+  createQueryKey('checkRubricAssociation', options);
+
+/**
+ * Check if rubric is associated with course
+ * Checks whether a specific rubric is already associated with the course.
+ */
+export const checkRubricAssociationOptions = (options: Options<CheckRubricAssociationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await checkRubricAssociation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: checkRubricAssociationQueryKey(options),
+  });
+};
+
+export const getPrimaryRubricQueryKey = (options: Options<GetPrimaryRubricData>) =>
+  createQueryKey('getPrimaryRubric', options);
+
+/**
+ * Get primary rubric for a course
+ * Retrieves the primary rubric association for the specified course.
+ */
+export const getPrimaryRubricOptions = (options: Options<GetPrimaryRubricData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPrimaryRubric({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPrimaryRubricQueryKey(options),
+  });
+};
+
+export const getRubricsByContextQueryKey = (options: Options<GetRubricsByContextData>) =>
+  createQueryKey('getRubricsByContext', options);
+
+/**
+ * Get rubrics by usage context
+ * Retrieves rubric associations for a specific usage context (e.g., 'midterm', 'final', 'assignment').
+ */
+export const getRubricsByContextOptions = (options: Options<GetRubricsByContextData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRubricsByContext({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRubricsByContextQueryKey(options),
+  });
+};
+
+export const getRubricsByContextInfiniteQueryKey = (
+  options: Options<GetRubricsByContextData>
+): QueryKey<Options<GetRubricsByContextData>> =>
+  createQueryKey('getRubricsByContext', options, true);
+
+/**
+ * Get rubrics by usage context
+ * Retrieves rubric associations for a specific usage context (e.g., 'midterm', 'final', 'assignment').
+ */
+export const getRubricsByContextInfiniteOptions = (options: Options<GetRubricsByContextData>) => {
+  return infiniteQueryOptions<
+    GetRubricsByContextResponse,
+    GetRubricsByContextError,
+    InfiniteData<GetRubricsByContextResponse>,
+    QueryKey<Options<GetRubricsByContextData>>,
+    | number
+    | Pick<QueryKey<Options<GetRubricsByContextData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetRubricsByContextData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getRubricsByContext({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getRubricsByContextInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getCourseEnrollmentsQueryKey = (options: Options<GetCourseEnrollmentsData>) =>
@@ -10171,7 +12521,7 @@ export const getCourseEnrollmentsInfiniteOptions = (options: Options<GetCourseEn
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10338,7 +12688,7 @@ export const searchCoursesInfiniteOptions = (options: Options<SearchCoursesData>
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10420,7 +12770,7 @@ export const searchRequirementsInfiniteOptions = (options: Options<SearchRequire
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10437,14 +12787,14 @@ export const searchRequirementsInfiniteOptions = (options: Options<SearchRequire
   );
 };
 
-export const getPublishedCoursesQueryKey = (options?: Options<GetPublishedCoursesData>) =>
+export const getPublishedCoursesQueryKey = (options: Options<GetPublishedCoursesData>) =>
   createQueryKey('getPublishedCourses', options);
 
 /**
  * Get published courses
  * Retrieves all published courses available for enrollment.
  */
-export const getPublishedCoursesOptions = (options?: Options<GetPublishedCoursesData>) => {
+export const getPublishedCoursesOptions = (options: Options<GetPublishedCoursesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getPublishedCourses({
@@ -10460,7 +12810,7 @@ export const getPublishedCoursesOptions = (options?: Options<GetPublishedCourses
 };
 
 export const getPublishedCoursesInfiniteQueryKey = (
-  options?: Options<GetPublishedCoursesData>
+  options: Options<GetPublishedCoursesData>
 ): QueryKey<Options<GetPublishedCoursesData>> =>
   createQueryKey('getPublishedCourses', options, true);
 
@@ -10468,7 +12818,7 @@ export const getPublishedCoursesInfiniteQueryKey = (
  * Get published courses
  * Retrieves all published courses available for enrollment.
  */
-export const getPublishedCoursesInfiniteOptions = (options?: Options<GetPublishedCoursesData>) => {
+export const getPublishedCoursesInfiniteOptions = (options: Options<GetPublishedCoursesData>) => {
   return infiniteQueryOptions<
     GetPublishedCoursesResponse,
     GetPublishedCoursesError,
@@ -10489,7 +12839,7 @@ export const getPublishedCoursesInfiniteOptions = (options?: Options<GetPublishe
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10614,7 +12964,7 @@ export const searchLessonsInfiniteOptions = (options: Options<SearchLessonsData>
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10685,7 +13035,7 @@ export const getCoursesByInstructorInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10769,7 +13119,7 @@ export const searchEnrollmentsInfiniteOptions = (options: Options<SearchEnrollme
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10854,7 +13204,7 @@ export const searchLessonContentInfiniteOptions = (options: Options<SearchLesson
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -10933,7 +13283,7 @@ export const getCoursesByCategoryInfiniteOptions = (options: Options<GetCoursesB
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -11018,7 +13368,7 @@ export const searchCategoryMappingsInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -11100,7 +13450,7 @@ export const searchAssessmentsInfiniteOptions = (options: Options<SearchAssessme
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -11117,14 +13467,14 @@ export const searchAssessmentsInfiniteOptions = (options: Options<SearchAssessme
   );
 };
 
-export const getActiveCoursesQueryKey = (options?: Options<GetActiveCoursesData>) =>
+export const getActiveCoursesQueryKey = (options: Options<GetActiveCoursesData>) =>
   createQueryKey('getActiveCourses', options);
 
 /**
  * Get active courses
  * Retrieves all currently active and published courses.
  */
-export const getActiveCoursesOptions = (options?: Options<GetActiveCoursesData>) => {
+export const getActiveCoursesOptions = (options: Options<GetActiveCoursesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await getActiveCourses({
@@ -11140,14 +13490,14 @@ export const getActiveCoursesOptions = (options?: Options<GetActiveCoursesData>)
 };
 
 export const getActiveCoursesInfiniteQueryKey = (
-  options?: Options<GetActiveCoursesData>
+  options: Options<GetActiveCoursesData>
 ): QueryKey<Options<GetActiveCoursesData>> => createQueryKey('getActiveCourses', options, true);
 
 /**
  * Get active courses
  * Retrieves all currently active and published courses.
  */
-export const getActiveCoursesInfiniteOptions = (options?: Options<GetActiveCoursesData>) => {
+export const getActiveCoursesInfiniteOptions = (options: Options<GetActiveCoursesData>) => {
   return infiniteQueryOptions<
     GetActiveCoursesResponse,
     GetActiveCoursesError,
@@ -11167,7 +13517,7 @@ export const getActiveCoursesInfiniteOptions = (options?: Options<GetActiveCours
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -11247,7 +13597,7 @@ export const searchContentTypesInfiniteOptions = (options: Options<SearchContent
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -11394,7 +13744,7 @@ export const searchCategoriesInfiniteOptions = (options: Options<SearchCategorie
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -11531,7 +13881,7 @@ export const searchCertificateTemplatesInfiniteOptions = (
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -11678,7 +14028,7 @@ export const searchCertificatesInfiniteOptions = (options: Options<SearchCertifi
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -11943,7 +14293,7 @@ export const searchSubmissionsInfiniteOptions = (options: Options<SearchSubmissi
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -12029,7 +14379,7 @@ export const searchAssignmentsInfiniteOptions = (options: Options<SearchAssignme
             ? pageParam
             : {
                 query: {
-                  page: pageParam,
+                  'pageable.page': pageParam,
                 },
               };
         const params = createInfiniteParams(queryKey, page);
@@ -12114,6 +14464,62 @@ export const cleanupOldInvitationsMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await cleanupOldInvitations({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove rubric association
+ * Removes the association between a rubric and a course.
+ */
+export const dissociateRubricMutation = (
+  options?: Partial<Options<DissociateRubricData>>
+): UseMutationOptions<
+  DissociateRubricResponse,
+  DissociateRubricError,
+  Options<DissociateRubricData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DissociateRubricResponse,
+    DissociateRubricError,
+    Options<DissociateRubricData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await dissociateRubric({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove rubric association by context
+ * Removes a specific rubric association based on usage context.
+ */
+export const dissociateRubricByContextMutation = (
+  options?: Partial<Options<DissociateRubricByContextData>>
+): UseMutationOptions<
+  DissociateRubricByContextResponse,
+  DissociateRubricByContextError,
+  Options<DissociateRubricByContextData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DissociateRubricByContextResponse,
+    DissociateRubricByContextError,
+    Options<DissociateRubricByContextData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await dissociateRubricByContext({
         ...options,
         ...localOptions,
         throwOnError: true,

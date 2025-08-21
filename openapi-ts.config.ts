@@ -57,6 +57,7 @@ export default defineConfig({
       name: 'zod',
       definitions: true,
       metadata: true,
+      compatibilityVersion: 3,
     },
     {
       name: '@hey-api/client-next',

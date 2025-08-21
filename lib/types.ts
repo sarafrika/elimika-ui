@@ -52,7 +52,7 @@ export type UserProfileType = User & {
     educations: InstructorEducation[],
     experience: InstructorExperience[],
     membership: InstructorProfessionalMembership[],
-    skills: InstructorSkill
+    skills: InstructorSkill[]
   },
   organizations?: TrainingCenter[]
 }
