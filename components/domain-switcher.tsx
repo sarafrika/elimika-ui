@@ -11,6 +11,7 @@ import {
 import { useUserProfile } from '@/context/profile-context';
 import { UserDomain } from '@/lib/types';
 import { GraduationCap, Users, BookOpen, Shield, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const domainConfig = {
   student: {
@@ -46,6 +47,7 @@ interface DomainSwitcherProps {
 
 export function DomainSwitcher({ className }: DomainSwitcherProps) {
   const profile = useUserProfile();
+  const router = useRouter();
 
   // Don't show if user has only one domain or is loading
   if (!profile || profile.isLoading || !profile.hasMultipleDomains || !profile.user_domain) {
@@ -61,8 +63,8 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
   const handleDomainSwitch = (domain: UserDomain) => {
     if (profile.setActiveDomain) {
       profile.setActiveDomain(domain);
-      // Force a page reload to ensure all components refresh with the new domain
-      window.location.reload();
+      // Use Next.js router for client-side navigation to avoid context reload
+      router.push('/dashboard/overview');
     }
   };
 
