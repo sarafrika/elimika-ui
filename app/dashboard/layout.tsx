@@ -2,15 +2,14 @@
 
 import { AppSidebar } from '@/components/app-sidebar';
 import DashboardMainContent from '@/components/dashboard-main-content';
-import DashboardTopBar from '@/components/dashboard-top-bar';
 import { DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
-import { TrainingCenterProvider } from '@/context/training-center-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { DashboardChildrenTypes, UserDomain } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
+import OrganisactionProvider from '../../context/organization-context';
 
 type OrgDomainType = DashboardView | 'organisation_user';
 
@@ -48,7 +47,7 @@ export default function DashboardLayout(props: DashboardChildrenTypes) {
   }
 
   // If profile is still loading or domains are undefined, wait for rehydration
-  if (!profile.user_domain) {
+  if (!profile.user_domain || !profile.activeDomain) {
     return (
       <div className='flex h-screen w-screen items-center justify-center'>
         <div className='flex animate-pulse flex-col items-center'>
@@ -60,37 +59,24 @@ export default function DashboardLayout(props: DashboardChildrenTypes) {
   }
 
   const userDomains = profile.user_domain as DashboardView[] || [];
-  const orgAdminDomains = userDomains as OrgDomainType[];
-  const activeDomain = orgAdminDomains[0];
-  const userDashboards = Object.keys(props).reduce(
-    (a: { [key: string]: ReactNode }, b: string) =>
-      orgAdminDomains.includes(b as OrgDomainType) ? { ...a, [b]: props[b] } : a,
+  const organizationDomains = userDomains as OrgDomainType[];
+  const activeDomain = profile.activeDomain;
+
+  // Filter only dashboards that are accessible to the logged in user
+  const dashboards = Object.keys(props).reduce(
+    (a: { [key: string]: ReactNode }, b: OrgDomainType) =>
+      organizationDomains.includes(b) ? { ...a, [b]: props[b] } : a,
     {}
   );
-  const currentDashboard = activeDomain ? userDashboards[activeDomain] : props.children;
 
-  if (orgAdminDomains.includes('organisation_user')) {
-    return (
-      <TrainingCenterProvider>
-        <SidebarProvider>
-          <BreadcrumbProvider>
-            <div className='flex min-h-screen w-full'>
-              {/* Sidebar */}
-              <AppSidebar activeDomain='organisation_user' />
-              {/* Main content area */}
-              <div className='flex w-full flex-1 flex-col'>
-                <DashboardTopBar showToggle={false} />
-                {props.organization}
-              </div>
-            </div>
-          </BreadcrumbProvider>
-        </SidebarProvider>
-      </TrainingCenterProvider>
-    );
+  // Include organisation_user dashboard since the @organization_user page is not available
+  if (userDomains.includes("organisation_user")) {
+    dashboards["organisation_user"] = props["organization"]
   }
 
+  const currentDashboard = activeDomain ? dashboards[activeDomain] : props.children;
   return (
-    <TrainingCenterProvider>
+    <OrganisactionProvider>
       <SidebarProvider>
         <DashboardViewProvider
           initialView={activeDomain as DashboardView}
@@ -108,6 +94,6 @@ export default function DashboardLayout(props: DashboardChildrenTypes) {
           </BreadcrumbProvider>
         </DashboardViewProvider>
       </SidebarProvider>
-    </TrainingCenterProvider>
+    </OrganisactionProvider>
   );
 }

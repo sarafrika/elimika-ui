@@ -1,7 +1,12 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { useUserProfile } from '../context/profile-context';
+import { UserDomain } from '../lib/types';
+import { ELIMIKA_DASHBOARD_STORAGE_KEY } from '../lib/utils';
 
-export type DashboardView = 'student' | 'admin' | 'instructor';
+export const AvailableViews = ['student', 'admin', 'instructor', 'organization']
+const dashboardViews = [...AvailableViews] as const;
+export type DashboardView = typeof dashboardViews[number];
 
 interface DashboardViewContextType {
   view: DashboardView;
@@ -11,41 +16,32 @@ interface DashboardViewContextType {
 
 const DashboardViewContext = createContext<DashboardViewContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'elimika-dashboard-view';
-
 export function DashboardViewProvider({
   children,
-  initialView = 'student',
-  availableViews = ['student', 'admin'],
+  initialView,
+  availableViews = AvailableViews,
 }: {
   children: ReactNode;
   initialView?: DashboardView;
   availableViews?: DashboardView[];
 }) {
   // Load from localStorage if available
-  const [view, setViewState] = useState<DashboardView>(initialView);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && availableViews.includes(stored as DashboardView)) {
-        setViewState(stored as DashboardView);
-      }
-    }
-    // Only run on mount
-    // eslint-disable-next-line
-  }, []);
+  const profile = useUserProfile();
+  const [view, setViewState] = useState<DashboardView>(initialView ?? profile?.activeDomain ?? "student");
 
   // Save to localStorage on change
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, view);
+      localStorage.setItem(ELIMIKA_DASHBOARD_STORAGE_KEY, view);
     }
   }, [view]);
 
   // Only allow switching to available views
   const setView = (v: DashboardView) => {
-    if (availableViews.includes(v)) setViewState(v);
+    if (availableViews.includes(v)) {
+      setViewState(v);
+      profile?.setActiveDomain(v as UserDomain);
+    }
   };
 
   return (

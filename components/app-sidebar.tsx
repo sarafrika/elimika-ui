@@ -12,7 +12,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { useTrainingCenter } from '@/context/training-center-provider';
 import menu from '@/lib/menu';
 import { UserDomain } from '@/lib/types';
 import { LibraryBigIcon } from 'lucide-react';
@@ -20,12 +19,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { NavMain } from './nav-main';
+import { useOrganization } from '../context/organization-context';
 
 export function AppSidebar({
   activeDomain,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { activeDomain: UserDomain }) {
-  const trainingCenter = useTrainingCenter();
+  const trainingCenter = useOrganization();
   const pathname = usePathname();
 
   // Helper to get menu items for a domain

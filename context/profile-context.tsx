@@ -1,4 +1,4 @@
-import { UserProfileType } from '@/lib/types';
+import { UserDomain, UserProfileType } from '@/lib/types';
 import {
   getInstructorEducation,
   getInstructorExperience,
@@ -19,8 +19,7 @@ import {
 import { queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-
-type DomainTypes = "instructor" | "student" | "organisation"
+import { ELIMIKA_DASHBOARD_STORAGE_KEY } from '../lib/utils';
 
 type ExtendedInstructor = Instructor & {
   educations: InstructorEducation[];
@@ -33,7 +32,7 @@ const UserProfileContext = createContext<Partial<UserProfileType> & {
   isLoading: boolean,
   invalidateQuery: () => void,
   clearProfile: () => void,
-  setActiveDomain: (domain: DomainTypes) => void,
+  setActiveDomain: (domain: UserDomain) => void,
   activeDomain: string | null,
   updateProfile: (data: UserProfileType) => void
 } | null>(null);
@@ -48,13 +47,13 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
     enabled: !!session?.user?.email
   }));
 
-  const [activeDomain, setActiveDomain] = useState<DomainTypes | null>(null);
+  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY) as UserDomain | null);
 
   // Update active domain when profile data changes
   useEffect(() => {
     if (data && !isError && data.user_domain && data.user_domain.length > 0) {
-      const domain = data.user_domain[0];
-      if (domain === "instructor" || domain === "student" || domain === "organisation") {
+      const domain = (localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY) ?? data.user_domain[0]) as UserDomain;
+      if (domain !== null) {
         setActiveDomain(domain);
       }
     }
@@ -80,7 +79,7 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
         await refetch();
       },
       clearProfile,
-      setActiveDomain: (domain: DomainTypes) => setActiveDomain(domain),
+      setActiveDomain: (domain: UserDomain) => setActiveDomain(domain),
       activeDomain,
       updateProfile: async (data) => {
         // setProfile(data);

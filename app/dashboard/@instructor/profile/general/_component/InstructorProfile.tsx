@@ -37,6 +37,7 @@ import { cn, profilePicSvg } from '@/lib/utils';
 import { zInstructor, zUser } from "@/services/client/zod.gen";
 import { CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { createInstructor, updateInstructor, updateUser, uploadProfileImage } from '../../../../../../services/client';
 import { client } from '../../../../../../services/client/client.gen';
@@ -48,7 +49,9 @@ const generalProfileSchema = z.object({
     updated_by: true,
     user_domain: true
   }).merge(z.object({ dob: z.date() })),
-  instructor: zInstructor.omit({
+  instructor: zInstructor.merge(z.object({
+    location: z.string().optional()
+  })).omit({
     created_date: true,
     updated_date: true,
     updated_by: true
@@ -362,6 +365,25 @@ export default function InstructorProfile() {
                     </p>
                   </div>
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name='instructor.location'
+                  render={({ field }) => (<FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                      <LocationInput {...field} onSuggest={(loc => {
+                        if (loc.features.length > 0) {
+                          form.setValue("instructor.latitude", loc.features[0]!.properties.coordinates.latitude);
+
+                          form.setValue("instructor.longitude", loc.features[0]!.properties.coordinates.longitude)
+                        }
+                        return loc;
+                      })} />
+                    </FormControl>
+                    <FormDescription>Search and select your physical localaion</FormDescription>
+                    <FormMessage />
+                  </FormItem>)} />
 
                 <FormField
                   control={form.control}

@@ -18,20 +18,15 @@ import { CommandInput } from 'cmdk';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
 import Combobox from '../../../../../../components/combobox';
+import LocationInput from '../../../../../../components/locationInput';
+import { useOrganization } from '../../../../../../context/organization-context';
 import { useUserProfile } from '../../../../../../context/profile-context';
-import { useTrainingCenter } from '../../../../../../context/training-center-provider';
+import { queryClient } from '../../../../../../lib/query-client';
+import { ApiResponse, createTrainingBranch, updateTrainingBranch } from '../../../../../../services/client';
 import { zTrainingBranch, zUser } from '../../../../../../services/client/zod.gen';
-
-const ageGroups = [
-  'Kindergarten',
-  'Lower Primary',
-  'Upper Primary',
-  'JSS',
-  'Secondary',
-  'Adults',
-] as const;
 
 const userSchema = zUser.merge(z.object({ dob: z.date() }));
 
@@ -39,29 +34,12 @@ const branchSchema = zTrainingBranch.omit({
   created_date: true,
   updated_date: true
 }).merge(z.object({
-  poc_user: userSchema.optional(),
-  country: z.string().optional(),
-  // coursesOffered: z.string().optional(),
-  // classrooms: z.number().min(0, 'Must be a positive number').optional(),
-  // ageGroups: z.array(z.string()).optional(),
   organisation_uuid: z.string().optional()
 }))
 
 const branchesSchema = z.object({
   branches: z.array(
     branchSchema
-    /* z.object({
-      id: z.string().optional(),
-      branchName: z.string().min(1, 'Branch name is required.'),
-      country: z.string().min(1, 'Country is required.'),
-      address: z.string().min(1, 'Address is required.'),
-      pocName: z.string().min(1, 'Point of contact name is required.'),
-      pocPhone: z.string().min(1, 'Point of contact phone is required.'),
-      pocEmail: z.string().email('Invalid email for point of contact.'),
-      coursesOffered: z.string().optional(),
-      classrooms: z.number().min(0, 'Must be a positive number').optional(),
-      ageGroups: z.array(z.string()).optional(),
-    }) */
   ),
 });
 
@@ -85,23 +63,19 @@ export default function ManageBranchForm() {
   }, [replaceBreadcrumbs]);
 
   const user = useUserProfile();
-  const trainingCenter = useTrainingCenter()
+  const trainingCenter = useOrganization()
   const { organizations } = user!
-  // const [organization] = organizations ?? [];
 
   const defaultBranch = (): BranchType => ({
     branch_name: 'Main Campus',
     active: true,
-    poc_user: user as UserType,
     poc_user_uuid: user!.uuid
   });
-
-  // defaultBranch().poc_user.full_name
 
   const form = useForm<BranchesFormValues>({
     resolver: zodResolver(branchesSchema),
     defaultValues: {
-      branches: trainingCenter && trainingCenter.branches.length > 0 ?
+      branches: trainingCenter && trainingCenter.branches!.length > 0 ?
         trainingCenter.branches :
         [defaultBranch()],
     },
@@ -112,9 +86,50 @@ export default function ManageBranchForm() {
     name: 'branches',
   });
 
-  const onSubmit = (data: BranchesFormValues) => {
-    // TODO: Implement submission logic
+  const onSubmit = async (data: BranchesFormValues) => {
+
     console.log(data);
+    const responses = await Promise.all(data.branches.map(branch => {
+      if (branch.uuid) return updateTrainingBranch({
+        path: {
+          uuid: branch.uuid
+        },
+        body: {
+          ...branch,
+          organisation_uuid: trainingCenter?.uuid!
+        }
+      });
+
+      return createTrainingBranch({
+        body: {
+          ...branch,
+          organisation_uuid: trainingCenter?.uuid!
+        }
+      })
+    }));
+
+    let hasError = false;
+    responses.map((response: ApiResponse, i) => {
+      if (response.error) {
+        console.log(response.error)
+        Object.keys(response.error).map((key: string) => {
+          const fieldName = `branches.${i}.${key}` as any;
+          const { error } = response.error as any;
+          form.setError(fieldName, error[key]);
+        });
+        hasError = true;
+      }
+      else {
+
+      }
+    });
+
+    if (hasError) toast.error("Error saving branch");
+    else {
+      toast.success("Branch added successfully");
+      queryClient.invalidateQueries({ queryKey: ["organization"] })
+    }
+
   };
 
   return (
@@ -162,62 +177,50 @@ export default function ManageBranchForm() {
                     )}
                   />
 
-                  <div className='grid gap-6 sm:grid-cols-2'>
-                    <FormField
-                      control={form.control}
-                      name={`branches.${index}.country`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <Input placeholder='e.g., Kenya' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`branches.${index}.address`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder='e.g., 123 Waiyaki Way' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name={`branches.${index}.address`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
+                        <FormControl>
+                          {/* <Input placeholder='e.g., 123 Waiyaki Way' {...field} /> */}
+                          <LocationInput {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                  <div>
+                  <FormField
+                    control={form.control}
+                    name={`branches.${index}.poc_user_uuid`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Point of Contact Person</FormLabel>
+                        <div className="flex gap-3">
+                          <div className='flex-grow'>
+                            <Combobox value={field.value ?? ""} setValue={field.onChange} items={(trainingCenter && trainingCenter.users ? trainingCenter.users : []).map(user => ({
+                              label: user.full_name!,
+                              value: user.uuid!
+                            }))}>
+                              <CommandInput placeholder="Search framework..." className="h-9" />
+                            </Combobox>
+                          </div>
+                          <Button type='button' variant={"outline"}>Invite User</Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* <div>
                     <h4 className='text-md mb-4 font-medium'>Point of Contact</h4>
                     <div className='space-y-4 rounded-md border p-4'>
 
-                      <FormField
-                        control={form.control}
-                        name={`branches.${index}.poc_user_uuid`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Select Point of Contact Person</FormLabel>
-                            <div className="flex gap-3">
-                              <div className='flex-grow'>
-                                <Combobox value={field.value ?? ""} setValue={field.onChange} items={(trainingCenter && trainingCenter.users ? trainingCenter.users : []).map(user => ({
-                                  label: user.full_name!,
-                                  value: user.uuid!
-                                }))}>
-                                  <CommandInput placeholder="Search framework..." className="h-9" />
-                                </Combobox>
-                              </div>
-                              <Button type='button' variant={"outline"}>Invite User</Button>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      
 
-                      {/* <FormField
+                      <FormField
                         control={form.control}
                         name={`branches.${index}.poc_user.full_name`}
                         render={({ field }) => (
@@ -229,7 +232,7 @@ export default function ManageBranchForm() {
                             <FormMessage />
                           </FormItem>
                         )}
-                      /> */}
+                      />
                       <div className='grid gap-6 sm:grid-cols-2'>
                         <FormField
                           control={form.control}
@@ -259,7 +262,7 @@ export default function ManageBranchForm() {
                         />
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* <div>
                     <h4 className='text-md mb-4 font-medium'>Branch Details</h4>
@@ -367,7 +370,9 @@ export default function ManageBranchForm() {
         </Card>
 
         <div className='flex justify-end'>
-          <Button type='submit'>Save Branches</Button>
+          <Button type='submit' disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? <>Saving...</> : <>Save Branches</>}
+          </Button>
         </div>
       </form>
     </Form>

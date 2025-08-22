@@ -1,5 +1,5 @@
 import { TrainingCenter } from "@/lib/types";
-import { ApiResponse, SearchResponse } from "@/services/client";
+import { ApiResponse, getTrainingBranchesByOrganisation, getUsersByOrganisation, SearchResponse, TrainingBranch, User } from "@/services/client";
 import { client } from "@/services/client/client.gen";
 import { queryOptions, useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
@@ -58,6 +58,33 @@ function createQueryOptions(reqParams: { userid: string, token: string }, option
             const organizationData = {
                 ...orgRespData.data.content[0]
             } as TrainingCenter;
+
+            const branchesResp = await getTrainingBranchesByOrganisation({
+                path: {
+                    uuid: organizationData.uuid!
+                },
+                query: {
+                    pageable: { page: 0, size: 5 }
+                }
+            }) as ApiResponse;
+
+            const branchesData = branchesResp.data as SearchResponse;
+            if (branchesData.data && branchesData.data.content)
+                organizationData.branches = branchesData.data.content as unknown as TrainingBranch[];
+
+            const orgUsersResp = await getUsersByOrganisation({
+                path: {
+                    uuid: organizationData.uuid!
+                },
+                query: {
+                    pageable: { page: 0, size: 5 }
+                }
+            }) as ApiResponse;
+
+            const orgUsersData = orgUsersResp.data as SearchResponse;
+            if (orgUsersData.data && orgUsersData.data.content)
+                organizationData.users = orgUsersData.data.content as unknown as User[];
+
 
             // TODO: get organization branches, courses, instructures and users
             return organizationData;
