@@ -924,12 +924,6 @@ export const RubricCriteriaSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    is_primary_criteria: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
-      example: true,
-      readOnly: true,
-    },
     criteria_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment criteria.',
@@ -946,6 +940,12 @@ export const RubricCriteriaSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted criteria number for display in assessment interface.',
       example: 'Criteria 1',
+      readOnly: true,
+    },
+    is_primary_criteria: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1505,16 +1505,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: 2,
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2436,6 +2436,13 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    has_location_coordinates: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
+      example: true,
+      readOnly: true,
+    },
     formatted_location: {
       type: 'string',
       description:
@@ -2447,13 +2454,6 @@ export const InstructorSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
-      readOnly: true,
-    },
-    has_location_coordinates: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
       readOnly: true,
     },
@@ -2692,12 +2692,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    formatted_duration: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: 4,
-      readOnly: true,
-    },
     summary: {
       type: 'string',
       description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
@@ -2710,6 +2704,15 @@ export const InstructorProfessionalMembershipSchema = {
         '**[READ-ONLY]** Indicates if the membership record has all essential information.',
       example: true,
       readOnly: true,
+    },
+    formatted_duration: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: 4,
+      readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     membership_period: {
       type: 'string',
@@ -2755,9 +2758,6 @@ export const InstructorProfessionalMembershipSchema = {
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
       readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
     },
   },
   required: ['instructor_uuid', 'organization_name'],
@@ -2906,6 +2906,33 @@ export const InstructorExperienceSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
+      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
+    duration_in_months: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: 5,
+      readOnly: true,
+    },
     employment_period: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
@@ -2939,33 +2966,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    duration_in_months: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: 5,
-      readOnly: true,
-    },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
-      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3097,17 +3097,11 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    has_certificate_number: {
+    is_complete: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
       example: true,
-      readOnly: true,
-    },
-    formatted_completion: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
-      example: 2020,
       readOnly: true,
     },
     is_recent_qualification: {
@@ -3127,11 +3121,17 @@ export const InstructorEducationSchema = {
     education_level: {
       $ref: '#/components/schemas/EducationLevelEnum',
     },
-    is_complete: {
+    has_certificate_number: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
       example: true,
+      readOnly: true,
+    },
+    formatted_completion: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
+      example: 2020,
       readOnly: true,
     },
   },
@@ -3665,17 +3665,9 @@ export const CourseSchema = {
       example: false,
       readOnly: true,
     },
-    lifecycle_stage: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
-      example: 'Published and Active',
-      readOnly: true,
-    },
-    accepts_new_enrollments: {
+    is_published: {
       type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      description: '**[READ-ONLY]** Indicates if the course is published and discoverable.',
       example: true,
       readOnly: true,
     },
@@ -3697,18 +3689,6 @@ export const CourseSchema = {
       example: false,
       readOnly: true,
     },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is published and discoverable.',
-      example: true,
-      readOnly: true,
-    },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: 40,
-      readOnly: true,
-    },
     has_multiple_categories: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
@@ -3720,6 +3700,26 @@ export const CourseSchema = {
       format: 'int32',
       description: '**[READ-ONLY]** Number of categories this course belongs to.',
       example: 2,
+      readOnly: true,
+    },
+    lifecycle_stage: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
+      example: 'Published and Active',
+      readOnly: true,
+    },
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      example: true,
+      readOnly: true,
+    },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: 40,
       readOnly: true,
     },
   },
@@ -5380,6 +5380,12 @@ export const AssignmentSchema = {
       example: 'Theory Assignment',
       readOnly: true,
     },
+    submission_summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Summary of accepted submission types for this assignment.',
+      example: 3,
+      readOnly: true,
+    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
@@ -5390,12 +5396,6 @@ export const AssignmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.',
       example: 'Lesson-Specific',
-      readOnly: true,
-    },
-    submission_summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Summary of accepted submission types for this assignment.',
-      example: 3,
       readOnly: true,
     },
   },
@@ -6776,12 +6776,6 @@ export const QuizAttemptSchema = {
       example: 85,
       readOnly: true,
     },
-    attempt_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
-      example: 'Graded Attempt',
-      readOnly: true,
-    },
     performance_summary: {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
@@ -6792,6 +6786,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
       example: 1,
+      readOnly: true,
+    },
+    attempt_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
+      example: 'Graded Attempt',
       readOnly: true,
     },
   },
@@ -8582,6 +8582,14 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
+  readOnly: true,
+} as const;
+
 export const OrganizationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organization type based on name keywords.',
@@ -8594,14 +8602,6 @@ export const OrganizationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
-  readOnly: true,
-} as const;
-
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
   readOnly: true,
 } as const;
 

@@ -1,25 +1,27 @@
-import { ComponentType } from 'react';
 import {
-  BoltIcon,
-  FileText,
-  LibraryIcon,
-  UserIcon,
-  Users,
-  Building2,
-  BookOpen,
-  LayoutDashboard,
-  Briefcase,
-  ClipboardList,
-  Building,
-  UserCog,
-  Settings,
   Award,
+  BoltIcon,
+  Book,
+  BookOpen,
+  Briefcase,
+  Building,
+  Building2,
+  Calendar,
+  CheckSquare,
+  ClipboardList,
   DollarSign,
+  FileText,
+  Layers,
+  LayoutDashboard,
+  LibraryIcon,
+  Settings,
   Star,
   UserCircle,
-  Book,
-  Calendar,
+  UserCog,
+  UserIcon,
+  Users
 } from 'lucide-react';
+import { ComponentType } from 'react';
 import { UserDomain } from './types';
 
 export type MenuItem = {
@@ -151,9 +153,19 @@ export default {
       icon: BookOpen,
     },
     {
-      title: 'Classes',
-      url: '/dashboard/classes',
+      title: 'Programs',
+      url: '/dashboard/programs',
+      icon: Layers,
+    },
+    {
+      title: 'Trainings',
+      url: '/dashboard/trainings',
       icon: ClipboardList,
+    },
+    {
+      title: 'Rubrics Management',
+      url: '/dashboard/rubric-management',
+      icon: CheckSquare,
     },
     {
       title: 'Assignments',

@@ -2,7 +2,7 @@
 
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppBreadcrumb } from '@/components/ui/app-breadcrumb';
-import DashboardViewSwitcher from '@/components/dashboard-view-switcher';
+import { DomainSwitcher } from '@/components/domain-switcher';
 
 // export default function DashboardTopBar({
 //   showToggle = true,
@@ -39,7 +39,7 @@ export default function DashboardTopBar({ showToggle = true }: { showToggle?: bo
         <>
           {!isMobile && <AppBreadcrumb />}
           <div className='flex-1' />
-          <DashboardViewSwitcher />
+          <DomainSwitcher />
         </>
       )}
     </div>

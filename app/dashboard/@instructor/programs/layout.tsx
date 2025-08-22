@@ -2,19 +2,19 @@
 
 import { Separator } from '@/components/ui/separator';
 
-interface ClassManagementLayoutProps {
+interface ProgramManagementLayoutProps {
   children: React.ReactNode;
 }
 
-export default function ClassManagementLayout({ children }: ClassManagementLayoutProps) {
+export default function ProgramManagementLayout({ children }: ProgramManagementLayoutProps) {
   return (
     <div className='space-y-6 p-4 pb-16 md:p-10'>
       <div className='flex items-center justify-between'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight'>Manage Classes</h2>
+          <h2 className='text-2xl font-bold tracking-tight'>Manage Programs</h2>
           <p className='text-muted-foreground'>
             Create, edit, schedule, track, and communicate with students to effectively manage all
-            aspects of your classes.
+            aspects of your programs.
           </p>
         </div>
       </div>

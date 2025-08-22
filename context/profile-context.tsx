@@ -1,4 +1,3 @@
-"use client"
 import { UserDomain, UserProfileType } from '@/lib/types';
 import {
   getInstructorEducation,
@@ -22,6 +21,8 @@ import { useSession } from 'next-auth/react';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { ELIMIKA_DASHBOARD_STORAGE_KEY } from '../lib/utils';
 
+type DomainTypes = UserDomain
+
 type ExtendedInstructor = Instructor & {
   educations: InstructorEducation[];
   experience: InstructorExperience[];
@@ -34,37 +35,66 @@ const UserProfileContext = createContext<Partial<UserProfileType> & {
   invalidateQuery: () => void,
   clearProfile: () => void,
   setActiveDomain: (domain: UserDomain) => void,
-  activeDomain: string | null,
-  updateProfile: (data: UserProfileType) => void
+  activeDomain: UserDomain | null,
+  hasMultipleDomains: boolean
 } | null>(null);
 
 export const useUserProfile = () => useContext(UserProfileContext);
 
-export default function UserProfileProvider({ children }: { children: ReactNode }) {
+export default function UserProfileProvider({
+  children,
+  initialData
+}: {
+  children: ReactNode;
+  initialData?: any;
+}) {
 
   const { data: session, status } = useSession();
   const qc = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery(createQueryOptions(session?.user?.email, {
-    enabled: !!session?.user?.email
+    enabled: !!session?.user?.email,
+    initialData: initialData
   }));
 
-  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(null);
+  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(() => {
+    // Try to get saved domain from localStorage
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('selectedDomain');
+      return saved as UserDomain || null;
+    }
+    return null;
+  });
 
-  // Update active domain when profile data changes
+  // Update active domain when profile data changes, but only if no domain is already selected
   useEffect(() => {
     if (data && !isError && data.user_domain && data.user_domain.length > 0) {
-      let defaultDomain = localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY);
-      const domain = (defaultDomain || data.user_domain[0]) as UserDomain;
-      if (domain !== null) {
-        setActiveDomain(domain);
+      // Only auto-select if user has a single domain or if current domain is invalid
+      if (!activeDomain || !data.user_domain.includes(activeDomain)) {
+        // Only auto-set domain if user has exactly one domain
+        if (data.user_domain.length === 1) {
+          const validDomain = data.user_domain[0] as UserDomain;
+          setActiveDomain(validDomain);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('selectedDomain', validDomain);
+          }
+        } else if (activeDomain && !data.user_domain.includes(activeDomain)) {
+          // Clear invalid domain selection
+          setActiveDomain(null);
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('selectedDomain');
+          }
+        }
       }
     }
-  }, [data, isError]);
+  }, [data, isError, activeDomain]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       clearProfile();
       setActiveDomain(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('selectedDomain');
+      }
     }
   }, [status]);
 
@@ -85,14 +115,14 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
         await refetch();
       },
       clearProfile,
-      setActiveDomain: (domain: UserDomain) => setActiveDomain(domain),
+      setActiveDomain: (domain: UserDomain) => {
+        setActiveDomain(domain);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('selectedDomain', domain);
+        }
+      },
       activeDomain,
-      updateProfile: async (data) => {
-        // setProfile(data);
-        sessionStorage.setItem("profile", JSON.stringify(data));
-        await qc.invalidateQueries({ queryKey: ["profile"] });
-        await refetch();
-      }
+      hasMultipleDomains: (data?.user_domain?.length || 0) > 1
     }}>
     {children}
   </UserProfileContext.Provider>

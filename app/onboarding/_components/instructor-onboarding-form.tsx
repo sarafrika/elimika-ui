@@ -12,19 +12,19 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { BookOpen } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
-import { useQueryClient } from '@tanstack/react-query';
 import { useUserProfile } from '@/context/profile-context';
 import { createInstructor } from '@/services/client';
 import { zInstructor } from '@/services/client/zod.gen';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { BookOpen } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
-const InstructorOnboardingSchema = zInstructor.omit({ 
+const InstructorOnboardingSchema = zInstructor.omit({
   uuid: true,
   full_name: true,
   admin_verified: true,
@@ -105,7 +105,7 @@ export function InstructorOnboardingForm() {
       // Invalidate instructor-related queries
       await queryClient.invalidateQueries({ queryKey: ['instructors'] });
       await queryClient.invalidateQueries({ queryKey: ['searchInstructors'] });
-      
+
       // Invalidate and refetch user profile to get updated user_domain
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
       if (user.invalidateQuery) {
@@ -196,7 +196,7 @@ export function InstructorOnboardingForm() {
                   <FormItem>
                     <FormLabel>Professional Headline</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         placeholder='e.g. Software Engineer & Python Expert'
                         {...field}
                       />
@@ -208,7 +208,7 @@ export function InstructorOnboardingForm() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name='bio'
@@ -216,7 +216,7 @@ export function InstructorOnboardingForm() {
                   <FormItem>
                     <FormLabel>Bio</FormLabel>
                     <FormControl>
-                      <textarea 
+                      <textarea
                         className='flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
                         placeholder='Tell students about your background, expertise, and teaching philosophy...'
                         {...field}
@@ -237,7 +237,7 @@ export function InstructorOnboardingForm() {
                   <FormItem>
                     <FormLabel>Website (Optional)</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         type='url'
                         placeholder='https://your-portfolio.com'
                         {...field}
@@ -270,8 +270,8 @@ export function InstructorOnboardingForm() {
                     <FormItem>
                       <FormLabel>Latitude</FormLabel>
                       <FormControl>
-                        <Input 
-                          type='number' 
+                        <Input
+                          type='number'
                           step='any'
                           placeholder='-1.2921'
                           {...field}
@@ -289,8 +289,8 @@ export function InstructorOnboardingForm() {
                     <FormItem>
                       <FormLabel>Longitude</FormLabel>
                       <FormControl>
-                        <Input 
-                          type='number' 
+                        <Input
+                          type='number'
                           step='any'
                           placeholder='36.8219'
                           {...field}
@@ -302,7 +302,7 @@ export function InstructorOnboardingForm() {
                   )}
                 />
               </div>
-              
+
               <div className='flex justify-center'>
                 <Button type='button' variant='outline' onClick={handleGetCurrentLocation}>
                   Use Current Location
@@ -315,7 +315,7 @@ export function InstructorOnboardingForm() {
           <div className='rounded-lg bg-blue-50 p-4'>
             <h3 className='font-medium text-blue-900'>What&apos;s Next?</h3>
             <p className='mt-1 text-sm text-blue-700'>
-              After registration, you can add your education, experience, skills, and professional memberships 
+              After registration, you can add your education, experience, skills, and professional memberships
               in your instructor profile to attract more students.
             </p>
           </div>

@@ -82,6 +82,7 @@ import {
   updateCourseAssessmentMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AddRubricForm } from './rubric-management-form';
 
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
@@ -226,13 +227,13 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
   const { setValue } = useFormContext();
 
   // GET COURSE CONTENT TYPES
-  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ 
+  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({
     query: {
       pageable: {
         page: 0,
         size: 100
       }
-    } 
+    }
   }));
 
   const contentTypeData = React.useMemo(() => {
@@ -717,7 +718,7 @@ function LessonCreationForm({
       {
         onSuccess: lessonResponse => {
           queryClient.invalidateQueries({
-            queryKey: getCourseLessonsQueryKey({ 
+            queryKey: getCourseLessonsQueryKey({
               path: { courseUuid: courseId as string },
               query: { pageable: { page: 0, size: 100 } }
             })
@@ -759,7 +760,7 @@ function LessonCreationForm({
               onSuccess: (data: any) => {
                 toast.success('Lesson content created successfully.');
                 queryClient.invalidateQueries({
-                  queryKey: getCourseLessonsQueryKey({ 
+                  queryKey: getCourseLessonsQueryKey({
                     path: { courseUuid: courseId as string },
                     query: { pageable: { page: 0, size: 100 } }
                   })
@@ -1098,10 +1099,10 @@ function LessonEditingForm({
                 if (typeof editSuccessRespones === 'function') {
                   editSuccessRespones(data?.data);
                   queryClient.invalidateQueries({
-                    queryKey: getCourseLessonsQueryKey({ 
-                    path: { courseUuid: courseId as string },
-                    query: { pageable: { page: 0, size: 100 } }
-                  })
+                    queryKey: getCourseLessonsQueryKey({
+                      path: { courseUuid: courseId as string },
+                      query: { pageable: { page: 0, size: 100 } }
+                    })
                   });
                 }
               },
@@ -1402,11 +1403,11 @@ function AssessmentCreationForm({
         onSuccess: (data) => {
           toast.success(data?.data?.message || 'Assessment created successfully!');
           queryClient.invalidateQueries({
-            queryKey: searchAssessmentsQueryKey({ 
-              query: { 
+            queryKey: searchAssessmentsQueryKey({
+              query: {
                 searchParams: { courseUuid: courseId },
                 pageable: { page: 0, size: 100 }
-              } 
+              }
             })
           });
           onCancel();
@@ -1446,12 +1447,12 @@ function AssessmentCreationForm({
           onSuccess: (data) => {
             toast.success(data?.message || 'Assessment updated successfully!');
             queryClient.invalidateQueries({
-              queryKey: searchAssessmentsQueryKey({ 
-              query: { 
-                searchParams: { courseUuid: courseId },
-                pageable: { page: 0, size: 100 }
-              } 
-            })
+              queryKey: searchAssessmentsQueryKey({
+                query: {
+                  searchParams: { courseUuid: courseId },
+                  pageable: { page: 0, size: 100 }
+                }
+              })
             });
             onCancel();
           },
@@ -1675,6 +1676,8 @@ function AssessmentList({
   const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRubricModalOpen, setIsRubricModalOpen] = useState(false);
+
 
   const getTotalDuration = (lesson: any) => {
     const hours = lesson.duration_hours || 0;
@@ -1686,6 +1689,12 @@ function AssessmentList({
     setSelectedAssessment(assessment);
     setIsModalOpen(true);
   };
+
+  const handleAddRubrics = (assessment: any) => {
+    setSelectedAssessment(assessment)
+    setIsRubricModalOpen(true);
+
+  }
 
   const handleCancel = () => {
     setIsModalOpen(false);
@@ -1704,11 +1713,11 @@ function AssessmentList({
       onSuccess: () => {
         toast.success('Assessment deleted successfully');
         queryClient.invalidateQueries({
-          queryKey: searchAssessmentsQueryKey({ 
-            query: { 
+          queryKey: searchAssessmentsQueryKey({
+            query: {
               searchParams: { courseUuid: courseId },
               pageable: { page: 0, size: 100 }
-            } 
+            }
           })
         });
       },
@@ -1771,7 +1780,7 @@ function AssessmentList({
                       </DropdownMenuItem>
 
 
-                      <DropdownMenuItem onClick={() => onAddRubrics(assessment)}>
+                      <DropdownMenuItem onClick={() => handleAddRubrics(assessment)}>
                         <FilePlus className='mr-2 h-4 w-4' />
                         Add Rubrics
                       </DropdownMenuItem>
@@ -1838,6 +1847,13 @@ function AssessmentList({
         </DialogContent>
       </Dialog>
 
+      <RubricDialog
+        isOpen={isRubricModalOpen}
+        onOpenChange={() => setIsRubricModalOpen(!isRubricModalOpen)}
+        courseId={selectedAssessment?.course_uuid}
+        lessonId={selectedAssessment?.uuid}
+        onCancel={() => { }}
+      />
     </div>
   );
 }
@@ -1860,227 +1876,302 @@ export enum Visibility {
   Private = 'Private',
 }
 
-const rubricFormSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  type: z.nativeEnum(RubricType),
-  visibility: z.nativeEnum(Visibility),
-  grading: z.array(
-    z.object({
-      name: z.string().min(1, 'Criterion is required'),
-      description: z.string().optional(),
-      points: z.number().min(0, 'Points must be positive'),
-    })
-  ).min(1, 'At least one grading criterion is required'),
-});
+// type ComponentBlockProps = {
+//   index: number;
+//   remove: (index: number) => void;
+//   isOnlyOne: boolean;
+// };
 
-type RubricFormValues = z.infer<typeof rubricFormSchema>;
+// export const ComponentBlock = ({ index, remove, isOnlyOne }: ComponentBlockProps) => {
+//   const { register, control } = useFormContext();
 
-interface AddRubricFormProps {
-  courseId: string;
-  lessonId: string;
-  onCancel: () => void;
-  onSubmitSuccess?: () => void;
-  className?: string;
-  defaultValues?: Partial<RubricFormValues>; // <-- useful for editing or pre-filling
-}
+//   const { fields, append, remove: removeGrading } = useFieldArray({
+//     control,
+//     name: `components.${index}.grading`,
+//   });
+
+//   return (
+//     <div className="border border-gray-300 p-2 rounded space-y-4">
+//       {/* Component Name */}
+//       <Input
+//         placeholder="Assessment Component Name"
+//         {...register(`components.${index}.name`)}
+//       />
+
+//       {/* Grading Table */}
+//       <table className="w-full border text-sm">
+//         <thead>
+//           <tr className="bg-gray-100 text-left">
+//             <th className="p-1.5">Grading Name</th>
+//             <th className="p-1.5">Description</th>
+//             <th className="p-1.5">Points</th>
+//             <th className="p-1.5"></th>
+//           </tr>
+//         </thead>
+//         <tbody>
+//           {fields.map((field, gradingIndex) => (
+//             <tr key={field.id}>
+//               <td className="p-1.5">
+//                 <Input
+//                   {...register(
+//                     `components.${index}.grading.${gradingIndex}.name`
+//                   )}
+//                   placeholder="Name"
+//                 />
+//               </td>
+//               <td className="p-1.5">
+//                 <Input
+//                   {...register(
+//                     `components.${index}.grading.${gradingIndex}.description`
+//                   )}
+//                   placeholder="Description"
+//                 />
+//               </td>
+//               <td className="p-1.5">
+//                 <Input
+//                   type="number"
+//                   {...register(
+//                     `components.${index}.grading.${gradingIndex}.points`,
+//                     { valueAsNumber: true }
+//                   )}
+//                 />
+//               </td>
+//               <td className="p-1.5">
+//                 <Button
+//                   type="button"
+//                   variant="ghost"
+//                   onClick={() => removeGrading(gradingIndex)}
+//                   disabled={fields.length === 1}
+//                 >
+//                   <X className="w-4 h-4 text-red-500" />
+//                 </Button>
+//               </td>
+//             </tr>
+//           ))}
+//         </tbody>
+//       </table>
+
+//       <Button
+//         type="button"
+//         variant="outline"
+//         onClick={() =>
+//           append({ name: '', description: '', points: 0 })
+//         }
+//       >
+//         <PlusCircle className="mr-2 w-4 h-4" />
+//         Add Grading Criterion
+//       </Button>
+
+//       <div className="text-right">
+//         <Button
+//           type="button"
+//           variant="ghost"
+//           onClick={() => remove(index)}
+//           disabled={isOnlyOne}
+//           className="text-red-600"
+//         >
+//           <Trash className="w-4 h-4 text-red-500" />
+//         </Button>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export const rubricFormSchema = z.object({
+//   title: z.string().min(1, 'Title is required'),
+//   description: z.string().optional(),
+//   type: z.nativeEnum(RubricType),
+//   visibility: z.nativeEnum(Visibility),
+//   components: z.array(
+//     z.object({
+//       name: z.string().min(1, 'Component name is required'),
+//       grading: z.array(
+//         z.object({
+//           name: z.string().min(1, 'Grading name is required'),
+//           description: z.string().optional(),
+//           points: z.number().min(0, 'Points must be positive'),
+//         })
+//       ).min(1, 'Each component must have at least one grading criterion'),
+//     })
+//   ).min(1, 'At least one assessment component is required'),
+// });
+
+// type RubricFormValues = z.infer<typeof rubricFormSchema>;
+
+// interface AddRubricFormProps {
+//   courseId: string;
+//   lessonId: string;
+//   onCancel: () => void;
+//   onSubmitSuccess?: () => void;
+//   className?: string;
+//   defaultValues?: Partial<RubricFormValues>; // <-- useful for editing or pre-filling
+// }
 
 
-function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, className }: AddRubricFormProps) {
-  const form = useForm<RubricFormValues>({
-    resolver: zodResolver(rubricFormSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      type: RubricType.Assignment,
-      visibility: Visibility.Public,
-      grading: [{ name: '', description: '', points: 0 }],
-    },
-  });
+// function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, className }: AddRubricFormProps) {
+//   const form = useForm<RubricFormValues>({
+//     resolver: zodResolver(rubricFormSchema),
+//     defaultValues: {
+//       title: '',
+//       description: '',
+//       type: RubricType.Assignment,
+//       visibility: Visibility.Public,
+//       components: [
+//         {
+//           name: '',
+//           grading: [{ name: '', description: '', points: 0 }],
+//         },
+//       ],
+//     },
+//   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'grading',
-  });
+//   const {
+//     control,
+//     register,
+//     handleSubmit,
+//     formState: { errors },
+//   } = form;
 
-  const onSubmit = async (values: RubricFormValues) => {
-    try {
-      // TODO: implement add rubric logic
-      // console.log('Submitting rubric:', values);
-      toast.success('Rubric created successfully');
-      onSubmitSuccess?.();
-      onCancel();
-    } catch (error) {
-      toast.error('Failed to create rubric');
-    }
-  };
+//   const {
+//     fields: componentFields,
+//     append: appendComponent,
+//     remove: removeComponent,
+//   } = useFieldArray({
+//     control,
+//     name: 'components',
+//   });
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Rubric Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter rubric title" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+//   const onSubmit = async (values: RubricFormValues) => {
+//     try {
+//       // TODO: implement add rubric logic
+//       console.log('Submitting rubric:', values);
+//       toast.success('Rubric created successfully');
+//       onSubmitSuccess?.();
+//       onCancel();
+//     } catch (error) {
+//       toast.error('Failed to create rubric');
+//     }
+//   };
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Input placeholder="Optional rubric description" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+//   return (
+//     <Form {...form}>
+//       <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
+//         <FormField
+//           control={form.control}
+//           name="title"
+//           render={({ field }) => (
+//             <FormItem>
+//               <FormLabel>Rubric Title</FormLabel>
+//               <FormControl>
+//                 <Input placeholder="Enter rubric title" {...field} />
+//               </FormControl>
+//               <FormMessage />
+//             </FormItem>
+//           )}
+//         />
 
-        <div className="flex flex-col sm:flex-row items-start gap-6">
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem className="flex-1 w-full">
-                <FormLabel>Rubric Type</FormLabel>
-                <Select {...field} onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select rubric type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(RubricType).map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+//         <FormField
+//           control={form.control}
+//           name="description"
+//           render={({ field }) => (
+//             <FormItem>
+//               <FormLabel>Description</FormLabel>
+//               <FormControl>
+//                 <Input placeholder="Optional rubric description" {...field} />
+//               </FormControl>
+//               <FormMessage />
+//             </FormItem>
+//           )}
+//         />
 
-          <FormField
-            control={form.control}
-            name="visibility"
-            render={({ field }) => (
-              <FormItem className="w-full sm:w-[150px] flex-shrink-0">
-                <FormLabel>Rubric Visibility</FormLabel>
-                <Select {...field} onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select visibility" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(Visibility).map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+//         <div className="flex flex-col sm:flex-row items-start gap-6">
+//           <FormField
+//             control={form.control}
+//             name="type"
+//             render={({ field }) => (
+//               <FormItem className="flex-1 w-full">
+//                 <FormLabel>Rubric Type</FormLabel>
+//                 <Select {...field} onValueChange={field.onChange} value={field.value}>
+//                   <SelectTrigger className="w-full">
+//                     <SelectValue placeholder="Select rubric type" />
+//                   </SelectTrigger>
+//                   <SelectContent>
+//                     {Object.values(RubricType).map((type) => (
+//                       <SelectItem key={type} value={type}>
+//                         {type}
+//                       </SelectItem>
+//                     ))}
+//                   </SelectContent>
+//                 </Select>
+//                 <FormMessage />
+//               </FormItem>
+//             )}
+//           />
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Grading Criteria</h3>
-          {fields.map((field, index) => (
-            <div
-              key={field.id}
-              className="flex items-start border border-gray-300 rounded-md p-4 pr-2"
-            >
-              <div className="flex flex-col flex-1 gap-4">
-                <div className="flex gap-4">
-                  <FormField
-                    control={form.control}
-                    name={`grading.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Criterion</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Criterion name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+//           <FormField
+//             control={form.control}
+//             name="visibility"
+//             render={({ field }) => (
+//               <FormItem className="w-full sm:w-[150px] flex-shrink-0">
+//                 <FormLabel>Rubric Visibility</FormLabel>
+//                 <Select {...field} onValueChange={field.onChange} value={field.value}>
+//                   <SelectTrigger className="w-full">
+//                     <SelectValue placeholder="Select visibility" />
+//                   </SelectTrigger>
+//                   <SelectContent>
+//                     {Object.values(Visibility).map((option) => (
+//                       <SelectItem key={option} value={option}>
+//                         {option}
+//                       </SelectItem>
+//                     ))}
+//                   </SelectContent>
+//                 </Select>
+//                 <FormMessage />
+//               </FormItem>
+//             )}
+//           />
+//         </div>
 
-                  <FormField
-                    control={form.control}
-                    name={`grading.${index}.points`}
-                    render={({ field }) => (
-                      <FormItem className="w-[100px]">
-                        <FormLabel>Points</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+//         <div className="space-y-3">
+//           <h3 className="text-lg font-semibold">Assessment Components</h3>
 
-                <FormField
-                  control={form.control}
-                  name={`grading.${index}.description`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Optional description" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+//           {componentFields.map((component, index) => (
+//             <ComponentBlock
+//               key={component.id}
+//               index={index}
+//               remove={removeComponent}
+//               isOnlyOne={componentFields.length === 1}
+//             />
+//           ))}
 
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => remove(index)}
-                disabled={fields.length === 1}
-                className="self-start"
-              >
-                <X className="h-4 w-4 text-red-600" />
-              </Button>
-            </div>
-          ))}
+//           {/* Add New Component */}
+//           <Button
+//             type="button"
+//             variant="secondary"
+//             onClick={() =>
+//               appendComponent({
+//                 name: '',
+//                 grading: [{ name: '', description: '', points: 0 }],
+//               })
+//             }
+//           >
+//             <PlusCircle className="mr-2 w-4 h-4" />
+//             Add Assessment Component
+//           </Button>
+//         </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => append({ name: '', description: '', points: 0 })}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Grading Criterion
-          </Button>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-6">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" className="min-w-[120px]">
-            Create Rubric
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
-}
+//         <div className="flex justify-end gap-2 pt-6">
+//           <Button type="button" variant="outline" onClick={onCancel}>
+//             Cancel
+//           </Button>
+//           <Button type="submit" className="min-w-[120px]">
+//             Create Rubric
+//           </Button>
+//         </div>
+//       </form>
+//     </Form>
+//   );
+// }
 
 // ADD LESSON
 interface AddLessonDialogProps {
@@ -2189,7 +2280,7 @@ function RubricDialog({
 }: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='flex max-w-6xl flex-col p-0'>
+      <DialogContent className='flex min-w-[500px] flex-col p-0'>
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>Add Rubric</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
@@ -2201,8 +2292,9 @@ function RubricDialog({
           <AddRubricForm
             onCancel={() => onOpenChange(false)}
             className='px-6 pb-6'
-            courseId=''
-            lessonId=''
+            courseId={courseId as string}
+            rubricId={''}
+            // lessonId={lessonId as string}
             onSubmitSuccess={() => { }}
           />
         </ScrollArea>
