@@ -2,7 +2,6 @@ import { getRubricCriteria, getRubricScoring } from '@/services/client';
 import { searchAssessmentRubricsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 
-
 // const { data: allRubrics } = useQuery(searchAssessmentRubricsOptions({ query: { pageable: {}, searchParams: { instructor_uuid_eq: instructor?.uuid as string, } } }))
 
 // const rubricUuids = allRubrics?.data?.content?.map((rubric: any) => rubric.uuid) ?? [];
@@ -50,14 +49,22 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 // console.log('scoringDataArray', scoringDataArray);
 
 export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
-    const { data: allRubrics, isLoading: isRubricsLoading, isError: isRubricsError } = useQuery(
-        searchAssessmentRubricsOptions({
+    const {
+        data: allRubrics,
+        isLoading: isRubricsLoading,
+        isError: isRubricsError
+    } = useQuery({
+        ...searchAssessmentRubricsOptions({
             query: {
                 pageable: {},
-                searchParams: { instructor_uuid_eq: instructorUuid as string },
+                searchParams: {
+                    instructor_uuid_eq: instructorUuid as string,
+                },
             },
-        })
-    );
+        }),
+        staleTime: 0,
+    });
+
 
     const rubricList = allRubrics?.data?.content ?? [];
     const rubricUuids = rubricList.map((rubric: any) => rubric.uuid);

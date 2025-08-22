@@ -1,5 +1,6 @@
 'use client';
 
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -9,30 +10,25 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import Spinner from '@/components/ui/spinner';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
+import { deleteAssessmentRubricMutation, deleteRubricCriterionMutation, deleteRubricScoringMutation, getRubricCriteriaQueryKey, getRubricScoringQueryKey, searchAssessmentRubricsQueryKey } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import { CirclePlus, EllipsisVertical, Grip, PenIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { deleteAssessmentRubricMutation, searchAssessmentRubricsQueryKey } from '../../../../services/client/@tanstack/react-query.gen';
-import { AddRubricForm, RubricFormValues, Visibility } from '../_components/rubric-management-form';
+import { CriteriaDialog, RubricCriteriaFormValues, RubricDetailsFormValues, RubricDialog, RubricScoringFormValues, ScoringDialog } from '../_components/new-rubric-form';
+import { Visibility } from '../_components/rubric-management-form';
 import { useRubricsWithCriteriaAndScoring } from './rubric-chaining';
 
-export default function RubricsCreationPage() {
-    const searchParams = useSearchParams();
-    const courseId = searchParams.get('id');
 
+export default function RubricsCreationPage() {
     const instructor = useInstructor();
     const queryClient = useQueryClient();
     const { replaceBreadcrumbs } = useBreadcrumb();
 
     useEffect(() => {
-        if (!courseId) return;
 
         replaceBreadcrumbs([
             { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
@@ -44,72 +40,140 @@ export default function RubricsCreationPage() {
             {
                 id: 'rubrics',
                 title: 'Rubrics',
-                url: `/dashboard/course-management/add-rubrics?id=${courseId}`,
+                url: `/dashboard/course-management/add-rubrics?`,
                 isLast: true,
             },
         ]);
-    }, [courseId, replaceBreadcrumbs]);
+    }, [replaceBreadcrumbs]);
 
+    // rubrics update
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+    const openCreateRubricModal = () => setIsCreateModalOpen(true)
+
+    const [isCriterionModalOpen, setIsCriterionModalOpen] = useState(false)
+    const [isScoringModalOpen, setIsScoringModalOpen] = useState(false)
+    // rubrics update
 
     const { rubricsWithDetails, isLoading: rubricDataIsLoading } = useRubricsWithCriteriaAndScoring(instructor?.uuid);
 
     const [rubrics, setRubrics] = useState(rubricsWithDetails || []);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [editingRubric, setEditingRubric] = useState<RubricFormValues | null>(null);
-    const [editingRubricId, setEditingRubricId] = useState<string | null>(null);
+    const [editingRubric, setEditingRubric] = useState<RubricDetailsFormValues | null>(null);
+    const [editingCriterion, setEditingCriterion] = useState<RubricCriteriaFormValues | null>(null);
+    const [editingScoring, setEditingScoring] = useState<RubricScoringFormValues | null>(null);
 
-    const openAddModal = () => {
-        setEditingRubric(null);
-        setEditingRubricId(null);
-        setModalOpen(true);
-    };
+    const [editingRubricId, setEditingRubricId] = useState<string | null>(null);
+    const [editingCriterionId, setEditingCriterionId] = useState<string | null>(null);
+    const [editingScoringId, setEditingScoringId] = useState<string | null>(null);
+
 
     const openEditModal = (rubricId: string) => {
         const rubricItem = rubricsWithDetails.find((r) => r.rubric.uuid === rubricId);
         if (!rubricItem) return;
 
         const rubric = rubricItem.rubric;
-        const criteria = rubricItem.criteria ?? [];
 
         setEditingRubric({
             title: rubric.title,
             description: rubric.description,
             type: rubric.rubric_type,
             visibility: rubric.is_public ? Visibility.Public : Visibility.Private,
-            components: criteria.map((c) => ({
-                name: c.component_name,
-                uuid: c.uuid,
-                grading: c.scoring.map((s: any) => ({
-                    name: s.performance_expectation,
-                    description: s.description,
-                    points: parseInt(s.score_range),
-                    uuid: s.uuid,
-                    grading_level_uuid: s.grading_level_uuid,
-                    scoring_uuid: s.uuid
-                })),
-            })),
+        });
+        setEditingRubricId(rubricId);
+        setIsCreateModalOpen(true);
+    };
+
+    const handleAddCriteria = (rubricId: string) => {
+        const rubricItem = rubricsWithDetails.find((r) => r.rubric.uuid === rubricId);
+        if (!rubricItem) return;
+
+        setEditingRubricId(rubricId);
+        setIsCriterionModalOpen(true)
+    };
+
+    const handleEditCriterion = (rubricId: string, criterionId: string) => {
+        const rubricItem = rubricsWithDetails.find((r) => r.rubric.uuid === rubricId);
+        if (!rubricItem) return;
+
+        const criteria = rubricItem.criteria ?? [];
+        const selectedCriterion = criteria.find((c) => c.uuid === criterionId);
+        if (!selectedCriterion) return;
+
+        setEditingCriterion({
+            name: selectedCriterion.component_name,
+            uuid: selectedCriterion.uuid,
         });
 
         setEditingRubricId(rubricId);
-        setModalOpen(true);
+        setEditingCriterionId(criterionId);
+        setIsCriterionModalOpen(true);
     };
 
-    const deleteAssessment = useMutation(deleteAssessmentRubricMutation());
+    const handleAddScore = (rubricId: string, criterionId: string) => {
+        const rubricItem = rubricsWithDetails.find((r) => r.rubric.uuid === rubricId);
+        if (!rubricItem) return;
+
+        const rubric = rubricItem.rubric;
+        const criteria = rubricItem.criteria ?? [];
+
+        setEditingRubricId(rubricId);
+        setEditingCriterionId(criterionId)
+        setIsScoringModalOpen(true)
+    };
+
+    const handleEditScore = (rubricId: string, criterionId: string, scoringId: string) => {
+        const rubricItem = rubricsWithDetails.find((r) => r.rubric.uuid === rubricId);
+        if (!rubricItem) return;
+
+        const criteria = rubricItem.criteria ?? [];
+        const selectedCriterion = criteria.find((c) => c.uuid === criterionId);
+        if (!selectedCriterion) return;
+
+        const scoringArray = selectedCriterion.scoring ?? selectedCriterion.grading ?? [];
+
+        const selectedScoring = scoringArray.find((s: any) => s.uuid === scoringId);
+        if (!selectedScoring) return;
+
+        setEditingScoring({
+            scoring_uuid: selectedScoring.uuid,
+            name: selectedScoring.performance_expectation || "",
+            description: selectedScoring.description || "",
+            points: parseInt(selectedScoring.score_range || "0"),
+            grading_level_uuid: selectedScoring.grading_level_uuid || ""
+        });
+
+        setEditingRubricId(rubricId);
+        setEditingCriterionId(criterionId);
+        setEditingScoringId(scoringId);
+        setIsScoringModalOpen(true);
+    };
 
     const [rubricToDelete, setRubricToDelete] = useState<string | null>(null);
+    const [criterionToDelete, setCriterionToDelete] = useState<string | null>(null);
+    const [scoringToDelete, setScoringToDelete] = useState<string | null>(null);
+
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deleteCriteriaModalOpen, setDeleteCriteriaModalOpen] = useState(false);
+    const [deleteScoringModalOpen, setDeleteScoringModalOpen] = useState(false);
 
     const handleAskDeleteRubric = (rubricId: string) => {
-        setRubricToDelete(rubricId);
-        setDeleteModalOpen(true);
+        setRubricToDelete(rubricId); setDeleteModalOpen(true);
     };
 
+    const handleAskDeleteCriterion = (rubricId: string, criterionId: string) => {
+        setRubricToDelete(rubricId); setCriterionToDelete(criterionId); setDeleteCriteriaModalOpen(true)
+    };
+
+    const handleAskDeleteScoring = (rubricId: string, criterionId: string, scoringId: string) => {
+        setRubricToDelete(rubricId); setCriterionToDelete(criterionId); setScoringToDelete(scoringId); setDeleteScoringModalOpen(true)
+    };
+
+    const deleteRubric = useMutation(deleteAssessmentRubricMutation());
     const confirmDeleteRubric = () => {
         if (!rubricToDelete) return;
         // Optimistic UI update
         setRubrics((prev) => prev.filter((r) => r.rubric.uuid !== rubricToDelete));
 
-        deleteAssessment.mutate(
+        deleteRubric.mutate(
             { path: { uuid: rubricToDelete } },
             {
                 onSuccess: () => {
@@ -133,28 +197,113 @@ export default function RubricsCreationPage() {
         );
     };
 
-    const handleFormSubmit = (values: RubricFormValues) => {
-        if (editingRubricId) {
-            setRubrics((prev: any) =>
-                prev.map((r: any) =>
-                    r.uuid === editingRubricId
-                        ? { ...r, ...values }
-                        : r
-                )
-            );
-            toast.success('Rubric updated');
-        } else {
-            setRubrics((prev: any) => [
-                ...prev,
-                {
-                    uuid: (prev.length + 1).toString(),
-                    ...values,
+    const deleteRubricCriterion = useMutation(deleteRubricCriterionMutation());
+    const confirmDeleteCriterion = () => {
+        if (!rubricToDelete || !criterionToDelete) return;
+
+        // Optimistic UI update
+        setRubrics((prev) =>
+            prev.map((rubricGroup) => {
+                if (rubricGroup.rubric.uuid === rubricToDelete) {
+                    return {
+                        ...rubricGroup,
+                        criteria: rubricGroup.criteria.filter(
+                            (criterion) => criterion.uuid !== criterionToDelete
+                        ),
+                    };
+                }
+                return rubricGroup;
+            })
+        );
+
+        deleteRubricCriterion.mutate(
+            {
+                path: { rubricUuid: rubricToDelete, criteriaUuid: criterionToDelete },
+            },
+            {
+                onSuccess: () => {
+                    queryClient.invalidateQueries({
+                        queryKey: getRubricCriteriaQueryKey({
+                            path: { rubricUuid: rubricToDelete },
+                            query: { pageable: {} },
+                        }),
+                    });
+                    toast.success('Rubric criterion deleted successfully.');
                 },
-            ]);
-            toast.success('Rubric created');
-        }
-        setModalOpen(false);
+                onError: () => {
+                    toast.error('Failed to delete rubric criterion.');
+                },
+                onSettled: () => {
+                    setDeleteCriteriaModalOpen(false);
+                    setRubricToDelete(null);
+                    setCriterionToDelete(null);
+                },
+            }
+        );
     };
+
+
+    const deleteRubricScoring = useMutation(deleteRubricScoringMutation())
+
+    const confirmDeleteScoring = () => {
+        if (!rubricToDelete || !criterionToDelete || !scoringToDelete) return;
+
+        // Optimistic UI update
+        setRubrics((prev) =>
+            prev.map((rubricGroup) => {
+                if (rubricGroup.rubric.uuid !== rubricToDelete) return rubricGroup;
+
+                return {
+                    ...rubricGroup,
+                    criteria: rubricGroup.criteria.map((criterion) => {
+                        if (criterion.uuid !== criterionToDelete) return criterion;
+
+                        return {
+                            ...criterion,
+                            scoring: criterion.scoring.filter(
+                                (s: any) => s.uuid !== scoringToDelete
+                            ),
+                        };
+                    }),
+                };
+            })
+        );
+
+        deleteRubricScoring.mutate(
+            {
+                path: {
+                    rubricUuid: rubricToDelete,
+                    criteriaUuid: criterionToDelete,
+                    scoringUuid: scoringToDelete,
+                },
+            },
+            {
+                onSuccess: () => {
+                    queryClient.invalidateQueries({
+                        queryKey: getRubricScoringQueryKey({
+                            path: {
+                                rubricUuid: rubricToDelete,
+                                criteriaUuid: criterionToDelete,
+                            },
+                            query: { pageable: {} },
+                        }),
+                    });
+                    toast.success('Rubric scoring deleted successfully.');
+                },
+                onError: () => {
+                    toast.error('Failed to delete rubric scoring.');
+                },
+                onSettled: () => {
+                    setDeleteScoringModalOpen(false);
+                    setRubricToDelete(null);
+                    setCriterionToDelete(null);
+                    setScoringToDelete(null);
+                },
+            }
+        );
+    };
+
+
 
     if (rubricDataIsLoading) {
         return <div className="flex flex-col gap-4 text-[12px] sm:text-[14px]">
@@ -175,7 +324,7 @@ export default function RubricsCreationPage() {
                         You have {rubricsWithDetails.length} rubric{rubricsWithDetails.length !== 1 ? 's' : ''} created.
                     </p>
                 </div>
-                <Button type="button" onClick={openAddModal} className="px-4 py-2 text-sm cursor-pointer">
+                <Button type="button" onClick={openCreateRubricModal} className="px-4 py-2 text-sm cursor-pointer">
                     <PlusIcon className="h-4 w-4 mr-1" />
                     New Rubric
                 </Button>
@@ -184,191 +333,150 @@ export default function RubricsCreationPage() {
             {!rubricDataIsLoading && rubricsWithDetails.length === 0 ? (
                 <div className="bg-muted/20 rounded-md border py-12 text-center">
                     <p className="text-muted-foreground mt-2">No rubrics created yet.</p>
-                    <Button className="mt-4" onClick={openAddModal}>
+                    <Button className="mt-4" onClick={openCreateRubricModal}>
                         Create Your First Rubric
                     </Button>
                 </div>
             ) : (
-                <div className="rounded-t-lg border border-gray-200 overflow-hidden">
-                    <Table>
-                        <TableCaption className="py-4">A list of your rubrics</TableCaption>
+                <div className="space-y-4">
+                    {rubricsWithDetails.map((rubricItem: any) => {
+                        const rubric = rubricItem.rubric;
+                        const criteria = rubricItem.criteria ?? [];
 
-                        <TableHeader className="bg-muted">
-                            <TableRow>
-                                <TableHead className="w-4 text-center">
-                                    <Square
-                                        size={20}
-                                        strokeWidth={1}
-                                        className="mx-auto text-muted-foreground"
-                                    />
-                                </TableHead>
-                                <TableHead className="w-[300px]">Title</TableHead>
-                                <TableHead className="w-[200px]">Component</TableHead>
-                                <TableHead>Grading</TableHead>
-                                <TableHead className="text-center">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
+                        return (
+                            <div
+                                key={rubricItem?.uuid}
+                                className='group relative flex items-start gap-4 rounded-lg border px-4 py-2 transition-all'
+                            >
+                                <Grip className='text-muted-foreground mt-4 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
 
-                        <TableBody>
-                            {rubricDataIsLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={10} className="py-6">
-                                        <div className="flex w-full items-center justify-center">
-                                            <Spinner />
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                <>
-                                    {rubricsWithDetails.map((rubricItem: any) => {
-                                        const rubric = rubricItem.rubric;
-                                        const criteriaList = rubricItem.criteria ?? [];
+                                <Accordion type="multiple" key={rubric.uuid} className="w-full self-start">
+                                    <AccordionItem value={rubric.uuid} className='px-1' >
+                                        <AccordionTrigger className="w-full text-left flex justify-between items-center border-none no-underline">
+                                            <div className="flex flex-col flex-grow">
+                                                <h3 className="font-semibold">{rubric.title}</h3>
+                                                <p className="text-sm text-muted-foreground">{rubric.description}</p>
+                                            </div>
 
-                                        return (
-                                            <React.Fragment key={rubric.uuid}>
-                                                <TableRow>
-                                                    {/* Checkbox */}
-                                                    <TableCell rowSpan={criteriaList.length} className="w-4 text-center align-top">
-                                                        <Square size={20} strokeWidth={1} className="mx-auto text-muted-foreground" />
-                                                    </TableCell>
+                                            {/* Hover Actions */}
+                                            <div className="ml-2 flex-shrink-0">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <EllipsisVertical className="w-4 h-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => openEditModal(rubric.uuid)}>
+                                                            <PenIcon className="mr-2 h-4 w-4" />
+                                                            Edit Rubric
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleAddCriteria(rubric.uuid)}>
+                                                            <CirclePlus className="mr-2 h-4 w-4" />
+                                                            Add Criteria
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            variant="destructive"
+                                                            onClick={() => handleAskDeleteRubric(rubric.uuid)}
+                                                        >
+                                                            <TrashIcon className="mr-2 h-4 w-4" />
+                                                            Delete Rubric
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        </AccordionTrigger>
 
-                                                    {/* Title */}
-                                                    <TableCell rowSpan={criteriaList.length} className="font-medium align-top">
-                                                        <div className="flex flex-col gap-1">
-                                                            <div>{rubric.title}</div>
-                                                            <div className="text-sm text-muted-foreground">{rubric.description}</div>
-                                                        </div>
-                                                    </TableCell>
 
-                                                    {/* First criteria/component */}
-                                                    <TableCell className="align-top">
-                                                        {criteriaList[0]?.component_name}
-                                                    </TableCell>
+                                        <AccordionContent className="px-4 pb-4">
+                                            <Accordion type="multiple" className="space-y-2">
+                                                {criteria.map((criterion: any, index: number) => (
+                                                    <AccordionItem key={criterion.uuid || index} value={criterion.uuid || `${rubric.uuid}-${index}`}>
+                                                        <AccordionTrigger className="py-2 px-2 rounded bg-muted/50 hover:bg-muted flex justify-between items-center">
+                                                            <div className="flex flex-col flex-grow">
+                                                                <p className="text-sm font-medium">{criterion.component_name}</p>
+                                                            </div>
 
-                                                    {/* First criteria's scoring */}
-                                                    <TableCell className="align-top">
-                                                        <div className="space-y-2">
-                                                            {criteriaList[0]?.scoring?.map((score: any, i: number) => (
-                                                                <div key={i} className="border-b pb-2 last:border-none last:pb-0">
-                                                                    <div className="text-sm font-medium">
-                                                                        {score.performance_expectation}: {score.score_range}
+
+
+                                                            {/* Criterion Actions */}
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon">
+                                                                        <EllipsisVertical className="w-4 h-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem onClick={() => handleEditCriterion(rubric.uuid, criterion.uuid)}>
+                                                                        <PenIcon className="mr-2 h-4 w-4" />
+                                                                        Edit Criterion
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => handleAddScore(rubric.uuid, criterion.uuid)}>
+                                                                        <CirclePlus className="mr-2 h-4 w-4" />
+                                                                        Add Scoring
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        variant="destructive"
+                                                                        onClick={() => handleAskDeleteCriterion(rubric.uuid, criterion.uuid)}
+                                                                    >
+                                                                        <TrashIcon className="mr-2 h-4 w-4" />
+                                                                        Delete Criterion
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </AccordionTrigger>
+
+                                                        <AccordionContent className="space-y-2 px-4 pt-2">
+                                                            {criterion.scoring?.map((score: any, i: number) => (
+                                                                <div
+                                                                    key={score.uuid || i}
+                                                                    className="border p-3 rounded bg-background shadow-sm relative"
+                                                                >
+                                                                    <div className="font-medium text-sm">
+                                                                        {score.performance_expectation} – <span className="text-muted-foreground">{score.score_range}</span>
                                                                     </div>
-
                                                                     {score.description && (
-                                                                        <div className="text-sm text-muted-foreground">
-                                                                            {score.description.length > 45
-                                                                                ? `${score.description.slice(0, 45)}...`
-                                                                                : score.description}
-                                                                        </div>
+                                                                        <p className="text-sm text-muted-foreground mt-1">
+                                                                            {score.description}
+                                                                        </p>
                                                                     )}
-
+                                                                    {/* Scoring Actions */}
+                                                                    <div className="absolute top-2 right-2 flex space-x-1">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            onClick={() => handleEditScore(rubric.uuid, criterion.uuid, score.uuid)}
+                                                                        >
+                                                                            <PenIcon className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            onClick={() => handleAskDeleteScoring(rubric.uuid, criterion.uuid, score.uuid)}
+                                                                        >
+                                                                            <TrashIcon className="h-4 w-4 text-destructive" />
+                                                                        </Button>
+                                                                    </div>
                                                                 </div>
                                                             ))}
-                                                        </div>
-                                                    </TableCell>
-
-                                                    {/* Actions */}
-                                                    <TableCell rowSpan={criteriaList.length} className="text-center align-top">
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" aria-label="Actions">
-                                                                    <svg
-                                                                        width="15"
-                                                                        height="15"
-                                                                        viewBox="0 0 15 15"
-                                                                        fill="none"
-                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                        className="h-4 w-4"
-                                                                    >
-                                                                        <path
-                                                                            d="M8.625 2.5C8.625 3.12132 8.12132 3.625 7.5 3.625C6.87868 3.625 6.375 3.12132 6.375 2.5C6.375 1.87868 6.87868 1.375 7.5 1.375C8.12132 1.375 8.625 1.87868 8.625 2.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM7.5 13.625C8.12132 13.625 8.625 13.1213 8.625 12.5C8.625 11.8787 8.12132 11.375 7.5 11.375C6.87868 11.375 6.375 11.8787 6.375 12.5C6.375 13.1213 6.87868 13.625 7.5 13.625Z"
-                                                                            fill="currentColor"
-                                                                            fillRule="evenodd"
-                                                                            clipRule="evenodd"
-                                                                        ></path>
-                                                                    </svg>
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuItem onClick={() => openEditModal(rubric.uuid)}>
-                                                                    <PenIcon className="mr-2 h-4 w-4" />
-                                                                    Edit Rubric
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuSeparator />
-                                                                <DropdownMenuItem
-                                                                    variant="destructive"
-                                                                    onClick={() => handleAskDeleteRubric(rubric.uuid)}
-                                                                >
-                                                                    <TrashIcon className="mr-2 h-4 w-4" />
-                                                                    Delete Rubric
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </TableCell>
-                                                </TableRow>
-
-                                                {/* Remaining Criteria Rows */}
-                                                {criteriaList.slice(1).map((criteria: any, idx: number) => (
-                                                    <TableRow key={`${rubric.uuid}-criteria-${idx}`}>
-                                                        <TableCell className="align-top">
-                                                            {criteria.component_name}
-                                                        </TableCell>
-                                                        <TableCell className="align-top">
-                                                            <div className="space-y-2">
-                                                                {criteria.scoring?.map((score: any, i: number) => (
-                                                                    <div key={i} className="border-b pb-2 last:border-none last:pb-0">
-                                                                        <div className="text-sm font-medium">
-                                                                            {score.performance_expectation}: {score.score_range}
-                                                                        </div>
-                                                                        {score.description && (
-                                                                            <div className="text-sm text-muted-foreground">
-                                                                                {score.description}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </TableCell>
-                                                    </TableRow>
+                                                        </AccordionContent>
+                                                    </AccordionItem>
                                                 ))}
-                                            </React.Fragment>
-                                        );
-                                    })}
-
-                                </>
-                            )}
-                        </TableBody>
-                    </Table>
+                                            </Accordion>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
+                            </div>
+                        );
+                    })}
                 </div>
+
             )}
-
-            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-                <DialogContent className="flex max-w-6xl flex-col p-0">
-                    <DialogHeader className="border-b px-6 py-4">
-                        <DialogTitle className="text-xl">
-                            {editingRubricId ? 'Edit Rubric' : 'Add New Rubric'}
-                        </DialogTitle>
-                        <DialogDescription className="text-muted-foreground text-sm">
-                            {editingRubric
-                                ? "Update the existing rubric's title, description, and grading criteria."
-                                : "Create a new rubric by providing its title, description, and grading criteria."}
-                        </DialogDescription>
-
-                    </DialogHeader>
-
-                    <ScrollArea className="h-[calc(90vh-8rem)]">
-                        <AddRubricForm
-                            onCancel={() => setModalOpen(false)}
-                            onSubmitSuccess={() => handleFormSubmit}
-                            defaultValues={editingRubric || undefined}
-                            className="px-6 pb-6"
-                            courseId={courseId as string}
-                            rubricId={editingRubricId as string}
-                        />
-                    </ScrollArea>
-                </DialogContent>
-            </Dialog>
-
 
             <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
                 <DialogContent className="max-w-md">
@@ -384,12 +492,80 @@ export default function RubricsCreationPage() {
                             Cancel
                         </Button>
                         <Button variant="destructive" className='min-w-[100px]' onClick={confirmDeleteRubric}>
-                            {deleteAssessment.isPending ? <Spinner /> : "Delete"}
+                            {deleteRubric.isPending ? <Spinner /> : "Delete Rubric"}
                         </Button>
                     </div>
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={deleteCriteriaModalOpen} onOpenChange={setDeleteCriteriaModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Delete Criterion</DialogTitle>
+                        <DialogDescription className='my-2' >
+                            Are you sure you want to delete this rubric criterion? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex justify-end gap-2 mt-4">
+                        <Button variant="outline" onClick={() => setDeleteCriteriaModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" className='min-w-[100px]' onClick={confirmDeleteCriterion}>
+                            {deleteRubricCriterion.isPending ? <Spinner /> : "Delete Criterion"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={deleteScoringModalOpen} onOpenChange={setDeleteScoringModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Delete Scoring</DialogTitle>
+                        <DialogDescription className='my-2' >
+                            Are you sure you want to delete this rubric scoring? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex justify-end gap-2 mt-4">
+                        <Button variant="outline" onClick={() => setDeleteScoringModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" className='min-w-[100px]' onClick={confirmDeleteScoring}>
+                            {deleteRubricScoring.isPending ? <Spinner /> : "Delete Scoring"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {isCreateModalOpen && <RubricDialog
+                open={isCreateModalOpen}
+                setOpen={setIsCreateModalOpen}
+                onSubmitSuccess={() => { setEditingRubricId(null); setEditingRubric(null) }}
+                editingRubric={editingRubric}
+                editingRubricId={editingRubricId as string}
+            />}
+
+
+
+            {isCriterionModalOpen && <CriteriaDialog
+                open={isCriterionModalOpen}
+                setOpen={setIsCriterionModalOpen}
+                defaultValues={editingCriterion}
+                rubricId={editingRubricId as string}
+                criterionId={editingCriterionId as string}
+                onSuccess={() => { setEditingRubricId(null); setEditingCriterionId(null); setEditingCriterion(null) }}
+            />}
+
+            {isScoringModalOpen && <ScoringDialog
+                open={isScoringModalOpen}
+                setOpen={setIsScoringModalOpen}
+                defaultValues={editingScoring}
+                rubricId={editingRubricId as string}
+                criterionId={editingCriterionId as string}
+                scoringId={editingScoringId as string}
+                onSuccess={() => { setEditingRubricId(null); setEditingCriterionId(null); setEditingScoringId(null); setEditingScoring(null) }}
+            />}
         </div>
     );
 }
