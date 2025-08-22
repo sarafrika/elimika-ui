@@ -42,58 +42,36 @@ const UserProfileContext = createContext<Partial<UserProfileType> & {
 export const useUserProfile = () => useContext(UserProfileContext);
 
 export default function UserProfileProvider({
-  children,
-  initialData
+  children
 }: {
   children: ReactNode;
-  initialData?: any;
 }) {
 
   const { data: session, status } = useSession();
   const qc = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery(createQueryOptions(session?.user?.email, {
-    enabled: !!session?.user?.email,
-    initialData: initialData
+    enabled: !!session?.user?.email
   }));
 
-  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(() => {
-    // Try to get saved domain from localStorage
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('selectedDomain');
-      return saved as UserDomain || null;
-    }
-    return null;
-  });
+  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(null);
 
-  // Update active domain when profile data changes, but only if no domain is already selected
-  useEffect(() => {
+  // Update active domain when profile data changes
+  /* useEffect(() => {
     if (data && !isError && data.user_domain && data.user_domain.length > 0) {
-      // Only auto-select if user has a single domain or if current domain is invalid
-      if (!activeDomain || !data.user_domain.includes(activeDomain)) {
-        // Only auto-set domain if user has exactly one domain
-        if (data.user_domain.length === 1) {
-          const validDomain = data.user_domain[0] as UserDomain;
-          setActiveDomain(validDomain);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('selectedDomain', validDomain);
-          }
-        } else if (activeDomain && !data.user_domain.includes(activeDomain)) {
-          // Clear invalid domain selection
-          setActiveDomain(null);
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('selectedDomain');
-          }
-        }
+      let defaultDomain = localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY);
+      const domain = (defaultDomain || data.user_domain[0]) as UserDomain;
+      if (domain !== null) {
+        setActiveDomain(domain);
       }
     }
-  }, [data, isError, activeDomain]);
+  }, [data, isError]); */
 
   useEffect(() => {
     if (status === "unauthenticated") {
       clearProfile();
       setActiveDomain(null);
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('selectedDomain');
+        localStorage.removeItem(ELIMIKA_DASHBOARD_STORAGE_KEY);
       }
     }
   }, [status]);
@@ -118,7 +96,7 @@ export default function UserProfileProvider({
       setActiveDomain: (domain: UserDomain) => {
         setActiveDomain(domain);
         if (typeof window !== 'undefined') {
-          localStorage.setItem('selectedDomain', domain);
+          localStorage.setItem(ELIMIKA_DASHBOARD_STORAGE_KEY, domain);
         }
       },
       activeDomain,

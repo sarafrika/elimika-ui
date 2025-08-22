@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from "react"
-import OrganisactionProvider from "../../../context/organization-context"
+import OrganisactionProvider from "../../../context/training-center-provide"
 
 export default function OrganizationLayout({ children }: { children: ReactNode }) {
     return (

@@ -18,8 +18,8 @@ import { LibraryBigIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
+import { useOrganization } from '../context/training-center-provide';
 import { NavMain } from './nav-main';
-import { useOrganization } from '../context/organization-context';
 
 export function AppSidebar({
   activeDomain,

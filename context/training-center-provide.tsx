@@ -7,10 +7,10 @@ import { createContext, ReactNode, useContext } from "react";
 import CustomLoader from "../components/custom-loader";
 import { useUserProfile } from "./profile-context";
 
-const OrganisationContext = createContext<TrainingCenter | undefined>(undefined);
-export const useOrganization = () => useContext(OrganisationContext);
+const TrainingCenterContext = createContext<TrainingCenter | undefined>(undefined);
+export const useOrganization = () => useContext(TrainingCenterContext);
 
-export default function OrganisactionProvider({ children }: { children: ReactNode }) {
+export default function TrainingCenterProvider({ children }: { children: ReactNode }) {
     const { data: session } = useSession();
     const userProfile = useUserProfile();
 
@@ -22,9 +22,9 @@ export default function OrganisactionProvider({ children }: { children: ReactNod
     }));
 
     return (
-        <OrganisationContext.Provider value={data as TrainingCenter}>
+        <TrainingCenterContext.Provider value={data as TrainingCenter}>
             {isLoading ? <CustomLoader /> : children}
-        </ OrganisationContext.Provider>
+        </TrainingCenterContext.Provider>
     )
 }
 
