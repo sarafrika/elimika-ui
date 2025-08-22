@@ -3,13 +3,10 @@
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  DialogTitle
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -23,22 +20,18 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { addProgramCourseMutation, createTrainingProgramMutation, getAllCategoriesOptions, getProgramCoursesQueryKey, searchCoursesOptions, searchTrainingProgramsQueryKey, updateTrainingProgramMutation } from '@/services/client/@tanstack/react-query.gen';
+import { addProgramCourseMutation, createTrainingProgramMutation, getProgramCoursesQueryKey, searchCoursesOptions, searchTrainingProgramsQueryKey, updateTrainingProgramMutation } from '@/services/client/@tanstack/react-query.gen';
 import { SchemaEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { AddCategoryFormItem } from '@/components/add-category-formfield';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
-import { createCategory } from '@/services/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -92,43 +85,8 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
   });
 
   const queryClient = useQueryClient()
-  const dialogCloseRef = useRef<HTMLButtonElement>(null);
-  const [categoryInput, setCategoryInput] = useState('');
   const instructor = useInstructor();
   const { data: session } = useSession()
-
-  // GET COURSE CATEGORIES
-  const { data: categories } = useQuery(getAllCategoriesOptions({
-    query: {
-      pageable: {
-        page: 0,
-        size: 100
-      }
-    }
-  }));
-
-  // MUTATION
-  const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
-    mutationFn: ({ body }: { body: any }) => createCategory({ body }),
-    onSuccess: (data: any) => {
-
-      if (data?.error) {
-        if (data.error.error?.toLowerCase().includes('duplicate key')) {
-          toast.error('Category already exists');
-        } else {
-          toast.error('Failed to add category');
-        }
-        dialogCloseRef.current?.click();
-        setCategoryInput('');
-        return
-      }
-
-      toast.success(data?.message);
-      dialogCloseRef.current?.click();
-      queryClient.invalidateQueries({ queryKey: ["getAllCategories"] });
-      setCategoryInput('');
-    },
-  });
 
   const createTrainingProgram = useMutation(createTrainingProgramMutation())
   const updateTrainingProgram = useMutation(updateTrainingProgramMutation());
@@ -175,6 +133,10 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
         },
         {
           onSuccess: commonOnSuccess,
+          onError: (error) => {
+            //@ts-ignore
+            toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`)
+          }
         }
       );
     } else {
@@ -182,11 +144,14 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
         { body: trainingProgramBody },
         {
           onSuccess: commonOnSuccess,
+          onError: (error) => {
+            //@ts-ignore
+            toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`)
+          }
         }
       );
     }
   };
-
 
   return (
     <Form {...form}>
@@ -325,99 +290,7 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
           control={form.control}
           name="categories"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-
-              <div className="mb-1 flex items-center gap-2">
-                <Select
-                  value={field.value || ''}
-                  onValueChange={(uuid) => {
-                    field.onChange(uuid);
-                  }}
-                >
-                  <FormControl className="w-full">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <div className="max-h-[250px] overflow-auto">
-                      {categories?.data?.content?.map((cat: any) => (
-                        <SelectItem key={cat.uuid} value={cat.uuid}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </div>
-                  </SelectContent>
-                </Select>
-
-                {/* Dialog to add new category */}
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="hidden sm:flex">Add new</Button>
-                  </DialogTrigger>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="flex sm:hidden"><Plus /></Button>
-                  </DialogTrigger>
-                  <DialogContent className="w-full sm:max-w-[350px]">
-                    <DialogHeader>
-                      <DialogTitle>Add new category</DialogTitle>
-                      <DialogDescription>Add a new category here.</DialogDescription>
-                    </DialogHeader>
-                    <div className="flex w-full items-center gap-2 py-2">
-                      <div className="grid w-full gap-3">
-                        <Label htmlFor="category-name">Category Name</Label>
-                        <Input
-                          id="category-name"
-                          name="category"
-                          value={categoryInput}
-                          onChange={(e) => setCategoryInput(e.target.value)}
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter className="justify-end">
-                      <Button
-                        type="button"
-                        className="min-w-[75px]"
-                        onClick={() => {
-                          if (categoryInput?.trim()) {
-                            createCategoryMutation({ body: { name: categoryInput.trim() } });
-                          }
-                        }}
-                      >
-                        {createCategoryPending ? <Spinner /> : 'Add'}
-                      </Button>
-                      <DialogClose asChild>
-                        <button ref={dialogCloseRef} style={{ display: 'none' }} />
-                      </DialogClose>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Display selected category */}
-              {field.value && (
-                <div className="flex flex-wrap gap-2">
-                  {(() => {
-                    const selectedCat = categories?.data?.content?.find((c: any) => c.uuid === field.value);
-                    return selectedCat ? (
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        {selectedCat.name}
-                        <button
-                          type="button"
-                          className="ml-1 text-red-500 hover:text-red-700"
-                          onClick={() => field.onChange('')}
-                        >
-                          ✕
-                        </button>
-                      </Badge>
-                    ) : null;
-                  })()}
-                </div>
-              )}
-              <FormMessage />
-            </FormItem>
+            <AddCategoryFormItem field={field} />
           )}
         />
 

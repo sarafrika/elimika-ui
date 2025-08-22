@@ -19,8 +19,8 @@ import { PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { deleteAssessmentRubricMutation, searchAssessmentRubricsQueryKey } from '../../../../../services/client/@tanstack/react-query.gen';
-import { AddRubricForm, RubricFormValues, Visibility } from '../../_components/rubric-management-form';
+import { deleteAssessmentRubricMutation, searchAssessmentRubricsQueryKey } from '../../../../services/client/@tanstack/react-query.gen';
+import { AddRubricForm, RubricFormValues, Visibility } from '../_components/rubric-management-form';
 import { useRubricsWithCriteriaAndScoring } from './rubric-chaining';
 
 export default function RubricsCreationPage() {

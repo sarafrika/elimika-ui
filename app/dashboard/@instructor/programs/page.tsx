@@ -101,6 +101,7 @@ export default function ClassesPage() {
   const programInitialValues: Partial<ProgramFormValues> = {
     title: selectedProgram?.title || '',
     description: selectedProgram?.description || '',
+    categories: selectedProgram?.category_uuid || '',
     ...selectedProgram
   };
 
