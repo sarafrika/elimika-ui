@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ReactNode } from 'react';
 import { Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, Student, User } from '@/services/client';
 
-export type UserDomain = 'student' | 'instructor' | 'admin' | 'organisation_user';
+export type UserDomain = 'student' | 'instructor' | 'admin' | 'organisation_user' | 'organisation';
 
 export interface ApiResponse<T> {
   success: boolean;
