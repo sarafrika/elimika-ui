@@ -1,3 +1,4 @@
+"use client"
 import { UserDomain, UserProfileType } from '@/lib/types';
 import {
   getInstructorEducation,
@@ -47,12 +48,13 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
     enabled: !!session?.user?.email
   }));
 
-  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY) as UserDomain | null);
+  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(null);
 
   // Update active domain when profile data changes
   useEffect(() => {
     if (data && !isError && data.user_domain && data.user_domain.length > 0) {
-      const domain = (localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY) ?? data.user_domain[0]) as UserDomain;
+      let defaultDomain = localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY);
+      const domain = (defaultDomain || data.user_domain[0]) as UserDomain;
       if (domain !== null) {
         setActiveDomain(domain);
       }
@@ -65,6 +67,10 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
       setActiveDomain(null);
     }
   }, [status]);
+
+  useEffect(() => {
+    setActiveDomain(localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY) as UserDomain | null)
+  }, [])
 
   function clearProfile() {
     void qc.invalidateQueries({ queryKey: ["profile"] });

@@ -88,7 +88,11 @@ export default function ManageBranchForm() {
 
   const onSubmit = async (data: BranchesFormValues) => {
 
-    console.log(data);
+    if (!trainingCenter || !trainingCenter.uuid) {
+      toast.warning("No training center selected");
+      return
+    }
+
     const responses = await Promise.all(data.branches.map(branch => {
       if (branch.uuid) return updateTrainingBranch({
         path: {
@@ -96,14 +100,14 @@ export default function ManageBranchForm() {
         },
         body: {
           ...branch,
-          organisation_uuid: trainingCenter?.uuid!
+          organisation_uuid: trainingCenter.uuid!
         }
       });
 
       return createTrainingBranch({
         body: {
           ...branch,
-          organisation_uuid: trainingCenter?.uuid!
+          organisation_uuid: trainingCenter.uuid!
         }
       })
     }));
@@ -111,7 +115,6 @@ export default function ManageBranchForm() {
     let hasError = false;
     responses.map((response: ApiResponse, i) => {
       if (response.error) {
-        console.log(response.error)
         Object.keys(response.error).map((key: string) => {
           const fieldName = `branches.${i}.${key}` as any;
           const { error } = response.error as any;

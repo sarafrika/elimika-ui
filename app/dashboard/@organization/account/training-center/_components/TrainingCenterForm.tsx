@@ -57,9 +57,7 @@ export default function TrainingCenterForm() {
     }, [replaceBreadcrumbs]);
 
     const userProfile = useUserProfile();
-    if (userProfile?.isLoading) return <CustomLoader />
-
-    let organisation = useOrganization();
+    const organisation = useOrganization();
 
     const form = useForm<TrainingCenterFormValues>({
         resolver: zodResolver(trainingCenterSchema),
@@ -103,6 +101,10 @@ export default function TrainingCenterForm() {
         queryClient.invalidateQueries({ queryKey: ["organization"] });
         toast.success("Saved successfully");
     };
+
+    if (userProfile?.isLoading) {
+        return <CustomLoader />
+    }
 
     return (
         <Form {...form}>
