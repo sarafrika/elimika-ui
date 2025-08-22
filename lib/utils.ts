@@ -63,3 +63,5 @@ export async function fileToBinaryString(file: File) {
     .map(b => String.fromCharCode(b))
     .join('');
 }
+
+export const ELIMIKA_DASHBOARD_STORAGE_KEY = 'elimika-dashboard-view';
