@@ -83,7 +83,7 @@ const courseCreationSchema = z.object({
   age_lower_limit: z.coerce.number().optional(),
   age_upper_limit: z.coerce.number().optional(),
   duration_hours: z.coerce.number().optional(),
-  duration_minutes: z.coerce.number().min(1, 'minutes must be between 1 and 59'),
+  duration_minutes: z.coerce.number().min(0, 'minutes must be between 0 and 59'),
 
 });
 

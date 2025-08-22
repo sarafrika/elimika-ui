@@ -30,7 +30,7 @@ import {
   searchCoursesQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { EyeIcon, FilePenIcon, FilePlus, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
+import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -214,15 +214,6 @@ export default function CourseDraftsPage() {
                               >
                                 <EyeIcon className='focus:text-primary-foreground mr-2 h-4 w-4' />
                                 Preview
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Link
-                                href={`/dashboard/course-management/manage-rubrics/?id=${course.uuid}`}
-                                className='flex w-full items-center'
-                              >
-                                <FilePlus className='focus:text-primary-foreground mr-2 h-4 w-4' />
-                                Manage Rubrics
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />

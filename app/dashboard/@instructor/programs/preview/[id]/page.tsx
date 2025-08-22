@@ -1,18 +1,18 @@
 'use client';
 
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { getProgramCoursesOptions, getProgramCoursesQueryKey, getTrainingProgramByUuidOptions, publishProgramMutation, removeProgramCourseMutation } from '@/services/client/@tanstack/react-query.gen';
+import { getInstructorByUuidOptions, getProgramCoursesOptions, getProgramCoursesQueryKey, getTrainingProgramByUuidOptions, publishProgramMutation, removeProgramCourseMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Clock, Trash, Users } from 'lucide-react';
+import { BookOpen, Check, Clock, CoinsIcon, Trash, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import HTMLTextPreview from '../../../../../../components/editors/html-text-preview';
 import { AddProgramCourseDialog } from '../../../_components/program-management-form';
 
 const cls = {
@@ -63,6 +63,12 @@ export default function ProgramPreviewPage() {
   const { data, isLoading, isFetching, } = useQuery(getTrainingProgramByUuidOptions({ path: { uuid: programId } }))
   // @ts-ignore
   const programData = data?.data
+
+  // GET INSTRUCTOR BY ID
+  const { data: instructor } = useQuery({
+    ...getInstructorByUuidOptions({ path: { uuid: programData?.instructor_uuid as string } }),
+    enabled: !!programData?.instructor_uuid,
+  });
 
   // GET TRAINING PROGRAM COURSES
   const { data: programCourses, refetch } = useQuery(getProgramCoursesOptions({ path: { programUuid: programId } }))
@@ -175,25 +181,43 @@ export default function ProgramPreviewPage() {
         </div>
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>
           <span>Instructor:</span>
-          <Badge variant='outline'>{programData?.instructor_uuid}</Badge>
-          <span className='text-xs text-gray-500'>({programData?.instructor_uuid})</span>
+          {/* @ts-ignore */}
+          <Badge variant='outline'>{instructor?.data?.full_name}</Badge>
+          {/* @ts-ignore */}
+          <span className='text-xs text-gray-500'>({instructor?.data?.professional_headline})</span>
         </div>
       </div>
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center gap-2 text-sm text-gray-700'>
-          <span className='font-medium'>Program Size:</span>
+          <span className='font-semibold text-black'>Program Size:</span>
           <span className='flex items-center gap-1'>
-            <Users className='h-5 w-5 text-gray-600' />
+            <Users className='h-4 w-4 text-gray-600' />
             {programData?.class_limit === 0 ? 'Unlimited students' : `Up to ${programData?.class_limit} students`}
           </span>
         </div>
 
         <div className='flex items-center gap-2 text-sm text-gray-700'>
-          <span className='font-medium'>Duration:</span>
+          <span className='font-semibold text-black'>Duration:</span>
           <span className='flex items-center gap-1'>
-            <Clock className='h-5 w-5 text-gray-600' />
+            <Clock className='h-4 w-4 text-gray-600' />
             Approx. {programData?.total_duration_display}
+          </span>
+        </div>
+
+        <div className='flex items-center gap-2 text-sm text-gray-700'>
+          <span className='font-semibold text-black'>Price:</span>
+          <span className='flex items-center gap-1'>
+            <CoinsIcon className='h-3 w-3 text-gray-600' />
+            {programData?.price} KES
+          </span>
+        </div>
+
+        <div className='flex flex-col items-start gap-2 text-sm text-gray-700'>
+          <span className='font-semibold text-black'>Pre-requisites:</span>
+          <span className='flex items-center gap-2'>
+            <Check className='h-4 w-4 text-gray-600 min-w-4 self-start' />
+            {programData?.prerequisites}
           </span>
         </div>
       </div>

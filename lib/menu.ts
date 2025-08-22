@@ -7,6 +7,7 @@ import {
   Building,
   Building2,
   Calendar,
+  CheckSquare,
   ClipboardList,
   DollarSign,
   FileText,
@@ -18,7 +19,7 @@ import {
   UserCircle,
   UserCog,
   UserIcon,
-  Users,
+  Users
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -160,6 +161,11 @@ export default {
       title: 'Trainings',
       url: '/dashboard/trainings',
       icon: ClipboardList,
+    },
+    {
+      title: 'Rubrics Management',
+      url: '/dashboard/rubric-management',
+      icon: CheckSquare,
     },
     {
       title: 'Assignments',

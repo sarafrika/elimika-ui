@@ -73,9 +73,9 @@ export const ComponentBlock = ({ index, remove, isOnlyOne, defaultValues }: Comp
                 {...register(`components.${index}.name`)}
             />
 
-            <Input type="hidden" {...register(`components.${index}.uuid`)} />
+            {/* <Input type="hidden" {...register(`components.${index}.uuid`)} /> */}
             <Input type="hidden" {...register(`components.${index}.scoring_uuid`)} />
-            <Input type="hidden" {...register(`components.${index}.grading_level_uuid`)} />
+            {/* <Input type="hidden" {...register(`components.${index}.grading_level_uuid`)} /> */}
 
 
             {/* Grading Table */}
@@ -116,10 +116,14 @@ export const ComponentBlock = ({ index, remove, isOnlyOne, defaultValues }: Comp
                                             );
 
                                             if (selectedLevel) {
-                                                setValue(`components.${index}.grading.${gradingIndex}.points`, selectedLevel?.points);
-                                                setValue(`components.${index}.grading.${gradingIndex}.uuid`, selectedLevel?.uuid);
+                                                // console.log('Selected Grading Level:', selectedLevel);
+
+                                                setValue(`components.${index}.grading.${gradingIndex}.points`, selectedLevel.points);
+                                                setValue(`components.${index}.grading.${gradingIndex}.uuid`, selectedLevel.uuid);
+                                                setValue(`components.${index}.grading.${gradingIndex}.grading_level_uuid`, selectedLevel.uuid);
                                             } else {
                                                 setValue(`components.${index}.grading.${gradingIndex}.points`, 0);
+                                                setValue(`components.${index}.grading.${gradingIndex}.uuid`, '');
                                                 setValue(`components.${index}.grading.${gradingIndex}.uuid`, '');
                                             }
                                         }}
@@ -305,6 +309,15 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
                     },
                     {
                         onSuccess: () => {
+                            queryClient.invalidateQueries({
+                                queryKey: searchAssessmentRubricsQueryKey({
+                                    query: {
+                                        searchParams: { instructor_uuid_eq: instructor?.uuid as string },
+                                        pageable: {}
+                                    }
+                                })
+                            });
+
                             const component = values.components[0];
                             const criterionId = component?.uuid;
 
@@ -333,7 +346,15 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
                                 },
                                 {
                                     onSuccess: () => {
+                                        queryClient.invalidateQueries({
+                                            queryKey: getRubricCriteriaQueryKey({
+                                                path: { rubricUuid: rubricId as string },
+                                                query: { pageable: {} }
+                                            })
+                                        });
+
                                         const rubricScoringBody = {
+                                            uuid: grading?.scoring_uuid,
                                             criteria_uuid: criterionId,
                                             grading_level_uuid: gradingLevelUuid,
                                             description: grading?.description,
@@ -353,28 +374,12 @@ export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, c
                                             {
                                                 onSuccess: () => {
                                                     queryClient.invalidateQueries({
-                                                        queryKey: searchAssessmentRubricsQueryKey({
-                                                            query: {
-                                                                searchParams: { instructor_uuid_eq: instructor?.uuid as string },
-                                                                pageable: {}
-                                                            }
-                                                        })
-                                                    });
-
-                                                    queryClient.invalidateQueries({
-                                                        queryKey: getRubricCriteriaQueryKey({
-                                                            path: { rubricUuid: rubricId as string },
-                                                            query: { pageable: {} }
-                                                        })
-                                                    });
-
-                                                    queryClient.invalidateQueries({
                                                         queryKey: getRubricScoringQueryKey({
                                                             path: { rubricUuid: rubricId as string, criteriaUuid: criterionId as string },
                                                             query: { pageable: {} }
-
                                                         })
                                                     });
+
                                                     toast.success("Rubric updated successfully");
                                                     onSubmitSuccess?.();
                                                     onCancel();

@@ -10,13 +10,14 @@ import {
 import {
   Award,
   BookOpen,
+  CheckSquare,
   ClipboardList,
   DollarSign,
   Layers,
   LayoutDashboard,
   Star,
   UserCircle,
-  Users,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
@@ -41,6 +42,11 @@ const instructorMenuItems = [
     title: 'Trainings',
     url: '/dashboard/trainings',
     icon: ClipboardList,
+  },
+  {
+    title: 'Rubrics Management',
+    url: '/dashboard/rubric-management',
+    icon: CheckSquare,
   },
   {
     title: 'Assignments',
