@@ -181,7 +181,7 @@ export default function RubricsCreationPage() {
                 </Button>
             </div>
 
-            {rubricsWithDetails.length === 0 ? (
+            {!rubricDataIsLoading && rubricsWithDetails.length === 0 ? (
                 <div className="bg-muted/20 rounded-md border py-12 text-center">
                     <p className="text-muted-foreground mt-2">No rubrics created yet.</p>
                     <Button className="mt-4" onClick={openAddModal}>
@@ -253,6 +253,7 @@ export default function RubricsCreationPage() {
                                                                     <div className="text-sm font-medium">
                                                                         {score.performance_expectation}: {score.score_range}
                                                                     </div>
+
                                                                     {score.description && (
                                                                         <div className="text-sm text-muted-foreground">
                                                                             {score.description.length > 45
