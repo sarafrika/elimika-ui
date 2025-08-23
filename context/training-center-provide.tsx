@@ -8,7 +8,7 @@ import CustomLoader from "../components/custom-loader";
 import { useUserProfile } from "./profile-context";
 
 const TrainingCenterContext = createContext<TrainingCenter | undefined>(undefined);
-export const useOrganization = () => useContext(TrainingCenterContext);
+export const useTrainingCenter = () => useContext(TrainingCenterContext);
 
 export default function TrainingCenterProvider({ children }: { children: ReactNode }) {
     const { data: session } = useSession();

@@ -23,7 +23,7 @@ import * as z from 'zod';
 import Combobox from '../../../../../../components/combobox';
 import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
-import { useOrganization } from '../../../../../../context/training-center-provide';
+import { useTrainingCenter } from '../../../../../../context/training-center-provide';
 import { queryClient } from '../../../../../../lib/query-client';
 import { ApiResponse, createTrainingBranch, updateTrainingBranch } from '../../../../../../services/client';
 import { zTrainingBranch, zUser } from '../../../../../../services/client/zod.gen';
@@ -47,7 +47,7 @@ type UserType = z.infer<typeof userSchema>;
 type BranchType = z.infer<typeof branchSchema>;
 type BranchesFormValues = z.infer<typeof branchesSchema>;
 
-export default function ManageBranchForm() {
+export default function ManageBranch() {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function ManageBranchForm() {
   }, [replaceBreadcrumbs]);
 
   const user = useUserProfile();
-  const trainingCenter = useOrganization()
+  const trainingCenter = useTrainingCenter()
   const { organizations } = user!
 
   const defaultBranch = (): BranchType => ({
@@ -187,7 +187,6 @@ export default function ManageBranchForm() {
                       <FormItem>
                         <FormLabel>Location</FormLabel>
                         <FormControl>
-                          {/* <Input placeholder='e.g., 123 Waiyaki Way' {...field} /> */}
                           <LocationInput {...field} />
                         </FormControl>
                         <FormMessage />
@@ -217,142 +216,6 @@ export default function ManageBranchForm() {
                     )}
                   />
 
-                  {/* <div>
-                    <h4 className='text-md mb-4 font-medium'>Point of Contact</h4>
-                    <div className='space-y-4 rounded-md border p-4'>
-
-                      
-
-                      <FormField
-                        control={form.control}
-                        name={`branches.${index}.poc_user.full_name`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input readOnly placeholder='e.g., John Doe' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className='grid gap-6 sm:grid-cols-2'>
-                        <FormField
-                          control={form.control}
-                          name={`branches.${index}.poc_user.phone_number`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phone Number</FormLabel>
-                              <FormControl>
-                                <Input readOnly placeholder='+254 7...' {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`branches.${index}.poc_user.email`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email Address</FormLabel>
-                              <FormControl>
-                                <Input readOnly type='email' placeholder='johndoe@example.com' {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </div> */}
-
-                  {/* <div>
-                    <h4 className='text-md mb-4 font-medium'>Branch Details</h4>
-                    <div className='space-y-4 rounded-md border p-4'>
-                      <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
-                        <FormField
-                          control={form.control}
-                          name={`branches.${index}.classrooms`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Number of Classrooms</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type='number'
-                                  placeholder='e.g., 15'
-                                  {...field}
-                                  onChange={e =>
-                                    field.onChange(
-                                      e.target.value ? parseInt(e.target.value, 10) : ''
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`branches.${index}.coursesOffered`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Courses Offered</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder='List courses separated by commas (e.g., Piano, Guitar, Vocals)'
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <FormField
-                        control={form.control}
-                        name={`branches.${index}.ageGroups`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Age Groups Served</FormLabel>
-                            <div className='grid grid-cols-2 gap-4 rounded-lg border p-4 sm:grid-cols-3'>
-                              {ageGroups.map(item => (
-                                <FormField
-                                  key={item}
-                                  control={form.control}
-                                  name={`branches.${index}.ageGroups`}
-                                  render={({ field }) => {
-                                    return (
-                                      <FormItem
-                                        key={item}
-                                        className='flex flex-row items-start space-y-0 space-x-3'
-                                      >
-                                        <FormControl>
-                                          <Checkbox
-                                            checked={field.value?.includes(item)}
-                                            onCheckedChange={checked => {
-                                              return checked
-                                                ? field.onChange([...(field.value ?? []), item])
-                                                : field.onChange(
-                                                  field.value?.filter(value => value !== item)
-                                                );
-                                            }}
-                                          />
-                                        </FormControl>
-                                        <FormLabel className='font-normal'>{item}</FormLabel>
-                                      </FormItem>
-                                    );
-                                  }}
-                                />
-                              ))}
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div> */}
                 </div>
               ))}
 

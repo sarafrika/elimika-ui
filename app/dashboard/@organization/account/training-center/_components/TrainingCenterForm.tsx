@@ -23,7 +23,7 @@ import * as z from 'zod';
 import CustomLoader from '../../../../../../components/custom-loader';
 import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
-import { useOrganization } from '../../../../../../context/training-center-provide';
+import { useTrainingCenter } from '../../../../../../context/training-center-provide';
 import { queryClient } from '../../../../../../lib/query-client';
 import { updateOrganisation, updateUser, User } from '../../../../../../services/client';
 import { zOrganisation } from '../../../../../../services/client/zod.gen';
@@ -57,7 +57,7 @@ export default function TrainingCenterForm() {
     }, [replaceBreadcrumbs]);
 
     const userProfile = useUserProfile();
-    const organisation = useOrganization();
+    const organisation = useTrainingCenter();
 
     const form = useForm<TrainingCenterFormValues>({
         resolver: zodResolver(trainingCenterSchema),

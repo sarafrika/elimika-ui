@@ -4,7 +4,7 @@ import { getAuthToken } from './services/auth/get-token';
 export const createClientConfig: CreateClientConfig = config => ({
   ...config,
   auth: async () => await getAuthToken(),
-  next: { revalidate: 1000 * 60 * 60 },
+  next: { revalidate: process.env.PRODUCTION ? 1000 * 60 * 15 : 0.5 },
   querySerializer: (qp) => {
     const serialize = (obj: { [key: string]: string }): string => Object.keys(obj)
       .map((key: string) => {
