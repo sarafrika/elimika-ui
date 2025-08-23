@@ -1,94 +1,84 @@
+'use client';
+
 import { AppSidebar } from '@/components/app-sidebar';
 import DashboardMainContent from '@/components/dashboard-main-content';
-import DashboardTopBar from '@/components/dashboard-top-bar';
 import { DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
-import { TrainingCenterProvider } from '@/context/training-center-provider';
-import { UserDomain } from '@/lib/types';
-import { redirect } from 'next/navigation';
-import { ReactNode } from 'react';
-import { auth } from '../../services/auth';
-import { search } from '../../services/client';
-import { DashboardChildrenTypes } from './_types';
+import { useUserProfile } from '@/context/profile-context';
+import { DashboardChildrenTypes, UserDomain } from '@/lib/types';
+import { useRouter } from 'next/navigation';
+import { ReactNode, useEffect } from 'react';
+import CustomLoader from '../../components/custom-loader';
+import { DomainSelection } from '../../components/domain-selection';
+import TrainingCenterProvider from '../../context/training-center-provide';
 
 type OrgDomainType = DashboardView | 'organisation_user';
+export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) {
+  const profile = useUserProfile();
+  const router = useRouter();
 
-export default async function DashboardLayout(props: DashboardChildrenTypes) {
-  try {
-    const session = await auth();
-
-    if (!session) {
-      return redirect('/');
-    }
-
-    const { data, error } = await search({
-      query: {
-        searchParams: {
-          email_eq: session.user.email
-        }
+  useEffect(() => {
+    // Only process redirects when profile is fully loaded
+    if (!profile?.isLoading && profile && profile.user_domain !== undefined) {
+      // Redirect to onboarding if no domains
+      if (!profile.user_domain || profile.user_domain.length === 0) {
+        router.push('/onboarding');
+        return;
       }
-    });
-
-    if (error || !data.data || !data.data.content || data.data.content.length === 0) {
-      return redirect('/');
     }
+  }, [profile, router]);
 
-    const user = data.data.content[0];
-
-    const userDomains = user?.user_domain as DashboardView[];
-    const orgAdminDomains = userDomains as OrgDomainType[];
-    const defaultDomain = orgAdminDomains[0];
-    const userDashboards = Object.keys(props).reduce(
-      (a: { [key: string]: ReactNode }, b: string) =>
-        orgAdminDomains.includes(b as OrgDomainType) ? { ...a, [b]: props[b] } : a,
-      {}
-    );
-    const currentDashboard = userDashboards[defaultDomain ?? 'student'] ?? props.children;
-
-    if (orgAdminDomains.includes('organisation_user')) {
-      return (
-        <TrainingCenterProvider>
-          <SidebarProvider>
-            <BreadcrumbProvider>
-              <div className='flex min-h-screen w-full'>
-                {/* Sidebar */}
-                <AppSidebar activeDomain='organisation_user' />
-                {/* Main content area */}
-                <div className='flex w-full flex-1 flex-col'>
-                  <DashboardTopBar showToggle={false} />
-                  {props.organisation}
-                </div>
-              </div>
-            </BreadcrumbProvider>
-          </SidebarProvider>
-        </TrainingCenterProvider>
-      );
-    }
-
-    return (
-      <TrainingCenterProvider>
-        <SidebarProvider>
-          <DashboardViewProvider
-            initialView={defaultDomain as DashboardView}
-            availableViews={userDomains}
-          >
-            <BreadcrumbProvider>
-              <div className='flex min-h-screen w-full'>
-                {/* Sidebar */}
-                <AppSidebar activeDomain={defaultDomain as UserDomain} />
-                {/* Main content area */}
-                <div className='flex w-full flex-1 flex-col'>
-                  <DashboardMainContent>{currentDashboard}</DashboardMainContent>
-                </div>
-              </div>
-            </BreadcrumbProvider>
-          </DashboardViewProvider>
-        </SidebarProvider>
-      </TrainingCenterProvider>
-    );
-  } catch (e) {
-    // Revisit this error
-    redirect('/onboarding');
+  // Show loading if profile exists but domains are not loaded yet
+  // This handles the rehydration period when TanStack Query is loading persisted data
+  if (profile?.isLoading || !profile || (!profile.isLoading && (!profile.user_domain || profile.user_domain.length === 0))) {
+    return (<CustomLoader />);
   }
+
+  const userDomains = profile.user_domain as DashboardView[] || [];
+  const organizationDomains = userDomains as OrgDomainType[];
+  const activeDomain = profile.activeDomain;
+
+  if (!activeDomain) {
+    return (<DomainSelection
+      domains={userDomains as UserDomain[]}
+      onDomainSelect={(domain) => profile.setActiveDomain(domain)}
+      userName={profile.first_name}
+    />)
+  }
+
+  // Filter only dashboards that are accessible to the logged in user
+  const dashboards = Object.keys(dashboardProps).reduce(
+    (a: { [key: string]: ReactNode }, b: OrgDomainType) =>
+      organizationDomains.includes(b) ? { ...a, [b]: dashboardProps[b] } : a,
+    {}
+  );
+
+  // Include organisation_user dashboard since the @organization_user page is not available
+  if (userDomains.includes("organisation_user")) {
+    dashboards["organisation_user"] = dashboardProps["organization"]
+  }
+
+  const currentDashboard = activeDomain ? dashboards[activeDomain] : dashboardProps.children;
+  return (
+    <TrainingCenterProvider>
+      <SidebarProvider>
+        <DashboardViewProvider
+          initialView={activeDomain as DashboardView}
+          availableViews={userDomains}
+        >
+          <BreadcrumbProvider>
+            <div className='flex min-h-screen w-full'>
+              {/* Sidebar */}
+              <AppSidebar activeDomain={activeDomain as UserDomain} />
+              {/* Main content area */}
+              <div className='flex w-full flex-1 flex-col'>
+                <DashboardMainContent>{currentDashboard}</DashboardMainContent>
+              </div>
+            </div>
+          </BreadcrumbProvider>
+        </DashboardViewProvider>
+      </SidebarProvider>
+    </TrainingCenterProvider>
+  );
 }

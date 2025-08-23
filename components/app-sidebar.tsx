@@ -12,24 +12,28 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { useTrainingCenter } from '@/context/training-center-provider';
 import menu from '@/lib/menu';
 import { UserDomain } from '@/lib/types';
 import { LibraryBigIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
+import { useOrganization } from '../context/training-center-provide';
 import { NavMain } from './nav-main';
 
 export function AppSidebar({
   activeDomain,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { activeDomain: UserDomain }) {
-  const { trainingCenter } = useTrainingCenter();
+  const trainingCenter = useOrganization();
   const pathname = usePathname();
 
   // Helper to get menu items for a domain
-  const getMenuItems = (domain: UserDomain) => menu[domain] || [];
+  const getMenuItems = (domain: UserDomain) => {
+    // Map 'organisation' domain to 'organisation_user' menu items
+    const menuKey = domain === 'organisation' ? 'organisation_user' : domain;
+    return (menu as any)[menuKey] || [];
+  };
 
   // Label for the sidebar group
   const groupLabel =
@@ -37,7 +41,9 @@ export function AppSidebar({
       ? 'Admin Panel'
       : activeDomain === 'student'
         ? 'Student Panel'
-        : activeDomain.charAt(0).toUpperCase() + activeDomain.slice(1) + ' Panel';
+        : activeDomain
+          ? activeDomain.charAt(0).toUpperCase() + activeDomain.slice(1) + ' Panel'
+          : 'Panel';
 
   return (
     <Sidebar variant='inset' {...props}>

@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noEmitOnError": false,
+    "noErrorTruncation": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "api.d.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "context/**/*.ts",
+    "context/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "hooks/**/*.ts",
+    "hooks/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "hey-client/**/*",
+    "services/client/**/*"
+  ]
+}

@@ -3,8 +3,7 @@ import { getAuthToken } from './services/auth/get-token';
 
 export const createClientConfig: CreateClientConfig = config => ({
   ...config,
-  auth: () => getAuthToken(),
-  //TODO: Ensure to invalidate queries after update
+  auth: async () => await getAuthToken(),
   next: { revalidate: 1000 * 60 * 60 },
   querySerializer: (qp) => {
     const serialize = (obj: { [key: string]: string }): string => Object.keys(obj)

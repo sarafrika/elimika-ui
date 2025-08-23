@@ -21,6 +21,7 @@ import { MenuItem } from '@/lib/menu';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '../context/profile-context';
+import { DomainSwitcher } from '@/components/domain-switcher';
 
 type NavUserProps = {
   items: MenuItem[];
@@ -93,6 +94,22 @@ export function NavUser({ items }: NavUserProps) {
                   <span className='text-muted-foreground text-xs'>{user!.email}</span>
                 </div>
               </div>
+              
+              {/* Domain Switcher - Only show if user has multiple domains */}
+              {user?.hasMultipleDomains && (
+                <>
+                  <DropdownMenuSeparator className='my-2' />
+                  <div className='mb-2'>
+                    <p className='text-muted-foreground mb-2 px-3 text-xs font-medium uppercase tracking-wide'>
+                      Switch Dashboard
+                    </p>
+                    <div className='px-3'>
+                      <DomainSwitcher className='w-full justify-start' />
+                    </div>
+                  </div>
+                </>
+              )}
+              
               <DropdownMenuSeparator className='my-2' />
               {/* Profile & Logout Actions */}
               <div className='mt-0.5 flex flex-col gap-1'>
