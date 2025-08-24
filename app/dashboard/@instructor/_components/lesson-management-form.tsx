@@ -1,7 +1,6 @@
 'use client';
 
 import RichTextRenderer from '@/components/editors/richTextRenders';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -427,9 +426,10 @@ function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormPr
 }
 
 type LessonListProps = {
+  courseId: string;
   courseTitle: string;
   courseCategory: any;
-  // lessons: TLesson[]
+  // lessons
   lessons: any;
   lessonItems: any;
   isLoading: boolean;
@@ -438,12 +438,18 @@ type LessonListProps = {
   onDeleteLesson: (lessonId: string) => void;
   onReorderLessons: (newLessons: any[]) => void;
   onAddAssessment: (lesson: any) => void;
-  onAddRubrics: (lesson: any) => void
+  // lesson contents
+  lessonContents: any,
+  onAddLessonContent: (lesson: any) => void,
+  onEditLessonContent: (courseId: any, lessonId: any, contentId: any) => void
+  onDeleteLessonContent: (courseId: any, lessonId: any, contentId: any) => void
 };
 
 function LessonList({
+  courseId,
   courseTitle,
   courseCategory,
+  // lessons
   lessons,
   lessonItems,
   isLoading,
@@ -452,12 +458,22 @@ function LessonList({
   onDeleteLesson,
   onReorderLessons,
   onAddAssessment,
-  onAddRubrics,
+  // lesson contents
+  lessonContents,
+  onAddLessonContent,
+  onEditLessonContent,
+  onDeleteLessonContent
 }: LessonListProps) {
   const getTotalDuration = (lesson: any) => {
     const hours = lesson.duration_hours || 0;
     const minutes = lesson.duration_minutes || 0;
     return hours * 60 + minutes;
+  };
+
+  const [expandedLessonId, setExpandedLessonId] = useState<string | null>(null);
+
+  const toggleLesson = (id: string) => {
+    setExpandedLessonId(prev => (prev === id ? null : id));
   };
 
   return (
@@ -485,107 +501,187 @@ function LessonList({
           <p className='text-muted-foreground mt-2'>You can create a new lesson to get started.</p>
         </div>
       ) : (
-        <div className='space-y-3'>
-          {lessons?.content.map((lesson: any, index: any) => (
-            <div
-              key={lesson?.uuid || index}
-              className='group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all'
-            >
-              <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
+        <div className="space-y-3">
+          {lessons?.content.map((lesson: any, index: any) => {
+            const isExpanded = expandedLessonId === lesson.uuid;
 
-              <div className='flex-1 space-y-3'>
-                <div className='flex items-start justify-between'>
-                  <div className='flex flex-col items-start'>
-                    <h3 className='text-lg font-medium'>{lesson.title}</h3>
-                    <div className='text-muted-foreground text-sm'>
-                      <RichTextRenderer htmlString={lesson?.description} maxChars={150} />
+            return (
+              <div
+                key={lesson?.uuid || index}
+                className="group relative flex flex-col gap-4 rounded-lg border p-4 transition-all"
+              >
+                <div className="flex items-start gap-4">
+                  <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100" />
+
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex flex-col items-start">
+                        <h3 className="text-lg font-medium">{lesson.title}</h3>
+                        <div className="text-muted-foreground text-sm">
+                          <RichTextRenderer htmlString={lesson?.description} maxChars={150} />
+                        </div>
+                      </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
+                            <PenLine className="mr-1 h-4 w-4" />
+                            Edit Lesson
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem onClick={() => onAddLessonContent(lesson)}>
+                            <PenLine className="mr-1 h-4 w-4" />
+                            Add Lesson Content
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
+                            <ClipboardCheck className="mr-1 h-4 w-4" />
+                            Add Assessment
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => {
+                              if (lesson.uuid) onDeleteLesson(lesson?.uuid);
+                            }}
+                          >
+                            <Trash className="mr-1 h-4 w-4" />
+                            Delete Lesson
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='opacity-0 transition-opacity group-hover:opacity-100'
-                      >
-                        <MoreVertical className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-                        <PenLine className='mr-1 h-4 w-4' />
-                        Edit Lesson
-                      </DropdownMenuItem>
 
-                      <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
-                        <ClipboardCheck className='mr-1 h-4 w-4' />
-                        Add Assessment
-                      </DropdownMenuItem>
-                      {/* 
-                      <DropdownMenuItem onClick={() => onAddRubrics(lesson)}>
-                        <FilePlus className='mr-1 h-4 w-4' />
-                        Add Rubric
-                      </DropdownMenuItem> */}
+                    <div className="text-muted-foreground flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-4 w-4" />
+                        <span>{getTotalDuration(lesson)} minutes</span>
+                      </div>
 
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className='text-red-600'
-                        onClick={() => {
-                          if (lesson.uuid) {
-                            onDeleteLesson(lesson?.uuid as string);
-                          }
-                        }}
-                      >
-                        <Trash className='mr-1 h-4 w-4' />
-                        Delete Lesson
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                      <div className="flex items-center gap-1.5">
+                        <BookOpen className="h-4 w-4" />
+                        <span>
+                          {lessonItems?.length || "0"}{" "}
+                          {lessonItems?.length === 1 ? "item" : "items"}
+                        </span>
+                      </div>
 
-                <div className='flex flex-wrap gap-2'>
-                  {/* {lesson.content.map((item: any, i: number) => (
-                  <Badge key={i} variant="secondary" className="flex items-center gap-1.5">
-                    {getContentTypeIcon(item.contentType as ContentType)}
-                    <span>{item.title}</span>
-                  </Badge>
-                ))} */}
+                      {(lesson.resources?.length ?? 0) > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <LinkIcon className="h-4 w-4" />
+                          <span>
+                            {lesson.resources?.length ?? 0}{" "}
+                            {(lesson.resources?.length ?? 0) === 1
+                              ? "resource"
+                              : "resources"}
+                          </span>
 
-                  {courseCategory?.map((i: any) => (
-                    <Badge key={i} variant='secondary' className='flex items-center gap-1.5'>
-                      {getContentTypeIcon(i?.contentType as ContentType)}
-                      <span>{i}</span>
-                    </Badge>
-                  ))}
-                </div>
-
-                <div className='text-muted-foreground flex items-center gap-4 text-sm'>
-                  <div className='flex items-center gap-1.5'>
-                    <Clock className='h-4 w-4' />
-                    <span>{getTotalDuration(lesson)} minutes</span>
-                  </div>
-
-                  <div className='flex items-center gap-1.5'>
-                    <BookOpen className='h-4 w-4' />
-                    <span>
-                      {lessonItems?.length || '0'} {lessonItems?.length === 1 ? 'item' : 'items'}
-                    </span>
-                  </div>
-
-                  {(lesson.resources?.length ?? 0) > 0 && (
-                    <div className='flex items-center gap-1.5'>
-                      <LinkIcon className='h-4 w-4' />
-                      <span>
-                        {lesson.resources?.length ?? 0}{' '}
-                        {(lesson.resources?.length ?? 0) === 1 ? 'resource' : 'resources'}
-                      </span>
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => toggleLesson(lesson.uuid)}
+                      className="pl-0"
+                    >
+                      {isExpanded ? "Hide Contents" : "View Contents"}
+                    </Button>
+                  </div>
                 </div>
+
+                {isExpanded && (
+                  <div className="pl-10 mt-2 space-y-2">
+                    {lessonContents.length > 0 ? (
+                      lessonContents
+                        .sort((a: any, b: any) => a.display_order - b.display_order)
+                        .map((item: any) => (
+                          <div
+                            key={item.uuid}
+                            className="group flex items-center justify-between gap-4 p-4 rounded-md text-sm text-muted-foreground
+                     hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-default"
+                          >
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                {getContentTypeIcon(item.content_type)}
+                                <span className="font-medium text-gray-900 dark:text-gray-100">{item.title}</span>
+                              </div>
+                              <span className="line-clamp-2 text-xs text-gray-600 dark:text-gray-400">{item.description}</span>
+                              {item.content_text && <span className="text-xs text-gray-700 dark:text-gray-300">{item.content_text}</span>}
+                              {item.file_url && (
+                                <a
+                                  href={item.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-500"
+                                >
+                                  View File
+                                </a>
+                              )}
+                            </div>
+
+                            {/* Dropdown for content actions */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                  aria-label="More actions"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => onEditLessonContent(courseId, item.lesson_uuid, item.uuid)}
+                                >
+                                  <PenLine className="mr-1 h-4 w-4" />
+                                  Edit Content
+                                </DropdownMenuItem>
+
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-red-600"
+                                  onClick={() => onDeleteLessonContent(courseId, item.lesson_uuid, item.uuid)}
+                                >
+                                  <Trash className="mr-1 h-4 w-4" />
+                                  Delete Content
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        ))
+                    ) : (
+                      <div className="flex flex-row items-center justify-between">
+                        <p className="text-sm text-muted-foreground">No content items yet.</p>
+
+                        <Button onClick={() => onAddLessonContent(lesson)} className="self-start sm:self-end lg:self-center">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Add New Content
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                )}
+
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
       )}
 
       {/* {lessons?.metatdata?.totalPages >= 1 && (
@@ -1857,321 +1953,6 @@ function AssessmentList({
     </div>
   );
 }
-
-// RUBRICS
-export enum RubricType {
-  Assignment = 'Assignment',
-  Exam = 'Exam',
-  ClassAttendance = 'Class Attendance',
-  Auditions = 'Auditions',
-  Competition = 'Competition',
-  Performance = 'Performance',
-  Project = 'Project',
-  Quiz = 'Quiz',
-  Reading = 'Reading',
-}
-
-export enum Visibility {
-  Public = 'Public',
-  Private = 'Private',
-}
-
-// type ComponentBlockProps = {
-//   index: number;
-//   remove: (index: number) => void;
-//   isOnlyOne: boolean;
-// };
-
-// export const ComponentBlock = ({ index, remove, isOnlyOne }: ComponentBlockProps) => {
-//   const { register, control } = useFormContext();
-
-//   const { fields, append, remove: removeGrading } = useFieldArray({
-//     control,
-//     name: `components.${index}.grading`,
-//   });
-
-//   return (
-//     <div className="border border-gray-300 p-2 rounded space-y-4">
-//       {/* Component Name */}
-//       <Input
-//         placeholder="Assessment Component Name"
-//         {...register(`components.${index}.name`)}
-//       />
-
-//       {/* Grading Table */}
-//       <table className="w-full border text-sm">
-//         <thead>
-//           <tr className="bg-gray-100 text-left">
-//             <th className="p-1.5">Grading Name</th>
-//             <th className="p-1.5">Description</th>
-//             <th className="p-1.5">Points</th>
-//             <th className="p-1.5"></th>
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {fields.map((field, gradingIndex) => (
-//             <tr key={field.id}>
-//               <td className="p-1.5">
-//                 <Input
-//                   {...register(
-//                     `components.${index}.grading.${gradingIndex}.name`
-//                   )}
-//                   placeholder="Name"
-//                 />
-//               </td>
-//               <td className="p-1.5">
-//                 <Input
-//                   {...register(
-//                     `components.${index}.grading.${gradingIndex}.description`
-//                   )}
-//                   placeholder="Description"
-//                 />
-//               </td>
-//               <td className="p-1.5">
-//                 <Input
-//                   type="number"
-//                   {...register(
-//                     `components.${index}.grading.${gradingIndex}.points`,
-//                     { valueAsNumber: true }
-//                   )}
-//                 />
-//               </td>
-//               <td className="p-1.5">
-//                 <Button
-//                   type="button"
-//                   variant="ghost"
-//                   onClick={() => removeGrading(gradingIndex)}
-//                   disabled={fields.length === 1}
-//                 >
-//                   <X className="w-4 h-4 text-red-500" />
-//                 </Button>
-//               </td>
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-
-//       <Button
-//         type="button"
-//         variant="outline"
-//         onClick={() =>
-//           append({ name: '', description: '', points: 0 })
-//         }
-//       >
-//         <PlusCircle className="mr-2 w-4 h-4" />
-//         Add Grading Criterion
-//       </Button>
-
-//       <div className="text-right">
-//         <Button
-//           type="button"
-//           variant="ghost"
-//           onClick={() => remove(index)}
-//           disabled={isOnlyOne}
-//           className="text-red-600"
-//         >
-//           <Trash className="w-4 h-4 text-red-500" />
-//         </Button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export const rubricFormSchema = z.object({
-//   title: z.string().min(1, 'Title is required'),
-//   description: z.string().optional(),
-//   type: z.nativeEnum(RubricType),
-//   visibility: z.nativeEnum(Visibility),
-//   components: z.array(
-//     z.object({
-//       name: z.string().min(1, 'Component name is required'),
-//       grading: z.array(
-//         z.object({
-//           name: z.string().min(1, 'Grading name is required'),
-//           description: z.string().optional(),
-//           points: z.number().min(0, 'Points must be positive'),
-//         })
-//       ).min(1, 'Each component must have at least one grading criterion'),
-//     })
-//   ).min(1, 'At least one assessment component is required'),
-// });
-
-// type RubricFormValues = z.infer<typeof rubricFormSchema>;
-
-// interface AddRubricFormProps {
-//   courseId: string;
-//   lessonId: string;
-//   onCancel: () => void;
-//   onSubmitSuccess?: () => void;
-//   className?: string;
-//   defaultValues?: Partial<RubricFormValues>; // <-- useful for editing or pre-filling
-// }
-
-
-// function AddRubricForm({ courseId, lessonId, onCancel, onSubmitSuccess, className }: AddRubricFormProps) {
-//   const form = useForm<RubricFormValues>({
-//     resolver: zodResolver(rubricFormSchema),
-//     defaultValues: {
-//       title: '',
-//       description: '',
-//       type: RubricType.Assignment,
-//       visibility: Visibility.Public,
-//       components: [
-//         {
-//           name: '',
-//           grading: [{ name: '', description: '', points: 0 }],
-//         },
-//       ],
-//     },
-//   });
-
-//   const {
-//     control,
-//     register,
-//     handleSubmit,
-//     formState: { errors },
-//   } = form;
-
-//   const {
-//     fields: componentFields,
-//     append: appendComponent,
-//     remove: removeComponent,
-//   } = useFieldArray({
-//     control,
-//     name: 'components',
-//   });
-
-//   const onSubmit = async (values: RubricFormValues) => {
-//     try {
-//       // TODO: implement add rubric logic
-//       console.log('Submitting rubric:', values);
-//       toast.success('Rubric created successfully');
-//       onSubmitSuccess?.();
-//       onCancel();
-//     } catch (error) {
-//       toast.error('Failed to create rubric');
-//     }
-//   };
-
-//   return (
-//     <Form {...form}>
-//       <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
-//         <FormField
-//           control={form.control}
-//           name="title"
-//           render={({ field }) => (
-//             <FormItem>
-//               <FormLabel>Rubric Title</FormLabel>
-//               <FormControl>
-//                 <Input placeholder="Enter rubric title" {...field} />
-//               </FormControl>
-//               <FormMessage />
-//             </FormItem>
-//           )}
-//         />
-
-//         <FormField
-//           control={form.control}
-//           name="description"
-//           render={({ field }) => (
-//             <FormItem>
-//               <FormLabel>Description</FormLabel>
-//               <FormControl>
-//                 <Input placeholder="Optional rubric description" {...field} />
-//               </FormControl>
-//               <FormMessage />
-//             </FormItem>
-//           )}
-//         />
-
-//         <div className="flex flex-col sm:flex-row items-start gap-6">
-//           <FormField
-//             control={form.control}
-//             name="type"
-//             render={({ field }) => (
-//               <FormItem className="flex-1 w-full">
-//                 <FormLabel>Rubric Type</FormLabel>
-//                 <Select {...field} onValueChange={field.onChange} value={field.value}>
-//                   <SelectTrigger className="w-full">
-//                     <SelectValue placeholder="Select rubric type" />
-//                   </SelectTrigger>
-//                   <SelectContent>
-//                     {Object.values(RubricType).map((type) => (
-//                       <SelectItem key={type} value={type}>
-//                         {type}
-//                       </SelectItem>
-//                     ))}
-//                   </SelectContent>
-//                 </Select>
-//                 <FormMessage />
-//               </FormItem>
-//             )}
-//           />
-
-//           <FormField
-//             control={form.control}
-//             name="visibility"
-//             render={({ field }) => (
-//               <FormItem className="w-full sm:w-[150px] flex-shrink-0">
-//                 <FormLabel>Rubric Visibility</FormLabel>
-//                 <Select {...field} onValueChange={field.onChange} value={field.value}>
-//                   <SelectTrigger className="w-full">
-//                     <SelectValue placeholder="Select visibility" />
-//                   </SelectTrigger>
-//                   <SelectContent>
-//                     {Object.values(Visibility).map((option) => (
-//                       <SelectItem key={option} value={option}>
-//                         {option}
-//                       </SelectItem>
-//                     ))}
-//                   </SelectContent>
-//                 </Select>
-//                 <FormMessage />
-//               </FormItem>
-//             )}
-//           />
-//         </div>
-
-//         <div className="space-y-3">
-//           <h3 className="text-lg font-semibold">Assessment Components</h3>
-
-//           {componentFields.map((component, index) => (
-//             <ComponentBlock
-//               key={component.id}
-//               index={index}
-//               remove={removeComponent}
-//               isOnlyOne={componentFields.length === 1}
-//             />
-//           ))}
-
-//           {/* Add New Component */}
-//           <Button
-//             type="button"
-//             variant="secondary"
-//             onClick={() =>
-//               appendComponent({
-//                 name: '',
-//                 grading: [{ name: '', description: '', points: 0 }],
-//               })
-//             }
-//           >
-//             <PlusCircle className="mr-2 w-4 h-4" />
-//             Add Assessment Component
-//           </Button>
-//         </div>
-
-//         <div className="flex justify-end gap-2 pt-6">
-//           <Button type="button" variant="outline" onClick={onCancel}>
-//             Cancel
-//           </Button>
-//           <Button type="submit" className="min-w-[120px]">
-//             Create Rubric
-//           </Button>
-//         </div>
-//       </form>
-//     </Form>
-//   );
-// }
 
 // ADD LESSON
 interface AddLessonDialogProps {

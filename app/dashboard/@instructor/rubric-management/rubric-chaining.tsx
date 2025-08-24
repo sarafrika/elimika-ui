@@ -1,58 +1,14 @@
 import { getRubricCriteria, getRubricScoring } from '@/services/client';
-import { searchAssessmentRubricsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getRubricCriteriaQueryKey, getRubricScoringQueryKey, searchAssessmentRubricsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
-
-// const { data: allRubrics } = useQuery(searchAssessmentRubricsOptions({ query: { pageable: {}, searchParams: { instructor_uuid_eq: instructor?.uuid as string, } } }))
-
-// const rubricUuids = allRubrics?.data?.content?.map((rubric: any) => rubric.uuid) ?? [];
-
-// const combinedCriteriaQueries = useQueries({
-//     queries: rubricUuids.map((rubricUuid) => ({
-//         queryKey: ['criteria', rubricUuid],
-//         queryFn: () =>
-//             getRubricCriteria({
-//                 path: { rubricUuid: rubricUuid },
-//                 query: { pageable: {} },
-//             }),
-//         enabled: !!rubricUuid,
-//     })),
-// });
-
-// const criteriaDataArray = combinedCriteriaQueries.map((criteriaQuery) => criteriaQuery.data);
-// console.log('criteriaDataArray', criteriaDataArray);
-
-// // rubricUuids corresponds to the criteriaDataArray by index
-// const criteriaPairs = criteriaDataArray.flatMap((criteriaData, index) => {
-//     const rubricUuid = rubricUuids[index];
-//     const criteriaList = criteriaData?.data?.data?.content ?? [];
-
-//     return criteriaList.map((criteria: any) => ({
-//         rubricUuid,
-//         criteriaUuid: criteria.uuid,
-//     }));
-// });
-// console.log('criteriaPairs', criteriaPairs);
-
-
-// const scoringQueries = useQueries({
-//     queries: criteriaPairs.map(({ rubricUuid, criteriaUuid }) => ({
-//         queryKey: ['scoring', rubricUuid, criteriaUuid],
-//         queryFn: () =>
-//             getRubricScoring({
-//                 path: { rubricUuid, criteriaUuid },
-//                 query: { pageable: {} },
-//             }),
-//         enabled: !!rubricUuid && !!criteriaUuid, // enable per query, not globally
-//     })),
-// });
-// const scoringDataArray = scoringQueries.map(q => q.data);
-// console.log('scoringDataArray', scoringDataArray);
 
 export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
     const {
         data: allRubrics,
         isLoading: isRubricsLoading,
-        isError: isRubricsError
+        isFetching,
+        isError: isRubricsError,
+        isFetched: isRubricsFetched
     } = useQuery({
         ...searchAssessmentRubricsOptions({
             query: {
@@ -62,7 +18,6 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
                 },
             },
         }),
-        staleTime: 0,
     });
 
 
@@ -71,7 +26,7 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
 
     const criteriaQueries = useQueries({
         queries: rubricUuids.map((rubricUuid) => ({
-            queryKey: ['criteria', rubricUuid],
+            queryKey: getRubricCriteriaQueryKey({ path: { rubricUuid }, query: { pageable: {} } }),
             queryFn: () =>
                 getRubricCriteria({
                     path: { rubricUuid },
@@ -94,7 +49,7 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
 
     const scoringQueries = useQueries({
         queries: criteriaPairs.map(({ rubricUuid, criteriaUuid }) => ({
-            queryKey: ['scoring', rubricUuid, criteriaUuid],
+            queryKey: getRubricScoringQueryKey({ path: { rubricUuid, criteriaUuid }, query: { pageable: {} } }),
             queryFn: () =>
                 getRubricScoring({
                     path: { rubricUuid, criteriaUuid },
@@ -129,12 +84,16 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
         };
     });
 
-    const isLoading = isRubricsLoading || criteriaQueries.some(q => q.isLoading) || scoringQueries.some(q => q.isLoading);
+    const isLoading = isFetching || isRubricsLoading || criteriaQueries.some(q => q.isLoading) || scoringQueries.some(q => q.isLoading);
+
+    const isFetched = isRubricsFetched || criteriaQueries.some(q => q.isFetched) || scoringQueries.some(q => q.isFetched);
+
     const isError = isRubricsError || criteriaQueries.some(q => q.isError) || scoringQueries.some(q => q.isError);
 
     return {
         rubricsWithDetails,
         isLoading,
         isError,
+        isFetched
     };
 };

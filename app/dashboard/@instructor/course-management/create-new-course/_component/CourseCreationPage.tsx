@@ -83,8 +83,6 @@ export default function CourseCreationPage() {
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
 
-  const [addRubricModalOpen, setAddRubricModalOpen] = useState(false);
-  const openAddRubricModal = () => setAddRubricModalOpen(true);
 
   // GET COURSE CONTENT TYPES
   const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }));
@@ -255,7 +253,7 @@ export default function CourseCreationPage() {
         onSuccess: () => {
           toast.success('Lesson deleted successfully');
           queryClient.invalidateQueries({
-            queryKey: getCourseLessonsQueryKey({ 
+            queryKey: getCourseLessonsQueryKey({
               path: { courseUuid: course?.data?.uuid as string },
               query: { pageable: { page: 0, size: 100 } }
             })
@@ -272,6 +270,56 @@ export default function CourseCreationPage() {
       </div>
     );
   }
+
+  const handleDeleteContent = (resolvedId: any, lessonId: any, contentId: any) => {
+    console.log(`deleting ${resolvedId} ${lessonId} ${contentId}  `)
+  }
+
+  const handleEditContent = (resolvedId: any, lessonId: any, contentId: any) => {
+    console.log(`editing ${resolvedId} ${lessonId} ${contentId} `)
+  }
+  const sampleLessonContents = [
+    {
+      uuid: "3543a246-5f2b-4653-b7f1-46768539cd41",
+      lesson_uuid: "0c720e16-881c-406f-b279-01a2d6126e84",
+      content_type_uuid: "70165f4b-1721-406c-b18e-d1f3e5d9e3a1",
+      content_type: "TEXT",
+      title: "Open Strings",
+      description: "<p>In this lesson, students will learn how to produce their first clear sounds on the violin by bowing the four open strings (G, D, A, E). The focus will be on developing a smooth and sustained tone without using the fingers to stop the strings. Students will also become familiar with basic bowing directions—down-bow and up-bow—to build control and consistency.</p><p></p>",
+      content_text: "https://chatgpt.com/",
+      file_url: "",
+      display_order: 1,
+      is_required: true,
+      file_size_bytes: null,
+      mime_type: null,
+      created_date: "2025-08-22T07:41:38.965825",
+      created_by: "3ede2548-f668-420d-9105-966c87525e35",
+      updated_date: "2025-08-22T10:41:38.966291",
+      updated_by: null,
+      content_category: "Text Content",
+      file_size_display: "No file"
+    },
+    {
+      uuid: "3543a246-5f2b-4653-b7f1-46768539cd51",
+      lesson_uuid: "0c720e16-881c-406f-b279-01a2d6126e84",
+      content_type_uuid: "70165f4b-1721-406c-b18e-d1f3e5d9e3a1",
+      content_type: "VIDEO",
+      title: "Open Strings",
+      description: "<p>In this lesson, students will learn how to produce their first clear sounds on the violin by bowing the four open strings (G, D, A, E). The focus will be on developing a smooth and sustained tone without using the fingers to stop the strings. Students will also become familiar with basic bowing directions—down-bow and up-bow—to build control and consistency.</p><p></p>",
+      content_text: "https://chatgpt.com/",
+      file_url: "",
+      display_order: 1,
+      is_required: true,
+      file_size_bytes: null,
+      mime_type: null,
+      created_date: "2025-08-22T07:41:38.965825",
+      created_by: "3ede2548-f668-420d-9105-966c87525e35",
+      updated_date: "2025-08-22T10:41:38.966291",
+      updated_by: null,
+      content_category: "Text Content",
+      file_size_display: "No file"
+    }
+  ]
 
   return (
     <div className='container mx-auto'>
@@ -324,15 +372,21 @@ export default function CourseCreationPage() {
             <LessonList
               isLoading={lessonsIsLoading}
               courseTitle={course?.data?.name as string}
+              courseId={resolveId}
               courseCategory={course?.data?.category_names}
+              // lessons
               lessons={courseLessons?.data}
               lessonItems={lessonContentData?.data}
               onAddLesson={openAddLessonModal}
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
               onAddAssessment={openAddAssessmentModal}
-              onAddRubrics={openAddRubricModal}
               onReorderLessons={() => { }}
+              // lesson content
+              lessonContents={sampleLessonContents}
+              onAddLessonContent={() => { }}
+              onEditLessonContent={handleEditContent}
+              onDeleteLessonContent={handleDeleteContent}
             />
 
             <LessonDialog
@@ -354,7 +408,7 @@ export default function CourseCreationPage() {
                   setCreatedCourseId(data?.uuid);
 
                   queryClient.invalidateQueries({
-                    queryKey: getCourseLessonsQueryKey({ 
+                    queryKey: getCourseLessonsQueryKey({
                       path: { courseUuid: courseId as string },
                       query: { pageable: { page: 0, size: 100 } }
                     })
@@ -367,8 +421,6 @@ export default function CourseCreationPage() {
                   queryClient.invalidateQueries({
                     queryKey: getLessonContentQueryKey({ path: { courseUuid: courseId as string, lessonUuid: selectedLesson?.uuid as string } })
                   });
-
-                  // refetchLessonContent();
                 }}
               />
             )}
@@ -398,7 +450,7 @@ export default function CourseCreationPage() {
               assessments={assessmentData?.data}
               lessonItems={lessonContentData?.data}
               courseId={resolveId}
-              onAddRubrics={openAddRubricModal}
+              onAddRubrics={() => { }}
             />
 
             {/* <RubricDialog

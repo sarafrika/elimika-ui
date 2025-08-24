@@ -59,7 +59,7 @@
   --popover-foreground: oklch(0.2 0.01 265); /* Dark gray */
 
   /* Elimika blue as primary color - #0061ED */
-  --primary: #0061ED; /* Elimika blue fallback */
+  --primary: #0061ed; /* Elimika blue fallback */
   --primary: oklch(0.527 0.2 258.4); /* Elimika blue #0061ED */
   --primary-foreground: #ffffff; /* White fallback */
   --primary-foreground: oklch(1 0 0); /* White text on blue */
@@ -86,7 +86,7 @@
 
   --border: oklch(0.9 0.03 250); /* Light blue border */
   --input: oklch(0.9 0.03 250); /* Light blue input */
-  --ring: #0061ED; /* Elimika blue fallback */
+  --ring: #0061ed; /* Elimika blue fallback */
   --ring: oklch(0.527 0.2 258.4); /* Elimika blue for focus rings */
 
   /* Chart colors */
@@ -196,6 +196,10 @@
     animation: wave 1s ease-in-out infinite;
     transform-origin: center bottom;
   }
+}
+
+.accordion-trigger-no-underline {
+  text-decoration: none !important; /* Use !important if necessary to override existing styles */
 }
 
 /* styles.css */
