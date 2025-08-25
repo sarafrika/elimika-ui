@@ -7,7 +7,9 @@ import {
 import {
   AssessmentDialog,
   AssessmentList,
+  ContentFormValues,
   EditLessonDialog,
+  LessonContentDialog,
   LessonDialog,
   LessonFormValues,
   LessonList
@@ -21,6 +23,7 @@ import { StepperContent, StepperList, StepperRoot, StepperTrigger } from '@/comp
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
   deleteCourseLessonMutation,
+  deleteLessonContentMutation,
   getAllContentTypesOptions,
   getCourseByUuidOptions,
   getCourseLessonOptions,
@@ -33,13 +36,13 @@ import {
   publishCourseQueryKey,
   searchAssessmentsOptions
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, BookOpenCheck, Check, CheckCircle, List } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ICourse, TLesson } from '../../../_components/instructor-type';
+import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
 
 export default function CourseCreationPage() {
   const router = useRouter();
@@ -80,11 +83,20 @@ export default function CourseCreationPage() {
     setEditLessonModalOpen(true);
   };
 
+  const [selectedContent, setSelectedContent] = useState<TLessonContentItem | null>(null);
+  const [addContentModalOpen, setAddContentModalOpen] = useState(false);
+  const openAddContentModal = (lesson: any) => {
+    setSelectedLesson(lesson); setAddContentModalOpen(true)
+  };
+
+  const openEditContentModal = (content: TLessonContentItem) => {
+    setAddContentModalOpen(true)
+    setSelectedContent(content)
+  }
+
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
 
-  const [addRubricModalOpen, setAddRubricModalOpen] = useState(false);
-  const openAddRubricModal = () => setAddRubricModalOpen(true);
 
   // GET COURSE CONTENT TYPES
   const { data: contentTypeList } = useQuery(getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }));
@@ -151,6 +163,33 @@ export default function CourseCreationPage() {
   // @ts-ignore
   const lesson = lessonData?.data
 
+  const lessonContentQueries = useQueries({
+    queries: (courseLessons?.data?.content || []).map((lesson) => {
+      const options = getLessonContentOptions({
+        path: { courseUuid: resolveId, lessonUuid: lesson?.uuid as string },
+      });
+
+      return {
+        queryKey: getLessonContentQueryKey({
+          path: {
+            courseUuid: resolveId,
+            lessonUuid: lesson?.uuid as string,
+          },
+        }),
+        queryFn: options.queryFn,
+        enabled: !!resolveId,
+      };
+    }),
+  });
+
+  const lessonContentMap = new Map();
+
+  (courseLessons?.data?.content || []).forEach((lesson, index) => {
+    const query = lessonContentQueries[index];
+    const contents = query?.data?.data || [];
+    lessonContentMap.set(lesson.uuid, contents);
+  });
+
   // GET COURSE LESSON CONTENT 
   const { data: lessonContentData } = useQuery({
     ...getLessonContentOptions({
@@ -158,6 +197,7 @@ export default function CourseCreationPage() {
     }),
     enabled: !!resolveId && !!selectedLesson?.uuid,
   });
+
 
   // const contentData = lessonContentData?.data?.[0];
   const lessonContent = lessonContentData?.data?.map((item: any) => ({
@@ -207,7 +247,6 @@ export default function CourseCreationPage() {
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
-    // resources: [],
     uuid: lesson?.uuid as string,
     title: lesson?.title,
     description: lesson?.description,
@@ -215,10 +254,21 @@ export default function CourseCreationPage() {
     number: lesson?.lesson_number,
     duration_hours: String(lesson?.duration_hours ?? '0'),
     duration_minutes: String(lesson?.duration_minutes ?? '0'),
-    // map content if multiple content upload is allowed
-    content: content,
+    // resources: [],
   };
 
+  const contentInitialValues: Partial<ContentFormValues> = {
+    uuid: selectedContent?.uuid,
+    display_order: selectedContent?.display_order,
+    content_category: selectedContent?.content_category,
+    // content_type: selectedContent?.content_type || "",
+    content_type_uuid: selectedContent?.content_type_uuid,
+    // duration_hours: selectedContent?.duration_hours,
+    // duration_minutes: selectedContent?.duration_minutes,
+    // estimated_duration: "",
+    title: selectedContent?.title,
+    // value: selectedContent?.value
+  }
 
   // GET COURSE ASSESSMENTS
   const { data: assessmentData, isLoading: assessmentLoading } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: resolveId }, pageable: { page: 0, size: 100 } } }));
@@ -255,7 +305,7 @@ export default function CourseCreationPage() {
         onSuccess: () => {
           toast.success('Lesson deleted successfully');
           queryClient.invalidateQueries({
-            queryKey: getCourseLessonsQueryKey({ 
+            queryKey: getCourseLessonsQueryKey({
               path: { courseUuid: course?.data?.uuid as string },
               query: { pageable: { page: 0, size: 100 } }
             })
@@ -264,6 +314,26 @@ export default function CourseCreationPage() {
       });
     } catch (err) { }
   };
+
+  const deleteLessonContent = useMutation(deleteLessonContentMutation())
+  const handleDeleteContent = async (resolvedId: any, lessonId: any, contentId: any) => {
+    if (!course?.data?.uuid) return;
+
+    try {
+      await deleteLessonContent.mutateAsync({
+        path: { courseUuid: course?.data?.uuid as string, lessonUuid: lessonId, contentUuid: contentId as string }
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: getLessonContentQueryKey({
+              path: { courseUuid: resolvedId, lessonUuid: lessonId },
+            })
+          });
+          toast.success('Lesson content deleted successfully');
+        },
+      });
+    } catch (err) { }
+  }
 
   if (courseId && !courseInitialValues) {
     return (
@@ -324,21 +394,29 @@ export default function CourseCreationPage() {
             <LessonList
               isLoading={lessonsIsLoading}
               courseTitle={course?.data?.name as string}
+              courseId={resolveId}
+              lessonId={selectedLesson?.uuid as string}
               courseCategory={course?.data?.category_names}
+              // lessons
               lessons={courseLessons?.data}
               lessonItems={lessonContentData?.data}
               onAddLesson={openAddLessonModal}
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
               onAddAssessment={openAddAssessmentModal}
-              onAddRubrics={openAddRubricModal}
               onReorderLessons={() => { }}
+              // lesson content
+              lessonContentsMap={lessonContentMap}
+              onAddLessonContent={openAddContentModal}
+              onEditLessonContent={openEditContentModal}
+              onDeleteLessonContent={handleDeleteContent}
             />
 
             <LessonDialog
               isOpen={addLessonModalOpen}
               onOpenChange={setAddLessonModalOpen}
               courseId={createdCourseId ? createdCourseId : (courseId as string)}
+              lessonId={selectedLesson?.uuid as string}
               onCancel={() => setAddLessonModalOpen(false)}
             />
 
@@ -354,7 +432,7 @@ export default function CourseCreationPage() {
                   setCreatedCourseId(data?.uuid);
 
                   queryClient.invalidateQueries({
-                    queryKey: getCourseLessonsQueryKey({ 
+                    queryKey: getCourseLessonsQueryKey({
                       path: { courseUuid: courseId as string },
                       query: { pageable: { page: 0, size: 100 } }
                     })
@@ -367,20 +445,26 @@ export default function CourseCreationPage() {
                   queryClient.invalidateQueries({
                     queryKey: getLessonContentQueryKey({ path: { courseUuid: courseId as string, lessonUuid: selectedLesson?.uuid as string } })
                   });
-
-                  // refetchLessonContent();
                 }}
               />
             )}
+
+            <LessonContentDialog
+              courseId={resolveId}
+              lessonId={selectedLesson?.uuid || selectedContent?.lesson_uuid as string}
+              contentId={selectedContent?.uuid as string}
+              isOpen={addContentModalOpen}
+              onOpenChange={setAddContentModalOpen}
+              onCancel={() => { setSelectedContent(null); setAddContentModalOpen(false) }}
+              initialValues={contentInitialValues}
+            />
 
             <AssessmentDialog
               isOpen={addAssessmentModalOpen}
               onOpenChange={setAddAssessmentModalOpen}
               courseId={createdCourseId ? createdCourseId : (courseId as string)}
-              onCancel={() => { }}
+              onCancel={() => setAddAssessmentModalOpen(false)}
             />
-
-
           </div>
         </StepperContent>
 
@@ -398,7 +482,7 @@ export default function CourseCreationPage() {
               assessments={assessmentData?.data}
               lessonItems={lessonContentData?.data}
               courseId={resolveId}
-              onAddRubrics={openAddRubricModal}
+              onAddRubrics={() => { }}
             />
 
             {/* <RubricDialog

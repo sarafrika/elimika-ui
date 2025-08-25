@@ -1,0 +1,207 @@
+
+function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormProps) {
+  const contentTypeUuid = useWatch({
+    control,
+    name: `content.${index}.contentType`,
+  });
+  const { setValue } = useFormContext();
+
+  // GET COURSE CONTENT TYPES
+  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({
+    query: {
+      pageable: {
+        page: 0,
+        size: 100
+      }
+    }
+  }));
+
+  const contentTypeData = React.useMemo(() => {
+    const respdata = contentTypeList!.data! as { content: any[] }
+    return respdata?.content ?? {};
+  }, [contentTypeList]);
+
+  // Lookup type key from uuid (e.g., "VIDEO")
+  const selectedTypeKey = React.useMemo(() => {
+    if (!contentTypeUuid) return undefined;
+    const match = Object.entries(contentTypeData).find(([_, val]: [string, any]) => {
+      return val?.uuid === contentTypeUuid;
+    });
+    return match?.[0];
+  }, [contentTypeUuid, contentTypeData]);
+
+  return (
+    <div className='space-y-4 rounded-lg border p-4'>
+      <div className='flex items-center justify-between'>
+        <h4 className='font-medium'>Content Item {index + 1}</h4>
+        {!isOnly && (
+          <Button type='button' variant='ghost' size='sm' onClick={onRemove}>
+            <X className='h-4 w-4 text-red-500' />
+          </Button>
+        )}
+      </div>
+
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+        <FormField
+          control={control}
+          name={`content.${index}.contentTypeUuid`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Content Type</FormLabel>
+              <Select
+                onValueChange={val => {
+                  const parsed = JSON.parse(val);
+                  setValue(`content.${index}.contentType`, parsed.name.toUpperCase());
+                  setValue(`content.${index}.contentTypeUuid`, parsed.uuid);
+                  setValue(`content.${index}.contentCategory`, parsed.upload_category);
+                }}
+                value={
+                  contentTypeUuid
+                    ? JSON.stringify(
+                      Object.values(contentTypeData).find((v: any) => v.uuid === contentTypeUuid)
+                    )
+                    : ''
+                }
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select content type' />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Object.entries(contentTypeData).map(([key, value]) => {
+                    const typedValue = value as { uuid: string; name: string; upload_category: string };
+                    const Icon = ContentTypeIcons[typedValue?.name?.toUpperCase() as keyof typeof ContentTypeIcons];
+
+                    return (
+                      <SelectItem key={typedValue.uuid} value={JSON.stringify(typedValue)}>
+                        <div className='flex items-center gap-2'>
+                          {Icon && <Icon className='h-4 w-4' />}
+                          <span>{typedValue.name}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name={`content.${index}.contentTypeUuid`}
+          render={({ field }) => <input type='hidden' {...field} />}
+        ></FormField>
+
+        <FormField
+          control={control}
+          name={`content.${index}.title`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Title</FormLabel>
+              <FormControl>
+                <Input placeholder='Enter content title' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      {selectedTypeKey === 'TEXT' ? (
+        <FormField
+          control={control}
+          name={`content.${index}.value`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Content</FormLabel>
+              <FormControl>
+                <SimpleEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : (
+        <>
+          {['PDF', 'AUDIO', 'IMAGE', 'VIDEO'].includes(selectedTypeKey || '') && (
+            <FormField
+              control={control}
+              name={`content.${index}.value`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>File Upload</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='file'
+                      accept={
+                        ACCEPTED_FILE_TYPES[selectedTypeKey as keyof typeof ACCEPTED_FILE_TYPES]
+                      }
+                      onChange={e => field.onChange(e.target.files?.[0])}
+                    />
+                  </FormControl>
+                  <FormDescription>Upload a file or provide a URL below</FormDescription>
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={control}
+            name={`content.${index}.value`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  {['VIDEO', 'AUDIO', 'PDF'].includes(selectedTypeKey || '')
+                    ? 'Or External URL'
+                    : 'URL'}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type='url'
+                    placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
+
+      <FormField
+        control={control}
+        name={`content.${index}.durationHours`}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Duration (hours)</FormLabel>
+            <FormControl>
+              <Input type='number' min='0' step='0.5' {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name={`content.${index}.durationMinutes`}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Duration (minutes)</FormLabel>
+            <FormControl>
+              <Input type='number' min='0' step='0.5' {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+}
