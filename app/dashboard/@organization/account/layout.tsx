@@ -19,7 +19,6 @@ const sections = [
     href: '/dashboard/account/training-center',
   },
   { name: 'Branches', href: '/dashboard/account/branches' },
-  { name: 'Courses', href: '/dashboard/account/courses' },
   { name: 'Availability', href: '/dashboard/account/availability' },
   { name: 'Fees & Scheduling', href: '/dashboard/account/fees-scheduling' },
   {

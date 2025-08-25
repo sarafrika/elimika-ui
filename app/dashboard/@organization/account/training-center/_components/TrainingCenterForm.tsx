@@ -6,22 +6,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
+    FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
+import CustomLoader from '../../../../../../components/custom-loader';
+import LocationInput from '../../../../../../components/locationInput';
+import { useUserProfile } from '../../../../../../context/profile-context';
+import { useOrganization } from '../../../../../../context/training-center-provide';
+import { queryClient } from '../../../../../../lib/query-client';
+import { updateOrganisation, updateUser, User } from '../../../../../../services/client';
 import { zOrganisation } from '../../../../../../services/client/zod.gen';
 
-const trainingCenterSchema = zOrganisation.merge(z.object({
+const trainingCenterSchema = zOrganisation.omit({
+    created_date: true,
+    updated_date: true
+}).merge(z.object({
     logoUrl: z.string().url().optional().or(z.literal('')),
     contactPersonEmail: z.string(),
     contactPersonPhone: z.string(),
@@ -46,14 +56,55 @@ export default function TrainingCenterForm() {
         ]);
     }, [replaceBreadcrumbs]);
 
+    const userProfile = useUserProfile();
+    const organisation = useOrganization();
+
     const form = useForm<TrainingCenterFormValues>({
-        resolver: zodResolver(trainingCenterSchema)
+        resolver: zodResolver(trainingCenterSchema),
+        defaultValues: {
+            ...(organisation ?? {}),
+            contactPersonEmail: userProfile!.email,
+            contactPersonPhone: userProfile!.phone_number,
+            user_uuid: userProfile!.uuid,
+            active: true
+        }
     });
 
-    const onSubmit = (data: TrainingCenterFormValues) => {
-        // TODO: Implement submission logic, including file upload for the logo
-        //console.log(data);
+    const onSubmit = async (orgData: TrainingCenterFormValues) => {
+
+        const updateResponse = await updateOrganisation({
+            path: {
+                uuid: organisation!.uuid!
+            },
+            body: orgData
+        });
+
+        // console.log(updateResponse);
+        if (updateResponse.error) {
+            toast.error("Error while updateing institution");
+            const error = updateResponse.error as any;
+            Object.keys(error).forEach((key: any) => form.setError(key, error[key]));
+            return;
+        }
+
+        if (!userProfile!.phone_number)
+            await updateUser({
+                path: {
+                    uuid: userProfile!.uuid!
+                },
+                body: {
+                    ...(userProfile as User),
+                    phone_number: orgData.contactPersonPhone
+                }
+            })
+
+        queryClient.invalidateQueries({ queryKey: ["organization"] });
+        toast.success("Saved successfully");
     };
+
+    if (userProfile?.isLoading) {
+        return <CustomLoader />
+    }
 
     return (
         <Form {...form}>
@@ -66,6 +117,7 @@ export default function TrainingCenterForm() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className='space-y-8'>
+
                         <FormField
                             control={form.control}
                             name='logoUrl'
@@ -100,19 +152,35 @@ export default function TrainingCenterForm() {
                             )}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name='name'
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Organisation Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder='Elimika' {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <div className="flex gap-4">
+                            <FormField
+                                control={form.control}
+                                name='name'
+                                render={({ field }) => (
+                                    <FormItem className='flex-grow'>
+                                        <FormLabel>Organisation Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder='Elimika' {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name='licence_no'
+                                render={({ field }) => (
+                                    <FormItem className='flex-grow'>
+                                        <FormLabel>Licence Number</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
                         <FormField
                             control={form.control}
@@ -133,6 +201,15 @@ export default function TrainingCenterForm() {
                             )}
                         />
 
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Contact Person</CardTitle>
+                        <CardDescription>The person to contact regarding the institution</CardDescription>
+                    </CardHeader>
+                    <CardContent>
                         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
                             <FormField
                                 control={form.control}
@@ -162,6 +239,48 @@ export default function TrainingCenterForm() {
                             />
                         </div>
 
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Location</CardTitle>
+                        <CardDescription>Where the instituion is located</CardDescription>
+                    </CardHeader>
+                    <CardContent className='flex flex-col gap-5'>
+
+                        {/* <div className='grid grid-cols-1 gap-6 md:grid-cols-2'> */}
+                        <FormField
+                            control={form.control}
+                            name='location'
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Physical Address</FormLabel>
+                                    <FormControl>
+                                        <LocationInput {...field} onRetrieve={(d) => {
+                                            form.setValue("country", d.properties.context.country?.name)
+                                            return d;
+                                        }} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        {/* <FormField
+                                control={form.control}
+                                name='country'
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Country</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} readOnly />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            /> */}
+                        {/* </div> */}
+
                         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
                             <FormField
                                 control={form.control}
@@ -178,12 +297,12 @@ export default function TrainingCenterForm() {
                             />
                             <FormField
                                 control={form.control}
-                                name='address'
+                                name='domain'
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Physical Address</FormLabel>
+                                        <FormLabel>Institution Domain</FormLabel>
                                         <FormControl>
-                                            <Input placeholder='123 Elimika St, Nairobi' {...field} />
+                                            <Input {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -191,45 +310,13 @@ export default function TrainingCenterForm() {
                             />
                         </div>
 
-                        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                            <FormField
-                                control={form.control}
-                                name='domain'
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Domain</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder='elimika.org' {...field} />
-                                        </FormControl>
-                                        <FormDescription>
-                                            Your organisation&apos;s primary domain for students and instructors.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name='code'
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Organisation Code</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder='ELK-001' {...field} />
-                                        </FormControl>
-                                        <FormDescription>
-                                            An internal or unique code for your organisation.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
                     </CardContent>
                 </Card>
 
                 <div className='flex justify-end'>
-                    <Button type='submit'>Update Profile</Button>
+                    <Button type='submit' disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? <><Loader2 /> Updating....</> : "Update Profile"}
+                    </Button>
                 </div>
             </form>
         </Form>
