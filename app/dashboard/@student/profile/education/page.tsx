@@ -77,8 +77,8 @@ type EducationFormValues = z.infer<typeof educationSchema>;
 
 function EducationSettingsContent() {
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const user = useUserProfile()
-  const { student, invalidateQuery } = user!
+  const user = useUserProfile();
+  const { student, invalidateQuery } = user!;
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -206,10 +206,11 @@ function EducationSettingsContent() {
                     type='button'
                     key={skill}
                     onClick={() => handleSkillToggle(skill)}
-                    className={`${skillPillClassesBase} ${selectedSkills.includes(skill)
-                      ? skillPillSelectedClasses
-                      : skillPillUnselectedClasses
-                      }`}
+                    className={`${skillPillClassesBase} ${
+                      selectedSkills.includes(skill)
+                        ? skillPillSelectedClasses
+                        : skillPillUnselectedClasses
+                    }`}
                   >
                     {selectedSkills.includes(skill) && (
                       <CheckSquare className='mr-2 inline-block h-4 w-4' />

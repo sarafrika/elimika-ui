@@ -24,20 +24,22 @@ import { useUserProfile } from '@/context/profile-context';
 import { createStudent } from '@/services/client';
 import { zStudent } from '@/services/client/zod.gen';
 
-const StudentOnboardingSchema = zStudent.omit({ 
-  uuid: true,
-  created_date: true,
-  created_by: true,
-  updated_date: true,
-  updated_by: true,
-  secondaryGuardianContact: true,
-  primaryGuardianContact: true,
-  allGuardianContacts: true,
-}).extend({
-  // Override phone number validation to allow empty strings
-  first_guardian_mobile: z.string().max(20).optional(),
-  second_guardian_mobile: z.string().max(20).optional(),
-});
+const StudentOnboardingSchema = zStudent
+  .omit({
+    uuid: true,
+    created_date: true,
+    created_by: true,
+    updated_date: true,
+    updated_by: true,
+    secondaryGuardianContact: true,
+    primaryGuardianContact: true,
+    allGuardianContacts: true,
+  })
+  .extend({
+    // Override phone number validation to allow empty strings
+    first_guardian_mobile: z.string().max(20).optional(),
+    second_guardian_mobile: z.string().max(20).optional(),
+  });
 
 type StudentOnboardingFormData = z.infer<typeof StudentOnboardingSchema>;
 
@@ -67,13 +69,13 @@ export function StudentOnboardingForm() {
     setIsSubmitting(true);
     try {
       await createStudent({
-        body: data
+        body: data,
       });
 
       // Invalidate student-related queries
       await queryClient.invalidateQueries({ queryKey: ['students'] });
       await queryClient.invalidateQueries({ queryKey: ['searchStudents'] });
-      
+
       // Invalidate and refetch user profile to get updated user_domain
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
       await user.invalidateQuery?.();
@@ -93,7 +95,9 @@ export function StudentOnboardingForm() {
           <GraduationCap className='h-8 w-8 text-blue-600' />
         </div>
         <h1 className='mb-2 text-3xl font-bold text-gray-900'>Student Registration</h1>
-        <p className='text-gray-600'>Set up your student profile - all fields are optional and can be completed later</p>
+        <p className='text-gray-600'>
+          Set up your student profile - all fields are optional and can be completed later
+        </p>
       </div>
 
       <Form {...form}>
@@ -102,7 +106,9 @@ export function StudentOnboardingForm() {
           <Card>
             <CardHeader>
               <CardTitle>Guardian Information</CardTitle>
-              <CardDescription>Primary guardian/parent details for emergency contact (all fields optional)</CardDescription>
+              <CardDescription>
+                Primary guardian/parent details for emergency contact (all fields optional)
+              </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <FormField
@@ -127,9 +133,7 @@ export function StudentOnboardingForm() {
                     <FormControl>
                       <Input placeholder='Phone number (optional)' {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Phone number (any format accepted)
-                    </FormDescription>
+                    <FormDescription>Phone number (any format accepted)</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -156,9 +160,7 @@ export function StudentOnboardingForm() {
                     <FormControl>
                       <Input placeholder='Phone number (optional)' {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Phone number (any format accepted)
-                    </FormDescription>
+                    <FormDescription>Phone number (any format accepted)</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -169,13 +171,13 @@ export function StudentOnboardingForm() {
           <div className='rounded-lg bg-blue-50 p-4'>
             <h3 className='font-medium text-blue-900'>Optional Setup</h3>
             <p className='mt-1 text-sm text-blue-700'>
-              You can complete this form now or skip it and add guardian information later in your profile settings.
-              All fields are optional and can be updated anytime.
+              You can complete this form now or skip it and add guardian information later in your
+              profile settings. All fields are optional and can be updated anytime.
             </p>
           </div>
 
           <Button type='submit' className='w-full' disabled={isSubmitting}>
-{isSubmitting ? 'Creating Account...' : 'Create Student Account'}
+            {isSubmitting ? 'Creating Account...' : 'Create Student Account'}
           </Button>
         </form>
       </Form>

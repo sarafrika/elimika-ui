@@ -12,7 +12,7 @@ import { useInstructor } from '@/context/instructor-context';
 import {
   getCourseByUuidOptions,
   getCourseLessonsOptions,
-  searchAssessmentsOptions
+  searchAssessmentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
@@ -50,47 +50,63 @@ export default function CoursePreviewPage() {
     router.push(`/dashboard/course-management/create-new-course?id=${courseId}`);
   };
 
-  // GET COURSE BY ID 
+  // GET COURSE BY ID
   const { data: courseDetail, isLoading } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
-    enabled: !!courseId
+    enabled: !!courseId,
   });
   // @ts-ignore
   const course = courseDetail?.data;
 
   // GET COURSE LESSONS
   const { data: courseLessons } = useQuery({
-    ...getCourseLessonsOptions({ path: { courseUuid: courseId as string }, query: { pageable: { page: 0, size: 100 } } }),
+    ...getCourseLessonsOptions({
+      path: { courseUuid: courseId as string },
+      query: { pageable: { page: 0, size: 100 } },
+    }),
     enabled: !!courseId,
   });
 
   // GET COURSE ASSESSMENTS
-  const { data: assessmentData } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: courseId as string }, pageable: { page: 0, size: 100 } } }));
-
+  const { data: assessmentData } = useQuery(
+    searchAssessmentsOptions({
+      query: { searchParams: { courseUuid: courseId as string }, pageable: { page: 0, size: 100 } },
+    })
+  );
 
   if (isLoading)
     return (
-      <div className="flex flex-col gap-4 text-[12px] sm:text-[14px]">
-        <div className="h-20 bg-gray-200 rounded animate-pulse w-full"></div>
+      <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
+        <div className='h-20 w-full animate-pulse rounded bg-gray-200'></div>
         <div className='mt-10 flex items-center justify-center'>
           <Spinner />
         </div>
-        <div className="h-16 bg-gray-200 rounded animate-pulse w-full"></div>
-        <div className="h-12 bg-gray-200 rounded animate-pulse w-full"></div>
-
+        <div className='h-16 w-full animate-pulse rounded bg-gray-200'></div>
+        <div className='h-12 w-full animate-pulse rounded bg-gray-200'></div>
       </div>
-
     );
 
   return (
     <div className='mx-auto max-w-4xl space-y-8 p-4'>
       <div>
-        <Image src={course?.banner_url as string} alt='banner' width={128} height={128} className='w-full max-h-[250px]' />
+        <Image
+          src={course?.banner_url as string}
+          alt='banner'
+          width={128}
+          height={128}
+          className='max-h-[250px] w-full'
+        />
       </div>
 
       <div className='space-y-4'>
-        <div className='flex flex-row gap-4 items-center' >
-          <Image src={course?.thumbnail_url as string || "/illustration.png"} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
+        <div className='flex flex-row items-center gap-4'>
+          <Image
+            src={(course?.thumbnail_url as string) || '/illustration.png'}
+            alt='thumbnail'
+            width={48}
+            height={48}
+            className='min-h-12 min-w-12 rounded-md bg-stone-300'
+          />
 
           <h1 className='text-4xl font-bold tracking-tight md:max-w-[90%]'>{course?.name}</h1>
         </div>
@@ -138,7 +154,10 @@ export default function CoursePreviewPage() {
                   ?.slice()
                   ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
                   ?.map((lesson: any, i: any) => (
-                    <div key={i} className='flex flex-row gap-2 border-b pb-4 last:border-none last:pb-4'>
+                    <div
+                      key={i}
+                      className='flex flex-row gap-2 border-b pb-4 last:border-none last:pb-4'
+                    >
                       <div>
                         <span className='min-h-4 min-w-4'>
                           <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
@@ -164,18 +183,23 @@ export default function CoursePreviewPage() {
                           <span>📅 Duration:</span> {lesson.duration_display}
                         </h3>
                       </div>
-
                     </div>
                   ))}
 
                 {courseLessons?.data?.content?.length === 0 && (
-                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-muted-foreground">
-                    <BookOpen className="mb-2 h-8 w-8 text-muted-foreground" />
-                    <p className="font-medium">No lessons available</p>
-                    <p className="mt-1 text-sm">Start by adding your first lesson to this course.</p>
-                    <Button variant="outline" className="mt-4" onClick={() =>
-                      router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
-                    }>
+                  <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
+                    <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
+                    <p className='font-medium'>No lessons available</p>
+                    <p className='mt-1 text-sm'>
+                      Start by adding your first lesson to this course.
+                    </p>
+                    <Button
+                      variant='outline'
+                      className='mt-4'
+                      onClick={() =>
+                        router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
+                      }
+                    >
                       + Add Lesson
                     </Button>
                   </div>
@@ -190,37 +214,44 @@ export default function CoursePreviewPage() {
             </CardHeader>
             <CardContent>
               <div className='mt-2 flex flex-col gap-2 space-y-4'>
-                {assessmentData?.data?.content
-                  ?.slice()
-                  ?.map((assessment: any, i: any) => (
-                    <div key={i} className='flex flex-row gap-2 border-b pb-4 last:border-none last:pb-4'>
-                      <div>
-                        <span className='min-h-4 min-w-4'>
-                          <BookOpenCheck className='mt-1 h-4 w-4' />
-                        </span>
-                      </div>
-                      <div className='flex flex-col gap-2'>
-                        <h3 className='font-semibold'>{assessment.title}</h3>
-                        <RichTextRenderer
-                          htmlString={(assessment?.description as string) || 'No assessment provided'}
-                        />
-
-                        <h3 className='font-semibold'>
-                          <span>📅 Duration:</span> {assessment.duration_display}
-                        </h3>
-                      </div>
-
+                {assessmentData?.data?.content?.slice()?.map((assessment: any, i: any) => (
+                  <div
+                    key={i}
+                    className='flex flex-row gap-2 border-b pb-4 last:border-none last:pb-4'
+                  >
+                    <div>
+                      <span className='min-h-4 min-w-4'>
+                        <BookOpenCheck className='mt-1 h-4 w-4' />
+                      </span>
                     </div>
-                  ))}
+                    <div className='flex flex-col gap-2'>
+                      <h3 className='font-semibold'>{assessment.title}</h3>
+                      <RichTextRenderer
+                        htmlString={(assessment?.description as string) || 'No assessment provided'}
+                      />
+
+                      <h3 className='font-semibold'>
+                        <span>📅 Duration:</span> {assessment.duration_display}
+                      </h3>
+                    </div>
+                  </div>
+                ))}
 
                 {assessmentData?.data?.content?.length === 0 && (
-                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center text-muted-foreground">
-                    <BookOpenCheck className="mb-2 h-8 w-8 text-muted-foreground" />
-                    <p className="font-medium">No assessment available</p>
-                    <p className="mt-1 text-sm">Start by adding lessons to your course, then add assessments under each lesson.</p>
-                    <Button variant="outline" className="mt-4" onClick={() =>
-                      router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
-                    }>
+                  <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
+                    <BookOpenCheck className='text-muted-foreground mb-2 h-8 w-8' />
+                    <p className='font-medium'>No assessment available</p>
+                    <p className='mt-1 text-sm'>
+                      Start by adding lessons to your course, then add assessments under each
+                      lesson.
+                    </p>
+                    <Button
+                      variant='outline'
+                      className='mt-4'
+                      onClick={() =>
+                        router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
+                      }
+                    >
                       + Add Lesson
                     </Button>
                   </div>

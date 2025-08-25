@@ -16,7 +16,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -29,19 +29,24 @@ import { format } from 'date-fns';
 import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { InstructorProfessionalMembership } from '../../../../../../services/client';
-import { addInstructorMembershipMutation, updateInstructorMembershipMutation } from '../../../../../../services/client/@tanstack/react-query.gen';
+import {
+  addInstructorMembershipMutation,
+  updateInstructorMembershipMutation,
+} from '../../../../../../services/client/@tanstack/react-query.gen';
 import { zInstructorProfessionalMembership } from '../../../../../../services/client/zod.gen';
 
-const InstructorMembershipSchema = zInstructorProfessionalMembership.omit({
-  created_date: true,
-  updated_date: true,
-  updated_by: true
-}).merge(
-  z.object({
-    start_date: z.date(),
-    end_date: z.date()
+const InstructorMembershipSchema = zInstructorProfessionalMembership
+  .omit({
+    created_date: true,
+    updated_date: true,
+    updated_by: true,
   })
-);
+  .merge(
+    z.object({
+      start_date: z.date(),
+      end_date: z.date(),
+    })
+  );
 const professionalMembershipSchema = z.object({
   professional_bodies: z.array(InstructorMembershipSchema),
 });
@@ -66,7 +71,10 @@ export default function ProfessionalBodySettings() {
 
   const user = useUserProfile();
   const { instructor, invalidateQuery } = user!;
-  const instructorMembership = instructor?.membership as Omit<InstructorProfessionalMembership, "created_date" | "updated_date" | "created_by">[]
+  const instructorMembership = instructor?.membership as Omit<
+    InstructorProfessionalMembership,
+    'created_date' | 'updated_date' | 'created_by'
+  >[];
 
   const defaultMemebership: InstructorMembershipType = {
     organization_name: 'Tech Experts Inc.',
@@ -130,7 +138,7 @@ export default function ProfessionalBodySettings() {
           body: {
             ...memData,
             start_date: new Date(memData.start_date),
-            end_date: new Date(memData.end_date)
+            end_date: new Date(memData.end_date),
           },
         });
       } else {
@@ -141,7 +149,7 @@ export default function ProfessionalBodySettings() {
           body: {
             ...memData,
             start_date: new Date(memData.start_date),
-            end_date: new Date(memData.end_date)
+            end_date: new Date(memData.end_date),
           },
         });
 
@@ -153,7 +161,7 @@ export default function ProfessionalBodySettings() {
         }
 
         if (index === data.professional_bodies.length - 1) {
-          invalidateQuery!()
+          invalidateQuery!();
         }
       }
     });

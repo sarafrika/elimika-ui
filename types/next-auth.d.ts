@@ -31,10 +31,10 @@ declare module 'next-auth' {
           roles?: string[];
         };
         [key: string]:
-        | {
-          roles?: string[];
-        }
-        | undefined;
+          | {
+              roles?: string[];
+            }
+          | undefined;
       };
       /** User's organisation memberships */
       organisation?: string[];
@@ -71,10 +71,10 @@ declare module 'next-auth/jwt' {
         roles?: string[];
       };
       [key: string]:
-      | {
-        roles?: string[];
-      }
-      | undefined;
+        | {
+            roles?: string[];
+          }
+        | undefined;
     };
     /** User's organisation memberships */
     organisation?: string[];

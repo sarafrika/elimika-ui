@@ -26,7 +26,7 @@ import { formatCourseDate } from '@/lib/format-course-date';
 import {
   deleteCourseMutation,
   searchCoursesOptions,
-  searchCoursesQueryKey
+  searchCoursesQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeIcon, FilePenIcon, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
@@ -60,10 +60,15 @@ export default function CourseDraftsPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
-
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data, isFetched } = useQuery(searchCoursesOptions({ query: { searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, }, pageable: { page, size } } }))
-
+  const { data, isFetched } = useQuery(
+    searchCoursesOptions({
+      query: {
+        searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string },
+        pageable: { page, size },
+      },
+    })
+  );
 
   // DELETE COURSE MUTATION
   const DeleteCourse = useMutation(deleteCourseMutation());
@@ -71,17 +76,25 @@ export default function CourseDraftsPage() {
     if (!courseId) return;
 
     try {
-      await DeleteCourse.mutateAsync({
-        path: { uuid: courseId }
-      }, {
-        onSuccess: () => {
-          toast.success('Course deleted succcessfully');
-          queryClient.invalidateQueries({
-            queryKey: searchCoursesQueryKey({ query: { searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string, }, pageable: { page, size } } })
-          });
+      await DeleteCourse.mutateAsync(
+        {
+          path: { uuid: courseId },
         },
-      });
-    } catch (err) { }
+        {
+          onSuccess: () => {
+            toast.success('Course deleted succcessfully');
+            queryClient.invalidateQueries({
+              queryKey: searchCoursesQueryKey({
+                query: {
+                  searchParams: { status: 'draft', instructor_uuid_eq: instructor?.uuid as string },
+                  pageable: { page, size },
+                },
+              }),
+            });
+          },
+        }
+      );
+    } catch (err) {}
   };
 
   const draftCourses = data?.data?.content || [];
@@ -105,15 +118,15 @@ export default function CourseDraftsPage() {
         </Button>
       </div>
 
-      {!isFetched &&
-        <div className="flex flex-col gap-4 text-[12px] sm:text-[14px]">
-          <div className="h-20 bg-gray-200 rounded animate-pulse w-full"></div>
-          <div className="h-16 bg-gray-200 rounded animate-pulse w-full"></div>
-          <div className="h-12 bg-gray-200 rounded animate-pulse w-full"></div>
+      {!isFetched && (
+        <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
+          <div className='h-20 w-full animate-pulse rounded bg-gray-200'></div>
+          <div className='h-16 w-full animate-pulse rounded bg-gray-200'></div>
+          <div className='h-12 w-full animate-pulse rounded bg-gray-200'></div>
         </div>
-      }
+      )}
 
-      {isFetched && draftCourses?.length === 0 &&
+      {isFetched && draftCourses?.length === 0 && (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No draft courses</h3>
@@ -126,16 +139,16 @@ export default function CourseDraftsPage() {
             </Link>
           </Button>
         </div>
-      }
+      )}
 
-      {draftCourses?.length >= 1 &&
-        <div className="rounded-t-lg border border-gray-200 overflow-hidden">
+      {draftCourses?.length >= 1 && (
+        <div className='overflow-hidden rounded-t-lg border border-gray-200'>
           <Table>
             <TableCaption className='py-4'>A list of your course drafts</TableCaption>
             <TableHeader className='bg-gray-200'>
               <TableRow>
                 <TableHead>
-                  <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
+                  <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                 </TableHead>
                 <TableHead></TableHead>
                 <TableHead>Course Name</TableHead>
@@ -151,11 +164,17 @@ export default function CourseDraftsPage() {
                 {draftCourses?.map((course: any) => (
                   <TableRow key={course.uuid}>
                     <TableHead>
-                      <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
+                      <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                     </TableHead>
 
                     <TableCell className='py-4'>
-                      <Image src={course?.thumbnail_url as string || "/illustration.png"} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
+                      <Image
+                        src={(course?.thumbnail_url as string) || '/illustration.png'}
+                        alt='thumbnail'
+                        width={48}
+                        height={48}
+                        className='min-h-12 min-w-12 rounded-md bg-stone-300'
+                      />
                     </TableCell>
 
                     <TableCell className='font-medium'>
@@ -233,7 +252,7 @@ export default function CourseDraftsPage() {
             </TableBody>
           </Table>
         </div>
-      }
+      )}
 
       {/* @ts-ignore */}
       {paginationMetadata?.totalPages >= 1 && (

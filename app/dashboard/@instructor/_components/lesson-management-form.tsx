@@ -40,6 +40,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   BookOpen,
   BookOpenCheck,
+  ChevronDown,
+  ChevronRight,
+  CircleCheckBig,
   ClipboardCheck,
   Clock,
   FileAudio,
@@ -55,16 +58,10 @@ import {
   Trash,
   VideoIcon,
   X,
-  Youtube
+  Youtube,
 } from 'lucide-react';
-import React, { ReactNode, useEffect, useState } from 'react';
-import {
-  Control,
-  FieldErrors,
-  SubmitHandler,
-  useFieldArray,
-  useForm
-} from 'react-hook-form';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import { Control, FieldErrors, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
@@ -84,7 +81,9 @@ import {
   updateLessonContentMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AddRubricForm } from './rubric-management-form';
+import clsx from 'clsx';
+import { useUserProfile } from '../../../../context/profile-context';
+import { useRubricsWithCriteriaAndScoring } from '../rubric-management/rubric-chaining';
 
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
@@ -141,8 +140,11 @@ const lessonFormSchema = z.object({
   title: z.string().min(1, 'Lesson title is required'),
   // content: z.array(contentItemSchema),
   resources: z.array(resourceSchema),
-  description: z.string().min(1, 'Lesson description is required').max(1000, "Description cannot exceed 1000 characters"),
-  objectives: z.string().max(500, "Objectives cannot exceed 500 characters").optional(),
+  description: z
+    .string()
+    .min(1, 'Lesson description is required')
+    .max(1000, 'Description cannot exceed 1000 characters'),
+  objectives: z.string().max(500, 'Objectives cannot exceed 500 characters').optional(),
   uuid: z.any(),
   duration_hours: z.any(),
   duration_minutes: z.any(),
@@ -210,15 +212,6 @@ const ContentTypeIcons = {
   YOUTUBE: Youtube,
 };
 
-// const ContentTypeLabels = {
-//   [CONTENT_TYPES.AUDIO]: "Audio",
-//   [CONTENT_TYPES.VIDEO]: "Video",
-//   [CONTENT_TYPES.TEXT]: "Text",
-//   [CONTENT_TYPES.LINK]: "Link",
-//   [CONTENT_TYPES.PDF]: "PDF",
-//   [CONTENT_TYPES.YOUTUBE]: "YouTube",
-// }
-
 function getContentPlaceholder(contentType: string) {
   switch (contentType) {
     case 'TEXT':
@@ -234,7 +227,7 @@ function getContentPlaceholder(contentType: string) {
 
 type LessonListProps = {
   courseId: string;
-  lessonId: string
+  lessonId: string;
   courseTitle: string;
   courseCategory: any;
   // lessons
@@ -248,10 +241,10 @@ type LessonListProps = {
   onAddAssessment: (lesson: any) => void;
   // lesson contents
   // lessonContentsMap: Map<string, LessonContent[]>
-  lessonContentsMap: Map<string, any[]>
-  onAddLessonContent: (lesson: any) => void,
-  onEditLessonContent: (item: any) => void
-  onDeleteLessonContent: (courseId: any, lessonId: any, contentId: any) => void
+  lessonContentsMap: Map<string, any[]>;
+  onAddLessonContent: (lesson: any) => void;
+  onEditLessonContent: (item: any) => void;
+  onDeleteLessonContent: (courseId: any, lessonId: any, contentId: any) => void;
 };
 
 function LessonList({
@@ -272,7 +265,7 @@ function LessonList({
   lessonContentsMap,
   onAddLessonContent,
   onEditLessonContent,
-  onDeleteLessonContent
+  onDeleteLessonContent,
 }: LessonListProps) {
   const getTotalDuration = (lesson: any) => {
     const hours = lesson.duration_hours || 0;
@@ -286,9 +279,40 @@ function LessonList({
     setExpandedLessonId(prev => (prev === id ? null : id));
   };
 
+  const { data: contentTypeList } = useQuery(
+    getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
+  );
+
+  const contentTypeData = useMemo(() => {
+    const content = contentTypeList?.data?.content;
+    return Array.isArray(content) ? content : [];
+  }, [contentTypeList]);
+
+
+  const enrichedLessonContentsMap = useMemo(() => {
+    const map = new Map();
+
+    lessons?.content.forEach((lesson: any) => {
+      const contents = lessonContentsMap.get(lesson.uuid) || [];
+
+      const enriched = contents.map(content => {
+        const type = contentTypeData.find(item => item.uuid === content.content_type_uuid);
+        return {
+          ...content,
+          content_type_key: type?.name?.toUpperCase() || undefined,
+        };
+      });
+
+      map.set(lesson.uuid, enriched);
+    });
+
+    return map;
+  }, [lessons, lessonContentsMap, contentTypeData]);
+
+
   return (
     <div className='space-y-6'>
-      <div className='flex flex-col md:flex-row items-center justify-between gap-4'>
+      <div className='flex flex-col items-center justify-between gap-4 md:flex-row'>
         <div className='space-y-1'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
           <p className='text-muted-foreground text-sm'>
@@ -305,30 +329,32 @@ function LessonList({
       {isLoading ? (
         <Spinner />
       ) : lessons?.content?.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+        <div className='text-muted-foreground rounded-lg border border-dashed p-12 text-center'>
           <BookOpen className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No lessons found for this course.</h3>
           <p className='text-muted-foreground mt-2'>You can create a new lesson to get started.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className='space-y-3'>
           {lessons?.content.map((lesson: any, index: any) => {
             const isExpanded = expandedLessonId === lesson.uuid;
-            const contents = lessonContentsMap.get(lesson.uuid) || [];
+
+            const enrichedContents = enrichedLessonContentsMap.get(lesson.uuid) || [];
+
 
             return (
               <div
                 key={lesson?.uuid || index}
-                className="group relative flex flex-col gap-4 rounded-lg border p-4 transition-all"
+                className='group relative flex flex-col gap-4 rounded-lg border p-4 transition-all'
               >
-                <div className="flex items-start gap-4">
-                  <Grip className="text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100" />
+                <div className='flex items-start gap-4'>
+                  <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
 
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex flex-col items-start">
-                        <h3 className="text-lg font-medium">{lesson.title}</h3>
-                        <div className="text-muted-foreground text-sm">
+                  <div className='flex-1 space-y-3'>
+                    <div className='flex items-start justify-between'>
+                      <div className='flex flex-col items-start'>
+                        <h3 className='text-lg font-medium'>{lesson.title}</h3>
+                        <div className='text-muted-foreground text-sm'>
                           <RichTextRenderer htmlString={lesson?.description} maxChars={150} />
                         </div>
                       </div>
@@ -336,110 +362,112 @@ function LessonList({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            className="opacity-0 transition-opacity group-hover:opacity-100"
+                            variant='ghost'
+                            size='icon'
+                            className='opacity-0 transition-opacity group-hover:opacity-100'
                           >
-                            <MoreVertical className="h-4 w-4" />
+                            <MoreVertical className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align='end'>
                           <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-                            <PenLine className="mr-1 h-4 w-4" />
+                            <PenLine className='mr-1 h-4 w-4' />
                             Edit Lesson
                           </DropdownMenuItem>
 
                           <DropdownMenuItem onClick={() => onAddLessonContent(lesson)}>
-                            <PlusCircle className="mr-1 h-4 w-4" />
+                            <PlusCircle className='mr-1 h-4 w-4' />
                             Add Lesson Content
                           </DropdownMenuItem>
 
                           <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
-                            <ClipboardCheck className="mr-1 h-4 w-4" />
+                            <ClipboardCheck className='mr-1 h-4 w-4' />
                             Add Assessment
                           </DropdownMenuItem>
 
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className="text-red-600"
+                            className='text-red-600'
                             onClick={() => {
                               if (lesson.uuid) onDeleteLesson(lesson?.uuid);
                             }}
                           >
-                            <Trash className="mr-1 h-4 w-4" />
+                            <Trash className='mr-1 h-4 w-4' />
                             Delete Lesson
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
 
-                    <div className="text-muted-foreground flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-4 w-4" />
+                    <div className='text-muted-foreground flex items-center gap-4 text-sm'>
+                      <div className='flex items-center gap-1.5'>
+                        <Clock className='h-4 w-4' />
                         <span>{getTotalDuration(lesson)} minutes</span>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
-                        <BookOpen className="h-4 w-4" />
+                      <div className='flex items-center gap-1.5'>
+                        <BookOpen className='h-4 w-4' />
                         <span>
-                          {contents.length || "0"}{" "}
-                          {contents.length === 1 ? "item" : "items"}
+                          {enrichedContents.length || '0'} {enrichedContents.length === 1 ? 'item' : 'items'}
                         </span>
                       </div>
 
                       {(lesson.resources?.length ?? 0) > 0 && (
-                        <div className="flex items-center gap-1.5">
-                          <LinkIcon className="h-4 w-4" />
+                        <div className='flex items-center gap-1.5'>
+                          <LinkIcon className='h-4 w-4' />
                           <span>
-                            {lesson.resources?.length ?? 0}{" "}
-                            {(lesson.resources?.length ?? 0) === 1
-                              ? "resource"
-                              : "resources"}
+                            {lesson.resources?.length ?? 0}{' '}
+                            {(lesson.resources?.length ?? 0) === 1 ? 'resource' : 'resources'}
                           </span>
-
                         </div>
                       )}
                     </div>
 
                     <Button
-                      variant="link"
-                      size="sm"
+                      variant='link'
+                      size='sm'
                       onClick={() => toggleLesson(lesson.uuid)}
-                      className="pl-0"
+                      className='pl-0'
                     >
-                      {isExpanded ? "Hide Contents" : "View Contents"}
+                      {isExpanded ? 'Hide Contents' : 'View Contents'}
                     </Button>
                   </div>
                 </div>
 
                 {isExpanded && (
-                  <div className="pl-8 mt-2 space-y-2">
-                    {contents.length > 0 ? (
-                      contents
+                  <div className='mt-2 space-y-2 pl-8'>
+                    {enrichedContents.length > 0 ? (
+                      enrichedContents
                         .sort((a: any, b: any) => a.display_order - b.display_order)
                         .map((item: any) => (
                           <div
                             key={item.uuid}
-                            className="group flex items-center justify-between gap-4 p-4 rounded-md text-sm text-muted-foreground
-                     hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-default"
+                            className='group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-md p-4 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700'
                           >
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                {getContentTypeIcon(item.content_type)}
-                                <span className="font-medium text-gray-900 dark:text-gray-100">{item.title}</span>
+                            <div className='flex flex-col gap-1'>
+                              <div className='flex items-center gap-2'>
+                                {getContentTypeIcon(item.content_type_key)}
+                                <span className='font-medium text-gray-900 dark:text-gray-100'>
+                                  {item.title}
+                                </span>
                               </div>
-                              <div className="line-clamp-2 text-xs text-gray-600 dark:text-gray-400">
+                              <div className='line-clamp-2 text-xs text-gray-600 dark:text-gray-400'>
                                 <RichTextRenderer htmlString={item?.description} maxChars={150} />
                               </div>
-                              {item.content_text && <div className="text-xs text-gray-700 dark:text-gray-300">
-                                <RichTextRenderer htmlString={item?.content_text} maxChars={150} />
-                              </div>}
+                              {item.content_text && (
+                                <div className='text-xs text-gray-700 dark:text-gray-300'>
+                                  <RichTextRenderer
+                                    htmlString={item?.content_text}
+                                    maxChars={150}
+                                  />
+                                </div>
+                              )}
                               {item.file_url && (
                                 <a
                                   href={item.file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-500"
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='text-xs text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-500'
                                 >
                                   View File
                                 </a>
@@ -450,28 +478,28 @@ function LessonList({
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                                  aria-label="More actions"
+                                  variant='ghost'
+                                  size='icon'
+                                  className='cursor-pointer opacity-0 transition-opacity group-hover:opacity-100'
+                                  aria-label='More actions'
                                 >
-                                  <MoreVertical className="h-4 w-4" />
+                                  <MoreVertical className='h-4 w-4' />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => onEditLessonContent(item)}
-                                >
-                                  <PenLine className="mr-1 h-4 w-4" />
+                              <DropdownMenuContent align='end'>
+                                <DropdownMenuItem onClick={() => onEditLessonContent(item)}>
+                                  <PenLine className='mr-1 h-4 w-4' />
                                   Edit Content
                                 </DropdownMenuItem>
 
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => onDeleteLessonContent(courseId, item.lesson_uuid, item.uuid)}
+                                  className='text-red-600'
+                                  onClick={() =>
+                                    onDeleteLessonContent(courseId, item.lesson_uuid, item.uuid)
+                                  }
                                 >
-                                  <Trash className="mr-1 h-4 w-4" />
+                                  <Trash className='mr-1 h-4 w-4' />
                                   Delete Content
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -479,29 +507,26 @@ function LessonList({
                           </div>
                         ))
                     ) : (
-                      <div className="flex items-center gap-4 px-2 py-2">
-                        <p className="text-sm text-muted-foreground">No content items yet.</p>
+                      <div className='flex items-center gap-4 px-2 py-2'>
+                        <p className='text-muted-foreground text-sm'>No content items yet.</p>
 
                         <Button
                           onClick={() => onAddLessonContent(lesson)}
-                          variant="secondary"
-                          size="sm"
-                          className="flex items-center gap-1"
+                          variant='secondary'
+                          size='sm'
+                          className='flex items-center gap-1'
                         >
-                          <PlusCircle className="h-4 w-4" />
+                          <PlusCircle className='h-4 w-4' />
                           Add Content
                         </Button>
                       </div>
-
                     )}
                   </div>
                 )}
-
               </div>
             );
           })}
         </div>
-
       )}
 
       {/* {lessons?.metatdata?.totalPages >= 1 && (
@@ -552,9 +577,9 @@ function LessonCreationForm({
     const firstError = errors[firstFieldWithError];
 
     const message =
-      typeof firstError?.message === "string"
+      typeof firstError?.message === 'string'
         ? firstError.message
-        : "Please correct the form errors.";
+        : 'Please correct the form errors.';
 
     toast.error(message);
   };
@@ -574,11 +599,11 @@ function LessonCreationForm({
   const { data: courseDetail } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
     enabled: !!courseId,
-  })
+  });
   const course = courseDetail?.data;
 
   // MUTATION
-  const createLessonMutation = useMutation(addCourseLessonMutation())
+  const createLessonMutation = useMutation(addCourseLessonMutation());
 
   const onSubmitCreateLesson: SubmitHandler<LessonFormValues> = values => {
     const createLessonBody = {
@@ -600,23 +625,26 @@ function LessonCreationForm({
     createLessonMutation.mutate(
       { body: createLessonBody, path: { courseUuid: courseId as string } },
       {
-        onSuccess: (data) => {
+        onSuccess: data => {
           qc.invalidateQueries({
             queryKey: getCourseLessonsQueryKey({
               path: { courseUuid: courseId as string },
-              query: { pageable: { page: 0, size: 100 } }
-            })
+              query: { pageable: { page: 0, size: 100 } },
+            }),
           });
-          toast.success(data?.message)
-          onCancel()
+          toast.success(data?.message);
+          onCancel();
         },
-      },
+      }
     );
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitCreateLesson, handleSubmitError)} className={`space-y-8 ${className}`}>
+      <form
+        onSubmit={form.handleSubmit(onSubmitCreateLesson, handleSubmitError)}
+        className={`space-y-8 ${className}`}
+      >
         <div className='space-y-4'>
           <FormField
             control={form.control}
@@ -655,10 +683,7 @@ function LessonCreationForm({
               <FormItem>
                 <FormLabel>Lesson Description</FormLabel>
                 <FormControl>
-                  <SimpleEditor
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
+                  <SimpleEditor value={field.value} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -672,10 +697,7 @@ function LessonCreationForm({
               <FormItem>
                 <FormLabel>Lesson Objectives</FormLabel>
                 <FormControl>
-                  <SimpleEditor
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
+                  <SimpleEditor value={field.value} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -684,12 +706,12 @@ function LessonCreationForm({
 
           {/* Duration Hours */}
           <FormField
-            name="duration_hours"
+            name='duration_hours'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Duration (hours)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} step={1} {...field} />
+                  <Input type='number' min={0} step={1} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -698,12 +720,12 @@ function LessonCreationForm({
 
           {/* Duration Minutes */}
           <FormField
-            name="duration_minutes"
+            name='duration_minutes'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Duration (minutes)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} max={59} step={1} {...field} />
+                  <Input type='number' min={0} max={59} step={1} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -806,9 +828,9 @@ function LessonEditingForm({
     const firstError = errors[firstFieldWithError];
 
     const message =
-      typeof firstError?.message === "string"
+      typeof firstError?.message === 'string'
         ? firstError.message
-        : "Please correct the form errors.";
+        : 'Please correct the form errors.';
 
     toast.error(message);
   };
@@ -822,11 +844,11 @@ function LessonEditingForm({
     name: 'resources',
   });
 
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   const { data: courseData } = useQuery({
-    ...getCourseByUuidOptions({ path: { uuid: courseId as string } })
-  })
+    ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
+  });
 
   const updateLessonMutation = useMutation(updateCourseLessonMutation());
 
@@ -845,19 +867,24 @@ function LessonEditingForm({
       created_by: courseData?.data?.instructor_uuid,
       lesson_number: values?.number,
       lesson_sequence: `Lesson ${values?.number}`,
-    }
+    };
 
     updateLessonMutation.mutate(
       {
         body: updateLessonBody as any,
         path: {
           courseUuid: courseId as string,
-          lessonUuid: lessonId as string
-        }
+          lessonUuid: lessonId as string,
+        },
       },
       {
-        onSuccess: (data) => {
-          qc.invalidateQueries({ queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string }, query: { pageable: {} } }) })
+        onSuccess: data => {
+          qc.invalidateQueries({
+            queryKey: getCourseLessonsQueryKey({
+              path: { courseUuid: courseId as string },
+              query: { pageable: {} },
+            }),
+          });
 
           toast.success(data?.message);
           onCancel();
@@ -884,7 +911,10 @@ function LessonEditingForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitEditLesson, handleSubmitError)} className={`space-y-8 ${className}`}>
+      <form
+        onSubmit={form.handleSubmit(onSubmitEditLesson, handleSubmitError)}
+        className={`space-y-8 ${className}`}
+      >
         <div className='space-y-4'>
           <FormField
             control={form.control}
@@ -923,11 +953,7 @@ function LessonEditingForm({
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <SimpleEditor
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-
+                  <SimpleEditor value={field.value} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -936,12 +962,12 @@ function LessonEditingForm({
 
           {/* Duration Hours */}
           <FormField
-            name="duration_hours"
+            name='duration_hours'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Duration (hours)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} step={1} {...field} />
+                  <Input type='number' min={0} step={1} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -950,12 +976,12 @@ function LessonEditingForm({
 
           {/* Duration Minutes */}
           <FormField
-            name="duration_minutes"
+            name='duration_minutes'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Duration (minutes)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} max={59} step={1} {...field} />
+                  <Input type='number' min={0} max={59} step={1} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -1049,8 +1075,10 @@ const lessonContentSchema = z.object({
   content_type_uuid: z.string().min(1, 'Content type UUID is required'),
   content_category: z.string().min(1, 'Content category is required'),
   title: z.string().min(1, 'Title is required'),
+  description: z.any().optional(),
   value: z.any().optional(),
-  duration_minutes: z.coerce.number()
+  duration_minutes: z.coerce
+    .number()
     .min(0, 'Duration minutes must be positive')
     .max(59, 'Minutes must be less than 60'),
   duration_hours: z.coerce.number().min(0, 'Duration hours must be positive'),
@@ -1070,7 +1098,14 @@ const lessonContentSchema = z.object({
 
 export type ContentFormValues = z.infer<typeof lessonContentSchema>;
 
-function LessonContentForm({ onCancel, className, courseId, contentId, lessonId, initialValues }: LessonContentFormProps) {
+function LessonContentForm({
+  onCancel,
+  className,
+  courseId,
+  contentId,
+  lessonId,
+  initialValues,
+}: LessonContentFormProps) {
   const form = useForm<ContentFormValues>({
     resolver: zodResolver(lessonContentSchema),
     defaultValues: {
@@ -1078,10 +1113,11 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
       content_type_uuid: '',
       content_category: '',
       title: '',
-      value: undefined,
-      duration_minutes: 0,
-      duration_hours: 0,
-      estimated_duration: 0,
+      description: '',
+      value: '',
+      // duration_minutes: 0,
+      // duration_hours: 0,
+      // estimated_duration: 0,
       display_order: 0,
       ...initialValues, // ✅ prefill if editing
     },
@@ -1094,7 +1130,7 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
 
   // GET COURSE CONTENT TYPES
   const { data: contentTypeList } = useQuery(
-    getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
+    getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
   );
 
   const contentTypeData = React.useMemo(() => {
@@ -1121,15 +1157,15 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
 
   const qc = useQueryClient();
 
-  const createLessonContent = useMutation(addLessonContentMutation())
-  const updateLessonContent = useMutation(updateLessonContentMutation())
+  const createLessonContent = useMutation(addLessonContentMutation());
+  const updateLessonContent = useMutation(updateLessonContentMutation());
 
   const onSubmit = async (data: ContentFormValues) => {
     const contentBody = {
       lesson_uuid: lessonId as string,
       content_type_uuid: data?.content_type_uuid,
       title: data?.title,
-      description: '',
+      description: data?.description,
       content_text: data?.value,
       file_url: '',
       file_size_bytes: 157200,
@@ -1146,49 +1182,60 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
 
     try {
       if (isEditMode) {
-        updateLessonContent.mutate({
-          body: contentBody as any,
-          path: { courseUuid: courseId as string, lessonUuid: lessonId as string, contentUuid: contentId as string }
-        }, {
-          onSuccess: (data) => {
-            qc.invalidateQueries({
-              queryKey: getLessonContentQueryKey({
-                path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
-              })
-            });
-            toast.success(data?.message);
-            onCancel();
-          }
-        })
-      } else {
-        createLessonContent.mutate({
-          body: contentBody as any,
-          path: { courseUuid: courseId as string, lessonUuid: lessonId as string }
-        },
+        updateLessonContent.mutate(
           {
-            onSuccess: (data) => {
+            body: contentBody as any,
+            path: {
+              courseUuid: courseId as string,
+              lessonUuid: lessonId as string,
+              contentUuid: contentId as string,
+            },
+          },
+          {
+            onSuccess: data => {
               qc.invalidateQueries({
                 queryKey: getLessonContentQueryKey({
                   path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
-                })
+                }),
               });
               toast.success(data?.message);
               onCancel();
-            }
-          })
+            },
+          }
+        );
+      } else {
+        createLessonContent.mutate(
+          {
+            body: contentBody as any,
+            path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
+          },
+          {
+            onSuccess: data => {
+              qc.invalidateQueries({
+                queryKey: getLessonContentQueryKey({
+                  path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
+                }),
+              });
+              toast.success(data?.message);
+              onCancel();
+            },
+          }
+        );
       }
-
     } catch (error: any) {
       toast.error(error?.message || 'Something went wrong');
     }
   };
 
-  const isPending = createLessonContent.isPending || updateLessonContent.isPending
+  const isPending = createLessonContent.isPending || updateLessonContent.isPending;
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit, handleSubmitError)} className={`space-y-8 ${className ?? ''}`}>
-        <div className="space-y-4">
+      <form
+        onSubmit={form.handleSubmit(onSubmit, handleSubmitError)}
+        className={`space-y-8 ${className ?? ''}`}
+      >
+        <div className='flex flex-col gap-3 space-y-4'>
           <FormField
             control={form.control}
             name='display_order'
@@ -1205,46 +1252,73 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
             )}
           />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* Content Type Select */}
+          <FormField
+            name='title'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl>
+                  <Input placeholder='Enter content title' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            name='description'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <textarea
+                    {...field}
+                    placeholder='Enter a brief description'
+                    rows={4}
+                    className='border-input bg-background placeholder:text-muted-foreground focus:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className='w-full'>
             <FormField
-              name="content_type_uuid"
+              name='content_type_uuid'
               render={({ field }) => (
-                <FormItem>
+                <FormItem className='col-span-2'>
                   <FormLabel>Content Type</FormLabel>
                   <Select
-                    onValueChange={(val) => {
-                      // val is JSON stringified content type object
+                    onValueChange={val => {
                       try {
                         const parsed = JSON.parse(val);
                         setValue('content_type', parsed.name.toUpperCase());
                         setValue('content_type_uuid', parsed.uuid);
                         setValue('content_category', parsed.upload_category);
                       } catch {
-                        // fallback: reset values on parse error
                         setValue('content_type', 'TEXT');
                         setValue('content_type_uuid', '');
                         setValue('content_category', '');
                       }
                     }}
-                    value={
-                      contentTypeUuid
-                        ? JSON.stringify(selectedTypeObj)
-                        : ''
-                    }
+                    value={contentTypeUuid ? JSON.stringify(selectedTypeObj) : ''}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select content type" />
+                        <SelectValue placeholder='Select content type' />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {contentTypeData.map((value: any) => {
-                        const Icon = ContentTypeIcons[value.name.toUpperCase() as keyof typeof ContentTypeIcons];
+                        const Icon =
+                          ContentTypeIcons[
+                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                          ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
-                            <div className="flex items-center gap-2">
-                              {Icon && <Icon className="h-4 w-4" />}
+                            <div className='flex items-center gap-2'>
+                              {Icon && <Icon className='h-4 w-4' />}
                               <span>{value.name}</span>
                             </div>
                           </SelectItem>
@@ -1256,26 +1330,12 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
                 </FormItem>
               )}
             />
-
-            {/* Title */}
-            <FormField
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter content title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
 
           {/* Content or File Upload + URL */}
           {selectedTypeKey === 'TEXT' ? (
             <FormField
-              name="value"
+              name='value'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Content</FormLabel>
@@ -1290,15 +1350,17 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
             <>
               {['PDF', 'AUDIO', 'IMAGE', 'VIDEO'].includes(selectedTypeKey || '') && (
                 <FormField
-                  name="value"
+                  name='value'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>File Upload</FormLabel>
                       <FormControl>
                         <Input
-                          type="file"
-                          accept={ACCEPTED_FILE_TYPES[selectedTypeKey as keyof typeof ACCEPTED_FILE_TYPES]}
-                          onChange={(e) => field.onChange(e.target.files?.[0])}
+                          type='file'
+                          accept={
+                            ACCEPTED_FILE_TYPES[selectedTypeKey as keyof typeof ACCEPTED_FILE_TYPES]
+                          }
+                          onChange={e => field.onChange(e.target.files?.[0])}
                         />
                       </FormControl>
                       <FormDescription>Upload a file or provide a URL below</FormDescription>
@@ -1309,7 +1371,7 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
               )}
 
               <FormField
-                name="value"
+                name='value'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
@@ -1319,7 +1381,7 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
                     </FormLabel>
                     <FormControl>
                       <Input
-                        type="url"
+                        type='url'
                         placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
                         {...field}
                       />
@@ -1332,7 +1394,7 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
           )}
 
           {/* Duration Hours */}
-          <FormField
+          {/* <FormField
             name="duration_hours"
             render={({ field }) => (
               <FormItem>
@@ -1343,10 +1405,10 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
 
           {/* Duration Minutes */}
-          <FormField
+          {/* <FormField
             name="duration_minutes"
             render={({ field }) => (
               <FormItem>
@@ -1357,25 +1419,26 @@ function LessonContentForm({ onCancel, className, courseId, contentId, lessonId,
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
         </div>
 
         {/* Form Buttons */}
-        <div className="flex justify-end gap-2 pt-6">
-          <Button type="button" variant="outline" onClick={onCancel}>
+        <div className='flex justify-end gap-2 pt-6'>
+          <Button type='button' variant='outline' onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" className="min-w-fit px-3" disabled={isPending}>
+          <Button type='submit' className='min-w-fit px-3' disabled={isPending}>
             {isPending ? (
               <>
-                <Spinner className="mr-2 h-4 w-4" />
+                <Spinner className='mr-2 h-4 w-4' />
                 {isEditMode ? 'Updating...' : 'Creating...'}
               </>
+            ) : isEditMode ? (
+              'Update Lesson Content'
             ) : (
-              isEditMode ? 'Update Lesson Content' : 'Create Lesson Content'
+              'Create Lesson Content'
             )}
           </Button>
-
         </div>
       </form>
     </Form>
@@ -1387,7 +1450,7 @@ interface AssessmentCreationFormProps {
   assessmentId?: string | number;
   onCancel: () => void;
   className?: string;
-  initialValues?: any
+  initialValues?: any;
 }
 
 const assessmentFormSchema = z.object({
@@ -1493,15 +1556,15 @@ function AssessmentCreationForm({
         },
       },
       {
-        onSuccess: (data) => {
+        onSuccess: data => {
           toast.success(data?.data?.message || 'Assessment created successfully!');
           queryClient.invalidateQueries({
             queryKey: searchAssessmentsQueryKey({
               query: {
                 searchParams: { courseUuid: courseId },
-                pageable: { page: 0, size: 100 }
-              }
-            })
+                pageable: { page: 0, size: 100 },
+              },
+            }),
           });
           onCancel();
         },
@@ -1537,19 +1600,19 @@ function AssessmentCreationForm({
           },
         },
         {
-          onSuccess: (data) => {
+          onSuccess: data => {
             toast.success(data?.message || 'Assessment updated successfully!');
             queryClient.invalidateQueries({
               queryKey: searchAssessmentsQueryKey({
                 query: {
                   searchParams: { courseUuid: courseId },
-                  pageable: { page: 0, size: 100 }
-                }
-              })
+                  pageable: { page: 0, size: 100 },
+                },
+              }),
             });
             onCancel();
           },
-          onError: (error) => {
+          onError: error => {
             toast.error(error?.message || 'Failed to update assessment.');
           },
         }
@@ -1596,19 +1659,15 @@ function AssessmentCreationForm({
             )}
           />
 
-          <div className="w-full flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
+          <div className='flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:gap-4'>
             <FormField
               control={form.control}
-              name="assessment_type"
+              name='assessment_type'
               render={({ field }) => (
-                <FormItem className="w-full sm:w-auto">
+                <FormItem className='w-full sm:w-auto'>
                   <FormLabel>Assessment Type</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="e.g. attendance, test"
-                      {...field}
-                      className="w-full"
-                    />
+                    <Input placeholder='e.g. attendance, test' {...field} className='w-full' />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -1617,16 +1676,12 @@ function AssessmentCreationForm({
 
             <FormField
               control={form.control}
-              name="weight_percentage"
+              name='weight_percentage'
               render={({ field }) => (
-                <FormItem className="w-full sm:w-auto">
+                <FormItem className='w-full sm:w-auto'>
                   <FormLabel>Weight Percentage</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="e.g. 20 for 20%"
-                      {...field}
-                      className="w-full"
-                    />
+                    <Input placeholder='e.g. 20 for 20%' {...field} className='w-full' />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -1636,10 +1691,7 @@ function AssessmentCreationForm({
         </div>
 
         <div className='space-y-4'>
-          <FormSection
-            title='Questions'
-            description='Add one or more questions to this assessment'
-          >
+          <FormSection title='Questions' description='Add one or more questions to this assessment'>
             {questionFields.map((field, index) => (
               <div key={field.id} className='flex items-center gap-2'>
                 <FormField
@@ -1736,13 +1788,17 @@ function AssessmentCreationForm({
             Cancel
           </Button>
           <Button type='submit' className='min-w-[154px]'>
-            {assessmentId
-              ? updateAssessment.isPending
-                ? <Spinner />
-                : 'Update Assessment'
-              : createAssessmentMutation.isPending
-                ? <Spinner />
-                : 'Create Assessment'}
+            {assessmentId ? (
+              updateAssessment.isPending ? (
+                <Spinner />
+              ) : (
+                'Update Assessment'
+              )
+            ) : createAssessmentMutation.isPending ? (
+              <Spinner />
+            ) : (
+              'Create Assessment'
+            )}
           </Button>
         </div>
       </form>
@@ -1758,18 +1814,187 @@ type AssessmentListProps = {
   onAddRubrics: (assessment: any) => void;
 };
 
+const rubricSelectSchema = z.object({
+  rubric_uuid: z.string().min(1, 'Rubric is required'),
+});
+
+interface RubricSelectFormProps {
+  onCancel: () => void;
+  onSuccess?: () => void;
+  className?: string;
+}
+
+function RubricSelectForm({
+  onCancel,
+  onSuccess,
+  className,
+}: RubricSelectFormProps) {
+  const form = useForm({
+    resolver: zodResolver(rubricSelectSchema),
+    defaultValues: {
+      rubric_uuid: '',
+    },
+  });
+
+  const user = useUserProfile();
+  const qc = useQueryClient()
+
+  const {
+    rubricsWithDetails,
+    isLoading: rubricDataIsLoading,
+    isFetched: rubricsDataIsFetched,
+  } = useRubricsWithCriteriaAndScoring(user?.instructor?.uuid);
+
+  const memoizedRubricsWithDetails = useMemo(() => {
+    return rubricsWithDetails || [];
+  }, [rubricsWithDetails]);
+
+  const selectedRubricUuid = form.watch('rubric_uuid');
+  const [expandedRubricUuid, setExpandedRubricUuid] = useState<string | null>(null);
+
+  const onSubmit = (values: any) => {
+    // console.log(values, 'submitting values');
+    if (onSuccess) onSuccess();
+  };
+
+  const toggleExpand = (uuid: string) => {
+    setExpandedRubricUuid(prev => (prev === uuid ? null : uuid));
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className={clsx('space-y-8', className)}>
+        <FormField
+          control={form.control}
+          name="rubric_uuid"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Select a Rubric</FormLabel>
+              {rubricDataIsLoading && <p>Loading rubrics...</p>}
+              {rubricsDataIsFetched && memoizedRubricsWithDetails.length === 0 && (
+                <p>No rubrics found.</p>
+              )}
+
+              <div className="grid gap-4">
+                {memoizedRubricsWithDetails.map(({ rubric, criteria }) => {
+                  const isSelected = field.value === rubric.uuid;
+                  const isExpanded = expandedRubricUuid === rubric.uuid;
+
+                  return (
+                    <div
+                      key={rubric.uuid}
+                      className={clsx(
+                        'border rounded-lg p-4 transition cursor-pointer',
+                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
+                      )}
+                    >
+                      <div
+                        className="flex justify-between items-start"
+                        onClick={() => field.onChange(rubric.uuid)}
+                      >
+                        <div>
+                          <div className="text-lg font-semibold">{rubric.title}</div>
+                          <div className="text-sm text-muted-foreground">{rubric.description}</div>
+                        </div>
+                        {isSelected && (
+                          <span className="text-sm font-medium text-blue-600">Selected</span>
+                        )}
+                      </div>
+
+                      <div className="mt-2 text-sm text-gray-600">
+                        <p><strong>Type:</strong> {rubric.rubric_type}</p>
+                        <p><strong>Status:</strong> {rubric.usage_status}</p>
+                        <p><strong>Total Weight:</strong> {rubric.total_weight}{rubric.weight_unit === 'percentage' ? '%' : ''}</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(rubric.uuid)}
+                        className="mt-3 flex items-center gap-1 text-blue-600 text-sm"
+                      >
+                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        {isExpanded ? 'Hide Assessment Criteria' : 'Show Assessment Criteria & Scoring'}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-4 space-y-4 text-sm">
+                          {criteria.length === 0 && <p>No criteria available.</p>}
+
+                          {criteria.map((criterion) => (
+                            <div key={criterion.uuid} className="border border-gray-200 rounded-md p-3 bg-white">
+                              <div className="flex flex-row gap-2 items-center font-medium text-gray-800">
+                                <CircleCheckBig size={14} color='green' /> {criterion.component_name}
+                              </div>
+                              <div className="text-sm text-muted-foreground mb-1">{criterion.description}</div>
+                              <div className="text-xs text-gray-600">
+                                <p><strong>Weight:</strong> {criterion.weight}</p>
+                                <p><strong>Category:</strong> {criterion.criteria_category}</p>
+                                <p><strong>Priority:</strong> {criterion.weight_suggestion}</p>
+                                <p><strong>Primary:</strong> {criterion.is_primary_criteria ? 'Yes' : 'No'}</p>
+                              </div>
+
+                              {/* Scoring levels */}
+                              {criterion.scoring?.length > 0 ? (
+                                <div className="mt-2 space-y-2">
+                                  <div className="text-xs font-medium text-gray-700">Scoring Levels:</div>
+                                  {criterion.scoring.map((score: any) => (
+                                    <div
+                                      key={score.uuid}
+                                      className="border-l-4 border-blue-200 pl-3 py-1 bg-gray-50 rounded"
+                                    >
+                                      <div className="text-sm font-semibold text-gray-800">
+                                        {score.performance_expectation}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">{score.description}</div>
+                                      <div className="text-xs text-gray-600">
+                                        <p><strong>Score Range:</strong> {score.score_range}</p>
+                                        <p><strong>Feedback Category:</strong> {score.feedback_category}</p>
+                                        <p><strong>Passing:</strong> {score.is_passing_level ? 'Yes' : 'No'}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground mt-1">No scoring levels defined.</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Buttons */}
+        <div className="flex justify-end gap-3 pt-4">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" className="min-w-[180px]" disabled={!selectedRubricUuid}>
+            Assign Rubric
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
 function AssessmentList({
   assessments,
   lessonItems,
   isLoading,
   courseId,
-  onAddRubrics
+  onAddRubrics,
 }: AssessmentListProps) {
   const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRubricModalOpen, setIsRubricModalOpen] = useState(false);
-
 
   const getTotalDuration = (lesson: any) => {
     const hours = lesson.duration_hours || 0;
@@ -1783,10 +2008,9 @@ function AssessmentList({
   };
 
   const handleAddRubrics = (assessment: any) => {
-    setSelectedAssessment(assessment)
+    setSelectedAssessment(assessment);
     setIsRubricModalOpen(true);
-
-  }
+  };
 
   const handleCancel = () => {
     setIsModalOpen(false);
@@ -1797,35 +2021,39 @@ function AssessmentList({
   const queryClient = useQueryClient();
   const deleteAssessment = useMutation(deleteCourseAssessmentMutation());
   const handleDelete = (assessmentUuid: string) => {
-    if (!assessmentUuid) return
+    if (!assessmentUuid) return;
 
-    deleteAssessment.mutate({
-      path: { courseUuid: courseId as string, assessmentUuid }
-    }, {
-      onSuccess: () => {
-        toast.success('Assessment deleted successfully');
-        queryClient.invalidateQueries({
-          queryKey: searchAssessmentsQueryKey({
-            query: {
-              searchParams: { courseUuid: courseId },
-              pageable: { page: 0, size: 100 }
-            }
-          })
-        });
+    deleteAssessment.mutate(
+      {
+        path: { courseUuid: courseId as string, assessmentUuid },
       },
-      onError: (error: any) => {
-        toast.error(error?.message || 'Failed to delete assessment')
+      {
+        onSuccess: () => {
+          toast.success('Assessment deleted successfully');
+          queryClient.invalidateQueries({
+            queryKey: searchAssessmentsQueryKey({
+              query: {
+                searchParams: { courseUuid: courseId },
+                pageable: { page: 0, size: 100 },
+              },
+            }),
+          });
+        },
+        onError: (error: any) => {
+          toast.error(error?.message || 'Failed to delete assessment');
+        },
       }
-    });
+    );
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-row items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-muted-foreground text-sm">
-            You have {assessments?.content?.length}{" "}
-            {assessments?.content?.length === 1 ? "assessment" : "assessments"} created under this course.
+    <div className='space-y-6'>
+      <div className='flex flex-row items-center justify-between'>
+        <div className='space-y-1'>
+          <p className='text-muted-foreground text-sm'>
+            You have {assessments?.content?.length}{' '}
+            {assessments?.content?.length === 1 ? 'assessment' : 'assessments'} created under this
+            course.
           </p>
         </div>
       </div>
@@ -1833,17 +2061,19 @@ function AssessmentList({
       {isLoading ? (
         <Spinner />
       ) : assessments?.content?.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+        <div className='text-muted-foreground rounded-lg border border-dashed p-12 text-center'>
           <BookOpenCheck className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No assessments found for this course.</h3>
-          <p className='text-muted-foreground mt-2'>You can create new assessments under lessons.</p>
+          <p className='text-muted-foreground mt-2'>
+            You can create new assessments under lessons.
+          </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className='space-y-3'>
           {assessments?.content.map((assessment: any, index: any) => (
             <div
               key={assessment?.uuid || index}
-              className="group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all"
+              className='group hover:bg-accent/50 relative flex items-start gap-4 rounded-lg border p-4 transition-all'
             >
               <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
 
@@ -1858,19 +2088,18 @@ function AssessmentList({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="opacity-0 transition-opacity group-hover:opacity-100"
+                        variant='ghost'
+                        size='icon'
+                        className='opacity-0 transition-opacity group-hover:opacity-100'
                       >
-                        <MoreVertical className="h-4 w-4" />
+                        <MoreVertical className='h-4 w-4' />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align='end'>
                       <DropdownMenuItem onClick={() => handleEditAssessment(assessment)}>
-                        <ClipboardCheck className="mr-2 h-4 w-4" />
+                        <ClipboardCheck className='mr-2 h-4 w-4' />
                         Edit Assessment
                       </DropdownMenuItem>
-
 
                       <DropdownMenuItem onClick={() => handleAddRubrics(assessment)}>
                         <FilePlus className='mr-2 h-4 w-4' />
@@ -1879,14 +2108,14 @@ function AssessmentList({
 
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className="text-red-600"
+                        className='text-red-600'
                         onClick={() => {
                           if (assessment.uuid) {
                             handleDelete(assessment?.uuid as string);
                           }
                         }}
                       >
-                        <Trash className="mr-2 h-4 w-4" />
+                        <Trash className='mr-2 h-4 w-4' />
                         Delete Assessment
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -1912,11 +2141,14 @@ function AssessmentList({
         </div>
       )}
 
-      <Dialog open={isModalOpen} onOpenChange={(open) => {
-        if (!open) {
-          handleCancel();
-        }
-      }}>
+      <Dialog
+        open={isModalOpen}
+        onOpenChange={open => {
+          if (!open) {
+            handleCancel();
+          }
+        }}
+      >
         <DialogContent className='flex max-w-6xl flex-col p-0'>
           <DialogHeader className='border-b px-6 py-4'>
             <DialogTitle className='text-xl'>Edit Assessment</DialogTitle>
@@ -1939,7 +2171,7 @@ function AssessmentList({
         </DialogContent>
       </Dialog>
 
-      <RubricDialog
+      <RubricSelectDialog
         isOpen={isRubricModalOpen}
         onOpenChange={() => setIsRubricModalOpen(!isRubricModalOpen)}
         courseId={selectedAssessment?.course_uuid}
@@ -1960,10 +2192,17 @@ interface AddLessonDialogProps {
   initialValues?: Partial<LessonFormValues>;
   refetch?: () => any;
   onSuccess?: (data: any) => void;
-  onCancel: () => any
+  onCancel: () => any;
 }
 
-function LessonDialog({ isOpen, onOpenChange, courseId, lessonId, refetch, onCancel }: AddLessonDialogProps) {
+function LessonDialog({
+  isOpen,
+  onOpenChange,
+  courseId,
+  lessonId,
+  refetch,
+  onCancel,
+}: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
@@ -2002,22 +2241,22 @@ function LessonContentDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-w-6xl flex-col p-0">
-        <DialogHeader className="border-b px-6 py-4">
-          <DialogTitle className="text-xl">
+      <DialogContent className='flex max-w-6xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 py-4'>
+          <DialogTitle className='text-xl'>
             {isEditMode ? 'Edit Lesson Content' : 'Create New Lesson Content'}
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground text-sm">
+          <DialogDescription className='text-muted-foreground text-sm'>
             {isEditMode
               ? 'Update the details of your lesson content below.'
               : 'Fill in the contents of your lesson below.'}
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[calc(90vh-4rem)] sm:h-[calc(90vh-18rem)] lg:h-[calc(90vh-20rem)]">
+        <ScrollArea className='h-[calc(90vh-4rem)] sm:h-[calc(90vh-18rem)] lg:h-[calc(90vh-20rem)]'>
           <LessonContentForm
             onCancel={onCancel}
-            className="px-6 pb-6"
+            className='px-6 pb-6'
             courseId={courseId}
             lessonId={lessonId}
             contentId={contentId}
@@ -2063,18 +2302,15 @@ function EditLessonDialog({
   );
 }
 
-function AssessmentDialog({
-  isOpen,
-  onOpenChange,
-  courseId,
-}: AddLessonDialogProps) {
+function AssessmentDialog({ isOpen, onOpenChange, courseId }: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>Add Assessment</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Create a new assessment by providing its title, description, questions, and any helpful resources
+            Create a new assessment by providing its title, description, questions, and any helpful
+            resources
           </DialogDescription>
         </DialogHeader>
 
@@ -2090,30 +2326,22 @@ function AssessmentDialog({
   );
 }
 
-function RubricDialog({
-  isOpen,
-  onOpenChange,
-  courseId,
-  lessonId
-}: AddLessonDialogProps) {
+function RubricSelectDialog({ isOpen, onOpenChange }: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex min-w-[500px] flex-col p-0'>
         <DialogHeader className='border-b px-6 py-4'>
-          <DialogTitle className='text-xl'>Add Rubric</DialogTitle>
+          <DialogTitle className='text-xl'>Add/Assign Rubric</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Create a new rubric by providing its title, description, and grading criteria
+            Select a rubric for grading this assessment.
           </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className='h-[calc(90vh-8rem)]'>
-          <AddRubricForm
+          <RubricSelectForm
             onCancel={() => onOpenChange(false)}
             className='px-6 pb-6'
-            courseId={courseId as string}
-            rubricId={''}
-            // lessonId={lessonId as string}
-            onSubmitSuccess={() => { }}
+            onSuccess={() => { }}
           />
         </ScrollArea>
       </DialogContent>
@@ -2121,5 +2349,12 @@ function RubricDialog({
   );
 }
 
-export { AssessmentDialog, AssessmentList, EditLessonDialog, LessonContentDialog, LessonDialog, LessonList, RubricDialog };
+export {
+  AssessmentDialog,
+  AssessmentList,
+  EditLessonDialog,
+  LessonContentDialog,
+  LessonDialog,
+  LessonList
+};
 

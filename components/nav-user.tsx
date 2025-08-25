@@ -32,7 +32,9 @@ export function NavUser({ items }: NavUserProps) {
   const user = useUserProfile();
   const { isMobile } = useSidebar();
   // const { data: session } = useSession();
-  const activeDomain = user!.activeDomain ?? (user && user.user_domain && user.user_domain.length > 0 ? user.user_domain[0] : "");
+  const activeDomain =
+    user!.activeDomain ??
+    (user && user.user_domain && user.user_domain.length > 0 ? user.user_domain[0] : '');
 
   const userInitials =
     user!.full_name
@@ -66,9 +68,7 @@ export function NavUser({ items }: NavUserProps) {
                     {activeDomain}
                   </Badge>
                 </div>
-                <span className='text-muted-foreground truncate text-xs'>
-                  {user!.email}
-                </span>
+                <span className='text-muted-foreground truncate text-xs'>{user!.email}</span>
               </div>
               <ChevronsUpDown className='text-muted-foreground ml-auto size-4' />
             </SidebarMenuButton>
@@ -94,13 +94,13 @@ export function NavUser({ items }: NavUserProps) {
                   <span className='text-muted-foreground text-xs'>{user!.email}</span>
                 </div>
               </div>
-              
+
               {/* Domain Switcher - Only show if user has multiple domains */}
               {user?.hasMultipleDomains && (
                 <>
                   <DropdownMenuSeparator className='my-2' />
                   <div className='mb-2'>
-                    <p className='text-muted-foreground mb-2 px-3 text-xs font-medium uppercase tracking-wide'>
+                    <p className='text-muted-foreground mb-2 px-3 text-xs font-medium tracking-wide uppercase'>
                       Switch Dashboard
                     </p>
                     <div className='px-3'>
@@ -109,7 +109,7 @@ export function NavUser({ items }: NavUserProps) {
                   </div>
                 </>
               )}
-              
+
               <DropdownMenuSeparator className='my-2' />
               {/* Profile & Logout Actions */}
               <div className='mt-0.5 flex flex-col gap-1'>

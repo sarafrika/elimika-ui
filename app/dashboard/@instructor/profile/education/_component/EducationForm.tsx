@@ -31,8 +31,11 @@ import { useUserProfile } from '@/context/profile-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { InstructorEducation } from '@/services/api/schema';
 import { deleteInstructorEducation } from '@/services/client';
-import { addInstructorEducationMutation, updateInstructorEducationMutation } from '@/services/client/@tanstack/react-query.gen';
-import { zInstructorEducation } from "@/services/client/zod.gen";
+import {
+  addInstructorEducationMutation,
+  updateInstructorEducationMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { zInstructorEducation } from '@/services/client/zod.gen';
 import { useMutation } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -47,18 +50,20 @@ const DEGREE_OPTIONS = {
   Other: 'Other',
 } as const;
 
-const edSchema = zInstructorEducation.omit({
-  created_date: true,
-  updated_date: true,
-  updated_by: true
-}).merge(
-  z.object({
-    uuid: z.string().optional(),
-    field_of_study: z.string(),
-    year_started: z.string(),
-    year_completed: z.string().optional()
+const edSchema = zInstructorEducation
+  .omit({
+    created_date: true,
+    updated_date: true,
+    updated_by: true,
   })
-);
+  .merge(
+    z.object({
+      uuid: z.string().optional(),
+      field_of_study: z.string(),
+      year_started: z.string(),
+      year_completed: z.string().optional(),
+    })
+  );
 
 const educationSchema = z.object({
   educations: z.array(edSchema),
@@ -83,22 +88,23 @@ export default function EducationSettings() {
   }, [replaceBreadcrumbs]);
 
   const user = useUserProfile();
-  const { instructor, invalidateQuery } = user!
-  const instructorEducation = instructor!.educations ?? [] as Omit<InstructorEducation, "created_date" | "updated_date">[];
+  const { instructor, invalidateQuery } = user!;
+  const instructorEducation =
+    instructor!.educations ?? ([] as Omit<InstructorEducation, 'created_date' | 'updated_date'>[]);
 
   const defaultEducation: EdType = {
     school_name: 'University of Nairobi',
     qualification: "Bachelor's",
     field_of_study: 'Computer Science',
     year_started: '2018',
-    year_completed: "2022",
+    year_completed: '2022',
     is_recent_qualification: false,
     full_description: 'Graduated with First Class Honours.',
     certificate_number: 'CERT12345',
     instructor_uuid: instructor ? (instructor.uuid as string) : crypto.randomUUID(),
   };
 
-  const passEducation = (ed: Omit<InstructorEducation, "created_date" | "updated_date">) => ({
+  const passEducation = (ed: Omit<InstructorEducation, 'created_date' | 'updated_date'>) => ({
     ...defaultEducation,
     ...ed,
     year_completed: ed.year_completed?.toString(),
@@ -129,7 +135,6 @@ export default function EducationSettings() {
   const { errors, submitting } = useMultiMutations([addEdMutation, updateMutation]);
 
   const onSubmit = async (data: EducationFormValues) => {
-
     data.educations.forEach(async (ed, index) => {
       const options = {
         path: { instructorUuid: instructor!.uuid as string },
@@ -164,8 +169,8 @@ export default function EducationSettings() {
         const resp = await deleteInstructorEducation({
           path: {
             educationUuid: edUUID,
-            instructorUuid: instructor!.uuid!
-          }
+            instructorUuid: instructor!.uuid!,
+          },
         });
         if (resp.error) return;
       }

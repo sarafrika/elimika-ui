@@ -38,7 +38,7 @@ const domainConfig = {
     icon: Shield,
     title: 'Admin Dashboard',
     color: 'text-red-600',
-  }
+  },
 } as const;
 
 interface DomainSwitcherProps {
@@ -71,19 +71,17 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className={`${className || ''} flex items-center gap-2`}>
-          <CurrentIcon className="h-4 w-4" />
-          <span className="hidden sm:inline">
-            {currentDomainConfig?.title || 'Dashboard'}
-          </span>
-          <ChevronDown className="h-4 w-4" />
+        <Button variant='outline' className={`${className || ''} flex items-center gap-2`}>
+          <CurrentIcon className='h-4 w-4' />
+          <span className='hidden sm:inline'>{currentDomainConfig?.title || 'Dashboard'}</span>
+          <ChevronDown className='h-4 w-4' />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        {availableDomains.map((domain) => {
+      <DropdownMenuContent align='end' className='w-56'>
+        {availableDomains.map(domain => {
           const config = domainConfig[domain];
           if (!config) return null;
-          
+
           const Icon = config.icon;
           const isActive = domain === activeDomain;
 
@@ -91,15 +89,11 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
             <DropdownMenuItem
               key={domain}
               onClick={() => handleDomainSwitch(domain)}
-              className={`flex items-center gap-2 cursor-pointer ${
-                isActive ? 'bg-accent' : ''
-              }`}
+              className={`flex cursor-pointer items-center gap-2 ${isActive ? 'bg-accent' : ''}`}
             >
               <Icon className={`h-4 w-4 ${config.color}`} />
               <span>{config.title}</span>
-              {isActive && (
-                <div className="ml-auto h-2 w-2 rounded-full bg-blue-600" />
-              )}
+              {isActive && <div className='ml-auto h-2 w-2 rounded-full bg-blue-600' />}
             </DropdownMenuItem>
           );
         })}

@@ -19,7 +19,7 @@ import {
   UserCircle,
   UserCog,
   UserIcon,
-  Users
+  Users,
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';

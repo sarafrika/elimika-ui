@@ -26,7 +26,7 @@ import { formatCourseDate } from '@/lib/format-course-date';
 import {
   searchCoursesOptions,
   unpublishCourseMutation,
-  unpublishCourseQueryKey
+  unpublishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeIcon, FilePenIcon, Square, TrashIcon } from 'lucide-react';
@@ -39,7 +39,7 @@ import { toast } from 'sonner';
 export default function PublishedCoursesPage() {
   const queryClient = useQueryClient();
   const instructor = useInstructor();
-  const router = useRouter()
+  const router = useRouter();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -63,33 +63,43 @@ export default function PublishedCoursesPage() {
   const [page, setPage] = useState(0);
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data, isFetched } = useQuery(searchCoursesOptions({ query: { searchParams: { status: 'published', instructor_uuid_eq: instructor?.uuid as string, }, pageable: { page, size } } }))
+  const { data, isFetched } = useQuery(
+    searchCoursesOptions({
+      query: {
+        searchParams: { status: 'published', instructor_uuid_eq: instructor?.uuid as string },
+        pageable: { page, size },
+      },
+    })
+  );
 
   // UNPUBLISH COURSE MUTATION
   const unpublishCourse = useMutation(unpublishCourseMutation());
   const handleUnpublish = (uuid: string) => {
-    unpublishCourse.mutate({
-      path: { uuid: uuid }
-    }, {
-      onSuccess(data) {
-        if (!data?.success) {
-          toast.error(
-            typeof data?.error === 'string'
-              ? data.error
-              : 'An error occurred while unpublishing the course.'
-          )
-          return
-        }
-
-        if (data?.success) {
-          toast.success(data?.message)
-          queryClient.invalidateQueries({
-            queryKey: unpublishCourseQueryKey({ path: { uuid: data?.data?.uuid as string } })
-          });
-          router.push('/dashboard/course-management/drafts')
-        }
+    unpublishCourse.mutate(
+      {
+        path: { uuid: uuid },
       },
-    });
+      {
+        onSuccess(data) {
+          if (!data?.success) {
+            toast.error(
+              typeof data?.error === 'string'
+                ? data.error
+                : 'An error occurred while unpublishing the course.'
+            );
+            return;
+          }
+
+          if (data?.success) {
+            toast.success(data?.message);
+            queryClient.invalidateQueries({
+              queryKey: unpublishCourseQueryKey({ path: { uuid: data?.data?.uuid as string } }),
+            });
+            router.push('/dashboard/course-management/drafts');
+          }
+        },
+      }
+    );
   };
 
   const publishedCourses = data?.data?.content || [];
@@ -107,15 +117,15 @@ export default function PublishedCoursesPage() {
         </div>
       </div>
 
-      {!isFetched &&
-        <div className="flex flex-col gap-4 text-[12px] sm:text-[14px]">
-          <div className="h-20 bg-gray-200 rounded animate-pulse w-full"></div>
-          <div className="h-16 bg-gray-200 rounded animate-pulse w-full"></div>
-          <div className="h-12 bg-gray-200 rounded animate-pulse w-full"></div>
+      {!isFetched && (
+        <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
+          <div className='h-20 w-full animate-pulse rounded bg-gray-200'></div>
+          <div className='h-16 w-full animate-pulse rounded bg-gray-200'></div>
+          <div className='h-12 w-full animate-pulse rounded bg-gray-200'></div>
         </div>
-      }
+      )}
 
-      {isFetched && publishedCourses?.length === 0 &&
+      {isFetched && publishedCourses?.length === 0 && (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No published courses</h3>
@@ -123,16 +133,16 @@ export default function PublishedCoursesPage() {
             You don&apos;t have any published courses yet.
           </p>
         </div>
-      }
+      )}
 
-      {publishedCourses?.length >= 1 &&
-        <div className="rounded-t-lg border border-gray-200 overflow-hidden">
+      {publishedCourses?.length >= 1 && (
+        <div className='overflow-hidden rounded-t-lg border border-gray-200'>
           <Table>
             <TableCaption className='py-4'>A list of your published courses</TableCaption>
             <TableHeader className='bg-gray-200'>
               <TableRow>
                 <TableHead>
-                  <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
+                  <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                 </TableHead>
                 <TableHead></TableHead>
                 <TableHead>Course Name</TableHead>
@@ -148,11 +158,17 @@ export default function PublishedCoursesPage() {
                 {publishedCourses?.map((course: any) => (
                   <TableRow key={course.uuid}>
                     <TableHead>
-                      <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
+                      <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                     </TableHead>
 
                     <TableCell className='py-4'>
-                      <Image src={course?.thumbnail_url as string || "/illustration.png"} alt="thumbnail" width={48} height={48} className='rounded-md bg-stone-300 min-h-12 min-w-12' />
+                      <Image
+                        src={(course?.thumbnail_url as string) || '/illustration.png'}
+                        alt='thumbnail'
+                        width={48}
+                        height={48}
+                        className='min-h-12 min-w-12 rounded-md bg-stone-300'
+                      />
                     </TableCell>
 
                     <TableCell className='font-medium'>
@@ -221,7 +237,7 @@ export default function PublishedCoursesPage() {
             </TableBody>
           </Table>
         </div>
-      }
+      )}
 
       {/*  @ts-ignore */}
       {paginationMetadata?.totalPages >= 1 && (

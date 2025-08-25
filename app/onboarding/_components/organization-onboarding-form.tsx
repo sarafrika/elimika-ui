@@ -32,10 +32,10 @@ import { useUserProfile } from '@/context/profile-context';
 import { createOrganisation } from '@/services/client';
 import { zOrganisation } from '@/services/client/zod.gen';
 
-const OrganizationOnboardingSchema = zOrganisation.omit({ 
+const OrganizationOnboardingSchema = zOrganisation.omit({
   uuid: true,
-  domain: true, 
-  created_date: true, 
+  domain: true,
+  created_date: true,
   updated_date: true,
 });
 
@@ -79,12 +79,12 @@ export function OrganizationOnboardingForm() {
     setIsSubmitting(true);
     try {
       await createOrganisation({
-        body: data
+        body: data,
       });
 
       // Invalidate organization-related queries
       await queryClient.invalidateQueries({ queryKey: ['organisations'] });
-      
+
       // Invalidate and refetch user profile to get updated user_domain
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
       await user.invalidateQuery?.();
@@ -127,9 +127,7 @@ export function OrganizationOnboardingForm() {
                     <FormControl>
                       <Input placeholder='Elimika Training Institute' {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Official name of your organization
-                    </FormDescription>
+                    <FormDescription>Official name of your organization</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -161,9 +159,7 @@ export function OrganizationOnboardingForm() {
                     <FormControl>
                       <Input placeholder='REG-123456' {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Official license or registration number
-                    </FormDescription>
+                    <FormDescription>Official license or registration number</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -195,9 +191,7 @@ export function OrganizationOnboardingForm() {
                     <FormControl>
                       <Input placeholder='Kenya' {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Country where your organization is located
-                    </FormDescription>
+                    <FormDescription>Country where your organization is located</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -210,7 +204,7 @@ export function OrganizationOnboardingForm() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder='Describe your organization, its mission, and the types of courses you offer...'
                         className='resize-none'
                         rows={4}
@@ -218,7 +212,8 @@ export function OrganizationOnboardingForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Provide additional context about your organization&apos;s purpose and activities
+                      Provide additional context about your organization&apos;s purpose and
+                      activities
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -230,8 +225,8 @@ export function OrganizationOnboardingForm() {
           <div className='rounded-lg bg-yellow-50 p-4'>
             <h3 className='font-medium text-yellow-900'>Next Steps</h3>
             <p className='mt-1 text-sm text-yellow-700'>
-              After registration, you&apos;ll be able to create training branches, invite instructors and students,
-              and start offering courses through your organization.
+              After registration, you&apos;ll be able to create training branches, invite
+              instructors and students, and start offering courses through your organization.
             </p>
           </div>
 
