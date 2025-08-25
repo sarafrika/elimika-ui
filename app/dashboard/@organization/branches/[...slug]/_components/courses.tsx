@@ -1,7 +1,8 @@
+import { Book } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "../../../../../../components/ui/card";
 import { Course, getAllCourses } from "../../../../../../services/client";
 
-export default async function Courses() {
+export default async function Courses({ user_uuid }: { user_uuid: string }) {
 
     const coursesResp = await getAllCourses({
         query: {
@@ -19,12 +20,12 @@ export default async function Courses() {
     const courses = coursesResp.data.data.content as Course[];
 
     return (<>
-        {courses.map(course => <Card>
+        {courses.map(course => <Card key={course.uuid}>
             <CardHeader>
                 <CardTitle>{course.name}</CardTitle>
             </CardHeader>
 
-            <img src={course.thumbnail_url} className="w-full object-fit" />
+            {course.thumbnail_url && course.thumbnail_url.length > 0 ? <img src={course.thumbnail_url} className="w-full object-fit" /> : <Book size={256} color="gray-500" />}
         </Card>)}
     </>);
 

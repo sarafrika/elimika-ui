@@ -9,11 +9,13 @@ import Courses from "./_components/courses";
 import { Action } from "./utils";
 
 export default async function ViewBranch({
-    params
+    params,
+    ...slots
 }: {
     params: Promise<{ slug: Action[] }>
 }) {
-    const { slug: [branch_uuid] } = await params;
+    const { slug: [branch_uuid, tab] } = await params;
+
     if (branch_uuid == "new" || branch_uuid == "edit") {
         return null;
     }
@@ -67,7 +69,7 @@ export default async function ViewBranch({
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-3 gap-4">
-                                <Courses />
+                                <Courses user_uuid={branch.organisation_uuid} />
                             </div>
                         </CardContent>
                     </Card>

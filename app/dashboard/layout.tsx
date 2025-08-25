@@ -1,5 +1,4 @@
-'use client';
-
+"use client"
 import { AppSidebar } from '@/components/app-sidebar';
 import DashboardMainContent from '@/components/dashboard-main-content';
 import { DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
@@ -15,6 +14,7 @@ import TrainingCenterProvider from '../../context/training-center-provide';
 
 type OrgDomainType = DashboardView | 'organisation_user';
 export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) {
+
   const profile = useUserProfile();
   const router = useRouter();
 
