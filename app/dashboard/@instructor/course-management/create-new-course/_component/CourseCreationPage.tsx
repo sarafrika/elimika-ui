@@ -7,7 +7,9 @@ import {
 import {
   AssessmentDialog,
   AssessmentList,
+  ContentFormValues,
   EditLessonDialog,
+  LessonContentDialog,
   LessonDialog,
   LessonFormValues,
   LessonList
@@ -21,6 +23,7 @@ import { StepperContent, StepperList, StepperRoot, StepperTrigger } from '@/comp
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
   deleteCourseLessonMutation,
+  deleteLessonContentMutation,
   getAllContentTypesOptions,
   getCourseByUuidOptions,
   getCourseLessonOptions,
@@ -33,13 +36,13 @@ import {
   publishCourseQueryKey,
   searchAssessmentsOptions
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, BookOpenCheck, Check, CheckCircle, List } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ICourse, TLesson } from '../../../_components/instructor-type';
+import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
 
 export default function CourseCreationPage() {
   const router = useRouter();
@@ -79,6 +82,17 @@ export default function CourseCreationPage() {
     setSelectedLesson(lesson);
     setEditLessonModalOpen(true);
   };
+
+  const [selectedContent, setSelectedContent] = useState<TLessonContentItem | null>(null);
+  const [addContentModalOpen, setAddContentModalOpen] = useState(false);
+  const openAddContentModal = (lesson: any) => {
+    setSelectedLesson(lesson); setAddContentModalOpen(true)
+  };
+
+  const openEditContentModal = (content: TLessonContentItem) => {
+    setAddContentModalOpen(true)
+    setSelectedContent(content)
+  }
 
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
@@ -149,6 +163,33 @@ export default function CourseCreationPage() {
   // @ts-ignore
   const lesson = lessonData?.data
 
+  const lessonContentQueries = useQueries({
+    queries: (courseLessons?.data?.content || []).map((lesson) => {
+      const options = getLessonContentOptions({
+        path: { courseUuid: resolveId, lessonUuid: lesson?.uuid as string },
+      });
+
+      return {
+        queryKey: getLessonContentQueryKey({
+          path: {
+            courseUuid: resolveId,
+            lessonUuid: lesson?.uuid as string,
+          },
+        }),
+        queryFn: options.queryFn,
+        enabled: !!resolveId,
+      };
+    }),
+  });
+
+  const lessonContentMap = new Map();
+
+  (courseLessons?.data?.content || []).forEach((lesson, index) => {
+    const query = lessonContentQueries[index];
+    const contents = query?.data?.data || [];
+    lessonContentMap.set(lesson.uuid, contents);
+  });
+
   // GET COURSE LESSON CONTENT 
   const { data: lessonContentData } = useQuery({
     ...getLessonContentOptions({
@@ -156,6 +197,7 @@ export default function CourseCreationPage() {
     }),
     enabled: !!resolveId && !!selectedLesson?.uuid,
   });
+
 
   // const contentData = lessonContentData?.data?.[0];
   const lessonContent = lessonContentData?.data?.map((item: any) => ({
@@ -205,7 +247,6 @@ export default function CourseCreationPage() {
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
-    // resources: [],
     uuid: lesson?.uuid as string,
     title: lesson?.title,
     description: lesson?.description,
@@ -213,10 +254,21 @@ export default function CourseCreationPage() {
     number: lesson?.lesson_number,
     duration_hours: String(lesson?.duration_hours ?? '0'),
     duration_minutes: String(lesson?.duration_minutes ?? '0'),
-    // map content if multiple content upload is allowed
-    content: content,
+    // resources: [],
   };
 
+  const contentInitialValues: Partial<ContentFormValues> = {
+    uuid: selectedContent?.uuid,
+    display_order: selectedContent?.display_order,
+    content_category: selectedContent?.content_category,
+    // content_type: selectedContent?.content_type || "",
+    content_type_uuid: selectedContent?.content_type_uuid,
+    // duration_hours: selectedContent?.duration_hours,
+    // duration_minutes: selectedContent?.duration_minutes,
+    // estimated_duration: "",
+    title: selectedContent?.title,
+    // value: selectedContent?.value
+  }
 
   // GET COURSE ASSESSMENTS
   const { data: assessmentData, isLoading: assessmentLoading } = useQuery(searchAssessmentsOptions({ query: { searchParams: { courseUuid: resolveId }, pageable: { page: 0, size: 100 } } }));
@@ -263,6 +315,26 @@ export default function CourseCreationPage() {
     } catch (err) { }
   };
 
+  const deleteLessonContent = useMutation(deleteLessonContentMutation())
+  const handleDeleteContent = async (resolvedId: any, lessonId: any, contentId: any) => {
+    if (!course?.data?.uuid) return;
+
+    try {
+      await deleteLessonContent.mutateAsync({
+        path: { courseUuid: course?.data?.uuid as string, lessonUuid: lessonId, contentUuid: contentId as string }
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: getLessonContentQueryKey({
+              path: { courseUuid: resolvedId, lessonUuid: lessonId },
+            })
+          });
+          toast.success('Lesson content deleted successfully');
+        },
+      });
+    } catch (err) { }
+  }
+
   if (courseId && !courseInitialValues) {
     return (
       <div className='flex items-center justify-center'>
@@ -270,56 +342,6 @@ export default function CourseCreationPage() {
       </div>
     );
   }
-
-  const handleDeleteContent = (resolvedId: any, lessonId: any, contentId: any) => {
-    console.log(`deleting ${resolvedId} ${lessonId} ${contentId}  `)
-  }
-
-  const handleEditContent = (resolvedId: any, lessonId: any, contentId: any) => {
-    console.log(`editing ${resolvedId} ${lessonId} ${contentId} `)
-  }
-  const sampleLessonContents = [
-    {
-      uuid: "3543a246-5f2b-4653-b7f1-46768539cd41",
-      lesson_uuid: "0c720e16-881c-406f-b279-01a2d6126e84",
-      content_type_uuid: "70165f4b-1721-406c-b18e-d1f3e5d9e3a1",
-      content_type: "TEXT",
-      title: "Open Strings",
-      description: "<p>In this lesson, students will learn how to produce their first clear sounds on the violin by bowing the four open strings (G, D, A, E). The focus will be on developing a smooth and sustained tone without using the fingers to stop the strings. Students will also become familiar with basic bowing directions—down-bow and up-bow—to build control and consistency.</p><p></p>",
-      content_text: "https://chatgpt.com/",
-      file_url: "",
-      display_order: 1,
-      is_required: true,
-      file_size_bytes: null,
-      mime_type: null,
-      created_date: "2025-08-22T07:41:38.965825",
-      created_by: "3ede2548-f668-420d-9105-966c87525e35",
-      updated_date: "2025-08-22T10:41:38.966291",
-      updated_by: null,
-      content_category: "Text Content",
-      file_size_display: "No file"
-    },
-    {
-      uuid: "3543a246-5f2b-4653-b7f1-46768539cd51",
-      lesson_uuid: "0c720e16-881c-406f-b279-01a2d6126e84",
-      content_type_uuid: "70165f4b-1721-406c-b18e-d1f3e5d9e3a1",
-      content_type: "VIDEO",
-      title: "Open Strings",
-      description: "<p>In this lesson, students will learn how to produce their first clear sounds on the violin by bowing the four open strings (G, D, A, E). The focus will be on developing a smooth and sustained tone without using the fingers to stop the strings. Students will also become familiar with basic bowing directions—down-bow and up-bow—to build control and consistency.</p><p></p>",
-      content_text: "https://chatgpt.com/",
-      file_url: "",
-      display_order: 1,
-      is_required: true,
-      file_size_bytes: null,
-      mime_type: null,
-      created_date: "2025-08-22T07:41:38.965825",
-      created_by: "3ede2548-f668-420d-9105-966c87525e35",
-      updated_date: "2025-08-22T10:41:38.966291",
-      updated_by: null,
-      content_category: "Text Content",
-      file_size_display: "No file"
-    }
-  ]
 
   return (
     <div className='container mx-auto'>
@@ -373,6 +395,7 @@ export default function CourseCreationPage() {
               isLoading={lessonsIsLoading}
               courseTitle={course?.data?.name as string}
               courseId={resolveId}
+              lessonId={selectedLesson?.uuid as string}
               courseCategory={course?.data?.category_names}
               // lessons
               lessons={courseLessons?.data}
@@ -383,9 +406,10 @@ export default function CourseCreationPage() {
               onAddAssessment={openAddAssessmentModal}
               onReorderLessons={() => { }}
               // lesson content
-              lessonContents={sampleLessonContents}
-              onAddLessonContent={() => { }}
-              onEditLessonContent={handleEditContent}
+              // lessonContents={sampleLessonContents}
+              lessonContentsMap={lessonContentMap}
+              onAddLessonContent={openAddContentModal}
+              onEditLessonContent={openEditContentModal}
               onDeleteLessonContent={handleDeleteContent}
             />
 
@@ -393,6 +417,7 @@ export default function CourseCreationPage() {
               isOpen={addLessonModalOpen}
               onOpenChange={setAddLessonModalOpen}
               courseId={createdCourseId ? createdCourseId : (courseId as string)}
+              lessonId={selectedLesson?.uuid as string}
               onCancel={() => setAddLessonModalOpen(false)}
             />
 
@@ -425,14 +450,22 @@ export default function CourseCreationPage() {
               />
             )}
 
+            <LessonContentDialog
+              courseId={resolveId}
+              lessonId={selectedLesson?.uuid || selectedContent?.lesson_uuid as string}
+              contentId={selectedContent?.uuid as string}
+              isOpen={addContentModalOpen}
+              onOpenChange={setAddContentModalOpen}
+              onCancel={() => { setSelectedContent(null); setAddContentModalOpen(false) }}
+              initialValues={contentInitialValues}
+            />
+
             <AssessmentDialog
               isOpen={addAssessmentModalOpen}
               onOpenChange={setAddAssessmentModalOpen}
               courseId={createdCourseId ? createdCourseId : (courseId as string)}
-              onCancel={() => { }}
+              onCancel={() => setAddAssessmentModalOpen(false)}
             />
-
-
           </div>
         </StepperContent>
 

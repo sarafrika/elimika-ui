@@ -57,3 +57,27 @@ export type TLesson = {
   // ✅ allows any other property
   [key: string]: unknown;
 };
+
+export type TLessonContentItem = {
+  uuid: string;
+  lesson_uuid: string;
+  content_type_uuid: string;
+  content_type: 'TEXT' | 'VIDEO' | 'AUDIO' | string; // Adjust or extend as needed
+  title: string;
+  description: string;
+  content_text: string | null;
+  file_url: string | null;
+  display_order: number;
+  is_required: boolean;
+  file_size_bytes: number | null;
+  mime_type: string | null;
+  created_date: string; // ISO date string
+  created_by: string;
+  updated_date: string;
+  updated_by: string | null;
+  content_category: string;
+  file_size_display: string;
+  duration_minutes: string;
+  duration_hours: string
+};
+

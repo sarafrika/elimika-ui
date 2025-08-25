@@ -63,22 +63,25 @@ import {
   FieldErrors,
   SubmitHandler,
   useFieldArray,
-  useForm,
-  useFormContext,
-  useWatch,
+  useForm
 } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
-import { addCourseAssessment, addCourseLesson, addLessonContent, getCourseByUuid, updateCourseLesson, updateLessonContent } from '@/services/client';
+import { addCourseAssessment } from '@/services/client';
 import {
-  addCourseLessonQueryKey,
+  addCourseLessonMutation,
+  addLessonContentMutation,
   deleteCourseAssessmentMutation,
   getAllContentTypesOptions,
+  getCourseByUuidOptions,
   getCourseLessonsQueryKey,
+  getLessonContentQueryKey,
   searchAssessmentsQueryKey,
-  updateCourseAssessmentMutation
+  updateCourseAssessmentMutation,
+  updateCourseLessonMutation,
+  updateLessonContentMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AddRubricForm } from './rubric-management-form';
@@ -106,6 +109,17 @@ const contentItemSchema = z.object({
     .min(0, 'Duration minutes must be positive')
     .max(59, 'Minutes must be less than 60'),
   durationHours: z.coerce.number().min(0, 'Duration hours must be positive'),
+  //
+  display_order: z.preprocess(
+    val => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      return Number(val);
+    },
+    z.number({
+      required_error: 'This field is required',
+      invalid_type_error: 'Must be a valid number',
+    })
+  ),
 });
 
 const resourceSchema = z.object({
@@ -125,7 +139,7 @@ const lessonFormSchema = z.object({
     })
   ),
   title: z.string().min(1, 'Lesson title is required'),
-  content: z.array(contentItemSchema),
+  // content: z.array(contentItemSchema),
   resources: z.array(resourceSchema),
   description: z.string().min(1, 'Lesson description is required').max(1000, "Description cannot exceed 1000 characters"),
   objectives: z.string().max(500, "Objectives cannot exceed 500 characters").optional(),
@@ -218,215 +232,9 @@ function getContentPlaceholder(contentType: string) {
   }
 }
 
-function ContentItemForm({ control, index, onRemove, isOnly }: ContentItemFormProps) {
-  const contentTypeUuid = useWatch({
-    control,
-    name: `content.${index}.contentType`,
-  });
-  const { setValue } = useFormContext();
-
-  // GET COURSE CONTENT TYPES
-  const { data: contentTypeList } = useQuery(getAllContentTypesOptions({
-    query: {
-      pageable: {
-        page: 0,
-        size: 100
-      }
-    }
-  }));
-
-  const contentTypeData = React.useMemo(() => {
-    const respdata = contentTypeList!.data! as { content: any[] }
-    return respdata?.content ?? {};
-  }, [contentTypeList]);
-
-  // Lookup type key from uuid (e.g., "VIDEO")
-  const selectedTypeKey = React.useMemo(() => {
-    if (!contentTypeUuid) return undefined;
-    const match = Object.entries(contentTypeData).find(([_, val]: [string, any]) => {
-      return val?.uuid === contentTypeUuid;
-    });
-    return match?.[0];
-  }, [contentTypeUuid, contentTypeData]);
-
-  return (
-    <div className='space-y-4 rounded-lg border p-4'>
-      <div className='flex items-center justify-between'>
-        <h4 className='font-medium'>Content Item {index + 1}</h4>
-        {!isOnly && (
-          <Button type='button' variant='ghost' size='sm' onClick={onRemove}>
-            <X className='h-4 w-4 text-red-500' />
-          </Button>
-        )}
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <FormField
-          control={control}
-          name={`content.${index}.contentTypeUuid`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Content Type</FormLabel>
-              <Select
-                onValueChange={val => {
-                  const parsed = JSON.parse(val);
-                  setValue(`content.${index}.contentType`, parsed.name.toUpperCase());
-                  setValue(`content.${index}.contentTypeUuid`, parsed.uuid);
-                  setValue(`content.${index}.contentCategory`, parsed.upload_category);
-                }}
-                value={
-                  contentTypeUuid
-                    ? JSON.stringify(
-                      Object.values(contentTypeData).find((v: any) => v.uuid === contentTypeUuid)
-                    )
-                    : ''
-                }
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select content type' />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {Object.entries(contentTypeData).map(([key, value]) => {
-                    const typedValue = value as { uuid: string; name: string; upload_category: string };
-                    const Icon = ContentTypeIcons[typedValue?.name?.toUpperCase() as keyof typeof ContentTypeIcons];
-
-                    return (
-                      <SelectItem key={typedValue.uuid} value={JSON.stringify(typedValue)}>
-                        <div className='flex items-center gap-2'>
-                          {Icon && <Icon className='h-4 w-4' />}
-                          <span>{typedValue.name}</span>
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name={`content.${index}.contentTypeUuid`}
-          render={({ field }) => <input type='hidden' {...field} />}
-        ></FormField>
-
-        <FormField
-          control={control}
-          name={`content.${index}.title`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder='Enter content title' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      {selectedTypeKey === 'TEXT' ? (
-        <FormField
-          control={control}
-          name={`content.${index}.value`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Content</FormLabel>
-              <FormControl>
-                <SimpleEditor
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      ) : (
-        <>
-          {['PDF', 'AUDIO', 'IMAGE', 'VIDEO'].includes(selectedTypeKey || '') && (
-            <FormField
-              control={control}
-              name={`content.${index}.value`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>File Upload</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='file'
-                      accept={
-                        ACCEPTED_FILE_TYPES[selectedTypeKey as keyof typeof ACCEPTED_FILE_TYPES]
-                      }
-                      onChange={e => field.onChange(e.target.files?.[0])}
-                    />
-                  </FormControl>
-                  <FormDescription>Upload a file or provide a URL below</FormDescription>
-                </FormItem>
-              )}
-            />
-          )}
-
-          <FormField
-            control={control}
-            name={`content.${index}.value`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  {['VIDEO', 'AUDIO', 'PDF'].includes(selectedTypeKey || '')
-                    ? 'Or External URL'
-                    : 'URL'}
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type='url'
-                    placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </>
-      )}
-
-      <FormField
-        control={control}
-        name={`content.${index}.durationHours`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Duration (hours)</FormLabel>
-            <FormControl>
-              <Input type='number' min='0' step='0.5' {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name={`content.${index}.durationMinutes`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Duration (minutes)</FormLabel>
-            <FormControl>
-              <Input type='number' min='0' step='0.5' {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </div>
-  );
-}
-
 type LessonListProps = {
   courseId: string;
+  lessonId: string
   courseTitle: string;
   courseCategory: any;
   // lessons
@@ -439,15 +247,17 @@ type LessonListProps = {
   onReorderLessons: (newLessons: any[]) => void;
   onAddAssessment: (lesson: any) => void;
   // lesson contents
-  lessonContents: any,
+  // lessonContentsMap: Map<string, LessonContent[]>
+  lessonContentsMap: Map<string, any[]>
   onAddLessonContent: (lesson: any) => void,
-  onEditLessonContent: (courseId: any, lessonId: any, contentId: any) => void
+  onEditLessonContent: (item: any) => void
   onDeleteLessonContent: (courseId: any, lessonId: any, contentId: any) => void
 };
 
 function LessonList({
   courseId,
   courseTitle,
+  lessonId,
   courseCategory,
   // lessons
   lessons,
@@ -459,7 +269,7 @@ function LessonList({
   onReorderLessons,
   onAddAssessment,
   // lesson contents
-  lessonContents,
+  lessonContentsMap,
   onAddLessonContent,
   onEditLessonContent,
   onDeleteLessonContent
@@ -504,6 +314,7 @@ function LessonList({
         <div className="space-y-3">
           {lessons?.content.map((lesson: any, index: any) => {
             const isExpanded = expandedLessonId === lesson.uuid;
+            const contents = lessonContentsMap.get(lesson.uuid) || [];
 
             return (
               <div
@@ -539,7 +350,7 @@ function LessonList({
                           </DropdownMenuItem>
 
                           <DropdownMenuItem onClick={() => onAddLessonContent(lesson)}>
-                            <PenLine className="mr-1 h-4 w-4" />
+                            <PlusCircle className="mr-1 h-4 w-4" />
                             Add Lesson Content
                           </DropdownMenuItem>
 
@@ -571,8 +382,8 @@ function LessonList({
                       <div className="flex items-center gap-1.5">
                         <BookOpen className="h-4 w-4" />
                         <span>
-                          {lessonItems?.length || "0"}{" "}
-                          {lessonItems?.length === 1 ? "item" : "items"}
+                          {contents.length || "0"}{" "}
+                          {contents.length === 1 ? "item" : "items"}
                         </span>
                       </div>
 
@@ -603,8 +414,8 @@ function LessonList({
 
                 {isExpanded && (
                   <div className="pl-10 mt-2 space-y-2">
-                    {lessonContents.length > 0 ? (
-                      lessonContents
+                    {contents.length > 0 ? (
+                      contents
                         .sort((a: any, b: any) => a.display_order - b.display_order)
                         .map((item: any) => (
                           <div
@@ -645,7 +456,7 @@ function LessonList({
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem
-                                  onClick={() => onEditLessonContent(courseId, item.lesson_uuid, item.uuid)}
+                                  onClick={() => onEditLessonContent(item)}
                                 >
                                   <PenLine className="mr-1 h-4 w-4" />
                                   Edit Content
@@ -674,7 +485,6 @@ function LessonList({
                       </div>
                     )}
                   </div>
-
                 )}
 
               </div>
@@ -706,7 +516,6 @@ interface AppLessonCreationFormProps {
   lessonId?: string | number;
   initialValues?: Partial<LessonFormValues>;
   refetch: any;
-  editSuccessRespones?: (data: any) => void;
 }
 
 function LessonCreationForm({
@@ -722,17 +531,8 @@ function LessonCreationForm({
       title: '',
       description: '',
       objectives: '',
-      content: [
-        {
-          contentType: 'TEXT',
-          title: '',
-          contentTypeUuid: '',
-          contentCategory: '',
-          durationMinutes: 0,
-          durationHours: 0,
-          value: undefined,
-        },
-      ],
+      duration_hours: '',
+      duration_minutes: '',
       resources: [],
     },
   });
@@ -750,15 +550,6 @@ function LessonCreationForm({
   };
 
   const {
-    fields: contentFields,
-    append: appendContent,
-    remove: removeContent,
-  } = useFieldArray({
-    control: form.control,
-    name: 'content',
-  });
-
-  const {
     fields: resourceFields,
     append: appendResource,
     remove: removeResource,
@@ -767,30 +558,17 @@ function LessonCreationForm({
     name: 'resources',
   });
 
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
 
   // QUERY
   const { data: courseDetail } = useQuery({
-    queryKey: ["courses"],
-    queryFn: () => getCourseByUuid({ path: { uuid: courseId as string } }),
+    ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
     enabled: !!courseId,
-  });
-  const course = courseDetail?.data?.data;
+  })
+  const course = courseDetail?.data;
 
   // MUTATION
-  const { mutate: createLessonMutation, isPending: createLessonIsPending } = useMutation({
-    mutationKey: [addCourseLessonQueryKey],
-    mutationFn: ({ uuid, body }: { uuid: string; body: any }) =>
-      addCourseLesson({ body, path: { courseUuid: uuid } }),
-    onSuccess: () => (queryClient.invalidateQueries({ queryKey: ["courses"] }))
-  });
-
-  const { mutate: createLessonContentMutation, isPending: createLessonContentIsPending } =
-    useMutation({
-      mutationKey: [addCourseLessonQueryKey],
-      mutationFn: ({ uuid, lessonUuid, body }: { uuid: string; lessonUuid: string; body: any }) =>
-        addLessonContent({ body, path: { courseUuid: uuid, lessonUuid: lessonUuid } }),
-    });
+  const createLessonMutation = useMutation(addCourseLessonMutation())
 
   const onSubmitCreateLesson: SubmitHandler<LessonFormValues> = values => {
     const createLessonBody = {
@@ -798,9 +576,9 @@ function LessonCreationForm({
       title: values?.title,
       description: values?.description as string,
       learning_objectives: values?.objectives as string,
-      duration_hours: Number(values?.content[0]?.durationHours),
-      duration_minutes: Number(values?.content[0]?.durationMinutes),
-      duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
+      duration_hours: values.duration_hours,
+      duration_minutes: values.duration_minutes,
+      duration_display: `${values.duration_hours} ${values.duration_minutes}`,
       status: course?.status as any,
       active: course?.active,
       is_published: course?.is_published,
@@ -809,65 +587,20 @@ function LessonCreationForm({
       lesson_sequence: `Lesson ${values?.number}`,
     };
 
-    createLessonMutation(
-      { body: createLessonBody, uuid: courseId as string },
+    createLessonMutation.mutate(
+      { body: createLessonBody, path: { courseUuid: courseId as string } },
       {
-        onSuccess: lessonResponse => {
-          queryClient.invalidateQueries({
+        onSuccess: (data) => {
+          qc.invalidateQueries({
             queryKey: getCourseLessonsQueryKey({
               path: { courseUuid: courseId as string },
               query: { pageable: { page: 0, size: 100 } }
             })
           });
-
-          const lessonUuid = lessonResponse?.data?.data?.uuid as string;
-
-          if (!lessonUuid) {
-            toast.error('Lesson uuid missing from response.');
-            return;
-          }
-
-          const createContentBody = {
-            lesson_uuid: lessonUuid as string,
-            content_type_uuid: values.content[0]?.contentTypeUuid ?? '',
-            title: values?.title,
-            description: values?.description ?? '',
-            content_text: values.content[0]?.value || '',
-            file_url: '',
-            file_size_bytes: 157200,
-            mime_type: values.content[0]?.value || '',
-            display_order: values?.number,
-            is_required: true,
-            created_by: 'instructor@sarafrika.com',
-            updated_by: 'instructor@sarafrika.com',
-            file_size_display: '',
-            // content_category: values.contentCategory,
-            // is_downloadable: true,
-            // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
-          };
-
-          createLessonContentMutation(
-            {
-              body: createContentBody,
-              uuid: courseId as string,
-              lessonUuid: lessonUuid,
-            },
-            {
-              onSuccess: (data: any) => {
-                toast.success('Lesson content created successfully.');
-                queryClient.invalidateQueries({
-                  queryKey: getCourseLessonsQueryKey({
-                    path: { courseUuid: courseId as string },
-                    query: { pageable: { page: 0, size: 100 } }
-                  })
-                });
-                onCancel();
-              },
-            }
-          );
+          toast.success(data?.message)
+          onCancel()
         },
       },
-
     );
   };
 
@@ -938,45 +671,34 @@ function LessonCreationForm({
               </FormItem>
             )}
           />
-        </div>
 
-        <div className='space-y-4'>
-          <FormSection
-            title='Lesson Content'
-            description='Add multiple content items to your lesson'
-          >
-            <div className='space-y-4'>
-              {contentFields.map((field, index) => (
-                <ContentItemForm
-                  key={field.id}
-                  control={form.control}
-                  index={index}
-                  onRemove={() => removeContent(index)}
-                  isOnly={contentFields.length === 1}
-                />
-              ))}
-            </div>
-          </FormSection>
+          {/* Duration Hours */}
+          <FormField
+            name="duration_hours"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration (hours)</FormLabel>
+                <FormControl>
+                  <Input type="number" min={0} step={1} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          <Button
-            type='button'
-            variant='outline'
-            // onClick={() =>
-            //   appendContent({
-            //     contentType: "TEXT",
-            //     title: "",
-            //     value: "",
-            //     contentCategory: "",
-            //     contentUuid: "",
-            //     durationHours: 0,
-            //     durationMinutes: 0,
-            //   })
-            // }
-            onClick={() => toast.message('Cannot add more contents at the moment')}
-          >
-            <PlusCircle className='mr-2 h-4 w-4' />
-            Add Content Item
-          </Button>
+          {/* Duration Minutes */}
+          <FormField
+            name="duration_minutes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration (minutes)</FormLabel>
+                <FormControl>
+                  <Input type="number" min={0} max={59} step={1} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className='space-y-4'>
@@ -1041,7 +763,7 @@ function LessonCreationForm({
             Cancel
           </Button>
           <Button type='submit' className='w-[120px]'>
-            {createLessonIsPending || createLessonContentIsPending ? <Spinner /> : 'Create Lesson'}
+            {createLessonMutation.isPending ? <Spinner /> : 'Create Lesson'}
           </Button>
         </div>
       </form>
@@ -1055,16 +777,8 @@ function LessonEditingForm({
   courseId,
   initialValues,
   lessonId,
-  editSuccessRespones,
 }: AppLessonCreationFormProps) {
-  const normalizedInitialValues = {
-    ...initialValues,
-    content: initialValues?.content
-      ? Array.isArray(initialValues.content)
-        ? initialValues.content
-        : [initialValues.content]
-      : [],
-  };
+  const normalizedInitialValues = { ...initialValues };
 
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
@@ -1073,7 +787,6 @@ function LessonEditingForm({
       title: '',
       description: '',
       resources: [],
-      // content: [{ contentType: 'TEXT', title: '' }],
       ...normalizedInitialValues,
     },
   });
@@ -1091,15 +804,6 @@ function LessonEditingForm({
   };
 
   const {
-    fields: contentFields,
-    append: appendContent,
-    remove: removeContent,
-  } = useFieldArray({
-    control: form.control,
-    name: 'content',
-  });
-
-  const {
     fields: resourceFields,
     append: appendResource,
     remove: removeResource,
@@ -1108,38 +812,23 @@ function LessonEditingForm({
     name: 'resources',
   });
 
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
 
-  const useGetCourseById = () => {
-    return useQuery({
-      queryKey: ["course-id"],
-      queryFn: () => getCourseByUuid({ path: { uuid: courseId as string } }).then(res => res.data),
-    });
-  };
-  const { data: courseData } = useGetCourseById();
+  const { data: courseData } = useQuery({
+    ...getCourseByUuidOptions({ path: { uuid: courseId as string } })
+  })
 
-  const updateLessonMutation = useMutation({
-    mutationFn: ({ body, courseId, lessonId }: { body: any; courseId: string, lessonId: string }) =>
-      updateCourseLesson({ body, path: { courseUuid: courseId, lessonUuid: lessonId } }),
-
-  });
-
-  const updateLessonContentMutation = useMutation({
-    mutationFn: ({ body, courseId, lessonId, contentId }: { body: any; courseId: string, lessonId: string, contentId: string }) =>
-      updateLessonContent({ body, path: { courseUuid: courseId, lessonUuid: lessonId, contentUuid: contentId } }),
-
-  });
-
+  const updateLessonMutation = useMutation(updateCourseLessonMutation());
 
   const onSubmitEditLesson = (values: LessonFormValues) => {
     const updateLessonBody = {
       course_uuid: courseId as string,
       title: values?.title,
       description: values?.description ?? '',
-      learning_objectives: "",
-      duration_hours: Number(values?.content[0]?.durationHours),
-      duration_minutes: Number(values?.content[0]?.durationMinutes),
-      duration_display: `${values?.content[0]?.durationHours}hours ${values?.content[0]?.durationMinutes}minutes`,
+      learning_objectives: values.description,
+      duration_hours: values.duration_hours,
+      duration_minutes: values.duration_minutes,
+      duration_display: `${values.duration_hours} ${values.duration_minutes}`,
       status: courseData?.data?.status,
       active: courseData?.data?.active,
       is_published: courseData?.data?.is_published,
@@ -1150,60 +839,34 @@ function LessonEditingForm({
 
     updateLessonMutation.mutate(
       {
-        body: updateLessonBody,
-        courseId: courseId as string,
-        lessonId: lessonId as string
+        body: updateLessonBody as any,
+        path: {
+          courseUuid: courseId as string,
+          lessonUuid: lessonId as string
+        }
       },
       {
         onSuccess: (data) => {
-          toast.success(data?.data?.message);
+          qc.invalidateQueries({ queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId as string }, query: { pageable: {} } }) })
+
+          toast.success(data?.message);
           onCancel();
 
-          if (typeof editSuccessRespones === 'function') {
-            editSuccessRespones(data?.data);
-          }
-
-          const updateLessonContentBody = {
-            lesson_uuid: lessonId as string,
-            content_type_uuid: values.content[0]?.contentTypeUuid as string,
-            title: values?.title,
-            description: values?.description ?? '',
-            content_text: values.content[0]?.value || '',
-            file_url: '',
-            file_size_bytes: 157200,
-            mime_type: values.content[0]?.value || '',
-            display_order: values?.number,
-            is_required: true,
-            created_by: 'instructor@sarafrika.com',
-            updated_by: 'instructor@sarafrika.com',
-            file_size_display: '',
-          }
-
-          updateLessonContentMutation.mutate(
-            {
-              body: updateLessonContentBody,
-              courseId: courseId as string,
-              lessonId: lessonId as string,
-              contentId: (initialValues?.content as any)?.[0]?.uuid as string,
-
-            },
-            {
-              onSuccess: data => {
-                toast.success(data?.data?.message);
-                onCancel();
-
-                if (typeof editSuccessRespones === 'function') {
-                  editSuccessRespones(data?.data);
-                  queryClient.invalidateQueries({
-                    queryKey: getCourseLessonsQueryKey({
-                      path: { courseUuid: courseId as string },
-                      query: { pageable: { page: 0, size: 100 } }
-                    })
-                  });
-                }
-              },
-            }
-          );
+          // const updateLessonContentBody = {
+          //   lesson_uuid: lessonId as string,
+          //   content_type_uuid: values.content[0]?.contentTypeUuid as string,
+          //   title: values?.title,
+          //   description: values?.description ?? '',
+          //   content_text: values.content[0]?.value || '',
+          //   file_url: '',
+          //   file_size_bytes: 157200,
+          //   mime_type: values.content[0]?.value || '',
+          //   display_order: values?.number,
+          //   is_required: true,
+          //   created_by: 'instructor@sarafrika.com',
+          //   updated_by: 'instructor@sarafrika.com',
+          //   file_size_display: '',
+          // }
         },
       }
     );
@@ -1261,58 +924,33 @@ function LessonEditingForm({
             )}
           />
 
-          {/* <FormField
-            control={form.control}
-            name="objectives"
+          {/* Duration Hours */}
+          <FormField
+            name="duration_hours"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Lesson Objectives</FormLabel>
+                <FormLabel>Duration (hours)</FormLabel>
                 <FormControl>
-                  <WysiwygRichTextEditor initialContent={field.value} onChange={field.onChange} />
+                  <Input type="number" min={0} step={1} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
-          /> */}
-        </div>
+          />
 
-        <div className='space-y-4'>
-          <FormSection
-            title='Lesson Content'
-            description='Add multiple content items to your lesson'
-          >
-            <div className='space-y-4'>
-              {contentFields.map((field, index) => (
-                <ContentItemForm
-                  key={field.id}
-                  control={form.control}
-                  index={index}
-                  onRemove={() => removeContent(index)}
-                  isOnly={contentFields.length === 1}
-                />
-              ))}
-            </div>
-          </FormSection>
-
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() =>
-              appendContent({
-                contentType: "TEXT",
-                title: "",
-                value: "",
-                contentCategory: "",
-                contentTypeUuid: "",
-                durationHours: 0,
-                durationMinutes: 0,
-              })
-            }
-          // onClick={() => toast.message('Cannot add more contents at the moment')}
-          >
-            <PlusCircle className='mr-2 h-4 w-4' />
-            Add Content Item
-          </Button>
+          {/* Duration Minutes */}
+          <FormField
+            name="duration_minutes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration (minutes)</FormLabel>
+                <FormControl>
+                  <Input type="number" min={0} max={59} step={1} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className='space-y-4'>
@@ -1379,6 +1017,355 @@ function LessonEditingForm({
           <Button type='submit' className='w-[120px]'>
             {updateLessonMutation.isPending ? <Spinner /> : 'Edit Lesson'}
           </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+interface LessonContentFormProps {
+  onCancel: () => void;
+  className?: string;
+  courseId?: string | number;
+  lessonId?: string | number;
+  contentId?: string | number;
+  initialValues?: Partial<ContentFormValues>;
+}
+
+const lessonContentSchema = z.object({
+  content_type: z.enum(['AUDIO', 'VIDEO', 'TEXT', 'LINK', 'PDF', 'YOUTUBE'], {
+    required_error: 'Content type is required',
+  }),
+  content_type_uuid: z.string().min(1, 'Content type UUID is required'),
+  content_category: z.string().min(1, 'Content category is required'),
+  title: z.string().min(1, 'Title is required'),
+  value: z.any().optional(),
+  duration_minutes: z.coerce.number()
+    .min(0, 'Duration minutes must be positive')
+    .max(59, 'Minutes must be less than 60'),
+  duration_hours: z.coerce.number().min(0, 'Duration hours must be positive'),
+  estimated_duration: z.coerce.number().min(0, 'Estimated duration must be positive'),
+  display_order: z.preprocess(
+    val => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      return Number(val);
+    },
+    z.number({
+      required_error: 'This field is required',
+      invalid_type_error: 'Must be a valid number',
+    })
+  ),
+  uuid: z.any().optional(),
+});
+
+export type ContentFormValues = z.infer<typeof lessonContentSchema>;
+
+function LessonContentForm({ onCancel, className, courseId, contentId, lessonId, initialValues }: LessonContentFormProps) {
+  const form = useForm<ContentFormValues>({
+    resolver: zodResolver(lessonContentSchema),
+    defaultValues: {
+      content_type: 'TEXT',
+      content_type_uuid: '',
+      content_category: '',
+      title: '',
+      value: undefined,
+      duration_minutes: 0,
+      duration_hours: 0,
+      estimated_duration: 0,
+      display_order: 0,
+      ...initialValues, // ✅ prefill if editing
+    },
+  });
+
+  const isEditMode = !!contentId;
+
+  const { setValue, watch } = form;
+  const contentTypeUuid = watch('content_type_uuid');
+
+  // GET COURSE CONTENT TYPES
+  const { data: contentTypeList } = useQuery(
+    getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
+  );
+
+  const contentTypeData = React.useMemo(() => {
+    const content = contentTypeList?.data?.content;
+    return Array.isArray(content) ? content : [];
+  }, [contentTypeList]);
+
+  const selectedTypeObj = React.useMemo(() => {
+    if (!contentTypeUuid) return undefined;
+    return contentTypeData.find((item: any) => item.uuid === contentTypeUuid);
+  }, [contentTypeUuid, contentTypeData]);
+
+  const selectedTypeKey = selectedTypeObj?.name?.toUpperCase() || undefined;
+
+  const handleSubmitError = (errors: FieldErrors<ContentFormValues>) => {
+    const firstFieldWithError = Object.keys(errors)[0] as keyof ContentFormValues;
+    const firstError = errors[firstFieldWithError];
+    const message =
+      typeof firstError?.message === 'string'
+        ? firstError.message
+        : 'Please correct the form errors.';
+    toast.error(message);
+  };
+
+  const qc = useQueryClient();
+
+  const createLessonContent = useMutation(addLessonContentMutation())
+  const updateLessonContent = useMutation(updateLessonContentMutation())
+
+  const onSubmit = async (data: ContentFormValues) => {
+    const contentBody = {
+      lesson_uuid: lessonId as string,
+      content_type_uuid: data?.content_type_uuid,
+      title: data?.title,
+      description: '',
+      content_text: data?.value,
+      file_url: '',
+      file_size_bytes: 157200,
+      mime_type: '',
+      display_order: data?.display_order,
+      is_required: true,
+      created_by: 'instructor@sarafrika.com',
+      updated_by: 'instructor@sarafrika.com',
+      file_size_display: '',
+      content_category: data.content_category,
+      // is_downloadable: true,
+      // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
+    };
+
+    try {
+      if (isEditMode) {
+        updateLessonContent.mutate({
+          body: contentBody as any,
+          path: { courseUuid: courseId as string, lessonUuid: lessonId as string, contentUuid: contentId as string }
+        }, {
+          onSuccess: (data) => {
+            qc.invalidateQueries({
+              queryKey: getLessonContentQueryKey({
+                path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
+              })
+            });
+            toast.success(data?.message);
+            onCancel();
+          }
+        })
+      } else {
+        createLessonContent.mutate({
+          body: contentBody as any,
+          path: { courseUuid: courseId as string, lessonUuid: lessonId as string }
+        },
+          {
+            onSuccess: (data) => {
+              qc.invalidateQueries({
+                queryKey: getLessonContentQueryKey({
+                  path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
+                })
+              });
+              toast.success(data?.message);
+              onCancel();
+            }
+          })
+      }
+
+    } catch (error: any) {
+      toast.error(error?.message || 'Something went wrong');
+    }
+  };
+
+  const isPending = createLessonContent.isPending || updateLessonContent.isPending
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit, handleSubmitError)} className={`space-y-8 ${className ?? ''}`}>
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name='display_order'
+            render={({ field }) => (
+              <FormItem>
+                <div className='mb-2 flex flex-col gap-2'>
+                  <FormLabel>Display Order #</FormLabel>
+                  <FormControl>
+                    <Input placeholder='Enter an display number for your content' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Content Type Select */}
+            <FormField
+              name="content_type_uuid"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Content Type</FormLabel>
+                  <Select
+                    onValueChange={(val) => {
+                      // val is JSON stringified content type object
+                      try {
+                        const parsed = JSON.parse(val);
+                        setValue('content_type', parsed.name.toUpperCase());
+                        setValue('content_type_uuid', parsed.uuid);
+                        setValue('content_category', parsed.upload_category);
+                      } catch {
+                        // fallback: reset values on parse error
+                        setValue('content_type', 'TEXT');
+                        setValue('content_type_uuid', '');
+                        setValue('content_category', '');
+                      }
+                    }}
+                    value={
+                      contentTypeUuid
+                        ? JSON.stringify(selectedTypeObj)
+                        : ''
+                    }
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select content type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {contentTypeData.map((value: any) => {
+                        const Icon = ContentTypeIcons[value.name.toUpperCase() as keyof typeof ContentTypeIcons];
+                        return (
+                          <SelectItem key={value.uuid} value={JSON.stringify(value)}>
+                            <div className="flex items-center gap-2">
+                              {Icon && <Icon className="h-4 w-4" />}
+                              <span>{value.name}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Title */}
+            <FormField
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter content title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Content or File Upload + URL */}
+          {selectedTypeKey === 'TEXT' ? (
+            <FormField
+              name="value"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Content</FormLabel>
+                  <FormControl>
+                    <SimpleEditor value={field.value} onChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <>
+              {['PDF', 'AUDIO', 'IMAGE', 'VIDEO'].includes(selectedTypeKey || '') && (
+                <FormField
+                  name="value"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>File Upload</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept={ACCEPTED_FILE_TYPES[selectedTypeKey as keyof typeof ACCEPTED_FILE_TYPES]}
+                          onChange={(e) => field.onChange(e.target.files?.[0])}
+                        />
+                      </FormControl>
+                      <FormDescription>Upload a file or provide a URL below</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                name="value"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {['VIDEO', 'AUDIO', 'PDF'].includes(selectedTypeKey || '')
+                        ? 'Or External URL'
+                        : 'URL'}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="url"
+                        placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
+
+          {/* Duration Hours */}
+          <FormField
+            name="duration_hours"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration (hours)</FormLabel>
+                <FormControl>
+                  <Input type="number" min={0} step={1} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Duration Minutes */}
+          <FormField
+            name="duration_minutes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration (minutes)</FormLabel>
+                <FormControl>
+                  <Input type="number" min={0} max={59} step={1} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Form Buttons */}
+        <div className="flex justify-end gap-2 pt-6">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" className="min-w-fit px-3" disabled={isPending}>
+            {isPending ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                {isEditMode ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              isEditMode ? 'Update Lesson Content' : 'Create Lesson Content'
+            )}
+          </Button>
+
         </div>
       </form>
     </Form>
@@ -1753,7 +1740,6 @@ function AssessmentCreationForm({
   );
 }
 
-
 type AssessmentListProps = {
   assessments: any;
   lessonItems: any;
@@ -1960,13 +1946,14 @@ interface AddLessonDialogProps {
   onOpenChange: (open: boolean) => void;
   courseId: string | number;
   lessonId?: string | number;
+  contentId?: string | number;
   initialValues?: Partial<LessonFormValues>;
   refetch?: () => any;
   onSuccess?: (data: any) => void;
   onCancel: () => any
 }
 
-function LessonDialog({ isOpen, onOpenChange, courseId, refetch, onCancel }: AddLessonDialogProps) {
+function LessonDialog({ isOpen, onOpenChange, courseId, lessonId, refetch, onCancel }: AddLessonDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
@@ -1983,7 +1970,48 @@ function LessonDialog({ isOpen, onOpenChange, courseId, refetch, onCancel }: Add
             onCancel={onCancel}
             className='px-6 pb-6'
             courseId={courseId}
+            lessonId={lessonId}
             refetch={refetch}
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LessonContentDialog({
+  isOpen,
+  onOpenChange,
+  courseId,
+  lessonId,
+  contentId,
+  onCancel,
+  initialValues,
+}: AddLessonDialogProps) {
+  const isEditMode = !!contentId;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-w-6xl flex-col p-0">
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle className="text-xl">
+            {isEditMode ? 'Edit Lesson Content' : 'Create New Lesson Content'}
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm">
+            {isEditMode
+              ? 'Update the details of your lesson content below.'
+              : 'Fill in the contents of your lesson below.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className="h-[calc(90vh-4rem)] sm:h-[calc(90vh-18rem)] lg:h-[calc(90vh-20rem)]">
+          <LessonContentForm
+            onCancel={onCancel}
+            className="px-6 pb-6"
+            courseId={courseId}
+            lessonId={lessonId}
+            contentId={contentId}
+            initialValues={initialValues}
           />
         </ScrollArea>
       </DialogContent>
@@ -2018,7 +2046,6 @@ function EditLessonDialog({
             initialValues={initialValues}
             onCancel={() => onOpenChange(false)}
             refetch={refetch}
-            editSuccessRespones={onSuccess}
           />
         </ScrollArea>
       </DialogContent>
@@ -2084,5 +2111,5 @@ function RubricDialog({
   );
 }
 
-export { AssessmentDialog, AssessmentList, EditLessonDialog, LessonDialog, LessonList, RubricDialog };
+export { AssessmentDialog, AssessmentList, EditLessonDialog, LessonContentDialog, LessonDialog, LessonList, RubricDialog };
 
