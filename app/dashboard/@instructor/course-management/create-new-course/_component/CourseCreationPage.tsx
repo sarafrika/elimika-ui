@@ -406,7 +406,6 @@ export default function CourseCreationPage() {
               onAddAssessment={openAddAssessmentModal}
               onReorderLessons={() => { }}
               // lesson content
-              // lessonContents={sampleLessonContents}
               lessonContentsMap={lessonContentMap}
               onAddLessonContent={openAddContentModal}
               onEditLessonContent={openEditContentModal}
