@@ -1,45 +1,43 @@
-"use client"
+'use client';
 
-import * as React from "react"
+import * as React from 'react';
 
 // --- Lib ---
-import { parseShortcutKeys } from "@/lib/tiptap-utils"
+import { parseShortcutKeys } from '@/lib/tiptap-utils';
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from '@/hooks/use-tiptap-editor';
 
 // --- Tiptap UI ---
-import type { UseImageUploadConfig } from "@/components/tiptap-ui/image-upload-button"
+import type { UseImageUploadConfig } from '@/components/tiptap-ui/image-upload-button';
 import {
   IMAGE_UPLOAD_SHORTCUT_KEY,
   useImageUpload,
-} from "@/components/tiptap-ui/image-upload-button"
+} from '@/components/tiptap-ui/image-upload-button';
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap-ui-primitive/badge"
+import type { ButtonProps } from '@/components/tiptap-ui-primitive/button';
+import { Button } from '@/components/tiptap-ui-primitive/button';
+import { Badge } from '@/components/tiptap-ui-primitive/badge';
 
-export interface ImageUploadButtonProps
-  extends Omit<ButtonProps, "type">,
-    UseImageUploadConfig {
+export interface ImageUploadButtonProps extends Omit<ButtonProps, 'type'>, UseImageUploadConfig {
   /**
    * Optional text to display alongside the icon.
    */
-  text?: string
+  text?: string;
   /**
    * Optional show shortcut keys in the button.
    * @default false
    */
-  showShortcut?: boolean
+  showShortcut?: boolean;
 }
 
 export function ImageShortcutBadge({
   shortcutKeys = IMAGE_UPLOAD_SHORTCUT_KEY,
 }: {
-  shortcutKeys?: string
+  shortcutKeys?: string;
 }) {
-  return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
+  return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
 /**
@@ -47,10 +45,7 @@ export function ImageShortcutBadge({
  *
  * For custom button implementations, use the `useImage` hook instead.
  */
-export const ImageUploadButton = React.forwardRef<
-  HTMLButtonElement,
-  ImageUploadButtonProps
->(
+export const ImageUploadButton = React.forwardRef<HTMLButtonElement, ImageUploadButtonProps>(
   (
     {
       editor: providedEditor,
@@ -64,40 +59,33 @@ export const ImageUploadButton = React.forwardRef<
     },
     ref
   ) => {
-    const { editor } = useTiptapEditor(providedEditor)
-    const {
-      isVisible,
-      canInsert,
-      handleImage,
-      label,
-      isActive,
-      shortcutKeys,
-      Icon,
-    } = useImageUpload({
-      editor,
-      hideWhenUnavailable,
-      onInserted,
-    })
+    const { editor } = useTiptapEditor(providedEditor);
+    const { isVisible, canInsert, handleImage, label, isActive, shortcutKeys, Icon } =
+      useImageUpload({
+        editor,
+        hideWhenUnavailable,
+        onInserted,
+      });
 
     const handleClick = React.useCallback(
       (event: React.MouseEvent<HTMLButtonElement>) => {
-        onClick?.(event)
-        if (event.defaultPrevented) return
-        handleImage()
+        onClick?.(event);
+        if (event.defaultPrevented) return;
+        handleImage();
       },
       [handleImage, onClick]
-    )
+    );
 
     if (!isVisible) {
-      return null
+      return null;
     }
 
     return (
       <Button
-        type="button"
-        data-style="ghost"
-        data-active-state={isActive ? "on" : "off"}
-        role="button"
+        type='button'
+        data-style='ghost'
+        data-active-state={isActive ? 'on' : 'off'}
+        role='button'
         tabIndex={-1}
         disabled={!canInsert}
         data-disabled={!canInsert}
@@ -110,14 +98,14 @@ export const ImageUploadButton = React.forwardRef<
       >
         {children ?? (
           <>
-            <Icon className="tiptap-button-icon" />
-            {text && <span className="tiptap-button-text">{text}</span>}
+            <Icon className='tiptap-button-icon' />
+            {text && <span className='tiptap-button-text'>{text}</span>}
             {showShortcut && <ImageShortcutBadge shortcutKeys={shortcutKeys} />}
           </>
         )}
       </Button>
-    )
+    );
   }
-)
+);
 
-ImageUploadButton.displayName = "ImageUploadButton"
+ImageUploadButton.displayName = 'ImageUploadButton';

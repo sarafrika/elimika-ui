@@ -1,5 +1,16 @@
 import { schemas } from '@/services/api/zod-client';
-import { Course, Instructor, InstructorEducation, InstructorExperience, InstructorProfessionalMembership, InstructorSkill, Organisation, Student, TrainingBranch, User } from '@/services/client';
+import {
+  Course,
+  Instructor,
+  InstructorEducation,
+  InstructorExperience,
+  InstructorProfessionalMembership,
+  InstructorSkill,
+  Organisation,
+  Student,
+  TrainingBranch,
+  User,
+} from '@/services/client';
 import { ReactNode } from 'react';
 import { z } from 'zod';
 
@@ -42,19 +53,19 @@ export type DashboardChildrenTypes = {
 };
 
 export type TrainingCenter = Organisation & {
-  branches?: TrainingBranch[],
-  users?: User[],
-  instructors?: Instructor[],
-  courses?: Course[]
-}
+  branches?: TrainingBranch[];
+  users?: User[];
+  instructors?: Instructor[];
+  courses?: Course[];
+};
 
 export type UserProfileType = User & {
-  student?: Student,
+  student?: Student;
   instructor?: Instructor & {
-    educations: InstructorEducation[],
-    experience: InstructorExperience[],
-    membership: InstructorProfessionalMembership[],
-    skills: InstructorSkill[]
-  },
-  organizations?: TrainingCenter[]
-}
+    educations: InstructorEducation[];
+    experience: InstructorExperience[];
+    membership: InstructorProfessionalMembership[];
+    skills: InstructorSkill[];
+  };
+  organizations?: TrainingCenter[];
+};

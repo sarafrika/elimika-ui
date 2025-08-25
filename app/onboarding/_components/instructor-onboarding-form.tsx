@@ -24,27 +24,25 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const InstructorOnboardingSchema = zInstructor.omit({
-  uuid: true,
-  full_name: true,
-  admin_verified: true,
-  created_date: true,
-  created_by: true,
-  updated_date: true,
-  updated_by: true,
-  formatted_location: true,
-  is_profile_complete: true,
-  has_location_coordinates: true,
-}).extend({
-  // Make website optional and allow empty string or valid URL
-  website: z.union([
-    z.string().url(),
-    z.literal(''),
-    z.undefined()
-  ]).optional(),
-  bio: z.string().max(2000).optional(),
-  professional_headline: z.string().max(150).optional()
-});
+const InstructorOnboardingSchema = zInstructor
+  .omit({
+    uuid: true,
+    full_name: true,
+    admin_verified: true,
+    created_date: true,
+    created_by: true,
+    updated_date: true,
+    updated_by: true,
+    formatted_location: true,
+    is_profile_complete: true,
+    has_location_coordinates: true,
+  })
+  .extend({
+    // Make website optional and allow empty string or valid URL
+    website: z.union([z.string().url(), z.literal(''), z.undefined()]).optional(),
+    bio: z.string().max(2000).optional(),
+    professional_headline: z.string().max(150).optional(),
+  });
 
 type InstructorOnboardingFormData = z.infer<typeof InstructorOnboardingSchema>;
 
@@ -89,13 +87,14 @@ export function InstructorOnboardingForm() {
       ...data,
       website: data.website === '' ? undefined : data.website,
       bio: data.bio === '' ? undefined : data.bio,
-      professional_headline: data.professional_headline === '' ? undefined : data.professional_headline,
+      professional_headline:
+        data.professional_headline === '' ? undefined : data.professional_headline,
     };
 
     setIsSubmitting(true);
     try {
       const response = await createInstructor({
-        body: cleanedData
+        body: cleanedData,
       });
 
       if (response.error) {
@@ -115,7 +114,8 @@ export function InstructorOnboardingForm() {
       toast.success('Instructor account created successfully!');
       router.replace('/dashboard/overview');
     } catch (error: any) {
-      const errorMessage = error?.message || 'Failed to create instructor account. Please try again.';
+      const errorMessage =
+        error?.message || 'Failed to create instructor account. Please try again.';
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -125,12 +125,12 @@ export function InstructorOnboardingForm() {
   const handleGetCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        position => {
           form.setValue('latitude', position.coords.latitude);
           form.setValue('longitude', position.coords.longitude);
           toast.success('Location detected successfully!');
         },
-        (error) => {
+        error => {
           toast.error('Failed to get current location. Please enter manually.');
         }
       );
@@ -162,7 +162,9 @@ export function InstructorOnboardingForm() {
             <BookOpen className='h-16 w-16' />
           </div>
           <h2 className='mb-2 text-xl font-semibold text-gray-900'>Unable to Load Profile</h2>
-          <p className='text-gray-600'>Please refresh the page or contact support if the issue persists.</p>
+          <p className='text-gray-600'>
+            Please refresh the page or contact support if the issue persists.
+          </p>
         </div>
       </div>
     );
@@ -196,10 +198,7 @@ export function InstructorOnboardingForm() {
                   <FormItem>
                     <FormLabel>Professional Headline</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder='e.g. Software Engineer & Python Expert'
-                        {...field}
-                      />
+                      <Input placeholder='e.g. Software Engineer & Python Expert' {...field} />
                     </FormControl>
                     <FormDescription>
                       A brief title that summarizes your expertise (max 150 characters)
@@ -217,13 +216,14 @@ export function InstructorOnboardingForm() {
                     <FormLabel>Bio</FormLabel>
                     <FormControl>
                       <textarea
-                        className='flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+                        className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
                         placeholder='Tell students about your background, expertise, and teaching philosophy...'
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Professional biography describing your expertise and teaching approach (max 2000 characters)
+                      Professional biography describing your expertise and teaching approach (max
+                      2000 characters)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -237,15 +237,9 @@ export function InstructorOnboardingForm() {
                   <FormItem>
                     <FormLabel>Website (Optional)</FormLabel>
                     <FormControl>
-                      <Input
-                        type='url'
-                        placeholder='https://your-portfolio.com'
-                        {...field}
-                      />
+                      <Input type='url' placeholder='https://your-portfolio.com' {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Professional website or portfolio URL
-                    </FormDescription>
+                    <FormDescription>Professional website or portfolio URL</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -275,7 +269,9 @@ export function InstructorOnboardingForm() {
                           step='any'
                           placeholder='-1.2921'
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={e =>
+                            field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -294,7 +290,9 @@ export function InstructorOnboardingForm() {
                           step='any'
                           placeholder='36.8219'
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          onChange={e =>
+                            field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -308,15 +306,14 @@ export function InstructorOnboardingForm() {
                   Use Current Location
                 </Button>
               </div>
-
             </CardContent>
           </Card>
 
           <div className='rounded-lg bg-blue-50 p-4'>
             <h3 className='font-medium text-blue-900'>What&apos;s Next?</h3>
             <p className='mt-1 text-sm text-blue-700'>
-              After registration, you can add your education, experience, skills, and professional memberships
-              in your instructor profile to attract more students.
+              After registration, you can add your education, experience, skills, and professional
+              memberships in your instructor profile to attract more students.
             </p>
           </div>
 

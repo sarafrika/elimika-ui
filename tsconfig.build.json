@@ -20,9 +20,5 @@
     "lib/**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "hey-client/**/*",
-    "services/client/**/*"
-  ]
+  "exclude": ["node_modules", "hey-client/**/*", "services/client/**/*"]
 }

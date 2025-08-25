@@ -16,7 +16,7 @@ const accountTypes = [
   },
   {
     id: 'instructor',
-    title: 'Instructor', 
+    title: 'Instructor',
     description: 'Create courses, manage content, and engage with your students.',
     href: '/onboarding/instructor',
     icon: Users,
@@ -40,56 +40,45 @@ const accountTypes = [
 
 export default function AccountTypeSelector() {
   return (
-    <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
-      {accountTypes.map((type) => {
+    <div className='mx-auto grid max-w-5xl gap-8 md:grid-cols-3'>
+      {accountTypes.map(type => {
         const Icon = type.icon;
-        
+
         return (
           <Link
             key={type.id}
             href={type.href}
-            className={`
-              relative p-8 rounded-3xl border-2 transition-all duration-300 group block
-              ${type.borderColor} ${type.bgColor} ${type.hoverBg} 
-              hover:shadow-xl hover:scale-[1.01] hover:border-primary/30
-              focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary
-            `}
+            className={`group relative block rounded-3xl border-2 p-8 transition-all duration-300 ${type.borderColor} ${type.bgColor} ${type.hoverBg} hover:border-primary/30 focus:ring-primary/20 focus:border-primary hover:scale-[1.01] hover:shadow-xl focus:ring-4 focus:outline-none`}
           >
             {/* Icon */}
-            <div className="flex justify-center mb-6">
-              <div className={`
-                p-4 rounded-2xl transition-all duration-300 bg-white shadow-sm
-                ${type.iconColor} group-hover:scale-110 group-hover:shadow-md
-              `}>
-                <Icon className="h-8 w-8" />
+            <div className='mb-6 flex justify-center'>
+              <div
+                className={`rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 ${type.iconColor} group-hover:scale-110 group-hover:shadow-md`}
+              >
+                <Icon className='h-8 w-8' />
               </div>
             </div>
 
             {/* Content */}
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold mb-3 text-foreground group-hover:text-primary transition-colors">
+            <div className='mb-8 text-center'>
+              <h3 className='text-foreground group-hover:text-primary mb-3 text-2xl font-bold transition-colors'>
                 {type.title}
               </h3>
-              <p className="text-muted-foreground leading-relaxed text-sm">
-                {type.description}
-              </p>
+              <p className='text-muted-foreground text-sm leading-relaxed'>{type.description}</p>
             </div>
 
             {/* Button */}
-            <div className="flex justify-center">
-              <div className={`
-                w-full py-3 px-6 rounded-lg border-2 border-border text-center
-                bg-white text-foreground transition-all duration-300 font-medium
-                group-hover:border-primary group-hover:bg-primary group-hover:text-white
-                flex items-center justify-center gap-3
-              `}>
+            <div className='flex justify-center'>
+              <div
+                className={`border-border text-foreground group-hover:border-primary group-hover:bg-primary flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 text-center font-medium transition-all duration-300 group-hover:text-white`}
+              >
                 Choose {type.title}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
               </div>
             </div>
 
             {/* Decorative gradient overlay */}
-            <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none bg-gradient-to-br from-primary to-transparent" />
+            <div className='from-primary pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-5' />
           </Link>
         );
       })}

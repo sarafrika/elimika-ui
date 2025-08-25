@@ -23,7 +23,12 @@ import {
 } from '@/components/ui/table';
 import { useInstructor } from '@/context/instructor-context';
 import { formatCourseDate } from '@/lib/format-course-date';
-import { deleteTrainingProgramMutation, getAllCategoriesOptions, searchTrainingProgramsOptions, searchTrainingProgramsQueryKey } from '@/services/client/@tanstack/react-query.gen';
+import {
+  deleteTrainingProgramMutation,
+  getAllCategoriesOptions,
+  searchTrainingProgramsOptions,
+  searchTrainingProgramsQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, EyeIcon, FilePenIcon, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -33,12 +38,12 @@ import {
   AddProgramCourseDialog,
   CreateProgramDialog,
   EditProgramDialog,
-  ProgramFormValues
+  ProgramFormValues,
 } from '../_components/program-management-form';
 
 export default function ClassesPage() {
-  const queryClient = useQueryClient()
-  const instructor = useInstructor()
+  const queryClient = useQueryClient();
+  const instructor = useInstructor();
 
   const [isCreateProgramDialog, setIsCreateProgramDialog] = useState(false);
   const openCreateProgramDialog = () => setIsCreateProgramDialog(true);
@@ -62,20 +67,22 @@ export default function ClassesPage() {
     setIsAddProgramCourseDialog(true);
   };
 
-
   const size = 20;
   const [page, setPage] = useState(0);
 
   const { data: categories } = useQuery(getAllCategoriesOptions({ query: { pageable: {} } }));
 
   // GET INSTRUCTOR'S PROGRAMS
-  const { data, isLoading, isFetching, } = useQuery(searchTrainingProgramsOptions({ query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: { page, size } } }))
+  const { data, isLoading, isFetching } = useQuery(
+    searchTrainingProgramsOptions({
+      query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: { page, size } },
+    })
+  );
 
   // @ts-ignore
   const programs = data?.data?.content || [];
   //@ts-ignore
   const paginationMetadata = data?.data?.metadata;
-
 
   // DELETE PROGRAM
   const deleteTrainingProgram = useMutation(deleteTrainingProgramMutation());
@@ -83,17 +90,25 @@ export default function ClassesPage() {
     if (!classId) return;
 
     try {
-      await deleteTrainingProgram.mutateAsync({
-        path: { uuid: classId }
-      }, {
-        onSuccess: () => {
-          toast.success('Training program deleted succcessfully');
-          queryClient.invalidateQueries({
-            queryKey: searchTrainingProgramsQueryKey({ query: { pageable: { page, size }, searchParams: { instructorUuid: instructor?.uuid } } })
-          });
+      await deleteTrainingProgram.mutateAsync(
+        {
+          path: { uuid: classId },
         },
-      });
-    } catch (err) { }
+        {
+          onSuccess: () => {
+            toast.success('Training program deleted succcessfully');
+            queryClient.invalidateQueries({
+              queryKey: searchTrainingProgramsQueryKey({
+                query: {
+                  pageable: { page, size },
+                  searchParams: { instructorUuid: instructor?.uuid },
+                },
+              }),
+            });
+          },
+        }
+      );
+    } catch (err) {}
   };
 
   const selectedProgram = programs.find((program: any) => program.uuid === editProgramId);
@@ -102,9 +117,8 @@ export default function ClassesPage() {
     title: selectedProgram?.title || '',
     description: selectedProgram?.description || '',
     categories: selectedProgram?.category_uuid || '',
-    ...selectedProgram
+    ...selectedProgram,
   };
-
 
   return (
     <div className='space-y-6'>
@@ -135,13 +149,13 @@ export default function ClassesPage() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-t-lg border border-gray-200 overflow-hidden">
+        <div className='overflow-hidden rounded-t-lg border border-gray-200'>
           <Table>
             <TableCaption className='py-4'>A list of your programs</TableCaption>
             <TableHeader className='bg-muted'>
               <TableRow>
                 <TableHead>
-                  <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
+                  <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                 </TableHead>
                 <TableHead className='w-[300px]'>Program Name</TableHead>
                 <TableHead>Categories</TableHead>
@@ -165,26 +179,23 @@ export default function ClassesPage() {
                   {programs.map((program: any) => (
                     <TableRow key={program.uuid}>
                       <TableHead>
-                        <Square size={20} strokeWidth={1} className='flex mx-auto self-center' />
+                        <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                       </TableHead>
                       <TableCell className='font-medium'>
                         <div>
                           <div>{program.title}</div>
-                          <div className='max-w-[250px] line-clamp-1 truncate text-muted-foreground text-sm' >
+                          <div className='text-muted-foreground line-clamp-1 max-w-[250px] truncate text-sm'>
                             <HTMLTextPreview htmlContent={program?.description as string} />
                           </div>
-
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className='flex flex-wrap gap-1'>
                           <Badge variant='outline' className='capitalize'>
-                            {
-                              categories?.data?.content?.find((p: any) => p.uuid === program.category_uuid)?.name
-                              || 'Unknown'
-                            }
+                            {categories?.data?.content?.find(
+                              (p: any) => p.uuid === program.category_uuid
+                            )?.name || 'Unknown'}
                           </Badge>
-
                         </div>
                       </TableCell>
                       <TableCell>{program.class_limit || 'Unlimited'}</TableCell>
@@ -265,9 +276,7 @@ export default function ClassesPage() {
         />
       )}
 
-      <CreateProgramDialog
-        isOpen={isCreateProgramDialog}
-        onOpenChange={closeCreateProgramDialog} />
+      <CreateProgramDialog isOpen={isCreateProgramDialog} onOpenChange={closeCreateProgramDialog} />
 
       {isEditProgramDialog && selectedProgram && (
         <EditProgramDialog
@@ -278,8 +287,11 @@ export default function ClassesPage() {
         />
       )}
 
-      <AddProgramCourseDialog isOpen={isAddProgramCourseDialog} onOpenChange={setIsAddProgramCourseDialog} programId={editProgramId || ''} />
-
-    </div >
+      <AddProgramCourseDialog
+        isOpen={isAddProgramCourseDialog}
+        onOpenChange={setIsAddProgramCourseDialog}
+        programId={editProgramId || ''}
+      />
+    </div>
   );
 }

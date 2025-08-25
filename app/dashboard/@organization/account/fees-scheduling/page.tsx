@@ -43,26 +43,26 @@ const rateCardHeaders: {
   key: keyof FeesSchedulingFormValues['rateCard'][0];
   label: string;
 }[] = [
-    { key: 'course', label: 'Course' },
-    { key: 'classType', label: 'Class Type' },
-    { key: 'method', label: 'Method' },
-    { key: 'rate', label: 'Rate/Hr (USD)' },
-  ];
+  { key: 'course', label: 'Course' },
+  { key: 'classType', label: 'Class Type' },
+  { key: 'method', label: 'Method' },
+  { key: 'rate', label: 'Rate/Hr (USD)' },
+];
 
 const scheduleHeaders: {
   key: keyof FeesSchedulingFormValues['schedule'][0];
   label: string;
 }[] = [
-    { key: 'course', label: 'Course/Program' },
-    { key: 'instructor', label: 'Instructor' },
-    { key: 'lessons', label: 'No. Lessons' },
-    { key: 'hours', label: '# Hrs' },
-    { key: 'hourlyFee', label: 'Hourly Fee' },
-    { key: 'totalFee', label: 'Total Fee' },
-    { key: 'materialFee', label: 'Material Fee' },
-    { key: 'academicPeriods', label: 'Acad. Periods' },
-    { key: 'feePerPeriod', label: 'Fee/Period' },
-  ];
+  { key: 'course', label: 'Course/Program' },
+  { key: 'instructor', label: 'Instructor' },
+  { key: 'lessons', label: 'No. Lessons' },
+  { key: 'hours', label: '# Hrs' },
+  { key: 'hourlyFee', label: 'Hourly Fee' },
+  { key: 'totalFee', label: 'Total Fee' },
+  { key: 'materialFee', label: 'Material Fee' },
+  { key: 'academicPeriods', label: 'Acad. Periods' },
+  { key: 'feePerPeriod', label: 'Fee/Period' },
+];
 
 export default function FeesSchedulingPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();

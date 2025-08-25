@@ -25,22 +25,28 @@ import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useOrganization } from '../../../../../../context/training-center-provide';
 import { queryClient } from '../../../../../../lib/query-client';
-import { ApiResponse, createTrainingBranch, updateTrainingBranch } from '../../../../../../services/client';
+import {
+  ApiResponse,
+  createTrainingBranch,
+  updateTrainingBranch,
+} from '../../../../../../services/client';
 import { zTrainingBranch, zUser } from '../../../../../../services/client/zod.gen';
 
 const userSchema = zUser.merge(z.object({ dob: z.date() }));
 
-const branchSchema = zTrainingBranch.omit({
-  created_date: true,
-  updated_date: true
-}).merge(z.object({
-  organisation_uuid: z.string().optional()
-}))
+const branchSchema = zTrainingBranch
+  .omit({
+    created_date: true,
+    updated_date: true,
+  })
+  .merge(
+    z.object({
+      organisation_uuid: z.string().optional(),
+    })
+  );
 
 const branchesSchema = z.object({
-  branches: z.array(
-    branchSchema
-  ),
+  branches: z.array(branchSchema),
 });
 
 type UserType = z.infer<typeof userSchema>;
@@ -63,21 +69,22 @@ export default function ManageBranchForm() {
   }, [replaceBreadcrumbs]);
 
   const user = useUserProfile();
-  const trainingCenter = useOrganization()
-  const { organizations } = user!
+  const trainingCenter = useOrganization();
+  const { organizations } = user!;
 
   const defaultBranch = (): BranchType => ({
     branch_name: 'Main Campus',
     active: true,
-    poc_user_uuid: user!.uuid
+    poc_user_uuid: user!.uuid,
   });
 
   const form = useForm<BranchesFormValues>({
     resolver: zodResolver(branchesSchema),
     defaultValues: {
-      branches: trainingCenter && trainingCenter.branches!.length > 0 ?
-        trainingCenter.branches :
-        [defaultBranch()],
+      branches:
+        trainingCenter && trainingCenter.branches!.length > 0
+          ? trainingCenter.branches
+          : [defaultBranch()],
     },
   });
 
@@ -87,30 +94,32 @@ export default function ManageBranchForm() {
   });
 
   const onSubmit = async (data: BranchesFormValues) => {
-
     if (!trainingCenter || !trainingCenter.uuid) {
-      toast.warning("No training center selected");
-      return
+      toast.warning('No training center selected');
+      return;
     }
 
-    const responses = await Promise.all(data.branches.map(branch => {
-      if (branch.uuid) return updateTrainingBranch({
-        path: {
-          uuid: branch.uuid
-        },
-        body: {
-          ...branch,
-          organisation_uuid: trainingCenter.uuid!
-        }
-      });
+    const responses = await Promise.all(
+      data.branches.map(branch => {
+        if (branch.uuid)
+          return updateTrainingBranch({
+            path: {
+              uuid: branch.uuid,
+            },
+            body: {
+              ...branch,
+              organisation_uuid: trainingCenter.uuid!,
+            },
+          });
 
-      return createTrainingBranch({
-        body: {
-          ...branch,
-          organisation_uuid: trainingCenter.uuid!
-        }
+        return createTrainingBranch({
+          body: {
+            ...branch,
+            organisation_uuid: trainingCenter.uuid!,
+          },
+        });
       })
-    }));
+    );
 
     let hasError = false;
     responses.map((response: ApiResponse, i) => {
@@ -121,18 +130,15 @@ export default function ManageBranchForm() {
           form.setError(fieldName, error[key]);
         });
         hasError = true;
-      }
-      else {
-
+      } else {
       }
     });
 
-    if (hasError) toast.error("Error saving branch");
+    if (hasError) toast.error('Error saving branch');
     else {
-      toast.success("Branch added successfully");
-      queryClient.invalidateQueries({ queryKey: ["organization"] })
+      toast.success('Branch added successfully');
+      queryClient.invalidateQueries({ queryKey: ['organization'] });
     }
-
   };
 
   return (
@@ -201,16 +207,25 @@ export default function ManageBranchForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Select Point of Contact Person</FormLabel>
-                        <div className="flex gap-3">
+                        <div className='flex gap-3'>
                           <div className='flex-grow'>
-                            <Combobox value={field.value ?? ""} setValue={field.onChange} items={(trainingCenter && trainingCenter.users ? trainingCenter.users : []).map(user => ({
-                              label: user.full_name!,
-                              value: user.uuid!
-                            }))}>
-                              <CommandInput placeholder="Search framework..." className="h-9" />
+                            <Combobox
+                              value={field.value ?? ''}
+                              setValue={field.onChange}
+                              items={(trainingCenter && trainingCenter.users
+                                ? trainingCenter.users
+                                : []
+                              ).map(user => ({
+                                label: user.full_name!,
+                                value: user.uuid!,
+                              }))}
+                            >
+                              <CommandInput placeholder='Search framework...' className='h-9' />
                             </Combobox>
                           </div>
-                          <Button type='button' variant={"outline"}>Invite User</Button>
+                          <Button type='button' variant={'outline'}>
+                            Invite User
+                          </Button>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -361,9 +376,7 @@ export default function ManageBranchForm() {
                 variant='outline'
                 size='sm'
                 className='mt-4'
-                onClick={() =>
-                  append(defaultBranch())
-                }
+                onClick={() => append(defaultBranch())}
               >
                 <PlusCircle className='mr-2 h-4 w-4' />
                 Add Another Branch

@@ -121,12 +121,13 @@ export default function StudentOverviewPage() {
                             style={{ minWidth: 90 }}
                           >
                             <div
-                              className={`mb-2 flex size-10 items-center justify-center rounded-full border-2 shadow-sm transition-all duration-300 ${isCompleted
+                              className={`mb-2 flex size-10 items-center justify-center rounded-full border-2 shadow-sm transition-all duration-300 ${
+                                isCompleted
                                   ? 'border-green-500 bg-green-500 text-white'
                                   : isCurrent
                                     ? 'bg-primary/90 text-primary-foreground border-primary'
                                     : 'bg-muted text-muted-foreground border-muted'
-                                }`}
+                              }`}
                               aria-label={stage.tooltip}
                             >
                               {isCompleted ? (

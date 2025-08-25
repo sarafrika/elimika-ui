@@ -1,4 +1,3 @@
-
 export default function TrainingsPage() {
   return (
     <div className='space-y-6'>

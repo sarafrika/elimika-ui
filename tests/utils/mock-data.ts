@@ -5,7 +5,7 @@ export const mockUsers = {
     role: 'student',
     firstName: 'John',
     lastName: 'Doe',
-    phone: '+1234567890'
+    phone: '+1234567890',
   },
   instructor: {
     id: '2',
@@ -14,15 +14,15 @@ export const mockUsers = {
     firstName: 'Jane',
     lastName: 'Smith',
     phone: '+0987654321',
-    specializations: ['React', 'JavaScript', 'TypeScript']
+    specializations: ['React', 'JavaScript', 'TypeScript'],
   },
   organization: {
     id: '3',
     email: 'admin@organization.com',
     role: 'organization',
     name: 'Tech Academy',
-    phone: '+1122334455'
-  }
+    phone: '+1122334455',
+  },
 };
 
 export const mockCourses = [
@@ -35,7 +35,7 @@ export const mockCourses = [
     duration: '8 weeks',
     price: 299.99,
     instructorId: '2',
-    isPublished: true
+    isPublished: true,
   },
   {
     id: '2',
@@ -46,8 +46,8 @@ export const mockCourses = [
     duration: '12 weeks',
     price: 499.99,
     instructorId: '2',
-    isPublished: false
-  }
+    isPublished: false,
+  },
 ];
 
 export const mockClasses = [
@@ -59,29 +59,29 @@ export const mockClasses = [
     time: '10:00',
     duration: 120,
     capacity: 30,
-    enrolledCount: 25
-  }
+    enrolledCount: 25,
+  },
 ];
 
 export const mockApiResponses = {
   session: {
-    success: mockUsers.student
+    success: mockUsers.student,
   },
   courses: {
     data: mockCourses,
-    total: mockCourses.length
+    total: mockCourses.length,
   },
   classes: {
     data: mockClasses,
-    total: mockClasses.length
+    total: mockClasses.length,
   },
   enrollment: {
     success: true,
-    enrollmentId: 'enrollment-123'
+    enrollmentId: 'enrollment-123',
   },
   payment: {
     success: true,
     paymentId: 'payment-456',
-    amount: 299.99
-  }
+    amount: 299.99,
+  },
 };

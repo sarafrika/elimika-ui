@@ -61,7 +61,7 @@ export default defineConfig({
     },
     {
       name: '@hey-api/client-next',
-      runtimeConfigPath: './hey-api.ts'
+      runtimeConfigPath: './hey-api.ts',
     },
   ],
 });

@@ -65,6 +65,7 @@ export type TLessonContentItem = {
   content_type: 'TEXT' | 'VIDEO' | 'AUDIO' | string; // Adjust or extend as needed
   title: string;
   description: string;
+  value: string;
   content_text: string | null;
   file_url: string | null;
   display_order: number;
@@ -78,6 +79,5 @@ export type TLessonContentItem = {
   content_category: string;
   file_size_display: string;
   duration_minutes: string;
-  duration_hours: string
+  duration_hours: string;
 };
-

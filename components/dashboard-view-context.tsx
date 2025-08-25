@@ -4,9 +4,9 @@ import { useUserProfile } from '../context/profile-context';
 import { UserDomain } from '../lib/types';
 import { ELIMIKA_DASHBOARD_STORAGE_KEY } from '../lib/utils';
 
-export const AvailableViews = ['student', 'admin', 'instructor', 'organization']
+export const AvailableViews = ['student', 'admin', 'instructor', 'organization'];
 const dashboardViews = [...AvailableViews] as const;
-export type DashboardView = typeof dashboardViews[number];
+export type DashboardView = (typeof dashboardViews)[number];
 
 interface DashboardViewContextType {
   view: DashboardView;
@@ -27,7 +27,9 @@ export function DashboardViewProvider({
 }) {
   // Load from localStorage if available
   const profile = useUserProfile();
-  const [view, setViewState] = useState<DashboardView>(initialView ?? profile?.activeDomain ?? "student");
+  const [view, setViewState] = useState<DashboardView>(
+    initialView ?? profile?.activeDomain ?? 'student'
+  );
 
   // Save to localStorage on change
   useEffect(() => {

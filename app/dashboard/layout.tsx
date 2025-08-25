@@ -31,20 +31,26 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
 
   // Show loading if profile exists but domains are not loaded yet
   // This handles the rehydration period when TanStack Query is loading persisted data
-  if (profile?.isLoading || !profile || (!profile.isLoading && (!profile.user_domain || profile.user_domain.length === 0))) {
-    return (<CustomLoader />);
+  if (
+    profile?.isLoading ||
+    !profile ||
+    (!profile.isLoading && (!profile.user_domain || profile.user_domain.length === 0))
+  ) {
+    return <CustomLoader />;
   }
 
-  const userDomains = profile.user_domain as DashboardView[] || [];
+  const userDomains = (profile.user_domain as DashboardView[]) || [];
   const organizationDomains = userDomains as OrgDomainType[];
   const activeDomain = profile.activeDomain;
 
   if (!activeDomain) {
-    return (<DomainSelection
-      domains={userDomains as UserDomain[]}
-      onDomainSelect={(domain) => profile.setActiveDomain(domain)}
-      userName={profile.first_name}
-    />)
+    return (
+      <DomainSelection
+        domains={userDomains as UserDomain[]}
+        onDomainSelect={domain => profile.setActiveDomain(domain)}
+        userName={profile.first_name}
+      />
+    );
   }
 
   // Filter only dashboards that are accessible to the logged in user
@@ -55,8 +61,8 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   );
 
   // Include organisation_user dashboard since the @organization_user page is not available
-  if (userDomains.includes("organisation_user")) {
-    dashboards["organisation_user"] = dashboardProps["organization"]
+  if (userDomains.includes('organisation_user')) {
+    dashboards['organisation_user'] = dashboardProps['organization'];
   }
 
   const currentDashboard = activeDomain ? dashboards[activeDomain] : dashboardProps.children;

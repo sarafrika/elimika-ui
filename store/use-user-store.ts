@@ -11,7 +11,7 @@ export type UserState = {
 };
 
 // Simplified store that only manages UI state, not user data
-export const useUserStore = create<UserState>((set) => ({
+export const useUserStore = create<UserState>(set => ({
   activeDomain: null,
   setActiveDomain: (domain: string) => set({ activeDomain: domain }),
   clearActiveDomain: () => set({ activeDomain: null }),
