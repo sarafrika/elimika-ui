@@ -1077,22 +1077,13 @@ const lessonContentSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.any().optional(),
   value: z.any().optional(),
-  duration_minutes: z.coerce
-    .number()
-    .min(0, 'Duration minutes must be positive')
-    .max(59, 'Minutes must be less than 60'),
-  duration_hours: z.coerce.number().min(0, 'Duration hours must be positive'),
-  estimated_duration: z.coerce.number().min(0, 'Estimated duration must be positive'),
-  display_order: z.preprocess(
-    val => {
-      if (val === '' || val === null || val === undefined) return undefined;
-      return Number(val);
-    },
-    z.number({
-      required_error: 'This field is required',
-      invalid_type_error: 'Must be a valid number',
-    })
-  ),
+  // duration_minutes: z.coerce
+  //   .number()
+  //   .min(0, 'Duration minutes must be positive')
+  //   .max(59, 'Minutes must be less than 60'),
+  // duration_hours: z.coerce.number().min(0, 'Duration hours must be positive'),
+  // estimated_duration: z.coerce.number().min(0, 'Estimated duration must be positive'),
+  display_order: z.coerce.number().min(0, 'Duration hours must be positive'),
   uuid: z.any().optional(),
 });
 
@@ -1168,13 +1159,13 @@ function LessonContentForm({
       description: data?.description,
       content_text: data?.value,
       file_url: '',
-      file_size_bytes: 157200,
-      mime_type: '',
+      // file_size_bytes: 157200,
+      // mime_type: '',
       display_order: data?.display_order,
       is_required: true,
       created_by: 'instructor@sarafrika.com',
       updated_by: 'instructor@sarafrika.com',
-      file_size_display: '',
+      // file_size_display: '',
       content_category: data.content_category,
       // is_downloadable: true,
       // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
@@ -2253,7 +2244,7 @@ function LessonContentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className='h-[calc(90vh-4rem)] sm:h-[calc(90vh-18rem)] lg:h-[calc(90vh-20rem)]'>
+        <ScrollArea className='h-[calc(90vh-4rem)] sm:h-[calc(90vh-8rem)]'>
           <LessonContentForm
             onCancel={onCancel}
             className='px-6 pb-6'
