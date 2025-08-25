@@ -413,7 +413,7 @@ function LessonList({
                 </div>
 
                 {isExpanded && (
-                  <div className="pl-10 mt-2 space-y-2">
+                  <div className="pl-8 mt-2 space-y-2">
                     {contents.length > 0 ? (
                       contents
                         .sort((a: any, b: any) => a.display_order - b.display_order)
@@ -428,8 +428,12 @@ function LessonList({
                                 {getContentTypeIcon(item.content_type)}
                                 <span className="font-medium text-gray-900 dark:text-gray-100">{item.title}</span>
                               </div>
-                              <span className="line-clamp-2 text-xs text-gray-600 dark:text-gray-400">{item.description}</span>
-                              {item.content_text && <span className="text-xs text-gray-700 dark:text-gray-300">{item.content_text}</span>}
+                              <div className="line-clamp-2 text-xs text-gray-600 dark:text-gray-400">
+                                <RichTextRenderer htmlString={item?.description} maxChars={150} />
+                              </div>
+                              {item.content_text && <div className="text-xs text-gray-700 dark:text-gray-300">
+                                <RichTextRenderer htmlString={item?.content_text} maxChars={150} />
+                              </div>}
                               {item.file_url && (
                                 <a
                                   href={item.file_url}
@@ -475,14 +479,20 @@ function LessonList({
                           </div>
                         ))
                     ) : (
-                      <div className="flex flex-row items-center justify-between">
+                      <div className="flex items-center gap-4 px-2 py-2">
                         <p className="text-sm text-muted-foreground">No content items yet.</p>
 
-                        <Button onClick={() => onAddLessonContent(lesson)} className="self-start sm:self-end lg:self-center">
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Add New Content
+                        <Button
+                          onClick={() => onAddLessonContent(lesson)}
+                          variant="secondary"
+                          size="sm"
+                          className="flex items-center gap-1"
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                          Add Content
                         </Button>
                       </div>
+
                     )}
                   </div>
                 )}
