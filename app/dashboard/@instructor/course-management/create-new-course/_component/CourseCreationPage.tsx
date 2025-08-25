@@ -265,6 +265,7 @@ export default function CourseCreationPage() {
     content_category: selectedContent?.content_category,
     content_type_uuid: selectedContent?.content_type_uuid,
     value: selectedContent?.content_text as any,
+    description: selectedContent?.description
     // content_type: selectedContent?.content_type || "",
     // duration_hours: selectedContent?.duration_hours,
     // duration_minutes: selectedContent?.duration_minutes,
@@ -472,7 +473,7 @@ export default function CourseCreationPage() {
             <LessonContentDialog
               courseId={resolveId}
               lessonId={selectedLesson?.uuid || (selectedContent?.lesson_uuid as string)}
-              contentId={selectedContent?.uuid as string}
+              contentId={selectedContent?.uuid as string || ''}
               isOpen={addContentModalOpen}
               onOpenChange={setAddContentModalOpen}
               onCancel={() => {
