@@ -1,17 +1,10 @@
 'use client';
 
+import DeleteModal from '@/components/custom-modals/delete-modal';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
@@ -155,12 +148,10 @@ export default function ProgramPreviewPage() {
     publishProgram.mutate(
       { path: { uuid: programId } },
       {
-        onSuccess: data => {
-          // @ts-ignore
+        onSuccess: (data) => {
           toast.success(data?.message);
         },
-        onError: error => {
-          // @ts-ignore
+        onError: (error) => {
           toast.error(error?.message);
         },
       }
@@ -346,26 +337,21 @@ export default function ProgramPreviewPage() {
         />
 
         {/* Confirm Remove Program Course Modal */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className='flex max-w-2xl flex-col'>
-            <DialogHeader>
-              <DialogTitle>Confirm Deletion</DialogTitle>
-              <DialogDescription className='py-3'>
-                Are you sure you want to remove{' '}
-                <span className='font-semibold'>&quot;{courseToDelete?.name}&quot;</span> from this
-                program? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant='secondary' onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant='destructive' onClick={handleConfirm} className='min-w-[80px]'>
-                {removeProgramCourse?.isPending ? <Spinner /> : 'Delete'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DeleteModal
+          open={isDialogOpen}
+          setOpen={setIsDialogOpen}
+          title="Confirm Deletion"
+          description={
+            <>
+              Are you sure you want to remove{' '}
+              <span className="font-semibold">&quot;{courseToDelete?.name}&quot;</span> from this
+              program? This action cannot be undone.
+            </>
+          }
+          onConfirm={handleConfirm}
+          isLoading={removeProgramCourse?.isPending}
+          confirmText="Delete"
+        />
       </div>
     </div>
   );
