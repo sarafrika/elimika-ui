@@ -58,12 +58,7 @@
   "prettier.requirePragma": false,
   "prettier.proseWrap": "preserve",
 
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact"
-  ],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "eslint.run": "onType",
   "eslint.format.enable": false,
 

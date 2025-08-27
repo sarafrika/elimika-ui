@@ -13,8 +13,8 @@ export default function RubricManagementLayout({ children }: RubricManagementLay
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Manage Rubrics</h2>
           <p className='text-muted-foreground'>
-            Define clear assessment criteria, provide consistent and objective grading, and deliver actionable feedback to students — all in one place.
-
+            Define clear assessment criteria, provide consistent and objective grading, and deliver
+            actionable feedback to students — all in one place.
           </p>
         </div>
       </div>

@@ -34,31 +34,42 @@ import {
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, profilePicSvg } from '@/lib/utils';
-import { zInstructor, zUser } from "@/services/client/zod.gen";
+import { zInstructor, zUser } from '@/services/client/zod.gen';
 import { CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
-import { createInstructor, updateInstructor, updateUser, uploadProfileImage } from '../../../../../../services/client';
+import {
+  createInstructor,
+  updateInstructor,
+  updateUser,
+  uploadProfileImage,
+} from '../../../../../../services/client';
 import { client } from '../../../../../../services/client/client.gen';
 
 const generalProfileSchema = z.object({
-  user: zUser.omit({
-    created_date: true,
-    updated_date: true,
-    updated_by: true,
-    user_domain: true
-  }).merge(z.object({ dob: z.date() })),
-  instructor: zInstructor.merge(z.object({
-    location: z.string().optional()
-  })).omit({
-    created_date: true,
-    updated_date: true,
-    updated_by: true
-  })
+  user: zUser
+    .omit({
+      created_date: true,
+      updated_date: true,
+      updated_by: true,
+      user_domain: true,
+    })
+    .merge(z.object({ dob: z.date() })),
+  instructor: zInstructor
+    .merge(
+      z.object({
+        location: z.string().optional(),
+      })
+    )
+    .omit({
+      created_date: true,
+      updated_date: true,
+      updated_by: true,
+    }),
 });
 
-type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>
+type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>;
 
 export default function InstructorProfile() {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -90,7 +101,7 @@ export default function InstructorProfile() {
       user: {
         ...user,
         dob: new Date(user!.dob ?? Date.now()),
-        profile_image_url: user!.profile_image_url ?? "https://profilepic.jpg"
+        profile_image_url: user!.profile_image_url ?? 'https://profilepic.jpg',
       },
       instructor: {
         ...instructor,
@@ -114,61 +125,64 @@ export default function InstructorProfile() {
       fd.append('profile_image', profilePic.file as Blob, fileName);
 
       client.put({
-        url: ""
-      })
+        url: '',
+      });
       uploadProfilePicResp = await uploadProfileImage({
         path: {
-          userUuid: user!.uuid!
+          userUuid: user!.uuid!,
         },
         //@ts-ignore
         body: fd,
         headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      })
+          'Content-Type': 'multipart/form-data',
+        },
+      });
     }
 
-    const manageInstructor = () => instructor ?
-      updateInstructor({
-        path: {
-          uuid: instructor.uuid!
-        },
-        body: updatedProfileData.instructor
-      }) : createInstructor({
-        body: updatedProfileData.instructor
-      })
-
+    const manageInstructor = () =>
+      instructor
+        ? updateInstructor({
+            path: {
+              uuid: instructor.uuid!,
+            },
+            body: updatedProfileData.instructor,
+          })
+        : createInstructor({
+            body: updatedProfileData.instructor,
+          });
 
     const response = await Promise.all([
       updateUser({
         path: {
-          uuid: user!.uuid!
+          uuid: user!.uuid!,
         },
         body: {
           ...updatedProfileData.user,
-          profile_image_url: uploadProfilePicResp && !uploadProfilePicResp.error ?
-            uploadProfilePicResp.data!.profile_image_url : user!.profile_image_url
-        }
+          profile_image_url:
+            uploadProfilePicResp && !uploadProfilePicResp.error
+              ? uploadProfilePicResp.data!.profile_image_url
+              : user!.profile_image_url,
+        },
       }),
 
-      manageInstructor()
+      manageInstructor(),
     ]);
     setSubmitting(false);
     let hasErrors = false;
 
     response.forEach((resp, i) => {
       if (resp.error) {
-        const { error } = resp.error as { error: any }
+        const { error } = resp.error as { error: any };
         Object.keys(error).forEach(key => {
           const fieldName = `${i === 0 ? 'user' : 'instructor'}.${key}` as any;
-          form.setError(fieldName, error[key])
+          form.setError(fieldName, error[key]);
         });
         hasErrors = true;
       }
     });
     if (hasErrors) return;
 
-    toast.success("Profile updated successfully");
+    toast.success('Profile updated successfully');
     await invalidateQuery!();
   }
 
@@ -192,7 +206,7 @@ export default function InstructorProfile() {
                   <Avatar className='bg-primary-50 h-24 w-24'>
                     <AvatarImage src={profilePic.url} alt='Avatar' />
                     <AvatarFallback className='bg-blue-50 text-xl text-blue-600'>
-                      {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ""}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ""}`}
+                      {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}`}
                     </AvatarFallback>
                   </Avatar>
                   <div className='space-y-2'>
@@ -369,21 +383,33 @@ export default function InstructorProfile() {
                 <FormField
                   control={form.control}
                   name='instructor.location'
-                  render={({ field }) => (<FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <LocationInput {...field} onSuggest={(loc => {
-                        if (loc.features.length > 0) {
-                          form.setValue("instructor.latitude", loc.features[0]!.properties.coordinates.latitude);
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <LocationInput
+                          {...field}
+                          onSuggest={loc => {
+                            if (loc.features.length > 0) {
+                              form.setValue(
+                                'instructor.latitude',
+                                loc.features[0]!.properties.coordinates.latitude
+                              );
 
-                          form.setValue("instructor.longitude", loc.features[0]!.properties.coordinates.longitude)
-                        }
-                        return loc;
-                      })} />
-                    </FormControl>
-                    <FormDescription>Search and select your physical localaion</FormDescription>
-                    <FormMessage />
-                  </FormItem>)} />
+                              form.setValue(
+                                'instructor.longitude',
+                                loc.features[0]!.properties.coordinates.longitude
+                              );
+                            }
+                            return loc;
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>Search and select your physical localaion</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}

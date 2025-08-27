@@ -84,7 +84,6 @@ const courseCreationSchema = z.object({
   age_upper_limit: z.coerce.number().optional(),
   duration_hours: z.coerce.number().optional(),
   duration_minutes: z.coerce.number().min(0, 'minutes must be between 0 and 59'),
-
 });
 
 type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any };
@@ -243,7 +242,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         },
       })
     );
-
 
     // actions
     const handleFileUpload = async (

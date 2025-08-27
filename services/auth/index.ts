@@ -49,15 +49,14 @@ const config: NextAuthConfig = {
   ],
   callbacks: {
     async jwt({ token, account, user, session, trigger }) {
-
-      if (trigger === "update") {
+      if (trigger === 'update') {
         session.user = user;
       }
 
       // Initial sign in
       if (account && user) {
         const decodedToken = decodeJWT(account.access_token!);
-        console.log(token)
+        console.log(token);
         return {
           ...token,
           id: account.providerAccountId,

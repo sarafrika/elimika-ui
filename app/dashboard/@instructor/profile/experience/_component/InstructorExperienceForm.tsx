@@ -24,19 +24,29 @@ import { useMutation } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../../../../context/profile-context';
-import { deleteInstructorExperience, InstructorExperience } from '../../../../../../services/client';
-import { addInstructorExperienceMutation, updateInstructorExperienceMutation } from '../../../../../../services/client/@tanstack/react-query.gen';
+import {
+  deleteInstructorExperience,
+  InstructorExperience,
+} from '../../../../../../services/client';
+import {
+  addInstructorExperienceMutation,
+  updateInstructorExperienceMutation,
+} from '../../../../../../services/client/@tanstack/react-query.gen';
 import { zInstructorExperience } from '../../../../../../services/client/zod.gen';
 
-const ExperienceSchema = zInstructorExperience.omit({
-  created_date: true,
-  updated_date: true,
-  updated_by: true,
-  years_of_experience: true
-}).merge(z.object({
-  start_date: z.string(),
-  end_date: z.string()
-}))
+const ExperienceSchema = zInstructorExperience
+  .omit({
+    created_date: true,
+    updated_date: true,
+    updated_by: true,
+    years_of_experience: true,
+  })
+  .merge(
+    z.object({
+      start_date: z.string(),
+      end_date: z.string(),
+    })
+  );
 
 const profileExperienceSchema = z.object({
   experiences: z.array(ExperienceSchema),
@@ -62,8 +72,8 @@ export default function ProfessionalExperienceSettings() {
   }, [replaceBreadcrumbs]);
 
   const user = useUserProfile();
-  const { instructor, invalidateQuery } = user!
-  const instructorExperience = instructor?.experience as InstructorExperience[]
+  const { instructor, invalidateQuery } = user!;
+  const instructorExperience = instructor?.experience as InstructorExperience[];
 
   const defaultExperience: ExperienceType = {
     organization_name: 'Google',
@@ -72,17 +82,21 @@ export default function ProfessionalExperienceSettings() {
     start_date: '2020-01',
     end_date: '2022-12',
     is_current_position: false,
-    instructor_uuid: instructor!.uuid!
+    instructor_uuid: instructor!.uuid!,
   };
 
   const passExperiences = (exp: InstructorExperience) => ({
     ...defaultExperience,
     ...exp,
-    start_date: new Date(exp.start_date ?? Date.now()).toISOString().split("-").slice(0, 2).join("-"),
-    end_date: new Date(exp.end_date ?? Date.now()).toISOString().split("-").slice(0, 2).join("-"),
+    start_date: new Date(exp.start_date ?? Date.now())
+      .toISOString()
+      .split('-')
+      .slice(0, 2)
+      .join('-'),
+    end_date: new Date(exp.end_date ?? Date.now()).toISOString().split('-').slice(0, 2).join('-'),
     updated_by: exp.updated_by ?? 'self',
     updated_date: new Date(exp.updated_date!).toISOString(),
-    years_of_experience: exp.years_of_experience ? exp.years_of_experience.toString() : ''
+    years_of_experience: exp.years_of_experience ? exp.years_of_experience.toString() : '',
   });
 
   const form = useForm<ProfileExperienceFormValues>({
@@ -111,7 +125,7 @@ export default function ProfessionalExperienceSettings() {
       const expData = {
         ...exp,
         start_date: new Date(`${exp.start_date}-1`).toISOString(),
-        end_date: new Date(`${exp.end_date}-30`).toISOString()
+        end_date: new Date(`${exp.end_date}-30`).toISOString(),
       };
       if (exp.uuid) {
         await updateExpMutation.mutateAsync({
@@ -122,7 +136,7 @@ export default function ProfessionalExperienceSettings() {
           body: {
             ...expData,
             start_date: new Date(expData.start_date),
-            end_date: new Date(expData.end_date)
+            end_date: new Date(expData.end_date),
           },
         });
       } else {
@@ -133,16 +147,24 @@ export default function ProfessionalExperienceSettings() {
           body: {
             ...expData,
             start_date: new Date(expData.start_date),
-            end_date: new Date(expData.end_date)
+            end_date: new Date(expData.end_date),
           },
         });
         const exps = form.getValues('experiences');
         exps[index] = passExperiences({
           ...resp.data,
           //@ts-ignore
-          start_date: new Date(resp.data!.start_date ?? Date.now()).toISOString().split("-").slice(0, 2).join("-"),
+          start_date: new Date(resp.data!.start_date ?? Date.now())
+            .toISOString()
+            .split('-')
+            .slice(0, 2)
+            .join('-'),
           //@ts-ignore
-          end_date: new Date(resp.data!.end_date ?? Date.now()).toISOString().split("-").slice(0, 2).join("-"),
+          end_date: new Date(resp.data!.end_date ?? Date.now())
+            .toISOString()
+            .split('-')
+            .slice(0, 2)
+            .join('-'),
         });
         form.setValue('experiences', exps);
       }
@@ -163,14 +185,14 @@ export default function ProfessionalExperienceSettings() {
           path: {
             instructorUuid: instructor!.uuid!,
             experienceUuid: expUUID,
-          }
-        })
+          },
+        });
         if (resp.error) {
           //console.log(resp.error);
           return;
         }
       }
-      invalidateQuery!()
+      invalidateQuery!();
       toast('Experience removed successfully');
     }
   }
