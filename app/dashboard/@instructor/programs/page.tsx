@@ -1,5 +1,6 @@
 'use client';
 
+import DeleteModal from '@/components/custom-modals/delete-modal';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { CustomPagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,7 @@ import {
   searchTrainingProgramsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, EyeIcon, FilePenIcon, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
+import { BadgeCheck, BookOpen, EyeIcon, FilePenIcon, MoreVertical, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -39,6 +40,7 @@ import {
   CreateProgramDialog,
   EditProgramDialog,
   ProgramFormValues,
+  ProgramRequirementDialog,
 } from '../_components/program-management-form';
 
 export default function ClassesPage() {
@@ -50,7 +52,9 @@ export default function ClassesPage() {
   const closeCreateProgramDialog = () => setIsCreateProgramDialog(false);
 
   const [isEditProgramDialog, setIsEditProgramDialog] = useState(false);
+
   const [editProgramId, setEditProgramId] = useState<string | null>(null);
+  const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null);
 
   const openEditProgramDialog = (id: string) => {
     setEditProgramId(id);
@@ -67,6 +71,13 @@ export default function ClassesPage() {
     setIsAddProgramCourseDialog(true);
   };
 
+  const [programRequirementModal, setProgramRequirementModal] = useState(false);
+  const openProgramRequirementModal = (id: string) => {
+    // setEditingRequirementId(id);
+    setEditProgramId(id);
+    setProgramRequirementModal(true);
+  };
+
   const size = 20;
   const [page, setPage] = useState(0);
 
@@ -79,24 +90,29 @@ export default function ClassesPage() {
     })
   );
 
-  // @ts-ignore
   const programs = data?.data?.content || [];
-  //@ts-ignore
   const paginationMetadata = data?.data?.metadata;
 
   // DELETE PROGRAM
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [programToDeleteId, setProgramToDeleteId] = useState<string | null>(null);
+  const openDeleteModal = (programId: string) => {
+    setProgramToDeleteId(programId);
+    setDeleteModalOpen(true);
+  };
+
   const deleteTrainingProgram = useMutation(deleteTrainingProgramMutation());
-  const handleDelete = async (classId: string) => {
-    if (!classId) return;
+  const confirmDelete = async () => {
+    if (!programToDeleteId) return;
 
     try {
       await deleteTrainingProgram.mutateAsync(
         {
-          path: { uuid: classId },
+          path: { uuid: programToDeleteId },
         },
         {
           onSuccess: () => {
-            toast.success('Training program deleted succcessfully');
+            toast.success('Training program deleted successfully');
             queryClient.invalidateQueries({
               queryKey: searchTrainingProgramsQueryKey({
                 query: {
@@ -105,10 +121,14 @@ export default function ClassesPage() {
                 },
               }),
             });
+            setDeleteModalOpen(false);
+            setProgramToDeleteId(null);
           },
         }
       );
-    } catch (err) {}
+    } catch (err) {
+      toast.error('Failed to delete program');
+    }
   };
 
   const selectedProgram = programs.find((program: any) => program.uuid === editProgramId);
@@ -136,7 +156,6 @@ export default function ClassesPage() {
         </Button>
       </div>
 
-      {/* Programs Table or Empty State */}
       {programs?.length === 0 && !isFetching ? (
         <div className='bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
@@ -204,21 +223,7 @@ export default function ClassesPage() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant='ghost' size='icon' aria-label='Open menu'>
-                              <svg
-                                width='15'
-                                height='15'
-                                viewBox='0 0 15 15'
-                                fill='none'
-                                xmlns='http://www.w3.org/2000/svg'
-                                className='h-4 w-4'
-                              >
-                                <path
-                                  d='M8.625 2.5C8.625 3.12132 8.12132 3.625 7.5 3.625C6.87868 3.625 6.375 3.12132 6.375 2.5C6.375 1.87868 6.87868 1.375 7.5 1.375C8.12132 1.375 8.625 1.87868 8.625 2.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM7.5 13.625C8.12132 13.625 8.625 13.1213 8.625 12.5C8.625 11.8787 8.12132 11.375 7.5 11.375C6.87868 11.375 6.375 11.8787 6.375 12.5C6.375 13.1213 6.87868 13.625 7.5 13.625Z'
-                                  fill='currentColor'
-                                  fillRule='evenodd'
-                                  clipRule='evenodd'
-                                ></path>
-                              </svg>
+                              <MoreVertical className='h-4 w-4' />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align='end'>
@@ -246,10 +251,16 @@ export default function ClassesPage() {
                               <BookOpen className='mr-2 h-4 w-4' />
                               Add Course
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => openProgramRequirementModal(program.uuid)}
+                            >
+                              <BadgeCheck className='mr-2 h-4 w-4' />
+                              Add Requirements
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               variant='destructive'
-                              onClick={() => handleDelete(program.uuid)}
+                              onClick={() => openDeleteModal(program.uuid)}
                             >
                               <TrashIcon className='mr-2 h-4 w-4' />
                               Delete
@@ -291,6 +302,24 @@ export default function ClassesPage() {
         isOpen={isAddProgramCourseDialog}
         onOpenChange={setIsAddProgramCourseDialog}
         programId={editProgramId || ''}
+      />
+
+      <ProgramRequirementDialog
+        isOpen={programRequirementModal}
+        onOpenChange={setProgramRequirementModal}
+        initialValues={undefined}
+        programId={editProgramId as string}
+        requirementId={editingRequirementId as string}
+      />
+
+      <DeleteModal
+        open={deleteModalOpen}
+        setOpen={setDeleteModalOpen}
+        title='Delete Program'
+        description='Are you sure you want to delete this training program? This action cannot be undone.'
+        onConfirm={confirmDelete}
+        isLoading={deleteTrainingProgram.isPending}
+        confirmText='Delete Program'
       />
     </div>
   );

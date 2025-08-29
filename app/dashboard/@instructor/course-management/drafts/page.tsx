@@ -1,6 +1,6 @@
 'use client'
 
-import { useInstructor } from '../../../../../context/instructor-context';
+import { useInstructor } from '@/context/instructor-context';
 import DraftCoursesComponent from './draftCourse-component';
 
 function Page() {

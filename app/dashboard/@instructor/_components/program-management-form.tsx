@@ -22,13 +22,16 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import {
   addProgramCourseMutation,
+  addProgramRequirementMutation,
   createTrainingProgramMutation,
   getProgramCoursesQueryKey,
+  getProgramRequirementsQueryKey,
   searchCoursesOptions,
   searchTrainingProgramsQueryKey,
+  updateProgramRequirementMutation,
   updateTrainingProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { SchemaEnum } from '@/services/client/types.gen';
+import { RequirementTypeEnum, SchemaEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { AddCategoryFormItem } from '@/components/add-category-formfield';
@@ -137,9 +140,9 @@ function ProgramCreationForm({
     const commonOnSuccess = (data: any) => {
       toast.success(
         data?.message ||
-          (isEditing
-            ? 'Training program updated successfully'
-            : 'Training program created successfully')
+        (isEditing
+          ? 'Training program updated successfully'
+          : 'Training program created successfully')
       );
       onCancel();
 
@@ -451,9 +454,8 @@ function AddCourseToProgramForm({
       has_prerequisites: !!values.prerequisite_course_uuid,
       association_category: values.is_required ? 'Required Course' : 'Optional Course',
       requirement_status: values.is_required ? 'Mandatory Course' : 'Elective Course',
-      curriculum_summary: `${
-        values.is_required ? 'Required' : 'Optional'
-      } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`,
+      curriculum_summary: `${values.is_required ? 'Required' : 'Optional'
+        } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`,
     };
 
     addProgramCourses.mutate(
@@ -594,6 +596,201 @@ function AddCourseToProgramForm({
   );
 }
 
+
+const programRequirementSchema = z.object({
+  program_uuid: z.string(),
+  requirement_type: z.string().optional(),
+  requirement_text: z.string().optional(),
+  requirement_category: z.string().optional(),
+  requirement_priority: z.string().optional(),
+  compliance_level: z.string().optional(),
+  requirement_summary: z.string().optional(),
+  is_mandatory: z.boolean(),
+  // is_optional: z.boolean(),
+});
+
+export type ProgramRequirementFormValues = z.infer<typeof programRequirementSchema>;
+
+function ProgramRequirementForm({
+  programUuid,
+  requirementUuid,
+  initialValues,
+  onSuccess,
+  onCancel,
+  className,
+}: {
+  programUuid: string;
+  requirementUuid?: string;
+  initialValues?: ProgramRequirementFormValues;
+  onSuccess?: () => void;
+  onCancel: () => void;
+  className?: string;
+}) {
+  const form = useForm<ProgramRequirementFormValues>({
+    resolver: zodResolver(programRequirementSchema),
+    defaultValues: {
+      program_uuid: '',
+      requirement_type: '',
+      requirement_text: '',
+      is_mandatory: true,
+      compliance_level: '',
+      requirement_category: '',
+      requirement_priority: '',
+      requirement_summary: '',
+      ...initialValues
+    },
+  });
+
+  const qc = useQueryClient();
+  const instructor = useInstructor();
+
+  const addProgramRequirement = useMutation(addProgramRequirementMutation());
+  const updateProgramRequirement = useMutation(updateProgramRequirementMutation());
+
+  const handleSubmit = async (values: ProgramRequirementFormValues) => {
+    const payload = {
+      ...values,
+      requirement_type: values.requirement_type as RequirementTypeEnum,
+      program_uuid: programUuid as string,
+      is_optional: !values.is_mandatory,
+      updated_by: instructor?.full_name,
+      requirement_text: values.requirement_text,
+      is_mandatory: values.is_mandatory,
+      requirement_category: values.requirement_category,
+      requirement_priority: values.requirement_priority,
+      compliance_level: values.compliance_level,
+      requirement_summary: values.requirement_summary,
+    };
+
+    if (requirementUuid) {
+      updateProgramRequirement.mutate(
+        { path: { programUuid, requirementUuid }, body: payload as any },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getProgramRequirementsQueryKey({
+                path: { programUuid },
+                query: { pageable: {} },
+              }),
+            });
+            toast.success(data?.message || 'Requirement updated successfully');
+            onCancel();
+          },
+          onError: () => toast.error('Failed to update requirement'),
+        }
+      );
+    } else {
+      addProgramRequirement.mutate(
+        { path: { programUuid: programUuid as string }, body: payload as any },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getProgramRequirementsQueryKey({
+                path: { programUuid: programUuid as string },
+                query: { pageable: {} },
+              }),
+            });
+
+            toast.success(data?.message || 'Requirement added successfully');
+            onCancel();
+          },
+          onError: (error) => {
+            // const message = error?.error?.toLowerCase?.() || '';
+            // if (message.includes('duplicate key')) {
+            //   toast.error('This requirement already exists or is duplicated.');
+            // } else {
+            //   toast.error('Failed to add requirement.');
+            // }
+          },
+        }
+      );
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
+        {/* Requirement Type */}
+        <FormField
+          control={form.control}
+          name='requirement_type'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Requirement Type</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ''}>
+                <FormControl className='w-full max-w-[462px]'>
+                  <SelectTrigger className='w-full truncate'>
+                    <SelectValue placeholder='Select requirement type' className='truncate' />
+                  </SelectTrigger>
+                </FormControl>
+
+                <SelectContent className='w-full max-w-[462px]'>
+                  {Object.entries(RequirementTypeEnum).map(([key, value]) => (
+                    <SelectItem
+                      key={key}
+                      value={value}
+                      className='w-full max-w-full truncate'
+                      title={value}
+                    >
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Requirement Text */}
+        <FormField
+          control={form.control}
+          name='requirement_text'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Requirement Text</FormLabel>
+              <FormControl>
+                <Textarea placeholder='Describe the requirement' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Required Checkbox */}
+        <FormField
+          control={form.control}
+          name='is_mandatory'
+          render={({ field }) => (
+            <FormItem className='flex items-center gap-2'>
+              <FormControl>
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+              <FormLabel>Is this requirement mandatory?</FormLabel>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Buttons */}
+        <div className='flex justify-end gap-3 pt-4'>
+          <Button type='button' variant='outline' onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            type='submit'
+            className='min-w-[180px]'
+            disabled={addProgramRequirement.isPending || updateProgramRequirement.isPending}
+          >
+            {(addProgramRequirement.isPending || updateProgramRequirement.isPending) && <Spinner />}
+            {initialValues ? 'Update Requirement' : 'Add Requirement'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
 interface CreateProgramDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -687,4 +884,54 @@ function AddProgramCourseDialog({
   );
 }
 
-export { AddProgramCourseDialog, CreateProgramDialog, EditProgramDialog };
+interface ProgramRequirementDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  programId?: string;
+  requirementId?: string;
+  onSuccess?: () => void;
+  initialValues: any
+}
+
+function ProgramRequirementDialog({
+  isOpen,
+  onOpenChange,
+  programId,
+  requirementId,
+  onSuccess,
+  initialValues,
+}: ProgramRequirementDialogProps) {
+  const isEditMode = requirementId;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className='flex max-w-6xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 pt-8 pb-4'>
+          <DialogTitle className='text-xl'>
+            {isEditMode ? 'Edit Program Requirement' : 'Add Program Requirement'}
+          </DialogTitle>
+
+          <DialogDescription className='text-muted-foreground text-sm'>
+            {isEditMode
+              ? 'Update the details of this program requirement.'
+              : 'Select a course to add to this program. You can define its position, prerequisites, and whether it’s required.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className='h-auto py-6'>
+          <ProgramRequirementForm
+            initialValues={initialValues}
+            requirementUuid={requirementId as string}
+            programUuid={programId as string}
+            onCancel={() => onOpenChange(false)}
+            onSuccess={onSuccess}
+            className='px-6 pb-6'
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+export { AddProgramCourseDialog, CreateProgramDialog, EditProgramDialog, ProgramRequirementDialog };
