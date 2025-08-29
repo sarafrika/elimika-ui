@@ -238,7 +238,6 @@ type LessonListProps = {
   onEditLesson: (lesson: any) => void;
   onDeleteLesson: (lessonId: string) => void;
   onReorderLessons: (newLessons: any[]) => void;
-  onAddAssessment: (lesson: any) => void;
   // lesson contents
   // lessonContentsMap: Map<string, LessonContent[]>
   lessonContentsMap: Map<string, any[]>;
@@ -260,7 +259,6 @@ function LessonList({
   onEditLesson,
   onDeleteLesson,
   onReorderLessons,
-  onAddAssessment,
   // lesson contents
   lessonContentsMap,
   onAddLessonContent,
@@ -313,7 +311,7 @@ function LessonList({
   return (
     <div className='space-y-6'>
       <div className='flex flex-col items-center justify-between gap-4 md:flex-row'>
-        <div className='space-y-1'>
+        <div className='space-y-1 self-start'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
           <p className='text-muted-foreground text-sm'>
             You have {lessons?.content?.length}{' '}
@@ -321,7 +319,7 @@ function LessonList({
           </p>
         </div>
         <Button onClick={onAddLesson} className='self-start sm:self-end lg:self-center'>
-          <PlusCircle className='mr-2 h-4 w-4' />
+          <PlusCircle className='mr-0.5 h-4 w-4' />
           Add Lesson
         </Button>
       </div>
@@ -378,11 +376,6 @@ function LessonList({
                           <DropdownMenuItem onClick={() => onAddLessonContent(lesson)}>
                             <PlusCircle className='mr-1 h-4 w-4' />
                             Add Lesson Content
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem onClick={() => onAddAssessment(lesson)}>
-                            <ClipboardCheck className='mr-1 h-4 w-4' />
-                            Add Assessment
                           </DropdownMenuItem>
 
                           <DropdownMenuSeparator />
@@ -1798,11 +1791,12 @@ function AssessmentCreationForm({
 }
 
 type AssessmentListProps = {
+  courseTitle: string;
   assessments: any;
   lessonItems: any;
   isLoading: boolean;
   courseId?: string;
-  onAddRubrics: (assessment: any) => void;
+  onAddAssessment: () => void;
 };
 
 const rubricSelectSchema = z.object({
@@ -1892,9 +1886,8 @@ function RubricSelectForm({
                         )}
                       </div>
 
-                      <div className="mt-2 text-sm text-gray-600">
+                      <div className="flex flfex-row items-center gap-6 mt-2 text-sm text-gray-600">
                         <p><strong>Type:</strong> {rubric.rubric_type}</p>
-                        <p><strong>Status:</strong> {rubric.usage_status}</p>
                         <p><strong>Total Weight:</strong> {rubric.total_weight}{rubric.weight_unit === 'percentage' ? '%' : ''}</p>
                       </div>
 
@@ -1917,12 +1910,7 @@ function RubricSelectForm({
                                 <CircleCheckBig size={14} color='green' /> {criterion.component_name}
                               </div>
                               <div className="text-sm text-muted-foreground mb-1">{criterion.description}</div>
-                              <div className="text-xs text-gray-600">
-                                <p><strong>Weight:</strong> {criterion.weight}</p>
-                                <p><strong>Category:</strong> {criterion.criteria_category}</p>
-                                <p><strong>Priority:</strong> {criterion.weight_suggestion}</p>
-                                <p><strong>Primary:</strong> {criterion.is_primary_criteria ? 'Yes' : 'No'}</p>
-                              </div>
+
 
                               {/* Scoring levels */}
                               {criterion.scoring?.length > 0 ? (
@@ -1976,11 +1964,12 @@ function RubricSelectForm({
 }
 
 function AssessmentList({
+  courseTitle,
   assessments,
   lessonItems,
   isLoading,
   courseId,
-  onAddRubrics,
+  onAddAssessment,
 }: AssessmentListProps) {
   const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
 
@@ -2041,12 +2030,17 @@ function AssessmentList({
     <div className='space-y-6'>
       <div className='flex flex-row items-center justify-between'>
         <div className='space-y-1'>
+          <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
           <p className='text-muted-foreground text-sm'>
             You have {assessments?.content?.length}{' '}
             {assessments?.content?.length === 1 ? 'assessment' : 'assessments'} created under this
             course.
           </p>
         </div>
+        <Button onClick={onAddAssessment} className='self-start sm:self-end lg:self-center'>
+          <PlusCircle className='h-4 w-4' />
+          Add Assessment
+        </Button>
       </div>
 
       {isLoading ? (

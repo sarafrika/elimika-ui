@@ -1,6 +1,7 @@
-import { getRubricCriteria, getRubricScoring } from '@/services/client';
+import { getRubricCriteria, getRubricMatrix, getRubricScoring } from '@/services/client';
 import {
   getRubricCriteriaQueryKey,
+  getRubricMatrixQueryKey,
   getRubricScoringQueryKey,
   searchAssessmentRubricsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -26,6 +27,16 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
 
   const rubricList = allRubrics?.data?.content ?? [];
   const rubricUuids = rubricList.map((rubric: any) => rubric.uuid);
+
+  const getRubricMatrixOptions = (rubricUuid: string) => ({
+    queryKey: getRubricMatrixQueryKey({ path: { rubricUuid } }),
+    queryFn: () => getRubricMatrix({ path: { rubricUuid } }),
+    enabled: !!rubricUuid,
+  });
+
+  const rubricMatrixResults = useQueries({
+    queries: rubricUuids.map((uuid) => getRubricMatrixOptions(uuid)),
+  });
 
   const criteriaQueries = useQueries({
     queries: rubricUuids.map(rubricUuid => ({
@@ -65,6 +76,31 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
     })),
   });
 
+  // const rubricsWithDetails = rubricList.map((rubric: any, index: number) => {
+  //   const rubricUuid = rubric.uuid;
+
+  //   const criteriaQuery = criteriaQueries[index];
+  //   const criteriaList = criteriaQuery?.data?.data?.data?.content ?? [];
+
+  //   const enrichedCriteria = criteriaList.map((criteria: any) => {
+  //     const scoringQuery = scoringQueries.find(
+  //       (q, idx) =>
+  //         criteriaPairs[idx]?.criteriaUuid === criteria.uuid &&
+  //         criteriaPairs[idx]?.rubricUuid === rubricUuid
+  //     );
+  //     const scoringList = scoringQuery?.data?.data?.data?.content ?? [];
+  //     return {
+  //       ...criteria,
+  //       scoring: scoringList,
+  //     };
+  //   });
+
+  //   return {
+  //     rubric,
+  //     criteria: enrichedCriteria,
+  //   };
+  // });
+
   const rubricsWithDetails = rubricList.map((rubric: any, index: number) => {
     const rubricUuid = rubric.uuid;
 
@@ -84,11 +120,16 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
       };
     });
 
+    const matrixQuery = rubricMatrixResults[index];
+    const matrixData = matrixQuery?.data ?? null;
+
     return {
       rubric,
       criteria: enrichedCriteria,
+      matrix: matrixData,
     };
   });
+
 
   const isLoading =
     isFetching ||

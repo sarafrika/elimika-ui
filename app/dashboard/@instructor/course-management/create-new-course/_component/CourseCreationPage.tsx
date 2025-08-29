@@ -414,7 +414,6 @@ export default function CourseCreationPage() {
               onAddLesson={openAddLessonModal}
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
-              onAddAssessment={openAddAssessmentModal}
               onReorderLessons={() => { }}
               // lesson content
               lessonContentsMap={lessonContentMap}
@@ -502,20 +501,20 @@ export default function CourseCreationPage() {
         >
           <div className='space-y-4'>
             <AssessmentList
+              courseTitle={course?.data?.name as string}
               isLoading={assessmentLoading}
               assessments={assessmentData?.data}
               lessonItems={lessonContentData?.data}
               courseId={resolveId}
-              onAddRubrics={() => { toast.success("select rubric to use for assessment") }}
+              onAddAssessment={openAddAssessmentModal}
             />
 
-            {/* <RubricDialog
-              isOpen={addRubricModalOpen}
-              onOpenChange={setAddRubricModalOpen}
-              courseId={resolveId}
-              lessonId={selectedLesson?.uuid}
-              onCancel={() => { }}
-            /> */}
+            <AssessmentDialog
+              isOpen={addAssessmentModalOpen}
+              onOpenChange={setAddAssessmentModalOpen}
+              courseId={createdCourseId ? createdCourseId : (courseId as string)}
+              onCancel={() => setAddAssessmentModalOpen(false)}
+            />
           </div>
         </StepperContent>
 
@@ -673,9 +672,9 @@ export default function CourseCreationPage() {
                           }
                         />
 
-                        <h3 className='font-semibold'>
+                        {/* <h3 className='font-semibold'>
                           <span>📅 Duration:</span> {assessment.duration_display}
-                        </h3>
+                        </h3> */}
                       </div>
                     </div>
                   ))}
