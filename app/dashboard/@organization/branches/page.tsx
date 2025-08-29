@@ -4,10 +4,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useTrainingCenter } from '@/context/training-center-provide';
 import { Separator } from '@radix-ui/react-separator';
 import { useQuery } from '@tanstack/react-query';
+import { Pencil, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Button } from '../../../../components/ui/button';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../../../../components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../../../../components/ui/dropdown-menu';
 import UserBadge from '../../../../components/user-badge';
 import VirticleDotsIcons from '../../../../components/virticle-dots-icon';
 import { getTrainingBranchesByOrganisation } from '../../../../services/client';
@@ -80,13 +81,17 @@ export default function BranchesPage() {
                       <Button variant="ghost"><VirticleDotsIcons /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
+                      {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
+                      {/* <DropdownMenuSeparator /> */}
                       <DropdownMenuCheckboxItem>
-                        <Link href={`/dashboard/branches/edit/${branch.uuid}`}>Edit</Link>
+                        <Link className='flex gap-3 items-center' href={`/dashboard/branches/edit/${branch.uuid}`}>
+                          <Pencil /> <span>Edit</span>
+                        </Link>
                       </DropdownMenuCheckboxItem>
                       <DropdownMenuCheckboxItem>
-                        Delete
+                        <Link href={""} className='flex gap-3'>
+                          <Trash /> <span className='text-red-500'>Delete</span>
+                        </Link>
                       </DropdownMenuCheckboxItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

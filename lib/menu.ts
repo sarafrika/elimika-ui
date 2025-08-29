@@ -227,8 +227,13 @@ export default {
       icon: Users,
     },
     {
-      title: 'Courses',
-      url: '/dashboard/courses',
+      title: 'Course Management',
+      url: '/dashboard/course-management',
+      icon: BookOpen,
+    },
+    {
+      title: 'Invites',
+      url: '/dashboard/invites',
       icon: BookOpen,
     },
     {

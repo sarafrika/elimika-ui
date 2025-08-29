@@ -3,8 +3,11 @@ import Link from "next/link";
 import { Calendar } from "../../../../../components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { Separator } from "../../../../../components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../../components/ui/tabs";
 import UserBadge from "../../../../../components/user-badge";
 import { getTrainingBranchByUuid, TrainingBranch } from "../../../../../services/client";
+import InviteList from "../../Invites/_components/InviteList";
+import Classroms from "./_components/classrooms";
 import Courses from "./_components/courses";
 import { Action } from "./utils";
 
@@ -62,17 +65,51 @@ export default async function ViewBranch({
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Courses</CardTitle>
-                            <CardDescription>Courses offered in this branch</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-3 gap-4">
-                                <Courses user_uuid={branch.organisation_uuid} />
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <Tabs>
+                        <TabsList>
+                            <TabsTrigger value="courses">Courses</TabsTrigger>
+                            <TabsTrigger value="invites">Invites</TabsTrigger>
+                            <TabsTrigger value="classrooms">Classrooms</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="courses">
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Courses</CardTitle>
+                                    <CardDescription>Courses offered in this branch</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <Courses user_uuid={branch.organisation_uuid} />
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                        </TabsContent>
+
+                        <TabsContent value="invites">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Invites</CardTitle>
+                                    <CardDescription>All invites sent to instructors / users</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <InviteList />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="classrooms">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Classrooms</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <Classroms />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
                 </div>
                 <div>
                     <Card>
@@ -81,7 +118,7 @@ export default async function ViewBranch({
                         </CardContent>
                     </Card>
                 </div>
-            </div>
+            </div >
 
         </>
     );
