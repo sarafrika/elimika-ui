@@ -31,7 +31,7 @@ import {
   searchTrainingProgramsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, EyeIcon, FilePenIcon, MoreVertical, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
+import { BadgeCheck, BookOpen, EyeIcon, FilePenIcon, MoreVertical, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -40,6 +40,7 @@ import {
   CreateProgramDialog,
   EditProgramDialog,
   ProgramFormValues,
+  ProgramRequirementDialog,
 } from '../_components/program-management-form';
 
 export default function ClassesPage() {
@@ -51,7 +52,9 @@ export default function ClassesPage() {
   const closeCreateProgramDialog = () => setIsCreateProgramDialog(false);
 
   const [isEditProgramDialog, setIsEditProgramDialog] = useState(false);
+
   const [editProgramId, setEditProgramId] = useState<string | null>(null);
+  const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null);
 
   const openEditProgramDialog = (id: string) => {
     setEditProgramId(id);
@@ -68,6 +71,13 @@ export default function ClassesPage() {
     setIsAddProgramCourseDialog(true);
   };
 
+  const [programRequirementModal, setProgramRequirementModal] = useState(false);
+  const openProgramRequirementModal = (id: string) => {
+    // setEditingRequirementId(id);
+    setEditProgramId(id);
+    setProgramRequirementModal(true);
+  };
+
   const size = 20;
   const [page, setPage] = useState(0);
 
@@ -80,9 +90,7 @@ export default function ClassesPage() {
     })
   );
 
-  // @ts-ignore
   const programs = data?.data?.content || [];
-  //@ts-ignore
   const paginationMetadata = data?.data?.metadata;
 
   // DELETE PROGRAM
@@ -243,6 +251,12 @@ export default function ClassesPage() {
                               <BookOpen className='mr-2 h-4 w-4' />
                               Add Course
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => openProgramRequirementModal(program.uuid)}
+                            >
+                              <BadgeCheck className='mr-2 h-4 w-4' />
+                              Add Requirements
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               variant='destructive'
@@ -288,6 +302,14 @@ export default function ClassesPage() {
         isOpen={isAddProgramCourseDialog}
         onOpenChange={setIsAddProgramCourseDialog}
         programId={editProgramId || ''}
+      />
+
+      <ProgramRequirementDialog
+        isOpen={programRequirementModal}
+        onOpenChange={setProgramRequirementModal}
+        initialValues={undefined}
+        programId={editProgramId as string}
+        requirementId={editingRequirementId as string}
       />
 
       <DeleteModal

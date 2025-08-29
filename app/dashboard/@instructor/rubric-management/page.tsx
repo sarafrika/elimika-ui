@@ -17,7 +17,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import isEqual from 'lodash.isequal';
-import { LayoutGridIcon, ListIcon, PlusIcon } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -38,8 +38,6 @@ export default function RubricsCreationPage() {
   const qc = useQueryClient();
   const instructor = useInstructor();
   const { replaceBreadcrumbs } = useBreadcrumb();
-
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
 
   useEffect(() => {
@@ -173,34 +171,7 @@ export default function RubricsCreationPage() {
     setIsScoringModalOpen(true);
   };
 
-
-  const handleEditCriteriaScoring = (rubricId: string, cell: any) => {
-    // console.log(rubricId, "rub id")
-    // console.log(cell, "ccell deets")
-
-    const rubricItem = rubrics.find(r => r.rubric.uuid === rubricId);
-    if (!rubricItem) return;
-
-    // setEditingScoring({
-    //   scoring_uuid: selectedScoring.uuid,
-    //   name: selectedScoring.performance_expectation || '',
-    //   description: selectedScoring.description || '',
-    //   points: parseInt(selectedScoring.score_range || '0'),
-    //   grading_level_uuid: selectedScoring.grading_level_uuid || '',
-    //   is_passing_level: selectedScoring.is_passing_level,
-    //   performance_expectation: selectedScoring.performance_expectation,
-    //   feedback_category: selectedScoring.feedback_category,
-    // });
-
-    setEditingRubricId(rubricId);
-    // setEditingCriterionId(criterionId);
-    // setEditingScoringId(scoringId);
-    setIsScoringModalOpen(true);
-  };
-
-
   const handleEditScoringLevel = (rubricId: any, level: any) => {
-
     setEditingScoringLevel({
       rubric_uuid: level.rubric_uuid,
       name: level.name,
@@ -216,6 +187,26 @@ export default function RubricsCreationPage() {
     setEditingRubricId(rubricId);
     setEditingScoringLevelId(level.uuid);
     setIsScoringLevelModalOpen(true);
+  };
+
+
+  const handleEditCriteriaScoring = (rubricId: string, cell: any) => {
+    const rubricItem = rubrics.find(r => r.rubric.uuid === rubricId);
+    if (!rubricItem) return;
+
+    setEditingScoring({
+      criteria_uuid: cell.criteria_uuid,
+      description: cell.description || '',
+      is_completed: cell.is_completed ?? false,
+      points: cell.points || 0,
+      scoring_level_uuid: cell.scoring_level_uuid,
+      weighted_points: cell.weighted_points || 0,
+    });
+
+    setEditingRubricId(rubricId);
+    setEditingCriterionId(cell.criteria_uuid);
+    setEditingScoringId(cell.scoring_level_uuid);
+    setIsScoringModalOpen(true);
   };
 
   const [rubricToDelete, setRubricToDelete] = useState<string | null>(null);
@@ -240,6 +231,12 @@ export default function RubricsCreationPage() {
     setDeleteCriteriaModalOpen(true);
   };
 
+  const handleAskDeleteScoringLevel = (rubricId: string, levelId: string) => {
+    setRubricToDelete(rubricId);
+    setScoringLevelToDelete(levelId);
+    setDeleteScoringLevelModalOpen(true);
+  };
+
   const handleAskDeleteCriteriaScoring = (rubricId: string, cell: any) => {
     setRubricToDelete(rubricId);
     // setCriterionToDelete(criterionId);
@@ -247,11 +244,7 @@ export default function RubricsCreationPage() {
     setDeleteScoringModalOpen(true);
   };
 
-  const handleAskDeleteScoringLevel = (rubricId: string, levelId: string) => {
-    setRubricToDelete(rubricId);
-    setScoringLevelToDelete(levelId);
-    setDeleteScoringLevelModalOpen(true);
-  };
+
 
   const deleteRubric = useMutation(deleteAssessmentRubricMutation());
   const confirmDeleteRubric = () => {
@@ -478,28 +471,6 @@ export default function RubricsCreationPage() {
         </Button>
       </div>
 
-      <div className="mb-4 flex items-center justify-start space-x-2">
-        <Button
-          variant={viewMode === 'list' ? 'default' : 'ghost'}
-          onClick={() => setViewMode('list')}
-          size="icon"
-          className="flex items-center gap-2 px-3 min-w-fit"
-        >
-          <ListIcon className="h-4 w-4" />
-          <span>List View</span>
-        </Button>
-
-        <Button
-          variant={viewMode === 'grid' ? 'default' : 'ghost'}
-          onClick={() => setViewMode('grid')}
-          size="icon"
-          className="flex items-center gap-2 px-3 min-w-fit"
-        >
-          <LayoutGridIcon className="h-4 w-4" />
-          <span>Grid View</span>
-        </Button>
-      </div>
-
 
       {rubricDataIsLoading && (
         <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
@@ -521,44 +492,41 @@ export default function RubricsCreationPage() {
           </div>
         )}
 
-      {viewMode === 'grid' && (
-        <>
-          {rubricsDataIsFetched && !rubricDataIsLoading && rubrics.length >= 1 && (
-            <div className="space-y-6">
-              {rubrics.map((item) => {
-                const rubric = item.rubric;
-                const matrixData = item.matrix?.data?.data;
+      <>
+        {rubricsDataIsFetched && !rubricDataIsLoading && rubrics.length >= 1 && (
+          <div className="space-y-6">
+            {rubrics.map((item) => {
+              const rubric = item.rubric;
+              const matrixData = item.matrix?.data?.data;
 
-                return (
-                  <RubricTable
-                    key={rubric.uuid}
-                    rubric={rubric}
-                    scoringLevels={matrixData?.scoring_levels || []}
-                    criteria={matrixData?.criteria || []}
-                    matrixCells={matrixData?.matrix_cells || {}}
+              return (
+                <RubricTable
+                  key={rubric.uuid}
+                  rubric={rubric}
+                  scoringLevels={matrixData?.scoring_levels || []}
+                  criteria={matrixData?.criteria || []}
+                  matrixCells={matrixData?.matrix_cells || {}}
 
-                    // Pass action handlers here
-                    onEditRubric={openEditModal}
-                    onDeleteRubric={handleAskDeleteRubric}
-                    onAddCriterion={handleAddCriteria}
-                    onAddScoringLevel={handleAddScoringLevel}
-                    onEditScoringLevel={handleEditScoringLevel}
-                    onDeleteScoringLevel={handleAskDeleteScoringLevel}
+                  // Pass action handlers here
+                  onEditRubric={openEditModal}
+                  onDeleteRubric={handleAskDeleteRubric}
+                  onAddCriterion={handleAddCriteria}
+                  onAddScoringLevel={handleAddScoringLevel}
+                  onEditScoringLevel={handleEditScoringLevel}
+                  onDeleteScoringLevel={handleAskDeleteScoringLevel}
 
-                    onEditCriterion={handleEditCriterion}
-                    onDeleteCriterion={handleAskDeleteCriterion}
-                    onAddScoring={handleAddScore}
-                    onEditCriterionScoring={handleEditCriteriaScoring}
-                    onDeleteCriterionScoring={handleAskDeleteCriteriaScoring}
+                  onEditCriterion={handleEditCriterion}
+                  onDeleteCriterion={handleAskDeleteCriterion}
+                  onAddScoring={handleAddScore}
+                  onEditCriterionScoring={handleEditCriteriaScoring}
+                  onDeleteCriterionScoring={handleAskDeleteCriteriaScoring}
 
-                  />
-                );
-              })}
-            </div>
-          )}
-        </>
-
-      )}
+                />
+              );
+            })}
+          </div>
+        )}
+      </>
 
       {/* Create and edit components modals */}
       {isCreateModalOpen && (

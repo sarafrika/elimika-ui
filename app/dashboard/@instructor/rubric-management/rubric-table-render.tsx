@@ -21,12 +21,16 @@ import {
     CirclePlus,
     DiamondPlus,
     EllipsisVertical,
+    Globe,
+    Lock,
     PencilIcon,
     PenIcon,
     TrashIcon,
+    Triangle
 } from 'lucide-react';
 
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 interface RubricTableProps {
     rubric: any;
@@ -79,8 +83,19 @@ const RubricTable: React.FC<RubricTableProps> = ({
             {/* Header */}
             <div className="flex justify-between items-center bg-gray-200 px-4 py-3 text-black font-semibold">
                 <div className='w-full' >
-                    <button onClick={() => setOpen(!open)} className="text-left w-full">
-                        {rubric.title}
+                    <button onClick={() => setOpen(!open)} className="text-left w-full flex flex-col gap-2">
+                        <p>{rubric.title}</p>
+                        <p className='text-sm text-gray-800 font-normal max-w-[95%] line-clamp-2'>{rubric.description}</p>
+
+                        <div className='flex flex-row gap-6 text-sm text-gray-800 font-normal'>
+                            <p className='flex items-center gap-1'>
+                                <Triangle size={14} fill='green' /> Type: {rubric.rubric_type}
+                            </p>
+                            <p className='flex items-center gap-1'>
+                                {rubric.is_public ? <Globe size={14} /> : <Lock size={14} />}
+                                {rubric.is_public ? "Public Rubric" : "Private Rubric"}
+                            </p>
+                        </div>
                     </button>
                 </div>
 
@@ -165,11 +180,11 @@ const RubricTable: React.FC<RubricTableProps> = ({
                             <TableBody>
                                 {sortedCriteria.map((crit) => (
                                     <TableRow key={crit.uuid}>
-                                        <TableCell className="align-top">
-                                            <div className="flex justify-between items-start py-2">
-                                                <div>
+                                        <TableCell className="align-top w-[300px] max-w-[300px]">
+                                            <div className="flex justify-between items-start py-2 gap-2">
+                                                <div className="flex-1">
                                                     <div className="font-medium">{crit.component_name}</div>
-                                                    <div className="text-xs text-gray-500">{crit.description}</div>
+                                                    <div className="text-xs text-gray-500 whitespace-pre-wrap">{crit.description}</div>
                                                 </div>
 
                                                 <DropdownMenu>
@@ -183,7 +198,12 @@ const RubricTable: React.FC<RubricTableProps> = ({
                                                             <PenIcon className="mr-2 h-4 w-4" />
                                                             Edit Criterion
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => onAddScoring(rubric.uuid, crit.uuid)}>
+                                                        <DropdownMenuItem
+                                                            onClick={() =>
+                                                                // onAddScoring(rubric.uuid, crit.uuid)
+                                                                toast.message('Update criteria scoring in the rubric matrix')
+                                                            }
+                                                        >
                                                             <CirclePlus className="mr-2 h-4 w-4" />
                                                             Add Scoring
                                                         </DropdownMenuItem>
@@ -203,7 +223,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
                                             const cell = matrixCells[`${crit.uuid}_${level.uuid}`] || null;
 
                                             return (
-                                                <TableCell key={level.uuid} className="text-sm align-center relative group">
+                                                <TableCell key={level.uuid} className="text-sm align-middle relative group min-w-[120px]">
                                                     {cell ? (
                                                         <>
                                                             {cell.description ? (
@@ -217,18 +237,14 @@ const RubricTable: React.FC<RubricTableProps> = ({
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"
-                                                                    onClick={() =>
-                                                                        onEditCriterionScoring(rubric.uuid, cell)
-                                                                    }
+                                                                    onClick={() => onEditCriterionScoring(rubric.uuid, cell)}
                                                                 >
                                                                     <PenIcon className="h-4 w-4" />
                                                                 </Button>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"
-                                                                    onClick={() =>
-                                                                        onDeleteCriterionScoring(rubric.uuid, cell)
-                                                                    }
+                                                                    onClick={() => onDeleteCriterionScoring(rubric.uuid, cell)}
                                                                 >
                                                                     <TrashIcon className="h-4 w-4 text-destructive" />
                                                                 </Button>
@@ -241,6 +257,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
                                             );
                                         })}
                                     </TableRow>
+
                                 ))}
                             </TableBody>
                         </Table>

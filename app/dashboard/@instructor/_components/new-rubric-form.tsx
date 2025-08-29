@@ -32,23 +32,21 @@ import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
   addRubricCriterionMutation,
-  addRubricScoringMutation,
   createAssessmentRubricMutation,
   createRubricScoringLevelMutation,
-  getAllGradingLevelsOptions,
   getRubricCriteriaQueryKey,
   getRubricMatrixQueryKey,
   getRubricScoringQueryKey,
   getScoringLevelsByRubricQueryKey,
   searchAssessmentRubricsQueryKey,
   updateAssessmentRubricMutation,
+  updateMatrixCellMutation,
   updateRubricCriterionMutation,
-  updateRubricScoringMutation,
   updateScoringLevelMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { StatusEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -798,14 +796,19 @@ export function ScoringLevelForm({
 
 //
 export const rubricScoringSchema = z.object({
-  grading_level_uuid: z.string().min(1),
-  name: z.string().min(1),
+  // grading_level_uuid: z.string().min(1),
+  // name: z.string().min(1),
+  // performance_expectation: z.string().optional(),
+  // points: z.coerce.number().optional(),
+  // scoring_uuid: z.string().optional(),
+  // is_passing_level: z.boolean().default(false),
+  // feedback_category: z.string().optional(),
+  criteria_uuid: z.string().optional(),
   description: z.string().optional(),
-  performance_expectation: z.string().optional(),
+  is_completed: z.boolean() ?? false,
   points: z.coerce.number().optional(),
-  scoring_uuid: z.string().optional(),
-  is_passing_level: z.boolean().default(false),
-  feedback_category: z.string().optional(),
+  scoring_level_uuid: z.string().optional(),
+  weighted_points: z.coerce.number().optional(),
 });
 
 export type RubricScoringFormValues = z.infer<typeof rubricScoringSchema>;
@@ -831,33 +834,29 @@ export function RubricScoringForm({
     resolver: zodResolver(rubricScoringSchema),
     defaultValues,
   });
-
-  const { setValue, register } = form;
+  // const { setValue, register } = form;
 
   const qc = useQueryClient();
   const instructor = useInstructor();
-  const { data: gradingLevels } = useQuery(getAllGradingLevelsOptions({ query: { pageable: {} } }));
 
-  const createRubricScores = useMutation(addRubricScoringMutation());
-  const updateRubricScores = useMutation(updateRubricScoringMutation());
+  const updateMatrixCells = useMutation(updateMatrixCellMutation());
 
   const handleSubmit = async (values: RubricScoringFormValues) => {
     const payload = {
-      criteria_uuid: criterionId,
-      grading_level_uuid: values.grading_level_uuid,
-      score_range: `${values.points} points`,
-      performance_expectation: values.performance_expectation,
+      criteria_uuid: values.criteria_uuid,
       description: values.description || '',
-      is_passing_level: values.is_passing_level,
-      feedback_category: values.feedback_category,
+      is_completed: values.is_completed,
+      scoring_level_uuid: values.scoring_level_uuid,
+      points: values.points,
+      weighted_points: values.weighted_points
       // additional scoring info
     };
 
     if (rubricId && criterionId && scoringId) {
-      updateRubricScores.mutate(
+      updateMatrixCells.mutate(
         {
-          path: { rubricUuid: rubricId, criteriaUuid: criterionId, scoringUuid: scoringId },
-          body: payload,
+          path: { rubricUuid: rubricId },
+          body: payload as any,
         },
         {
           onSuccess: data => {
@@ -892,50 +891,14 @@ export function RubricScoringForm({
           },
         }
       );
-    } else {
-      createRubricScores.mutate(
-        { path: { rubricUuid: rubricId, criteriaUuid: criterionId }, body: payload },
-        {
-          onSuccess: data => {
-            qc.invalidateQueries({
-              queryKey: searchAssessmentRubricsQueryKey({
-                query: {
-                  pageable: {},
-                  searchParams: { instructor_uuid_eq: instructor?.uuid as string },
-                },
-              }),
-            });
-
-            qc.invalidateQueries({
-              queryKey: getRubricCriteriaQueryKey({
-                path: { rubricUuid: rubricId },
-                query: { pageable: {} },
-              }),
-            });
-
-            qc.invalidateQueries({
-              queryKey: getRubricScoringQueryKey({
-                path: { rubricUuid: rubricId, criteriaUuid: criterionId },
-                query: { pageable: {} },
-              }),
-            });
-            qc.invalidateQueries({
-              queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
-            });
-            toast.success(data?.message);
-            onCancel();
-            onSuccess();
-          },
-        }
-      );
-    }
+    } else { }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
         {/* Grading Level Dropdown */}
-        <FormField
+        {/* <FormField
           control={form.control}
           name='grading_level_uuid'
           render={({ field }) => (
@@ -975,26 +938,26 @@ export function RubricScoringForm({
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
 
         <FormField
           control={form.control}
-          name='is_passing_level'
+          name='is_completed'
           render={({ field }) => (
             <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
               <FormControl>
                 <Checkbox
                   checked={field.value}
                   onCheckedChange={field.onChange}
-                  id='is_passing_level'
+                  id='is_completed'
                 />
               </FormControl>
               <div className='space-y-1 leading-none'>
-                <FormLabel htmlFor='is_passing_level' className='font-medium'>
-                  Passing Level
+                <FormLabel htmlFor='is_completed' className='font-medium'>
+                  Is Complete?
                 </FormLabel>
                 <FormDescription>
-                  Select this option if this score level should be considered a passing grade.
+                  Select this option if this score level should be considered as completed.
                 </FormDescription>
               </div>
             </FormItem>
@@ -1002,7 +965,7 @@ export function RubricScoringForm({
         />
 
         {/* Auto-filled Grading Name */}
-        <FormField
+        {/* <FormField
           control={form.control}
           name='name'
           render={({ field }) => (
@@ -1014,7 +977,7 @@ export function RubricScoringForm({
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
 
         {/* Optional Description */}
         <FormField
@@ -1050,7 +1013,7 @@ export function RubricScoringForm({
           )}
         />
 
-        <FormField
+        {/* <FormField
           control={form.control}
           name='performance_expectation'
           render={({ field }) => (
@@ -1062,9 +1025,9 @@ export function RubricScoringForm({
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
 
-        <FormField
+        {/* <FormField
           control={form.control}
           name='feedback_category'
           render={({ field }) => (
@@ -1080,7 +1043,7 @@ export function RubricScoringForm({
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
 
         <div className='flex justify-end gap-2 pt-6'>
           <Button type='button' variant='outline' onClick={onCancel}>
@@ -1090,10 +1053,10 @@ export function RubricScoringForm({
           <Button
             type='submit'
             className='flex min-w-[120px] items-center justify-center gap-2'
-            disabled={createRubricScores.isPending || updateRubricScores.isPending}
+            disabled={updateMatrixCells.isPending}
           >
-            {(createRubricScores.isPending || updateRubricScores.isPending) && <Spinner />}
-            {defaultValues ? 'Update Scoring' : 'Create Scoring'}
+            {(updateMatrixCells.isPending) && <Spinner />}
+            {defaultValues && 'Update Scoring'}
           </Button>
         </div>
       </form>
@@ -1186,7 +1149,6 @@ export function CriteriaDialog({
   );
 }
 
-
 export function ScoringLevelDialog({
   open,
   setOpen,
@@ -1253,12 +1215,10 @@ export function ScoringDialog({
       <DialogContent className='flex max-w-xl flex-col p-0'>
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>
-            {scoringId ? 'Edit Scoring' : 'Add New Scoring'}
+            {scoringId && 'Update Scoring'}
           </DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            {scoringId
-              ? 'Update the grading level and expectations for this scoring entry.'
-              : 'Define a new scoring entry for this criterion.'}
+            {scoringId && 'Update the grading level and expectations for this scoring entry'}
           </DialogDescription>
         </DialogHeader>
 
