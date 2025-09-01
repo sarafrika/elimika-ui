@@ -226,11 +226,14 @@ const RubricTable: React.FC<RubricTableProps> = ({
                                                 <TableCell key={level.uuid} className="text-sm align-middle relative group min-w-[120px]">
                                                     {cell ? (
                                                         <>
-                                                            {cell.description ? (
-                                                                <p className="mb-1">{cell.description}</p>
-                                                            ) : (
-                                                                <span className="italic text-gray-400">No description</span>
-                                                            )}
+                                                            <div className='text-xs text-gray-500 whitespace-pre-wrap w-auto' >
+                                                                {cell.description ? (
+                                                                    <p className="mb-1">{cell.description}</p>
+                                                                ) : (
+                                                                    <span className="italic text-gray-400">No description</span>
+                                                                )}
+                                                            </div>
+
                                                             <div className="text-xs text-gray-500">{cell.points} pts</div>
 
                                                             <div className="absolute top-1 right-1 hidden group-hover:flex gap-1">

@@ -10,6 +10,7 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import {
   deleteProgramRequirementMutation,
+  getProgramCertificatesOptions,
   getProgramCoursesOptions,
   getProgramCoursesQueryKey,
   getProgramRequirementsOptions,
@@ -82,8 +83,13 @@ export default function ProgramPreviewPage() {
   );
 
   // GET TRAINING PROGRAM COURSES
-  const { data: programCourses, refetch } = useQuery(
+  const { data: programCourses } = useQuery(
     getProgramCoursesOptions({ path: { programUuid: programId } })
+  );
+
+  // GET PROGRAM CERTIFICATES
+  const { data: programCertificates } = useQuery(
+    getProgramCertificatesOptions({ path: { programUuid: programId }, query: { pageable: {} } })
   );
 
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -369,7 +375,7 @@ export default function ProgramPreviewPage() {
           isOpen={isAddClassCourseDialog}
           onOpenChange={setIsAddClassCourseDialog}
           programId={programId}
-          onSuccess={() => refetch()}
+          onSuccess={() => { }}
         />
 
         {/* Confirm Remove Program Course Modal */}
