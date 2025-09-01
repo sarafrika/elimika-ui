@@ -228,15 +228,6 @@ export default function ClassesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align='end'>
                             <DropdownMenuItem asChild>
-                              <div
-                                onClick={() => openEditProgramDialog(program.uuid)}
-                                className='flex w-full items-center'
-                              >
-                                <PenIcon className='mr-2 h-4 w-4' />
-                                Edit
-                              </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
                               <Link
                                 href={`/dashboard/programs/preview/${program.uuid}`}
                                 className='flex w-full items-center'
@@ -245,6 +236,16 @@ export default function ClassesPage() {
                                 Preview
                               </Link>
                             </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <div
+                                onClick={() => openEditProgramDialog(program.uuid)}
+                                className='flex w-full items-center'
+                              >
+                                <PenIcon className='mr-2 h-4 w-4' />
+                                Edit
+                              </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => openAddProgramCourseDialog(program.uuid)}
                             >
@@ -256,6 +257,15 @@ export default function ClassesPage() {
                             >
                               <BadgeCheck className='mr-2 h-4 w-4' />
                               Add Requirements
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/dashboard/programs/enrollments/${program.uuid}`}
+                                className='flex w-full items-center'
+                              >
+                                <EyeIcon className='mr-2 h-4 w-4' />
+                                View Enrollments
+                              </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem

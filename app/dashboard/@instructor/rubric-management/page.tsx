@@ -29,8 +29,8 @@ import {
   ScoringDialog,
   ScoringLevelDialog,
   ScoringLevelFormValues,
-} from '../_components/new-rubric-form';
-import { Visibility } from '../_components/rubric-management-form';
+  Visibility,
+} from '../_components/rubric-management-form';
 import { useRubricsWithCriteriaAndScoring } from './rubric-chaining';
 import RubricTable from './rubric-table-render';
 
