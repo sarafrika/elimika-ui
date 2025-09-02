@@ -43,7 +43,7 @@ export default function CreateClassroomForm() {
                                     <SelectValue placeholder={"Select Branch"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {trainingCenter!.branches!.map(branch => <SelectItem value={branch.uuid!}>{branch.branch_name}</SelectItem>)}
+                                    {trainingCenter!.branches!.map(branch => <SelectItem key={branch.uuid} value={branch.uuid!}>{branch.branch_name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </FormControl>
@@ -60,7 +60,7 @@ export default function CreateClassroomForm() {
                                     <SelectValue placeholder={"Select Course"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {courses.map(course => <SelectItem value={course.uuid!}>{course.name}</SelectItem>)}
+                                    {courses.map(course => <SelectItem key={course.uuid} value={course.uuid!}>{course.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </FormControl>
