@@ -6,8 +6,6 @@ export default function MonthlyView({ date = new Date() }: { date: Date }) {
     const nextMonth = new Date(new Date(monthStart).setMonth(monthStart.getMonth() + 1));
     const monthEnd = new Date(new Date(nextMonth).setDate(monthStart.getDate() - 1));
 
-    console.log(monthEnd);
-
     return <Table>
         <TableBody>
             <TableRow>
