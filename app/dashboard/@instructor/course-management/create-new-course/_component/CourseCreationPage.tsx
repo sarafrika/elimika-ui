@@ -43,6 +43,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
+import { QuizDialog } from '../../../_components/quiz-management-form';
 
 export default function CourseCreationPage() {
   const router = useRouter();
@@ -94,6 +95,12 @@ export default function CourseCreationPage() {
     setAddContentModalOpen(true);
     setSelectedContent(content);
   };
+
+  const [addQuizModal, setAddQuizModal] = useState(false)
+  const openAddQuizModal = (lesson: any) => {
+    setSelectedLesson(lesson)
+    setAddQuizModal(true);
+  }
 
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
@@ -415,6 +422,8 @@ export default function CourseCreationPage() {
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
               onReorderLessons={() => { }}
+              // quizes
+              onAddQuiz={openAddQuizModal}
               // lesson content
               lessonContentsMap={lessonContentMap}
               onAddLessonContent={openAddContentModal}
@@ -482,12 +491,19 @@ export default function CourseCreationPage() {
               initialValues={contentInitialValues}
             />
 
-            <AssessmentDialog
+            <QuizDialog
+              isOpen={addQuizModal}
+              setOpen={setAddQuizModal}
+              lessonId={selectedLesson?.uuid as string || (selectedContent?.lesson_uuid as string)}
+              onCancel={() => { setSelectedLesson(null); setAddQuizModal(false) }}
+            />
+
+            {/* <AssessmentDialog
               isOpen={addAssessmentModalOpen}
               onOpenChange={setAddAssessmentModalOpen}
               courseId={createdCourseId ? createdCourseId : (courseId as string)}
               onCancel={() => setAddAssessmentModalOpen(false)}
-            />
+            /> */}
           </div>
         </StepperContent>
 

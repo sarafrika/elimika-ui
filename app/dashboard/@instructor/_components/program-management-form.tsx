@@ -426,13 +426,8 @@ function AddCourseToProgramForm({
   const { data: allCourses } = useQuery(
     searchCoursesOptions({
       query: {
-        searchParams: {
-          instructor_uuid_eq: instructor?.uuid as string,
-        },
-        pageable: {
-          page: 0,
-          size: 100,
-        },
+        searchParams: { instructor_uuid_eq: instructor?.uuid as string, },
+        pageable: { page: 0, size: 100, },
       },
     })
   );
