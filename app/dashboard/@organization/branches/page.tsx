@@ -24,7 +24,7 @@ export default function BranchesPage() {
     queryKey: ["branches", ...(trainingCenter ? [trainingCenter.uuid] : [])],
     queryFn: async () => getTrainingBranchesByOrganisation({
       path: {
-        uuid: trainingCenter?.uuid!
+        uuid: trainingCenter!.uuid!
       },
       query: {
         pageable

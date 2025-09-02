@@ -73,8 +73,6 @@ export default function TrainingCenterForm() {
     },
   });
 
-  console.log(form.formState.errors)
-
   const onSubmit = async (orgData: TrainingCenterFormValues) => {
     const updateResponse = await updateOrganisation({
       path: {

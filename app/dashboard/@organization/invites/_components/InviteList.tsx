@@ -66,11 +66,11 @@ export default function InviteList({
     async function resend(invitation_uuid: string) {
         const resp = await resendInvitation({
             path: {
-                uuid: user?.uuid!,
+                uuid: user!.uuid!,
                 invitationUuid: invitation_uuid
             },
             query: {
-                resender_uuid: user?.uuid!
+                resender_uuid: user!.uuid!
             }
         });
 
@@ -102,7 +102,7 @@ export default function InviteList({
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {invitations.map(invite => <TableRow>
+                {invitations.map(invite => <TableRow key={invite.uuid}>
                     <TableCell>{invite.recipient_name}</TableCell>
                     <TableCell>{invite.recipient_email}</TableCell>
                     <TableCell>{invite.status}</TableCell>

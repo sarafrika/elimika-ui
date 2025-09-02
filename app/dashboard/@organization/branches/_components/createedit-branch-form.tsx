@@ -33,8 +33,6 @@ export default function CreateEditBranchform({ branch, onSave }: { branch?: Trai
         defaultValues: branch
     });
 
-    console.log(form.formState.errors)
-
     const trainingCenter = useTrainingCenter();
 
     async function onSubmit(branchData: BranchType) {
