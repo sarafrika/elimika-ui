@@ -1,10 +1,6 @@
-import { redirect } from "next/navigation";
-import useServerUser from "../../../../../hooks/use-server-user";
-import { ApiResponse, getTrainingBranchesByOrganisation, Organisation, TrainingBranch } from "../../../../../services/client";
-import { client } from "../../../../../services/client/client.gen";
-import ManageBranchForm from "./_components/ManageBranchForm";
+import ManageBranch from "./_components/ManageBranches";
 
 
 export default async function BranchesPage() {
-  return (<ManageBranchForm />);
+  return (<ManageBranch />);
 }

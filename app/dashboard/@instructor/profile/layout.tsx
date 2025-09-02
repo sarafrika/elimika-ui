@@ -35,8 +35,8 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(typeof window !== "undefined" && window.innerWidth <= 745);
-      if (typeof window !== "undefined" && window.innerWidth > 745) {
+      setIsMobile(typeof window !== 'undefined' && window.innerWidth <= 745);
+      if (typeof window !== 'undefined' && window.innerWidth > 745) {
         setShowSidebar(true); // Always show sidebar on desktop
       } else {
         setShowSidebar(false); // Hide sidebar by default on mobile
@@ -44,7 +44,7 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
     };
 
     checkMobile();
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.addEventListener('resize', checkMobile);
       return () => window.removeEventListener('resize', checkMobile);
     }

@@ -42,7 +42,6 @@ import {
   deleteTrainingBranch1,
   getTrainingBranchByUuid1,
   updateTrainingBranch1,
-  updatePointOfContact,
   deleteInstructor,
   getInstructorByUuid,
   updateInstructor,
@@ -98,10 +97,8 @@ import {
   createAssessmentRubric,
   getScoringLevelsByRubric,
   createRubricScoringLevel,
-  createDefaultScoringLevels,
+  createRubricScoringLevelsBatch,
   recalculateScores,
-  initializeRubricMatrix,
-  initializeMatrix,
   getRubricCriteria,
   addRubricCriterion,
   getRubricScoring,
@@ -131,8 +128,11 @@ import {
   getOrganizationInvitations,
   createOrganizationInvitation,
   resendInvitation,
+  processPendingInvitations,
   sendExpiryReminders,
   markExpiredInvitations,
+  declineInvitation1,
+  acceptInvitation1,
   getAllInstructors,
   createInstructor,
   getInstructorSkills,
@@ -241,6 +241,7 @@ import {
   search2,
   validateInvitation,
   getInvitationByToken,
+  previewInvitation,
   getPendingInvitationsForEmail,
   searchSkills,
   searchInstructors,
@@ -398,9 +399,6 @@ import type {
   UpdateTrainingBranch1Data,
   UpdateTrainingBranch1Error,
   UpdateTrainingBranch1Response,
-  UpdatePointOfContactData,
-  UpdatePointOfContactError,
-  UpdatePointOfContactResponse,
   DeleteInstructorData,
   DeleteInstructorError,
   DeleteInstructorResponse,
@@ -543,18 +541,12 @@ import type {
   CreateRubricScoringLevelData,
   CreateRubricScoringLevelError,
   CreateRubricScoringLevelResponse,
-  CreateDefaultScoringLevelsData,
-  CreateDefaultScoringLevelsError,
-  CreateDefaultScoringLevelsResponse,
+  CreateRubricScoringLevelsBatchData,
+  CreateRubricScoringLevelsBatchError,
+  CreateRubricScoringLevelsBatchResponse,
   RecalculateScoresData,
   RecalculateScoresError,
   RecalculateScoresResponse,
-  InitializeRubricMatrixData,
-  InitializeRubricMatrixError,
-  InitializeRubricMatrixResponse,
-  InitializeMatrixData,
-  InitializeMatrixError,
-  InitializeMatrixResponse,
   GetRubricCriteriaData,
   GetRubricCriteriaError,
   GetRubricCriteriaResponse,
@@ -634,12 +626,21 @@ import type {
   ResendInvitationData,
   ResendInvitationError,
   ResendInvitationResponse,
+  ProcessPendingInvitationsData,
+  ProcessPendingInvitationsError,
+  ProcessPendingInvitationsResponse,
   SendExpiryRemindersData,
   SendExpiryRemindersError,
   SendExpiryRemindersResponse,
   MarkExpiredInvitationsData,
   MarkExpiredInvitationsError,
   MarkExpiredInvitationsResponse,
+  DeclineInvitation1Data,
+  DeclineInvitation1Error,
+  DeclineInvitation1Response,
+  AcceptInvitation1Data,
+  AcceptInvitation1Error,
+  AcceptInvitation1Response,
   GetAllInstructorsData,
   GetAllInstructorsError,
   GetAllInstructorsResponse,
@@ -912,6 +913,7 @@ import type {
   Search2Response,
   ValidateInvitationData,
   GetInvitationByTokenData,
+  PreviewInvitationData,
   GetPendingInvitationsForEmailData,
   SearchSkillsData,
   SearchSkillsError,
@@ -1058,13 +1060,15 @@ export type QueryKey<TOptions extends Options> = [
   Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
     _id: string;
     _infinite?: boolean;
+    tags?: ReadonlyArray<string>;
   },
 ];
 
 const createQueryKey = <TOptions extends Options>(
   id: string,
   options?: TOptions,
-  infinite?: boolean
+  infinite?: boolean,
+  tags?: ReadonlyArray<string>
 ): [QueryKey<TOptions>[0]] => {
   const params: QueryKey<TOptions>[0] = {
     _id: id,
@@ -1072,6 +1076,9 @@ const createQueryKey = <TOptions extends Options>(
   } as QueryKey<TOptions>[0];
   if (infinite) {
     params._infinite = infinite;
+  }
+  if (tags) {
+    params.tags = tags;
   }
   if (options?.body) {
     params.body = options.body;
@@ -2068,34 +2075,6 @@ export const updateTrainingBranch1Mutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateTrainingBranch1({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Update point of contact for training branch
- * Updates the point of contact user for a training branch. The POC must be either assigned to the branch or be a member of the parent organization.
- */
-export const updatePointOfContactMutation = (
-  options?: Partial<Options<UpdatePointOfContactData>>
-): UseMutationOptions<
-  UpdatePointOfContactResponse,
-  UpdatePointOfContactError,
-  Options<UpdatePointOfContactData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdatePointOfContactResponse,
-    UpdatePointOfContactError,
-    Options<UpdatePointOfContactData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await updatePointOfContact({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -3969,20 +3948,20 @@ export const createRubricScoringLevelMutation = (
   return mutationOptions;
 };
 
-export const createDefaultScoringLevelsQueryKey = (
-  options: Options<CreateDefaultScoringLevelsData>
-) => createQueryKey('createDefaultScoringLevels', options);
+export const createRubricScoringLevelsBatchQueryKey = (
+  options: Options<CreateRubricScoringLevelsBatchData>
+) => createQueryKey('createRubricScoringLevelsBatch', options);
 
 /**
- * Create default scoring levels
- * Creates a set of default scoring levels for the rubric based on the specified template (standard, simple, advanced).
+ * Create multiple scoring levels for a rubric (batch)
+ * Creates multiple custom scoring levels at once for efficient rubric setup.
  */
-export const createDefaultScoringLevelsOptions = (
-  options: Options<CreateDefaultScoringLevelsData>
+export const createRubricScoringLevelsBatchOptions = (
+  options: Options<CreateRubricScoringLevelsBatchData>
 ) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await createDefaultScoringLevels({
+      const { data } = await createRubricScoringLevelsBatch({
         ...options,
         ...queryKey[0],
         signal,
@@ -3990,80 +3969,28 @@ export const createDefaultScoringLevelsOptions = (
       });
       return data;
     },
-    queryKey: createDefaultScoringLevelsQueryKey(options),
+    queryKey: createRubricScoringLevelsBatchQueryKey(options),
   });
 };
 
-export const createDefaultScoringLevelsInfiniteQueryKey = (
-  options: Options<CreateDefaultScoringLevelsData>
-): QueryKey<Options<CreateDefaultScoringLevelsData>> =>
-  createQueryKey('createDefaultScoringLevels', options, true);
-
 /**
- * Create default scoring levels
- * Creates a set of default scoring levels for the rubric based on the specified template (standard, simple, advanced).
+ * Create multiple scoring levels for a rubric (batch)
+ * Creates multiple custom scoring levels at once for efficient rubric setup.
  */
-export const createDefaultScoringLevelsInfiniteOptions = (
-  options: Options<CreateDefaultScoringLevelsData>
-) => {
-  return infiniteQueryOptions<
-    CreateDefaultScoringLevelsResponse,
-    CreateDefaultScoringLevelsError,
-    InfiniteData<CreateDefaultScoringLevelsResponse>,
-    QueryKey<Options<CreateDefaultScoringLevelsData>>,
-    | number
-    | Pick<
-        QueryKey<Options<CreateDefaultScoringLevelsData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      >
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<CreateDefaultScoringLevelsData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await createDefaultScoringLevels({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: createDefaultScoringLevelsInfiniteQueryKey(options),
-    }
-  );
-};
-
-/**
- * Create default scoring levels
- * Creates a set of default scoring levels for the rubric based on the specified template (standard, simple, advanced).
- */
-export const createDefaultScoringLevelsMutation = (
-  options?: Partial<Options<CreateDefaultScoringLevelsData>>
+export const createRubricScoringLevelsBatchMutation = (
+  options?: Partial<Options<CreateRubricScoringLevelsBatchData>>
 ): UseMutationOptions<
-  CreateDefaultScoringLevelsResponse,
-  CreateDefaultScoringLevelsError,
-  Options<CreateDefaultScoringLevelsData>
+  CreateRubricScoringLevelsBatchResponse,
+  CreateRubricScoringLevelsBatchError,
+  Options<CreateRubricScoringLevelsBatchData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateDefaultScoringLevelsResponse,
-    CreateDefaultScoringLevelsError,
-    Options<CreateDefaultScoringLevelsData>
+    CreateRubricScoringLevelsBatchResponse,
+    CreateRubricScoringLevelsBatchError,
+    Options<CreateRubricScoringLevelsBatchData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await createDefaultScoringLevels({
+      const { data } = await createRubricScoringLevelsBatch({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -4114,106 +4041,6 @@ export const recalculateScoresMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await recalculateScores({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const initializeRubricMatrixQueryKey = (options: Options<InitializeRubricMatrixData>) =>
-  createQueryKey('initializeRubricMatrix', options);
-
-/**
- * Initialize rubric matrix
- * Initializes a rubric matrix with default scoring levels and structure. Creates default levels if none exist.
- */
-export const initializeRubricMatrixOptions = (options: Options<InitializeRubricMatrixData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await initializeRubricMatrix({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: initializeRubricMatrixQueryKey(options),
-  });
-};
-
-/**
- * Initialize rubric matrix
- * Initializes a rubric matrix with default scoring levels and structure. Creates default levels if none exist.
- */
-export const initializeRubricMatrixMutation = (
-  options?: Partial<Options<InitializeRubricMatrixData>>
-): UseMutationOptions<
-  InitializeRubricMatrixResponse,
-  InitializeRubricMatrixError,
-  Options<InitializeRubricMatrixData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    InitializeRubricMatrixResponse,
-    InitializeRubricMatrixError,
-    Options<InitializeRubricMatrixData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await initializeRubricMatrix({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const initializeMatrixQueryKey = (options: Options<InitializeMatrixData>) =>
-  createQueryKey('initializeMatrix', options);
-
-/**
- * Initialize rubric matrix
- * Sets up the rubric matrix with default scoring levels and prepares it for use.
- */
-export const initializeMatrixOptions = (options: Options<InitializeMatrixData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await initializeMatrix({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: initializeMatrixQueryKey(options),
-  });
-};
-
-/**
- * Initialize rubric matrix
- * Sets up the rubric matrix with default scoring levels and prepares it for use.
- */
-export const initializeMatrixMutation = (
-  options?: Partial<Options<InitializeMatrixData>>
-): UseMutationOptions<
-  InitializeMatrixResponse,
-  InitializeMatrixError,
-  Options<InitializeMatrixData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    InitializeMatrixResponse,
-    InitializeMatrixError,
-    Options<InitializeMatrixData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await initializeMatrix({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -4297,7 +4124,7 @@ export const addRubricCriterionQueryKey = (options: Options<AddRubricCriterionDa
 
 /**
  * Add a criterion to a rubric
- * Adds a new criterion to an existing assessment rubric.
+ * Adds a new criterion to an existing assessment rubric. If scoring levels exist, the matrix will be auto-generated.
  */
 export const addRubricCriterionOptions = (options: Options<AddRubricCriterionData>) => {
   return queryOptions({
@@ -4316,7 +4143,7 @@ export const addRubricCriterionOptions = (options: Options<AddRubricCriterionDat
 
 /**
  * Add a criterion to a rubric
- * Adds a new criterion to an existing assessment rubric.
+ * Adds a new criterion to an existing assessment rubric. If scoring levels exist, the matrix will be auto-generated.
  */
 export const addRubricCriterionMutation = (
   options?: Partial<Options<AddRubricCriterionData>>
@@ -5688,6 +5515,89 @@ export const resendInvitationMutation = (
   return mutationOptions;
 };
 
+export const processPendingInvitationsQueryKey = (
+  options?: Options<ProcessPendingInvitationsData>
+) => createQueryKey('processPendingInvitations', options);
+
+/**
+ * Process pending invitations for authenticated user
+ * Automatically processes all pending invitations for a newly authenticated user.
+ * Typically called after successful Keycloak registration/login to handle any outstanding invitations.
+ *
+ * **Use Cases:**
+ * - New user registers and has pending invitations
+ * - Existing user logs in and has new invitations waiting
+ * - Bulk processing of invitations after authentication
+ *
+ * **Behavior:**
+ * - Only processes valid, non-expired invitations
+ * - Automatically accepts all matching invitations for user's email
+ * - Sends confirmation emails for each accepted invitation
+ * - Returns list of successfully processed invitations
+ *
+ * **Authentication:** JWT token from Keycloak required in Authorization header.
+ *
+ */
+export const processPendingInvitationsOptions = (
+  options?: Options<ProcessPendingInvitationsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await processPendingInvitations({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: processPendingInvitationsQueryKey(options),
+  });
+};
+
+/**
+ * Process pending invitations for authenticated user
+ * Automatically processes all pending invitations for a newly authenticated user.
+ * Typically called after successful Keycloak registration/login to handle any outstanding invitations.
+ *
+ * **Use Cases:**
+ * - New user registers and has pending invitations
+ * - Existing user logs in and has new invitations waiting
+ * - Bulk processing of invitations after authentication
+ *
+ * **Behavior:**
+ * - Only processes valid, non-expired invitations
+ * - Automatically accepts all matching invitations for user's email
+ * - Sends confirmation emails for each accepted invitation
+ * - Returns list of successfully processed invitations
+ *
+ * **Authentication:** JWT token from Keycloak required in Authorization header.
+ *
+ */
+export const processPendingInvitationsMutation = (
+  options?: Partial<Options<ProcessPendingInvitationsData>>
+): UseMutationOptions<
+  ProcessPendingInvitationsResponse,
+  ProcessPendingInvitationsError,
+  Options<ProcessPendingInvitationsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ProcessPendingInvitationsResponse,
+    ProcessPendingInvitationsError,
+    Options<ProcessPendingInvitationsData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await processPendingInvitations({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const sendExpiryRemindersQueryKey = (options?: Options<SendExpiryRemindersData>) =>
   createQueryKey('sendExpiryReminders', options);
 
@@ -5778,6 +5688,156 @@ export const markExpiredInvitationsMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await markExpiredInvitations({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const declineInvitation1QueryKey = (options: Options<DeclineInvitation1Data>) =>
+  createQueryKey('declineInvitation1', options);
+
+/**
+ * Decline invitation (AUTHENTICATED)
+ * Declines an invitation for a Keycloak-authenticated user.
+ * Used by React frontend after user authentication to process invitation decline.
+ *
+ * **Flow:**
+ * 1. User authenticates via Keycloak
+ * 2. React frontend calls this endpoint with invitation token
+ * 3. System validates token and user email match
+ * 4. Marks invitation as declined with timestamp
+ * 5. Sends decline notification email to inviter
+ *
+ * **Authentication:** JWT token from Keycloak required in Authorization header.
+ * **Email Validation:** User's email from JWT must match invitation recipient.
+ * **Note:** Declined invitations cannot be reactivated.
+ *
+ */
+export const declineInvitation1Options = (options: Options<DeclineInvitation1Data>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await declineInvitation1({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: declineInvitation1QueryKey(options),
+  });
+};
+
+/**
+ * Decline invitation (AUTHENTICATED)
+ * Declines an invitation for a Keycloak-authenticated user.
+ * Used by React frontend after user authentication to process invitation decline.
+ *
+ * **Flow:**
+ * 1. User authenticates via Keycloak
+ * 2. React frontend calls this endpoint with invitation token
+ * 3. System validates token and user email match
+ * 4. Marks invitation as declined with timestamp
+ * 5. Sends decline notification email to inviter
+ *
+ * **Authentication:** JWT token from Keycloak required in Authorization header.
+ * **Email Validation:** User's email from JWT must match invitation recipient.
+ * **Note:** Declined invitations cannot be reactivated.
+ *
+ */
+export const declineInvitation1Mutation = (
+  options?: Partial<Options<DeclineInvitation1Data>>
+): UseMutationOptions<
+  DeclineInvitation1Response,
+  DeclineInvitation1Error,
+  Options<DeclineInvitation1Data>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeclineInvitation1Response,
+    DeclineInvitation1Error,
+    Options<DeclineInvitation1Data>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await declineInvitation1({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const acceptInvitation1QueryKey = (options: Options<AcceptInvitation1Data>) =>
+  createQueryKey('acceptInvitation1', options);
+
+/**
+ * Accept invitation (AUTHENTICATED)
+ * Accepts an invitation for a Keycloak-authenticated user.
+ * Used by React frontend after user authentication to process invitation acceptance.
+ *
+ * **Flow:**
+ * 1. User authenticates via Keycloak (login or registration)
+ * 2. React frontend calls this endpoint with invitation token
+ * 3. System validates token and user email match
+ * 4. Creates user-organization relationship and assigns role
+ * 5. Sends confirmation email to user
+ *
+ * **Authentication:** JWT token from Keycloak required in Authorization header.
+ * **Email Validation:** User's email from JWT must match invitation recipient.
+ *
+ */
+export const acceptInvitation1Options = (options: Options<AcceptInvitation1Data>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await acceptInvitation1({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: acceptInvitation1QueryKey(options),
+  });
+};
+
+/**
+ * Accept invitation (AUTHENTICATED)
+ * Accepts an invitation for a Keycloak-authenticated user.
+ * Used by React frontend after user authentication to process invitation acceptance.
+ *
+ * **Flow:**
+ * 1. User authenticates via Keycloak (login or registration)
+ * 2. React frontend calls this endpoint with invitation token
+ * 3. System validates token and user email match
+ * 4. Creates user-organization relationship and assigns role
+ * 5. Sends confirmation email to user
+ *
+ * **Authentication:** JWT token from Keycloak required in Authorization header.
+ * **Email Validation:** User's email from JWT must match invitation recipient.
+ *
+ */
+export const acceptInvitation1Mutation = (
+  options?: Partial<Options<AcceptInvitation1Data>>
+): UseMutationOptions<
+  AcceptInvitation1Response,
+  AcceptInvitation1Error,
+  Options<AcceptInvitation1Data>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AcceptInvitation1Response,
+    AcceptInvitation1Error,
+    Options<AcceptInvitation1Data>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await acceptInvitation1({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -11640,6 +11700,40 @@ export const getInvitationByTokenOptions = (options: Options<GetInvitationByToke
       return data;
     },
     queryKey: getInvitationByTokenQueryKey(options),
+  });
+};
+
+export const previewInvitationQueryKey = (options: Options<PreviewInvitationData>) =>
+  createQueryKey('previewInvitation', options);
+
+/**
+ * Preview invitation details (PUBLIC)
+ * Gets public-safe invitation details by token without requiring authentication.
+ * Used by React frontend to display invitation information before user login/registration.
+ *
+ * **URL Structure:** https://elimika.sarafrika.com/invitations/accept?token={token}
+ *
+ * **Response includes:**
+ * - Recipient name and organization details
+ * - Role being offered with description
+ * - Inviter information and personal notes
+ * - Expiration status and registration requirements
+ *
+ * **Security:** Token-based validation ensures only valid invitations are previewed.
+ *
+ */
+export const previewInvitationOptions = (options: Options<PreviewInvitationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await previewInvitation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: previewInvitationQueryKey(options),
   });
 };
 

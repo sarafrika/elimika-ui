@@ -1,97 +1,101 @@
-import { TrainingCenter } from "@/lib/types";
-import { ApiResponse, getTrainingBranchesByOrganisation, getUsersByOrganisation, SearchResponse, TrainingBranch, User } from "@/services/client";
-import { client } from "@/services/client/client.gen";
-import { queryOptions, useQuery, UseQueryOptions } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
-import { createContext, ReactNode, useContext } from "react";
-import CustomLoader from "../components/custom-loader";
-import { useUserProfile } from "./profile-context";
+import { TrainingCenter } from '@/lib/types';
+import {
+  ApiResponse,
+  getOrganisationByUuid,
+  getTrainingBranchesByOrganisation,
+  getUsersByOrganisation,
+  SearchResponse,
+  TrainingBranch,
+  User,
+} from '@/services/client';
+import { queryOptions, useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
+import { createContext, ReactNode, useContext } from 'react';
+import CustomLoader from '../components/custom-loader';
+import { useUserProfile } from './profile-context';
 
 const TrainingCenterContext = createContext<TrainingCenter | undefined>(undefined);
-export const useOrganization = () => useContext(TrainingCenterContext);
+export const useTrainingCenter = () => useContext(TrainingCenterContext);
 
 export default function TrainingCenterProvider({ children }: { children: ReactNode }) {
-    const { data: session } = useSession();
-    const userProfile = useUserProfile();
+  const { data: session } = useSession();
+  const userProfile = useUserProfile();
+  const activeOrgId = userProfile && userProfile.organisation_affiliations && userProfile.organisation_affiliations.length > 0 ?
+    (userProfile.organisation_affiliations.find(org => org.active) ?? userProfile.organisation_affiliations[0] ?? {}).organisationUuid : null;
 
-    const { data, isLoading } = useQuery(createQueryOptions({
-        userid: userProfile?.uuid!,
-        token: session?.user.id_token!
-    }, {
-        enabled: !!userProfile && !!session && !!session!.user
-    }));
-
-    return (
-        <TrainingCenterContext.Provider value={data as TrainingCenter}>
-            {isLoading ? <CustomLoader /> : children}
-        </TrainingCenterContext.Provider>
+  const { data, isLoading } = useQuery(
+    createQueryOptions(activeOrgId!, {
+      enabled: !!userProfile && !!session && !!session!.user && !!activeOrgId,
+    }
     )
+  );
+
+  return (
+    <TrainingCenterContext.Provider value={data as TrainingCenter}>
+      {isLoading ? <CustomLoader /> : children}
+    </TrainingCenterContext.Provider>
+  );
 }
 
-function createQueryOptions(reqParams: { userid: string, token: string }, options?: Omit<UseQueryOptions<TrainingCenter | null>, "queryKey" | "queryFn" | "staleTime">) {
-    return queryOptions({
-        ...options,
-        queryKey: ["organization"],
-        queryFn: async () => {
+function createQueryOptions(
+  organizaition_uuid: string | null,
+  options?: Omit<UseQueryOptions<TrainingCenter | null>, 'queryKey' | 'queryFn' | 'staleTime'>
+) {
+  return queryOptions({
+    ...options,
+    queryKey: ['organization'],
+    queryFn: async () => {
 
-            const orgResp = await client.get({
-                url: "/api/v1/organisations/search",
-                query: {
-                    searchParams: {
-                        user_uuid_eq: reqParams.userid!
-                    },
-                    pageable: {
-                        size: 1,
-                        page: 0
-                    }
-                },
-                headers: {
-                    Authorization: `Bearer ${reqParams.token}`
-                }
-            }) as ApiResponse;
+      if (!organizaition_uuid) return null;
 
-            const orgRespData = orgResp.data as SearchResponse;
+      const orgResp = await getOrganisationByUuid({
+        path: {
+          uuid: organizaition_uuid
+        }
+      });
 
-            if (!orgRespData.data || !orgRespData.data.content || orgRespData.data.content.length === 0)
-                return null;
+      const orgRespData = orgResp.data as ApiResponse;
+      console.log(orgRespData);
 
-            const organizationData = {
-                ...orgRespData.data.content[0]
-            } as TrainingCenter;
+      if (!orgRespData.data || orgRespData.error) {
+        return null;
+      }
 
-            const branchesResp = await getTrainingBranchesByOrganisation({
-                path: {
-                    uuid: organizationData.uuid!
-                },
-                query: {
-                    pageable: { page: 0, size: 5 }
-                }
-            }) as ApiResponse;
+      const organizationData = {
+        ...orgRespData.data,
+      } as TrainingCenter;
 
-            const branchesData = branchesResp.data as SearchResponse;
-            if (branchesData.data && branchesData.data.content)
-                organizationData.branches = branchesData.data.content as unknown as TrainingBranch[];
-
-            const orgUsersResp = await getUsersByOrganisation({
-                path: {
-                    uuid: organizationData.uuid!
-                },
-                query: {
-                    pageable: { page: 0, size: 5 }
-                }
-            }) as ApiResponse;
-
-            const orgUsersData = orgUsersResp.data as SearchResponse;
-            if (orgUsersData.data && orgUsersData.data.content)
-                organizationData.users = orgUsersData.data.content as unknown as User[];
-
-
-            // TODO: get organization branches, courses, instructures and users
-            return organizationData;
-
+      const branchesResp = (await getTrainingBranchesByOrganisation({
+        path: {
+          uuid: organizationData.uuid!,
         },
-        staleTime: 1000 * 60 * 15,
-        refetchOnWindowFocus: true,
-        refetchOnReconnect: true
-    });
+        query: {
+          pageable: { page: 0, size: 5 },
+        },
+      })) as ApiResponse;
+
+      const branchesData = branchesResp.data as SearchResponse;
+      if (branchesData.data && branchesData.data.content)
+        organizationData.branches = branchesData.data.content as unknown as TrainingBranch[];
+
+      const orgUsersResp = (await getUsersByOrganisation({
+        path: {
+          uuid: organizationData.uuid!,
+        },
+        query: {
+          pageable: { page: 0, size: 5 },
+        },
+      })) as ApiResponse;
+
+      const orgUsersData = orgUsersResp.data as SearchResponse;
+      if (orgUsersData.data && orgUsersData.data.content)
+        organizationData.users = orgUsersData.data.content as unknown as User[];
+
+      // TODO: get organization branches, courses, instructures and users
+      return organizationData;
+    },
+    staleTime: 1000 * 60 * 15,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
 }

@@ -1,606 +1,1225 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
-import { addRubricCriterionMutation, addRubricScoringMutation, createAssessmentRubricMutation, getAllGradingLevelsOptions, getRubricCriteriaQueryKey, getRubricScoringQueryKey, searchAssessmentRubricsQueryKey, updateAssessmentRubricMutation, updateRubricCriterionMutation, updateRubricScoringMutation } from '@/services/client/@tanstack/react-query.gen';
-import { StatusEnum, WeightUnitEnum } from '@/services/client/types.gen';
+import { useUserProfile } from '@/context/profile-context';
+import {
+  addRubricCriterionMutation,
+  createAssessmentRubricMutation,
+  createRubricScoringLevelMutation,
+  getRubricCriteriaQueryKey,
+  getRubricMatrixQueryKey,
+  getRubricScoringQueryKey,
+  getScoringLevelsByRubricQueryKey,
+  searchAssessmentRubricsQueryKey,
+  updateAssessmentRubricMutation,
+  updateMatrixCellMutation,
+  updateRubricCriterionMutation,
+  updateScoringLevelMutation
+} from '@/services/client/@tanstack/react-query.gen';
+import { StatusEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PlusCircle, Trash, X } from 'lucide-react';
-import { useEffect } from 'react';
-import { useFieldArray, useForm, useFormContext } from 'react-hook-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import Spinner from '../../../../components/ui/spinner';
 
 // RUBRICS
 export enum RubricType {
-    Assignment = 'Assignment',
-    Exam = 'Exam',
-    ClassAttendance = 'Class Attendance',
-    Auditions = 'Auditions',
-    Competition = 'Competition',
-    Performance = 'Performance',
-    Project = 'Project',
-    Quiz = 'Quiz',
-    Reading = 'Reading',
+  Assignment = 'Assignment',
+  Exam = 'Exam',
+  ClassAttendance = 'Class Attendance',
+  Auditions = 'Auditions',
+  Competition = 'Competition',
+  Performance = 'Performance',
+  Project = 'Project',
+  Quiz = 'Quiz',
+  Reading = 'Reading',
 }
 
 export enum Visibility {
-    Public = 'Public',
-    Private = 'Private',
+  Public = 'Public',
+  Private = 'Private',
 }
 
-type ComponentBlockProps = {
-    index: number;
-    remove: (index: number) => void;
-    isOnlyOne: boolean;
-    defaultValues?: RubricFormValues;
-};
-
-
-export const ComponentBlock = ({ index, remove, isOnlyOne, defaultValues }: ComponentBlockProps) => {
-    const { register, control, setValue } = useFormContext();
-    const { data: gradingLevels } = useQuery(getAllGradingLevelsOptions({ query: { pageable: {} } }));
-
-    const { fields, append, remove: removeGrading } = useFieldArray({
-        control,
-        name: `components.${index}.grading`,
-    });
-
-    useEffect(() => {
-        fields.forEach((_, gradingIndex) => {
-            register(`components.${index}.grading.${gradingIndex}.points`);
-            register(`components.${index}.grading.${gradingIndex}.uuid`);
-        });
-    }, [fields, index, register]);
-
-    return (
-        <div className="border border-gray-300 p-2 rounded space-y-4">
-            {/* Component Name */}
-            <Input
-                placeholder="Assessment Component Name"
-                {...register(`components.${index}.name`)}
-            />
-
-            {/* <Input type="hidden" {...register(`components.${index}.uuid`)} /> */}
-            <Input type="hidden" {...register(`components.${index}.scoring_uuid`)} />
-            {/* <Input type="hidden" {...register(`components.${index}.grading_level_uuid`)} /> */}
-
-
-            {/* Grading Table */}
-            <table className="w-full border text-sm">
-                <thead>
-                    <tr className="bg-gray-100 text-left">
-                        <th className="p-1.5">Grading Name</th>
-                        <th className="p-1.5">Description</th>
-                        <th className="p-1.5">Points</th>
-                        <th className="p-1.5"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {fields.map((field, gradingIndex) => (
-                        <tr key={field.id}>
-                            <td className="p-1.5">
-                                <Input
-                                    {...register(`components.${index}.grading.${gradingIndex}.name`)}
-                                    placeholder="Name"
-                                />
-                            </td>
-                            <td className="p-1.5">
-                                <Input
-                                    {...register(`components.${index}.grading.${gradingIndex}.description`)}
-                                    placeholder="Description"
-                                />
-                            </td>
-                            <td className="p-1.5">
-                                <div className="flex flex-col gap-1">
-                                    {/* UUID Select */}
-                                    <select
-                                        className="border border-gray-300 rounded px-2 py-1 w-full"
-                                        {...register(`components.${index}.grading.${gradingIndex}.uuid`)}
-                                        onChange={(e) => {
-                                            const selectedUuid = e.target.value;
-                                            const selectedLevel = gradingLevels?.data?.content?.find(
-                                                (level) => level.uuid === selectedUuid
-                                            );
-
-                                            if (selectedLevel) {
-                                                // console.log('Selected Grading Level:', selectedLevel);
-
-                                                setValue(`components.${index}.grading.${gradingIndex}.points`, selectedLevel.points);
-                                                setValue(`components.${index}.grading.${gradingIndex}.uuid`, selectedLevel.uuid);
-                                                setValue(`components.${index}.grading.${gradingIndex}.grading_level_uuid`, selectedLevel.uuid);
-                                            } else {
-                                                setValue(`components.${index}.grading.${gradingIndex}.points`, 0);
-                                                setValue(`components.${index}.grading.${gradingIndex}.uuid`, '');
-                                                setValue(`components.${index}.grading.${gradingIndex}.uuid`, '');
-                                            }
-                                        }}
-                                    >
-                                        <option value="">Select Grading Level</option>
-                                        {gradingLevels?.data?.content?.map((level) => (
-                                            <option key={level.uuid} value={level.uuid}>
-                                                {level.points} - {level.name}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    {/* Hidden Inputs for tracking */}
-                                    <Input
-                                        type="hidden"
-                                        {...register(`components.${index}.grading.${gradingIndex}.uuid`)}
-                                    />
-                                    <Input
-                                        type="hidden"
-                                        {...register(`components.${index}.grading.${gradingIndex}.points`, { valueAsNumber: true })}
-                                    />
-                                </div>
-                            </td>
-                            <td className="p-1.5">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    onClick={() => removeGrading(gradingIndex)}
-                                    disabled={fields.length === 1}
-                                >
-                                    <X className="w-4 h-4 text-red-500" />
-                                </Button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {/* Add Grading Criterion */}
-            <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                    append({ name: '', description: '', points: 0, uuid: '' })
-                }
-            >
-                <PlusCircle className="mr-2 w-4 h-4" />
-                Add Grading Criterion
-            </Button>
-
-            {/* Remove Component */}
-            <div className="text-right">
-                <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => remove(index)}
-                    disabled={isOnlyOne}
-                    className="text-red-600"
-                >
-                    <Trash className="w-4 h-4 text-red-500" />
-                </Button>
-            </div>
-        </div>
-    );
-};
-
-export const rubricFormSchema = z.object({
-    title: z.string().min(1, 'Title is required'),
-    description: z.string().optional(),
-    type: z.nativeEnum(RubricType),
-    visibility: z.nativeEnum(Visibility),
-    components: z.array(
-        z.object({
-            name: z.string().min(1, 'Component name is required'),
-            uuid: z.string(),
-            grading: z.array(
-                z.object({
-                    name: z.string().min(1, 'Grading name is required'),
-                    description: z.string().optional(),
-                    points: z.number().min(0, 'Points must be positive'),
-                    uuid: z.string(),
-                    scoring_uuid: z.string(),
-                    grading_level_uuid: z.string()
-                })
-            ).min(1, 'Each component must have at least one grading criterion'),
-        })
-    ).min(1, 'At least one assessment component is required'),
+export const rubricDetailsSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  type: z.nativeEnum(RubricType),
+  visibility: z.nativeEnum(Visibility),
+  total_weight: z.coerce.number().optional(),
+  max_score: z.coerce.number().optional(),
+  min_passing_score: z.coerce.number().optional(),
 });
 
-export type RubricFormValues = z.infer<typeof rubricFormSchema>;
+export type RubricDetailsFormValues = z.infer<typeof rubricDetailsSchema>;
 
-interface AddRubricFormProps {
-    courseId: string;
-    rubricId: string;
-    onCancel: () => void;
-    onSubmitSuccess?: () => void;
-    className?: string;
-    defaultValues?: RubricFormValues;
-}
+function RubricDetailsForm({
+  onSuccess,
+  defaultValues,
+  rubricId,
+  onCancel,
+  className,
+}: {
+  rubricId?: string;
+  defaultValues?: RubricDetailsFormValues;
+  onSuccess: () => void;
+  onCancel: () => void;
+  className: any;
+}) {
+  const form = useForm<RubricDetailsFormValues>({
+    resolver: zodResolver(rubricDetailsSchema),
+    defaultValues,
+  });
 
-export function AddRubricForm({ courseId, rubricId, onCancel, onSubmitSuccess, className, defaultValues }: AddRubricFormProps) {
-    const form = useForm<RubricFormValues>({
-        resolver: zodResolver(rubricFormSchema),
-        defaultValues: defaultValues ?? {
-            title: '',
-            description: '',
-            type: RubricType.Assignment,
-            visibility: Visibility.Public,
-            components: [
-                {
-                    name: '',
-                    uuid: '',
-                    grading: [{ name: '', description: '', points: 0, uuid: '', grading_level_uuid: '', scoring_uuid: '' }],
-                },
-            ],
-        },
-    });
+  const qc = useQueryClient();
+  const user = useUserProfile();
 
-    useEffect(() => {
-        if (defaultValues) {
-            form.reset(defaultValues);
-        }
-    }, [defaultValues, form]);
+  const createRubric = useMutation(createAssessmentRubricMutation());
+  const updateRubric = useMutation(updateAssessmentRubricMutation());
 
-    const {
-        control,
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = form;
-
-    const {
-        fields: componentFields,
-        append: appendComponent,
-        remove: removeComponent,
-    } = useFieldArray({
-        control,
-        name: 'components',
-    });
-
-    const instructor = useInstructor();
-    const queryClient = useQueryClient()
-
-    // MUTATIONS
-    const createRubric = useMutation(createAssessmentRubricMutation());
-    const createRubricComponent = useMutation(addRubricCriterionMutation())
-    const createRubricScores = useMutation(addRubricScoringMutation())
-
-    const updateRubric = useMutation(updateAssessmentRubricMutation());
-    const updateRubricComponent = useMutation(updateRubricCriterionMutation())
-    const updateRubricScores = useMutation(updateRubricScoringMutation())
-
-    const createRubricIsPending = createRubric.isPending || createRubricComponent.isPending || createRubricScores.isPending;
-    const updateRubricIsPending = updateRubric.isPending || updateRubricComponent.isPending || updateRubricScores.isPending;
-
-    const onSubmit = async (values: RubricFormValues) => {
-        try {
-            const rubricBody = {
-                title: values.title,
-                description: values.description,
-                course_uuid: courseId,
-                rubric_type: values.type,
-                instructor_uuid: instructor?.uuid as string,
-                is_public: values.visibility === "Public",
-                status: StatusEnum.DRAFT,
-                active: false,
-                total_weight: 100,
-                weight_unit: WeightUnitEnum.PERCENTAGE,
-                is_weighted: true,
-                created_by: "instructor@sarafrika.com",
-                updated_by: "instructor@sarafrika.com",
-                rubric_category: `${values.type} Assessment`,
-                is_published: true,
-                assessment_scope: "Course-Specific",
-                usage_status: "Active Public Rubric"
-            };
-
-            if (rubricId) {
-                updateRubric.mutate(
-                    {
-                        path: { uuid: rubricId },
-                        body: rubricBody
-                    },
-                    {
-                        onSuccess: () => {
-                            queryClient.invalidateQueries({
-                                queryKey: searchAssessmentRubricsQueryKey({
-                                    query: {
-                                        searchParams: { instructor_uuid_eq: instructor?.uuid as string },
-                                        pageable: {}
-                                    }
-                                })
-                            });
-
-                            const component = values.components[0];
-                            const criterionId = component?.uuid;
-
-                            const grading = component?.grading[0];
-                            const gradingId = grading?.uuid;
-                            const gradingLevelUuid = grading?.grading_level_uuid;
-
-                            const rubricComponentBody = {
-                                rubric_uuid: rubricId,
-                                component_name: component?.name || "",
-                                criteria_category: component?.name || "",
-                                description: "",
-                                display_order: 1,
-                                criteria_number: "Criteria 1",
-                                weight_suggestion: "High Priority",
-                                is_primary_criteria: true,
-                                weight: 25,
-                                created_by: "instructor@sarafrika.com",
-                                updated_by: "instructor@sarafrika.com",
-                            };
-
-                            updateRubricComponent.mutate(
-                                {
-                                    path: { rubricUuid: rubricId, criteriaUuid: criterionId as string },
-                                    body: rubricComponentBody
-                                },
-                                {
-                                    onSuccess: () => {
-                                        queryClient.invalidateQueries({
-                                            queryKey: getRubricCriteriaQueryKey({
-                                                path: { rubricUuid: rubricId as string },
-                                                query: { pageable: {} }
-                                            })
-                                        });
-
-                                        const rubricScoringBody = {
-                                            uuid: grading?.scoring_uuid,
-                                            criteria_uuid: criterionId,
-                                            grading_level_uuid: gradingLevelUuid,
-                                            description: grading?.description,
-                                            created_by: "instructor@sarafrika.com",
-                                            updated_by: "instructor@sarafrika.com",
-                                            score_range: `${grading?.points} points`,
-                                            is_passing_level: true,
-                                            performance_expectation: grading?.name,
-                                            feedback_category: grading?.description,
-                                        };
-
-                                        updateRubricScores.mutate(
-                                            {
-                                                path: { rubricUuid: rubricId, criteriaUuid: criterionId as string, scoringUuid: grading?.scoring_uuid as string },
-                                                body: rubricScoringBody as any
-                                            },
-                                            {
-                                                onSuccess: () => {
-                                                    queryClient.invalidateQueries({
-                                                        queryKey: getRubricScoringQueryKey({
-                                                            path: { rubricUuid: rubricId as string, criteriaUuid: criterionId as string },
-                                                            query: { pageable: {} }
-                                                        })
-                                                    });
-
-                                                    toast.success("Rubric updated successfully");
-                                                    onSubmitSuccess?.();
-                                                    onCancel();
-                                                },
-                                                onError: () => toast.error("Failed to update rubric scoring"),
-                                            }
-                                        );
-                                    },
-                                    onError: () => toast.error("Failed to update rubric component"),
-                                }
-                            );
-                        },
-                        onError: () => {
-                            toast.error("Failed to update rubric");
-                        }
-                    }
-                );
-            } else {
-                // Create logic remains unchanged
-                createRubric.mutate(
-                    { body: rubricBody },
-                    {
-                        onSuccess: (data) => {
-                            const rubricUuid = data?.data?.uuid as string;
-                            const component = values.components[0];
-                            const grading = component?.grading[0];
-
-                            const rubricComponentBody = {
-                                rubric_uuid: rubricUuid,
-                                component_name: component?.name || "",
-                                criteria_category: component?.name || "",
-                                description: "",
-                                display_order: 1,
-                                criteria_number: "Criteria 1",
-                                weight_suggestion: "High Priority",
-                                is_primary_criteria: true,
-                                weight: 25,
-                                created_by: "instructor@sarafrika.com",
-                                updated_by: "instructor@sarafrika.com",
-                            };
-
-                            createRubricComponent.mutate(
-                                { path: { rubricUuid }, body: rubricComponentBody },
-                                {
-                                    onSuccess: (data) => {
-                                        const criteriaUuid = data?.data?.uuid as string;
-
-                                        const rubricScoringBody = {
-                                            criteria_uuid: criteriaUuid,
-                                            grading_level_uuid: grading?.uuid,
-                                            description: grading?.description,
-                                            created_by: "instructor@sarafrika.com",
-                                            updated_by: "instructor@sarafrika.com",
-                                            score_range: `${grading?.points} points`,
-                                            is_passing_level: true,
-                                            performance_expectation: grading?.name,
-                                            feedback_category: grading?.description,
-                                        };
-
-                                        createRubricScores.mutate(
-                                            { path: { rubricUuid, criteriaUuid }, body: rubricScoringBody as any },
-                                            {
-                                                onSuccess: () => {
-                                                    queryClient.invalidateQueries({
-                                                        queryKey: searchAssessmentRubricsQueryKey({
-                                                            query: {
-                                                                searchParams: { instructor_uuid_eq: instructor?.uuid as string },
-                                                                pageable: {}
-                                                            }
-                                                        })
-                                                    });
-                                                    toast.success("Rubric created successfully");
-                                                    onSubmitSuccess?.();
-                                                    onCancel();
-                                                },
-                                                onError: () => toast.error("Failed to create rubric scoring")
-                                            }
-                                        );
-                                    },
-                                    onError: () => toast.error("Failed to create rubric component"),
-                                }
-                            );
-                        },
-                        onError: () => toast.error("Failed to create rubric")
-                    }
-                );
-            }
-        } catch (error) {
-            // console.error(error);
-            toast.error("An unexpected error occurred");
-        }
+  const handleSubmit = async (values: RubricDetailsFormValues) => {
+    const payload = {
+      ...values,
+      rubric_type: values.type,
+      instructor_uuid: user?.instructor?.uuid as string,
+      is_public: values.visibility === 'Public',
+      status: StatusEnum.DRAFT,
+      rubric_category: `${values.type} Assessment`,
+      total_weight: values.total_weight,
+      max_score: values.max_score,
+      min_passing_score: values.min_passing_score,
+      created_by: user?.email,
+      // additional rubric info
     };
 
+    if (rubricId) {
+      updateRubric.mutate(
+        { path: { uuid: rubricId }, body: payload },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: searchAssessmentRubricsQueryKey({
+                query: {
+                  pageable: {},
+                  searchParams: { instructor_uuid_eq: user?.instructor?.uuid as string },
+                },
+              }),
+            });
+            qc.invalidateQueries({
+              queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
+            });
+            toast.success(data?.message);
+            onCancel();
+            onSuccess();
+          },
+        }
+      );
+    } else {
+      createRubric.mutate(
+        { body: payload },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: searchAssessmentRubricsQueryKey({
+                query: {
+                  pageable: {},
+                  searchParams: { instructor_uuid_eq: user?.instructor?.uuid as string },
+                },
+              }),
+            });
+            toast.success(data?.message);
+            onCancel();
+            onSuccess();
+          },
+        }
+      );
+    }
+  };
 
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-8 ${className}`}>
-                <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Rubric Title</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Enter rubric title" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
+        <FormField
+          control={form.control}
+          name='title'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Rubric Title</FormLabel>
+              <FormControl>
+                <Input placeholder='Enter rubric title' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Optional rubric description" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+        <FormField
+          control={form.control}
+          name='description'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input placeholder='Optional rubric description' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-                <div className="flex flex-col sm:flex-row items-start gap-6">
-                    <FormField
-                        control={form.control}
-                        name="type"
-                        render={({ field }) => (
-                            <FormItem className="flex-1 w-full">
-                                <FormLabel>Rubric Type</FormLabel>
-                                <Select {...field} onValueChange={field.onChange} value={field.value}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select rubric type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {Object.values(RubricType).map((type) => (
-                                            <SelectItem key={type} value={type}>
-                                                {type}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="visibility"
-                        render={({ field }) => (
-                            <FormItem className="w-full sm:w-[150px] flex-shrink-0">
-                                <FormLabel>Rubric Visibility</FormLabel>
-                                <Select {...field} onValueChange={field.onChange} value={field.value}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select visibility" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {Object.values(Visibility).map((option) => (
-                                            <SelectItem key={option} value={option}>
-                                                {option}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-
-                <div className="space-y-3">
-                    <h3 className="text-lg font-semibold">Assessment Components</h3>
-
-                    {componentFields.map((component, index) => (
-                        <ComponentBlock
-                            key={component.id}
-                            index={index}
-                            remove={removeComponent}
-                            isOnlyOne={componentFields.length === 1}
-                            defaultValues={defaultValues}
-                        />
+        <div className='flex flex-col items-start gap-6 sm:flex-row'>
+          <FormField
+            control={form.control}
+            name='type'
+            render={({ field }) => (
+              <FormItem className='w-full flex-1'>
+                <FormLabel>Rubric Type</FormLabel>
+                <Select {...field} onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select rubric type' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(RubricType).map(type => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                    {/* Add New Component */}
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() =>
-                            appendComponent({
-                                name: '',
-                                uuid: '',
-                                grading: [{ name: '', description: '', points: 0, uuid: '', grading_level_uuid: '', scoring_uuid: '' }],
-                            })
-                        }
-                    >
-                        <PlusCircle className="mr-2 w-4 h-4" />
-                        Add Assessment Component
-                    </Button>
-                </div>
+          <FormField
+            control={form.control}
+            name='visibility'
+            render={({ field }) => (
+              <FormItem className='w-full flex-shrink-0 sm:w-[150px]'>
+                <FormLabel>Rubric Visibility</FormLabel>
+                <Select {...field} onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select visibility' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(Visibility).map(option => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-                <div className="flex justify-end gap-2 pt-6">
-                    <Button type="button" variant="outline" onClick={onCancel}>
-                        Cancel
-                    </Button>
+        <div className='flex flex-col items-start gap-6 sm:flex-row'>
+          <FormField
+            control={form.control}
+            name='total_weight'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel>Total Weight (%)</FormLabel>
+                <FormControl>
+                  <Input type='number' placeholder='e.g 100' {...field} className='w-full' />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                    <Button
-                        type="submit"
-                        className="min-w-[120px] flex items-center justify-center gap-2"
-                        disabled={createRubricIsPending || updateRubricIsPending}
-                    >
-                        {(createRubricIsPending || updateRubricIsPending) && (
-                            <Spinner />
-                        )}
-                        {defaultValues ? 'Update Rubric' : 'Create Rubric'}
-                    </Button>
-                </div>
+          <FormField
+            control={form.control}
+            name='max_score'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel>Max Score</FormLabel>
+                <FormControl>
+                  <Input type='number' placeholder='e.g 100' {...field} className='w-full' />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            </form>
-        </Form>
-    );
+          <FormField
+            control={form.control}
+            name='min_passing_score'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel>Passing Score</FormLabel>
+                <FormControl>
+                  <Input type='number' placeholder='e.g 50' {...field} className='w-full' />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='flex justify-end gap-2 pt-6'>
+          <Button type='button' variant='outline' onClick={onCancel}>
+            Cancel
+          </Button>
+
+          <Button
+            type='submit'
+            className='flex min-w-[120px] items-center justify-center gap-2'
+            disabled={createRubric.isPending || updateRubric.isPending}
+          >
+            {(createRubric.isPending || updateRubric.isPending) && <Spinner />}
+            {defaultValues ? 'Update Rubric' : 'Create Rubric'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+export const rubricCriteriaSchema = z.object({
+  uuid: z.string().optional(),
+  component_name: z.string().min(1),
+  description: z.string().optional(),
+  display_order: z.coerce.number().optional(),
+  weight: z.coerce.number().optional(),
+  criteria_number: z.string().optional(),
+  is_primary_criteria: z.boolean().default(false),
+});
+
+export type RubricCriteriaFormValues = z.infer<typeof rubricCriteriaSchema>;
+
+function RubricCriteriaForm({
+  rubricId,
+  defaultValues,
+  criterionId,
+  onSuccess,
+  onCancel,
+  className,
+}: {
+  rubricId: string;
+  defaultValues?: RubricCriteriaFormValues;
+  onSuccess: () => void;
+  onCancel: () => void;
+  criterionId: string;
+  className: any;
+}) {
+  const form = useForm<RubricCriteriaFormValues>({
+    resolver: zodResolver(rubricCriteriaSchema),
+    defaultValues,
+  });
+
+  const qc = useQueryClient();
+  const user = useUserProfile();
+
+  const createRubricCriteria = useMutation(addRubricCriterionMutation());
+  const updateRubricCriteria = useMutation(updateRubricCriterionMutation());
+
+  const handleSubmit = (values: RubricCriteriaFormValues) => {
+    const payload = {
+      rubric_uuid: rubricId,
+      component_name: values.component_name,
+      description: values.description,
+      criteria_category: '',
+      display_order: values.display_order,
+      weight: values.weight,
+      criteria_number: `Criteria ${values.display_order}`,
+      is_primary_criteria: values.is_primary_criteria,
+      // additional criterion info
+    };
+
+    if (rubricId && criterionId) {
+      updateRubricCriteria.mutate(
+        { path: { rubricUuid: rubricId, criteriaUuid: criterionId }, body: payload as any },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: searchAssessmentRubricsQueryKey({
+                query: {
+                  pageable: {},
+                  searchParams: { instructor_uuid_eq: user?.instructor?.uuid as string },
+                },
+              }),
+            });
+
+            qc.invalidateQueries({
+              queryKey: getRubricCriteriaQueryKey({
+                path: { rubricUuid: rubricId },
+                query: { pageable: {} },
+              }),
+            });
+
+            qc.invalidateQueries({
+              queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
+            });
+            toast.success(data?.message);
+            onCancel();
+            onSuccess();
+          },
+        }
+      );
+    } else {
+      createRubricCriteria.mutate(
+        { path: { rubricUuid: rubricId }, body: payload as any },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: searchAssessmentRubricsQueryKey({
+                query: {
+                  pageable: {},
+                  searchParams: { instructor_uuid_eq: user?.instructor?.uuid as string },
+                },
+              }),
+            });
+            qc.invalidateQueries({
+              queryKey: getRubricCriteriaQueryKey({
+                path: { rubricUuid: rubricId },
+                query: { pageable: {} },
+              }),
+            });
+            qc.invalidateQueries({
+              queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
+            });
+            toast.success(data?.message);
+            onCancel();
+            onSuccess();
+          },
+        }
+      );
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
+        <FormField
+          control={form.control}
+          name='component_name'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Assessment Component Name</FormLabel>
+              <FormControl>
+                <Input placeholder='Enter component name' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='description'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Assessment Component Description</FormLabel>
+              <FormControl>
+                <Input placeholder='Enter description' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Criteria Category might be added here */}
+
+        <FormField
+          control={form.control}
+          name='is_primary_criteria'
+          render={({ field }) => (
+            <FormItem className='flex flex-row items-start space-x-3'>
+              <FormControl>
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+              <div className='space-y-1 leading-none'>
+                <FormLabel>Primary Criteria</FormLabel>
+                <FormDescription>
+                  Indicate if this component is a primary criteria for this rubric assessment.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <div className='flex flex-col items-start gap-6 sm:flex-row'>
+          <FormField
+            control={form.control}
+            name='weight'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel>Weight</FormLabel>
+                <FormControl>
+                  <Input type='number' placeholder='e.g 25' {...field} className='w-full' />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='display_order'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel>Display Order</FormLabel>
+                <FormControl>
+                  <Input type='number' placeholder='e.g 1' {...field} className='w-full' />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='flex justify-end gap-2 pt-6'>
+          <Button type='button' variant='outline' onClick={onCancel}>
+            Cancel
+          </Button>
+
+          <Button
+            type='submit'
+            className='flex min-w-[120px] items-center justify-center gap-2'
+            disabled={createRubricCriteria.isPending || updateRubricCriteria.isPending}
+          >
+            {(createRubricCriteria.isPending || updateRubricCriteria.isPending) && <Spinner />}
+            {defaultValues ? 'Update Criteria' : 'Create Criteria'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+export const scoringLevelSchema = z.object({
+  rubric_uuid: z.string().optional(),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  points: z.coerce.number().optional(),
+  level_order: z.coerce.number().optional(),
+  color_code: z.string().optional(),
+  is_passing: z.boolean().default(false),
+  display_name: z.string().optional(),
+  performance_indicator: z.string().optional()
+});
+
+export type ScoringLevelFormValues = z.infer<typeof scoringLevelSchema>;
+
+function ScoringLevelForm({
+  rubricId,
+  scoringLevelId,
+  defaultValues,
+  onSuccess,
+  onCancel,
+  className,
+}: {
+  rubricId: string;
+  scoringLevelId?: string;
+  defaultValues?: ScoringLevelFormValues;
+  onSuccess: () => void;
+  onCancel: () => void;
+  className: any;
+}) {
+  const form = useForm<ScoringLevelFormValues>({
+    resolver: zodResolver(scoringLevelSchema),
+    defaultValues,
+  });
+
+  const qc = useQueryClient();
+  const instructor = useInstructor();
+
+  const createRubricScoringLevel = useMutation(createRubricScoringLevelMutation());
+  const updateRubricScoringLevel = useMutation(updateScoringLevelMutation());
+
+  const handleSubmit = async (values: ScoringLevelFormValues) => {
+    const payload = {
+      rubric_uuid: rubricId,
+      name: values.name,
+      description: values.description || '',
+      points: values.points,
+      level_order: values.level_order,
+      color_code: values.color_code,
+      is_passing: values.is_passing,
+      dispay_name: `${values.name} (${values.points} pts)`,
+      performance_indicator: values.performance_indicator,
+      // additional scoring info
+    };
+
+    if (scoringLevelId) {
+      updateRubricScoringLevel.mutate(
+        {
+          path: { rubricUuid: rubricId, levelUuid: scoringLevelId },
+          body: payload as any,
+        },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: searchAssessmentRubricsQueryKey({
+                query: {
+                  pageable: {},
+                  searchParams: { instructor_uuid_eq: instructor?.uuid as string },
+                },
+              }),
+            });
+
+            qc.invalidateQueries({
+              queryKey: getScoringLevelsByRubricQueryKey({
+                query: { pageable: {} },
+                path: { rubricUuid: rubricId },
+              }),
+            });
+
+            qc.invalidateQueries({
+              queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
+            });
+            toast.success(data?.message);
+            onCancel();
+            onSuccess();
+          },
+        }
+      );
+    } else {
+      createRubricScoringLevel.mutate(
+        { path: { rubricUuid: rubricId }, body: payload as any },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: searchAssessmentRubricsQueryKey({
+                query: {
+                  pageable: {},
+                  searchParams: { instructor_uuid_eq: instructor?.uuid as string },
+                },
+              }),
+            });
+
+            qc.invalidateQueries({
+              queryKey: getScoringLevelsByRubricQueryKey({
+                query: { pageable: {} },
+                path: { rubricUuid: rubricId },
+              }),
+            });
+
+            qc.invalidateQueries({
+              queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
+            });
+            toast.success(data?.message);
+            onCancel();
+            onSuccess();
+          },
+        }
+      );
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
+        <FormField
+          control={form.control}
+          name='is_passing'
+          render={({ field }) => (
+            <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  id='is_passing_level'
+                />
+              </FormControl>
+              <div className='space-y-1 leading-none'>
+                <FormLabel htmlFor='is_passing_level' className='font-medium'>
+                  Passing Level
+                </FormLabel>
+                <FormDescription>
+                  Select this option if this score level should be considered a passing grade.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='level_order'
+          render={({ field }) => (
+            <FormItem className='w-full'>
+              <FormLabel>Display Order</FormLabel>
+              <FormControl>
+                <Input type='number' placeholder='e.g 1' {...field} className='w-full' />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='color_code'
+          render={({ field }) => (
+            <FormItem className='w-full'>
+              <FormLabel className='mb-1 block text-sm font-medium text-gray-700'>
+                Color Code
+              </FormLabel>
+              <div className='flex items-center gap-4'>
+                <FormControl>
+                  <Input
+                    type='color'
+                    {...field}
+                    className='w-12 h-12 p-0 border border-gray-300 rounded-md cursor-pointer'
+                    onChange={(e) => {
+                      field.onChange(e);
+                    }}
+                  />
+                </FormControl>
+
+                {/* Hex Value Display */}
+                <span className='text-sm text-gray-700 font-mono'>
+                  {field.value?.toUpperCase() || '#FFFFFF'}
+                </span>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        \        <FormField
+          control={form.control}
+          name='name'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Scoring Level Name</FormLabel>
+              <FormControl>
+                <Input placeholder='e.g. present, distinction' className='text-sm' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='description'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder='e.g. Highly confident and fluent techniques given consistently throughout'
+                  className='text-sm'
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='points'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Scoring Level Point</FormLabel>
+              <FormControl>
+                <Input type='number' placeholder='e.g. 5' className='text-sm' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='performance_indicator'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Performance Indicator</FormLabel>
+              <FormControl>
+                <Input placeholder='e.g. Exceptional Performance' className='text-sm' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className='flex justify-end gap-2 pt-6'>
+          <Button type='button' variant='outline' onClick={onCancel}>
+            Cancel
+          </Button>
+
+          <Button
+            type='submit'
+            className='flex min-w-[120px] items-center justify-center gap-2'
+            disabled={createRubricScoringLevel.isPending || updateRubricScoringLevel.isPending}
+          >
+            {(createRubricScoringLevel.isPending || updateRubricScoringLevel.isPending) && <Spinner />}
+            {defaultValues ? 'Update Scoring Level' : 'Create Scoring Level'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+export const rubricScoringSchema = z.object({
+  criteria_uuid: z.string().optional(),
+  description: z.string().optional(),
+  is_completed: z.boolean() ?? false,
+  points: z.coerce.number().optional(),
+  scoring_level_uuid: z.string().optional(),
+  weighted_points: z.coerce.number().optional(),
+});
+
+export type RubricScoringFormValues = z.infer<typeof rubricScoringSchema>;
+
+function RubricScoringForm({
+  rubricId,
+  criterionId,
+  scoringId,
+  defaultValues,
+  onSuccess,
+  onCancel,
+  className,
+}: {
+  rubricId: string;
+  criterionId: string;
+  scoringId: string;
+  defaultValues?: RubricScoringFormValues;
+  onSuccess: () => void;
+  onCancel: () => void;
+  className: any;
+}) {
+  const form = useForm<RubricScoringFormValues>({
+    resolver: zodResolver(rubricScoringSchema),
+    defaultValues,
+  });
+  // const { setValue, register } = form;
+
+  const qc = useQueryClient();
+  const instructor = useInstructor();
+
+  const updateMatrixCells = useMutation(updateMatrixCellMutation());
+
+  const handleSubmit = async (values: RubricScoringFormValues) => {
+    const payload = {
+      criteria_uuid: values.criteria_uuid,
+      description: values.description || '',
+      is_completed: values.is_completed,
+      scoring_level_uuid: values.scoring_level_uuid,
+      points: values.points,
+      weighted_points: values.weighted_points
+      // additional scoring info
+    };
+
+    if (rubricId && criterionId && scoringId) {
+      updateMatrixCells.mutate(
+        {
+          path: { rubricUuid: rubricId },
+          body: payload as any,
+        },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: searchAssessmentRubricsQueryKey({
+                query: {
+                  pageable: {},
+                  searchParams: { instructor_uuid_eq: instructor?.uuid as string },
+                },
+              }),
+            });
+
+            qc.invalidateQueries({
+              queryKey: getRubricCriteriaQueryKey({
+                path: { rubricUuid: rubricId },
+                query: { pageable: {} },
+              }),
+            });
+
+            qc.invalidateQueries({
+              queryKey: getRubricScoringQueryKey({
+                path: { rubricUuid: rubricId, criteriaUuid: criterionId },
+                query: { pageable: {} },
+              }),
+            });
+            qc.invalidateQueries({
+              queryKey: getRubricMatrixQueryKey({ path: { rubricUuid: rubricId } }),
+            });
+            toast.success(data?.message);
+            onCancel();
+            onSuccess();
+          },
+        }
+      );
+    } else { }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
+        {/* Grading Level Dropdown */}
+        {/* <FormField
+          control={form.control}
+          name='grading_level_uuid'
+          render={({ field }) => (
+            <FormItem className='w-full'>
+              <FormLabel>Select Grading Level</FormLabel>
+              <Select
+                onValueChange={value => {
+                  const selected = gradingLevels?.data?.content?.find(
+                    level => level.uuid === value
+                  );
+
+                  if (selected) {
+                    setValue('grading_level_uuid', selected.uuid as string);
+                    setValue('name', selected.name);
+                    setValue('points', selected.points);
+                  } else {
+                    setValue('grading_level_uuid', '');
+                    setValue('name', '');
+                    setValue('points', 0);
+                  }
+                }}
+                value={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Choose grading level' />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {gradingLevels?.data?.content?.map(level => (
+                    <SelectItem key={level.uuid} value={level.uuid as string}>
+                      {level.points} - {level.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        /> */}
+
+        <FormField
+          control={form.control}
+          name='is_completed'
+          render={({ field }) => (
+            <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  id='is_completed'
+                />
+              </FormControl>
+              <div className='space-y-1 leading-none'>
+                <FormLabel htmlFor='is_completed' className='font-medium'>
+                  Is Complete?
+                </FormLabel>
+                <FormDescription>
+                  Select this option if this score level should be considered as completed.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {/* Auto-filled Grading Name */}
+        {/* <FormField
+          control={form.control}
+          name='name'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Grading Name</FormLabel>
+              <FormControl>
+                <Input placeholder='e.g. present, distinction' className='text-sm' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        /> */}
+
+        {/* Optional Description */}
+        <FormField
+          control={form.control}
+          name='description'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder='e.g. Highly confident and fluent techniques given consistently throughout'
+                  className='text-sm'
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Auto-filled Grading Point */}
+        <FormField
+          control={form.control}
+          name='points'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Grading Point</FormLabel>
+              <FormControl>
+                <Input type='number' placeholder='e.g. 5' className='text-sm' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* <FormField
+          control={form.control}
+          name='performance_expectation'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Performance Expectation</FormLabel>
+              <FormControl>
+                <Input placeholder='e.g. Exceptional Performance' className='text-sm' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        /> */}
+
+        {/* <FormField
+          control={form.control}
+          name='feedback_category'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Feedback Category</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder='Write a feedback for the scoring level'
+                  className='text-sm'
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        /> */}
+
+        <div className='flex justify-end gap-2 pt-6'>
+          <Button type='button' variant='outline' onClick={onCancel}>
+            Cancel
+          </Button>
+
+          <Button
+            type='submit'
+            className='flex min-w-[120px] items-center justify-center gap-2'
+            disabled={updateMatrixCells.isPending}
+          >
+            {(updateMatrixCells.isPending) && <Spinner />}
+            {defaultValues && 'Update Scoring'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+export function RubricDialog({
+  open,
+  setOpen,
+  editingRubric,
+  editingRubricId,
+  onSubmitSuccess,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  editingRubric?: any;
+  editingRubricId?: string;
+  onSubmitSuccess: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className='flex max-w-6xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 py-4'>
+          <DialogTitle className='text-xl'>
+            {editingRubricId ? 'Edit Rubric' : 'Add New Rubric'}
+          </DialogTitle>
+          <DialogDescription className='text-muted-foreground text-sm'>
+            {editingRubric
+              ? "Update the existing rubric's title, description, and grading criteria."
+              : 'Create a new rubric by providing its title, description, and grading criteria.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className='h-[calc(90vh-8rem)] sm:h-[calc(90vh-24rem)]'>
+          <RubricDetailsForm
+            onCancel={() => setOpen(false)}
+            defaultValues={editingRubric}
+            className='px-6 pb-6'
+            rubricId={editingRubricId ?? ''}
+            onSuccess={onSubmitSuccess}
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function CriteriaDialog({
+  open,
+  setOpen,
+  rubricId,
+  criterionId,
+  defaultValues,
+  onSuccess,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  rubricId: string;
+  criterionId?: string;
+  defaultValues?: any;
+  onSuccess: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className='flex max-w-4xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 py-4'>
+          <DialogTitle className='text-xl'>
+            {criterionId ? 'Edit Criterion' : 'Add New Criterion'}
+          </DialogTitle>
+          <DialogDescription className='text-muted-foreground text-sm'>
+            {criterionId
+              ? 'Modify an existing assessment criterion for this rubric.'
+              : 'Add a new criterion to this rubric, including the grading components.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className='h-[calc(90vh-16rem)] sm:h-[calc(90vh-24rem)]'>
+          <RubricCriteriaForm
+            rubricId={rubricId}
+            criterionId={criterionId ?? ''}
+            className='px-6 pb-6'
+            defaultValues={defaultValues}
+            onCancel={() => setOpen(false)}
+            onSuccess={onSuccess}
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function ScoringLevelDialog({
+  open,
+  setOpen,
+  rubricId,
+  scoringLevelId,
+  defaultValues,
+  onSuccess,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  rubricId: string;
+  scoringLevelId?: string;
+  defaultValues?: any;
+  onSuccess: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className='flex max-w-xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 py-4'>
+          <DialogTitle className='text-xl'>
+            {scoringLevelId ? 'Edit Scoring Level' : 'Add New Scoring Level'}
+          </DialogTitle>
+          <DialogDescription className='text-muted-foreground text-sm'>
+            {scoringLevelId
+              ? 'Update the scoring level and expectations for this scoring entry.'
+              : 'Define a new scoring entry for this criterion.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className='h-[calc(90vh-8rem)]'>
+          <ScoringLevelForm
+            rubricId={rubricId}
+            className='px-6 pb-6'
+            defaultValues={defaultValues}
+            scoringLevelId={scoringLevelId}
+            onCancel={() => setOpen(false)}
+            onSuccess={onSuccess}
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function ScoringDialog({
+  open,
+  setOpen,
+  rubricId,
+  criterionId,
+  scoringId,
+  defaultValues,
+  onSuccess,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  rubricId: string;
+  criterionId: string;
+  scoringId?: string;
+  defaultValues?: any;
+  onSuccess: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className='flex max-w-xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 py-4'>
+          <DialogTitle className='text-xl'>
+            {scoringId && 'Update Scoring'}
+          </DialogTitle>
+          <DialogDescription className='text-muted-foreground text-sm'>
+            {scoringId && 'Update the grading level and expectations for this scoring entry'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className='h-[calc(90vh-8rem)]'>
+          <RubricScoringForm
+            rubricId={rubricId}
+            criterionId={criterionId}
+            scoringId={scoringId || ''}
+            className='px-6 pb-6'
+            defaultValues={defaultValues}
+            onCancel={() => setOpen(false)}
+            onSuccess={onSuccess}
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
 }

@@ -13,29 +13,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { useUserProfile } from '@/context/profile-context';
+import { createOrganisation } from '@/services/client';
+import { zOrganisation } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { useUserProfile } from '@/context/profile-context';
-import { createOrganisation } from '@/services/client';
-import { zOrganisation } from '@/services/client/zod.gen';
+import LocationInput from '../../../components/locationInput';
 
-const OrganizationOnboardingSchema = zOrganisation.omit({ 
+const OrganizationOnboardingSchema = zOrganisation.omit({
   uuid: true,
-  domain: true, 
-  created_date: true, 
+  created_date: true,
   updated_date: true,
 });
 
@@ -62,9 +55,7 @@ export function OrganizationOnboardingForm() {
       name: '',
       description: '',
       active: true,
-      code: '',
       licence_no: '',
-      user_uuid: user?.uuid || '',
       location: '',
       country: '',
     },
@@ -79,15 +70,11 @@ export function OrganizationOnboardingForm() {
     setIsSubmitting(true);
     try {
       await createOrganisation({
-        body: data
+        body: data,
       });
 
       // Invalidate organization-related queries
-      await queryClient.invalidateQueries({ queryKey: ['organisations'] });
-      
-      // Invalidate and refetch user profile to get updated user_domain
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
-      await user.invalidateQuery?.();
+      await queryClient.invalidateQueries({ queryKey: ['organisations', 'profile'] });
 
       toast.success('Organization registered successfully!');
       router.replace('/dashboard/overview');
@@ -127,15 +114,13 @@ export function OrganizationOnboardingForm() {
                     <FormControl>
                       <Input placeholder='Elimika Training Institute' {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Official name of your organization
-                    </FormDescription>
+                    <FormDescription>Official name of your organization</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name='code'
                 render={({ field }) => (
@@ -150,7 +135,7 @@ export function OrganizationOnboardingForm() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
 
               <FormField
                 control={form.control}
@@ -161,9 +146,7 @@ export function OrganizationOnboardingForm() {
                     <FormControl>
                       <Input placeholder='REG-123456' {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Official license or registration number
-                    </FormDescription>
+                    <FormDescription>Official license or registration number</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -176,7 +159,14 @@ export function OrganizationOnboardingForm() {
                   <FormItem>
                     <FormLabel>Location (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder='123 Main Street, Downtown' {...field} />
+                      <LocationInput {...field} onRetrieve={(d) => {
+                        form.setValue("latitude", d.properties.coordinates.latitude);
+                        form.setValue("longitude", d.properties.coordinates.longitude);
+                        if (d.properties.context.country) {
+                          form.setValue("country", d.properties.context.country.name);
+                        }
+                        return d;
+                      }} />
                     </FormControl>
                     <FormDescription>
                       Physical location or address of your organization
@@ -195,9 +185,7 @@ export function OrganizationOnboardingForm() {
                     <FormControl>
                       <Input placeholder='Kenya' {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Country where your organization is located
-                    </FormDescription>
+                    <FormDescription>Country where your organization is located</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -210,7 +198,7 @@ export function OrganizationOnboardingForm() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder='Describe your organization, its mission, and the types of courses you offer...'
                         className='resize-none'
                         rows={4}
@@ -218,7 +206,8 @@ export function OrganizationOnboardingForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Provide additional context about your organization&apos;s purpose and activities
+                      Provide additional context about your organization&apos;s purpose and
+                      activities
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -230,8 +219,8 @@ export function OrganizationOnboardingForm() {
           <div className='rounded-lg bg-yellow-50 p-4'>
             <h3 className='font-medium text-yellow-900'>Next Steps</h3>
             <p className='mt-1 text-sm text-yellow-700'>
-              After registration, you&apos;ll be able to create training branches, invite instructors and students,
-              and start offering courses through your organization.
+              After registration, you&apos;ll be able to create training branches, invite
+              instructors and students, and start offering courses through your organization.
             </p>
           </div>
 

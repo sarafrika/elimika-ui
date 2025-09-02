@@ -13,11 +13,11 @@ export function useUserQuery() {
         return null;
       }
 
-      const resp = await search({ 
-        query: { 
-          searchParams: { email_eq: session.user.email }, 
-          pageable: { page: 0, size: 100 } 
-        } 
+      const resp = await search({
+        query: {
+          searchParams: { email_eq: session.user.email },
+          pageable: { page: 0, size: 100 },
+        },
       });
 
       if (resp.error) {
@@ -35,7 +35,7 @@ export function useUserQuery() {
 
 export function useUserDomains() {
   const userQuery = useUserQuery();
-  
+
   const userDomains = userQuery.data?.user_domain || [];
   const activeDomain = userDomains[0] || null;
 

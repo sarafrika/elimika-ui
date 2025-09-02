@@ -14,44 +14,44 @@ import {
   SearchResponse,
   searchStudents,
   Student,
-  User
+  User,
 } from '@/services/client';
 import { queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { ELIMIKA_DASHBOARD_STORAGE_KEY } from '../lib/utils';
 
-type DomainTypes = UserDomain
+type DomainTypes = UserDomain;
 
 type ExtendedInstructor = Instructor & {
   educations: InstructorEducation[];
   experience: InstructorExperience[];
   membership: InstructorProfessionalMembership[];
   skills: InstructorSkill[];
-}
+};
 
-const UserProfileContext = createContext<Partial<UserProfileType> & {
-  isLoading: boolean,
-  invalidateQuery: () => void,
-  clearProfile: () => void,
-  setActiveDomain: (domain: UserDomain) => void,
-  activeDomain: UserDomain | null,
-  hasMultipleDomains: boolean
-} | null>(null);
+const UserProfileContext = createContext<
+  | (Partial<UserProfileType> & {
+      isLoading: boolean;
+      invalidateQuery: () => void;
+      clearProfile: () => void;
+      setActiveDomain: (domain: UserDomain) => void;
+      activeDomain: UserDomain | null;
+      hasMultipleDomains: boolean;
+    })
+  | null
+>(null);
 
 export const useUserProfile = () => useContext(UserProfileContext);
 
-export default function UserProfileProvider({
-  children
-}: {
-  children: ReactNode;
-}) {
-
+export default function UserProfileProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const qc = useQueryClient();
-  const { data, isLoading, isError, refetch } = useQuery(createQueryOptions(session?.user?.email, {
-    enabled: !!session?.user?.email
-  }));
+  const { data, isLoading, isError, refetch } = useQuery(
+    createQueryOptions(session?.user?.email, {
+      enabled: !!session?.user?.email,
+    })
+  );
 
   const [activeDomain, setActiveDomain] = useState<UserDomain | null>(null);
 
@@ -67,7 +67,7 @@ export default function UserProfileProvider({
   }, [data, isError]); */
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (status === 'unauthenticated') {
       clearProfile();
       setActiveDomain(null);
       if (typeof window !== 'undefined') {
@@ -77,33 +77,36 @@ export default function UserProfileProvider({
   }, [status]);
 
   useEffect(() => {
-    setActiveDomain(localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY) as UserDomain | null)
-  }, [])
+    setActiveDomain(localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY) as UserDomain | null);
+  }, []);
 
   function clearProfile() {
-    void qc.invalidateQueries({ queryKey: ["profile"] });
+    void qc.invalidateQueries({ queryKey: ['profile'] });
   }
 
-  return <UserProfileContext.Provider value={
-    {
-      ...(data ?? {}),
-      isLoading,
-      invalidateQuery: async () => {
-        await qc.invalidateQueries({ queryKey: ["profile"] });
-        await refetch();
-      },
-      clearProfile,
-      setActiveDomain: (domain: UserDomain) => {
-        setActiveDomain(domain);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(ELIMIKA_DASHBOARD_STORAGE_KEY, domain);
-        }
-      },
-      activeDomain,
-      hasMultipleDomains: (data?.user_domain?.length || 0) > 1
-    }}>
-    {children}
-  </UserProfileContext.Provider>
+  return (
+    <UserProfileContext.Provider
+      value={{
+        ...(data ?? {}),
+        isLoading,
+        invalidateQuery: async () => {
+          await qc.invalidateQueries({ queryKey: ['profile'] });
+          await refetch();
+        },
+        clearProfile,
+        setActiveDomain: (domain: UserDomain) => {
+          setActiveDomain(domain);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(ELIMIKA_DASHBOARD_STORAGE_KEY, domain);
+          }
+        },
+        activeDomain,
+        hasMultipleDomains: (data?.user_domain?.length || 0) > 1,
+      }}
+    >
+      {children}
+    </UserProfileContext.Provider>
+  );
 }
 
 async function fetchUserProfile(email: string): Promise<UserProfileType> {
@@ -111,14 +114,14 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
   const userResponse = await search({
     query: {
       searchParams: {
-        email_eq: email
+        email_eq: email,
       },
       pageable: {
         page: 0,
         size: 1,
-        sort: []
-      }
-    }
+        sort: [],
+      },
+    },
   });
 
   const userData = userResponse.data as SearchResponse;
@@ -127,22 +130,23 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
   }
 
   const userContent = userData.data.content[0];
-  const user = { ...userContent, dob: new Date(userContent?.dob ?? Date.now()) } as User & UserProfileType;
+  const user = { ...userContent, dob: new Date(userContent?.dob ?? Date.now()) } as User &
+    UserProfileType;
 
   if (user.user_domain && user.user_domain.length > 0) {
     // Add student data if user is a student
-    if (user.user_domain.includes("student")) {
+    if (user.user_domain.includes('student')) {
       const searchResponse = await searchStudents({
         query: {
           searchParams: {
-            user_uuid_eq: user.uuid
+            user_uuid_eq: user.uuid,
           },
           pageable: {
             page: 0,
             size: 20,
-            sort: []
-          }
-        }
+            sort: [],
+          },
+        },
       });
 
       const respData = searchResponse.data as SearchResponse;
@@ -152,38 +156,43 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
     }
 
     // Add instructor data if user is an instructor
-    if (user.user_domain.includes("instructor")) {
+    if (user.user_domain.includes('instructor')) {
       const instructorSearchResponse = await searchInstructors({
         query: {
           searchParams: {
-            user_uuid_eq: user.uuid
+            user_uuid_eq: user.uuid,
           },
           pageable: {
             page: 0,
             size: 20,
-            sort: []
-          }
-        }
+            sort: [],
+          },
+        },
       });
 
       const responseData = instructorSearchResponse.data as SearchResponse;
-      if (!responseData.error && responseData.data?.content && responseData.data.content.length > 0) {
+      if (
+        !responseData.error &&
+        responseData.data?.content &&
+        responseData.data.content.length > 0
+      ) {
         const instructor = responseData.data.content[0] as unknown as Instructor;
         user.instructor = {
           ...instructor,
           educations: [] as InstructorEducation[],
           experience: [] as InstructorExperience[],
           membership: [] as InstructorProfessionalMembership[],
-          skills: [] as InstructorSkill[]
+          skills: [] as InstructorSkill[],
         } as ExtendedInstructor;
 
         // Add instructor education
         try {
           const instructorEducation = await getInstructorEducation({
-            path: { instructorUuid: instructor.uuid! }
+            path: { instructorUuid: instructor.uuid! },
           });
           if (!instructorEducation.error && instructorEducation.data?.data && user.instructor) {
-            user.instructor.educations = instructorEducation.data.data as unknown as InstructorEducation[];
+            user.instructor.educations = instructorEducation.data
+              .data as unknown as InstructorEducation[];
           }
         } catch (error) {
           console.warn('Failed to fetch instructor education:', error);
@@ -197,9 +206,9 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
               pageable: {
                 page: 0,
                 size: 20,
-                sort: []
-              }
-            }
+                sort: [],
+              },
+            },
           });
           const expResp = instructorExperience.data as SearchResponse;
           if (!expResp.error && expResp.data?.content && user.instructor) {
@@ -217,13 +226,14 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
               pageable: {
                 page: 0,
                 size: 20,
-                sort: []
-              }
-            }
+                sort: [],
+              },
+            },
           });
           const memResp = instructorMembership.data as SearchResponse;
           if (!memResp.error && memResp.data?.content && user.instructor) {
-            user.instructor.membership = memResp.data.content as unknown as InstructorProfessionalMembership[];
+            user.instructor.membership = memResp.data
+              .content as unknown as InstructorProfessionalMembership[];
           }
         } catch (error) {
           console.warn('Failed to fetch instructor memberships:', error);
@@ -237,9 +247,9 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
               pageable: {
                 page: 0,
                 size: 20,
-                sort: []
-              }
-            }
+                sort: [],
+              },
+            },
           });
           const skillsResp = instructorSkills.data as SearchResponse;
           if (!skillsResp.error && skillsResp.data?.content && user.instructor) {
@@ -255,10 +265,13 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
   return user;
 }
 
-function createQueryOptions(email?: string, options?: Omit<UseQueryOptions<UserProfileType>, "queryKey" | "queryFn" | "staleTime">) {
+function createQueryOptions(
+  email?: string,
+  options?: Omit<UseQueryOptions<UserProfileType>, 'queryKey' | 'queryFn' | 'staleTime'>
+) {
   return queryOptions({
     ...options,
-    queryKey: ["profile", email],
+    queryKey: ['profile', email],
     queryFn: async () => {
       if (!email) {
         throw new Error('Email is required to fetch profile');
@@ -267,6 +280,6 @@ function createQueryOptions(email?: string, options?: Omit<UseQueryOptions<UserP
     },
     staleTime: 1000 * 60 * 15,
     refetchOnWindowFocus: true,
-    refetchOnReconnect: true
-  })
+    refetchOnReconnect: true,
+  });
 }

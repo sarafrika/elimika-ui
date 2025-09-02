@@ -3,10 +3,10 @@
 import { z } from 'zod';
 
 export const zResponseDtoVoid = z.object({
-  data: z.object({}).optional(),
+  data: z.record(z.unknown()).optional(),
   status: z.number().int().optional(),
   message: z.string().optional(),
-  errors: z.object({}).optional(),
+  errors: z.record(z.string()).optional(),
   timestamp: z.string().datetime().optional(),
 });
 
@@ -18,6 +18,18 @@ export const zGenderEnum = z
   .describe(
     "**[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose."
   );
+
+export const zUserOrganisationAffiliationDto = z.object({
+  organisationUuid: z.string().uuid().optional(),
+  organisationName: z.string().optional(),
+  domainInOrganisation: z.string().optional(),
+  branchUuid: z.string().uuid().optional(),
+  branchName: z.string().optional(),
+  startDate: z.string().date().optional(),
+  endDate: z.string().date().optional(),
+  active: z.boolean().optional(),
+  affiliatedDate: z.string().datetime().optional(),
+});
 
 /**
  * Complete user profile information including personal details, authentication, and organizational data
@@ -142,6 +154,13 @@ export const zUser = z
       )
       .readonly()
       .optional(),
+    organisation_affiliations: z
+      .array(zUserOrganisationAffiliationDto)
+      .describe(
+        "**[READ-ONLY]** List of organization affiliations showing the user's specific roles within each organization they belong to. Includes organization details, branch assignments, and temporal information."
+      )
+      .readonly()
+      .optional(),
     display_name: z
       .string()
       .describe(
@@ -165,7 +184,7 @@ export const zApiResponseUser = z.object({
   success: z.boolean().optional(),
   data: zUser.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -194,11 +213,20 @@ export const zTrainingBranch = z
       .string()
       .describe('**[OPTIONAL]** Physical address of the training branch.')
       .optional(),
-    poc_user_uuid: z
+    poc_name: z
       .string()
-      .uuid()
-      .describe('**[OPTIONAL]** UUID of the user who serves as point of contact for this branch.')
-      .optional(),
+      .min(0)
+      .max(200)
+      .describe('**[REQUIRED]** Name of the point of contact for this branch.'),
+    poc_email: z
+      .string()
+      .max(320)
+      .describe('**[REQUIRED]** Email address of the point of contact for this branch.'),
+    poc_telephone: z
+      .string()
+      .max(20)
+      .regex(/^(\+254|0)?\d{8,9}$/)
+      .describe('**[REQUIRED]** Telephone number of the point of contact for this branch.'),
     active: z
       .boolean()
       .describe('**[REQUIRED]** Indicates whether the training branch is active and operational.'),
@@ -225,7 +253,7 @@ export const zApiResponseTrainingBranch = z.object({
   success: z.boolean().optional(),
   data: zTrainingBranch.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -281,8 +309,8 @@ export const zStudent = z
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.'
       )
       .optional(),
-    secondaryGuardianContact: z.string().optional(),
     primaryGuardianContact: z.string().optional(),
+    secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
     created_date: z
       .string()
@@ -332,15 +360,6 @@ export const zStatusEnum = z
 export const zWeightUnitEnum = z
   .enum(['percentage', 'points', 'ratio'])
   .describe('**[OPTIONAL]** Unit of measurement for weight calculations.');
-
-/**
- * **[OPTIONAL]** Template used for generating default scoring levels when using custom levels.
- */
-export const zMatrixTemplateEnum = z
-  .enum(['standard', 'simple', 'advanced'])
-  .describe(
-    '**[OPTIONAL]** Template used for generating default scoring levels when using custom levels.'
-  );
 
 /**
  * Assessment rubric with evaluation criteria and grading standards
@@ -397,19 +416,12 @@ export const zAssessmentRubric = z
       .describe('**[OPTIONAL]** Total weight distribution across all criteria for this rubric.')
       .optional(),
     weight_unit: zWeightUnitEnum.optional(),
-    is_weighted: z
-      .boolean()
-      .describe(
-        '**[OPTIONAL]** Indicates whether this rubric uses weighted evaluation or equal distribution.'
-      )
-      .optional(),
     uses_custom_levels: z
       .boolean()
       .describe(
         '**[OPTIONAL]** Indicates whether this rubric uses custom scoring levels or global grading levels.'
       )
       .optional(),
-    matrix_template: zMatrixTemplateEnum.optional(),
     max_score: z
       .number()
       .gte(0)
@@ -481,7 +493,7 @@ export const zApiResponseAssessmentRubric = z.object({
   success: z.boolean().optional(),
   data: zAssessmentRubric.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -593,8 +605,34 @@ export const zApiResponseRubricScoringLevel = z.object({
   success: z.boolean().optional(),
   data: zRubricScoringLevel.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
+
+/**
+ * Single cell in the rubric matrix representing criteria-scoring level intersection
+ */
+export const zRubricMatrixCell = z
+  .object({
+    criteria_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** UUID of the criteria (row) this cell belongs to.'),
+    scoring_level_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** UUID of the scoring level (column) this cell belongs to.'),
+    description: z
+      .string()
+      .min(0)
+      .max(1000)
+      .describe('**[REQUIRED]** Description of performance expectations at this intersection.'),
+    points: z
+      .number()
+      .describe('**[READ-ONLY]** Point value for this cell (derived from scoring level).')
+      .readonly()
+      .optional(),
+  })
+  .describe('Single cell in the rubric matrix representing criteria-scoring level intersection');
 
 /**
  * Individual assessment criteria within a rubric defining evaluation components
@@ -631,13 +669,6 @@ export const zRubricCriteria = z
       .describe(
         '**[REQUIRED]** Display order of the criteria within the rubric for consistent presentation.'
       ),
-    weight: z
-      .number()
-      .gte(0)
-      .lte(100)
-      .describe(
-        '**[REQUIRED]** Weight/percentage for this criteria in the overall rubric assessment.'
-      ),
     created_date: z
       .string()
       .datetime()
@@ -668,6 +699,11 @@ export const zRubricCriteria = z
       )
       .readonly()
       .optional(),
+    is_primary_criteria: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
+      .readonly()
+      .optional(),
     criteria_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment criteria.')
@@ -681,11 +717,6 @@ export const zRubricCriteria = z
     criteria_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted criteria number for display in assessment interface.')
-      .readonly()
-      .optional(),
-    is_primary_criteria: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
       .readonly()
       .optional(),
   })
@@ -735,22 +766,22 @@ export const zRubricMatrix = z
       .array(zRubricCriteria)
       .describe('**[REQUIRED]** List of criteria (rows) ordered by display_order.'),
     matrix_cells: z
-      .object({})
+      .record(zRubricMatrixCell)
       .describe(
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -760,28 +791,14 @@ export const zApiResponseRubricMatrix = z.object({
   success: z.boolean().optional(),
   data: zRubricMatrix.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
-
-/**
- * Single cell in the rubric matrix representing criteria-scoring level intersection
- */
-export const zRubricMatrixCell = z
-  .object({
-    criteria_uuid: z.string().uuid().describe('UUID of the criteria (row)').optional(),
-    scoring_level_uuid: z.string().uuid().describe('UUID of the scoring level (column)').optional(),
-    description: z.string().describe('Description of performance at this intersection').optional(),
-    points: z.number().describe('Point value for this cell (from scoring level)').optional(),
-    weighted_points: z.number().describe('Weighted points considering criteria weight').optional(),
-    is_completed: z.boolean().describe('Whether this cell is completed/has description').optional(),
-  })
-  .describe('Single cell in the rubric matrix representing criteria-scoring level intersection');
 
 export const zApiResponseRubricCriteria = z.object({
   success: z.boolean().optional(),
   data: zRubricCriteria.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -801,10 +818,12 @@ export const zRubricScoring = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Reference to the rubric criteria UUID this scoring applies to.'),
-    grading_level_uuid: z
+    rubric_scoring_level_uuid: z
       .string()
       .uuid()
-      .describe('**[REQUIRED]** Reference to the grading level UUID this scoring represents.'),
+      .describe(
+        '**[REQUIRED]** Reference to the rubric scoring level UUID this scoring represents.'
+      ),
     description: z
       .string()
       .min(0)
@@ -869,7 +888,7 @@ export const zApiResponseRubricScoring = z.object({
   success: z.boolean().optional(),
   data: zRubricScoring.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -995,7 +1014,7 @@ export const zApiResponseQuiz = z.object({
   success: z.boolean().optional(),
   data: zQuiz.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -1081,14 +1100,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
-      .readonly()
-      .optional(),
     question_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
   })
@@ -1098,7 +1117,7 @@ export const zApiResponseQuizQuestion = z.object({
   success: z.boolean().optional(),
   data: zQuizQuestion.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -1201,7 +1220,7 @@ export const zApiResponseQuizQuestionOption = z.object({
   success: z.boolean().optional(),
   data: zQuizQuestionOption.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zSchemaEnum = z.enum(['draft', 'in_review', 'published', 'archived']);
@@ -1325,14 +1344,14 @@ export const zTrainingProgram = z
       )
       .readonly()
       .optional(),
-    is_free: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the program is offered for free.')
-      .readonly()
-      .optional(),
     program_type: z
       .string()
       .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
+      .readonly()
+      .optional(),
+    is_free: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the program is offered for free.')
       .readonly()
       .optional(),
     total_duration_display: z
@@ -1347,7 +1366,7 @@ export const zApiResponseTrainingProgram = z.object({
   success: z.boolean().optional(),
   data: zTrainingProgram.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -1456,7 +1475,7 @@ export const zApiResponseProgramRequirement = z.object({
   success: z.boolean().optional(),
   data: zProgramRequirement.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -1565,7 +1584,7 @@ export const zApiResponseProgramCourse = z.object({
   success: z.boolean().optional(),
   data: zProgramCourse.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -1599,30 +1618,12 @@ export const zOrganisation = z
       .describe(
         '**[REQUIRED]** Indicates whether the organisation is active and can access the system. Inactive organisations cannot perform any operations.'
       ),
-    code: z
-      .string()
-      .describe(
-        '**[OPTIONAL]** Short code or abbreviation for the organisation. Used for quick identification and referencing.'
-      )
-      .optional(),
     licence_no: z
       .string()
       .max(100)
       .describe(
         '**[OPTIONAL]** Official licence number or registration number for the organisation. Used for regulatory compliance and verification.'
       )
-      .optional(),
-    domain: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Organisation's unique domain name, automatically generated from the name. Used for system integrations."
-      )
-      .readonly()
-      .optional(),
-    user_uuid: z
-      .string()
-      .uuid()
-      .describe('**[OPTIONAL]** Reference to the primary contact user for this organisation.')
       .optional(),
     location: z
       .string()
@@ -1633,6 +1634,21 @@ export const zOrganisation = z
       .string()
       .max(100)
       .describe('**[OPTIONAL]** Country where the organisation is located.')
+      .optional(),
+    slug: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** URL-friendly slug for the organisation's public profile. Auto-generated from the organisation name."
+      )
+      .readonly()
+      .optional(),
+    latitude: z
+      .number()
+      .describe("**[OPTIONAL]** Latitude coordinate for the organisation's location.")
+      .optional(),
+    longitude: z
+      .number()
+      .describe("**[OPTIONAL]** Longitude coordinate for the organisation's location.")
       .optional(),
     created_date: z
       .string()
@@ -1659,14 +1675,7 @@ export const zApiResponseOrganisation = z.object({
   success: z.boolean().optional(),
   data: zOrganisation.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
-});
-
-export const zApiResponseVoid = z.object({
-  success: z.boolean().optional(),
-  data: z.object({}).optional(),
-  message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -1773,13 +1782,6 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    has_location_coordinates: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
-      )
-      .readonly()
-      .optional(),
     formatted_location: z
       .string()
       .describe(
@@ -1791,6 +1793,13 @@ export const zInstructor = z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
+      )
+      .readonly()
+      .optional(),
+    has_location_coordinates: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
       )
       .readonly()
       .optional(),
@@ -1885,7 +1894,7 @@ export const zApiResponseInstructorSkill = z.object({
   success: z.boolean().optional(),
   data: zInstructorSkill.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -1999,11 +2008,6 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
-      .readonly()
-      .optional(),
     formatted_duration: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
@@ -2044,6 +2048,11 @@ export const zInstructorProfessionalMembership = z
       )
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -2053,7 +2062,7 @@ export const zApiResponseInstructorProfessionalMembership = z.object({
   success: z.boolean().optional(),
   data: zInstructorProfessionalMembership.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -2163,11 +2172,6 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
-      .readonly()
-      .optional(),
     duration_in_months: z
       .number()
       .int()
@@ -2207,6 +2211,11 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+      .readonly()
+      .optional(),
   })
   .describe(
     'Professional work experience record for instructors including positions, organizations, responsibilities, and employment duration'
@@ -2216,7 +2225,7 @@ export const zApiResponseInstructorExperience = z.object({
   success: z.boolean().optional(),
   data: zInstructorExperience.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -2309,11 +2318,6 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
-      .readonly()
-      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
@@ -2340,6 +2344,11 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .readonly()
+      .optional(),
   })
   .describe(
     'Educational qualification record for instructors including degrees, diplomas, certificates, and academic credentials'
@@ -2349,7 +2358,7 @@ export const zApiResponseInstructorEducation = z.object({
   success: z.boolean().optional(),
   data: zInstructorEducation.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -2580,7 +2589,7 @@ export const zApiResponseInstructorDocument = z.object({
   success: z.boolean().optional(),
   data: zInstructorDocument.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -2757,6 +2766,11 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
       .readonly()
       .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
     is_archived: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is archived and no longer available.')
@@ -2797,11 +2811,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
-      .readonly()
-      .optional(),
   })
   .describe(
     'Complete course with metadata, content organization, and publication status supporting multiple categories'
@@ -2811,7 +2820,7 @@ export const zApiResponseCourse = z.object({
   success: z.boolean().optional(),
   data: zCourse.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -2882,7 +2891,7 @@ export const zApiResponseCourseRubricAssociation = z.object({
   success: z.boolean().optional(),
   data: zCourseRubricAssociation.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -2951,7 +2960,7 @@ export const zApiResponseCourseRequirement = z.object({
   success: z.boolean().optional(),
   data: zCourseRequirement.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3069,7 +3078,7 @@ export const zApiResponseLesson = z.object({
   success: z.boolean().optional(),
   data: zLesson.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3190,7 +3199,7 @@ export const zApiResponseLessonContent = z.object({
   success: z.boolean().optional(),
   data: zLessonContent.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3301,7 +3310,7 @@ export const zApiResponseCourseAssessment = z.object({
   success: z.boolean().optional(),
   data: zCourseAssessment.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3382,7 +3391,7 @@ export const zApiResponseGradingLevel = z.object({
   success: z.boolean().optional(),
   data: zGradingLevel.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3466,7 +3475,7 @@ export const zApiResponseDifficultyLevel = z.object({
   success: z.boolean().optional(),
   data: zDifficultyLevel.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3557,7 +3566,7 @@ export const zApiResponseContentType = z.object({
   success: z.boolean().optional(),
   data: zContentType.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3646,7 +3655,7 @@ export const zApiResponseCategory = z.object({
   success: z.boolean().optional(),
   data: zCategory.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3789,7 +3798,7 @@ export const zApiResponseCertificate = z.object({
   success: z.boolean().optional(),
   data: zCertificate.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3888,7 +3897,7 @@ export const zApiResponseCertificateTemplate = z.object({
   success: z.boolean().optional(),
   data: zCertificateTemplate.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -3987,11 +3996,6 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
-    submission_summary: z
-      .string()
-      .describe('**[READ-ONLY]** Summary of accepted submission types for this assignment.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
@@ -4002,6 +4006,11 @@ export const zAssignment = z
       .describe('**[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.')
       .readonly()
       .optional(),
+    submission_summary: z
+      .string()
+      .describe('**[READ-ONLY]** Summary of accepted submission types for this assignment.')
+      .readonly()
+      .optional(),
   })
   .describe('Assignment with learning activities and assessment criteria');
 
@@ -4009,60 +4018,92 @@ export const zApiResponseAssignment = z.object({
   success: z.boolean().optional(),
   data: zAssignment.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseVoid = z.object({
+  success: z.boolean().optional(),
+  data: z.record(z.unknown()).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseStudent = z.object({
   success: z.boolean().optional(),
   data: zStudent.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
-export const zPageable = z.object({
-  page: z.number().int().gte(0).optional(),
-  size: z.number().int().gte(1).optional(),
-  sort: z.array(z.string()).optional(),
-});
-
-export const zPageMetadata = z.object({
-  pageNumber: z.number().int().optional(),
-  pageSize: z.number().int().optional(),
-  totalElements: z.coerce.bigint().optional(),
-  totalPages: z.number().int().optional(),
-  hasNext: z.boolean().optional(),
-  hasPrevious: z.boolean().optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
-});
-
-export const zPageLinks = z.object({
-  first: z.string().optional(),
-  previous: z.string().optional(),
-  self: z.string().optional(),
-  next: z.string().optional(),
-  last: z.string().optional(),
-});
-
-export const zPagedDtoRubricScoringLevel = z.object({
-  content: z.array(zRubricScoringLevel).optional(),
-  metadata: zPageMetadata.optional(),
-  links: zPageLinks.optional(),
-});
-
-export const zApiResponsePagedDtoRubricScoringLevel = z.object({
+export const zApiResponseListRubricScoringLevel = z.object({
   success: z.boolean().optional(),
-  data: zPagedDtoRubricScoringLevel.optional(),
+  data: z.array(zRubricScoringLevel).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseObject = z.object({
+  success: z.boolean().optional(),
+  data: z.record(z.unknown()).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseString = z.object({
   success: z.boolean().optional(),
   data: z.string().optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
+
+/**
+ * **[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.
+ */
+export const zDomainNameEnum = z
+  .enum(['student', 'instructor', 'admin', 'organisation_user'])
+  .describe(
+    '**[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.'
+  );
+
+/**
+ * Request body for creating new organization or branch invitations with recipient details and role assignment
+ */
+export const zInvitationRequest = z
+  .object({
+    recipient_email: z
+      .string()
+      .email()
+      .min(0)
+      .max(100)
+      .describe(
+        '**[REQUIRED]** Email address of the invitation recipient. Must be a valid email format and will be used to send the invitation email with accept/decline links.'
+      ),
+    recipient_name: z
+      .string()
+      .min(0)
+      .max(150)
+      .describe(
+        '**[REQUIRED]** Full name of the invitation recipient. Used in email templates, invitation records, and for display purposes throughout the invitation process.'
+      ),
+    domain_name: zDomainNameEnum,
+    inviter_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[REQUIRED]** UUID of the user who is sending this invitation. Must be an existing user with appropriate permissions to invite users to the target organization/branch.'
+      ),
+    notes: z
+      .string()
+      .min(0)
+      .max(500)
+      .describe(
+        '**[OPTIONAL]** Optional personal message or notes to include with the invitation email. Will be displayed in the invitation email template and can contain welcoming text, instructions, or context.'
+      )
+      .optional(),
+  })
+  .describe(
+    'Request body for creating new organization or branch invitations with recipient details and role assignment'
+  );
 
 /**
  * **[READ-ONLY]** Current status of the invitation in its lifecycle. Automatically managed by the system based on user actions and expiration rules.
@@ -4071,15 +4112,6 @@ export const zStatusEnum3 = z
   .enum(['PENDING', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'CANCELLED'])
   .describe(
     '**[READ-ONLY]** Current status of the invitation in its lifecycle. Automatically managed by the system based on user actions and expiration rules.'
-  );
-
-/**
- * **[READ-ONLY]** Name of the user domain/role for display purposes. Populated by the system based on the domain_uuid and indicates the role being offered.
- */
-export const zDomainNameEnum = z
-  .enum(['student', 'instructor', 'admin', 'organisation_user'])
-  .describe(
-    '**[READ-ONLY]** Name of the user domain/role for display purposes. Populated by the system based on the domain_uuid and indicates the role being offered.'
   );
 
 /**
@@ -4248,28 +4280,35 @@ export const zApiResponseInvitation = z.object({
   success: z.boolean().optional(),
   data: zInvitation.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseListInvitation = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zInvitation).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseInteger = z.object({
   success: z.boolean().optional(),
   data: z.number().int().optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseInstructor = z.object({
   success: z.boolean().optional(),
   data: zInstructor.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponse = z.object({
   success: z.boolean().optional(),
-  data: z.object({}).optional(),
+  data: z.record(z.unknown()).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -4380,14 +4419,19 @@ export const zAssignmentSubmission = z
       )
       .readonly()
       .optional(),
-    submission_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
+    is_graded: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
       .readonly()
       .optional(),
     grade_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
+    submission_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
       .readonly()
       .optional(),
     submission_status_display: z
@@ -4402,11 +4446,6 @@ export const zAssignmentSubmission = z
       .describe('**[READ-ONLY]** Summary of files attached to this submission.')
       .readonly()
       .optional(),
-    is_graded: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
-      .readonly()
-      .optional(),
   })
   .describe('Student submission for an assignment with grading and feedback information');
 
@@ -4414,7 +4453,32 @@ export const zApiResponseAssignmentSubmission = z.object({
   success: z.boolean().optional(),
   data: zAssignmentSubmission.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPageable = z.object({
+  page: z.number().int().gte(0).optional(),
+  size: z.number().int().gte(1).optional(),
+  sort: z.array(z.string()).optional(),
+});
+
+export const zPageMetadata = z.object({
+  pageNumber: z.number().int().optional(),
+  pageSize: z.number().int().optional(),
+  totalElements: z.coerce.bigint().optional(),
+  totalPages: z.number().int().optional(),
+  hasNext: z.boolean().optional(),
+  hasPrevious: z.boolean().optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
+});
+
+export const zPageLinks = z.object({
+  first: z.string().optional(),
+  previous: z.string().optional(),
+  self: z.string().optional(),
+  next: z.string().optional(),
+  last: z.string().optional(),
 });
 
 export const zPagedDtoUser = z.object({
@@ -4427,14 +4491,7 @@ export const zApiResponsePagedDtoUser = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoUser.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
-});
-
-export const zApiResponseListInvitation = z.object({
-  success: z.boolean().optional(),
-  data: z.array(zInvitation).optional(),
-  message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoTrainingBranch = z.object({
@@ -4447,7 +4504,7 @@ export const zApiResponsePagedDtoTrainingBranch = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoTrainingBranch.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoStudent = z.object({
@@ -4460,7 +4517,7 @@ export const zApiResponsePagedDtoStudent = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoStudent.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zSortObject = z.object({
@@ -4485,7 +4542,7 @@ export const zPage = z.object({
   last: z.boolean().optional(),
   pageable: zPageableObject.optional(),
   size: z.number().int().optional(),
-  content: z.array(z.object({})).optional(),
+  content: z.array(z.record(z.unknown())).optional(),
   number: z.number().int().optional(),
   sort: zSortObject.optional(),
   numberOfElements: z.number().int().optional(),
@@ -4502,7 +4559,7 @@ export const zApiResponsePagedDtoAssessmentRubric = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoAssessmentRubric.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zMatrixValidationResult = z.object({
@@ -4519,21 +4576,34 @@ export const zApiResponseMatrixValidationResult = z.object({
   success: z.boolean().optional(),
   data: zMatrixValidationResult.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoRubricScoringLevel = z.object({
+  content: z.array(zRubricScoringLevel).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoRubricScoringLevel = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoRubricScoringLevel.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseMatrixStatistics = z.object({
   success: z.boolean().optional(),
   data: zMatrixStatistics.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseMapStringObject = z.object({
   success: z.boolean().optional(),
-  data: z.record(z.object({})).optional(),
+  data: z.record(z.record(z.unknown())).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoRubricCriteria = z.object({
@@ -4546,7 +4616,7 @@ export const zApiResponsePagedDtoRubricCriteria = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoRubricCriteria.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoRubricScoring = z.object({
@@ -4559,14 +4629,14 @@ export const zApiResponsePagedDtoRubricScoring = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoRubricScoring.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseMapStringLong = z.object({
   success: z.boolean().optional(),
-  data: z.object({}).optional(),
+  data: z.record(z.coerce.bigint()).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoQuiz = z.object({
@@ -4579,21 +4649,21 @@ export const zApiResponsePagedDtoQuiz = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoQuiz.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseBigDecimal = z.object({
   success: z.boolean().optional(),
   data: z.number().optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListQuizQuestion = z.object({
   success: z.boolean().optional(),
   data: z.array(zQuizQuestion).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoQuizQuestionOption = z.object({
@@ -4606,7 +4676,7 @@ export const zApiResponsePagedDtoQuizQuestionOption = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoQuizQuestionOption.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -4721,16 +4791,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
-    performance_summary: z
-      .string()
-      .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -4739,6 +4799,16 @@ export const zQuizAttempt = z
     attempt_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
+      .readonly()
+      .optional(),
+    performance_summary: z
+      .string()
+      .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -4754,7 +4824,7 @@ export const zApiResponsePagedDtoQuizAttempt = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoQuizAttempt.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoQuizQuestion = z.object({
@@ -4767,7 +4837,7 @@ export const zApiResponsePagedDtoQuizQuestion = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoQuizQuestion.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoTrainingProgram = z.object({
@@ -4780,7 +4850,7 @@ export const zApiResponsePagedDtoTrainingProgram = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoTrainingProgram.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoProgramRequirement = z.object({
@@ -4793,7 +4863,7 @@ export const zApiResponsePagedDtoProgramRequirement = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoProgramRequirement.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -4884,14 +4954,14 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -4923,21 +4993,21 @@ export const zApiResponsePagedDtoProgramEnrollment = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoProgramEnrollment.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListCourse = z.object({
   success: z.boolean().optional(),
   data: z.array(zCourse).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseDouble = z.object({
   success: z.boolean().optional(),
   data: z.number().optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoCertificate = z.object({
@@ -4950,7 +5020,7 @@ export const zApiResponsePagedDtoCertificate = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCertificate.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoProgramCourse = z.object({
@@ -4963,7 +5033,7 @@ export const zApiResponsePagedDtoProgramCourse = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoProgramCourse.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoOrganisation = z.object({
@@ -4976,21 +5046,70 @@ export const zApiResponsePagedDtoOrganisation = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoOrganisation.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListUser = z.object({
   success: z.boolean().optional(),
   data: z.array(zUser).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseBoolean = z.object({
   success: z.boolean().optional(),
   data: z.boolean().optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Display name of the role/domain being offered
+ */
+export const zRoleNameEnum = z
+  .enum(['Student', 'Instructor', 'Administrator', 'Organization Member'])
+  .describe('Display name of the role/domain being offered');
+
+/**
+ * Public-safe invitation details shown to users before authentication
+ */
+export const zInvitationPreview = z
+  .object({
+    recipient_name: z.string().describe('Full name of the person being invited'),
+    organisation_name: z.string().describe('Name of the organization extending the invitation'),
+    branch_name: z
+      .string()
+      .describe('Name of the specific training branch (if applicable)')
+      .optional(),
+    role_name: zRoleNameEnum,
+    role_description: z
+      .string()
+      .describe("Detailed description of the role's responsibilities and permissions"),
+    inviter_name: z.string().describe('Full name of the person who sent the invitation'),
+    expires_at: z
+      .string()
+      .datetime()
+      .describe('Date and time when the invitation expires in ISO 8601 format'),
+    notes: z
+      .string()
+      .describe('Optional personal message or notes included with the invitation')
+      .optional(),
+    is_expired: z
+      .boolean()
+      .describe('Indicates whether the invitation has expired and can no longer be accepted'),
+    requires_registration: z
+      .boolean()
+      .describe(
+        'Indicates whether the recipient needs to register an account before accepting. True for student/instructor roles, false for admin/organisation_user roles.'
+      ),
+  })
+  .describe('Public-safe invitation details shown to users before authentication');
+
+export const zApiResponseInvitationPreview = z.object({
+  success: z.boolean().optional(),
+  data: zInvitationPreview.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoInstructor = z.object({
@@ -5003,7 +5122,7 @@ export const zApiResponsePagedDtoInstructor = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoInstructor.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoInstructorSkill = z.object({
@@ -5016,7 +5135,7 @@ export const zApiResponsePagedDtoInstructorSkill = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoInstructorSkill.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoInstructorProfessionalMembership = z.object({
@@ -5029,7 +5148,7 @@ export const zApiResponsePagedDtoInstructorProfessionalMembership = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoInstructorProfessionalMembership.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoInstructorExperience = z.object({
@@ -5042,21 +5161,21 @@ export const zApiResponsePagedDtoInstructorExperience = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoInstructorExperience.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListInstructorEducation = z.object({
   success: z.boolean().optional(),
   data: z.array(zInstructorEducation).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListInstructorDocument = z.object({
   success: z.boolean().optional(),
   data: z.array(zInstructorDocument).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoInstructorEducation = z.object({
@@ -5069,7 +5188,7 @@ export const zApiResponsePagedDtoInstructorEducation = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoInstructorEducation.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoInstructorDocument = z.object({
@@ -5082,7 +5201,7 @@ export const zApiResponsePagedDtoInstructorDocument = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoInstructorDocument.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoCourse = z.object({
@@ -5095,14 +5214,14 @@ export const zApiResponsePagedDtoCourse = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCourse.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListContentStatus = z.object({
   success: z.boolean().optional(),
   data: z.array(zSchemaEnum).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoCourseRubricAssociation = z.object({
@@ -5115,7 +5234,7 @@ export const zApiResponsePagedDtoCourseRubricAssociation = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCourseRubricAssociation.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoCourseRequirement = z.object({
@@ -5128,7 +5247,7 @@ export const zApiResponsePagedDtoCourseRequirement = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCourseRequirement.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoLesson = z.object({
@@ -5141,14 +5260,14 @@ export const zApiResponsePagedDtoLesson = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoLesson.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListLessonContent = z.object({
   success: z.boolean().optional(),
   data: z.array(zLessonContent).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -5232,14 +5351,14 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -5269,7 +5388,7 @@ export const zApiResponsePagedDtoCourseEnrollment = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCourseEnrollment.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -5356,7 +5475,7 @@ export const zApiResponseListCourseCategoryMapping = z.object({
   success: z.boolean().optional(),
   data: z.array(zCourseCategoryMapping).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoCourseAssessment = z.object({
@@ -5369,7 +5488,7 @@ export const zApiResponsePagedDtoCourseAssessment = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCourseAssessment.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoLessonContent = z.object({
@@ -5382,7 +5501,7 @@ export const zApiResponsePagedDtoLessonContent = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoLessonContent.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoCourseCategoryMapping = z.object({
@@ -5395,7 +5514,7 @@ export const zApiResponsePagedDtoCourseCategoryMapping = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCourseCategoryMapping.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoGradingLevel = z.object({
@@ -5408,14 +5527,14 @@ export const zApiResponsePagedDtoGradingLevel = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoGradingLevel.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListDifficultyLevel = z.object({
   success: z.boolean().optional(),
   data: z.array(zDifficultyLevel).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoContentType = z.object({
@@ -5428,14 +5547,14 @@ export const zApiResponsePagedDtoContentType = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoContentType.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListContentType = z.object({
   success: z.boolean().optional(),
   data: z.array(zContentType).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoCategory = z.object({
@@ -5448,14 +5567,14 @@ export const zApiResponsePagedDtoCategory = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCategory.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListCategory = z.object({
   success: z.boolean().optional(),
   data: z.array(zCategory).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoCertificateTemplate = z.object({
@@ -5468,14 +5587,14 @@ export const zApiResponsePagedDtoCertificateTemplate = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCertificateTemplate.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListCertificate = z.object({
   success: z.boolean().optional(),
   data: z.array(zCertificate).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoAssignment = z.object({
@@ -5488,14 +5607,14 @@ export const zApiResponsePagedDtoAssignment = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoAssignment.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zApiResponseListAssignmentSubmission = z.object({
   success: z.boolean().optional(),
   data: z.array(zAssignmentSubmission).optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 export const zPagedDtoAssignmentSubmission = z.object({
@@ -5508,7 +5627,7 @@ export const zApiResponsePagedDtoAssignmentSubmission = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoAssignmentSubmission.optional(),
   message: z.string().optional(),
-  error: z.object({}).optional(),
+  error: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -5799,7 +5918,7 @@ export const zUpdateScoringLevelData = z.object({
 export const zUpdateScoringLevelResponse = zApiResponseRubricScoringLevel;
 
 export const zUpdateMatrixCellData = z.object({
-  body: z.record(z.object({})),
+  body: zRubricMatrixCell,
   path: z.object({
     rubricUuid: z.string().uuid().describe('UUID of the rubric'),
   }),
@@ -6154,36 +6273,6 @@ export const zUpdateTrainingBranch1Data = z.object({
  * Training branch updated successfully
  */
 export const zUpdateTrainingBranch1Response = zApiResponseTrainingBranch;
-
-export const zUpdatePointOfContactData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
-      ),
-    branchUuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the training branch to update the POC for. Must be a branch within the specified organization.'
-      ),
-    pocUserUuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the user to set as point of contact. Must be assigned to the branch or be a member of the organization.'
-      ),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Point of contact updated successfully
- */
-export const zUpdatePointOfContactResponse = zApiResponseVoid;
 
 export const zDeleteInstructorData = z.object({
   body: z.never().optional(),
@@ -6892,22 +6981,18 @@ export const zCreateRubricScoringLevelData = z.object({
  */
 export const zCreateRubricScoringLevelResponse = zApiResponseRubricScoringLevel;
 
-export const zCreateDefaultScoringLevelsData = z.object({
-  body: z.never().optional(),
+export const zCreateRubricScoringLevelsBatchData = z.object({
+  body: z.array(zRubricScoringLevel),
   path: z.object({
     rubricUuid: z.string().uuid().describe('UUID of the rubric'),
   }),
-  query: z.object({
-    template: z.string().describe('Template to use: standard, simple, or advanced'),
-    createdBy: z.string().describe('User creating the levels').optional().default('SYSTEM'),
-    pageable: zPageable,
-  }),
+  query: z.never().optional(),
 });
 
 /**
  * OK
  */
-export const zCreateDefaultScoringLevelsResponse = zApiResponsePagedDtoRubricScoringLevel;
+export const zCreateRubricScoringLevelsBatchResponse = zApiResponseListRubricScoringLevel;
 
 export const zRecalculateScoresData = z.object({
   body: z.never().optional(),
@@ -6921,46 +7006,6 @@ export const zRecalculateScoresData = z.object({
  * OK
  */
 export const zRecalculateScoresResponse = zApiResponseRubricMatrix;
-
-export const zInitializeRubricMatrixData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    rubricUuid: z.string().uuid().describe('UUID of the rubric'),
-  }),
-  query: z
-    .object({
-      template: z
-        .string()
-        .describe('Template for default scoring levels')
-        .optional()
-        .default('standard'),
-      createdBy: z.string().describe('User initializing the matrix').optional().default('SYSTEM'),
-    })
-    .optional(),
-});
-
-/**
- * OK
- */
-export const zInitializeRubricMatrixResponse = zApiResponseRubricMatrix;
-
-export const zInitializeMatrixData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    rubricUuid: z.string().uuid(),
-  }),
-  query: z
-    .object({
-      template: z.string().optional().default('standard'),
-      createdBy: z.string().optional().default('SYSTEM'),
-    })
-    .optional(),
-});
-
-/**
- * OK
- */
-export const zInitializeMatrixResponse = zApiResponseRubricMatrix;
 
 export const zGetRubricCriteriaData = z.object({
   body: z.never().optional(),
@@ -6988,7 +7033,7 @@ export const zAddRubricCriterionData = z.object({
 /**
  * OK
  */
-export const zAddRubricCriterionResponse = zApiResponseRubricCriteria;
+export const zAddRubricCriterionResponse = zApiResponseObject;
 
 export const zGetRubricScoringData = z.object({
   body: z.never().optional(),
@@ -7355,7 +7400,7 @@ export const zGetBranchInvitationsData = z.object({
 export const zGetBranchInvitationsResponse = zApiResponseListInvitation;
 
 export const zCreateBranchInvitationData = z.object({
-  body: z.never().optional(),
+  body: zInvitationRequest,
   path: z.object({
     uuid: z
       .string()
@@ -7370,35 +7415,7 @@ export const zCreateBranchInvitationData = z.object({
         'UUID of the training branch the user is being invited to join. Must be a branch within the specified organization.'
       ),
   }),
-  query: z.object({
-    recipient_email: z
-      .string()
-      .describe(
-        'Email address of the person being invited to the training branch. Must be a valid email format.'
-      ),
-    recipient_name: z
-      .string()
-      .describe(
-        'Full name of the person being invited to the training branch. Used in email templates and records.'
-      ),
-    domain_name: z
-      .string()
-      .describe(
-        "Role/domain name being offered to the recipient within the training branch. Valid values: 'student', 'instructor', 'admin', 'organisation_user'"
-      ),
-    inviter_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the user who is sending this branch invitation. Must be an existing user with appropriate permissions.'
-      ),
-    notes: z
-      .string()
-      .describe(
-        'Optional personal message or notes to include with the branch invitation email. Maximum 500 characters.'
-      )
-      .optional(),
-  }),
+  query: z.never().optional(),
 });
 
 /**
@@ -7425,7 +7442,7 @@ export const zGetOrganizationInvitationsData = z.object({
 export const zGetOrganizationInvitationsResponse = zApiResponseListInvitation;
 
 export const zCreateOrganizationInvitationData = z.object({
-  body: z.never().optional(),
+  body: zInvitationRequest,
   path: z.object({
     uuid: z
       .string()
@@ -7434,40 +7451,17 @@ export const zCreateOrganizationInvitationData = z.object({
         'UUID of the organization the user is being invited to join. Must be an existing, active organization.'
       ),
   }),
-  query: z.object({
-    recipient_email: z
-      .string()
-      .describe('Email address of the person being invited. Must be a valid email format.'),
-    recipient_name: z
-      .string()
-      .describe(
-        'Full name of the person being invited. Used in email templates and invitation records.'
-      ),
-    domain_name: z
-      .string()
-      .describe(
-        "Role/domain name being offered to the recipient. Valid values: 'student', 'instructor', 'admin', 'organisation_user'"
-      ),
-    branch_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'Optional UUID of a training branch within the organization. If provided, the invitation will be branch-specific. Must belong to the specified organization.'
-      )
-      .optional(),
-    inviter_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the user who is sending this invitation. Must be an existing user with appropriate permissions in the organization.'
-      ),
-    notes: z
-      .string()
-      .describe(
-        'Optional personal message or notes to include with the invitation email. Maximum 500 characters.'
-      )
-      .optional(),
-  }),
+  query: z
+    .object({
+      branch_uuid: z
+        .string()
+        .uuid()
+        .describe(
+          'Optional UUID of a training branch within the organization. If provided, the invitation will be branch-specific. Must belong to the specified organization.'
+        )
+        .optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -7506,6 +7500,17 @@ export const zResendInvitationData = z.object({
  */
 export const zResendInvitationResponse = zApiResponseVoid;
 
+export const zProcessPendingInvitationsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Pending invitations processed successfully (may be empty list)
+ */
+export const zProcessPendingInvitationsResponse = zApiResponseListInvitation;
+
 export const zSendExpiryRemindersData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -7536,6 +7541,36 @@ export const zMarkExpiredInvitationsData = z.object({
  * Expired invitations marked successfully
  */
 export const zMarkExpiredInvitationsResponse = zApiResponseInteger;
+
+export const zDeclineInvitation1Data = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    token: z
+      .string()
+      .describe('Invitation token from email link. Must match an active, non-expired invitation.'),
+  }),
+});
+
+/**
+ * Invitation declined successfully
+ */
+export const zDeclineInvitation1Response = zApiResponseVoid;
+
+export const zAcceptInvitation1Data = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    token: z
+      .string()
+      .describe('Invitation token from email link. Must match an active, non-expired invitation.'),
+  }),
+});
+
+/**
+ * Invitation accepted successfully, user added to organization
+ */
+export const zAcceptInvitation1Response = zApiResponseUser;
 
 export const zGetAllInstructorsData = z.object({
   body: z.never().optional(),
@@ -8297,7 +8332,7 @@ export const zGradeSubmissionData = z.object({
 export const zGradeSubmissionResponse = zApiResponseAssignmentSubmission;
 
 export const zReorderScoringLevelsData = z.object({
-  body: z.object({}),
+  body: z.record(z.number().int()),
   path: z.object({
     rubricUuid: z.string().uuid().describe('UUID of the rubric'),
   }),
@@ -8360,7 +8395,7 @@ export const zSearchData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -8391,7 +8426,7 @@ export const zSearch1Data = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -8420,7 +8455,7 @@ export const zSearchStudentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -8540,7 +8575,7 @@ export const zSearchAssessmentRubricsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}),
+    searchParams: z.record(z.string()),
     pageable: zPageable,
   }),
 });
@@ -8723,7 +8758,7 @@ export const zSearchQuizzesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -8737,7 +8772,7 @@ export const zSearchQuestionsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -8751,7 +8786,7 @@ export const zSearchAttemptsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -8834,7 +8869,7 @@ export const zSearchTrainingProgramsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -8848,7 +8883,7 @@ export const zSearchProgramRequirementsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -8903,7 +8938,7 @@ export const zSearchProgramEnrollmentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -8917,7 +8952,7 @@ export const zSearchProgramCoursesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9055,7 +9090,7 @@ export const zSearch2Data = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9099,6 +9134,21 @@ export const zGetInvitationByTokenData = z.object({
  */
 export const zGetInvitationByTokenResponse = zApiResponseInvitation;
 
+export const zPreviewInvitationData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    token: z
+      .string()
+      .describe('Invitation token from email link. Must be a valid, non-expired invitation token.'),
+  }),
+});
+
+/**
+ * Invitation preview retrieved successfully
+ */
+export const zPreviewInvitationResponse = zApiResponseInvitationPreview;
+
 export const zGetPendingInvitationsForEmailData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -9120,7 +9170,7 @@ export const zSearchSkillsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9134,7 +9184,7 @@ export const zSearchInstructorsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9148,7 +9198,7 @@ export const zSearchMembershipsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9162,7 +9212,7 @@ export const zSearchExperienceData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9176,7 +9226,7 @@ export const zSearchEducationData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9190,7 +9240,7 @@ export const zSearchDocumentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9314,7 +9364,7 @@ export const zSearchCoursesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9328,7 +9378,7 @@ export const zSearchRequirementsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9372,7 +9422,7 @@ export const zSearchLessonsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9401,7 +9451,7 @@ export const zSearchEnrollmentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9415,7 +9465,7 @@ export const zSearchLessonContentData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9444,7 +9494,7 @@ export const zSearchCategoryMappingsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9458,7 +9508,7 @@ export const zSearchAssessmentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9485,7 +9535,7 @@ export const zSearchContentTypesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9536,7 +9586,7 @@ export const zSearchCategoriesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9574,7 +9624,7 @@ export const zSearchCertificateTemplatesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9614,7 +9664,7 @@ export const zSearchCertificatesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9726,7 +9776,7 @@ export const zSearchSubmissionsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });
@@ -9740,7 +9790,7 @@ export const zSearchAssignmentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    searchParams: z.object({}).describe('Optional search parameters for filtering'),
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
     pageable: zPageable,
   }),
 });

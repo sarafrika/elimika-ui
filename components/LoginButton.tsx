@@ -16,11 +16,17 @@ export default function LoginButton() {
   }
 
   // status === "unauthenticated"
-  return <Button onClick={async (evt) => {
-    evt.currentTarget.disabled = true;
-    setIsSigningIn(true);
-    await signIn('keycloak', {
-      redirectTo: `${window.location.origin}/dashboard/overview`
-    })
-  }}>{isSigningIn ? <Spinner /> : "Sign In"}</Button>;
+  return (
+    <Button
+      onClick={async evt => {
+        evt.currentTarget.disabled = true;
+        setIsSigningIn(true);
+        await signIn('keycloak', {
+          redirectTo: `${window.location.origin}/dashboard/overview`,
+        });
+      }}
+    >
+      {isSigningIn ? <Spinner /> : 'Sign In'}
+    </Button>
+  );
 }

@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -20,14 +20,30 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { addProgramCourseMutation, createTrainingProgramMutation, getProgramCoursesQueryKey, searchCoursesOptions, searchTrainingProgramsQueryKey, updateTrainingProgramMutation } from '@/services/client/@tanstack/react-query.gen';
-import { SchemaEnum } from '@/services/client/types.gen';
+import {
+  addProgramCourseMutation,
+  addProgramRequirementMutation,
+  createTrainingProgramMutation,
+  getProgramCoursesQueryKey,
+  getProgramRequirementsQueryKey,
+  searchCoursesOptions,
+  searchTrainingProgramsQueryKey,
+  updateProgramRequirementMutation,
+  updateTrainingProgramMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { RequirementTypeEnum, SchemaEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { AddCategoryFormItem } from '@/components/add-category-formfield';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -35,7 +51,6 @@ import { useSession } from 'next-auth/react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-
 
 const programFormSchema = z.object({
   title: z.string().min(1, 'Class title is required'),
@@ -49,7 +64,7 @@ const programFormSchema = z.object({
   price: z.coerce.number().optional(),
   is_free: z.boolean(),
   program_type: z.string().min(1, 'Program type is required'),
-  initialValues: z.any()
+  initialValues: z.any(),
 });
 
 export type ProgramFormValues = z.infer<typeof programFormSchema>;
@@ -61,7 +76,12 @@ interface ProgramCreationFormProps {
   initialValues?: Partial<ProgramFormValues>;
 }
 
-function ProgramCreationForm({ onCancel, className, programId, initialValues }: ProgramCreationFormProps) {
+function ProgramCreationForm({
+  onCancel,
+  className,
+  programId,
+  initialValues,
+}: ProgramCreationFormProps) {
   const form = useForm<ProgramFormValues>({
     resolver: zodResolver(programFormSchema),
     defaultValues: {
@@ -81,14 +101,15 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
   });
 
   const { append: appendCategory, remove: removeCategory } = useFieldArray({
-    control: form.control, name: 'categories',
+    control: form.control,
+    name: 'categories',
   });
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   const instructor = useInstructor();
-  const { data: session } = useSession()
+  const { data: session } = useSession();
 
-  const createTrainingProgram = useMutation(createTrainingProgramMutation())
+  const createTrainingProgram = useMutation(createTrainingProgramMutation());
   const updateTrainingProgram = useMutation(updateTrainingProgramMutation());
 
   const onSubmit = (values: ProgramFormValues, initialValues: any) => {
@@ -117,11 +138,18 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
     };
 
     const commonOnSuccess = (data: any) => {
-      toast.success(data?.message || (isEditing ? "Training program updated successfully" : "Training program created successfully"));
+      toast.success(
+        data?.message ||
+        (isEditing
+          ? 'Training program updated successfully'
+          : 'Training program created successfully')
+      );
       onCancel();
 
       queryClient.invalidateQueries({
-        queryKey: searchTrainingProgramsQueryKey({ query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: {} }, }),
+        queryKey: searchTrainingProgramsQueryKey({
+          query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: {} },
+        }),
       });
     };
 
@@ -133,10 +161,10 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
         },
         {
           onSuccess: commonOnSuccess,
-          onError: (error) => {
+          onError: error => {
             //@ts-ignore
-            toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`)
-          }
+            toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`);
+          },
         }
       );
     } else {
@@ -144,10 +172,10 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
         { body: trainingProgramBody },
         {
           onSuccess: commonOnSuccess,
-          onError: (error) => {
+          onError: error => {
             //@ts-ignore
-            toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`)
-          }
+            toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`);
+          },
         }
       );
     }
@@ -179,10 +207,7 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <SimpleEditor
-                  value={field.value}
-                  onChange={field.onChange}
-                />
+                <SimpleEditor value={field.value} onChange={field.onChange} />
                 {/* <Textarea placeholder='Enter description' className='resize-none' {...field} /> */}
               </FormControl>
               <FormMessage />
@@ -198,10 +223,7 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
             <FormItem>
               <FormLabel>Objectives</FormLabel>
               <FormControl>
-                <SimpleEditor
-                  value={field.value}
-                  onChange={field.onChange}
-                />
+                <SimpleEditor value={field.value} onChange={field.onChange} />
                 {/* <Textarea placeholder='What will students learn?' className='resize-none' {...field} /> */}
               </FormControl>
               <FormMessage />
@@ -217,7 +239,11 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
             <FormItem>
               <FormLabel>Prerequisites</FormLabel>
               <FormControl>
-                <Textarea placeholder='What should students know before taking this program?' className='resize-none' {...field} />
+                <Textarea
+                  placeholder='What should students know before taking this program?'
+                  className='resize-none'
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -288,10 +314,8 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
         {/* Categories */}
         <FormField
           control={form.control}
-          name="categories"
-          render={({ field }) => (
-            <AddCategoryFormItem field={field} />
-          )}
+          name='categories'
+          render={({ field }) => <AddCategoryFormItem field={field} />}
         />
 
         {/* Pricing */}
@@ -353,15 +377,17 @@ function ProgramCreationForm({ onCancel, className, programId, initialValues }: 
           </Button>
 
           <Button type='submit' className='min-w-[115px]'>
-            {(createTrainingProgram.isPending || updateTrainingProgram.isPending)
-              ? <Spinner />
-              : programId ? 'Update Program' : 'Create Program'}
+            {createTrainingProgram.isPending || updateTrainingProgram.isPending ? (
+              <Spinner />
+            ) : programId ? (
+              'Update Program'
+            ) : (
+              'Create Program'
+            )}
           </Button>
-
         </div>
       </form>
     </Form>
-
   );
 }
 
@@ -376,12 +402,12 @@ function AddCourseToProgramForm({
   programUuid,
   onCancel,
   onSuccess,
-  className
+  className,
 }: {
   programUuid: string;
   onCancel: () => void;
   onSuccess?: () => void;
-  className: any
+  className: any;
 }) {
   const form = useForm({
     resolver: zodResolver(addCourseToProgramSchema),
@@ -394,22 +420,19 @@ function AddCourseToProgramForm({
   });
 
   const queryClient = useQueryClient();
-  const instructor = useInstructor()
+  const instructor = useInstructor();
 
   // GET PUBLISHED INSTRUCTOR'S COURSES
-  const { data: allCourses } = useQuery(searchCoursesOptions({
-    query: {
-      searchParams: {
-        instructor_uuid_eq: instructor?.uuid as string
+  const { data: allCourses } = useQuery(
+    searchCoursesOptions({
+      query: {
+        searchParams: { instructor_uuid_eq: instructor?.uuid as string, },
+        pageable: { page: 0, size: 100, },
       },
-      pageable: {
-        page: 0,
-        size: 100
-      }
-    }
-  }))
+    })
+  );
 
-  const addProgramCourses = useMutation(addProgramCourseMutation())
+  const addProgramCourses = useMutation(addProgramCourseMutation());
 
   const onSubmit = (values: any) => {
     // const selectedCourse = allCourses?.data?.content?.find(c => c.uuid === values.course_uuid);
@@ -427,26 +450,31 @@ function AddCourseToProgramForm({
       association_category: values.is_required ? 'Required Course' : 'Optional Course',
       requirement_status: values.is_required ? 'Mandatory Course' : 'Elective Course',
       curriculum_summary: `${values.is_required ? 'Required' : 'Optional'
-        } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`
+        } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`,
     };
 
-    addProgramCourses.mutate({ body: body, path: { programUuid: programUuid } }, {
-      onSuccess: (data) => {
-        toast.success(data?.message || "Course added to program successfully")
-        onCancel();
-        queryClient.invalidateQueries({
-          queryKey: getProgramCoursesQueryKey({ path: { programUuid } }),
-        });
-      },
-      onError: (error: any) => {
-        const message = error?.error?.toLowerCase?.() || '';
-        if (message.includes('duplicate key')) {
-          toast.error("This course has already been added, or the sequence number is already in use.");
-        } else {
-          toast.error('Failed to add course to program.');
-        }
+    addProgramCourses.mutate(
+      { body: body, path: { programUuid: programUuid } },
+      {
+        onSuccess: data => {
+          toast.success(data?.message || 'Course added to program successfully');
+          onCancel();
+          queryClient.invalidateQueries({
+            queryKey: getProgramCoursesQueryKey({ path: { programUuid } }),
+          });
+        },
+        onError: (error: any) => {
+          const message = error?.error?.toLowerCase?.() || '';
+          if (message.includes('duplicate key')) {
+            toast.error(
+              'This course has already been added, or the sequence number is already in use.'
+            );
+          } else {
+            toast.error('Failed to add course to program.');
+          }
+        },
       }
-    });
+    );
   };
 
   return (
@@ -455,32 +483,26 @@ function AddCourseToProgramForm({
         {/* Course Selection */}
         <FormField
           control={form.control}
-          name="course_uuid"
+          name='course_uuid'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Course</FormLabel>
-              <Select
-                value={field.value || ''}
-                onValueChange={(uuid) => field.onChange(uuid)}
-              >
-                <FormControl className="w-full max-w-[462px]">
-                  <SelectTrigger className="w-full truncate">
-                    <SelectValue
-                      placeholder="Select course"
-                      className="truncate"
-                    />
+              <Select value={field.value || ''} onValueChange={uuid => field.onChange(uuid)}>
+                <FormControl className='w-full max-w-[462px]'>
+                  <SelectTrigger className='w-full truncate'>
+                    <SelectValue placeholder='Select course' className='truncate' />
                   </SelectTrigger>
                 </FormControl>
 
-                <SelectContent className="w-full max-w-[462px]">
+                <SelectContent className='w-full max-w-[462px]'>
                   {allCourses?.data?.content?.map((c: any) => (
                     <SelectItem
                       key={c.uuid}
                       value={c.uuid}
-                      className="w-full truncate max-w-full"
+                      className='w-full max-w-full truncate'
                       title={c.name}
                     >
-                      <span className="block truncate">{c.name}</span>
+                      <span className='block truncate'>{c.name}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -493,26 +515,29 @@ function AddCourseToProgramForm({
         {/* Prerequisite Course */}
         <FormField
           control={form.control}
-          name="prerequisite_course_uuid"
+          name='prerequisite_course_uuid'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Prerequisite Course</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || ''}>
-                <FormControl className="w-full max-w-[462px]">
-                  <SelectTrigger className="w-full truncate">
-                    <SelectValue placeholder="Select prerequisite (optional)" className="truncate" />
+                <FormControl className='w-full max-w-[462px]'>
+                  <SelectTrigger className='w-full truncate'>
+                    <SelectValue
+                      placeholder='Select prerequisite (optional)'
+                      className='truncate'
+                    />
                   </SelectTrigger>
                 </FormControl>
 
-                <SelectContent className="w-full max-w-[462px]">
+                <SelectContent className='w-full max-w-[462px]'>
                   {allCourses?.data?.content?.map((c: any) => (
                     <SelectItem
                       key={c.uuid}
                       value={c.uuid}
-                      className="w-full truncate max-w-full"
+                      className='w-full max-w-full truncate'
                       title={c.name}
                     >
-                      <span className="block truncate">{c.name}</span>
+                      <span className='block truncate'>{c.name}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -525,12 +550,12 @@ function AddCourseToProgramForm({
         {/* Sequence Order */}
         <FormField
           control={form.control}
-          name="sequence_order"
+          name='sequence_order'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Sequence Order</FormLabel>
               <FormControl>
-                <Input type="number" min={1} {...field} />
+                <Input type='number' min={1} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -540,9 +565,9 @@ function AddCourseToProgramForm({
         {/* Required Toggle */}
         <FormField
           control={form.control}
-          name="is_required"
+          name='is_required'
           render={({ field }) => (
-            <FormItem className="flex items-center gap-2">
+            <FormItem className='flex items-center gap-2'>
               <FormControl>
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
@@ -553,20 +578,213 @@ function AddCourseToProgramForm({
         />
 
         {/* Buttons */}
-        <div className="flex justify-end gap-3 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
+        <div className='flex justify-end gap-3 pt-4'>
+          <Button type='button' variant='outline' onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" className='min-w-[180px]' disabled={addProgramCourses.isPending}>
+          <Button type='submit' className='min-w-[180px]' disabled={addProgramCourses.isPending}>
             {addProgramCourses.isPending ? <Spinner /> : 'Add Course to Program'}
           </Button>
         </div>
-
       </form>
     </Form>
   );
 }
 
+
+const programRequirementSchema = z.object({
+  program_uuid: z.string(),
+  requirement_type: z.string().optional(),
+  requirement_text: z.string().optional(),
+  requirement_category: z.string().optional(),
+  requirement_priority: z.string().optional(),
+  compliance_level: z.string().optional(),
+  requirement_summary: z.string().optional(),
+  is_mandatory: z.boolean(),
+  // is_optional: z.boolean(),
+});
+
+export type ProgramRequirementFormValues = z.infer<typeof programRequirementSchema>;
+
+function ProgramRequirementForm({
+  programUuid,
+  requirementUuid,
+  initialValues,
+  onSuccess,
+  onCancel,
+  className,
+}: {
+  programUuid: string;
+  requirementUuid?: string;
+  initialValues?: ProgramRequirementFormValues;
+  onSuccess?: () => void;
+  onCancel: () => void;
+  className?: string;
+}) {
+  const form = useForm<ProgramRequirementFormValues>({
+    resolver: zodResolver(programRequirementSchema),
+    defaultValues: {
+      program_uuid: '',
+      requirement_type: '',
+      requirement_text: '',
+      is_mandatory: true,
+      compliance_level: '',
+      requirement_category: '',
+      requirement_priority: '',
+      requirement_summary: '',
+      ...initialValues
+    },
+  });
+
+  const qc = useQueryClient();
+  const instructor = useInstructor();
+
+  const addProgramRequirement = useMutation(addProgramRequirementMutation());
+  const updateProgramRequirement = useMutation(updateProgramRequirementMutation());
+
+  const handleSubmit = async (values: ProgramRequirementFormValues) => {
+    const payload = {
+      ...values,
+      requirement_type: values.requirement_type as RequirementTypeEnum,
+      program_uuid: programUuid as string,
+      is_optional: !values.is_mandatory,
+      updated_by: instructor?.full_name,
+      requirement_text: values.requirement_text,
+      is_mandatory: values.is_mandatory,
+      requirement_category: values.requirement_category,
+      requirement_priority: values.requirement_priority,
+      compliance_level: values.compliance_level,
+      requirement_summary: values.requirement_summary,
+    };
+
+    if (requirementUuid) {
+      updateProgramRequirement.mutate(
+        { path: { programUuid, requirementUuid }, body: payload as any },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getProgramRequirementsQueryKey({
+                path: { programUuid },
+                query: { pageable: {} },
+              }),
+            });
+            toast.success(data?.message || 'Requirement updated successfully');
+            onCancel();
+          },
+          onError: () => toast.error('Failed to update requirement'),
+        }
+      );
+    } else {
+      addProgramRequirement.mutate(
+        { path: { programUuid: programUuid as string }, body: payload as any },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getProgramRequirementsQueryKey({
+                path: { programUuid: programUuid as string },
+                query: { pageable: {} },
+              }),
+            });
+
+            toast.success(data?.message || 'Requirement added successfully');
+            onCancel();
+          },
+          onError: (error) => {
+            // const message = error?.error?.toLowerCase?.() || '';
+            // if (message.includes('duplicate key')) {
+            //   toast.error('This requirement already exists or is duplicated.');
+            // } else {
+            //   toast.error('Failed to add requirement.');
+            // }
+          },
+        }
+      );
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
+        {/* Requirement Type */}
+        <FormField
+          control={form.control}
+          name='requirement_type'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Requirement Type</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ''}>
+                <FormControl className='w-full max-w-[462px]'>
+                  <SelectTrigger className='w-full truncate'>
+                    <SelectValue placeholder='Select requirement type' className='truncate' />
+                  </SelectTrigger>
+                </FormControl>
+
+                <SelectContent className='w-full max-w-[462px]'>
+                  {Object.entries(RequirementTypeEnum).map(([key, value]) => (
+                    <SelectItem
+                      key={key}
+                      value={value}
+                      className='w-full max-w-full truncate'
+                      title={value}
+                    >
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Requirement Text */}
+        <FormField
+          control={form.control}
+          name='requirement_text'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Requirement Text</FormLabel>
+              <FormControl>
+                <Textarea placeholder='Describe the requirement' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Required Checkbox */}
+        <FormField
+          control={form.control}
+          name='is_mandatory'
+          render={({ field }) => (
+            <FormItem className='flex items-center gap-2'>
+              <FormControl>
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+              <FormLabel>Is this requirement mandatory?</FormLabel>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Buttons */}
+        <div className='flex justify-end gap-3 pt-4'>
+          <Button type='button' variant='outline' onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            type='submit'
+            className='min-w-[180px]'
+            disabled={addProgramRequirement.isPending || updateProgramRequirement.isPending}
+          >
+            {(addProgramRequirement.isPending || updateProgramRequirement.isPending) && <Spinner />}
+            {initialValues ? 'Update Requirement' : 'Add Requirement'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
 
 interface CreateProgramDialogProps {
   isOpen: boolean;
@@ -588,15 +806,19 @@ function CreateProgramDialog({ isOpen, onOpenChange }: CreateProgramDialogProps)
         </DialogHeader>
 
         <ScrollArea className='h-[calc(90vh-8rem)]'>
-          <ProgramCreationForm onCancel={() => onOpenChange(false)} className='px-6 pb-6'
-          />
+          <ProgramCreationForm onCancel={() => onOpenChange(false)} className='px-6 pb-6' />
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
 }
 
-function EditProgramDialog({ isOpen, onOpenChange, programId, initialValues }: CreateProgramDialogProps) {
+function EditProgramDialog({
+  isOpen,
+  onOpenChange,
+  programId,
+  initialValues,
+}: CreateProgramDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
@@ -620,22 +842,27 @@ function EditProgramDialog({ isOpen, onOpenChange, programId, initialValues }: C
   );
 }
 
-
 interface AddProgramCourseDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  programId?: string
-  onSuccess?: () => any
+  programId?: string;
+  onSuccess?: () => any;
 }
 
-function AddProgramCourseDialog({ isOpen, onOpenChange, programId, onSuccess }: AddProgramCourseDialogProps) {
+function AddProgramCourseDialog({
+  isOpen,
+  onOpenChange,
+  programId,
+  onSuccess,
+}: AddProgramCourseDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
         <DialogHeader className='border-b px-6 pt-8 pb-4'>
           <DialogTitle className='text-xl'>Add Program Course</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Select a course to add to this program. You can define its position, prerequisites, and whether it’s required.
+            Select a course to add to this program. You can define its position, prerequisites, and
+            whether it’s required.
           </DialogDescription>
         </DialogHeader>
 
@@ -652,5 +879,54 @@ function AddProgramCourseDialog({ isOpen, onOpenChange, programId, onSuccess }: 
   );
 }
 
-export { AddProgramCourseDialog, CreateProgramDialog, EditProgramDialog };
+interface ProgramRequirementDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  programId?: string;
+  requirementId?: string;
+  onSuccess?: () => void;
+  initialValues: any
+}
 
+function ProgramRequirementDialog({
+  isOpen,
+  onOpenChange,
+  programId,
+  requirementId,
+  onSuccess,
+  initialValues,
+}: ProgramRequirementDialogProps) {
+  const isEditMode = requirementId;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className='flex max-w-6xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 pt-8 pb-4'>
+          <DialogTitle className='text-xl'>
+            {isEditMode ? 'Edit Program Requirement' : 'Add Program Requirement'}
+          </DialogTitle>
+
+          <DialogDescription className='text-muted-foreground text-sm'>
+            {isEditMode
+              ? 'Update the details of this program requirement.'
+              : 'Select a course to add to this program. You can define its position, prerequisites, and whether it’s required.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className='h-auto py-6'>
+          <ProgramRequirementForm
+            initialValues={initialValues}
+            requirementUuid={requirementId as string}
+            programUuid={programId as string}
+            onCancel={() => onOpenChange(false)}
+            onSuccess={onSuccess}
+            className='px-6 pb-6'
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+export { AddProgramCourseDialog, CreateProgramDialog, EditProgramDialog, ProgramRequirementDialog };

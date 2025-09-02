@@ -20,7 +20,7 @@ export const getUserProfile = async () => {
         pageable: {
           page: 0,
           size: 1,
-        }
+        },
       },
     },
   });
