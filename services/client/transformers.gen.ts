@@ -62,12 +62,9 @@ import type {
   CreateAssessmentRubricResponse,
   GetScoringLevelsByRubricResponse,
   CreateRubricScoringLevelResponse,
-  CreateDefaultScoringLevelsResponse,
+  CreateRubricScoringLevelsBatchResponse,
   RecalculateScoresResponse,
-  InitializeRubricMatrixResponse,
-  InitializeMatrixResponse,
   GetRubricCriteriaResponse,
-  AddRubricCriterionResponse,
   GetRubricScoringResponse,
   AddRubricScoringResponse,
   GetAllQuizzesResponse,
@@ -91,6 +88,8 @@ import type {
   CreateBranchInvitationResponse,
   GetOrganizationInvitationsResponse,
   CreateOrganizationInvitationResponse,
+  ProcessPendingInvitationsResponse,
+  AcceptInvitation1Response,
   GetAllInstructorsResponse,
   CreateInstructorResponse,
   GetInstructorSkillsResponse,
@@ -184,6 +183,7 @@ import type {
   GetBranchUsersByDomainResponse,
   Search2Response,
   GetInvitationByTokenResponse,
+  PreviewInvitationResponse,
   GetPendingInvitationsForEmailResponse,
   SearchSkillsResponse,
   SearchInstructorsResponse,
@@ -226,6 +226,19 @@ import type {
   GetPendingGradingResponse,
 } from './types.gen';
 
+const userOrganisationAffiliationDtoSchemaResponseTransformer = (data: any) => {
+  if (data.startDate) {
+    data.startDate = new Date(data.startDate);
+  }
+  if (data.endDate) {
+    data.endDate = new Date(data.endDate);
+  }
+  if (data.affiliatedDate) {
+    data.affiliatedDate = new Date(data.affiliatedDate);
+  }
+  return data;
+};
+
 const userSchemaResponseTransformer = (data: any) => {
   data.dob = new Date(data.dob);
   if (data.created_date) {
@@ -233,6 +246,11 @@ const userSchemaResponseTransformer = (data: any) => {
   }
   if (data.updated_date) {
     data.updated_date = new Date(data.updated_date);
+  }
+  if (data.organisation_affiliations) {
+    data.organisation_affiliations = data.organisation_affiliations.map((item: any) => {
+      return userOrganisationAffiliationDtoSchemaResponseTransformer(item);
+    });
   }
   return data;
 };
@@ -1336,30 +1354,25 @@ export const createRubricScoringLevelResponseTransformer = async (
   return data;
 };
 
-export const createDefaultScoringLevelsResponseTransformer = async (
+const apiResponseListRubricScoringLevelSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return rubricScoringLevelSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const createRubricScoringLevelsBatchResponseTransformer = async (
   data: any
-): Promise<CreateDefaultScoringLevelsResponse> => {
-  data = apiResponsePagedDtoRubricScoringLevelSchemaResponseTransformer(data);
+): Promise<CreateRubricScoringLevelsBatchResponse> => {
+  data = apiResponseListRubricScoringLevelSchemaResponseTransformer(data);
   return data;
 };
 
 export const recalculateScoresResponseTransformer = async (
   data: any
 ): Promise<RecalculateScoresResponse> => {
-  data = apiResponseRubricMatrixSchemaResponseTransformer(data);
-  return data;
-};
-
-export const initializeRubricMatrixResponseTransformer = async (
-  data: any
-): Promise<InitializeRubricMatrixResponse> => {
-  data = apiResponseRubricMatrixSchemaResponseTransformer(data);
-  return data;
-};
-
-export const initializeMatrixResponseTransformer = async (
-  data: any
-): Promise<InitializeMatrixResponse> => {
   data = apiResponseRubricMatrixSchemaResponseTransformer(data);
   return data;
 };
@@ -1387,13 +1400,6 @@ export const getRubricCriteriaResponseTransformer = async (
   data: any
 ): Promise<GetRubricCriteriaResponse> => {
   data = apiResponsePagedDtoRubricCriteriaSchemaResponseTransformer(data);
-  return data;
-};
-
-export const addRubricCriterionResponseTransformer = async (
-  data: any
-): Promise<AddRubricCriterionResponse> => {
-  data = apiResponseRubricCriteriaSchemaResponseTransformer(data);
   return data;
 };
 
@@ -1720,6 +1726,20 @@ export const createOrganizationInvitationResponseTransformer = async (
   data: any
 ): Promise<CreateOrganizationInvitationResponse> => {
   data = apiResponseInvitationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const processPendingInvitationsResponseTransformer = async (
+  data: any
+): Promise<ProcessPendingInvitationsResponse> => {
+  data = apiResponseListInvitationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const acceptInvitation1ResponseTransformer = async (
+  data: any
+): Promise<AcceptInvitation1Response> => {
+  data = apiResponseUserSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2860,6 +2880,25 @@ export const getInvitationByTokenResponseTransformer = async (
   data: any
 ): Promise<GetInvitationByTokenResponse> => {
   data = apiResponseInvitationSchemaResponseTransformer(data);
+  return data;
+};
+
+const invitationPreviewSchemaResponseTransformer = (data: any) => {
+  data.expires_at = new Date(data.expires_at);
+  return data;
+};
+
+const apiResponseInvitationPreviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = invitationPreviewSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const previewInvitationResponseTransformer = async (
+  data: any
+): Promise<PreviewInvitationResponse> => {
+  data = apiResponseInvitationPreviewSchemaResponseTransformer(data);
   return data;
 };
 

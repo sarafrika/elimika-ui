@@ -13,28 +13,21 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { useUserProfile } from '@/context/profile-context';
+import { createOrganisation } from '@/services/client';
+import { zOrganisation } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { useUserProfile } from '@/context/profile-context';
-import { createOrganisation } from '@/services/client';
-import { zOrganisation } from '@/services/client/zod.gen';
+import LocationInput from '../../../components/locationInput';
 
 const OrganizationOnboardingSchema = zOrganisation.omit({
   uuid: true,
-  domain: true,
   created_date: true,
   updated_date: true,
 });
@@ -62,9 +55,7 @@ export function OrganizationOnboardingForm() {
       name: '',
       description: '',
       active: true,
-      code: '',
       licence_no: '',
-      user_uuid: user?.uuid || '',
       location: '',
       country: '',
     },
@@ -83,11 +74,7 @@ export function OrganizationOnboardingForm() {
       });
 
       // Invalidate organization-related queries
-      await queryClient.invalidateQueries({ queryKey: ['organisations'] });
-
-      // Invalidate and refetch user profile to get updated user_domain
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
-      await user.invalidateQuery?.();
+      await queryClient.invalidateQueries({ queryKey: ['organisations', 'profile'] });
 
       toast.success('Organization registered successfully!');
       router.replace('/dashboard/overview');
@@ -133,7 +120,7 @@ export function OrganizationOnboardingForm() {
                 )}
               />
 
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name='code'
                 render={({ field }) => (
@@ -148,7 +135,7 @@ export function OrganizationOnboardingForm() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
 
               <FormField
                 control={form.control}
@@ -172,7 +159,14 @@ export function OrganizationOnboardingForm() {
                   <FormItem>
                     <FormLabel>Location (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder='123 Main Street, Downtown' {...field} />
+                      <LocationInput {...field} onRetrieve={(d) => {
+                        form.setValue("latitude", d.properties.coordinates.latitude);
+                        form.setValue("longitude", d.properties.coordinates.longitude);
+                        if (d.properties.context.country) {
+                          form.setValue("country", d.properties.context.country.name);
+                        }
+                        return d;
+                      }} />
                     </FormControl>
                     <FormDescription>
                       Physical location or address of your organization
