@@ -1,10 +1,13 @@
 "use client"
 import { useQuery } from '@tanstack/react-query';
+import { Button } from '../../../../../components/ui/button';
+import { Card, CardContent } from '../../../../../components/ui/card';
 import { Separator } from '../../../../../components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../../components/ui/table';
 import UserBadge from '../../../../../components/user-badge';
 import { useTrainingCenter } from '../../../../../context/training-center-provide';
-import { getAllInstructors, Instructor } from '../../../../../services/client';
+import { getUsersByOrganisationAndDomain, User } from '../../../../../services/client';
+import { InviteForm } from '../../invites/_components/InviteForm';
 
 export default function InstructorsList() {
 
@@ -12,13 +15,11 @@ export default function InstructorsList() {
 
     const { data, error } = useQuery({
         queryKey: ["organization", "students"],
-        queryFn: () => getAllInstructors({
-            query: {
-                pageable: {
-                    size: 20,
-                    page: 0
-                }
-            },
+        queryFn: () => getUsersByOrganisationAndDomain({
+            path: {
+                uuid: trainingCenter!.uuid!,
+                domainName: "instructor"
+            }
         }),
         enabled: !!trainingCenter
     });
@@ -27,10 +28,10 @@ export default function InstructorsList() {
         return (<>Error loading instructors</>);
     }
 
-    let instructors: Instructor[] = [];
+    let instructors: User[] = [];
 
-    if (data && !data.error && data.data.data && data.data.data.content) {
-        instructors = data.data.data.content;
+    if (data && !data.error && data.data.data && data.data.data) {
+        instructors = data.data.data;
     }
 
     return (
@@ -40,24 +41,32 @@ export default function InstructorsList() {
                     <h1 className='text-2xl font-bold'>Manage Instructors</h1>
                     <p>A list of all the instructors under {trainingCenter!.name}.</p>
                 </div>
-                {/* <InviteForm><Button>Invite Instructor</Button></InviteForm> */}
+                <InviteForm><Button>Invite Instructor</Button></InviteForm>
             </div>
-            <Separator />
 
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Name</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {instructors.map(instructor => <TableRow key={instructor.uuid}>
-                        <TableCell>
-                            <UserBadge user_uuid={instructor.user_uuid} />
-                        </TableCell>
-                    </TableRow>)}
-                </TableBody>
-            </Table>
+            <Card>
+                <CardContent>
+                    {instructors.length > 0 ? <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {instructors.map(instructor => <TableRow key={instructor.uuid}>
+                                <TableCell>
+                                    <UserBadge user_uuid={instructor.uuid!} />
+                                </TableCell>
+                            </TableRow>)}
+                        </TableBody>
+                    </Table> : <div className='p-4 flex flex-col gap-5 items-center'>
+                        <h3 className='text-3xl'>No Instructor added</h3>
+                        <InviteForm>
+                            <Button>Invite Instructor</Button>
+                        </InviteForm>
+                    </div>}
+                </CardContent>
+            </Card>
         </div>
     );
 }

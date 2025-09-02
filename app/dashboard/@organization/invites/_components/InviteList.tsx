@@ -5,6 +5,7 @@ import { BlocksIcon, Check, SendIcon } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "../../../../../components/ui/button";
+import { Card, CardContent } from "../../../../../components/ui/card";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "../../../../../components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../../../components/ui/table";
 import VirticleDotsIcons from "../../../../../components/virticle-dots-icon";
@@ -92,48 +93,54 @@ export default function InviteList({
     ])
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Recipient Name</TableHead>
-                    <TableHead>Recipient Email</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead></TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {invitations.map(invite => <TableRow key={invite.uuid}>
-                    <TableCell>{invite.recipient_name}</TableCell>
-                    <TableCell>{invite.recipient_email}</TableCell>
-                    <TableCell>{invite.status}</TableCell>
-                    <TableCell>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost"><VirticleDotsIcons /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56">
-                                {invite.inviter_uuid === user!.uuid && <>
-                                    <DropdownMenuCheckboxItem onClick={() => cancelInvite(invite.uuid!)}>
-                                        <BlocksIcon /> <span>Cancel</span>
-                                    </DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem onClick={() => resend(invite.uuid!)}>
-                                        <SendIcon /> <span>Resend</span>
-                                    </DropdownMenuCheckboxItem>
-                                </>}
+        <Card>
+            <CardContent>
+                {invitations.length > 0 ? <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Recipient Name</TableHead>
+                            <TableHead>Recipient Email</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {invitations.map(invite => <TableRow key={invite.uuid}>
+                            <TableCell>{invite.recipient_name}</TableCell>
+                            <TableCell>{invite.recipient_email}</TableCell>
+                            <TableCell>{invite.status}</TableCell>
+                            <TableCell>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost"><VirticleDotsIcons /></Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-56">
+                                        {invite.inviter_uuid === user!.uuid && <>
+                                            <DropdownMenuCheckboxItem onClick={() => cancelInvite(invite.uuid!)}>
+                                                <BlocksIcon /> <span>Cancel</span>
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem onClick={() => resend(invite.uuid!)}>
+                                                <SendIcon /> <span>Resend</span>
+                                            </DropdownMenuCheckboxItem>
+                                        </>}
 
-                                {invite.inviter_uuid !== user!.uuid && <>
-                                    <DropdownMenuItem onClick={() => acceptInvitation(invite.uuid!, invite.token!)}>
-                                        <Button variant={"ghost"}><Check /> <span>Accept</span></Button>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => declineInvitation(invite.uuid!, invite.token!)}>
-                                        <Button variant={"ghost"}><BlocksIcon /> <span>Decline</span></Button>
-                                    </DropdownMenuItem>
-                                </>}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </TableCell>
-                </TableRow>)}
-            </TableBody>
-        </Table>
+                                        {invite.inviter_uuid !== user!.uuid && <>
+                                            <DropdownMenuItem onClick={() => acceptInvitation(invite.uuid!, invite.token!)}>
+                                                <Button variant={"ghost"}><Check /> <span>Accept</span></Button>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => declineInvitation(invite.uuid!, invite.token!)}>
+                                                <Button variant={"ghost"}><BlocksIcon /> <span>Decline</span></Button>
+                                            </DropdownMenuItem>
+                                        </>}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                        </TableRow>)}
+                    </TableBody>
+                </Table> : <div className="flex flex-col items-center">
+                    <h3 className="text-2xl">No Invites</h3>
+                </div>}
+            </CardContent>
+        </Card>
     )
 }
