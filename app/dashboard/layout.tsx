@@ -6,7 +6,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { DashboardChildrenTypes, UserDomain } from '@/lib/types';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { ReactNode, useEffect } from 'react';
 import CustomLoader from '../../components/custom-loader';
 import { DomainSelection } from '../../components/domain-selection';
@@ -42,6 +42,10 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   const userDomains = (profile.user_domain as DashboardView[]) || [];
   const organizationDomains = userDomains as OrgDomainType[];
   const activeDomain = profile.activeDomain;
+
+  if (activeDomain === "organisation_user" && (!profile.organisation_affiliations || profile.organisation_affiliations.length === 0)) {
+    redirect("/onboarding/organisation")
+  }
 
   if (!activeDomain) {
     return (

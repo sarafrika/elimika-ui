@@ -7,9 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Pencil, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../../../../components/ui/dropdown-menu';
-import UserBadge from '../../../../components/user-badge';
 import VirticleDotsIcons from '../../../../components/virticle-dots-icon';
 import { getTrainingBranchesByOrganisation } from '../../../../services/client';
 
@@ -21,7 +21,7 @@ export default function BranchesPage() {
   const [pageable, setPageable] = useState<{ page: number, size: number }>({ page: 0, size: 10 })
 
   const { data, isLoading } = useQuery({
-    queryKey: ["branches", trainingCenter!.uuid],
+    queryKey: ["branches", ...(trainingCenter ? [trainingCenter.uuid] : [])],
     queryFn: async () => getTrainingBranchesByOrganisation({
       path: {
         uuid: trainingCenter?.uuid!
@@ -73,7 +73,13 @@ export default function BranchesPage() {
                 <TableCell>
                   <Link href={`/dashboard/branches/${branch.uuid}`}>{branch.branch_name}</Link>
                 </TableCell>
-                <TableCell><UserBadge user_uuid={branch.poc_user_uuid!} /></TableCell>
+                <TableCell>
+                  {branch.poc_name}
+                  <div className="flex gap-3">
+                    {branch.poc_email && <Badge variant={"outline"}>{branch.poc_email}</Badge>}
+                    {branch.poc_telephone && <Badge variant={"outline"}>{branch.poc_telephone}</Badge>}
+                  </div>
+                </TableCell>
                 {/* Organization admin / owner can edit delete a branch */}
                 <TableCell>
                   <DropdownMenu>

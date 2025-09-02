@@ -1,4 +1,4 @@
-import { Table, TableHead, TableHeader, TableRow } from "../../../../../../components/ui/table";
+import { Table, TableHead, TableHeader, TableRow } from "../../../../../components/ui/table";
 
 export default function AgeGroups() {
     return (

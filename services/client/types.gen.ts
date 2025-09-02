@@ -82,6 +82,10 @@ export type User = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** List of organization affiliations showing the user's specific roles within each organization they belong to. Includes organization details, branch assignments, and temporal information.
+   */
+  readonly organisation_affiliations?: Array<UserOrganisationAffiliationDto>;
+  /**
    * **[READ-ONLY]** User's display name for UI purposes, consisting of first name and last name only (excludes middle name). Automatically computed from name components.
    */
   readonly display_name?: string;
@@ -89,6 +93,18 @@ export type User = {
    * **[READ-ONLY]** User's complete full name including first, middle (if present), and last names concatenated together. Automatically computed from individual name components.
    */
   readonly full_name?: string;
+};
+
+export type UserOrganisationAffiliationDto = {
+  organisationUuid?: string;
+  organisationName?: string;
+  domainInOrganisation?: string;
+  branchUuid?: string;
+  branchName?: string;
+  startDate?: Date;
+  endDate?: Date;
+  active?: boolean;
+  affiliatedDate?: Date;
 };
 
 export type ApiResponseUser = {
@@ -121,9 +137,17 @@ export type TrainingBranch = {
    */
   address?: string;
   /**
-   * **[OPTIONAL]** UUID of the user who serves as point of contact for this branch.
+   * **[REQUIRED]** Name of the point of contact for this branch.
    */
-  poc_user_uuid?: string;
+  poc_name: string;
+  /**
+   * **[REQUIRED]** Email address of the point of contact for this branch.
+   */
+  poc_email: string;
+  /**
+   * **[REQUIRED]** Telephone number of the point of contact for this branch.
+   */
+  poc_telephone: string;
   /**
    * **[REQUIRED]** Indicates whether the training branch is active and operational.
    */
@@ -175,8 +199,8 @@ export type Student = {
    * **[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.
    */
   second_guardian_mobile?: string;
-  secondaryGuardianContact?: string;
   primaryGuardianContact?: string;
+  secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
@@ -235,14 +259,9 @@ export type AssessmentRubric = {
   total_weight?: number;
   weight_unit?: WeightUnitEnum;
   /**
-   * **[OPTIONAL]** Indicates whether this rubric uses weighted evaluation or equal distribution.
-   */
-  is_weighted?: boolean;
-  /**
    * **[OPTIONAL]** Indicates whether this rubric uses custom scoring levels or global grading levels.
    */
   uses_custom_levels?: boolean;
-  matrix_template?: MatrixTemplateEnum;
   /**
    * **[OPTIONAL]** Maximum possible score for this rubric based on weighted criteria and highest scoring levels.
    */
@@ -373,6 +392,28 @@ export type ApiResponseRubricScoringLevel = {
   };
 };
 
+/**
+ * Single cell in the rubric matrix representing criteria-scoring level intersection
+ */
+export type RubricMatrixCell = {
+  /**
+   * **[REQUIRED]** UUID of the criteria (row) this cell belongs to.
+   */
+  criteria_uuid: string;
+  /**
+   * **[REQUIRED]** UUID of the scoring level (column) this cell belongs to.
+   */
+  scoring_level_uuid: string;
+  /**
+   * **[REQUIRED]** Description of performance expectations at this intersection.
+   */
+  description: string;
+  /**
+   * **[READ-ONLY]** Point value for this cell (derived from scoring level).
+   */
+  readonly points?: number;
+};
+
 export type ApiResponseRubricMatrix = {
   success?: boolean;
   data?: RubricMatrix;
@@ -441,10 +482,6 @@ export type RubricCriteria = {
    */
   display_order: number;
   /**
-   * **[REQUIRED]** Weight/percentage for this criteria in the overall rubric assessment.
-   */
-  weight: number;
-  /**
    * **[READ-ONLY]** Timestamp when the criteria was created. Automatically set by the system.
    */
   readonly created_date?: Date;
@@ -461,6 +498,10 @@ export type RubricCriteria = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if this is a primary assessment criteria.
+   */
+  readonly is_primary_criteria?: boolean;
+  /**
    * **[READ-ONLY]** Category classification of the assessment criteria.
    */
   readonly criteria_category?: string;
@@ -472,10 +513,6 @@ export type RubricCriteria = {
    * **[READ-ONLY]** Formatted criteria number for display in assessment interface.
    */
   readonly criteria_number?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a primary assessment criteria.
-   */
-  readonly is_primary_criteria?: boolean;
 };
 
 /**
@@ -505,43 +542,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
-};
-
-/**
- * Single cell in the rubric matrix representing criteria-scoring level intersection
- */
-export type RubricMatrixCell = {
   /**
-   * UUID of the criteria (row)
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
-  criteria_uuid?: string;
-  /**
-   * UUID of the scoring level (column)
-   */
-  scoring_level_uuid?: string;
-  /**
-   * Description of performance at this intersection
-   */
-  description?: string;
-  /**
-   * Point value for this cell (from scoring level)
-   */
-  points?: number;
-  /**
-   * Weighted points considering criteria weight
-   */
-  weighted_points?: number;
-  /**
-   * Whether this cell is completed/has description
-   */
-  is_completed?: boolean;
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -566,9 +573,9 @@ export type RubricScoring = {
    */
   criteria_uuid: string;
   /**
-   * **[REQUIRED]** Reference to the grading level UUID this scoring represents.
+   * **[REQUIRED]** Reference to the rubric scoring level UUID this scoring represents.
    */
-  grading_level_uuid: string;
+  rubric_scoring_level_uuid: string;
   /**
    * **[REQUIRED]** Detailed description of performance expectations at this grading level.
    */
@@ -754,13 +761,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -917,13 +924,13 @@ export type TrainingProgram = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the program is offered for free.
-   */
-  readonly is_free?: boolean;
-  /**
    * **[READ-ONLY]** Classification of program type based on duration and content.
    */
   readonly program_type?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the program is offered for free.
+   */
+  readonly is_free?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total program duration.
    */
@@ -1103,21 +1110,9 @@ export type Organisation = {
    */
   active: boolean;
   /**
-   * **[OPTIONAL]** Short code or abbreviation for the organisation. Used for quick identification and referencing.
-   */
-  code?: string;
-  /**
    * **[OPTIONAL]** Official licence number or registration number for the organisation. Used for regulatory compliance and verification.
    */
   licence_no?: string;
-  /**
-   * **[READ-ONLY]** Organisation's unique domain name, automatically generated from the name. Used for system integrations.
-   */
-  readonly domain?: string;
-  /**
-   * **[OPTIONAL]** Reference to the primary contact user for this organisation.
-   */
-  user_uuid?: string;
   /**
    * **[OPTIONAL]** Physical location or address of the organisation.
    */
@@ -1126,6 +1121,18 @@ export type Organisation = {
    * **[OPTIONAL]** Country where the organisation is located.
    */
   country?: string;
+  /**
+   * **[READ-ONLY]** URL-friendly slug for the organisation's public profile. Auto-generated from the organisation name.
+   */
+  readonly slug?: string;
+  /**
+   * **[OPTIONAL]** Latitude coordinate for the organisation's location.
+   */
+  latitude?: number;
+  /**
+   * **[OPTIONAL]** Longitude coordinate for the organisation's location.
+   */
+  longitude?: number;
   /**
    * **[READ-ONLY]** Timestamp when the organisation was first created. Automatically set by the system and cannot be modified.
    */
@@ -1139,17 +1146,6 @@ export type Organisation = {
 export type ApiResponseOrganisation = {
   success?: boolean;
   data?: Organisation;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
-};
-
-export type ApiResponseVoid = {
-  success?: boolean;
-  data?: {
-    [key: string]: unknown;
-  };
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -1213,10 +1209,6 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
-   */
-  readonly has_location_coordinates?: boolean;
-  /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
@@ -1224,6 +1216,10 @@ export type Instructor = {
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
   readonly is_profile_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   */
+  readonly has_location_coordinates?: boolean;
 };
 
 /**
@@ -1339,10 +1335,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
@@ -1372,6 +1364,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1444,10 +1440,6 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
@@ -1476,6 +1468,10 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1536,10 +1532,6 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1556,6 +1548,10 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -1806,6 +1802,10 @@ export type Course = {
    */
   readonly is_published?: boolean;
   /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if the course is archived and no longer available.
    */
   readonly is_archived?: boolean;
@@ -1833,10 +1833,6 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
 };
 
 export type ApiResponseCourse = {
@@ -2649,10 +2645,6 @@ export type Assignment = {
    */
   readonly assignment_category?: string;
   /**
-   * **[READ-ONLY]** Summary of accepted submission types for this assignment.
-   */
-  readonly submission_summary?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
    */
   readonly points_display?: string;
@@ -2660,11 +2652,26 @@ export type Assignment = {
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
   readonly assignment_scope?: string;
+  /**
+   * **[READ-ONLY]** Summary of accepted submission types for this assignment.
+   */
+  readonly submission_summary?: string;
 };
 
 export type ApiResponseAssignment = {
   success?: boolean;
   data?: Assignment;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type ApiResponseVoid = {
+  success?: boolean;
+  data?: {
+    [key: string]: unknown;
+  };
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -2680,44 +2687,24 @@ export type ApiResponseStudent = {
   };
 };
 
-export type Pageable = {
-  page?: number;
-  size?: number;
-  sort?: Array<string>;
-};
-
-export type ApiResponsePagedDtoRubricScoringLevel = {
+export type ApiResponseListRubricScoringLevel = {
   success?: boolean;
-  data?: PagedDtoRubricScoringLevel;
+  data?: Array<RubricScoringLevel>;
   message?: string;
   error?: {
     [key: string]: unknown;
   };
 };
 
-export type PageLinks = {
-  first?: string;
-  previous?: string;
-  self?: string;
-  next?: string;
-  last?: string;
-};
-
-export type PageMetadata = {
-  pageNumber?: number;
-  pageSize?: number;
-  totalElements?: bigint;
-  totalPages?: number;
-  hasNext?: boolean;
-  hasPrevious?: boolean;
-  first?: boolean;
-  last?: boolean;
-};
-
-export type PagedDtoRubricScoringLevel = {
-  content?: Array<RubricScoringLevel>;
-  metadata?: PageMetadata;
-  links?: PageLinks;
+export type ApiResponseObject = {
+  success?: boolean;
+  data?: {
+    [key: string]: unknown;
+  };
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
 };
 
 export type ApiResponseString = {
@@ -2727,6 +2714,29 @@ export type ApiResponseString = {
   error?: {
     [key: string]: unknown;
   };
+};
+
+/**
+ * Request body for creating new organization or branch invitations with recipient details and role assignment
+ */
+export type InvitationRequest = {
+  /**
+   * **[REQUIRED]** Email address of the invitation recipient. Must be a valid email format and will be used to send the invitation email with accept/decline links.
+   */
+  recipient_email: string;
+  /**
+   * **[REQUIRED]** Full name of the invitation recipient. Used in email templates, invitation records, and for display purposes throughout the invitation process.
+   */
+  recipient_name: string;
+  domain_name: DomainNameEnum;
+  /**
+   * **[REQUIRED]** UUID of the user who is sending this invitation. Must be an existing user with appropriate permissions to invite users to the target organization/branch.
+   */
+  inviter_uuid: string;
+  /**
+   * **[OPTIONAL]** Optional personal message or notes to include with the invitation email. Will be displayed in the invitation email template and can contain welcoming text, instructions, or context.
+   */
+  notes?: string;
 };
 
 export type ApiResponseInvitation = {
@@ -2824,6 +2834,15 @@ export type Invitation = {
    * **[READ-ONLY]** Email or identifier of who last modified the invitation. Used for audit trail purposes and automatically updated by the system on changes.
    */
   readonly updated_by?: string;
+};
+
+export type ApiResponseListInvitation = {
+  success?: boolean;
+  data?: Array<Invitation>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
 };
 
 export type ApiResponseInteger = {
@@ -2934,13 +2953,17 @@ export type AssignmentSubmission = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the submission based on its content type.
+   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
    */
-  readonly submission_category?: string;
+  readonly is_graded?: boolean;
   /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
   readonly grade_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the submission based on its content type.
+   */
+  readonly submission_category?: string;
   /**
    * **[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.
    */
@@ -2949,10 +2972,12 @@ export type AssignmentSubmission = {
    * **[READ-ONLY]** Summary of files attached to this submission.
    */
   readonly file_count_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
-   */
-  readonly is_graded?: boolean;
+};
+
+export type Pageable = {
+  page?: number;
+  size?: number;
+  sort?: Array<string>;
 };
 
 export type ApiResponsePagedDtoUser = {
@@ -2964,19 +2989,29 @@ export type ApiResponsePagedDtoUser = {
   };
 };
 
+export type PageLinks = {
+  first?: string;
+  previous?: string;
+  self?: string;
+  next?: string;
+  last?: string;
+};
+
+export type PageMetadata = {
+  pageNumber?: number;
+  pageSize?: number;
+  totalElements?: bigint;
+  totalPages?: number;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
+  first?: boolean;
+  last?: boolean;
+};
+
 export type PagedDtoUser = {
   content?: Array<User>;
   metadata?: PageMetadata;
   links?: PageLinks;
-};
-
-export type ApiResponseListInvitation = {
-  success?: boolean;
-  data?: Array<Invitation>;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
 };
 
 export type ApiResponsePagedDtoTrainingBranch = {
@@ -3072,6 +3107,21 @@ export type MatrixValidationResult = {
   completionPercentage?: number;
   weightsValid?: boolean;
   scoresCalculated?: boolean;
+};
+
+export type ApiResponsePagedDtoRubricScoringLevel = {
+  success?: boolean;
+  data?: PagedDtoRubricScoringLevel;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoRubricScoringLevel = {
+  content?: Array<RubricScoringLevel>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
 };
 
 export type ApiResponseMatrixStatistics = {
@@ -3270,14 +3320,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
-   */
-  readonly performance_summary?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -3285,6 +3327,14 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
+   */
+  readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -3401,13 +3451,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -3497,6 +3547,58 @@ export type ApiResponseBoolean = {
   error?: {
     [key: string]: unknown;
   };
+};
+
+export type ApiResponseInvitationPreview = {
+  success?: boolean;
+  data?: InvitationPreview;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Public-safe invitation details shown to users before authentication
+ */
+export type InvitationPreview = {
+  /**
+   * Full name of the person being invited
+   */
+  recipient_name: string;
+  /**
+   * Name of the organization extending the invitation
+   */
+  organisation_name: string;
+  /**
+   * Name of the specific training branch (if applicable)
+   */
+  branch_name?: string;
+  role_name: RoleNameEnum;
+  /**
+   * Detailed description of the role's responsibilities and permissions
+   */
+  role_description: string;
+  /**
+   * Full name of the person who sent the invitation
+   */
+  inviter_name: string;
+  /**
+   * Date and time when the invitation expires in ISO 8601 format
+   */
+  expires_at: Date;
+  /**
+   * Optional personal message or notes included with the invitation
+   */
+  notes?: string;
+  /**
+   * Indicates whether the invitation has expired and can no longer be accepted
+   */
+  is_expired: boolean;
+  /**
+   * Indicates whether the recipient needs to register an account before accepting. True for student/instructor roles, false for admin/organisation_user roles.
+   */
+  requires_registration: boolean;
 };
 
 export type ApiResponsePagedDtoInstructor = {
@@ -3748,13 +3850,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -4129,20 +4231,6 @@ export const WeightUnitEnum = {
 export type WeightUnitEnum = (typeof WeightUnitEnum)[keyof typeof WeightUnitEnum];
 
 /**
- * **[OPTIONAL]** Template used for generating default scoring levels when using custom levels.
- */
-export const MatrixTemplateEnum = {
-  STANDARD: 'standard',
-  SIMPLE: 'simple',
-  ADVANCED: 'advanced',
-} as const;
-
-/**
- * **[OPTIONAL]** Template used for generating default scoring levels when using custom levels.
- */
-export type MatrixTemplateEnum = (typeof MatrixTemplateEnum)[keyof typeof MatrixTemplateEnum];
-
-/**
  * **[REQUIRED]** Type of question determining the answer format and validation.
  */
 export const QuestionTypeEnum = {
@@ -4299,6 +4387,21 @@ export const TemplateTypeEnum = {
 export type TemplateTypeEnum = (typeof TemplateTypeEnum)[keyof typeof TemplateTypeEnum];
 
 /**
+ * **[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.
+ */
+export const DomainNameEnum = {
+  STUDENT: 'student',
+  INSTRUCTOR: 'instructor',
+  ADMIN: 'admin',
+  ORGANISATION_USER: 'organisation_user',
+} as const;
+
+/**
+ * **[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.
+ */
+export type DomainNameEnum = (typeof DomainNameEnum)[keyof typeof DomainNameEnum];
+
+/**
  * **[READ-ONLY]** Current status of the invitation in its lifecycle. Automatically managed by the system based on user actions and expiration rules.
  */
 export const StatusEnum3 = {
@@ -4313,21 +4416,6 @@ export const StatusEnum3 = {
  * **[READ-ONLY]** Current status of the invitation in its lifecycle. Automatically managed by the system based on user actions and expiration rules.
  */
 export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
-
-/**
- * **[READ-ONLY]** Name of the user domain/role for display purposes. Populated by the system based on the domain_uuid and indicates the role being offered.
- */
-export const DomainNameEnum = {
-  STUDENT: 'student',
-  INSTRUCTOR: 'instructor',
-  ADMIN: 'admin',
-  ORGANISATION_USER: 'organisation_user',
-} as const;
-
-/**
- * **[READ-ONLY]** Name of the user domain/role for display purposes. Populated by the system based on the domain_uuid and indicates the role being offered.
- */
-export type DomainNameEnum = (typeof DomainNameEnum)[keyof typeof DomainNameEnum];
 
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
@@ -4373,6 +4461,21 @@ export const StatusEnum6 = {
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
 export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+
+/**
+ * Display name of the role/domain being offered
+ */
+export const RoleNameEnum = {
+  STUDENT: 'Student',
+  INSTRUCTOR: 'Instructor',
+  ADMINISTRATOR: 'Administrator',
+  ORGANIZATION_MEMBER: 'Organization Member',
+} as const;
+
+/**
+ * Display name of the role/domain being offered
+ */
+export type RoleNameEnum = (typeof RoleNameEnum)[keyof typeof RoleNameEnum];
 
 export type DeleteUserData = {
   body?: never;
@@ -4889,11 +4992,7 @@ export type UpdateScoringLevelResponse =
   UpdateScoringLevelResponses[keyof UpdateScoringLevelResponses];
 
 export type UpdateMatrixCellData = {
-  body: {
-    [key: string]: {
-      [key: string]: unknown;
-    };
-  };
+  body: RubricMatrixCell;
   path: {
     /**
      * UUID of the rubric
@@ -5739,54 +5838,6 @@ export type UpdateTrainingBranch1Responses = {
 
 export type UpdateTrainingBranch1Response =
   UpdateTrainingBranch1Responses[keyof UpdateTrainingBranch1Responses];
-
-export type UpdatePointOfContactData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
-     */
-    uuid: string;
-    /**
-     * UUID of the training branch to update the POC for. Must be a branch within the specified organization.
-     */
-    branchUuid: string;
-    /**
-     * UUID of the user to set as point of contact. Must be assigned to the branch or be a member of the organization.
-     */
-    pocUserUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/poc/{pocUserUuid}';
-};
-
-export type UpdatePointOfContactErrors = {
-  /**
-   * User is not eligible to be POC
-   */
-  400: ApiResponseVoid;
-  /**
-   * Training branch or user not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type UpdatePointOfContactError =
-  UpdatePointOfContactErrors[keyof UpdatePointOfContactErrors];
-
-export type UpdatePointOfContactResponses = {
-  /**
-   * Point of contact updated successfully
-   */
-  200: ApiResponseVoid;
-};
-
-export type UpdatePointOfContactResponse =
-  UpdatePointOfContactResponses[keyof UpdatePointOfContactResponses];
 
 export type DeleteInstructorData = {
   body?: never;
@@ -7630,29 +7681,19 @@ export type CreateRubricScoringLevelResponses = {
 export type CreateRubricScoringLevelResponse =
   CreateRubricScoringLevelResponses[keyof CreateRubricScoringLevelResponses];
 
-export type CreateDefaultScoringLevelsData = {
-  body?: never;
+export type CreateRubricScoringLevelsBatchData = {
+  body: Array<RubricScoringLevel>;
   path: {
     /**
      * UUID of the rubric
      */
     rubricUuid: string;
   };
-  query: {
-    /**
-     * Template to use: standard, simple, or advanced
-     */
-    template: string;
-    /**
-     * User creating the levels
-     */
-    createdBy?: string;
-    pageable: Pageable;
-  };
-  url: '/api/v1/rubrics/{rubricUuid}/scoring-levels/defaults';
+  query?: never;
+  url: '/api/v1/rubrics/{rubricUuid}/scoring-levels/batch';
 };
 
-export type CreateDefaultScoringLevelsErrors = {
+export type CreateRubricScoringLevelsBatchErrors = {
   /**
    * Not Found
    */
@@ -7663,18 +7704,18 @@ export type CreateDefaultScoringLevelsErrors = {
   500: ResponseDtoVoid;
 };
 
-export type CreateDefaultScoringLevelsError =
-  CreateDefaultScoringLevelsErrors[keyof CreateDefaultScoringLevelsErrors];
+export type CreateRubricScoringLevelsBatchError =
+  CreateRubricScoringLevelsBatchErrors[keyof CreateRubricScoringLevelsBatchErrors];
 
-export type CreateDefaultScoringLevelsResponses = {
+export type CreateRubricScoringLevelsBatchResponses = {
   /**
    * OK
    */
-  200: ApiResponsePagedDtoRubricScoringLevel;
+  200: ApiResponseListRubricScoringLevel;
 };
 
-export type CreateDefaultScoringLevelsResponse =
-  CreateDefaultScoringLevelsResponses[keyof CreateDefaultScoringLevelsResponses];
+export type CreateRubricScoringLevelsBatchResponse =
+  CreateRubricScoringLevelsBatchResponses[keyof CreateRubricScoringLevelsBatchResponses];
 
 export type RecalculateScoresData = {
   body?: never;
@@ -7710,85 +7751,6 @@ export type RecalculateScoresResponses = {
 
 export type RecalculateScoresResponse =
   RecalculateScoresResponses[keyof RecalculateScoresResponses];
-
-export type InitializeRubricMatrixData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the rubric
-     */
-    rubricUuid: string;
-  };
-  query?: {
-    /**
-     * Template for default scoring levels
-     */
-    template?: string;
-    /**
-     * User initializing the matrix
-     */
-    createdBy?: string;
-  };
-  url: '/api/v1/rubrics/{rubricUuid}/matrix/initialize';
-};
-
-export type InitializeRubricMatrixErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type InitializeRubricMatrixError =
-  InitializeRubricMatrixErrors[keyof InitializeRubricMatrixErrors];
-
-export type InitializeRubricMatrixResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseRubricMatrix;
-};
-
-export type InitializeRubricMatrixResponse =
-  InitializeRubricMatrixResponses[keyof InitializeRubricMatrixResponses];
-
-export type InitializeMatrixData = {
-  body?: never;
-  path: {
-    rubricUuid: string;
-  };
-  query?: {
-    template?: string;
-    createdBy?: string;
-  };
-  url: '/api/v1/rubrics/{rubricUuid}/initialize-matrix';
-};
-
-export type InitializeMatrixErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type InitializeMatrixError = InitializeMatrixErrors[keyof InitializeMatrixErrors];
-
-export type InitializeMatrixResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseRubricMatrix;
-};
-
-export type InitializeMatrixResponse = InitializeMatrixResponses[keyof InitializeMatrixResponses];
 
 export type GetRubricCriteriaData = {
   body?: never;
@@ -7850,7 +7812,7 @@ export type AddRubricCriterionResponses = {
   /**
    * OK
    */
-  200: ApiResponseRubricCriteria;
+  200: ApiResponseObject;
 };
 
 export type AddRubricCriterionResponse =
@@ -8664,7 +8626,7 @@ export type GetBranchInvitationsResponse =
   GetBranchInvitationsResponses[keyof GetBranchInvitationsResponses];
 
 export type CreateBranchInvitationData = {
-  body?: never;
+  body: InvitationRequest;
   path: {
     /**
      * UUID of the organization that owns the training branch. Must be an existing organization.
@@ -8675,28 +8637,7 @@ export type CreateBranchInvitationData = {
      */
     branchUuid: string;
   };
-  query: {
-    /**
-     * Email address of the person being invited to the training branch. Must be a valid email format.
-     */
-    recipient_email: string;
-    /**
-     * Full name of the person being invited to the training branch. Used in email templates and records.
-     */
-    recipient_name: string;
-    /**
-     * Role/domain name being offered to the recipient within the training branch. Valid values: 'student', 'instructor', 'admin', 'organisation_user'
-     */
-    domain_name: string;
-    /**
-     * UUID of the user who is sending this branch invitation. Must be an existing user with appropriate permissions.
-     */
-    inviter_uuid: string;
-    /**
-     * Optional personal message or notes to include with the branch invitation email. Maximum 500 characters.
-     */
-    notes?: string;
-  };
+  query?: never;
   url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/invitations';
 };
 
@@ -8765,38 +8706,18 @@ export type GetOrganizationInvitationsResponse =
   GetOrganizationInvitationsResponses[keyof GetOrganizationInvitationsResponses];
 
 export type CreateOrganizationInvitationData = {
-  body?: never;
+  body: InvitationRequest;
   path: {
     /**
      * UUID of the organization the user is being invited to join. Must be an existing, active organization.
      */
     uuid: string;
   };
-  query: {
-    /**
-     * Email address of the person being invited. Must be a valid email format.
-     */
-    recipient_email: string;
-    /**
-     * Full name of the person being invited. Used in email templates and invitation records.
-     */
-    recipient_name: string;
-    /**
-     * Role/domain name being offered to the recipient. Valid values: 'student', 'instructor', 'admin', 'organisation_user'
-     */
-    domain_name: string;
+  query?: {
     /**
      * Optional UUID of a training branch within the organization. If provided, the invitation will be branch-specific. Must belong to the specified organization.
      */
     branch_uuid?: string;
-    /**
-     * UUID of the user who is sending this invitation. Must be an existing user with appropriate permissions in the organization.
-     */
-    inviter_uuid: string;
-    /**
-     * Optional personal message or notes to include with the invitation email. Maximum 500 characters.
-     */
-    notes?: string;
   };
   url: '/api/v1/organisations/{uuid}/invitations';
 };
@@ -8876,6 +8797,41 @@ export type ResendInvitationResponses = {
 
 export type ResendInvitationResponse = ResendInvitationResponses[keyof ResendInvitationResponses];
 
+export type ProcessPendingInvitationsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/invitations/process-pending';
+};
+
+export type ProcessPendingInvitationsErrors = {
+  /**
+   * Authentication required - user must be logged in via Keycloak
+   */
+  401: ApiResponseListInvitation;
+  /**
+   * User not found in database after authentication
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ProcessPendingInvitationsError =
+  ProcessPendingInvitationsErrors[keyof ProcessPendingInvitationsErrors];
+
+export type ProcessPendingInvitationsResponses = {
+  /**
+   * Pending invitations processed successfully (may be empty list)
+   */
+  200: ApiResponseListInvitation;
+};
+
+export type ProcessPendingInvitationsResponse =
+  ProcessPendingInvitationsResponses[keyof ProcessPendingInvitationsResponses];
+
 export type SendExpiryRemindersData = {
   body?: never;
   path?: never;
@@ -8941,6 +8897,92 @@ export type MarkExpiredInvitationsResponses = {
 
 export type MarkExpiredInvitationsResponse =
   MarkExpiredInvitationsResponses[keyof MarkExpiredInvitationsResponses];
+
+export type DeclineInvitation1Data = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Invitation token from email link. Must match an active, non-expired invitation.
+     */
+    token: string;
+  };
+  url: '/api/v1/invitations/decline';
+};
+
+export type DeclineInvitation1Errors = {
+  /**
+   * Invalid token, email mismatch, or invitation already processed
+   */
+  400: ApiResponseVoid;
+  /**
+   * Authentication required - user must be logged in via Keycloak
+   */
+  401: ApiResponseVoid;
+  /**
+   * Invitation not found or user not found in database
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeclineInvitation1Error = DeclineInvitation1Errors[keyof DeclineInvitation1Errors];
+
+export type DeclineInvitation1Responses = {
+  /**
+   * Invitation declined successfully
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeclineInvitation1Response =
+  DeclineInvitation1Responses[keyof DeclineInvitation1Responses];
+
+export type AcceptInvitation1Data = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Invitation token from email link. Must match an active, non-expired invitation.
+     */
+    token: string;
+  };
+  url: '/api/v1/invitations/accept';
+};
+
+export type AcceptInvitation1Errors = {
+  /**
+   * Invalid token, email mismatch, or invitation already processed
+   */
+  400: ApiResponseUser;
+  /**
+   * Authentication required - user must be logged in via Keycloak
+   */
+  401: ApiResponseUser;
+  /**
+   * Invitation not found or user not found in database
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AcceptInvitation1Error = AcceptInvitation1Errors[keyof AcceptInvitation1Errors];
+
+export type AcceptInvitation1Responses = {
+  /**
+   * Invitation accepted successfully, user added to organization
+   */
+  200: ApiResponseUser;
+};
+
+export type AcceptInvitation1Response =
+  AcceptInvitation1Responses[keyof AcceptInvitation1Responses];
 
 export type GetAllInstructorsData = {
   body?: never;
@@ -12687,6 +12729,45 @@ export type GetInvitationByTokenResponses = {
 
 export type GetInvitationByTokenResponse =
   GetInvitationByTokenResponses[keyof GetInvitationByTokenResponses];
+
+export type PreviewInvitationData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Invitation token from email link. Must be a valid, non-expired invitation token.
+     */
+    token: string;
+  };
+  url: '/api/v1/invitations/preview';
+};
+
+export type PreviewInvitationErrors = {
+  /**
+   * Invalid or malformed token
+   */
+  400: ApiResponseInvitationPreview;
+  /**
+   * Invitation not found or token expired
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type PreviewInvitationError = PreviewInvitationErrors[keyof PreviewInvitationErrors];
+
+export type PreviewInvitationResponses = {
+  /**
+   * Invitation preview retrieved successfully
+   */
+  200: ApiResponseInvitationPreview;
+};
+
+export type PreviewInvitationResponse =
+  PreviewInvitationResponses[keyof PreviewInvitationResponses];
 
 export type GetPendingInvitationsForEmailData = {
   body?: never;

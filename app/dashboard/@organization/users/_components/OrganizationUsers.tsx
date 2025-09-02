@@ -1,12 +1,10 @@
 "use client"
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "../../../../../components/ui/button";
 import { Separator } from "../../../../../components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../../../components/ui/table";
 import UserBadge from "../../../../../components/user-badge";
 import { useTrainingCenter } from "../../../../../context/training-center-provide";
 import { getUsersByOrganisation, User } from "../../../../../services/client";
-import { InviteForm } from "../../Invites/_components/InviteForm";
 
 export default function OrganizationUsers() {
 
@@ -45,7 +43,7 @@ export default function OrganizationUsers() {
                     <h1 className='text-2xl font-bold'>Manage Users</h1>
                     <p>A list of all the users under {trainingCenter!.name} organisation.</p>
                 </div>
-                <InviteForm><Button>Invite User</Button></InviteForm>
+                {/* <InviteForm><Button>Invite User</Button></InviteForm> */}
             </div>
             <Separator />
 

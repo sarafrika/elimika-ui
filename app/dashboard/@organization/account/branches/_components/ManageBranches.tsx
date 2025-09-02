@@ -14,13 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CommandInput } from 'cmdk';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import Combobox from '../../../../../../components/combobox';
 import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useTrainingCenter } from '../../../../../../context/training-center-provide';
@@ -75,7 +73,9 @@ export default function ManageBranch() {
   const defaultBranch = (): BranchType => ({
     branch_name: 'Main Campus',
     active: true,
-    poc_user_uuid: user!.uuid,
+    poc_name: "",
+    poc_email: "",
+    poc_telephone: ""
   });
 
   const form = useForm<BranchesFormValues>({
@@ -200,36 +200,49 @@ export default function ManageBranch() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name={`branches.${index}.poc_user_uuid`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Select Point of Contact Person</FormLabel>
-                        <div className='flex gap-3'>
-                          <div className='flex-grow'>
-                            <Combobox
-                              value={field.value ?? ''}
-                              setValue={field.onChange}
-                              items={(trainingCenter && trainingCenter.users
-                                ? trainingCenter.users
-                                : []
-                              ).map(user => ({
-                                label: user.full_name!,
-                                value: user.uuid!,
-                              }))}
-                            >
-                              <CommandInput placeholder='Search framework...' className='h-9' />
-                            </Combobox>
-                          </div>
-                          <Button type='button' variant={'outline'}>
-                            Invite User
-                          </Button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-col-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name={`branches.${index}.poc_name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Point of contact name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`branches.${index}.poc_email`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Point of contact email</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`branches.${index}.poc_telephone`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Point of contact phone_number</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                 </div>
               ))}

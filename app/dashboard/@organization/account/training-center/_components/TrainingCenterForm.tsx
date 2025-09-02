@@ -69,10 +69,11 @@ export default function TrainingCenterForm() {
       ...(organisation ?? {}),
       contactPersonEmail: userProfile!.email,
       contactPersonPhone: userProfile!.phone_number,
-      user_uuid: userProfile!.uuid,
       active: true,
     },
   });
+
+  console.log(form.formState.errors)
 
   const onSubmit = async (orgData: TrainingCenterFormValues) => {
     const updateResponse = await updateOrganisation({
@@ -260,6 +261,8 @@ export default function TrainingCenterForm() {
                       {...field}
                       onRetrieve={d => {
                         form.setValue('country', d.properties.context.country?.name);
+                        form.setValue('latitude', d.properties.coordinates.latitude);
+                        form.setValue('longitude', d.properties.coordinates.longitude);
                         return d;
                       }}
                     />
@@ -297,19 +300,7 @@ export default function TrainingCenterForm() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name='domain'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Institution Domain</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
             </div>
           </CardContent>
         </Card>

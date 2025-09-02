@@ -1,13 +1,13 @@
 import { TrainingCenter } from '@/lib/types';
 import {
   ApiResponse,
+  getOrganisationByUuid,
   getTrainingBranchesByOrganisation,
   getUsersByOrganisation,
   SearchResponse,
   TrainingBranch,
   User,
 } from '@/services/client';
-import { client } from '@/services/client/client.gen';
 import { queryOptions, useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { createContext, ReactNode, useContext } from 'react';
@@ -20,16 +20,13 @@ export const useTrainingCenter = () => useContext(TrainingCenterContext);
 export default function TrainingCenterProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const userProfile = useUserProfile();
+  const activeOrgId = userProfile && userProfile.organisation_affiliations && userProfile.organisation_affiliations.length > 0 ?
+    (userProfile.organisation_affiliations.find(org => org.active) ?? userProfile.organisation_affiliations[0] ?? {}).organisationUuid : null;
 
   const { data, isLoading } = useQuery(
-    createQueryOptions(
-      {
-        userid: userProfile?.uuid!,
-        token: session?.user.id_token!,
-      },
-      {
-        enabled: !!userProfile && !!session && !!session!.user,
-      }
+    createQueryOptions(activeOrgId!, {
+      enabled: !!userProfile && !!session && !!session!.user && !!activeOrgId,
+    }
     )
   );
 
@@ -41,36 +38,31 @@ export default function TrainingCenterProvider({ children }: { children: ReactNo
 }
 
 function createQueryOptions(
-  reqParams: { userid: string; token: string },
+  organizaition_uuid: string | null,
   options?: Omit<UseQueryOptions<TrainingCenter | null>, 'queryKey' | 'queryFn' | 'staleTime'>
 ) {
   return queryOptions({
     ...options,
     queryKey: ['organization'],
     queryFn: async () => {
-      const orgResp = (await client.get({
-        url: '/api/v1/organisations/search',
-        query: {
-          searchParams: {
-            user_uuid_eq: reqParams.userid!,
-          },
-          pageable: {
-            size: 1,
-            page: 0,
-          },
-        },
-        headers: {
-          Authorization: `Bearer ${reqParams.token}`,
-        },
-      })) as ApiResponse;
 
-      const orgRespData = orgResp.data as SearchResponse;
+      if (!organizaition_uuid) return null;
 
-      if (!orgRespData.data || !orgRespData.data.content || orgRespData.data.content.length === 0)
+      const orgResp = await getOrganisationByUuid({
+        path: {
+          uuid: organizaition_uuid
+        }
+      });
+
+      const orgRespData = orgResp.data as ApiResponse;
+      console.log(orgRespData);
+
+      if (!orgRespData.data || orgRespData.error) {
         return null;
+      }
 
       const organizationData = {
-        ...orgRespData.data.content[0],
+        ...orgRespData.data,
       } as TrainingCenter;
 
       const branchesResp = (await getTrainingBranchesByOrganisation({

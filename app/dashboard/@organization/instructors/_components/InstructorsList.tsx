@@ -1,13 +1,10 @@
 "use client"
 import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
-import { Button } from '../../../../../components/ui/button';
 import { Separator } from '../../../../../components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../../components/ui/table';
 import UserBadge from '../../../../../components/user-badge';
 import { useTrainingCenter } from '../../../../../context/training-center-provide';
 import { getAllInstructors, Instructor } from '../../../../../services/client';
-import { InviteForm } from '../../Invites/_components/InviteForm';
 
 export default function InstructorsList() {
 
@@ -43,7 +40,7 @@ export default function InstructorsList() {
                     <h1 className='text-2xl font-bold'>Manage Instructors</h1>
                     <p>A list of all the instructors under {trainingCenter!.name}.</p>
                 </div>
-                <InviteForm><Button>Invite Instructor</Button></InviteForm>
+                {/* <InviteForm><Button>Invite Instructor</Button></InviteForm> */}
             </div>
             <Separator />
 

@@ -153,6 +153,11 @@ export default {
       icon: BookOpen,
     },
     {
+      title: 'Invites',
+      url: '/dashboard/invites',
+      icon: BookOpen,
+    },
+    {
       title: 'Programs',
       url: '/dashboard/programs',
       icon: Layers,

@@ -1,14 +1,11 @@
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, Book, LineChart, MapPin, UserIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
+import { Badge } from "../../../../../components/ui/badge";
 import { Calendar } from "../../../../../components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { Separator } from "../../../../../components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../../components/ui/tabs";
-import UserBadge from "../../../../../components/user-badge";
 import { getTrainingBranchByUuid, TrainingBranch } from "../../../../../services/client";
-import InviteList from "../../Invites/_components/InviteList";
-import Classroms from "./_components/classrooms";
-import Courses from "./_components/courses";
+import TabSection from "../_components/tabsection";
 import { Action } from "./utils";
 
 export default async function ViewBranch({
@@ -41,75 +38,63 @@ export default async function ViewBranch({
             </div>
             <Separator />
 
-            <div className="grid grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
                 <div className="col-span-3 flex flex-col gap-5">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Contacts</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex justify-between">
-                                <div className="flex flex-col gap-2">
-                                    <h4 className="text-sm text-gray-400 flex gap-2">
-                                        <MapPin size={16} />
-                                        <span>Location</span>
-                                    </h4>
-                                    <h5 className="">{branch.address}</h5>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <h4 className="text-sm text-gray-400 flex gap-2">Point of contact</h4>
-                                    {branch.poc_user_uuid &&
-                                        <UserBadge user_uuid={branch.poc_user_uuid} showContacts />}
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="flex flex-col md:flex-row gap-5 flex-wrap">
+                        <Card className="flex-grow">
+                            <CardContent>
+                                <div className="flex flex-col">
 
-                    <Tabs>
-                        <TabsList>
-                            <TabsTrigger value="courses">Courses</TabsTrigger>
-                            <TabsTrigger value="invites">Invites</TabsTrigger>
-                            <TabsTrigger value="classrooms">Classrooms</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="courses">
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Courses</CardTitle>
-                                    <CardDescription>Courses offered in this branch</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <Courses user_uuid={branch.organisation_uuid} />
+                                    <div className="flex gap-2">
+                                        <MapPin size={32} className="text-gray-400" />
+                                        <div>
+                                            <span className="text-gray-400">Location</span>
+                                            <h5 className="">{branch.address}</h5>
+                                        </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <div className="flex flex-col gap-2">
+                                        <h4 className="flex gap-2 items-center">
+                                            <UserIcon size={32} className="text-gray-400" />
+                                            <div>
+                                                <span className="text-gray-400 ">Point of contact</span>
+                                                <h4>{branch.poc_name}</h4>
+                                            </div>
+                                        </h4>
+                                        <div className="flex gap-3">
+                                            {branch.poc_email && <Badge variant={"outline"}>{branch.poc_email}</Badge>}
+                                            {branch.poc_telephone && <Badge variant={"outline"}>{branch.poc_telephone}</Badge>}
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                        </TabsContent>
+                        <Card className="flex-grow">
+                            <CardHeader>
+                                <CardTitle>Total Students</CardTitle>
+                                <CardDescription>Number of students enrolled</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <h1 className="text-3xl flex gap-3">
+                                    <UsersIcon size={32} /> 150k
+                                    <LineChart className="ms-auto text-gray-400" />
+                                </h1>
+                            </CardContent>
+                        </Card>
 
-                        <TabsContent value="invites">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Invites</CardTitle>
-                                    <CardDescription>All invites sent to instructors / users</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <InviteList />
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
+                        <Card className="flex-grow">
+                            <CardHeader>
+                                <CardTitle>Total Courses</CardTitle>
+                                <CardDescription>Number of courses offered</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <h1 className="text-3xl flex gap-3">
+                                    <Book size={32} /> 100+</h1>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                        <TabsContent value="classrooms">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Classrooms</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <Classroms />
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </Tabs>
+                    <TabSection {...{ branch }} />
                 </div>
                 <div>
                     <Card>

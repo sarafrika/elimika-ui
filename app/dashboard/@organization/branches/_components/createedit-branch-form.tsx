@@ -6,17 +6,15 @@ import { redirect } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import Combobox from "../../../../../../components/combobox";
-import LocationInput from "../../../../../../components/locationInput";
-import { Button } from "../../../../../../components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../../../../components/ui/card";
-import { CommandInput } from "../../../../../../components/ui/command";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../../../../../components/ui/form";
-import { Input } from "../../../../../../components/ui/input";
-import { useTrainingCenter } from "../../../../../../context/training-center-provide";
-import { queryClient } from "../../../../../../lib/query-client";
-import { createTrainingBranch, TrainingBranch, updateTrainingBranch } from "../../../../../../services/client";
-import { zTrainingBranch } from "../../../../../../services/client/zod.gen";
+import LocationInput from "../../../../../components/locationInput";
+import { Button } from "../../../../../components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../../../components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../../../../components/ui/form";
+import { Input } from "../../../../../components/ui/input";
+import { useTrainingCenter } from "../../../../../context/training-center-provide";
+import { queryClient } from "../../../../../lib/query-client";
+import { createTrainingBranch, TrainingBranch, updateTrainingBranch } from "../../../../../services/client";
+import { zTrainingBranch } from "../../../../../services/client/zod.gen";
 
 const BranchSchema = zTrainingBranch.omit({
     created_date: true,
@@ -34,6 +32,8 @@ export default function CreateEditBranchform({ branch, onSave }: { branch?: Trai
         resolver: zodResolver(BranchSchema),
         defaultValues: branch
     });
+
+    console.log(form.formState.errors)
 
     const trainingCenter = useTrainingCenter();
 
@@ -71,7 +71,7 @@ export default function CreateEditBranchform({ branch, onSave }: { branch?: Trai
 
         if (onSave) onSave();
         toast.success("Branch saved successfully");
-        queryClient.invalidateQueries({ queryKey: ['organization'] })
+        await queryClient.invalidateQueries({ queryKey: ['organization'] })
         redirect(`/dashboard/branches/${newBranch.uuid}`)
     }
 
@@ -114,31 +114,55 @@ export default function CreateEditBranchform({ branch, onSave }: { branch?: Trai
                             )}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name={`poc_user_uuid`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Select Point of Contact Person</FormLabel>
-                                    <div className="flex gap-3">
-                                        <div className='flex-grow'>
-                                            <Combobox value={field.value ?? ""} setValue={field.onChange} items={(trainingCenter && trainingCenter.users ? trainingCenter.users : []).map(user => ({
-                                                label: user.full_name!,
-                                                value: user.uuid!
-                                            }))}>
-                                                <CommandInput placeholder="Search framework..." className="h-9" />
-                                            </Combobox>
-                                        </div>
-                                        <Button type='button' variant={"outline"}>Invite User</Button>
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <div className="grid gap-5 grid-cols-2">
+                            <FormField
+                                control={form.control}
+                                name={`poc_name`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>POC Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder='Point of contact name' {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name={`poc_email`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>POC Email</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder='Point of contact email' {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name={`poc_telephone`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>POC Phone Number</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder='Point of contact phone number' {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+
                     </CardContent>
                     <CardFooter className="flex flex-row-reverse gap-3">
                         <Button type="submit">{form.formState.isSubmitting}
-                            {form.formState.isSubmitted ? <><Loader /> Saving...</> : <>Save Branch</>}
+                            {form.formState.isSubmitting ? <><Loader /> Saving...</> : <>Save Branch</>}
                         </Button>
                         <Button type="button" variant={"ghost"}>
                             <Link href={"/dashboard/branches"}>Cancel</Link>

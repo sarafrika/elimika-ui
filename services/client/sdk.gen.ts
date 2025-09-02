@@ -127,9 +127,6 @@ import type {
   UpdateTrainingBranch1Data,
   UpdateTrainingBranch1Responses,
   UpdateTrainingBranch1Errors,
-  UpdatePointOfContactData,
-  UpdatePointOfContactResponses,
-  UpdatePointOfContactErrors,
   DeleteInstructorData,
   DeleteInstructorResponses,
   DeleteInstructorErrors,
@@ -295,18 +292,12 @@ import type {
   CreateRubricScoringLevelData,
   CreateRubricScoringLevelResponses,
   CreateRubricScoringLevelErrors,
-  CreateDefaultScoringLevelsData,
-  CreateDefaultScoringLevelsResponses,
-  CreateDefaultScoringLevelsErrors,
+  CreateRubricScoringLevelsBatchData,
+  CreateRubricScoringLevelsBatchResponses,
+  CreateRubricScoringLevelsBatchErrors,
   RecalculateScoresData,
   RecalculateScoresResponses,
   RecalculateScoresErrors,
-  InitializeRubricMatrixData,
-  InitializeRubricMatrixResponses,
-  InitializeRubricMatrixErrors,
-  InitializeMatrixData,
-  InitializeMatrixResponses,
-  InitializeMatrixErrors,
   GetRubricCriteriaData,
   GetRubricCriteriaResponses,
   GetRubricCriteriaErrors,
@@ -394,12 +385,21 @@ import type {
   ResendInvitationData,
   ResendInvitationResponses,
   ResendInvitationErrors,
+  ProcessPendingInvitationsData,
+  ProcessPendingInvitationsResponses,
+  ProcessPendingInvitationsErrors,
   SendExpiryRemindersData,
   SendExpiryRemindersResponses,
   SendExpiryRemindersErrors,
   MarkExpiredInvitationsData,
   MarkExpiredInvitationsResponses,
   MarkExpiredInvitationsErrors,
+  DeclineInvitation1Data,
+  DeclineInvitation1Responses,
+  DeclineInvitation1Errors,
+  AcceptInvitation1Data,
+  AcceptInvitation1Responses,
+  AcceptInvitation1Errors,
   GetAllInstructorsData,
   GetAllInstructorsResponses,
   GetAllInstructorsErrors,
@@ -724,6 +724,9 @@ import type {
   GetInvitationByTokenData,
   GetInvitationByTokenResponses,
   GetInvitationByTokenErrors,
+  PreviewInvitationData,
+  PreviewInvitationResponses,
+  PreviewInvitationErrors,
   GetPendingInvitationsForEmailData,
   GetPendingInvitationsForEmailResponses,
   GetPendingInvitationsForEmailErrors,
@@ -950,12 +953,9 @@ import {
   createAssessmentRubricResponseTransformer,
   getScoringLevelsByRubricResponseTransformer,
   createRubricScoringLevelResponseTransformer,
-  createDefaultScoringLevelsResponseTransformer,
+  createRubricScoringLevelsBatchResponseTransformer,
   recalculateScoresResponseTransformer,
-  initializeRubricMatrixResponseTransformer,
-  initializeMatrixResponseTransformer,
   getRubricCriteriaResponseTransformer,
-  addRubricCriterionResponseTransformer,
   getRubricScoringResponseTransformer,
   addRubricScoringResponseTransformer,
   getAllQuizzesResponseTransformer,
@@ -979,6 +979,8 @@ import {
   createBranchInvitationResponseTransformer,
   getOrganizationInvitationsResponseTransformer,
   createOrganizationInvitationResponseTransformer,
+  processPendingInvitationsResponseTransformer,
+  acceptInvitation1ResponseTransformer,
   getAllInstructorsResponseTransformer,
   createInstructorResponseTransformer,
   getInstructorSkillsResponseTransformer,
@@ -1072,6 +1074,7 @@ import {
   getBranchUsersByDomainResponseTransformer,
   search2ResponseTransformer,
   getInvitationByTokenResponseTransformer,
+  previewInvitationResponseTransformer,
   getPendingInvitationsForEmailResponseTransformer,
   searchSkillsResponseTransformer,
   searchInstructorsResponseTransformer,
@@ -2281,33 +2284,6 @@ export const updateTrainingBranch1 = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
-  });
-};
-
-/**
- * Update point of contact for training branch
- * Updates the point of contact user for a training branch. The POC must be either assigned to the branch or be a member of the parent organization.
- */
-export const updatePointOfContact = <ThrowOnError extends boolean = false>(
-  options: Options<UpdatePointOfContactData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).put<
-    UpdatePointOfContactResponses,
-    UpdatePointOfContactErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/poc/{pocUserUuid}',
-    ...options,
   });
 };
 
@@ -3967,18 +3943,18 @@ export const createRubricScoringLevel = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create default scoring levels
- * Creates a set of default scoring levels for the rubric based on the specified template (standard, simple, advanced).
+ * Create multiple scoring levels for a rubric (batch)
+ * Creates multiple custom scoring levels at once for efficient rubric setup.
  */
-export const createDefaultScoringLevels = <ThrowOnError extends boolean = false>(
-  options: Options<CreateDefaultScoringLevelsData, ThrowOnError>
+export const createRubricScoringLevelsBatch = <ThrowOnError extends boolean = false>(
+  options: Options<CreateRubricScoringLevelsBatchData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    CreateDefaultScoringLevelsResponses,
-    CreateDefaultScoringLevelsErrors,
+    CreateRubricScoringLevelsBatchResponses,
+    CreateRubricScoringLevelsBatchErrors,
     ThrowOnError
   >({
-    responseTransformer: createDefaultScoringLevelsResponseTransformer,
+    responseTransformer: createRubricScoringLevelsBatchResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -3989,8 +3965,12 @@ export const createDefaultScoringLevels = <ThrowOnError extends boolean = false>
         type: 'http',
       },
     ],
-    url: '/api/v1/rubrics/{rubricUuid}/scoring-levels/defaults',
+    url: '/api/v1/rubrics/{rubricUuid}/scoring-levels/batch',
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -4018,62 +3998,6 @@ export const recalculateScores = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/rubrics/{rubricUuid}/matrix/recalculate',
-    ...options,
-  });
-};
-
-/**
- * Initialize rubric matrix
- * Initializes a rubric matrix with default scoring levels and structure. Creates default levels if none exist.
- */
-export const initializeRubricMatrix = <ThrowOnError extends boolean = false>(
-  options: Options<InitializeRubricMatrixData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    InitializeRubricMatrixResponses,
-    InitializeRubricMatrixErrors,
-    ThrowOnError
-  >({
-    responseTransformer: initializeRubricMatrixResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/rubrics/{rubricUuid}/matrix/initialize',
-    ...options,
-  });
-};
-
-/**
- * Initialize rubric matrix
- * Sets up the rubric matrix with default scoring levels and prepares it for use.
- */
-export const initializeMatrix = <ThrowOnError extends boolean = false>(
-  options: Options<InitializeMatrixData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    InitializeMatrixResponses,
-    InitializeMatrixErrors,
-    ThrowOnError
-  >({
-    responseTransformer: initializeMatrixResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/rubrics/{rubricUuid}/initialize-matrix',
     ...options,
   });
 };
@@ -4108,7 +4032,7 @@ export const getRubricCriteria = <ThrowOnError extends boolean = false>(
 
 /**
  * Add a criterion to a rubric
- * Adds a new criterion to an existing assessment rubric.
+ * Adds a new criterion to an existing assessment rubric. If scoring levels exist, the matrix will be auto-generated.
  */
 export const addRubricCriterion = <ThrowOnError extends boolean = false>(
   options: Options<AddRubricCriterionData, ThrowOnError>
@@ -4118,7 +4042,6 @@ export const addRubricCriterion = <ThrowOnError extends boolean = false>(
     AddRubricCriterionErrors,
     ThrowOnError
   >({
-    responseTransformer: addRubricCriterionResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -4840,6 +4763,10 @@ export const createBranchInvitation = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/invitations',
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -4896,6 +4823,10 @@ export const createOrganizationInvitation = <ThrowOnError extends boolean = fals
     ],
     url: '/api/v1/organisations/{uuid}/invitations',
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -4922,6 +4853,45 @@ export const resendInvitation = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{uuid}/invitations/{invitationUuid}/resend',
+    ...options,
+  });
+};
+
+/**
+ * Process pending invitations for authenticated user
+ * Automatically processes all pending invitations for a newly authenticated user.
+ * Typically called after successful Keycloak registration/login to handle any outstanding invitations.
+ *
+ * **Use Cases:**
+ * - New user registers and has pending invitations
+ * - Existing user logs in and has new invitations waiting
+ * - Bulk processing of invitations after authentication
+ *
+ * **Behavior:**
+ * - Only processes valid, non-expired invitations
+ * - Automatically accepts all matching invitations for user's email
+ * - Sends confirmation emails for each accepted invitation
+ * - Returns list of successfully processed invitations
+ *
+ * **Authentication:** JWT token from Keycloak required in Authorization header.
+ *
+ */
+export const processPendingInvitations = <ThrowOnError extends boolean = false>(
+  options?: Options<ProcessPendingInvitationsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).post<
+    ProcessPendingInvitationsResponses,
+    ProcessPendingInvitationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: processPendingInvitationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/process-pending',
     ...options,
   });
 };
@@ -4976,6 +4946,78 @@ export const markExpiredInvitations = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/invitations/maintenance/mark-expired',
+    ...options,
+  });
+};
+
+/**
+ * Decline invitation (AUTHENTICATED)
+ * Declines an invitation for a Keycloak-authenticated user.
+ * Used by React frontend after user authentication to process invitation decline.
+ *
+ * **Flow:**
+ * 1. User authenticates via Keycloak
+ * 2. React frontend calls this endpoint with invitation token
+ * 3. System validates token and user email match
+ * 4. Marks invitation as declined with timestamp
+ * 5. Sends decline notification email to inviter
+ *
+ * **Authentication:** JWT token from Keycloak required in Authorization header.
+ * **Email Validation:** User's email from JWT must match invitation recipient.
+ * **Note:** Declined invitations cannot be reactivated.
+ *
+ */
+export const declineInvitation1 = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineInvitation1Data, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DeclineInvitation1Responses,
+    DeclineInvitation1Errors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/decline',
+    ...options,
+  });
+};
+
+/**
+ * Accept invitation (AUTHENTICATED)
+ * Accepts an invitation for a Keycloak-authenticated user.
+ * Used by React frontend after user authentication to process invitation acceptance.
+ *
+ * **Flow:**
+ * 1. User authenticates via Keycloak (login or registration)
+ * 2. React frontend calls this endpoint with invitation token
+ * 3. System validates token and user email match
+ * 4. Creates user-organization relationship and assigns role
+ * 5. Sends confirmation email to user
+ *
+ * **Authentication:** JWT token from Keycloak required in Authorization header.
+ * **Email Validation:** User's email from JWT must match invitation recipient.
+ *
+ */
+export const acceptInvitation1 = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptInvitation1Data, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AcceptInvitation1Responses,
+    AcceptInvitation1Errors,
+    ThrowOnError
+  >({
+    responseTransformer: acceptInvitation1ResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/accept',
     ...options,
   });
 };
@@ -8243,6 +8285,46 @@ export const getInvitationByToken = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/invitations/token/{token}',
+    ...options,
+  });
+};
+
+/**
+ * Preview invitation details (PUBLIC)
+ * Gets public-safe invitation details by token without requiring authentication.
+ * Used by React frontend to display invitation information before user login/registration.
+ *
+ * **URL Structure:** https://elimika.sarafrika.com/invitations/accept?token={token}
+ *
+ * **Response includes:**
+ * - Recipient name and organization details
+ * - Role being offered with description
+ * - Inviter information and personal notes
+ * - Expiration status and registration requirements
+ *
+ * **Security:** Token-based validation ensures only valid invitations are previewed.
+ *
+ */
+export const previewInvitation = <ThrowOnError extends boolean = false>(
+  options: Options<PreviewInvitationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    PreviewInvitationResponses,
+    PreviewInvitationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: previewInvitationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/invitations/preview',
     ...options,
   });
 };
