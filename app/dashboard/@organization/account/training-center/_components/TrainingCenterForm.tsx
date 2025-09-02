@@ -16,15 +16,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import CustomLoader from '../../../../../../components/custom-loader';
+import ImageSelector, { ImageType } from '../../../../../../components/image-selector';
 import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useTrainingCenter } from '../../../../../../context/training-center-provide';
 import { queryClient } from '../../../../../../lib/query-client';
+import { profilePicSvg } from '../../../../../../lib/utils';
 import { updateOrganisation, updateUser, User } from '../../../../../../services/client';
 import { zOrganisation } from '../../../../../../services/client/zod.gen';
 
@@ -62,6 +64,12 @@ export default function TrainingCenterForm() {
 
   const userProfile = useUserProfile();
   const organisation = useTrainingCenter();
+
+  /** For handling profile picture preview */
+  const fileElmentRef = useRef<HTMLInputElement>(null);
+  const [profilePic, setProfilePic] = useState<ImageType>({
+    url: userProfile!.profile_image_url ?? profilePicSvg,
+  });
 
   const form = useForm<TrainingCenterFormValues>({
     resolver: zodResolver(trainingCenterSchema),
@@ -127,25 +135,20 @@ export default function TrainingCenterForm() {
                   <FormLabel>Organisation Logo</FormLabel>
                   <div className='flex items-center gap-x-4'>
                     <Avatar className='h-20 w-20 rounded-lg'>
-                      <AvatarImage src={field.value ?? undefined} />
+                      <AvatarImage src={profilePic.url!} />
                       <AvatarFallback className='rounded-lg'>Logo</AvatarFallback>
                     </Avatar>
                     <FormControl>
-                      <Input
-                        type='file'
-                        className='max-w-xs'
-                        onChange={e => {
-                          // Handle file upload preview
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              form.setValue('logoUrl', reader.result as string);
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
+                      <ImageSelector onSelect={setProfilePic} {...{ fileElmentRef }}>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          type='button'
+                          onClick={() => fileElmentRef.current?.click()}
+                        >
+                          Change
+                        </Button>
+                      </ImageSelector>
                     </FormControl>
                   </div>
                   <FormMessage />

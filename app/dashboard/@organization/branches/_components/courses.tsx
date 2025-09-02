@@ -2,9 +2,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "../../../../../components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../../../components/ui/table";
 import { Course, getAllCourses } from "../../../../../services/client";
 
-export default function Courses({ user_uuid }: { user_uuid: string }) {
+export default function Courses({ user_uuid, viewType = "list" }: { user_uuid: string, viewType: "list" | "grid" }) {
 
     const { data, error } = useQuery({
         queryKey: ["courses"],
@@ -25,13 +26,34 @@ export default function Courses({ user_uuid }: { user_uuid: string }) {
     const courses = data.data.data.content as Course[];
 
     return (<>
-        {courses.map(course => <Card key={course.uuid}>
-            <CardHeader>
-                <CardTitle>{course.name}</CardTitle>
-            </CardHeader>
+        {viewType === "grid" ? <div className="grid grid-cols-3 gap-4">
+            {
+                courses.map(course => <Card key={course.uuid}>
+                    <CardHeader>
+                        <CardTitle>{course.name}</CardTitle>
+                    </CardHeader>
 
-            {course.thumbnail_url && course.thumbnail_url.length > 0 ? <img src={course.thumbnail_url} className="w-full object-fit" /> : <Book size={256} color="gray-500" />}
-        </Card>)}
+                    {course.thumbnail_url && course.thumbnail_url.length > 0 ? <img src={course.thumbnail_url} className="w-full object-fit" /> : <Book size={256} color="gray-500" />}
+                </Card>)
+            }
+        </div> : <Table className="w-full table table-striped">
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Image</TableHead>
+                    <TableHead>Name</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {courses.map(course => <TableRow key={course.uuid}>
+                    <TableCell>
+                        {course.thumbnail_url && course.thumbnail_url.length > 0 ? <img className="w-10 h-10 object-fit" src={course.thumbnail_url} /> : <Book size={32} color="gray-500" />}
+                    </TableCell>
+                    <TableCell>
+                        {course.name}
+                    </TableCell>
+                </TableRow>)}
+            </TableBody>
+        </Table>}
     </>);
 
 }

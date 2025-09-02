@@ -35,6 +35,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useUserProfile } from '../../../../../../context/profile-context';
+import { uploadProfileImage } from '../../../../../../services/client';
 import { zStudent, zUser } from '../../../../../../services/client/zod.gen';
 
 const StudentProfileSchema = z.object({
@@ -43,6 +44,7 @@ const StudentProfileSchema = z.object({
       user_domain: true,
       created_date: true,
       updated_date: true,
+      organisation_affiliations: true
     })
     .merge(
       z.object({
@@ -116,17 +118,13 @@ export default function StudentProfileGeneralForm() {
 
       /** Upload profile picture */
       if (profilePic.file) {
-        const fd = new FormData();
-        const fileName = `${crypto.randomUUID()}${profilePic.file.name}`;
-        fd.append('profile_image', profilePic.file as Blob, fileName);
-        profilePicUpload.mutate({
-          params: {
-            path: {
-              uuid: user!.uuid as UUID,
-            },
+        const profilPicResp = await uploadProfileImage({
+          path: {
+            userUuid: user!.uuid as UUID
           },
-          // @ts-ignore
-          body: fd,
+          body: {
+            profileImage: profilePic.file
+          }
         });
       }
 

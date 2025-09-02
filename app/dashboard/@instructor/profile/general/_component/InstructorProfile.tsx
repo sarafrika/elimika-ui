@@ -39,13 +39,13 @@ import { CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
+import { queryClient } from '../../../../../../lib/query-client';
 import {
   createInstructor,
   updateInstructor,
   updateUser,
   uploadProfileImage,
 } from '../../../../../../services/client';
-import { client } from '../../../../../../services/client/client.gen';
 
 const generalProfileSchema = z.object({
   user: zUser
@@ -54,6 +54,7 @@ const generalProfileSchema = z.object({
       updated_date: true,
       updated_by: true,
       user_domain: true,
+      organisation_affiliations: true
     })
     .merge(z.object({ dob: z.date() })),
   instructor: zInstructor
@@ -122,34 +123,30 @@ export default function InstructorProfile() {
     if (profilePic.file) {
       const fd = new FormData();
       const fileName = `${crypto.randomUUID()}${profilePic.file.name}`;
-      fd.append('profile_image', profilePic.file as Blob, fileName);
+      fd.append('profileImage', profilePic.file as Blob, fileName);
+      fd.append("profileImage", fileName);
 
-      client.put({
-        url: '',
-      });
       uploadProfilePicResp = await uploadProfileImage({
         path: {
           userUuid: user!.uuid!,
         },
-        //@ts-ignore
-        body: fd,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        body: {
+          profileImage: profilePic.file
+        }
       });
     }
 
     const manageInstructor = () =>
       instructor
         ? updateInstructor({
-            path: {
-              uuid: instructor.uuid!,
-            },
-            body: updatedProfileData.instructor,
-          })
+          path: {
+            uuid: instructor.uuid!,
+          },
+          body: updatedProfileData.instructor,
+        })
         : createInstructor({
-            body: updatedProfileData.instructor,
-          });
+          body: updatedProfileData.instructor,
+        });
 
     const response = await Promise.all([
       updateUser({
@@ -183,7 +180,7 @@ export default function InstructorProfile() {
     if (hasErrors) return;
 
     toast.success('Profile updated successfully');
-    await invalidateQuery!();
+    await queryClient.invalidateQueries({ queryKey: ["profile", user!.email] });
   }
 
   return (
@@ -204,7 +201,7 @@ export default function InstructorProfile() {
               <div className='flex flex-col items-start gap-8 sm:flex-row'>
                 <div className='flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4'>
                   <Avatar className='bg-primary-50 h-24 w-24'>
-                    <AvatarImage src={profilePic.url} alt='Avatar' />
+                    <AvatarImage src={user!.profile_image_url ?? profilePic.url} alt='Avatar' className='object-fit' />
                     <AvatarFallback className='bg-blue-50 text-xl text-blue-600'>
                       {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}`}
                     </AvatarFallback>

@@ -116,18 +116,18 @@ export default function InviteList({
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56">
                                         {invite.inviter_uuid === user!.uuid && <>
-                                            <DropdownMenuCheckboxItem onClick={() => cancelInvite(invite.uuid!)}>
+                                            {invite.status !== "CANCELLED" && <DropdownMenuCheckboxItem onClick={() => cancelInvite(invite.uuid!)}>
                                                 <BlocksIcon /> <span>Cancel</span>
-                                            </DropdownMenuCheckboxItem>
+                                            </DropdownMenuCheckboxItem>}
                                             <DropdownMenuCheckboxItem onClick={() => resend(invite.uuid!)}>
                                                 <SendIcon /> <span>Resend</span>
                                             </DropdownMenuCheckboxItem>
                                         </>}
 
                                         {invite.inviter_uuid !== user!.uuid && <>
-                                            <DropdownMenuItem onClick={() => acceptInvitation(invite.uuid!, invite.token!)}>
+                                            {invite.status === "PENDING" && <DropdownMenuItem onClick={() => acceptInvitation(invite.uuid!, invite.token!)}>
                                                 <Button variant={"ghost"}><Check /> <span>Accept</span></Button>
-                                            </DropdownMenuItem>
+                                            </DropdownMenuItem>}
                                             <DropdownMenuItem onClick={() => declineInvitation(invite.uuid!, invite.token!)}>
                                                 <Button variant={"ghost"}><BlocksIcon /> <span>Decline</span></Button>
                                             </DropdownMenuItem>

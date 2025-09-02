@@ -1,4 +1,6 @@
 "use client"
+import { Grid, List } from "lucide-react"
+import { useState } from "react"
 import { Button } from "../../../../../components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../../components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../../components/ui/tabs"
@@ -11,6 +13,7 @@ import Courses from "./courses"
 
 export default function TabSection({ branch }: { branch: TrainingBranch }) {
     const trainingCenter = useTrainingCenter();
+    const [courseViewType, setCourseViewType] = useState<"list" | "grid">("list");
     return (
         <Tabs defaultValue="courses">
             <TabsList>
@@ -24,11 +27,16 @@ export default function TabSection({ branch }: { branch: TrainingBranch }) {
                     <CardHeader>
                         <CardTitle>Courses</CardTitle>
                         <CardDescription>Courses offered in this branch</CardDescription>
+                        <CardAction>
+                            {
+                                courseViewType === "grid" ?
+                                    <Button variant={"ghost"} onClick={() => setCourseViewType("list")}><List /></Button> :
+                                    <Button variant={"ghost"} onClick={() => setCourseViewType("grid")}><Grid /></Button>
+                            }
+                        </CardAction>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-3 gap-4">
-                            <Courses user_uuid={branch.organisation_uuid} />
-                        </div>
+                        <Courses viewType={courseViewType} user_uuid={branch.organisation_uuid} />
                     </CardContent>
                 </Card>
 
