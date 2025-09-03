@@ -46,9 +46,9 @@ import {
   CircleCheckBig,
   ClipboardCheck,
   Clock,
+  Eye,
   FileAudio,
   FileIcon,
-  FilePlus,
   FileText,
   FileVideo,
   Grip,
@@ -59,7 +59,7 @@ import {
   Trash,
   VideoIcon,
   X,
-  Youtube,
+  Youtube
 } from 'lucide-react';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { Control, FieldErrors, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
@@ -83,6 +83,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
+import Link from 'next/link';
 import { useUserProfile } from '../../../../context/profile-context';
 import { useRubricsWithCriteriaAndScoring } from '../rubric-management/rubric-chaining';
 
@@ -155,9 +156,9 @@ export type LessonFormValues = z.infer<typeof lessonFormSchema>;
 
 export type AssessmentFormValues = z.infer<typeof assessmentFormSchema>;
 
-type ContentType = keyof typeof CONTENT_TYPES;
+export type ContentType = keyof typeof CONTENT_TYPES;
 
-const getContentTypeIcon = (type: ContentType) => {
+export const getContentTypeIcon = (type: ContentType) => {
   switch (type) {
     case 'VIDEO':
       return <VideoIcon className='h-4 w-4' />;
@@ -342,7 +343,6 @@ function LessonList({
 
             const enrichedContents = enrichedLessonContentsMap.get(lesson.uuid) || [];
 
-
             return (
               <div
                 key={lesson?.uuid || index}
@@ -370,10 +370,23 @@ function LessonList({
                             <MoreVertical className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
+
+
                         <DropdownMenuContent align='end'>
                           <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
                             <PenLine className='mr-1 h-4 w-4' />
                             Edit Lesson
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem >
+                            <Link
+                              href={`/dashboard/course-management/lesson?courseId=${lesson.course_uuid}&id=${lesson.uuid}`}
+
+                              className='flex flex-row items-center'
+                            >
+                              <Eye className='mr-3 h-4 w-4' />
+                              Lesson management
+                            </Link>
                           </DropdownMenuItem>
 
                           <DropdownMenuItem onClick={() => onAddLessonContent(lesson)}>
@@ -1450,19 +1463,7 @@ const assessmentFormSchema = z.object({
   description: z.string().optional(),
   assessment_type: z.string().optional(),
   weight_percentage: z.any().optional(),
-  questions: z.array(
-    z.object({
-      prompt: z.string().min(1),
-      options: z
-        .array(
-          z.object({
-            text: z.string().min(1),
-            isCorrect: z.boolean().optional(),
-          })
-        )
-        .optional(),
-    })
-  ),
+  rubric_uuid: z.any().optional(),
   resources: z.array(
     z.object({
       title: z.string().optional(),
@@ -1485,8 +1486,7 @@ function AssessmentCreationForm({
       description: '',
       assessment_type: '',
       weight_percentage: '',
-      questions: [{ prompt: '' }],
-      // questions: [{ prompt: "", options: [{ text: "", isCorrect: false }] }],
+      rubric_uuid: '',
       resources: [],
     },
   });
@@ -1498,15 +1498,6 @@ function AssessmentCreationForm({
   }, [initialValues, form]);
 
   const {
-    fields: questionFields,
-    append: appendQuestion,
-    remove: removeQuestion,
-  } = useFieldArray({
-    control: form.control,
-    name: 'questions',
-  });
-
-  const {
     fields: resourceFields,
     append: appendResource,
     remove: removeResource,
@@ -1516,6 +1507,23 @@ function AssessmentCreationForm({
   });
 
   const queryClient = useQueryClient();
+  const user = useUserProfile();
+
+  const {
+    rubricsWithDetails,
+    isLoading: rubricDataIsLoading,
+    isFetched: rubricsDataIsFetched,
+  } = useRubricsWithCriteriaAndScoring(user?.instructor?.uuid);
+
+  const memoizedRubricsWithDetails = useMemo(() => {
+    return rubricsWithDetails || [];
+  }, [rubricsWithDetails]);
+
+  const selectedRubricUuid = form.watch('rubric_uuid');
+  const [expandedRubricUuid, setExpandedRubricUuid] = useState<string | null>(null);
+  const toggleExpand = (uuid: string) => {
+    setExpandedRubricUuid(prev => (prev === uuid ? null : uuid));
+  };
 
   // CREATE ASSESSMENT MUTATION
   const createAssessmentMutation = useMutation({
@@ -1537,7 +1545,7 @@ function AssessmentCreationForm({
           title: values.title,
           description: values.description,
           weight_percentage: values.weight_percentage,
-          rubric_uuid: '',
+          rubric_uuid: selectedRubricUuid || values.rubric_uuid,
           is_required: true,
           created_by: 'instructor@sarafrika.com',
           updated_by: 'instructor@sarafrika.com',
@@ -1581,7 +1589,7 @@ function AssessmentCreationForm({
             title: values.title,
             description: values.description,
             weight_percentage: values.weight_percentage,
-            rubric_uuid: '',
+            rubric_uuid: selectedRubricUuid,
             is_required: true,
             created_by: 'instructor@sarafrika.com',
             updated_by: 'instructor@sarafrika.com',
@@ -1682,42 +1690,105 @@ function AssessmentCreationForm({
           </div>
         </div>
 
-        <div className='space-y-4'>
-          <FormSection title='Questions' description='Add one or more questions to this assessment'>
-            {questionFields.map((field, index) => (
-              <div key={field.id} className='flex items-center gap-2'>
-                <FormField
-                  control={form.control}
-                  name={`questions.${index}.prompt`}
-                  render={({ field }) => (
-                    <FormItem className='flex-1'>
-                      <FormLabel>Question {index + 1}</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Enter question prompt' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => removeQuestion(index)}
-                  disabled={questionFields.length === 1}
-                >
-                  <X className='h-4 w-4 text-red-600' />
-                </Button>
+        <FormField
+          control={form.control}
+          name="rubric_uuid"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Select a Rubric</FormLabel>
+              {rubricDataIsLoading && <p>Loading rubrics...</p>}
+              {rubricsDataIsFetched && memoizedRubricsWithDetails.length === 0 && (
+                <p>No rubrics found.</p>
+              )}
+
+              <div className="grid gap-4">
+                {memoizedRubricsWithDetails.map(({ rubric, criteria }) => {
+                  const isSelected = field.value === rubric.uuid;
+                  const isExpanded = expandedRubricUuid === rubric.uuid;
+
+                  return (
+                    <div
+                      key={rubric.uuid}
+                      className={clsx(
+                        'border rounded-lg p-4 transition cursor-pointer',
+                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
+                      )}
+                    >
+                      <div
+                        className="flex justify-between items-start"
+                        onClick={() => field.onChange(rubric.uuid)}
+                      >
+                        <div>
+                          <div className="text-base font-semibold mb-1">{rubric.title}</div>
+                          <div className="text-[13px] font-light text-muted-foreground">{rubric.description}</div>
+                        </div>
+                        {isSelected && (
+                          <span className="text-sm font-medium text-blue-600">Selected</span>
+                        )}
+                      </div>
+
+                      <div className="flex flfex-row items-center gap-6 mt-2 text-sm text-gray-600">
+                        <p><strong>Type:</strong> {rubric.rubric_type}</p>
+                        <p><strong>Total Weight:</strong> {rubric.total_weight}{rubric.weight_unit === 'percentage' ? '%' : ''}</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(rubric.uuid)}
+                        className="mt-3 flex items-center gap-1 text-blue-600 text-sm"
+                      >
+                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        {isExpanded ? 'Hide Assessment Criteria' : 'Show Assessment Criteria & Scoring'}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-4 space-y-4 text-sm">
+                          {criteria.length === 0 && <p>No criteria available.</p>}
+
+                          {criteria.map((criterion) => (
+                            <div key={criterion.uuid} className="border border-gray-200 rounded-md p-3 bg-white">
+                              <div className="flex flex-row gap-2 items-center font-medium text-gray-800">
+                                <CircleCheckBig size={14} color='green' /> {criterion.component_name}
+                              </div>
+                              <div className="text-sm text-muted-foreground mb-1">{criterion.description}</div>
+
+
+                              {/* Scoring levels */}
+                              {criterion.scoring?.length > 0 ? (
+                                <div className="mt-2 space-y-2">
+                                  {/* <div className="text-xs font-medium text-gray-700">Scoring Levels:</div> */}
+                                  {/* {criterion.scoring.map((score: any) => (
+                                    <div
+                                      key={score.uuid}
+                                      className="border-l-4 border-blue-200 pl-3 py-1 bg-gray-50 rounded"
+                                    >
+                                      <div className="text-sm font-semibold text-gray-800">
+                                        {score.performance_expectation}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">{score.description}</div>
+                                      <div className="text-xs text-gray-600">
+                                        <p><strong>Score Range:</strong> {score.score_range}</p>
+                                        <p><strong>Feedback Category:</strong> {score.feedback_category}</p>
+                                        <p><strong>Passing:</strong> {score.is_passing_level ? 'Yes' : 'No'}</p>
+                                      </div>
+                                    </div>
+                                  ))} */}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground mt-1">No scoring levels defined.</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-
-            <Button type='button' variant='outline' onClick={() => appendQuestion({ prompt: '' })}>
-              <PlusCircle className='mr-2 h-4 w-4' />
-              Add Question
-            </Button>
-          </FormSection>
-        </div>
-
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className='space-y-4'>
           <h3 className='text-lg font-medium'>Resources</h3>
 
@@ -1807,170 +1878,6 @@ type AssessmentListProps = {
   onAddAssessment: () => void;
 };
 
-const rubricSelectSchema = z.object({
-  rubric_uuid: z.string().min(1, 'Rubric is required'),
-});
-
-interface RubricSelectFormProps {
-  onCancel: () => void;
-  onSuccess?: () => void;
-  className?: string;
-}
-
-function RubricSelectForm({
-  onCancel,
-  onSuccess,
-  className,
-}: RubricSelectFormProps) {
-  const form = useForm({
-    resolver: zodResolver(rubricSelectSchema),
-    defaultValues: {
-      rubric_uuid: '',
-    },
-  });
-
-  const user = useUserProfile();
-  const qc = useQueryClient()
-
-  const {
-    rubricsWithDetails,
-    isLoading: rubricDataIsLoading,
-    isFetched: rubricsDataIsFetched,
-  } = useRubricsWithCriteriaAndScoring(user?.instructor?.uuid);
-
-  const memoizedRubricsWithDetails = useMemo(() => {
-    return rubricsWithDetails || [];
-  }, [rubricsWithDetails]);
-
-  const selectedRubricUuid = form.watch('rubric_uuid');
-  const [expandedRubricUuid, setExpandedRubricUuid] = useState<string | null>(null);
-
-  const onSubmit = (values: any) => {
-    // console.log(values, 'submitting values');
-    if (onSuccess) onSuccess();
-  };
-
-  const toggleExpand = (uuid: string) => {
-    setExpandedRubricUuid(prev => (prev === uuid ? null : uuid));
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className={clsx('space-y-8', className)}>
-        <FormField
-          control={form.control}
-          name="rubric_uuid"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Select a Rubric</FormLabel>
-              {rubricDataIsLoading && <p>Loading rubrics...</p>}
-              {rubricsDataIsFetched && memoizedRubricsWithDetails.length === 0 && (
-                <p>No rubrics found.</p>
-              )}
-
-              <div className="grid gap-4">
-                {memoizedRubricsWithDetails.map(({ rubric, criteria }) => {
-                  const isSelected = field.value === rubric.uuid;
-                  const isExpanded = expandedRubricUuid === rubric.uuid;
-
-                  return (
-                    <div
-                      key={rubric.uuid}
-                      className={clsx(
-                        'border rounded-lg p-4 transition cursor-pointer',
-                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
-                      )}
-                    >
-                      <div
-                        className="flex justify-between items-start"
-                        onClick={() => field.onChange(rubric.uuid)}
-                      >
-                        <div>
-                          <div className="text-lg font-semibold">{rubric.title}</div>
-                          <div className="text-sm text-muted-foreground">{rubric.description}</div>
-                        </div>
-                        {isSelected && (
-                          <span className="text-sm font-medium text-blue-600">Selected</span>
-                        )}
-                      </div>
-
-                      <div className="flex flfex-row items-center gap-6 mt-2 text-sm text-gray-600">
-                        <p><strong>Type:</strong> {rubric.rubric_type}</p>
-                        <p><strong>Total Weight:</strong> {rubric.total_weight}{rubric.weight_unit === 'percentage' ? '%' : ''}</p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => toggleExpand(rubric.uuid)}
-                        className="mt-3 flex items-center gap-1 text-blue-600 text-sm"
-                      >
-                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                        {isExpanded ? 'Hide Assessment Criteria' : 'Show Assessment Criteria & Scoring'}
-                      </button>
-
-                      {isExpanded && (
-                        <div className="mt-4 space-y-4 text-sm">
-                          {criteria.length === 0 && <p>No criteria available.</p>}
-
-                          {criteria.map((criterion) => (
-                            <div key={criterion.uuid} className="border border-gray-200 rounded-md p-3 bg-white">
-                              <div className="flex flex-row gap-2 items-center font-medium text-gray-800">
-                                <CircleCheckBig size={14} color='green' /> {criterion.component_name}
-                              </div>
-                              <div className="text-sm text-muted-foreground mb-1">{criterion.description}</div>
-
-
-                              {/* Scoring levels */}
-                              {criterion.scoring?.length > 0 ? (
-                                <div className="mt-2 space-y-2">
-                                  <div className="text-xs font-medium text-gray-700">Scoring Levels:</div>
-                                  {criterion.scoring.map((score: any) => (
-                                    <div
-                                      key={score.uuid}
-                                      className="border-l-4 border-blue-200 pl-3 py-1 bg-gray-50 rounded"
-                                    >
-                                      <div className="text-sm font-semibold text-gray-800">
-                                        {score.performance_expectation}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">{score.description}</div>
-                                      <div className="text-xs text-gray-600">
-                                        <p><strong>Score Range:</strong> {score.score_range}</p>
-                                        <p><strong>Feedback Category:</strong> {score.feedback_category}</p>
-                                        <p><strong>Passing:</strong> {score.is_passing_level ? 'Yes' : 'No'}</p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-xs text-muted-foreground mt-1">No scoring levels defined.</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Buttons */}
-        <div className="flex justify-end gap-3 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" className="min-w-[180px]" disabled={!selectedRubricUuid}>
-            Assign Rubric
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
-}
-
 function AssessmentList({
   courseTitle,
   assessments,
@@ -1982,7 +1889,6 @@ function AssessmentList({
   const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isRubricModalOpen, setIsRubricModalOpen] = useState(false);
 
   const getTotalDuration = (lesson: any) => {
     const hours = lesson.duration_hours || 0;
@@ -1993,11 +1899,6 @@ function AssessmentList({
   const handleEditAssessment = (assessment: any) => {
     setSelectedAssessment(assessment);
     setIsModalOpen(true);
-  };
-
-  const handleAddRubrics = (assessment: any) => {
-    setSelectedAssessment(assessment);
-    setIsRubricModalOpen(true);
   };
 
   const handleCancel = () => {
@@ -2094,11 +1995,6 @@ function AssessmentList({
                         Edit Assessment
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem onClick={() => handleAddRubrics(assessment)}>
-                        <FilePlus className='mr-2 h-4 w-4' />
-                        Add Rubrics
-                      </DropdownMenuItem>
-
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className='text-red-600'
@@ -2163,14 +2059,6 @@ function AssessmentList({
           </ScrollArea>
         </DialogContent>
       </Dialog>
-
-      <RubricSelectDialog
-        isOpen={isRubricModalOpen}
-        onOpenChange={() => setIsRubricModalOpen(!isRubricModalOpen)}
-        courseId={selectedAssessment?.course_uuid}
-        lessonId={selectedAssessment?.uuid}
-        onCancel={() => { }}
-      />
     </div>
   );
 }
@@ -2312,29 +2200,6 @@ function AssessmentDialog({ isOpen, onOpenChange, courseId }: AddLessonDialogPro
             onCancel={() => onOpenChange(false)}
             className='px-6 pb-6'
             courseId={courseId}
-          />
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function RubricSelectDialog({ isOpen, onOpenChange }: AddLessonDialogProps) {
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='flex min-w-[500px] flex-col p-0'>
-        <DialogHeader className='border-b px-6 py-4'>
-          <DialogTitle className='text-xl'>Add/Assign Rubric</DialogTitle>
-          <DialogDescription className='text-muted-foreground text-sm'>
-            Select a rubric for grading this assessment.
-          </DialogDescription>
-        </DialogHeader>
-
-        <ScrollArea className='h-[calc(90vh-8rem)]'>
-          <RubricSelectForm
-            onCancel={() => onOpenChange(false)}
-            className='px-6 pb-6'
-            onSuccess={() => { }}
           />
         </ScrollArea>
       </DialogContent>

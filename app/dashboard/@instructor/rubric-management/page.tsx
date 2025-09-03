@@ -39,7 +39,6 @@ export default function RubricsCreationPage() {
   const instructor = useInstructor();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
-
   useEffect(() => {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
@@ -442,15 +441,6 @@ export default function RubricsCreationPage() {
       }
     );
   };
-
-  // const initMatrix = useMutation(initializeMatrixMutation())
-  // const handleInitializeMatrix = (rubricId: any) => {
-  //   initMatrix.mutate({ path: { rubricUuid: rubricId }, query: { template: 'standard' } }, {
-  //     onSuccess: (data) => {
-  //       toast.success(data?.message)
-  //     }
-  //   })
-  // }
 
   return (
     <div className='space-y-6'>

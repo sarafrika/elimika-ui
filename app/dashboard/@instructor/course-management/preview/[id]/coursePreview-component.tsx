@@ -6,32 +6,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
-    deleteQuizMutation,
     getCourseByUuidOptions,
     getCourseLessonsOptions,
-    searchAssessmentsOptions,
-    searchQuizzesOptions
+    searchAssessmentsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { DialogTitle } from '@radix-ui/react-dialog';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, BookOpenCheck, CheckCircle, Clock, MoreVertical, PenLine, PlusCircle, Trash, Users } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { BookOpen, BookOpenCheck, CheckCircle, Clock, Users } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import DeleteModal from '../../../../../../components/custom-modals/delete-modal';
-import { QuestionDialog, QuizDialog, QuizFormValues } from '../../../_components/quiz-management-form';
-import QuizQuestions from './quizQuestions';
 
 export default function CoursePreviewComponent({ instructorName }: { instructorName: string }) {
     const params = useParams();
@@ -62,13 +49,6 @@ export default function CoursePreviewComponent({ instructorName }: { instructorN
         router.push(`/dashboard/course-management/create-new-course?id=${courseId}`);
     };
 
-    const [expandedQuizIndexes, setExpandedQuizIndexes] = useState<number[]>([]);
-    const toggleQuizQuestions = (index: number) => {
-        setExpandedQuizIndexes((prev) =>
-            prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
-        );
-    };
-
     // GET COURSE BY ID
     const { data: courseDetail, isLoading } = useQuery({
         ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
@@ -92,54 +72,6 @@ export default function CoursePreviewComponent({ instructorName }: { instructorN
             query: { searchParams: { courseUuid: courseId as string }, pageable: { page: 0, size: 100 } },
         })
     );
-
-
-    // Quiz management
-    const { data: quizzesData, refetch: refetchQuizzes } = useQuery(
-        searchQuizzesOptions({ query: { searchParams: { lesson_uuid: "" }, pageable: {} }, })
-    );
-
-    const [editingQuizData, setEditingQuizData] = useState<QuizFormValues | null>(null);
-
-    const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
-    const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
-
-    const [openEditQuizModal, setOpenEditQuizModal] = useState(false)
-    const [openDeleteQuizModal, setOpenDeleteQuizModal] = useState(false)
-
-    const [openQuestionModal, setOpenQuestionModal] = useState(false)
-
-    const handleEditQuiz = (quiz: any) => {
-        setEditingQuizData(quiz)
-        setEditingLessonId(quiz.lesson_uuid)
-        setEditingQuizId(quiz?.uuid)
-        setOpenEditQuizModal(true)
-    }
-
-    const handleAddQuestions = (quiz: any) => {
-        setEditingQuizId(quiz?.uuid)
-        setOpenQuestionModal(true)
-    }
-
-    const handleDeleteQuiz = (quiz: any) => {
-        setEditingQuizId(quiz?.uuid)
-        setOpenDeleteQuizModal(true)
-    }
-
-    const quizInitialValues = {
-        ...editingQuizData
-    }
-    const deleteQuiz = useMutation(deleteQuizMutation())
-    const confirmDelete = () => {
-        deleteQuiz.mutate({ path: { uuid: editingQuizId as string } }, {
-            onSuccess: () => {
-                refetchQuizzes()
-                toast.success("Quiz deleted successfully")
-                setOpenDeleteQuizModal(false)
-            }
-        })
-    }
-
 
     if (isLoading)
         return (
@@ -277,111 +209,6 @@ export default function CoursePreviewComponent({ instructorName }: { instructorN
 
                     <Card>
                         <CardHeader className='mt-4'>
-                            <CardTitle>Lesson Quizzes</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className='mt-2 flex flex-col gap-2 space-y-4 w-full'>
-                                {quizzesData?.data?.content
-                                    ?.map((quiz: any, i: any) => (
-                                        <div
-                                            key={i}
-                                            className='flex flex-col gap-2 border-b pb-4 last:border-none last:pb-4 group relative'
-                                        >
-                                            <div className='flex flex-row gap-2'>
-                                                <div>
-                                                    <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
-                                                </div>
-                                                <div className='flex flex-col gap-2 w-full'>
-                                                    <h3 className='font-semibold'>{quiz.title}</h3>
-                                                    <RichTextRenderer htmlString={(quiz?.description as string) || 'No lesson provided'} />
-                                                    <div className='w-full flex flex-row items-center'>
-                                                        <h3 className='w-1/2 font-semibold'>
-                                                            <span>📅 Time Limit:</span> {quiz.time_limit_display}
-                                                        </h3>
-                                                        <p className='w-1/2'>Passing score: {quiz.passing_score}</p>
-                                                    </div>
-
-                                                    {/* Toggle Button */}
-                                                    <Button
-                                                        variant='link'
-                                                        size='sm'
-                                                        onClick={() => toggleQuizQuestions(i)}
-                                                        className='pl-0 self-start'
-                                                    >
-                                                        {expandedQuizIndexes.includes(i) ? 'Hide Questions' : 'Show Questions'}
-                                                    </Button>
-
-                                                    {/* Conditionally Render Questions */}
-                                                    {expandedQuizIndexes.includes(i) && (
-                                                        <QuizQuestions quizUuid={quiz.uuid} />
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Edit and Delete buttons (hidden by default) */}
-                                            <div className='absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity items-start'>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button
-                                                            variant='ghost'
-                                                            size='icon'
-                                                            className='opacity-0 transition-opacity group-hover:opacity-100'
-                                                        >
-                                                            <MoreVertical className='h-4 w-4' />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align='end'>
-                                                        <DropdownMenuItem
-                                                            onClick={() => handleEditQuiz(quiz)}
-
-                                                        >
-                                                            <PenLine className='mr-1 h-4 w-4' />
-                                                            Edit Quiz
-                                                        </DropdownMenuItem>
-
-                                                        <DropdownMenuItem onClick={() => handleAddQuestions(quiz)}>
-                                                            <PlusCircle className='mr-1 h-4 w-4' />
-                                                            Add Questions
-                                                        </DropdownMenuItem>
-
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            className='text-red-600'
-                                                            onClick={() => handleDeleteQuiz(quiz)}
-
-                                                        >
-                                                            <Trash className='mr-1 h-4 w-4' />
-                                                            Delete Quiz
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div></div>
-                                    ))}
-
-                                {quizzesData?.data?.content?.length === 0 && (
-                                    <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
-                                        <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
-                                        <p className='font-medium'>No Quiz created yet</p>
-                                        <p className='mt-1 text-sm'>
-                                            Start by creating quizes for your lessons under this course.
-                                        </p>
-                                        {/* <Button
-                                            variant='outline'
-                                            className='mt-4'
-                                            onClick={() =>
-                                                router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
-                                            }
-                                        >
-                                            + Add Lesson
-                                        </Button> */}
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className='mt-4'>
                             <CardTitle>Course Assessments</CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -458,7 +285,6 @@ export default function CoursePreviewComponent({ instructorName }: { instructorN
                                     size='lg'
                                     variant='outline'
                                     className='w-full'
-                                    // onClick={() => setOpen(true)}
                                     onClick={handleConfirm}
                                 >
                                     Edit Course
@@ -504,39 +330,6 @@ export default function CoursePreviewComponent({ instructorName }: { instructorN
                         </div>
                     </Card>
 
-                    <QuizDialog
-                        isOpen={openEditQuizModal}
-                        setOpen={setOpenEditQuizModal}
-                        lessonId={editingLessonId as string}
-                        editingQuiz={editingQuizId as string}
-                        initialValues={quizInitialValues}
-                        onCancel={() => {
-                            setEditingQuizData(null)
-                            setEditingLessonId(null)
-                            setEditingQuizId(null);
-                            setOpenEditQuizModal(false)
-                        }}
-                        onSuccess={() => refetchQuizzes()}
-                    />
-
-                    <QuestionDialog
-                        isOpen={openQuestionModal}
-                        setOpen={setOpenQuestionModal}
-                        quizId={editingQuizId as string}
-                        onCancel={() => {
-                            setOpenQuestionModal(false)
-                        }}
-                    />
-
-                    <DeleteModal
-                        open={openDeleteQuizModal}
-                        setOpen={setOpenDeleteQuizModal}
-                        title='Delete Quiz'
-                        description='Are you sure you want to delete this quiz? This action cannot be undone.'
-                        onConfirm={confirmDelete}
-                        isLoading={deleteQuiz.isPending}
-                        confirmText='Delete Quiz'
-                    />
                 </div>
             </div>
         </div>
