@@ -31,7 +31,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { UUID } from 'crypto';
 import { format } from 'date-fns';
 import { AlertCircleIcon, CalendarIcon } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useUserProfile } from '../../../../../../context/profile-context';
@@ -157,7 +157,6 @@ export default function StudentProfileGeneralForm() {
     },
     [
       profilePic.file,
-      profilePicUpload,
       resetErrors,
       student,
       updateStudentMutation,
@@ -165,17 +164,6 @@ export default function StudentProfileGeneralForm() {
       userMutation,
     ]
   );
-
-  /* async function onSubmit(data: StudentProfileType) {
-
-    } */
-
-  // //console.log(form.formState.errors);
-  const ref = useRef(submitting);
-  useEffect(() => {
-    if (ref.current) {
-    }
-  }, [submitting]);
 
   return (
     <div className='max-w-3/4'>
