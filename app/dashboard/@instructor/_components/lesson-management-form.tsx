@@ -40,7 +40,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   BookOpen,
   BookOpenCheck,
-  CheckSquare,
   ChevronDown,
   ChevronRight,
   CircleCheckBig,
@@ -373,11 +372,6 @@ function LessonList({
 
 
                         <DropdownMenuContent align='end'>
-                          <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-                            <PenLine className='mr-1 h-4 w-4' />
-                            Edit Lesson
-                          </DropdownMenuItem>
-
                           <DropdownMenuItem >
                             <Link
                               href={`/dashboard/course-management/lesson?courseId=${lesson.course_uuid}&id=${lesson.uuid}`}
@@ -385,11 +379,17 @@ function LessonList({
                               className='flex flex-row items-center'
                             >
                               <Eye className='mr-3 h-4 w-4' />
-                              Lesson management
+                              Manage Lesson
                             </Link>
                           </DropdownMenuItem>
 
-                          <DropdownMenuItem onClick={() => onAddLessonContent(lesson)}>
+                          <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
+                            <PenLine className='mr-1 h-4 w-4' />
+                            Edit Lesson
+                          </DropdownMenuItem>
+
+
+                          {/* <DropdownMenuItem onClick={() => onAddLessonContent(lesson)}>
                             <PlusCircle className='mr-1 h-4 w-4' />
                             Add Lesson Content
                           </DropdownMenuItem>
@@ -397,7 +397,7 @@ function LessonList({
                           <DropdownMenuItem onClick={() => onAddQuiz(lesson)}>
                             <CheckSquare className='mr-1 h-4 w-4' />
                             Add Quiz
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
 
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -437,14 +437,14 @@ function LessonList({
                       )}
                     </div>
 
-                    <Button
+                    {/* <Button
                       variant='link'
                       size='sm'
                       onClick={() => toggleLesson(lesson.uuid)}
                       className='pl-0'
                     >
                       {isExpanded ? 'Hide Contents' : 'View Contents'}
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
 

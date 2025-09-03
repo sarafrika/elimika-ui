@@ -36,7 +36,7 @@ const LessonDetailsPage = () => {
             {
                 id: 'course-management',
                 title: 'Course Management',
-                url: '/dashboard/course-management/drafts',
+                url: `/dashboard/course-management/create-new-course?id=${courseId}`,
             },
             {
                 id: 'lesson-management',
@@ -45,7 +45,7 @@ const LessonDetailsPage = () => {
                 isLast: true,
             },
         ]);
-    }, [replaceBreadcrumbs]);
+    }, [replaceBreadcrumbs, courseId, lessonId, lesson?.title]);
 
     // lesson content
     const { data: contentTypeList } = useQuery(
@@ -129,6 +129,13 @@ const LessonDetailsPage = () => {
 
     const [openQuestionModal, setOpenQuestionModal] = useState(false)
 
+    const handleAddQuiz = () => {
+        setEditingQuizData(null)
+        setEditingQuizId(null)
+        setEditingLessonId(lessonId)
+        setOpenEditQuizModal(true)
+    }
+
     const handleEditQuiz = (quiz: any) => {
         setEditingQuizData(quiz)
         setEditingLessonId(quiz.lesson_uuid)
@@ -146,9 +153,6 @@ const LessonDetailsPage = () => {
         setOpenDeleteQuizModal(true)
     }
 
-    const quizInitialValues = {
-        ...editingQuizData
-    }
     const deleteQuiz = useMutation(deleteQuizMutation())
     const confirmDelete = () => {
         deleteQuiz.mutate({ path: { uuid: editingQuizId as string } }, {
@@ -178,15 +182,22 @@ const LessonDetailsPage = () => {
                         </p>
                     </div>
                 </div>
-                <Button onClick={handleAddLessonContent} className='self-start sm:self-end lg:self-center'>
-                    <PlusCircle className='mr-0.5 h-4 w-4' />
-                    Add Lesson Content
-                </Button>
             </div>
 
             <Card>
                 <CardHeader>
-                    <p className='text-lg font-semibold'>Lesson Content</p>
+                    <div className="flex flex-row items-center justify-between gap-4" >
+                        <p className='text-lg font-semibold'>Lesson Content</p>
+                        <Button
+                            onClick={handleAddLessonContent}
+                            variant='secondary'
+                            size='sm'
+                            className='flex items-center gap-1 w-fit'
+                        >
+                            <PlusCircle className='h-4 w-4' />
+                            Add Content
+                        </Button>
+                    </div>
                     <p className='text-sm text-muted-foreground'>
                         Browse and manage the instructional materials, text, files, and other resources included in this lesson.
                     </p>
@@ -216,7 +227,7 @@ const LessonDetailsPage = () => {
                                         </div>
 
                                         {item.content_text && (
-                                            <div className='text-sm text-gray-700 dark:text-gray-300'>
+                                            <div className='text-sm text-gray-700 dark:text-gray-300 mt-2'>
                                                 <RichTextRenderer htmlString={item.content_text} />
                                             </div>
                                         )}
@@ -286,17 +297,28 @@ const LessonDetailsPage = () => {
                 </div>
             </Card>
 
-
             <Card>
                 <CardHeader className='mt-4'>
-                    <p className='text-lg font-semibold'>Lesson Quizzes</p>
+                    <div className="flex flex-row items-center justify-between gap-4" >
+                        <p className='text-lg font-semibold'>Lesson Quizzes</p>
+                        <Button
+                            onClick={handleAddQuiz}
+                            variant='secondary'
+                            size='sm'
+                            className='flex items-center gap-1 w-fit'
+                        >
+                            <PlusCircle className='h-4 w-4' />
+                            Add Quiz
+                        </Button>
+                    </div>
                     <p className='text-sm text-muted-foreground'>
                         Manage and review quizzes assigned to this lesson. Use quizzes to assess learners&apos; understanding and reinforce key concepts.
                     </p>
+
                 </CardHeader>
 
                 <CardContent>
-                    <div className='mt-2 flex flex-col gap-2 space-y-4 w-full'>
+                    <div className='mt-1 flex flex-col gap-2 space-y-2 w-full'>
                         {quizzesData?.data?.content
                             ?.map((quiz: any, i: any) => (
                                 <div
@@ -419,14 +441,19 @@ const LessonDetailsPage = () => {
                 setOpen={setOpenEditQuizModal}
                 lessonId={editingLessonId as string}
                 editingQuiz={editingQuizId as string}
-                initialValues={quizInitialValues}
+                initialValues={editingQuizData as any}
                 onCancel={() => {
                     setEditingQuizData(null)
                     setEditingLessonId(null)
                     setEditingQuizId(null);
                     setOpenEditQuizModal(false)
                 }}
-                onSuccess={() => refetchQuizzes()}
+                onSuccess={() => {
+                    setEditingQuizData(null)
+                    setEditingLessonId(null)
+                    setEditingQuizId(null);
+                    refetchQuizzes()
+                }}
             />
 
             <QuestionDialog

@@ -79,7 +79,7 @@ export default function RubricsCreationPage() {
     if (!rubricDataIsLoading && !isEqual(memoizedRubricsWithDetails, rubrics)) {
       setRubrics(memoizedRubricsWithDetails);
     }
-  }, [memoizedRubricsWithDetails, rubricDataIsLoading]);
+  }, [memoizedRubricsWithDetails, rubricDataIsLoading, rubrics]);
 
   const [editingRubric, setEditingRubric] = useState<RubricDetailsFormValues | null>(null);
   const [editingCriterion, setEditingCriterion] = useState<RubricCriteriaFormValues | null>(null);
