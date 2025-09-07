@@ -40,6 +40,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   BookOpen,
   BookOpenCheck,
+  CheckSquare,
   ChevronDown,
   ChevronRight,
   CircleCheckBig,
@@ -239,9 +240,8 @@ type LessonListProps = {
   onEditLesson: (lesson: any) => void;
   onDeleteLesson: (lessonId: string) => void;
   onReorderLessons: (newLessons: any[]) => void;
-  onAddQuiz: (lesson: any) => void
+  onAddAssignment: (lesson: any) => void
   // lesson contents
-  // lessonContentsMap: Map<string, LessonContent[]>
   lessonContentsMap: Map<string, any[]>;
   onAddLessonContent: (lesson: any) => void;
   onEditLessonContent: (item: any) => void;
@@ -261,7 +261,7 @@ function LessonList({
   onEditLesson,
   onDeleteLesson,
   onReorderLessons,
-  onAddQuiz,
+  onAddAssignment,
   // lesson contents
   lessonContentsMap,
   onAddLessonContent,
@@ -388,6 +388,10 @@ function LessonList({
                             Edit Lesson
                           </DropdownMenuItem>
 
+                          <DropdownMenuItem onClick={() => onAddAssignment(lesson)}>
+                            <CheckSquare className='mr-1 h-4 w-4' />
+                            Add Assignment
+                          </DropdownMenuItem>
 
                           {/* <DropdownMenuItem onClick={() => onAddLessonContent(lesson)}>
                             <PlusCircle className='mr-1 h-4 w-4' />
