@@ -42,8 +42,8 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AssignmentDialog } from '../../../_components/assignment-management-frm';
 import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
-import { QuizDialog } from '../../../_components/quiz-management-form';
 
 export default function CourseCreationPage() {
   const router = useRouter();
@@ -96,10 +96,10 @@ export default function CourseCreationPage() {
     setSelectedContent(content);
   };
 
-  const [addQuizModal, setAddQuizModal] = useState(false)
-  const openAddQuizModal = (lesson: any) => {
+  const [addAssignmentModal, setAddAssignmentModal] = useState(false)
+  const openAddAssignmentModal = (lesson: any) => {
     setSelectedLesson(lesson)
-    setAddQuizModal(true);
+    setAddAssignmentModal(true);
   }
 
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
@@ -422,13 +422,13 @@ export default function CourseCreationPage() {
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
               onReorderLessons={() => { }}
-              // quizes
-              onAddQuiz={openAddQuizModal}
               // lesson content
               lessonContentsMap={lessonContentMap}
               onAddLessonContent={openAddContentModal}
               onEditLessonContent={openEditContentModal}
               onDeleteLessonContent={handleDeleteContent}
+              // assignment
+              onAddAssignment={openAddAssignmentModal}
             />
 
             <LessonDialog
@@ -491,19 +491,12 @@ export default function CourseCreationPage() {
               initialValues={contentInitialValues}
             />
 
-            <QuizDialog
-              isOpen={addQuizModal}
-              setOpen={setAddQuizModal}
-              lessonId={selectedLesson?.uuid as string || (selectedContent?.lesson_uuid as string)}
-              onCancel={() => { setSelectedLesson(null); setAddQuizModal(false) }}
+            <AssignmentDialog isOpen={addAssignmentModal}
+              setOpen={setAddAssignmentModal}
+              lessonId={selectedLesson?.uuid as string}
+              onSuccess={() => { setSelectedLesson(null); setAddAssignmentModal(false) }}
+              onCancel={() => { setSelectedLesson(null); setAddAssignmentModal(false) }}
             />
-
-            {/* <AssessmentDialog
-              isOpen={addAssessmentModalOpen}
-              onOpenChange={setAddAssessmentModalOpen}
-              courseId={createdCourseId ? createdCourseId : (courseId as string)}
-              onCancel={() => setAddAssessmentModalOpen(false)}
-            /> */}
           </div>
         </StepperContent>
 

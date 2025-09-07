@@ -670,7 +670,7 @@ interface AddQuizDialogProps {
     onCancel: () => any;
 }
 
-function QuizDialog({ isOpen, setOpen, editingQuiz, initialValues, lessonId, onSuccess }: AddQuizDialogProps) {
+function QuizDialog({ isOpen, setOpen, editingQuiz, initialValues, lessonId, onSuccess, onCancel }: AddQuizDialogProps) {
     return (
         <Dialog open={isOpen} onOpenChange={setOpen}>
             <DialogContent className='flex max-w-6xl flex-col p-0'>
@@ -683,11 +683,11 @@ function QuizDialog({ isOpen, setOpen, editingQuiz, initialValues, lessonId, onS
 
                 <ScrollArea className='h-[calc(90vh-12rem)]'>
                     <QuizForm
-                        onCancel={() => setOpen(false)}
+                        onCancel={onCancel}
                         initialValues={initialValues as any}
                         className='px-6 pb-6'
-                        quizId={editingQuiz ?? ''}
-                        lessonId={lessonId || ''}
+                        quizId={editingQuiz}
+                        lessonId={lessonId as string}
                         onSuccess={onSuccess}
                     />
                 </ScrollArea>

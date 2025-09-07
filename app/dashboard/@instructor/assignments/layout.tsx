@@ -12,7 +12,7 @@ export default function AssignmentLayout({ children }: AssignmentLayoutProps) {
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Manage Assignments</h2>
-          <p className='text-muted-foreground'>Create and track assignments.</p>
+          <p className='text-muted-foreground'>Manage and track assignments.</p>
         </div>
       </div>
       <Separator />

@@ -12,7 +12,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MoreVertical, PenLine, PlusCircle, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { OptionDialog, QuestionDialog, QuestionFormValues } from '../../../_components/quiz-management-form';
+import { OptionDialog, QuestionDialog, QuestionFormValues } from '../../_components/quiz-management-form';
+
 
 type QuestionItemProps = {
     quizUuid: string;
