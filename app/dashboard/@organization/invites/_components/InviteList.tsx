@@ -2,7 +2,6 @@
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { BlocksIcon, Check, SendIcon } from "lucide-react";
-import { useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "../../../../../components/ui/button";
 import { Card, CardContent } from "../../../../../components/ui/card";
@@ -37,6 +36,8 @@ export default function InviteList({
             query: {
                 canceller_uuid: user!.uuid!
             }
+        }, {
+            onSuccess: () => queryClient.invalidateQueries({ queryKey: queryOption.queryKey })
         })
     }
 
@@ -49,6 +50,8 @@ export default function InviteList({
             query: {
                 token
             }
+        }, {
+            onSuccess: () => queryClient.invalidateQueries({ queryKey: queryOption.queryKey })
         })
     }
 
@@ -61,6 +64,8 @@ export default function InviteList({
             query: {
                 token
             }
+        }, {
+            onSuccess: () => queryClient.invalidateQueries({ queryKey: queryOption.queryKey })
         })
     }
 
@@ -82,15 +87,8 @@ export default function InviteList({
         else {
             toast.success("Invite resent")
         }
-    }
-
-    useEffect(() => {
         queryClient.invalidateQueries({ queryKey: queryOption.queryKey })
-    }, [
-        cancelMutation.isSuccess,
-        acceptMutation.isSuccess,
-        declineMutation.isSuccess
-    ])
+    }
 
     return (
         <Card>

@@ -1,6 +1,7 @@
 "use client"
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "lucide-react";
+import Image from "next/image";
 import { Card, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../../../components/ui/table";
 import { Course, getAllCourses } from "../../../../../services/client";
@@ -33,7 +34,7 @@ export default function Courses({ user_uuid, viewType = "list" }: { user_uuid: s
                         <CardTitle>{course.name}</CardTitle>
                     </CardHeader>
 
-                    {course.thumbnail_url && course.thumbnail_url.length > 0 ? <img src={course.thumbnail_url} className="w-full object-fit" /> : <Book size={256} color="gray-500" />}
+                    {course.thumbnail_url && course.thumbnail_url.length > 0 ? <Image alt={course.name} src={course.thumbnail_url} className="w-full object-fit" /> : <Book size={256} color="gray-500" />}
                 </Card>)
             }
         </div> : <Table className="w-full table table-striped">
@@ -46,7 +47,7 @@ export default function Courses({ user_uuid, viewType = "list" }: { user_uuid: s
             <TableBody>
                 {courses.map(course => <TableRow key={course.uuid}>
                     <TableCell>
-                        {course.thumbnail_url && course.thumbnail_url.length > 0 ? <img className="w-10 h-10 object-fit" src={course.thumbnail_url} /> : <Book size={32} color="gray-500" />}
+                        {course.thumbnail_url && course.thumbnail_url.length > 0 ? <Image alt={course.name} className="w-10 h-10 object-fit" src={course.thumbnail_url} /> : <Book size={32} color="gray-500" />}
                     </TableCell>
                     <TableCell>
                         {course.name}
