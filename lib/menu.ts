@@ -14,6 +14,7 @@ import {
   Layers,
   LayoutDashboard,
   LibraryIcon,
+  Mails,
   Settings,
   Star,
   UserCircle,
@@ -155,7 +156,7 @@ export default {
     {
       title: 'Invites',
       url: '/dashboard/invites',
-      icon: BookOpen,
+      icon: Mails,
     },
     {
       title: 'Programs',
@@ -239,7 +240,7 @@ export default {
     {
       title: 'Invites',
       url: '/dashboard/invites',
-      icon: BookOpen,
+      icon: Mails,
     },
     {
       title: 'Classes',

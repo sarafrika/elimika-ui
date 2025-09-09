@@ -42,7 +42,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { AssignmentDialog } from '../../../_components/assignment-management-frm';
+import { AssignmentDialog } from '../../../_components/assignment-management-form';
 import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
 
 export default function CourseCreationPage() {

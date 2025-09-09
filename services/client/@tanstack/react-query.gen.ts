@@ -78,11 +78,23 @@ import {
   deleteCategory,
   getCategoryByUuid,
   updateCategory,
+  deactivateClassDefinition,
+  getClassDefinition,
+  updateClassDefinition,
+  cancelRecurringClassSchedule,
+  scheduleRecurringClassFromDefinition,
+  updateRecurringClassSchedule,
+  deleteClassRecurrencePattern,
+  getClassRecurrencePattern,
+  updateClassRecurrencePattern,
   deleteCertificate,
   getCertificateByUuid,
   updateCertificate,
   deleteCertificateTemplate,
   updateCertificateTemplate,
+  deleteInstructorAvailabilitySlot,
+  getInstructorAvailabilitySlot,
+  updateInstructorAvailabilitySlot,
   deleteAssignment,
   getAssignmentByUuid,
   updateAssignment,
@@ -91,6 +103,9 @@ import {
   uploadProfileImage,
   getAllTrainingBranches,
   createTrainingBranch,
+  checkStudentConflict,
+  scheduleClass,
+  checkInstructorConflict,
   getAllStudents,
   createStudent,
   getAllAssessmentRubrics,
@@ -146,6 +161,7 @@ import {
   getInstructorDocuments,
   addInstructorDocument,
   verifyDocument,
+  enrollStudent,
   getAllCourses,
   createCourse,
   unpublishCourse,
@@ -174,6 +190,8 @@ import {
   createContentType,
   getAllCategories,
   createCategory,
+  createClassDefinition,
+  createClassRecurrencePattern,
   getAllCertificates,
   createCertificate,
   revokeCertificate,
@@ -182,12 +200,20 @@ import {
   createCertificateTemplate,
   generateProgramCertificate,
   generateCourseCertificate,
+  createInstructorAvailabilitySlot,
+  setInstructorWeeklyAvailability,
+  setInstructorMonthlyAvailability,
+  setInstructorDailyAvailability,
+  setInstructorCustomAvailability,
+  blockInstructorTime,
   getAllAssignments,
   createAssignment,
   submitAssignment,
   returnSubmission,
   gradeSubmission,
+  updateScheduledInstanceStatus,
   reorderScoringLevels,
+  markAttendance,
   getAllUsers,
   getInvitationsSentByUser,
   getPendingInvitationsForUser,
@@ -195,6 +221,9 @@ import {
   getProfileImage,
   search1,
   getTrainingBranchesByOrganisation1,
+  cancelScheduledClass,
+  getScheduledInstance,
+  getInstructorSchedule,
   searchStudents,
   validateMatrix,
   getPassingScoringLevels,
@@ -249,6 +278,12 @@ import {
   searchExperience,
   searchEducation,
   searchDocuments,
+  cancelEnrollment,
+  getEnrollment,
+  getStudentSchedule,
+  getEnrollmentsForInstance,
+  getEnrollmentCount,
+  hasCapacityForEnrollment,
   getStatusTransitions,
   checkRubricAssociation,
   getPrimaryRubric,
@@ -275,6 +310,12 @@ import {
   getSubCategories,
   searchCategories,
   getRootCategories,
+  previewRecurringClassSchedule,
+  checkClassSchedulingConflicts,
+  getClassDefinitionsForOrganisation,
+  getClassDefinitionsForInstructor,
+  getClassDefinitionsForCourse,
+  getAllActiveClassDefinitions,
   verifyCertificate,
   searchCertificateTemplates,
   getStudentCertificates,
@@ -284,6 +325,13 @@ import {
   getProgramCertificates1,
   getCertificateByNumber,
   getCourseCertificates,
+  clearInstructorAvailability,
+  getInstructorAvailability,
+  findInstructorAvailableSlots,
+  getInstructorAvailabilityForDate,
+  checkInstructorAvailability,
+  getInstructorBlockedSlots,
+  getInstructorAvailableSlots,
   getAssignmentSubmissions,
   getHighPerformanceSubmissions,
   getAverageScore,
@@ -489,6 +537,29 @@ import type {
   UpdateCategoryData,
   UpdateCategoryError,
   UpdateCategoryResponse,
+  DeactivateClassDefinitionData,
+  DeactivateClassDefinitionError,
+  DeactivateClassDefinitionResponse,
+  GetClassDefinitionData,
+  UpdateClassDefinitionData,
+  UpdateClassDefinitionError,
+  UpdateClassDefinitionResponse,
+  CancelRecurringClassScheduleData,
+  CancelRecurringClassScheduleError,
+  CancelRecurringClassScheduleResponse,
+  ScheduleRecurringClassFromDefinitionData,
+  ScheduleRecurringClassFromDefinitionError,
+  ScheduleRecurringClassFromDefinitionResponse,
+  UpdateRecurringClassScheduleData,
+  UpdateRecurringClassScheduleError,
+  UpdateRecurringClassScheduleResponse,
+  DeleteClassRecurrencePatternData,
+  DeleteClassRecurrencePatternError,
+  DeleteClassRecurrencePatternResponse,
+  GetClassRecurrencePatternData,
+  UpdateClassRecurrencePatternData,
+  UpdateClassRecurrencePatternError,
+  UpdateClassRecurrencePatternResponse,
   DeleteCertificateData,
   DeleteCertificateError,
   DeleteCertificateResponse,
@@ -501,6 +572,13 @@ import type {
   UpdateCertificateTemplateData,
   UpdateCertificateTemplateError,
   UpdateCertificateTemplateResponse,
+  DeleteInstructorAvailabilitySlotData,
+  DeleteInstructorAvailabilitySlotError,
+  DeleteInstructorAvailabilitySlotResponse,
+  GetInstructorAvailabilitySlotData,
+  UpdateInstructorAvailabilitySlotData,
+  UpdateInstructorAvailabilitySlotError,
+  UpdateInstructorAvailabilitySlotResponse,
   DeleteAssignmentData,
   DeleteAssignmentError,
   DeleteAssignmentResponse,
@@ -523,6 +601,15 @@ import type {
   CreateTrainingBranchData,
   CreateTrainingBranchError,
   CreateTrainingBranchResponse,
+  CheckStudentConflictData,
+  CheckStudentConflictError,
+  CheckStudentConflictResponse,
+  ScheduleClassData,
+  ScheduleClassError,
+  ScheduleClassResponse,
+  CheckInstructorConflictData,
+  CheckInstructorConflictError,
+  CheckInstructorConflictResponse,
   GetAllStudentsData,
   GetAllStudentsError,
   GetAllStudentsResponse,
@@ -676,6 +763,9 @@ import type {
   VerifyDocumentData,
   VerifyDocumentError,
   VerifyDocumentResponse,
+  EnrollStudentData,
+  EnrollStudentError,
+  EnrollStudentResponse,
   GetAllCoursesData,
   GetAllCoursesError,
   GetAllCoursesResponse,
@@ -756,6 +846,12 @@ import type {
   CreateCategoryData,
   CreateCategoryError,
   CreateCategoryResponse,
+  CreateClassDefinitionData,
+  CreateClassDefinitionError,
+  CreateClassDefinitionResponse,
+  CreateClassRecurrencePatternData,
+  CreateClassRecurrencePatternError,
+  CreateClassRecurrencePatternResponse,
   GetAllCertificatesData,
   GetAllCertificatesError,
   GetAllCertificatesResponse,
@@ -780,6 +876,24 @@ import type {
   GenerateCourseCertificateData,
   GenerateCourseCertificateError,
   GenerateCourseCertificateResponse,
+  CreateInstructorAvailabilitySlotData,
+  CreateInstructorAvailabilitySlotError,
+  CreateInstructorAvailabilitySlotResponse,
+  SetInstructorWeeklyAvailabilityData,
+  SetInstructorWeeklyAvailabilityError,
+  SetInstructorWeeklyAvailabilityResponse,
+  SetInstructorMonthlyAvailabilityData,
+  SetInstructorMonthlyAvailabilityError,
+  SetInstructorMonthlyAvailabilityResponse,
+  SetInstructorDailyAvailabilityData,
+  SetInstructorDailyAvailabilityError,
+  SetInstructorDailyAvailabilityResponse,
+  SetInstructorCustomAvailabilityData,
+  SetInstructorCustomAvailabilityError,
+  SetInstructorCustomAvailabilityResponse,
+  BlockInstructorTimeData,
+  BlockInstructorTimeError,
+  BlockInstructorTimeResponse,
   GetAllAssignmentsData,
   GetAllAssignmentsError,
   GetAllAssignmentsResponse,
@@ -795,9 +909,15 @@ import type {
   GradeSubmissionData,
   GradeSubmissionError,
   GradeSubmissionResponse,
+  UpdateScheduledInstanceStatusData,
+  UpdateScheduledInstanceStatusError,
+  UpdateScheduledInstanceStatusResponse,
   ReorderScoringLevelsData,
   ReorderScoringLevelsError,
   ReorderScoringLevelsResponse,
+  MarkAttendanceData,
+  MarkAttendanceError,
+  MarkAttendanceResponse,
   GetAllUsersData,
   GetAllUsersError,
   GetAllUsersResponse,
@@ -813,6 +933,13 @@ import type {
   GetTrainingBranchesByOrganisation1Data,
   GetTrainingBranchesByOrganisation1Error,
   GetTrainingBranchesByOrganisation1Response,
+  CancelScheduledClassData,
+  CancelScheduledClassError,
+  CancelScheduledClassResponse,
+  GetScheduledInstanceData,
+  GetInstructorScheduleData,
+  GetInstructorScheduleError,
+  GetInstructorScheduleResponse,
   SearchStudentsData,
   SearchStudentsError,
   SearchStudentsResponse,
@@ -933,6 +1060,16 @@ import type {
   SearchDocumentsData,
   SearchDocumentsError,
   SearchDocumentsResponse,
+  CancelEnrollmentData,
+  CancelEnrollmentError,
+  CancelEnrollmentResponse,
+  GetEnrollmentData,
+  GetStudentScheduleData,
+  GetStudentScheduleError,
+  GetStudentScheduleResponse,
+  GetEnrollmentsForInstanceData,
+  GetEnrollmentCountData,
+  HasCapacityForEnrollmentData,
   GetStatusTransitionsData,
   CheckRubricAssociationData,
   GetPrimaryRubricData,
@@ -991,6 +1128,12 @@ import type {
   SearchCategoriesError,
   SearchCategoriesResponse,
   GetRootCategoriesData,
+  PreviewRecurringClassScheduleData,
+  CheckClassSchedulingConflictsData,
+  GetClassDefinitionsForOrganisationData,
+  GetClassDefinitionsForInstructorData,
+  GetClassDefinitionsForCourseData,
+  GetAllActiveClassDefinitionsData,
   VerifyCertificateData,
   SearchCertificateTemplatesData,
   SearchCertificateTemplatesError,
@@ -1004,6 +1147,17 @@ import type {
   GetProgramCertificates1Data,
   GetCertificateByNumberData,
   GetCourseCertificatesData,
+  ClearInstructorAvailabilityData,
+  ClearInstructorAvailabilityError,
+  ClearInstructorAvailabilityResponse,
+  GetInstructorAvailabilityData,
+  FindInstructorAvailableSlotsData,
+  GetInstructorAvailabilityForDateData,
+  CheckInstructorAvailabilityData,
+  CheckInstructorAvailabilityError,
+  CheckInstructorAvailabilityResponse,
+  GetInstructorBlockedSlotsData,
+  GetInstructorAvailableSlotsData,
   GetAssignmentSubmissionsData,
   GetHighPerformanceSubmissionsData,
   GetAverageScoreData,
@@ -3078,6 +3232,264 @@ export const updateCategoryMutation = (
 };
 
 /**
+ * Deactivate a class definition by UUID
+ */
+export const deactivateClassDefinitionMutation = (
+  options?: Partial<Options<DeactivateClassDefinitionData>>
+): UseMutationOptions<
+  DeactivateClassDefinitionResponse,
+  DeactivateClassDefinitionError,
+  Options<DeactivateClassDefinitionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeactivateClassDefinitionResponse,
+    DeactivateClassDefinitionError,
+    Options<DeactivateClassDefinitionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deactivateClassDefinition({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getClassDefinitionQueryKey = (options: Options<GetClassDefinitionData>) =>
+  createQueryKey('getClassDefinition', options);
+
+/**
+ * Get a class definition by UUID
+ */
+export const getClassDefinitionOptions = (options: Options<GetClassDefinitionData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassDefinition({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassDefinitionQueryKey(options),
+  });
+};
+
+/**
+ * Update a class definition by UUID
+ */
+export const updateClassDefinitionMutation = (
+  options?: Partial<Options<UpdateClassDefinitionData>>
+): UseMutationOptions<
+  UpdateClassDefinitionResponse,
+  UpdateClassDefinitionError,
+  Options<UpdateClassDefinitionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateClassDefinitionResponse,
+    UpdateClassDefinitionError,
+    Options<UpdateClassDefinitionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateClassDefinition({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Cancel recurring schedule for a class definition
+ */
+export const cancelRecurringClassScheduleMutation = (
+  options?: Partial<Options<CancelRecurringClassScheduleData>>
+): UseMutationOptions<
+  CancelRecurringClassScheduleResponse,
+  CancelRecurringClassScheduleError,
+  Options<CancelRecurringClassScheduleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CancelRecurringClassScheduleResponse,
+    CancelRecurringClassScheduleError,
+    Options<CancelRecurringClassScheduleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await cancelRecurringClassSchedule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const scheduleRecurringClassFromDefinitionQueryKey = (
+  options: Options<ScheduleRecurringClassFromDefinitionData>
+) => createQueryKey('scheduleRecurringClassFromDefinition', options);
+
+/**
+ * Schedule recurring classes from a class definition
+ */
+export const scheduleRecurringClassFromDefinitionOptions = (
+  options: Options<ScheduleRecurringClassFromDefinitionData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await scheduleRecurringClassFromDefinition({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: scheduleRecurringClassFromDefinitionQueryKey(options),
+  });
+};
+
+/**
+ * Schedule recurring classes from a class definition
+ */
+export const scheduleRecurringClassFromDefinitionMutation = (
+  options?: Partial<Options<ScheduleRecurringClassFromDefinitionData>>
+): UseMutationOptions<
+  ScheduleRecurringClassFromDefinitionResponse,
+  ScheduleRecurringClassFromDefinitionError,
+  Options<ScheduleRecurringClassFromDefinitionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ScheduleRecurringClassFromDefinitionResponse,
+    ScheduleRecurringClassFromDefinitionError,
+    Options<ScheduleRecurringClassFromDefinitionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await scheduleRecurringClassFromDefinition({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update recurring schedule for a class definition
+ */
+export const updateRecurringClassScheduleMutation = (
+  options?: Partial<Options<UpdateRecurringClassScheduleData>>
+): UseMutationOptions<
+  UpdateRecurringClassScheduleResponse,
+  UpdateRecurringClassScheduleError,
+  Options<UpdateRecurringClassScheduleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateRecurringClassScheduleResponse,
+    UpdateRecurringClassScheduleError,
+    Options<UpdateRecurringClassScheduleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateRecurringClassSchedule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a recurrence pattern by UUID
+ */
+export const deleteClassRecurrencePatternMutation = (
+  options?: Partial<Options<DeleteClassRecurrencePatternData>>
+): UseMutationOptions<
+  DeleteClassRecurrencePatternResponse,
+  DeleteClassRecurrencePatternError,
+  Options<DeleteClassRecurrencePatternData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteClassRecurrencePatternResponse,
+    DeleteClassRecurrencePatternError,
+    Options<DeleteClassRecurrencePatternData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteClassRecurrencePattern({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getClassRecurrencePatternQueryKey = (
+  options: Options<GetClassRecurrencePatternData>
+) => createQueryKey('getClassRecurrencePattern', options);
+
+/**
+ * Get a recurrence pattern by UUID
+ */
+export const getClassRecurrencePatternOptions = (
+  options: Options<GetClassRecurrencePatternData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassRecurrencePattern({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassRecurrencePatternQueryKey(options),
+  });
+};
+
+/**
+ * Update a recurrence pattern by UUID
+ */
+export const updateClassRecurrencePatternMutation = (
+  options?: Partial<Options<UpdateClassRecurrencePatternData>>
+): UseMutationOptions<
+  UpdateClassRecurrencePatternResponse,
+  UpdateClassRecurrencePatternError,
+  Options<UpdateClassRecurrencePatternData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateClassRecurrencePatternResponse,
+    UpdateClassRecurrencePatternError,
+    Options<UpdateClassRecurrencePatternData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateClassRecurrencePattern({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete certificate
  * Permanently removes a certificate record.
  */
@@ -3201,6 +3613,84 @@ export const updateCertificateTemplateMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCertificateTemplate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete an availability slot
+ */
+export const deleteInstructorAvailabilitySlotMutation = (
+  options?: Partial<Options<DeleteInstructorAvailabilitySlotData>>
+): UseMutationOptions<
+  DeleteInstructorAvailabilitySlotResponse,
+  DeleteInstructorAvailabilitySlotError,
+  Options<DeleteInstructorAvailabilitySlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteInstructorAvailabilitySlotResponse,
+    DeleteInstructorAvailabilitySlotError,
+    Options<DeleteInstructorAvailabilitySlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteInstructorAvailabilitySlot({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getInstructorAvailabilitySlotQueryKey = (
+  options: Options<GetInstructorAvailabilitySlotData>
+) => createQueryKey('getInstructorAvailabilitySlot', options);
+
+/**
+ * Get an availability slot by UUID
+ */
+export const getInstructorAvailabilitySlotOptions = (
+  options: Options<GetInstructorAvailabilitySlotData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorAvailabilitySlot({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorAvailabilitySlotQueryKey(options),
+  });
+};
+
+/**
+ * Update an existing availability slot
+ */
+export const updateInstructorAvailabilitySlotMutation = (
+  options?: Partial<Options<UpdateInstructorAvailabilitySlotData>>
+): UseMutationOptions<
+  UpdateInstructorAvailabilitySlotResponse,
+  UpdateInstructorAvailabilitySlotError,
+  Options<UpdateInstructorAvailabilitySlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateInstructorAvailabilitySlotResponse,
+    UpdateInstructorAvailabilitySlotError,
+    Options<UpdateInstructorAvailabilitySlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateInstructorAvailabilitySlot({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -3580,6 +4070,146 @@ export const createTrainingBranchMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createTrainingBranch({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const checkStudentConflictQueryKey = (options: Options<CheckStudentConflictData>) =>
+  createQueryKey('checkStudentConflict', options);
+
+/**
+ * Check if a student has enrollment conflicts
+ */
+export const checkStudentConflictOptions = (options: Options<CheckStudentConflictData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await checkStudentConflict({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: checkStudentConflictQueryKey(options),
+  });
+};
+
+/**
+ * Check if a student has enrollment conflicts
+ */
+export const checkStudentConflictMutation = (
+  options?: Partial<Options<CheckStudentConflictData>>
+): UseMutationOptions<
+  CheckStudentConflictResponse,
+  CheckStudentConflictError,
+  Options<CheckStudentConflictData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CheckStudentConflictResponse,
+    CheckStudentConflictError,
+    Options<CheckStudentConflictData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await checkStudentConflict({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const scheduleClassQueryKey = (options: Options<ScheduleClassData>) =>
+  createQueryKey('scheduleClass', options);
+
+/**
+ * Schedule a new class instance
+ */
+export const scheduleClassOptions = (options: Options<ScheduleClassData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await scheduleClass({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: scheduleClassQueryKey(options),
+  });
+};
+
+/**
+ * Schedule a new class instance
+ */
+export const scheduleClassMutation = (
+  options?: Partial<Options<ScheduleClassData>>
+): UseMutationOptions<ScheduleClassResponse, ScheduleClassError, Options<ScheduleClassData>> => {
+  const mutationOptions: UseMutationOptions<
+    ScheduleClassResponse,
+    ScheduleClassError,
+    Options<ScheduleClassData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await scheduleClass({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const checkInstructorConflictQueryKey = (options: Options<CheckInstructorConflictData>) =>
+  createQueryKey('checkInstructorConflict', options);
+
+/**
+ * Check if an instructor has scheduling conflicts
+ */
+export const checkInstructorConflictOptions = (options: Options<CheckInstructorConflictData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await checkInstructorConflict({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: checkInstructorConflictQueryKey(options),
+  });
+};
+
+/**
+ * Check if an instructor has scheduling conflicts
+ */
+export const checkInstructorConflictMutation = (
+  options?: Partial<Options<CheckInstructorConflictData>>
+): UseMutationOptions<
+  CheckInstructorConflictResponse,
+  CheckInstructorConflictError,
+  Options<CheckInstructorConflictData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CheckInstructorConflictResponse,
+    CheckInstructorConflictError,
+    Options<CheckInstructorConflictData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await checkInstructorConflict({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -5341,8 +5971,8 @@ export const createBranchInvitationQueryKey = (options: Options<CreateBranchInvi
   createQueryKey('createBranchInvitation', options);
 
 /**
- * Create training branch invitation
- * Creates and sends an email invitation for a user to join a specific training branch with a defined role. This is a specialized invitation that automatically determines the parent organization from the branch. The invitation email will include branch-specific information and location details.
+ * Create an invitation to a specific training branch
+ * Creates and sends an email invitation for a user to join a specific training branch with a defined role. This is the sole endpoint for creating branch-specific invitations. The parent organization is inferred from the branch.
  */
 export const createBranchInvitationOptions = (options: Options<CreateBranchInvitationData>) => {
   return queryOptions({
@@ -5360,8 +5990,8 @@ export const createBranchInvitationOptions = (options: Options<CreateBranchInvit
 };
 
 /**
- * Create training branch invitation
- * Creates and sends an email invitation for a user to join a specific training branch with a defined role. This is a specialized invitation that automatically determines the parent organization from the branch. The invitation email will include branch-specific information and location details.
+ * Create an invitation to a specific training branch
+ * Creates and sends an email invitation for a user to join a specific training branch with a defined role. This is the sole endpoint for creating branch-specific invitations. The parent organization is inferred from the branch.
  */
 export const createBranchInvitationMutation = (
   options?: Partial<Options<CreateBranchInvitationData>>
@@ -5417,8 +6047,8 @@ export const createOrganizationInvitationQueryKey = (
 ) => createQueryKey('createOrganizationInvitation', options);
 
 /**
- * Create organization invitation
- * Creates and sends an email invitation for a user to join this specific organization with a defined role. If a training branch UUID is provided, the invitation will be branch-specific within the organization. The invitation email will be sent to the recipient with acceptance and decline links containing the unique token.
+ * Create an invitation to the top-level organization
+ * Creates and sends an email invitation for a user to join the organization itself, without assignment to a specific branch. The user will have the specified role at the organization level. Use the '/{uuid}/training-branches/{branchUuid}/invitations' endpoint to invite a user directly to a branch.
  */
 export const createOrganizationInvitationOptions = (
   options: Options<CreateOrganizationInvitationData>
@@ -5438,8 +6068,8 @@ export const createOrganizationInvitationOptions = (
 };
 
 /**
- * Create organization invitation
- * Creates and sends an email invitation for a user to join this specific organization with a defined role. If a training branch UUID is provided, the invitation will be branch-specific within the organization. The invitation email will be sent to the recipient with acceptance and decline links containing the unique token.
+ * Create an invitation to the top-level organization
+ * Creates and sends an email invitation for a user to join the organization itself, without assignment to a specific branch. The user will have the specified role at the organization level. Use the '/{uuid}/training-branches/{branchUuid}/invitations' endpoint to invite a user directly to a branch.
  */
 export const createOrganizationInvitationMutation = (
   options?: Partial<Options<CreateOrganizationInvitationData>>
@@ -6510,6 +7140,50 @@ export const verifyDocumentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await verifyDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const enrollStudentQueryKey = (options: Options<EnrollStudentData>) =>
+  createQueryKey('enrollStudent', options);
+
+/**
+ * Enroll a student in a scheduled class instance
+ */
+export const enrollStudentOptions = (options: Options<EnrollStudentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await enrollStudent({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: enrollStudentQueryKey(options),
+  });
+};
+
+/**
+ * Enroll a student in a scheduled class instance
+ */
+export const enrollStudentMutation = (
+  options?: Partial<Options<EnrollStudentData>>
+): UseMutationOptions<EnrollStudentResponse, EnrollStudentError, Options<EnrollStudentData>> => {
+  const mutationOptions: UseMutationOptions<
+    EnrollStudentResponse,
+    EnrollStudentError,
+    Options<EnrollStudentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await enrollStudent({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -8193,6 +8867,105 @@ export const createCategoryMutation = (
   return mutationOptions;
 };
 
+export const createClassDefinitionQueryKey = (options: Options<CreateClassDefinitionData>) =>
+  createQueryKey('createClassDefinition', options);
+
+/**
+ * Create a new class definition
+ */
+export const createClassDefinitionOptions = (options: Options<CreateClassDefinitionData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createClassDefinition({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createClassDefinitionQueryKey(options),
+  });
+};
+
+/**
+ * Create a new class definition
+ */
+export const createClassDefinitionMutation = (
+  options?: Partial<Options<CreateClassDefinitionData>>
+): UseMutationOptions<
+  CreateClassDefinitionResponse,
+  CreateClassDefinitionError,
+  Options<CreateClassDefinitionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateClassDefinitionResponse,
+    CreateClassDefinitionError,
+    Options<CreateClassDefinitionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createClassDefinition({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const createClassRecurrencePatternQueryKey = (
+  options: Options<CreateClassRecurrencePatternData>
+) => createQueryKey('createClassRecurrencePattern', options);
+
+/**
+ * Create a new recurrence pattern
+ */
+export const createClassRecurrencePatternOptions = (
+  options: Options<CreateClassRecurrencePatternData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createClassRecurrencePattern({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createClassRecurrencePatternQueryKey(options),
+  });
+};
+
+/**
+ * Create a new recurrence pattern
+ */
+export const createClassRecurrencePatternMutation = (
+  options?: Partial<Options<CreateClassRecurrencePatternData>>
+): UseMutationOptions<
+  CreateClassRecurrencePatternResponse,
+  CreateClassRecurrencePatternError,
+  Options<CreateClassRecurrencePatternData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateClassRecurrencePatternResponse,
+    CreateClassRecurrencePatternError,
+    Options<CreateClassRecurrencePatternData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createClassRecurrencePattern({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAllCertificatesQueryKey = (options: Options<GetAllCertificatesData>) =>
   createQueryKey('getAllCertificates', options);
 
@@ -8641,6 +9414,355 @@ export const generateCourseCertificateMutation = (
   return mutationOptions;
 };
 
+export const createInstructorAvailabilitySlotQueryKey = (
+  options: Options<CreateInstructorAvailabilitySlotData>
+) => createQueryKey('createInstructorAvailabilitySlot', options);
+
+/**
+ * Create a new availability slot
+ */
+export const createInstructorAvailabilitySlotOptions = (
+  options: Options<CreateInstructorAvailabilitySlotData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createInstructorAvailabilitySlot({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createInstructorAvailabilitySlotQueryKey(options),
+  });
+};
+
+/**
+ * Create a new availability slot
+ */
+export const createInstructorAvailabilitySlotMutation = (
+  options?: Partial<Options<CreateInstructorAvailabilitySlotData>>
+): UseMutationOptions<
+  CreateInstructorAvailabilitySlotResponse,
+  CreateInstructorAvailabilitySlotError,
+  Options<CreateInstructorAvailabilitySlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateInstructorAvailabilitySlotResponse,
+    CreateInstructorAvailabilitySlotError,
+    Options<CreateInstructorAvailabilitySlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createInstructorAvailabilitySlot({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const setInstructorWeeklyAvailabilityQueryKey = (
+  options: Options<SetInstructorWeeklyAvailabilityData>
+) => createQueryKey('setInstructorWeeklyAvailability', options);
+
+/**
+ * Set weekly availability patterns for an instructor
+ */
+export const setInstructorWeeklyAvailabilityOptions = (
+  options: Options<SetInstructorWeeklyAvailabilityData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await setInstructorWeeklyAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: setInstructorWeeklyAvailabilityQueryKey(options),
+  });
+};
+
+/**
+ * Set weekly availability patterns for an instructor
+ */
+export const setInstructorWeeklyAvailabilityMutation = (
+  options?: Partial<Options<SetInstructorWeeklyAvailabilityData>>
+): UseMutationOptions<
+  SetInstructorWeeklyAvailabilityResponse,
+  SetInstructorWeeklyAvailabilityError,
+  Options<SetInstructorWeeklyAvailabilityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SetInstructorWeeklyAvailabilityResponse,
+    SetInstructorWeeklyAvailabilityError,
+    Options<SetInstructorWeeklyAvailabilityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await setInstructorWeeklyAvailability({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const setInstructorMonthlyAvailabilityQueryKey = (
+  options: Options<SetInstructorMonthlyAvailabilityData>
+) => createQueryKey('setInstructorMonthlyAvailability', options);
+
+/**
+ * Set monthly availability patterns for an instructor
+ */
+export const setInstructorMonthlyAvailabilityOptions = (
+  options: Options<SetInstructorMonthlyAvailabilityData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await setInstructorMonthlyAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: setInstructorMonthlyAvailabilityQueryKey(options),
+  });
+};
+
+/**
+ * Set monthly availability patterns for an instructor
+ */
+export const setInstructorMonthlyAvailabilityMutation = (
+  options?: Partial<Options<SetInstructorMonthlyAvailabilityData>>
+): UseMutationOptions<
+  SetInstructorMonthlyAvailabilityResponse,
+  SetInstructorMonthlyAvailabilityError,
+  Options<SetInstructorMonthlyAvailabilityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SetInstructorMonthlyAvailabilityResponse,
+    SetInstructorMonthlyAvailabilityError,
+    Options<SetInstructorMonthlyAvailabilityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await setInstructorMonthlyAvailability({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const setInstructorDailyAvailabilityQueryKey = (
+  options: Options<SetInstructorDailyAvailabilityData>
+) => createQueryKey('setInstructorDailyAvailability', options);
+
+/**
+ * Set daily availability patterns for an instructor
+ */
+export const setInstructorDailyAvailabilityOptions = (
+  options: Options<SetInstructorDailyAvailabilityData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await setInstructorDailyAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: setInstructorDailyAvailabilityQueryKey(options),
+  });
+};
+
+/**
+ * Set daily availability patterns for an instructor
+ */
+export const setInstructorDailyAvailabilityMutation = (
+  options?: Partial<Options<SetInstructorDailyAvailabilityData>>
+): UseMutationOptions<
+  SetInstructorDailyAvailabilityResponse,
+  SetInstructorDailyAvailabilityError,
+  Options<SetInstructorDailyAvailabilityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SetInstructorDailyAvailabilityResponse,
+    SetInstructorDailyAvailabilityError,
+    Options<SetInstructorDailyAvailabilityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await setInstructorDailyAvailability({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const setInstructorCustomAvailabilityQueryKey = (
+  options: Options<SetInstructorCustomAvailabilityData>
+) => createQueryKey('setInstructorCustomAvailability', options);
+
+/**
+ * Set custom availability patterns for an instructor
+ */
+export const setInstructorCustomAvailabilityOptions = (
+  options: Options<SetInstructorCustomAvailabilityData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await setInstructorCustomAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: setInstructorCustomAvailabilityQueryKey(options),
+  });
+};
+
+/**
+ * Set custom availability patterns for an instructor
+ */
+export const setInstructorCustomAvailabilityMutation = (
+  options?: Partial<Options<SetInstructorCustomAvailabilityData>>
+): UseMutationOptions<
+  SetInstructorCustomAvailabilityResponse,
+  SetInstructorCustomAvailabilityError,
+  Options<SetInstructorCustomAvailabilityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SetInstructorCustomAvailabilityResponse,
+    SetInstructorCustomAvailabilityError,
+    Options<SetInstructorCustomAvailabilityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await setInstructorCustomAvailability({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const blockInstructorTimeQueryKey = (options: Options<BlockInstructorTimeData>) =>
+  createQueryKey('blockInstructorTime', options);
+
+/**
+ * Block time for an instructor
+ */
+export const blockInstructorTimeOptions = (options: Options<BlockInstructorTimeData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await blockInstructorTime({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: blockInstructorTimeQueryKey(options),
+  });
+};
+
+export const blockInstructorTimeInfiniteQueryKey = (
+  options: Options<BlockInstructorTimeData>
+): QueryKey<Options<BlockInstructorTimeData>> =>
+  createQueryKey('blockInstructorTime', options, true);
+
+/**
+ * Block time for an instructor
+ */
+export const blockInstructorTimeInfiniteOptions = (options: Options<BlockInstructorTimeData>) => {
+  return infiniteQueryOptions<
+    BlockInstructorTimeResponse,
+    BlockInstructorTimeError,
+    InfiniteData<BlockInstructorTimeResponse>,
+    QueryKey<Options<BlockInstructorTimeData>>,
+    | Date
+    | Pick<QueryKey<Options<BlockInstructorTimeData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<BlockInstructorTimeData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await blockInstructorTime({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: blockInstructorTimeInfiniteQueryKey(options),
+    }
+  );
+};
+
+/**
+ * Block time for an instructor
+ */
+export const blockInstructorTimeMutation = (
+  options?: Partial<Options<BlockInstructorTimeData>>
+): UseMutationOptions<
+  BlockInstructorTimeResponse,
+  BlockInstructorTimeError,
+  Options<BlockInstructorTimeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    BlockInstructorTimeResponse,
+    BlockInstructorTimeError,
+    Options<BlockInstructorTimeData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await blockInstructorTime({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAllAssignmentsQueryKey = (options: Options<GetAllAssignmentsData>) =>
   createQueryKey('getAllAssignments', options);
 
@@ -8910,6 +10032,33 @@ export const gradeSubmissionMutation = (
 };
 
 /**
+ * Update the status of a scheduled instance
+ */
+export const updateScheduledInstanceStatusMutation = (
+  options?: Partial<Options<UpdateScheduledInstanceStatusData>>
+): UseMutationOptions<
+  UpdateScheduledInstanceStatusResponse,
+  UpdateScheduledInstanceStatusError,
+  Options<UpdateScheduledInstanceStatusData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateScheduledInstanceStatusResponse,
+    UpdateScheduledInstanceStatusError,
+    Options<UpdateScheduledInstanceStatusData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateScheduledInstanceStatus({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Reorder scoring levels
  * Updates the display order of scoring levels within the rubric. Provide a map of level UUIDs to their new order values.
  */
@@ -8927,6 +10076,29 @@ export const reorderScoringLevelsMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await reorderScoringLevels({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Mark attendance for a student enrollment
+ */
+export const markAttendanceMutation = (
+  options?: Partial<Options<MarkAttendanceData>>
+): UseMutationOptions<MarkAttendanceResponse, MarkAttendanceError, Options<MarkAttendanceData>> => {
+  const mutationOptions: UseMutationOptions<
+    MarkAttendanceResponse,
+    MarkAttendanceError,
+    Options<MarkAttendanceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await markAttendance({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9270,6 +10442,123 @@ export const getTrainingBranchesByOrganisation1InfiniteOptions = (
         return data;
       },
       queryKey: getTrainingBranchesByOrganisation1InfiniteQueryKey(options),
+    }
+  );
+};
+
+/**
+ * Cancel a scheduled class instance
+ */
+export const cancelScheduledClassMutation = (
+  options?: Partial<Options<CancelScheduledClassData>>
+): UseMutationOptions<
+  CancelScheduledClassResponse,
+  CancelScheduledClassError,
+  Options<CancelScheduledClassData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CancelScheduledClassResponse,
+    CancelScheduledClassError,
+    Options<CancelScheduledClassData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await cancelScheduledClass({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getScheduledInstanceQueryKey = (options: Options<GetScheduledInstanceData>) =>
+  createQueryKey('getScheduledInstance', options);
+
+/**
+ * Get a scheduled instance by UUID
+ */
+export const getScheduledInstanceOptions = (options: Options<GetScheduledInstanceData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getScheduledInstance({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getScheduledInstanceQueryKey(options),
+  });
+};
+
+export const getInstructorScheduleQueryKey = (options: Options<GetInstructorScheduleData>) =>
+  createQueryKey('getInstructorSchedule', options);
+
+/**
+ * Get schedule for a specific instructor within a date range
+ */
+export const getInstructorScheduleOptions = (options: Options<GetInstructorScheduleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorSchedule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorScheduleQueryKey(options),
+  });
+};
+
+export const getInstructorScheduleInfiniteQueryKey = (
+  options: Options<GetInstructorScheduleData>
+): QueryKey<Options<GetInstructorScheduleData>> =>
+  createQueryKey('getInstructorSchedule', options, true);
+
+/**
+ * Get schedule for a specific instructor within a date range
+ */
+export const getInstructorScheduleInfiniteOptions = (
+  options: Options<GetInstructorScheduleData>
+) => {
+  return infiniteQueryOptions<
+    GetInstructorScheduleResponse,
+    GetInstructorScheduleError,
+    InfiniteData<GetInstructorScheduleResponse>,
+    QueryKey<Options<GetInstructorScheduleData>>,
+    | Date
+    | Pick<QueryKey<Options<GetInstructorScheduleData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetInstructorScheduleData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getInstructorSchedule({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getInstructorScheduleInfiniteQueryKey(options),
     }
   );
 };
@@ -12416,6 +13705,185 @@ export const searchDocumentsInfiniteOptions = (options: Options<SearchDocumentsD
   );
 };
 
+/**
+ * Cancel a student enrollment
+ */
+export const cancelEnrollmentMutation = (
+  options?: Partial<Options<CancelEnrollmentData>>
+): UseMutationOptions<
+  CancelEnrollmentResponse,
+  CancelEnrollmentError,
+  Options<CancelEnrollmentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CancelEnrollmentResponse,
+    CancelEnrollmentError,
+    Options<CancelEnrollmentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await cancelEnrollment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getEnrollmentQueryKey = (options: Options<GetEnrollmentData>) =>
+  createQueryKey('getEnrollment', options);
+
+/**
+ * Get an enrollment by UUID
+ */
+export const getEnrollmentOptions = (options: Options<GetEnrollmentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollment({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentQueryKey(options),
+  });
+};
+
+export const getStudentScheduleQueryKey = (options: Options<GetStudentScheduleData>) =>
+  createQueryKey('getStudentSchedule', options);
+
+/**
+ * Get schedule for a specific student within a date range
+ */
+export const getStudentScheduleOptions = (options: Options<GetStudentScheduleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentSchedule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentScheduleQueryKey(options),
+  });
+};
+
+export const getStudentScheduleInfiniteQueryKey = (
+  options: Options<GetStudentScheduleData>
+): QueryKey<Options<GetStudentScheduleData>> => createQueryKey('getStudentSchedule', options, true);
+
+/**
+ * Get schedule for a specific student within a date range
+ */
+export const getStudentScheduleInfiniteOptions = (options: Options<GetStudentScheduleData>) => {
+  return infiniteQueryOptions<
+    GetStudentScheduleResponse,
+    GetStudentScheduleError,
+    InfiniteData<GetStudentScheduleResponse>,
+    QueryKey<Options<GetStudentScheduleData>>,
+    Date | Pick<QueryKey<Options<GetStudentScheduleData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetStudentScheduleData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getStudentSchedule({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getStudentScheduleInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getEnrollmentsForInstanceQueryKey = (
+  options: Options<GetEnrollmentsForInstanceData>
+) => createQueryKey('getEnrollmentsForInstance', options);
+
+/**
+ * Get all enrollments for a scheduled instance
+ */
+export const getEnrollmentsForInstanceOptions = (
+  options: Options<GetEnrollmentsForInstanceData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollmentsForInstance({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentsForInstanceQueryKey(options),
+  });
+};
+
+export const getEnrollmentCountQueryKey = (options: Options<GetEnrollmentCountData>) =>
+  createQueryKey('getEnrollmentCount', options);
+
+/**
+ * Get enrollment count for a scheduled instance
+ */
+export const getEnrollmentCountOptions = (options: Options<GetEnrollmentCountData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollmentCount({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentCountQueryKey(options),
+  });
+};
+
+export const hasCapacityForEnrollmentQueryKey = (options: Options<HasCapacityForEnrollmentData>) =>
+  createQueryKey('hasCapacityForEnrollment', options);
+
+/**
+ * Check if a scheduled instance has capacity for new enrollments
+ */
+export const hasCapacityForEnrollmentOptions = (options: Options<HasCapacityForEnrollmentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await hasCapacityForEnrollment({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: hasCapacityForEnrollmentQueryKey(options),
+  });
+};
+
 export const getStatusTransitionsQueryKey = (options: Options<GetStatusTransitionsData>) =>
   createQueryKey('getStatusTransitions', options);
 
@@ -13872,6 +15340,150 @@ export const getRootCategoriesOptions = (options?: Options<GetRootCategoriesData
   });
 };
 
+export const previewRecurringClassScheduleQueryKey = (
+  options: Options<PreviewRecurringClassScheduleData>
+) => createQueryKey('previewRecurringClassSchedule', options);
+
+/**
+ * Preview recurring schedule without creating instances
+ */
+export const previewRecurringClassScheduleOptions = (
+  options: Options<PreviewRecurringClassScheduleData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await previewRecurringClassSchedule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: previewRecurringClassScheduleQueryKey(options),
+  });
+};
+
+export const checkClassSchedulingConflictsQueryKey = (
+  options: Options<CheckClassSchedulingConflictsData>
+) => createQueryKey('checkClassSchedulingConflicts', options);
+
+/**
+ * Check for scheduling conflicts
+ */
+export const checkClassSchedulingConflictsOptions = (
+  options: Options<CheckClassSchedulingConflictsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await checkClassSchedulingConflicts({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: checkClassSchedulingConflictsQueryKey(options),
+  });
+};
+
+export const getClassDefinitionsForOrganisationQueryKey = (
+  options: Options<GetClassDefinitionsForOrganisationData>
+) => createQueryKey('getClassDefinitionsForOrganisation', options);
+
+/**
+ * Get class definitions for an organisation
+ */
+export const getClassDefinitionsForOrganisationOptions = (
+  options: Options<GetClassDefinitionsForOrganisationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassDefinitionsForOrganisation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassDefinitionsForOrganisationQueryKey(options),
+  });
+};
+
+export const getClassDefinitionsForInstructorQueryKey = (
+  options: Options<GetClassDefinitionsForInstructorData>
+) => createQueryKey('getClassDefinitionsForInstructor', options);
+
+/**
+ * Get class definitions for an instructor
+ */
+export const getClassDefinitionsForInstructorOptions = (
+  options: Options<GetClassDefinitionsForInstructorData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassDefinitionsForInstructor({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassDefinitionsForInstructorQueryKey(options),
+  });
+};
+
+export const getClassDefinitionsForCourseQueryKey = (
+  options: Options<GetClassDefinitionsForCourseData>
+) => createQueryKey('getClassDefinitionsForCourse', options);
+
+/**
+ * Get class definitions for a course
+ */
+export const getClassDefinitionsForCourseOptions = (
+  options: Options<GetClassDefinitionsForCourseData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassDefinitionsForCourse({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassDefinitionsForCourseQueryKey(options),
+  });
+};
+
+export const getAllActiveClassDefinitionsQueryKey = (
+  options?: Options<GetAllActiveClassDefinitionsData>
+) => createQueryKey('getAllActiveClassDefinitions', options);
+
+/**
+ * Get all active class definitions
+ */
+export const getAllActiveClassDefinitionsOptions = (
+  options?: Options<GetAllActiveClassDefinitionsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAllActiveClassDefinitions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAllActiveClassDefinitionsQueryKey(options),
+  });
+};
+
 export const verifyCertificateQueryKey = (options: Options<VerifyCertificateData>) =>
   createQueryKey('verifyCertificate', options);
 
@@ -14219,6 +15831,228 @@ export const getCourseCertificatesOptions = (options?: Options<GetCourseCertific
       return data;
     },
     queryKey: getCourseCertificatesQueryKey(options),
+  });
+};
+
+/**
+ * Clear all availability for an instructor
+ */
+export const clearInstructorAvailabilityMutation = (
+  options?: Partial<Options<ClearInstructorAvailabilityData>>
+): UseMutationOptions<
+  ClearInstructorAvailabilityResponse,
+  ClearInstructorAvailabilityError,
+  Options<ClearInstructorAvailabilityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClearInstructorAvailabilityResponse,
+    ClearInstructorAvailabilityError,
+    Options<ClearInstructorAvailabilityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await clearInstructorAvailability({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getInstructorAvailabilityQueryKey = (
+  options: Options<GetInstructorAvailabilityData>
+) => createQueryKey('getInstructorAvailability', options);
+
+/**
+ * Get all availability for an instructor
+ */
+export const getInstructorAvailabilityOptions = (
+  options: Options<GetInstructorAvailabilityData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorAvailabilityQueryKey(options),
+  });
+};
+
+export const findInstructorAvailableSlotsQueryKey = (
+  options: Options<FindInstructorAvailableSlotsData>
+) => createQueryKey('findInstructorAvailableSlots', options);
+
+/**
+ * Find available slots for an instructor within a date range
+ */
+export const findInstructorAvailableSlotsOptions = (
+  options: Options<FindInstructorAvailableSlotsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await findInstructorAvailableSlots({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: findInstructorAvailableSlotsQueryKey(options),
+  });
+};
+
+export const getInstructorAvailabilityForDateQueryKey = (
+  options: Options<GetInstructorAvailabilityForDateData>
+) => createQueryKey('getInstructorAvailabilityForDate', options);
+
+/**
+ * Get availability for an instructor on a specific date
+ */
+export const getInstructorAvailabilityForDateOptions = (
+  options: Options<GetInstructorAvailabilityForDateData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorAvailabilityForDate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorAvailabilityForDateQueryKey(options),
+  });
+};
+
+export const checkInstructorAvailabilityQueryKey = (
+  options: Options<CheckInstructorAvailabilityData>
+) => createQueryKey('checkInstructorAvailability', options);
+
+/**
+ * Check if an instructor is available during a time period
+ */
+export const checkInstructorAvailabilityOptions = (
+  options: Options<CheckInstructorAvailabilityData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await checkInstructorAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: checkInstructorAvailabilityQueryKey(options),
+  });
+};
+
+export const checkInstructorAvailabilityInfiniteQueryKey = (
+  options: Options<CheckInstructorAvailabilityData>
+): QueryKey<Options<CheckInstructorAvailabilityData>> =>
+  createQueryKey('checkInstructorAvailability', options, true);
+
+/**
+ * Check if an instructor is available during a time period
+ */
+export const checkInstructorAvailabilityInfiniteOptions = (
+  options: Options<CheckInstructorAvailabilityData>
+) => {
+  return infiniteQueryOptions<
+    CheckInstructorAvailabilityResponse,
+    CheckInstructorAvailabilityError,
+    InfiniteData<CheckInstructorAvailabilityResponse>,
+    QueryKey<Options<CheckInstructorAvailabilityData>>,
+    | Date
+    | Pick<
+        QueryKey<Options<CheckInstructorAvailabilityData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<CheckInstructorAvailabilityData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await checkInstructorAvailability({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: checkInstructorAvailabilityInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getInstructorBlockedSlotsQueryKey = (
+  options: Options<GetInstructorBlockedSlotsData>
+) => createQueryKey('getInstructorBlockedSlots', options);
+
+/**
+ * Get blocked slots for an instructor on a specific date
+ */
+export const getInstructorBlockedSlotsOptions = (
+  options: Options<GetInstructorBlockedSlotsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorBlockedSlots({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorBlockedSlotsQueryKey(options),
+  });
+};
+
+export const getInstructorAvailableSlotsQueryKey = (
+  options: Options<GetInstructorAvailableSlotsData>
+) => createQueryKey('getInstructorAvailableSlots', options);
+
+/**
+ * Get available slots for an instructor on a specific date
+ */
+export const getInstructorAvailableSlotsOptions = (
+  options: Options<GetInstructorAvailableSlotsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorAvailableSlots({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorAvailableSlotsQueryKey(options),
   });
 };
 
