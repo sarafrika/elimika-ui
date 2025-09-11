@@ -44,7 +44,7 @@ const StudentProfileSchema = z.object({
       user_domain: true,
       created_date: true,
       updated_date: true,
-      organisation_affiliations: true
+      organisation_affiliations: true,
     })
     .merge(
       z.object({
@@ -120,11 +120,11 @@ export default function StudentProfileGeneralForm() {
       if (profilePic.file) {
         const profilPicResp = await uploadProfileImage({
           path: {
-            userUuid: user!.uuid as UUID
+            userUuid: user!.uuid as UUID,
           },
           body: {
-            profileImage: profilePic.file
-          }
+            profileImage: profilePic.file,
+          },
         });
       }
 
@@ -155,14 +155,7 @@ export default function StudentProfileGeneralForm() {
 
       user!.invalidateQuery!();
     },
-    [
-      profilePic.file,
-      resetErrors,
-      student,
-      updateStudentMutation,
-      user,
-      userMutation,
-    ]
+    [profilePic.file, resetErrors, student, updateStudentMutation, user, userMutation]
   );
 
   return (

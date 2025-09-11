@@ -59,7 +59,7 @@ import {
   Trash,
   VideoIcon,
   X,
-  Youtube
+  Youtube,
 } from 'lucide-react';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { Control, FieldErrors, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
@@ -79,7 +79,7 @@ import {
   searchAssessmentsQueryKey,
   updateCourseAssessmentMutation,
   updateCourseLessonMutation,
-  updateLessonContentMutation
+  updateLessonContentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -240,7 +240,7 @@ type LessonListProps = {
   onEditLesson: (lesson: any) => void;
   onDeleteLesson: (lessonId: string) => void;
   onReorderLessons: (newLessons: any[]) => void;
-  onAddAssignment: (lesson: any) => void
+  onAddAssignment: (lesson: any) => void;
   // lesson contents
   lessonContentsMap: Map<string, any[]>;
   onAddLessonContent: (lesson: any) => void;
@@ -289,7 +289,6 @@ function LessonList({
     return Array.isArray(content) ? content : [];
   }, [contentTypeList]);
 
-
   const enrichedLessonContentsMap = useMemo(() => {
     const map = new Map();
 
@@ -309,7 +308,6 @@ function LessonList({
 
     return map;
   }, [lessons, lessonContentsMap, contentTypeData]);
-
 
   return (
     <div className='space-y-6'>
@@ -370,12 +368,10 @@ function LessonList({
                           </Button>
                         </DropdownMenuTrigger>
 
-
                         <DropdownMenuContent align='end'>
-                          <DropdownMenuItem >
+                          <DropdownMenuItem>
                             <Link
                               href={`/dashboard/course-management/lesson?courseId=${lesson.course_uuid}&id=${lesson.uuid}`}
-
                               className='flex flex-row items-center'
                             >
                               <Eye className='mr-3 h-4 w-4' />
@@ -426,7 +422,8 @@ function LessonList({
                       <div className='flex items-center gap-1.5'>
                         <BookOpen className='h-4 w-4' />
                         <span>
-                          {enrichedContents.length || '0'} {enrichedContents.length === 1 ? 'item' : 'items'}
+                          {enrichedContents.length || '0'}{' '}
+                          {enrichedContents.length === 1 ? 'item' : 'items'}
                         </span>
                       </div>
 
@@ -1322,7 +1319,7 @@ function LessonContentForm({
                       {contentTypeData.map((value: any) => {
                         const Icon =
                           ContentTypeIcons[
-                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1621,7 +1618,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   return (
@@ -1696,7 +1693,7 @@ function AssessmentCreationForm({
 
         <FormField
           control={form.control}
-          name="rubric_uuid"
+          name='rubric_uuid'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Select a Rubric</FormLabel>
@@ -1705,7 +1702,7 @@ function AssessmentCreationForm({
                 <p>No rubrics found.</p>
               )}
 
-              <div className="grid gap-4">
+              <div className='grid gap-4'>
                 {memoizedRubricsWithDetails.map(({ rubric, criteria }) => {
                   const isSelected = field.value === rubric.uuid;
                   const isExpanded = expandedRubricUuid === rubric.uuid;
@@ -1714,52 +1711,68 @@ function AssessmentCreationForm({
                     <div
                       key={rubric.uuid}
                       className={clsx(
-                        'border rounded-lg p-4 transition cursor-pointer',
-                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
+                        'cursor-pointer rounded-lg border p-4 transition',
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:bg-gray-50'
                       )}
                     >
                       <div
-                        className="flex justify-between items-start"
+                        className='flex items-start justify-between'
                         onClick={() => field.onChange(rubric.uuid)}
                       >
                         <div>
-                          <div className="text-base font-semibold mb-1">{rubric.title}</div>
-                          <div className="text-[13px] font-light text-muted-foreground">{rubric.description}</div>
+                          <div className='mb-1 text-base font-semibold'>{rubric.title}</div>
+                          <div className='text-muted-foreground text-[13px] font-light'>
+                            {rubric.description}
+                          </div>
                         </div>
                         {isSelected && (
-                          <span className="text-sm font-medium text-blue-600">Selected</span>
+                          <span className='text-sm font-medium text-blue-600'>Selected</span>
                         )}
                       </div>
 
-                      <div className="flex flfex-row items-center gap-6 mt-2 text-sm text-gray-600">
-                        <p><strong>Type:</strong> {rubric.rubric_type}</p>
-                        <p><strong>Total Weight:</strong> {rubric.total_weight}{rubric.weight_unit === 'percentage' ? '%' : ''}</p>
+                      <div className='flfex-row mt-2 flex items-center gap-6 text-sm text-gray-600'>
+                        <p>
+                          <strong>Type:</strong> {rubric.rubric_type}
+                        </p>
+                        <p>
+                          <strong>Total Weight:</strong> {rubric.total_weight}
+                          {rubric.weight_unit === 'percentage' ? '%' : ''}
+                        </p>
                       </div>
 
                       <button
-                        type="button"
+                        type='button'
                         onClick={() => toggleExpand(rubric.uuid)}
-                        className="mt-3 flex items-center gap-1 text-blue-600 text-sm"
+                        className='mt-3 flex items-center gap-1 text-sm text-blue-600'
                       >
                         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                        {isExpanded ? 'Hide Assessment Criteria' : 'Show Assessment Criteria & Scoring'}
+                        {isExpanded
+                          ? 'Hide Assessment Criteria'
+                          : 'Show Assessment Criteria & Scoring'}
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-4 space-y-4 text-sm">
+                        <div className='mt-4 space-y-4 text-sm'>
                           {criteria.length === 0 && <p>No criteria available.</p>}
 
-                          {criteria.map((criterion) => (
-                            <div key={criterion.uuid} className="border border-gray-200 rounded-md p-3 bg-white">
-                              <div className="flex flex-row gap-2 items-center font-medium text-gray-800">
-                                <CircleCheckBig size={14} color='green' /> {criterion.component_name}
+                          {criteria.map(criterion => (
+                            <div
+                              key={criterion.uuid}
+                              className='rounded-md border border-gray-200 bg-white p-3'
+                            >
+                              <div className='flex flex-row items-center gap-2 font-medium text-gray-800'>
+                                <CircleCheckBig size={14} color='green' />{' '}
+                                {criterion.component_name}
                               </div>
-                              <div className="text-sm text-muted-foreground mb-1">{criterion.description}</div>
-
+                              <div className='text-muted-foreground mb-1 text-sm'>
+                                {criterion.description}
+                              </div>
 
                               {/* Scoring levels */}
                               {criterion.scoring?.length > 0 ? (
-                                <div className="mt-2 space-y-2">
+                                <div className='mt-2 space-y-2'>
                                   {/* <div className="text-xs font-medium text-gray-700">Scoring Levels:</div> */}
                                   {/* {criterion.scoring.map((score: any) => (
                                     <div
@@ -1779,7 +1792,9 @@ function AssessmentCreationForm({
                                   ))} */}
                                 </div>
                               ) : (
-                                <p className="text-xs text-muted-foreground mt-1">No scoring levels defined.</p>
+                                <p className='text-muted-foreground mt-1 text-xs'>
+                                  No scoring levels defined.
+                                </p>
                               )}
                             </div>
                           ))}
@@ -2217,6 +2232,5 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList
+  LessonList,
 };
-

@@ -31,7 +31,17 @@ import {
   searchTrainingProgramsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BadgeCheck, BookOpen, EyeIcon, FilePenIcon, MoreVertical, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
+import {
+  BadgeCheck,
+  BookOpen,
+  EyeIcon,
+  FilePenIcon,
+  MoreVertical,
+  PenIcon,
+  PlusIcon,
+  Square,
+  TrashIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';

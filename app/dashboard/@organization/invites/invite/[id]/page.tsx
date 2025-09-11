@@ -1,9 +1,5 @@
-
 export default function InvitePage() {
+  // const { data, isLoading } = getInvitationsSentByUserQueryKey
 
-    // const { data, isLoading } = getInvitationsSentByUserQueryKey
-
-    return (
-        <div>page</div>
-    )
+  return <div>page</div>;
 }

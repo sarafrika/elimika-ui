@@ -6,7 +6,7 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import {
   getProgramEnrollmentsOptions,
-  getTrainingProgramByUuidOptions
+  getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Clock, Users } from 'lucide-react';
@@ -17,7 +17,7 @@ export default function ProgramEnrollmentPage() {
   const params = useParams();
   const programId = params?.id as string;
   const qc = useQueryClient();
-  const user = useUserProfile()
+  const user = useUserProfile();
 
   const { data, isLoading, isFetching } = useQuery(
     getTrainingProgramByUuidOptions({ path: { uuid: programId } })
@@ -77,7 +77,7 @@ export default function ProgramEnrollmentPage() {
       </div>
 
       <div className='flex flex-row gap-4'>
-        <div className='w-1/2 flex items-center gap-2 text-sm text-gray-700'>
+        <div className='flex w-1/2 items-center gap-2 text-sm text-gray-700'>
           <span className='font-semibold text-black'>Program Size:</span>
           <span className='flex items-center gap-1'>
             <Users className='h-4 w-4 text-gray-600' />
@@ -87,7 +87,7 @@ export default function ProgramEnrollmentPage() {
           </span>
         </div>
 
-        <div className='w-1/2 flex items-center gap-2 text-sm text-gray-700'>
+        <div className='flex w-1/2 items-center gap-2 text-sm text-gray-700'>
           <span className='font-semibold text-black'>Duration:</span>
           <span className='flex items-center gap-1'>
             <Clock className='h-4 w-4 text-gray-600' />
@@ -97,9 +97,7 @@ export default function ProgramEnrollmentPage() {
       </div>
 
       {/* Main Content */}
-      <div className='col-span-1 space-y-6 md:col-span-3'>
-        List of enrolled students
-      </div>
+      <div className='col-span-1 space-y-6 md:col-span-3'>List of enrolled students</div>
     </div>
   );
 }

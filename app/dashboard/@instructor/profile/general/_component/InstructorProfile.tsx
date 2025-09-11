@@ -54,7 +54,7 @@ const generalProfileSchema = z.object({
       updated_date: true,
       updated_by: true,
       user_domain: true,
-      organisation_affiliations: true
+      organisation_affiliations: true,
     })
     .merge(z.object({ dob: z.date() })),
   instructor: zInstructor
@@ -124,29 +124,29 @@ export default function InstructorProfile() {
       const fd = new FormData();
       const fileName = `${crypto.randomUUID()}${profilePic.file.name}`;
       fd.append('profileImage', profilePic.file as Blob, fileName);
-      fd.append("profileImage", fileName);
+      fd.append('profileImage', fileName);
 
       uploadProfilePicResp = await uploadProfileImage({
         path: {
           userUuid: user!.uuid!,
         },
         body: {
-          profileImage: profilePic.file
-        }
+          profileImage: profilePic.file,
+        },
       });
     }
 
     const manageInstructor = () =>
       instructor
         ? updateInstructor({
-          path: {
-            uuid: instructor.uuid!,
-          },
-          body: updatedProfileData.instructor,
-        })
+            path: {
+              uuid: instructor.uuid!,
+            },
+            body: updatedProfileData.instructor,
+          })
         : createInstructor({
-          body: updatedProfileData.instructor,
-        });
+            body: updatedProfileData.instructor,
+          });
 
     const response = await Promise.all([
       updateUser({
@@ -180,7 +180,7 @@ export default function InstructorProfile() {
     if (hasErrors) return;
 
     toast.success('Profile updated successfully');
-    await queryClient.invalidateQueries({ queryKey: ["profile", user!.email] });
+    await queryClient.invalidateQueries({ queryKey: ['profile', user!.email] });
   }
 
   return (
@@ -201,7 +201,11 @@ export default function InstructorProfile() {
               <div className='flex flex-col items-start gap-8 sm:flex-row'>
                 <div className='flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4'>
                   <Avatar className='bg-primary-50 h-24 w-24'>
-                    <AvatarImage src={user!.profile_image_url ?? profilePic.url} alt='Avatar' className='object-fit' />
+                    <AvatarImage
+                      src={user!.profile_image_url ?? profilePic.url}
+                      alt='Avatar'
+                      className='object-fit'
+                    />
                     <AvatarFallback className='bg-blue-50 text-xl text-blue-600'>
                       {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}`}
                     </AvatarFallback>

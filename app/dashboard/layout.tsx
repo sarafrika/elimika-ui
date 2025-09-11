@@ -1,4 +1,4 @@
-"use client"
+'use client';
 import { AppSidebar } from '@/components/app-sidebar';
 import DashboardMainContent from '@/components/dashboard-main-content';
 import { DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
@@ -14,7 +14,6 @@ import TrainingCenterProvider from '../../context/training-center-provide';
 
 type OrgDomainType = DashboardView | 'organisation_user';
 export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) {
-
   const profile = useUserProfile();
   const router = useRouter();
 
@@ -43,8 +42,11 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   const organizationDomains = userDomains as OrgDomainType[];
   const activeDomain = profile.activeDomain;
 
-  if (activeDomain === "organisation_user" && (!profile.organisation_affiliations || profile.organisation_affiliations.length === 0)) {
-    redirect("/onboarding/organisation")
+  if (
+    activeDomain === 'organisation_user' &&
+    (!profile.organisation_affiliations || profile.organisation_affiliations.length === 0)
+  ) {
+    redirect('/onboarding/organisation');
   }
 
   if (!activeDomain) {

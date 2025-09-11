@@ -1,6 +1,3 @@
-
 export default function Classroms() {
-    return (
-        <div>classrooms</div>
-    )
+  return <div>classrooms</div>;
 }

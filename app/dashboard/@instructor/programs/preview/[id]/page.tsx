@@ -17,7 +17,7 @@ import {
   getProgramRequirementsQueryKey,
   getTrainingProgramByUuidOptions,
   publishProgramMutation,
-  removeProgramCourseMutation
+  removeProgramCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, Check, CheckCheck, Clock, CoinsIcon, Trash, Users } from 'lucide-react';
@@ -69,7 +69,7 @@ export default function ProgramPreviewPage() {
   const params = useParams();
   const programId = params?.id as string;
   const qc = useQueryClient();
-  const user = useUserProfile()
+  const user = useUserProfile();
 
   // GET TRAINING PROGRAM BY ID
   const { data, isLoading, isFetching } = useQuery(
@@ -147,17 +147,23 @@ export default function ProgramPreviewPage() {
     }
   };
 
-  const deleteRequirement = useMutation(deleteProgramRequirementMutation())
+  const deleteRequirement = useMutation(deleteProgramRequirementMutation());
   const handleDeleteRequirement = (requirementId: any) => {
-    deleteRequirement.mutate({ path: { programUuid: programId, requirementUuid: requirementId } }, {
-      onSuccess: () => {
-        qc.invalidateQueries({
-          queryKey: getProgramRequirementsQueryKey({ path: { programUuid: programId }, query: { pageable: {} } }),
-        });
-        toast.success('Program requirement deleted successfully')
+    deleteRequirement.mutate(
+      { path: { programUuid: programId, requirementUuid: requirementId } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({
+            queryKey: getProgramRequirementsQueryKey({
+              path: { programUuid: programId },
+              query: { pageable: {} },
+            }),
+          });
+          toast.success('Program requirement deleted successfully');
+        },
       }
-    })
-  }
+    );
+  };
 
   const publishProgram = useMutation(publishProgramMutation());
   const handlePublishProgram = () => {
@@ -166,10 +172,10 @@ export default function ProgramPreviewPage() {
     publishProgram.mutate(
       { path: { uuid: programId } },
       {
-        onSuccess: (data) => {
+        onSuccess: data => {
           toast.success(data?.message);
         },
-        onError: (error) => {
+        onError: error => {
           toast.error(error?.message);
         },
       }
@@ -249,14 +255,11 @@ export default function ProgramPreviewPage() {
           </span>
         </div>
 
-        <div className='flex flex-col items-start gap-2 text-sm text-gray-700 w-full'>
+        <div className='flex w-full flex-col items-start gap-2 text-sm text-gray-700'>
           <span className='font-semibold text-black'>Requirements:</span>
-          <div className='flex flex-col gap-2 w-full'>
+          <div className='flex w-full flex-col gap-2'>
             {programRequirement?.data?.content?.map((r, i) => (
-              <div
-                key={i}
-                className='group flex items-center gap-2 relative py-1'
-              >
+              <div key={i} className='group relative flex items-center gap-2 py-1'>
                 <CheckCheck className='h-4 w-4 min-w-4 self-start text-gray-600' />
                 <div>
                   {r?.requirement_type} - {r.requirement_text}
@@ -265,7 +268,7 @@ export default function ProgramPreviewPage() {
                 {/* Delete Button (shown on hover) */}
                 <button
                   onClick={() => handleDeleteRequirement(r.uuid)}
-                  className='absolute right-0 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 hover:p-2 transition px-2'
+                  className='absolute right-0 px-2 text-gray-400 opacity-0 transition group-hover:opacity-100 hover:p-2 hover:text-red-600'
                   aria-label='Delete requirement'
                 >
                   <Trash className='h-4 w-4' />
@@ -375,24 +378,24 @@ export default function ProgramPreviewPage() {
           isOpen={isAddClassCourseDialog}
           onOpenChange={setIsAddClassCourseDialog}
           programId={programId}
-          onSuccess={() => { }}
+          onSuccess={() => {}}
         />
 
         {/* Confirm Remove Program Course Modal */}
         <DeleteModal
           open={isDialogOpen}
           setOpen={setIsDialogOpen}
-          title="Confirm Deletion"
+          title='Confirm Deletion'
           description={
             <>
               Are you sure you want to remove{' '}
-              <span className="font-semibold">&quot;{courseToDelete?.name}&quot;</span> from this
+              <span className='font-semibold'>&quot;{courseToDelete?.name}&quot;</span> from this
               program? This action cannot be undone.
             </>
           }
           onConfirm={handleConfirm}
           isLoading={removeProgramCourse?.isPending}
-          confirmText="Delete"
+          confirmText='Delete'
         />
       </div>
     </div>

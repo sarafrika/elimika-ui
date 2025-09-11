@@ -67,15 +67,15 @@ export default function ManageBranch() {
   }, [replaceBreadcrumbs]);
 
   const user = useUserProfile();
-  const trainingCenter = useTrainingCenter()
-  const { organizations } = user!
+  const trainingCenter = useTrainingCenter();
+  const { organizations } = user!;
 
   const defaultBranch = (): BranchType => ({
     branch_name: 'Main Campus',
     active: true,
-    poc_name: "",
-    poc_email: "",
-    poc_telephone: ""
+    poc_name: '',
+    poc_email: '',
+    poc_telephone: '',
   });
 
   const form = useForm<BranchesFormValues>({
@@ -200,7 +200,7 @@ export default function ManageBranch() {
                     )}
                   />
 
-                  <div className="grid grid-col-2 gap-3">
+                  <div className='grid-col-2 grid gap-3'>
                     <FormField
                       control={form.control}
                       name={`branches.${index}.poc_name`}
@@ -243,7 +243,6 @@ export default function ManageBranch() {
                       )}
                     />
                   </div>
-
                 </div>
               ))}
 

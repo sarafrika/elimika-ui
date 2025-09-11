@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useInstructor } from '@/context/instructor-context';
 import CoursePreviewComponent from '../../../../@instructor/course-management/preview/[id]/coursePreview-component';

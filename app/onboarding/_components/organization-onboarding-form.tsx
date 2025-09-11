@@ -159,14 +159,17 @@ export function OrganizationOnboardingForm() {
                   <FormItem>
                     <FormLabel>Location (Optional)</FormLabel>
                     <FormControl>
-                      <LocationInput {...field} onRetrieve={(d) => {
-                        form.setValue("latitude", d.properties.coordinates.latitude);
-                        form.setValue("longitude", d.properties.coordinates.longitude);
-                        if (d.properties.context.country) {
-                          form.setValue("country", d.properties.context.country.name);
-                        }
-                        return d;
-                      }} />
+                      <LocationInput
+                        {...field}
+                        onRetrieve={d => {
+                          form.setValue('latitude', d.properties.coordinates.latitude);
+                          form.setValue('longitude', d.properties.coordinates.longitude);
+                          if (d.properties.context.country) {
+                            form.setValue('country', d.properties.context.country.name);
+                          }
+                          return d;
+                        }}
+                      />
                     </FormControl>
                     <FormDescription>
                       Physical location or address of your organization
