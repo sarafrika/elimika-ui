@@ -403,13 +403,13 @@ function RecurrencForm({
       updateClassRecurrence.mutate(
         { path: { uuid: recurrenceId }, body: payload as any },
         {
-          onSuccess: data => {
+          onSuccess: (data) => {
             qc.invalidateQueries({
               queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
             });
             toast.success(data?.message);
             onCancel();
-            onSuccess();
+            onSuccess(data);
           },
         }
       );
@@ -423,7 +423,7 @@ function RecurrencForm({
             });
             toast.success(data?.message);
             onCancel();
-            onSuccess();
+            onSuccess(data);
           },
         }
       );

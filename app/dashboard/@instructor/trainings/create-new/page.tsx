@@ -2,6 +2,8 @@
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -18,7 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { LocationTypeEnum } from '@/services/client';
 import {
@@ -26,6 +30,7 @@ import {
   getAllCoursesOptions,
   getClassDefinitionOptions,
   getClassDefinitionsForInstructorQueryKey,
+  searchTrainingProgramsOptions,
   updateClassDefinitionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,9 +39,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Card } from '../../../../../components/ui/card';
-import { Checkbox } from '../../../../../components/ui/checkbox';
-import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
 import {
   ClassFormValues,
   classSchema,
@@ -51,6 +53,7 @@ export default function ClassCreationPage() {
   const qc = useQueryClient();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
+  const { data: programs } = useQuery(searchTrainingProgramsOptions({ query: { pageable: {}, searchParams: { instructorUuid: instructor?.uuid } } }))
 
   useEffect(() => {
     if (!classId) return;
@@ -87,6 +90,8 @@ export default function ClassCreationPage() {
     },
   });
 
+  const [recurringUuid, setRecurringUuid] = useState<string | null>(null)
+  const [recurringData, setRecurringData] = useState<any | null>(null)
   const [openAddRecurrenceModal, setOpenAddRecurrenceModal] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -101,7 +106,7 @@ export default function ClassCreationPage() {
   const handleSubmit = async (values: ClassFormValues) => {
     const payload = {
       ...values,
-      recurrence_pattern_uuid: '6afa111e-d783-42ec-9276-95dfeaddc423',
+      recurrence_pattern_uuid: recurringUuid as string,
       default_instructor_uuid: instructor?.uuid as string,
     };
 
@@ -212,17 +217,26 @@ export default function ClassCreationPage() {
               name='course_uuid'
               render={({ field }) => (
                 <FormItem className='w-full flex-1'>
-                  <FormLabel>Assign Course</FormLabel>
+                  <FormLabel>Assign Course or Program</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select course' />
+                      <SelectValue placeholder='Select course or program' />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className='pb-4' >
+                      <p className='pl-3 py-2'>Courses</p>
                       {courses?.data?.content?.map(course => (
-                        <SelectItem key={course.uuid} value={course.uuid as string}>
+                        <SelectItem className='pb-1' key={course.uuid} value={course.uuid as string}>
                           {course.name}
                         </SelectItem>
                       ))}
+                      <Separator className='my-2' />
+                      <p className='pl-3 py-2'>Programs</p>
+                      {programs?.data?.content?.map(program => (
+                        <SelectItem className='pb-1' key={program.uuid} value={program.uuid as string}>
+                          {program.title}
+                        </SelectItem>
+                      ))}
+
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -317,20 +331,48 @@ export default function ClassCreationPage() {
                 control={form.control}
                 name='recurrence_pattern_uuid'
                 render={({ field }) => (
-                  <FormItem className='w-full flex-1'>
+                  <FormItem className='w-full flex-1 items-center'>
                     <FormLabel>Recurrence (Frequency)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className='w-full'>
-                        <SelectValue placeholder='Select recurrence pattern' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {courses?.data?.content?.map(course => (
-                          <SelectItem key={course.uuid} value={course.uuid as string}>
-                            {course.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="rounded-md border p-3.5 bg-muted/30 space-y-2 text-sm text-muted-foreground">
+
+                      {recurringData?.days_of_week && (
+                        <div>
+                          <span className="font-medium text-foreground">Day(s) of week:</span>{' '}
+                          {recurringData?.days_of_week}
+                        </div>
+                      )}
+
+                      {recurringData?.day_of_month && (
+                        <div>
+                          <span className="font-medium text-foreground">Day of month:</span>{' '}
+                          {recurringData.day_of_month}
+                        </div>
+                      )}
+
+                      {recurringData?.end_date && (
+                        <div>
+                          <span className="font-medium text-foreground">Ends on:</span>{' '}
+                          {new Date(recurringData?.end_date).toLocaleDateString()}
+                        </div>
+                      )}
+
+                      {/* {recurringData?.occurrence_count && (
+                        <div>
+                          <span className="font-medium text-foreground">Occurrences:</span>{' '}
+                          {recurringData?.occurrence_count}
+                        </div>
+                      )} */}
+
+                      {/* <div>
+                        <span className="font-medium text-foreground">Status:</span>{' '}
+                        {recurringData?.is_active ? 'Active' : 'Inactive'}
+                      </div> */}
+
+                      <div className="pt-2 italic text-foreground">
+                        {recurringData?.pattern_description}
+                      </div>
+                    </div>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -412,6 +454,28 @@ export default function ClassCreationPage() {
         isOpen={openAddRecurrenceModal}
         setOpen={setOpenAddRecurrenceModal}
         onCancel={() => setOpenAddRecurrenceModal(false)}
+        onSuccess={(data: any) => {
+          setRecurringUuid(data?.data?.uuid as string)
+          setRecurringData(data?.data)
+
+          // example success response
+          // {
+          //   success: true,
+          //   data: {
+          //       uuid: "f6a1984d-fce2-48b3-9947-3813299e90bf",
+          //       recurrence_type: "WEEKLY",
+          //       interval_value: 1,
+          //       days_of_week: "MONDAY,FRIDAY",
+          //       day_of_month: null,
+          //       end_date: "2025-12-12",
+          //       occurrence_count: null,
+          //       is_active: true,
+          //       is_indefinite: false,
+          //       pattern_description: "Every week on MONDAY, FRIDAY until 2025-12-12"
+          //    },
+          //    message: "Recurrence pattern created successfully"
+          // }
+        }}
       />
     </Card>
   );

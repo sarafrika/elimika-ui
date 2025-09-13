@@ -1,5 +1,3 @@
-import { getMenuWithActivePath, MenuItem } from '@/lib/menu';
-import { ComponentPropsWithoutRef } from 'react';
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -7,9 +5,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import { getMenuWithActivePath, MenuItem } from '@/lib/menu';
 import { useUserStore } from '@/store/use-user-store';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ComponentPropsWithoutRef } from 'react';
 
 interface NavSecondaryProps {
   items: MenuItem[];
