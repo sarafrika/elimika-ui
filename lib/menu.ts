@@ -14,6 +14,7 @@ import {
   Layers,
   LayoutDashboard,
   LibraryIcon,
+  Mails,
   Settings,
   Star,
   UserCircle,
@@ -43,14 +44,17 @@ export function markActiveMenuItem(items: MenuItem[], currentPath: string): Menu
   return items.map(item => {
     const newItem: MenuItem = { ...item };
 
-    newItem.isActive = item.url === currentPath;
+    // ==> Mark as active only if exact match
+    // newItem.isActive = item.url === currentPath;
+
+    // == Mark as active only if exact match or path starts with item.url
+    newItem.isActive = currentPath.startsWith(item?.url as any);
 
     if (item.items && item.items.length > 0) {
       newItem.items = markActiveMenuItem(item.items, currentPath);
 
-      if (newItem.items.some(child => child.isActive)) {
-        newItem.isActive = true;
-      }
+      // ==> Mark parent as active if child is active
+      // if (newItem.items.some(child => child.isActive)) newItem.isActive = true
     }
 
     return newItem;
@@ -155,7 +159,7 @@ export default {
     {
       title: 'Invites',
       url: '/dashboard/invites',
-      icon: BookOpen,
+      icon: Mails,
     },
     {
       title: 'Programs',
@@ -166,6 +170,18 @@ export default {
       title: 'Trainings',
       url: '/dashboard/trainings',
       icon: ClipboardList,
+      items: [
+        {
+          title: 'Overview',
+          url: '/dashboard/trainings/overview',
+          icon: LayoutDashboard,
+        },
+        {
+          title: 'Timetable',
+          url: '/dashboard/trainings/timetable',
+          icon: Calendar,
+        }
+      ]
     },
     {
       title: 'Rubrics Management',
@@ -239,7 +255,7 @@ export default {
     {
       title: 'Invites',
       url: '/dashboard/invites',
-      icon: BookOpen,
+      icon: Mails,
     },
     {
       title: 'Classes',

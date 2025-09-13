@@ -31,7 +31,17 @@ import {
   searchTrainingProgramsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BadgeCheck, BookOpen, EyeIcon, FilePenIcon, MoreVertical, PenIcon, PlusIcon, Square, TrashIcon } from 'lucide-react';
+import {
+  BadgeCheck,
+  BookOpen,
+  EyeIcon,
+  FilePenIcon,
+  MoreVertical,
+  PenIcon,
+  PlusIcon,
+  Square,
+  TrashIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -142,7 +152,14 @@ export default function ClassesPage() {
 
   return (
     <div className='space-y-6'>
-      <div className='flex justify-end'>
+      <div className='mb-6 flex items-end justify-between'>
+        <div>
+          <h1 className='text-2xl font-semibold'>Your Programs</h1>
+          <p className='text-muted-foreground mt-1 text-base'>
+            You have {programs?.length} program
+            {programs?.length > 1 ? 's' : ''} created.
+          </p>
+        </div>
         <Button
           onClick={openCreateProgramDialog}
           type='button'
@@ -161,7 +178,7 @@ export default function ClassesPage() {
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No programs found</h3>
           <p className='text-muted-foreground mt-2'>
-            You don&apos;t have any progras yet. Start by creating a new program.
+            You don&apos;t have any programs yet. Start by creating a new program.
           </p>
           <Button onClick={openCreateProgramDialog} className='mt-4' asChild>
             <div>Create Your First Program</div>

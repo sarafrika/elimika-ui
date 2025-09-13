@@ -1,5 +1,5 @@
-import ClassroomList from "./_components/ClassroomList";
+import ClassroomList from './_components/ClassroomList';
 
 export default function ClassesPage() {
-  return (<ClassroomList />);
+  return <ClassroomList />;
 }

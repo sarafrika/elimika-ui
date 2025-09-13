@@ -1,6 +1,5 @@
-import ManageBranch from "./_components/ManageBranches";
-
+import ManageBranch from './_components/ManageBranches';
 
 export default async function BranchesPage() {
-  return (<ManageBranch />);
+  return <ManageBranch />;
 }

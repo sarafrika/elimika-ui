@@ -13,7 +13,7 @@ import {
   getRubricMatrixQueryKey,
   getRubricScoringQueryKey,
   getScoringLevelsByRubricQueryKey,
-  searchAssessmentRubricsQueryKey
+  searchAssessmentRubricsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import isEqual from 'lodash.isequal';
@@ -83,14 +83,15 @@ export default function RubricsCreationPage() {
 
   const [editingRubric, setEditingRubric] = useState<RubricDetailsFormValues | null>(null);
   const [editingCriterion, setEditingCriterion] = useState<RubricCriteriaFormValues | null>(null);
-  const [editingScoringLevel, setEditingScoringLevel] = useState<ScoringLevelFormValues | null>(null);
+  const [editingScoringLevel, setEditingScoringLevel] = useState<ScoringLevelFormValues | null>(
+    null
+  );
   const [editingScoring, setEditingScoring] = useState<RubricScoringFormValues | null>(null);
 
   const [editingRubricId, setEditingRubricId] = useState<string | null>(null);
   const [editingCriterionId, setEditingCriterionId] = useState<string | null>(null);
   const [editingScoringId, setEditingScoringId] = useState<string | null>(null);
   const [editingScoringLevelId, setEditingScoringLevelId] = useState<string | null>(null);
-
 
   const openEditModal = (rubricId: string) => {
     const rubricItem = rubrics.find(r => r.rubric.uuid === rubricId);
@@ -131,8 +132,7 @@ export default function RubricsCreationPage() {
 
     setEditingRubricId(rubricId);
     setIsScoringLevelModalOpen(true);
-  }
-
+  };
 
   const handleEditCriterion = (rubricId: string, criterionId: string) => {
     const rubricItem = rubrics.find(r => r.rubric.uuid === rubricId);
@@ -188,7 +188,6 @@ export default function RubricsCreationPage() {
     setIsScoringLevelModalOpen(true);
   };
 
-
   const handleEditCriteriaScoring = (rubricId: string, cell: any) => {
     const rubricItem = rubrics.find(r => r.rubric.uuid === rubricId);
     if (!rubricItem) return;
@@ -218,7 +217,6 @@ export default function RubricsCreationPage() {
   const [deleteScoringLevelModalOpen, setDeleteScoringLevelModalOpen] = useState(false);
   const [deleteScoringModalOpen, setDeleteScoringModalOpen] = useState(false);
 
-
   const handleAskDeleteRubric = (rubricId: string) => {
     setRubricToDelete(rubricId);
     setDeleteModalOpen(true);
@@ -242,8 +240,6 @@ export default function RubricsCreationPage() {
     // setScoringToDelete(scoringId);
     setDeleteScoringModalOpen(true);
   };
-
-
 
   const deleteRubric = useMutation(deleteAssessmentRubricMutation());
   const confirmDeleteRubric = () => {
@@ -361,7 +357,7 @@ export default function RubricsCreationPage() {
         onSuccess: () => {
           qc.invalidateQueries({
             queryKey: getScoringLevelsByRubricQueryKey({
-              path: { rubricUuid: rubricToDelete, },
+              path: { rubricUuid: rubricToDelete },
               query: { pageable: {} },
             }),
           });
@@ -461,7 +457,6 @@ export default function RubricsCreationPage() {
         </Button>
       </div>
 
-
       {rubricDataIsLoading && (
         <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
           <div className='h-20 w-full animate-pulse rounded bg-gray-200'></div>
@@ -484,8 +479,8 @@ export default function RubricsCreationPage() {
 
       <>
         {rubricsDataIsFetched && !rubricDataIsLoading && rubrics.length >= 1 && (
-          <div className="space-y-6">
-            {rubrics.map((item) => {
+          <div className='space-y-6'>
+            {rubrics.map(item => {
               const rubric = item.rubric;
               const matrixData = item.matrix?.data?.data;
 
@@ -496,7 +491,6 @@ export default function RubricsCreationPage() {
                   scoringLevels={matrixData?.scoring_levels || []}
                   criteria={matrixData?.criteria || []}
                   matrixCells={matrixData?.matrix_cells || {}}
-
                   // Pass action handlers here
                   onEditRubric={openEditModal}
                   onDeleteRubric={handleAskDeleteRubric}
@@ -504,13 +498,11 @@ export default function RubricsCreationPage() {
                   onAddScoringLevel={handleAddScoringLevel}
                   onEditScoringLevel={handleEditScoringLevel}
                   onDeleteScoringLevel={handleAskDeleteScoringLevel}
-
                   onEditCriterion={handleEditCriterion}
                   onDeleteCriterion={handleAskDeleteCriterion}
                   onAddScoring={handleAddScore}
                   onEditCriterionScoring={handleEditCriteriaScoring}
                   onDeleteCriterionScoring={handleAskDeleteCriteriaScoring}
-
                 />
               );
             })}
@@ -560,7 +552,8 @@ export default function RubricsCreationPage() {
             setEditingScoringLevelId(null);
             setEditingScoringId(null);
             setEditingScoring(null);
-          }} />
+          }}
+        />
       )}
 
       {isScoringModalOpen && (
@@ -578,7 +571,6 @@ export default function RubricsCreationPage() {
             setEditingScoring(null);
           }}
         />
-
       )}
 
       {/* Delete components modals */}

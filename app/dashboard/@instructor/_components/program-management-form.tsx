@@ -140,9 +140,9 @@ function ProgramCreationForm({
     const commonOnSuccess = (data: any) => {
       toast.success(
         data?.message ||
-        (isEditing
-          ? 'Training program updated successfully'
-          : 'Training program created successfully')
+          (isEditing
+            ? 'Training program updated successfully'
+            : 'Training program created successfully')
       );
       onCancel();
 
@@ -426,8 +426,8 @@ function AddCourseToProgramForm({
   const { data: allCourses } = useQuery(
     searchCoursesOptions({
       query: {
-        searchParams: { instructor_uuid_eq: instructor?.uuid as string, },
-        pageable: { page: 0, size: 100, },
+        searchParams: { instructor_uuid_eq: instructor?.uuid as string },
+        pageable: { page: 0, size: 100 },
       },
     })
   );
@@ -449,8 +449,9 @@ function AddCourseToProgramForm({
       has_prerequisites: !!values.prerequisite_course_uuid,
       association_category: values.is_required ? 'Required Course' : 'Optional Course',
       requirement_status: values.is_required ? 'Mandatory Course' : 'Elective Course',
-      curriculum_summary: `${values.is_required ? 'Required' : 'Optional'
-        } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`,
+      curriculum_summary: `${
+        values.is_required ? 'Required' : 'Optional'
+      } course${values.prerequisite_course_uuid ? ' with prerequisites' : ''} in sequence position ${values.sequence_order}`,
     };
 
     addProgramCourses.mutate(
@@ -591,7 +592,6 @@ function AddCourseToProgramForm({
   );
 }
 
-
 const programRequirementSchema = z.object({
   program_uuid: z.string(),
   requirement_type: z.string().optional(),
@@ -632,7 +632,7 @@ function ProgramRequirementForm({
       requirement_category: '',
       requirement_priority: '',
       requirement_summary: '',
-      ...initialValues
+      ...initialValues,
     },
   });
 
@@ -689,7 +689,7 @@ function ProgramRequirementForm({
             toast.success(data?.message || 'Requirement added successfully');
             onCancel();
           },
-          onError: (error) => {
+          onError: error => {
             // const message = error?.error?.toLowerCase?.() || '';
             // if (message.includes('duplicate key')) {
             //   toast.error('This requirement already exists or is duplicated.');
@@ -885,7 +885,7 @@ interface ProgramRequirementDialogProps {
   programId?: string;
   requirementId?: string;
   onSuccess?: () => void;
-  initialValues: any
+  initialValues: any;
 }
 
 function ProgramRequirementDialog({
@@ -927,6 +927,5 @@ function ProgramRequirementDialog({
     </Dialog>
   );
 }
-
 
 export { AddProgramCourseDialog, CreateProgramDialog, EditProgramDialog, ProgramRequirementDialog };

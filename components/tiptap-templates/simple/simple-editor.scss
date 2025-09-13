@@ -55,9 +55,12 @@ body,
 .simple-editor-wrapper {
   display: flex;
   flex-direction: column;
-  max-width: 648px;
+  align-items: flex-start;
+  align-self: flex-start;
+  justify-self: flex-start;
+  max-width: 858px;
   width: 100%;
-  margin: 0 auto;
+  // margin: 0 auto;
 
   border: 1px solid #ccc;
   border-radius: 8px;

@@ -42,7 +42,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { AssignmentDialog } from '../../../_components/assignment-management-frm';
+import { AssignmentDialog } from '../../../_components/assignment-management-form';
 import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
 
 export default function CourseCreationPage() {
@@ -96,11 +96,11 @@ export default function CourseCreationPage() {
     setSelectedContent(content);
   };
 
-  const [addAssignmentModal, setAddAssignmentModal] = useState(false)
+  const [addAssignmentModal, setAddAssignmentModal] = useState(false);
   const openAddAssignmentModal = (lesson: any) => {
-    setSelectedLesson(lesson)
+    setSelectedLesson(lesson);
     setAddAssignmentModal(true);
-  }
+  };
 
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
@@ -225,33 +225,33 @@ export default function CourseCreationPage() {
   const content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
-        const matchedType = Array.isArray(contentTypeList?.data)
-          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-          : undefined;
+          const matchedType = Array.isArray(contentTypeList?.data)
+            ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
+            : undefined;
 
-        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
+          const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
 
-        return {
-          contentType: typeName.toUpperCase() as
-            | 'AUDIO'
-            | 'VIDEO'
-            | 'TEXT'
-            | 'LINK'
-            | 'PDF'
-            | 'YOUTUBE',
-          title: item?.title || '',
-          uuid: item?.uuid || '',
-          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-          duration:
-            typeof item?.estimated_duration === 'string'
-              ? parseInt(item.estimated_duration) || 0
-              : 0,
-          durationHours: item?.duration_hours || 0,
-          durationMinutes: item?.duration_minutes || 0,
-          contentTypeUuid: item?.content_type || '',
-          contentCategory: matchedType?.upload_category ?? '',
-        };
-      })
+          return {
+            contentType: typeName.toUpperCase() as
+              | 'AUDIO'
+              | 'VIDEO'
+              | 'TEXT'
+              | 'LINK'
+              | 'PDF'
+              | 'YOUTUBE',
+            title: item?.title || '',
+            uuid: item?.uuid || '',
+            value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
+            duration:
+              typeof item?.estimated_duration === 'string'
+                ? parseInt(item.estimated_duration) || 0
+                : 0,
+            durationHours: item?.duration_hours || 0,
+            durationMinutes: item?.duration_minutes || 0,
+            contentTypeUuid: item?.content_type || '',
+            contentCategory: matchedType?.upload_category ?? '',
+          };
+        })
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
@@ -272,7 +272,7 @@ export default function CourseCreationPage() {
     content_category: selectedContent?.content_category,
     content_type_uuid: selectedContent?.content_type_uuid,
     value: selectedContent?.content_text as any,
-    description: selectedContent?.description
+    description: selectedContent?.description,
     // content_type: selectedContent?.content_type || "",
     // duration_hours: selectedContent?.duration_hours,
     // duration_minutes: selectedContent?.duration_minutes,
@@ -306,7 +306,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   // DELETE LESSON MUTATION
@@ -331,7 +331,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
@@ -358,7 +358,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   if (courseId && !courseInitialValues) {
@@ -421,7 +421,7 @@ export default function CourseCreationPage() {
               onAddLesson={openAddLessonModal}
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
-              onReorderLessons={() => { }}
+              onReorderLessons={() => {}}
               // lesson content
               lessonContentsMap={lessonContentMap}
               onAddLessonContent={openAddContentModal}
@@ -446,7 +446,7 @@ export default function CourseCreationPage() {
                 courseId={courseId as string}
                 lessonId={selectedLesson?.uuid}
                 initialValues={lessonInitialValues}
-                onCancel={() => { }}
+                onCancel={() => {}}
                 onSuccess={data => {
                   setCreatedCourseId(data?.uuid);
 
@@ -481,7 +481,7 @@ export default function CourseCreationPage() {
             <LessonContentDialog
               courseId={resolveId}
               lessonId={selectedLesson?.uuid || (selectedContent?.lesson_uuid as string)}
-              contentId={selectedContent?.uuid as string || ''}
+              contentId={(selectedContent?.uuid as string) || ''}
               isOpen={addContentModalOpen}
               onOpenChange={setAddContentModalOpen}
               onCancel={() => {
@@ -491,11 +491,18 @@ export default function CourseCreationPage() {
               initialValues={contentInitialValues}
             />
 
-            <AssignmentDialog isOpen={addAssignmentModal}
+            <AssignmentDialog
+              isOpen={addAssignmentModal}
               setOpen={setAddAssignmentModal}
               lessonId={selectedLesson?.uuid as string}
-              onSuccess={() => { setSelectedLesson(null); setAddAssignmentModal(false) }}
-              onCancel={() => { setSelectedLesson(null); setAddAssignmentModal(false) }}
+              onSuccess={() => {
+                setSelectedLesson(null);
+                setAddAssignmentModal(false);
+              }}
+              onCancel={() => {
+                setSelectedLesson(null);
+                setAddAssignmentModal(false);
+              }}
             />
           </div>
         </StepperContent>

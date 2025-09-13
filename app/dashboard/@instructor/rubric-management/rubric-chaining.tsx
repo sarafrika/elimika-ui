@@ -35,7 +35,7 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
   });
 
   const rubricMatrixResults = useQueries({
-    queries: rubricUuids.map((uuid) => getRubricMatrixOptions(uuid)),
+    queries: rubricUuids.map(uuid => getRubricMatrixOptions(uuid)),
   });
 
   const criteriaQueries = useQueries({
@@ -129,7 +129,6 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
       matrix: matrixData,
     };
   });
-
 
   const isLoading =
     isFetching ||

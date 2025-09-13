@@ -1,5 +1,7 @@
 'use client';
 
+import menu, { MenuItem } from '@/lib/menu';
+import { usePathname } from 'next/navigation';
 import {
   createContext,
   ReactNode,
@@ -9,8 +11,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { usePathname } from 'next/navigation';
-import menu, { MenuItem } from '@/lib/menu';
 
 export type BreadcrumbItem = {
   id: string;

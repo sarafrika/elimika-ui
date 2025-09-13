@@ -8,11 +8,15 @@ interface TrainingLayoutProps {
 
 export default function TrainingLayout({ children }: TrainingLayoutProps) {
   return (
-    <div className='space-y-6 p-4 pb-16 md:p-10'>
-      <div className='flex items-center justify-between'>
+    <div className='space-y-8 p-4 pb-16 md:p-10'>
+      <div className='flex w-full items-center justify-between lg:max-w-[75%]'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Manage Classes</h2>
-          <p className='text-muted-foreground'>Create and track classes.</p>
+          <p className='text-muted-foreground'>
+            Create and organize classes quickly with customizable details. Track student enrollment,
+            attendance, and schedules all in one place. Easily update class information and manage
+            materials to keep everything running smoothly and efficiently.
+          </p>
         </div>
       </div>
       <Separator />

@@ -1,10 +1,10 @@
-'use client'
+'use client';
 
 import { useInstructor } from '../../../../../context/instructor-context';
 import PublishedCoursesComponent from '../../../@instructor/course-management/published/publishedCourse-component';
 
 function Page() {
-  const instrucor = useInstructor()
+  const instrucor = useInstructor();
   return <PublishedCoursesComponent instructorId={instrucor?.uuid as string} />;
 }
 

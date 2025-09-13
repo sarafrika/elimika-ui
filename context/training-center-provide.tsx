@@ -20,14 +20,21 @@ export const useTrainingCenter = () => useContext(TrainingCenterContext);
 export default function TrainingCenterProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const userProfile = useUserProfile();
-  const activeOrgId = userProfile && userProfile.organisation_affiliations && userProfile.organisation_affiliations.length > 0 ?
-    (userProfile.organisation_affiliations.find(org => org.active) ?? userProfile.organisation_affiliations[0] ?? {}).organisationUuid : null;
+  const activeOrgId =
+    userProfile &&
+    userProfile.organisation_affiliations &&
+    userProfile.organisation_affiliations.length > 0
+      ? (
+          userProfile.organisation_affiliations.find(org => org.active) ??
+          userProfile.organisation_affiliations[0] ??
+          {}
+        ).organisationUuid
+      : null;
 
   const { data, isLoading } = useQuery(
     createQueryOptions(activeOrgId!, {
       enabled: !!userProfile && !!session && !!session!.user && !!activeOrgId,
-    }
-    )
+    })
   );
 
   return (
@@ -45,13 +52,12 @@ function createQueryOptions(
     ...options,
     queryKey: ['organization'],
     queryFn: async () => {
-
       if (!organizaition_uuid) return null;
 
       const orgResp = await getOrganisationByUuid({
         path: {
-          uuid: organizaition_uuid
-        }
+          uuid: organizaition_uuid,
+        },
       });
 
       const orgRespData = orgResp.data as ApiResponse;

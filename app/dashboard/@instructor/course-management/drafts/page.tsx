@@ -1,10 +1,10 @@
-'use client'
+'use client';
 
 import { useInstructor } from '@/context/instructor-context';
 import DraftCoursesComponent from './draftCourse-component';
 
 function Page() {
-  const instructor = useInstructor()
+  const instructor = useInstructor();
   return <DraftCoursesComponent instructorId={instructor?.uuid as string} />;
 }
 

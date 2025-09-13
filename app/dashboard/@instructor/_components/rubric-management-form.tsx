@@ -42,7 +42,7 @@ import {
   updateAssessmentRubricMutation,
   updateMatrixCellMutation,
   updateRubricCriterionMutation,
-  updateScoringLevelMutation
+  updateScoringLevelMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { StatusEnum } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -527,7 +527,7 @@ export const scoringLevelSchema = z.object({
   color_code: z.string().optional(),
   is_passing: z.boolean().default(false),
   display_name: z.string().optional(),
-  performance_indicator: z.string().optional()
+  performance_indicator: z.string().optional(),
 });
 
 export type ScoringLevelFormValues = z.infer<typeof scoringLevelSchema>;
@@ -664,7 +664,6 @@ function ScoringLevelForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name='level_order'
@@ -678,7 +677,6 @@ function ScoringLevelForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name='color_code'
@@ -692,15 +690,15 @@ function ScoringLevelForm({
                   <Input
                     type='color'
                     {...field}
-                    className='w-12 h-12 p-0 border border-gray-300 rounded-md cursor-pointer'
-                    onChange={(e) => {
+                    className='h-12 w-12 cursor-pointer rounded-md border border-gray-300 p-0'
+                    onChange={e => {
                       field.onChange(e);
                     }}
                   />
                 </FormControl>
 
                 {/* Hex Value Display */}
-                <span className='text-sm text-gray-700 font-mono'>
+                <span className='font-mono text-sm text-gray-700'>
                   {field.value?.toUpperCase() || '#FFFFFF'}
                 </span>
               </div>
@@ -708,8 +706,8 @@ function ScoringLevelForm({
             </FormItem>
           )}
         />
-
-        \        <FormField
+        \{' '}
+        <FormField
           control={form.control}
           name='name'
           render={({ field }) => (
@@ -722,7 +720,6 @@ function ScoringLevelForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name='description'
@@ -740,7 +737,6 @@ function ScoringLevelForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name='points'
@@ -754,7 +750,6 @@ function ScoringLevelForm({
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name='performance_indicator'
@@ -768,7 +763,6 @@ function ScoringLevelForm({
             </FormItem>
           )}
         />
-
         <div className='flex justify-end gap-2 pt-6'>
           <Button type='button' variant='outline' onClick={onCancel}>
             Cancel
@@ -779,7 +773,9 @@ function ScoringLevelForm({
             className='flex min-w-[120px] items-center justify-center gap-2'
             disabled={createRubricScoringLevel.isPending || updateRubricScoringLevel.isPending}
           >
-            {(createRubricScoringLevel.isPending || updateRubricScoringLevel.isPending) && <Spinner />}
+            {(createRubricScoringLevel.isPending || updateRubricScoringLevel.isPending) && (
+              <Spinner />
+            )}
             {defaultValues ? 'Update Scoring Level' : 'Create Scoring Level'}
           </Button>
         </div>
@@ -834,7 +830,7 @@ function RubricScoringForm({
       is_completed: values.is_completed,
       scoring_level_uuid: values.scoring_level_uuid,
       points: values.points,
-      weighted_points: values.weighted_points
+      weighted_points: values.weighted_points,
       // additional scoring info
     };
 
@@ -877,7 +873,8 @@ function RubricScoringForm({
           },
         }
       );
-    } else { }
+    } else {
+    }
   };
 
   return (
@@ -1041,7 +1038,7 @@ function RubricScoringForm({
             className='flex min-w-[120px] items-center justify-center gap-2'
             disabled={updateMatrixCells.isPending}
           >
-            {(updateMatrixCells.isPending) && <Spinner />}
+            {updateMatrixCells.isPending && <Spinner />}
             {defaultValues && 'Update Scoring'}
           </Button>
         </div>
@@ -1200,9 +1197,7 @@ export function ScoringDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className='flex max-w-xl flex-col p-0'>
         <DialogHeader className='border-b px-6 py-4'>
-          <DialogTitle className='text-xl'>
-            {scoringId && 'Update Scoring'}
-          </DialogTitle>
+          <DialogTitle className='text-xl'>{scoringId && 'Update Scoring'}</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
             {scoringId && 'Update the grading level and expectations for this scoring entry'}
           </DialogDescription>

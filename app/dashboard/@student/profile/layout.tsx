@@ -1,13 +1,13 @@
 'use client';
 
+import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 
 const sections = [
   { name: 'General', href: '/dashboard/profile/general' },
-  { name: 'Education', href: '/dashboard/profile/education' },
-  { name: 'Certifications', href: '/dashboard/profile/certifications' },
+  { name: 'Guardian Information', href: '/dashboard/profile/guardian-information' },
 ];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
@@ -44,14 +44,25 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
         </SidebarContent>
       </Sidebar> */}
 
-      <main className='flex-1 overflow-auto px-6 py-3'>
-        <ul className='flex gap-5'>
-          {sections.map(sec => (
-            <Link key={sec.name} href={sec.href}>
-              {sec.name}
-            </Link>
-          ))}
+      <main className='flex-1 flex flex-col overflow-auto px-6 py-3 gap-8'>
+        <ul className="flex gap-5 mt-4 ">
+          {sections.map(sec => {
+            const isActive = pathname.startsWith(sec.href);
+
+            return (
+              <li key={sec.name}>
+                <Link
+                  href={sec.href}
+                  className={`px-3 py-1 rounded-md transition-colors ${isActive ? 'bg-gray-200 text-black' : 'hover:bg-gray-100 text-gray-700'
+                    }`}
+                >
+                  {sec.name}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
+        <Separator />
 
         {children}
       </main>

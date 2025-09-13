@@ -235,6 +235,33 @@ import type {
   UpdateCategoryData,
   UpdateCategoryResponses,
   UpdateCategoryErrors,
+  DeactivateClassDefinitionData,
+  DeactivateClassDefinitionResponses,
+  DeactivateClassDefinitionErrors,
+  GetClassDefinitionData,
+  GetClassDefinitionResponses,
+  GetClassDefinitionErrors,
+  UpdateClassDefinitionData,
+  UpdateClassDefinitionResponses,
+  UpdateClassDefinitionErrors,
+  CancelRecurringClassScheduleData,
+  CancelRecurringClassScheduleResponses,
+  CancelRecurringClassScheduleErrors,
+  ScheduleRecurringClassFromDefinitionData,
+  ScheduleRecurringClassFromDefinitionResponses,
+  ScheduleRecurringClassFromDefinitionErrors,
+  UpdateRecurringClassScheduleData,
+  UpdateRecurringClassScheduleResponses,
+  UpdateRecurringClassScheduleErrors,
+  DeleteClassRecurrencePatternData,
+  DeleteClassRecurrencePatternResponses,
+  DeleteClassRecurrencePatternErrors,
+  GetClassRecurrencePatternData,
+  GetClassRecurrencePatternResponses,
+  GetClassRecurrencePatternErrors,
+  UpdateClassRecurrencePatternData,
+  UpdateClassRecurrencePatternResponses,
+  UpdateClassRecurrencePatternErrors,
   DeleteCertificateData,
   DeleteCertificateResponses,
   DeleteCertificateErrors,
@@ -250,6 +277,15 @@ import type {
   UpdateCertificateTemplateData,
   UpdateCertificateTemplateResponses,
   UpdateCertificateTemplateErrors,
+  DeleteInstructorAvailabilitySlotData,
+  DeleteInstructorAvailabilitySlotResponses,
+  DeleteInstructorAvailabilitySlotErrors,
+  GetInstructorAvailabilitySlotData,
+  GetInstructorAvailabilitySlotResponses,
+  GetInstructorAvailabilitySlotErrors,
+  UpdateInstructorAvailabilitySlotData,
+  UpdateInstructorAvailabilitySlotResponses,
+  UpdateInstructorAvailabilitySlotErrors,
   DeleteAssignmentData,
   DeleteAssignmentResponses,
   DeleteAssignmentErrors,
@@ -274,6 +310,15 @@ import type {
   CreateTrainingBranchData,
   CreateTrainingBranchResponses,
   CreateTrainingBranchErrors,
+  CheckStudentConflictData,
+  CheckStudentConflictResponses,
+  CheckStudentConflictErrors,
+  ScheduleClassData,
+  ScheduleClassResponses,
+  ScheduleClassErrors,
+  CheckInstructorConflictData,
+  CheckInstructorConflictResponses,
+  CheckInstructorConflictErrors,
   GetAllStudentsData,
   GetAllStudentsResponses,
   GetAllStudentsErrors,
@@ -439,6 +484,9 @@ import type {
   VerifyDocumentData,
   VerifyDocumentResponses,
   VerifyDocumentErrors,
+  EnrollStudentData,
+  EnrollStudentResponses,
+  EnrollStudentErrors,
   GetAllCoursesData,
   GetAllCoursesResponses,
   GetAllCoursesErrors,
@@ -523,6 +571,12 @@ import type {
   CreateCategoryData,
   CreateCategoryResponses,
   CreateCategoryErrors,
+  CreateClassDefinitionData,
+  CreateClassDefinitionResponses,
+  CreateClassDefinitionErrors,
+  CreateClassRecurrencePatternData,
+  CreateClassRecurrencePatternResponses,
+  CreateClassRecurrencePatternErrors,
   GetAllCertificatesData,
   GetAllCertificatesResponses,
   GetAllCertificatesErrors,
@@ -547,6 +601,24 @@ import type {
   GenerateCourseCertificateData,
   GenerateCourseCertificateResponses,
   GenerateCourseCertificateErrors,
+  CreateInstructorAvailabilitySlotData,
+  CreateInstructorAvailabilitySlotResponses,
+  CreateInstructorAvailabilitySlotErrors,
+  SetInstructorWeeklyAvailabilityData,
+  SetInstructorWeeklyAvailabilityResponses,
+  SetInstructorWeeklyAvailabilityErrors,
+  SetInstructorMonthlyAvailabilityData,
+  SetInstructorMonthlyAvailabilityResponses,
+  SetInstructorMonthlyAvailabilityErrors,
+  SetInstructorDailyAvailabilityData,
+  SetInstructorDailyAvailabilityResponses,
+  SetInstructorDailyAvailabilityErrors,
+  SetInstructorCustomAvailabilityData,
+  SetInstructorCustomAvailabilityResponses,
+  SetInstructorCustomAvailabilityErrors,
+  BlockInstructorTimeData,
+  BlockInstructorTimeResponses,
+  BlockInstructorTimeErrors,
   GetAllAssignmentsData,
   GetAllAssignmentsResponses,
   GetAllAssignmentsErrors,
@@ -562,9 +634,15 @@ import type {
   GradeSubmissionData,
   GradeSubmissionResponses,
   GradeSubmissionErrors,
+  UpdateScheduledInstanceStatusData,
+  UpdateScheduledInstanceStatusResponses,
+  UpdateScheduledInstanceStatusErrors,
   ReorderScoringLevelsData,
   ReorderScoringLevelsResponses,
   ReorderScoringLevelsErrors,
+  MarkAttendanceData,
+  MarkAttendanceResponses,
+  MarkAttendanceErrors,
   GetAllUsersData,
   GetAllUsersResponses,
   GetAllUsersErrors,
@@ -586,6 +664,15 @@ import type {
   GetTrainingBranchesByOrganisation1Data,
   GetTrainingBranchesByOrganisation1Responses,
   GetTrainingBranchesByOrganisation1Errors,
+  CancelScheduledClassData,
+  CancelScheduledClassResponses,
+  CancelScheduledClassErrors,
+  GetScheduledInstanceData,
+  GetScheduledInstanceResponses,
+  GetScheduledInstanceErrors,
+  GetInstructorScheduleData,
+  GetInstructorScheduleResponses,
+  GetInstructorScheduleErrors,
   SearchStudentsData,
   SearchStudentsResponses,
   SearchStudentsErrors,
@@ -748,6 +835,24 @@ import type {
   SearchDocumentsData,
   SearchDocumentsResponses,
   SearchDocumentsErrors,
+  CancelEnrollmentData,
+  CancelEnrollmentResponses,
+  CancelEnrollmentErrors,
+  GetEnrollmentData,
+  GetEnrollmentResponses,
+  GetEnrollmentErrors,
+  GetStudentScheduleData,
+  GetStudentScheduleResponses,
+  GetStudentScheduleErrors,
+  GetEnrollmentsForInstanceData,
+  GetEnrollmentsForInstanceResponses,
+  GetEnrollmentsForInstanceErrors,
+  GetEnrollmentCountData,
+  GetEnrollmentCountResponses,
+  GetEnrollmentCountErrors,
+  HasCapacityForEnrollmentData,
+  HasCapacityForEnrollmentResponses,
+  HasCapacityForEnrollmentErrors,
   GetStatusTransitionsData,
   GetStatusTransitionsResponses,
   GetStatusTransitionsErrors,
@@ -826,6 +931,24 @@ import type {
   GetRootCategoriesData,
   GetRootCategoriesResponses,
   GetRootCategoriesErrors,
+  PreviewRecurringClassScheduleData,
+  PreviewRecurringClassScheduleResponses,
+  PreviewRecurringClassScheduleErrors,
+  CheckClassSchedulingConflictsData,
+  CheckClassSchedulingConflictsResponses,
+  CheckClassSchedulingConflictsErrors,
+  GetClassDefinitionsForOrganisationData,
+  GetClassDefinitionsForOrganisationResponses,
+  GetClassDefinitionsForOrganisationErrors,
+  GetClassDefinitionsForInstructorData,
+  GetClassDefinitionsForInstructorResponses,
+  GetClassDefinitionsForInstructorErrors,
+  GetClassDefinitionsForCourseData,
+  GetClassDefinitionsForCourseResponses,
+  GetClassDefinitionsForCourseErrors,
+  GetAllActiveClassDefinitionsData,
+  GetAllActiveClassDefinitionsResponses,
+  GetAllActiveClassDefinitionsErrors,
   VerifyCertificateData,
   VerifyCertificateResponses,
   VerifyCertificateErrors,
@@ -853,6 +976,27 @@ import type {
   GetCourseCertificatesData,
   GetCourseCertificatesResponses,
   GetCourseCertificatesErrors,
+  ClearInstructorAvailabilityData,
+  ClearInstructorAvailabilityResponses,
+  ClearInstructorAvailabilityErrors,
+  GetInstructorAvailabilityData,
+  GetInstructorAvailabilityResponses,
+  GetInstructorAvailabilityErrors,
+  FindInstructorAvailableSlotsData,
+  FindInstructorAvailableSlotsResponses,
+  FindInstructorAvailableSlotsErrors,
+  GetInstructorAvailabilityForDateData,
+  GetInstructorAvailabilityForDateResponses,
+  GetInstructorAvailabilityForDateErrors,
+  CheckInstructorAvailabilityData,
+  CheckInstructorAvailabilityResponses,
+  CheckInstructorAvailabilityErrors,
+  GetInstructorBlockedSlotsData,
+  GetInstructorBlockedSlotsResponses,
+  GetInstructorBlockedSlotsErrors,
+  GetInstructorAvailableSlotsData,
+  GetInstructorAvailableSlotsResponses,
+  GetInstructorAvailableSlotsErrors,
   GetAssignmentSubmissionsData,
   GetAssignmentSubmissionsResponses,
   GetAssignmentSubmissionsErrors,
@@ -938,15 +1082,24 @@ import {
   updateContentTypeResponseTransformer,
   getCategoryByUuidResponseTransformer,
   updateCategoryResponseTransformer,
+  getClassDefinitionResponseTransformer,
+  updateClassDefinitionResponseTransformer,
+  scheduleRecurringClassFromDefinitionResponseTransformer,
+  updateRecurringClassScheduleResponseTransformer,
+  getClassRecurrencePatternResponseTransformer,
+  updateClassRecurrencePatternResponseTransformer,
   getCertificateByUuidResponseTransformer,
   updateCertificateResponseTransformer,
   updateCertificateTemplateResponseTransformer,
+  getInstructorAvailabilitySlotResponseTransformer,
+  updateInstructorAvailabilitySlotResponseTransformer,
   getAssignmentByUuidResponseTransformer,
   updateAssignmentResponseTransformer,
   acceptInvitationResponseTransformer,
   uploadProfileImageResponseTransformer,
   getAllTrainingBranchesResponseTransformer,
   createTrainingBranchResponseTransformer,
+  scheduleClassResponseTransformer,
   getAllStudentsResponseTransformer,
   createStudentResponseTransformer,
   getAllAssessmentRubricsResponseTransformer,
@@ -994,6 +1147,7 @@ import {
   getInstructorDocumentsResponseTransformer,
   addInstructorDocumentResponseTransformer,
   verifyDocumentResponseTransformer,
+  enrollStudentResponseTransformer,
   getAllCoursesResponseTransformer,
   createCourseResponseTransformer,
   unpublishCourseResponseTransformer,
@@ -1020,6 +1174,8 @@ import {
   createContentTypeResponseTransformer,
   getAllCategoriesResponseTransformer,
   createCategoryResponseTransformer,
+  createClassDefinitionResponseTransformer,
+  createClassRecurrencePatternResponseTransformer,
   getAllCertificatesResponseTransformer,
   createCertificateResponseTransformer,
   generateCertificateUrlResponseTransformer,
@@ -1027,6 +1183,7 @@ import {
   createCertificateTemplateResponseTransformer,
   generateProgramCertificateResponseTransformer,
   generateCourseCertificateResponseTransformer,
+  createInstructorAvailabilitySlotResponseTransformer,
   getAllAssignmentsResponseTransformer,
   createAssignmentResponseTransformer,
   submitAssignmentResponseTransformer,
@@ -1038,6 +1195,8 @@ import {
   searchResponseTransformer,
   search1ResponseTransformer,
   getTrainingBranchesByOrganisation1ResponseTransformer,
+  getScheduledInstanceResponseTransformer,
+  getInstructorScheduleResponseTransformer,
   searchStudentsResponseTransformer,
   getPassingScoringLevelsResponseTransformer,
   getHighestScoringLevelResponseTransformer,
@@ -1082,6 +1241,10 @@ import {
   searchExperienceResponseTransformer,
   searchEducationResponseTransformer,
   searchDocumentsResponseTransformer,
+  getEnrollmentResponseTransformer,
+  getStudentScheduleResponseTransformer,
+  getEnrollmentsForInstanceResponseTransformer,
+  getEnrollmentCountResponseTransformer,
   getPrimaryRubricResponseTransformer,
   getRubricsByContextResponseTransformer,
   getCourseEnrollmentsResponseTransformer,
@@ -1102,6 +1265,12 @@ import {
   getSubCategoriesResponseTransformer,
   searchCategoriesResponseTransformer,
   getRootCategoriesResponseTransformer,
+  previewRecurringClassScheduleResponseTransformer,
+  checkClassSchedulingConflictsResponseTransformer,
+  getClassDefinitionsForOrganisationResponseTransformer,
+  getClassDefinitionsForInstructorResponseTransformer,
+  getClassDefinitionsForCourseResponseTransformer,
+  getAllActiveClassDefinitionsResponseTransformer,
   searchCertificateTemplatesResponseTransformer,
   getStudentCertificatesResponseTransformer,
   getDownloadableCertificatesResponseTransformer,
@@ -1110,6 +1279,11 @@ import {
   getProgramCertificates1ResponseTransformer,
   getCertificateByNumberResponseTransformer,
   getCourseCertificatesResponseTransformer,
+  getInstructorAvailabilityResponseTransformer,
+  findInstructorAvailableSlotsResponseTransformer,
+  getInstructorAvailabilityForDateResponseTransformer,
+  getInstructorBlockedSlotsResponseTransformer,
+  getInstructorAvailableSlotsResponseTransformer,
   getAssignmentSubmissionsResponseTransformer,
   getHighPerformanceSubmissionsResponseTransformer,
   searchSubmissionsResponseTransformer,
@@ -3385,6 +3559,254 @@ export const updateCategory = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Deactivate a class definition by UUID
+ */
+export const deactivateClassDefinition = <ThrowOnError extends boolean = false>(
+  options: Options<DeactivateClassDefinitionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeactivateClassDefinitionResponses,
+    DeactivateClassDefinitionErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get a class definition by UUID
+ */
+export const getClassDefinition = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassDefinitionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassDefinitionResponses,
+    GetClassDefinitionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassDefinitionResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a class definition by UUID
+ */
+export const updateClassDefinition = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateClassDefinitionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateClassDefinitionResponses,
+    UpdateClassDefinitionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateClassDefinitionResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Cancel recurring schedule for a class definition
+ */
+export const cancelRecurringClassSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<CancelRecurringClassScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    CancelRecurringClassScheduleResponses,
+    CancelRecurringClassScheduleErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/schedule',
+    ...options,
+  });
+};
+
+/**
+ * Schedule recurring classes from a class definition
+ */
+export const scheduleRecurringClassFromDefinition = <ThrowOnError extends boolean = false>(
+  options: Options<ScheduleRecurringClassFromDefinitionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ScheduleRecurringClassFromDefinitionResponses,
+    ScheduleRecurringClassFromDefinitionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: scheduleRecurringClassFromDefinitionResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/schedule',
+    ...options,
+  });
+};
+
+/**
+ * Update recurring schedule for a class definition
+ */
+export const updateRecurringClassSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateRecurringClassScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateRecurringClassScheduleResponses,
+    UpdateRecurringClassScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateRecurringClassScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/schedule',
+    ...options,
+  });
+};
+
+/**
+ * Delete a recurrence pattern by UUID
+ */
+export const deleteClassRecurrencePattern = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteClassRecurrencePatternData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteClassRecurrencePatternResponses,
+    DeleteClassRecurrencePatternErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/recurrence-patterns/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get a recurrence pattern by UUID
+ */
+export const getClassRecurrencePattern = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassRecurrencePatternData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassRecurrencePatternResponses,
+    GetClassRecurrencePatternErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassRecurrencePatternResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/recurrence-patterns/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a recurrence pattern by UUID
+ */
+export const updateClassRecurrencePattern = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateClassRecurrencePatternData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateClassRecurrencePatternResponses,
+    UpdateClassRecurrencePatternErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateClassRecurrencePatternResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/recurrence-patterns/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete certificate
  * Permanently removes a certificate record.
  */
@@ -3522,6 +3944,90 @@ export const updateCertificateTemplate = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/certificates/templates/{templateUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete an availability slot
+ */
+export const deleteInstructorAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteInstructorAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteInstructorAvailabilitySlotResponses,
+    DeleteInstructorAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/slots/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get an availability slot by UUID
+ */
+export const getInstructorAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorAvailabilitySlotResponses,
+    GetInstructorAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorAvailabilitySlotResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/slots/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update an existing availability slot
+ */
+export const updateInstructorAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateInstructorAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateInstructorAvailabilitySlotResponses,
+    UpdateInstructorAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateInstructorAvailabilitySlotResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/slots/{uuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -3754,6 +4260,97 @@ export const createTrainingBranch = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/training-branches',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Check if a student has enrollment conflicts
+ */
+export const checkStudentConflict = <ThrowOnError extends boolean = false>(
+  options: Options<CheckStudentConflictData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CheckStudentConflictResponses,
+    CheckStudentConflictErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/student/{studentUuid}/check-conflict',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Schedule a new class instance
+ */
+export const scheduleClass = <ThrowOnError extends boolean = false>(
+  options: Options<ScheduleClassData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ScheduleClassResponses,
+    ScheduleClassErrors,
+    ThrowOnError
+  >({
+    responseTransformer: scheduleClassResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Check if an instructor has scheduling conflicts
+ */
+export const checkInstructorConflict = <ThrowOnError extends boolean = false>(
+  options: Options<CheckInstructorConflictData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CheckInstructorConflictResponses,
+    CheckInstructorConflictErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/instructor/{instructorUuid}/check-conflict',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -4739,8 +5336,8 @@ export const getBranchInvitations = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create training branch invitation
- * Creates and sends an email invitation for a user to join a specific training branch with a defined role. This is a specialized invitation that automatically determines the parent organization from the branch. The invitation email will include branch-specific information and location details.
+ * Create an invitation to a specific training branch
+ * Creates and sends an email invitation for a user to join a specific training branch with a defined role. This is the sole endpoint for creating branch-specific invitations. The parent organization is inferred from the branch.
  */
 export const createBranchInvitation = <ThrowOnError extends boolean = false>(
   options: Options<CreateBranchInvitationData, ThrowOnError>
@@ -4799,8 +5396,8 @@ export const getOrganizationInvitations = <ThrowOnError extends boolean = false>
 };
 
 /**
- * Create organization invitation
- * Creates and sends an email invitation for a user to join this specific organization with a defined role. If a training branch UUID is provided, the invitation will be branch-specific within the organization. The invitation email will be sent to the recipient with acceptance and decline links containing the unique token.
+ * Create an invitation to the top-level organization
+ * Creates and sends an email invitation for a user to join the organization itself, without assignment to a specific branch. The user will have the specified role at the organization level. Use the '/{uuid}/training-branches/{branchUuid}/invitations' endpoint to invite a user directly to a branch.
  */
 export const createOrganizationInvitation = <ThrowOnError extends boolean = false>(
   options: Options<CreateOrganizationInvitationData, ThrowOnError>
@@ -5407,6 +6004,37 @@ export const verifyDocument = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/instructors/{instructorUuid}/documents/{documentUuid}/verify',
     ...options,
+  });
+};
+
+/**
+ * Enroll a student in a scheduled class instance
+ */
+export const enrollStudent = <ThrowOnError extends boolean = false>(
+  options: Options<EnrollStudentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    EnrollStudentResponses,
+    EnrollStudentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: enrollStudentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -6356,6 +6984,68 @@ export const createCategory = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Create a new class definition
+ */
+export const createClassDefinition = <ThrowOnError extends boolean = false>(
+  options: Options<CreateClassDefinitionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateClassDefinitionResponses,
+    CreateClassDefinitionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createClassDefinitionResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Create a new recurrence pattern
+ */
+export const createClassRecurrencePattern = <ThrowOnError extends boolean = false>(
+  options: Options<CreateClassRecurrencePatternData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateClassRecurrencePatternResponses,
+    CreateClassRecurrencePatternErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createClassRecurrencePatternResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/recurrence-patterns',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get all certificates
  * Retrieves paginated list of all certificates with filtering support.
  */
@@ -6587,6 +7277,183 @@ export const generateCourseCertificate = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Create a new availability slot
+ */
+export const createInstructorAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<CreateInstructorAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateInstructorAvailabilitySlotResponses,
+    CreateInstructorAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createInstructorAvailabilitySlotResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Set weekly availability patterns for an instructor
+ */
+export const setInstructorWeeklyAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<SetInstructorWeeklyAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SetInstructorWeeklyAvailabilityResponses,
+    SetInstructorWeeklyAvailabilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/weekly',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Set monthly availability patterns for an instructor
+ */
+export const setInstructorMonthlyAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<SetInstructorMonthlyAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SetInstructorMonthlyAvailabilityResponses,
+    SetInstructorMonthlyAvailabilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/monthly',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Set daily availability patterns for an instructor
+ */
+export const setInstructorDailyAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<SetInstructorDailyAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SetInstructorDailyAvailabilityResponses,
+    SetInstructorDailyAvailabilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/daily',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Set custom availability patterns for an instructor
+ */
+export const setInstructorCustomAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<SetInstructorCustomAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SetInstructorCustomAvailabilityResponses,
+    SetInstructorCustomAvailabilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/custom',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Block time for an instructor
+ */
+export const blockInstructorTime = <ThrowOnError extends boolean = false>(
+  options: Options<BlockInstructorTimeData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    BlockInstructorTimeResponses,
+    BlockInstructorTimeErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/block',
+    ...options,
+  });
+};
+
+/**
  * Get all assignments
  * Retrieves paginated list of all assignments with filtering support.
  */
@@ -6731,6 +7598,32 @@ export const gradeSubmission = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Update the status of a scheduled instance
+ */
+export const updateScheduledInstanceStatus = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateScheduledInstanceStatusData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    UpdateScheduledInstanceStatusResponses,
+    UpdateScheduledInstanceStatusErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/status',
+    ...options,
+  });
+};
+
+/**
  * Reorder scoring levels
  * Updates the display order of scoring levels within the rubric. Provide a map of level UUIDs to their new order values.
  */
@@ -6758,6 +7651,32 @@ export const reorderScoringLevels = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+};
+
+/**
+ * Mark attendance for a student enrollment
+ */
+export const markAttendance = <ThrowOnError extends boolean = false>(
+  options: Options<MarkAttendanceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    MarkAttendanceResponses,
+    MarkAttendanceErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/{enrollmentUuid}/attendance',
+    ...options,
   });
 };
 
@@ -6942,6 +7861,86 @@ export const getTrainingBranchesByOrganisation1 = <ThrowOnError extends boolean 
       },
     ],
     url: '/api/v1/training-branches/organisation/{organisationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Cancel a scheduled class instance
+ */
+export const cancelScheduledClass = <ThrowOnError extends boolean = false>(
+  options: Options<CancelScheduledClassData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    CancelScheduledClassResponses,
+    CancelScheduledClassErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get a scheduled instance by UUID
+ */
+export const getScheduledInstance = <ThrowOnError extends boolean = false>(
+  options: Options<GetScheduledInstanceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetScheduledInstanceResponses,
+    GetScheduledInstanceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getScheduledInstanceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get schedule for a specific instructor within a date range
+ */
+export const getInstructorSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorScheduleResponses,
+    GetInstructorScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/instructor/{instructorUuid}',
     ...options,
   });
 };
@@ -8651,6 +9650,166 @@ export const searchDocuments = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Cancel a student enrollment
+ */
+export const cancelEnrollment = <ThrowOnError extends boolean = false>(
+  options: Options<CancelEnrollmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    CancelEnrollmentResponses,
+    CancelEnrollmentErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/{enrollmentUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get an enrollment by UUID
+ */
+export const getEnrollment = <ThrowOnError extends boolean = false>(
+  options: Options<GetEnrollmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetEnrollmentResponses,
+    GetEnrollmentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getEnrollmentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/{enrollmentUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get schedule for a specific student within a date range
+ */
+export const getStudentSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentScheduleResponses,
+    GetStudentScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStudentScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/student/{studentUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get all enrollments for a scheduled instance
+ */
+export const getEnrollmentsForInstance = <ThrowOnError extends boolean = false>(
+  options: Options<GetEnrollmentsForInstanceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetEnrollmentsForInstanceResponses,
+    GetEnrollmentsForInstanceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getEnrollmentsForInstanceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/instance/{instanceUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get enrollment count for a scheduled instance
+ */
+export const getEnrollmentCount = <ThrowOnError extends boolean = false>(
+  options: Options<GetEnrollmentCountData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetEnrollmentCountResponses,
+    GetEnrollmentCountErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getEnrollmentCountResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/instance/{instanceUuid}/count',
+    ...options,
+  });
+};
+
+/**
+ * Check if a scheduled instance has capacity for new enrollments
+ */
+export const hasCapacityForEnrollment = <ThrowOnError extends boolean = false>(
+  options: Options<HasCapacityForEnrollmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    HasCapacityForEnrollmentResponses,
+    HasCapacityForEnrollmentErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/instance/{instanceUuid}/capacity',
+    ...options,
+  });
+};
+
+/**
  * Get available status transitions
  * Returns the list of valid status transitions for a course based on its current state and business rules.
  *
@@ -9476,6 +10635,168 @@ export const getRootCategories = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Preview recurring schedule without creating instances
+ */
+export const previewRecurringClassSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<PreviewRecurringClassScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    PreviewRecurringClassScheduleResponses,
+    PreviewRecurringClassScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: previewRecurringClassScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/schedule/preview',
+    ...options,
+  });
+};
+
+/**
+ * Check for scheduling conflicts
+ */
+export const checkClassSchedulingConflicts = <ThrowOnError extends boolean = false>(
+  options: Options<CheckClassSchedulingConflictsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    CheckClassSchedulingConflictsResponses,
+    CheckClassSchedulingConflictsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: checkClassSchedulingConflictsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/schedule/conflicts',
+    ...options,
+  });
+};
+
+/**
+ * Get class definitions for an organisation
+ */
+export const getClassDefinitionsForOrganisation = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassDefinitionsForOrganisationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassDefinitionsForOrganisationResponses,
+    GetClassDefinitionsForOrganisationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassDefinitionsForOrganisationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/organisation/{organisationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get class definitions for an instructor
+ */
+export const getClassDefinitionsForInstructor = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassDefinitionsForInstructorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassDefinitionsForInstructorResponses,
+    GetClassDefinitionsForInstructorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassDefinitionsForInstructorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/instructor/{instructorUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get class definitions for a course
+ */
+export const getClassDefinitionsForCourse = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassDefinitionsForCourseData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassDefinitionsForCourseResponses,
+    GetClassDefinitionsForCourseErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassDefinitionsForCourseResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/course/{courseUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get all active class definitions
+ */
+export const getAllActiveClassDefinitions = <ThrowOnError extends boolean = false>(
+  options?: Options<GetAllActiveClassDefinitionsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetAllActiveClassDefinitionsResponses,
+    GetAllActiveClassDefinitionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAllActiveClassDefinitionsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/active',
+    ...options,
+  });
+};
+
+/**
  * Verify certificate
  * Verifies the authenticity of a certificate using its certificate number.
  */
@@ -9746,6 +11067,193 @@ export const getCourseCertificates = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/certificates/course-certificates',
+    ...options,
+  });
+};
+
+/**
+ * Clear all availability for an instructor
+ */
+export const clearInstructorAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<ClearInstructorAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    ClearInstructorAvailabilityResponses,
+    ClearInstructorAvailabilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get all availability for an instructor
+ */
+export const getInstructorAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorAvailabilityResponses,
+    GetInstructorAvailabilityErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorAvailabilityResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Find available slots for an instructor within a date range
+ */
+export const findInstructorAvailableSlots = <ThrowOnError extends boolean = false>(
+  options: Options<FindInstructorAvailableSlotsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    FindInstructorAvailableSlotsResponses,
+    FindInstructorAvailableSlotsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: findInstructorAvailableSlotsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/find-available',
+    ...options,
+  });
+};
+
+/**
+ * Get availability for an instructor on a specific date
+ */
+export const getInstructorAvailabilityForDate = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorAvailabilityForDateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorAvailabilityForDateResponses,
+    GetInstructorAvailabilityForDateErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorAvailabilityForDateResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/date/{date}',
+    ...options,
+  });
+};
+
+/**
+ * Check if an instructor is available during a time period
+ */
+export const checkInstructorAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<CheckInstructorAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    CheckInstructorAvailabilityResponses,
+    CheckInstructorAvailabilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/check',
+    ...options,
+  });
+};
+
+/**
+ * Get blocked slots for an instructor on a specific date
+ */
+export const getInstructorBlockedSlots = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorBlockedSlotsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorBlockedSlotsResponses,
+    GetInstructorBlockedSlotsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorBlockedSlotsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/blocked/{date}',
+    ...options,
+  });
+};
+
+/**
+ * Get available slots for an instructor on a specific date
+ */
+export const getInstructorAvailableSlots = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorAvailableSlotsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorAvailableSlotsResponses,
+    GetInstructorAvailableSlotsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorAvailableSlotsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/availability/instructors/{instructorUuid}/available/{date}',
     ...options,
   });
 };
