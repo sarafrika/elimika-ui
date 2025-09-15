@@ -1,5 +1,15 @@
 'use client';
+
 import CustomLoader from '@/components/custom-loader';
+import DeleteModal from '@/components/custom-modals/delete-modal';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -8,24 +18,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import VirticleDotsIcons from '@/components/virticle-dots-icon';
 import { useTrainingCenter } from '@/context/training-center-provide';
+import { getTrainingBranchesByOrganisation } from '@/services/client';
+import { deleteTrainingBranchMutation } from '@/services/client/@tanstack/react-query.gen';
 import { Separator } from '@radix-ui/react-separator';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Badge } from '../../../../components/ui/badge';
-import { Button } from '../../../../components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '../../../../components/ui/dropdown-menu';
-import VirticleDotsIcons from '../../../../components/virticle-dots-icon';
-import { getTrainingBranchesByOrganisation } from '../../../../services/client';
+import { toast } from 'sonner';
 
 export default function BranchesPage() {
+  const qc = useQueryClient()
   const trainingCenter = useTrainingCenter();
   const [pageable, setPageable] = useState<{ page: number; size: number }>({ page: 0, size: 10 });
 
@@ -42,6 +47,26 @@ export default function BranchesPage() {
       }),
     enabled: !!trainingCenter,
   });
+
+  const [deleteBranchModalOpen, setDeleteBranchModalOpen] = useState(false);
+  const [deletingBranchId, setDeletingBranchId] = useState<string | null>(null);
+  const deleteOrgBranch = (branch_uuid: string) => {
+    setDeletingBranchId(branch_uuid);
+    setDeleteBranchModalOpen(true);
+  }
+
+  const deleteBranchMutation = useMutation(deleteTrainingBranchMutation())
+  const confirmDeleteOption = () => {
+    if (!deletingBranchId) return;
+    deleteBranchMutation.mutate({ path: { uuid: deletingBranchId } }, {
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ['branches'] })
+        toast.success('Training branch deleted successfully');
+        setDeleteBranchModalOpen(false);
+        setDeletingBranchId(null);
+      }
+    })
+  }
 
   if (!trainingCenter) {
     return <CustomLoader />;
@@ -67,7 +92,7 @@ export default function BranchesPage() {
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
         {!trainingCenter.branches || trainingCenter.branches.length === 0 ? (
-          <div className='flex flex-col items-center justify-center'>
+          <div className='flex flex-col mt-20 items-center justify-center'>
             <h3>There are no branches for this organization</h3>
             {/* If organization owner or admin show the add button */}
             <Button>Add New Branch</Button>
@@ -106,7 +131,7 @@ export default function BranchesPage() {
                           <VirticleDotsIcons />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className='w-56'>
+                      <DropdownMenuContent className='w-auto' align='end'>
                         {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
                         {/* <DropdownMenuSeparator /> */}
                         <DropdownMenuCheckboxItem>
@@ -118,9 +143,9 @@ export default function BranchesPage() {
                           </Link>
                         </DropdownMenuCheckboxItem>
                         <DropdownMenuCheckboxItem>
-                          <Link href={''} className='flex gap-3'>
+                          <div onClick={() => deleteOrgBranch(branch.uuid as string)} className='flex gap-3'>
                             <Trash /> <span className='text-red-500'>Delete</span>
-                          </Link>
+                          </div>
                         </DropdownMenuCheckboxItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -131,6 +156,16 @@ export default function BranchesPage() {
           </Table>
         )}
       </div>
+
+      <DeleteModal
+        open={deleteBranchModalOpen}
+        setOpen={setDeleteBranchModalOpen}
+        title='Delete Organisation Branch'
+        description='Are you sure you want to delete this branch? This action cannot be undone.'
+        onConfirm={confirmDeleteOption}
+        isLoading={deleteBranchMutation.isPending}
+        confirmText='Delete Branch'
+      />
     </div>
   );
 }

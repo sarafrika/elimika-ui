@@ -22,7 +22,7 @@ export default function TabSection({ branch }: { branch: TrainingBranch }) {
   const trainingCenter = useTrainingCenter();
   const [courseViewType, setCourseViewType] = useState<'list' | 'grid'>('list');
   return (
-    <Tabs defaultValue='courses'>
+    <Tabs defaultValue='courses' className='mb-20'>
       <TabsList>
         <TabsTrigger value='courses'>Courses</TabsTrigger>
         <TabsTrigger value='invites'>Invites</TabsTrigger>

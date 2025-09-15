@@ -1,6 +1,7 @@
 'use client';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
+import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
   createClassDefinitionMutation,
@@ -34,11 +36,14 @@ import {
   getAllActiveClassDefinitionsQueryKey,
   getAllCoursesOptions,
   getClassRecurrencePatternQueryKey,
+  scheduleClassMutation,
   scheduleRecurringClassFromDefinitionMutation,
   updateClassDefinitionMutation,
   updateClassRecurrencePatternMutation,
   updateRecurringClassScheduleMutation,
+  updateScheduledInstanceStatusMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { LocationTypeEnum, RecurrenceTypeEnum, StatusEnum3 } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XIcon } from 'lucide-react';
@@ -46,8 +51,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
-import { Badge } from '../../../../components/ui/badge';
-import { LocationTypeEnum, RecurrenceTypeEnum } from '../../../../services/client/types.gen';
 
 const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
 const WEEK_DAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
@@ -613,8 +616,8 @@ function RecurrencForm({
 
 export const scheduleSchema = z.object({
   uuid: z.any().optional(),
-  start_date: z.any().optional(), // Accepts strings like "2024-12-31"
-  end_date: z.any().optional(), // Accepts strings like "2024-12-31"
+  start_date: z.any().optional(), // e.g. "2024-12-31"
+  end_date: z.any().optional(), // e.g. "2024-12-31"
 });
 
 export type ScheduleFormValues = z.infer<typeof scheduleSchema>;
@@ -740,6 +743,164 @@ function ScheduleForm({
     </Form>
   );
 }
+
+export const timetableScheduleSchema = z.object({
+  start_time: z.any(), // e.g. "2024-12-31"
+  end_time: z.any(), // e.g. "2024-12-31"
+  timezone: z.any()
+});
+
+export type TimetableScheduleFormValues = z.infer<typeof timetableScheduleSchema>;
+
+function TimetableScheduleForm({
+  onSuccess,
+  timetableScheduleId,
+  classId,
+  initialValues,
+  onCancel,
+  className,
+  status
+}: {
+  timetableScheduleId?: string;
+  onSuccess: any;
+  classId?: string;
+  onCancel: () => void;
+  initialValues: any;
+  className: any;
+  status: StatusEnum3
+}) {
+  const form = useForm<TimetableScheduleFormValues>({
+    resolver: zodResolver(timetableScheduleSchema),
+    defaultValues: {},
+  });
+
+  const qc = useQueryClient();
+  const instructor = useInstructor();
+
+  const createTimetableSchedule = useMutation(scheduleClassMutation());
+  const updateTimetableSchedule = useMutation(updateScheduledInstanceStatusMutation());
+
+  const handleSubmit = async (values: TimetableScheduleFormValues) => {
+    const payload = {
+      ...values,
+      class_definition_uuid: classId,
+      instructor_uuid: instructor?.uuid as string
+    };
+
+    if (timetableScheduleId) {
+      updateTimetableSchedule.mutate(
+        { path: { instanceUuid: timetableScheduleId as string }, query: { status } },
+        {
+          onSuccess: (data: any) => {
+            qc.invalidateQueries({
+              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
+            });
+            toast.success(data?.message);
+            onCancel();
+            onSuccess();
+          },
+          onError: (error: any) => {
+            toast.error(error?.message)
+          }
+        }
+      );
+    } else {
+      createTimetableSchedule.mutate(
+        { body: payload as any },
+        {
+          onSuccess: (data: any) => {
+            qc.invalidateQueries({
+              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
+            });
+            toast.success(data?.message);
+            onCancel();
+            onSuccess();
+          },
+          onError: (error: any) => {
+            toast.error(error?.message)
+          }
+        }
+      );
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
+        <FormField
+          control={form.control}
+          name='start_time'
+          render={({ field }) => (
+            <FormItem className='w-full'>
+              <FormLabel>Start Time</FormLabel>
+              <FormControl>
+                <Input
+                  type="datetime-local"
+                  step="60" // 1-minute steps; adjust as needed
+                  {...field}
+                  onChange={e => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='end_time'
+          render={({ field }) => (
+            <FormItem className='w-full'>
+              <FormLabel>End Time</FormLabel>
+              <FormControl>
+                <Input
+                  type="datetime-local"
+                  step="60" // 1-minute steps; adjust as needed
+                  {...field}
+                  onChange={e => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='timezone'
+          render={({ field }) => (
+            <FormItem className='w-full'>
+              <FormLabel>Time Zone</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder='e.g. UTC'
+                  {...field}
+                  onChange={e => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className='flex justify-end gap-2 pt-6'>
+          <Button type='button' variant='outline' onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            type='submit'
+            className='flex min-w-[120px] items-center justify-center gap-2'
+            disabled={createTimetableSchedule.isPending || updateTimetableSchedule.isPending}
+          >
+            {(createTimetableSchedule.isPending || updateTimetableSchedule.isPending) && <Spinner />}
+            {initialValues ? 'Update Timetable Schedule' : 'Create Timetable Schedule'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
 
 interface ClassDialogProps {
   isOpen: boolean;
@@ -877,4 +1038,59 @@ function ScheduleDialog({
   );
 }
 
-export { ClassDialog, RecurrenceDialog, ScheduleDialog };
+
+interface TimetableScheduleDialogProps {
+  isOpen: boolean;
+  setOpen: (open: boolean) => void;
+  onSuccess?: any;
+  timetableScheduleId?: string;
+  editingClassId?: string;
+  initialValues?: any;
+  onCancel: () => any;
+  status: StatusEnum3
+}
+
+function TimetableScheduleDialog({
+  isOpen,
+  setOpen,
+  onSuccess,
+  timetableScheduleId,
+  editingClassId,
+  initialValues,
+  onCancel,
+  status
+}: TimetableScheduleDialogProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={setOpen}>
+      <DialogContent className='flex max-w-6xl flex-col p-0'>
+        <DialogHeader className='border-b px-6 py-4'>
+          <DialogTitle className='text-xl'>
+            {timetableScheduleId
+              ? 'Edit Class Timetable Schedule'
+              : 'Create Class Timetable Schedule'}
+          </DialogTitle>
+          <DialogDescription className='text-muted-foreground text-sm'>
+            {timetableScheduleId
+              ? 'Edit class timetable schedule'
+              : 'Create a new class timetable schedule'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className='h-auto'>
+          <TimetableScheduleForm
+            onCancel={onCancel}
+            initialValues={initialValues as any}
+            className='px-6 pb-6'
+            timetableScheduleId={timetableScheduleId}
+            classId={editingClassId}
+            onSuccess={onSuccess}
+            status={status}
+          />
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export { ClassDialog, RecurrenceDialog, ScheduleDialog, TimetableScheduleDialog };
+
