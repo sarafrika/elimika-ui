@@ -9,7 +9,7 @@ const localizer = momentLocalizer(moment);
 
 const ClassCalendar = () => {
     const [date, setDate] = useState(new Date());
-    const [view, setView] = useState(Views.MONTH); // 👈 Control view state
+    const [view, setView] = useState(Views.MONTH);
 
     const handleToday = () => {
         setDate(new Date());

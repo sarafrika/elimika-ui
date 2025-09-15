@@ -50,7 +50,7 @@ export default function Courses({
               </CardHeader>
 
               {course.thumbnail_url && course.thumbnail_url.length > 0 ? (
-                <Image alt={course.name} src={course.thumbnail_url} className='object-fit w-full' />
+                <Image width={12} height={12} alt={course.name} src={course.thumbnail_url} className='object-fit w-full rounded-sm' />
               ) : (
                 <Book size={256} color='gray-500' />
               )}
@@ -71,8 +71,10 @@ export default function Courses({
                 <TableCell>
                   {course.thumbnail_url && course.thumbnail_url.length > 0 ? (
                     <Image
+                      width={40}
+                      height={40}
                       alt={course.name}
-                      className='object-fit h-10 w-10'
+                      className='object-fit h-10 w-10 rounded-md'
                       src={course.thumbnail_url}
                     />
                   ) : (

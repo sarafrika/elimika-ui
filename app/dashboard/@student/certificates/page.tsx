@@ -1,11 +1,9 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useStudent } from '@/context/student-context';
 import { getStudentCertificatesOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { EyeIcon, MoreVertical, Star, TrashIcon } from 'lucide-react';
+import { Star } from 'lucide-react';
 import Link from 'next/link';
 
 const certificates = [
@@ -149,11 +147,12 @@ export default function CertificatesPage() {
       ) : (
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
           {certificates.map((cert) => (
-            <div
+            <Link
+              href={`/dashboard/certificates/${cert.uuid}`}
               key={cert.uuid}
               className='relative min-h-[250px] rounded-lg border bg-white p-5 shadow-sm transition hover:shadow-md'
             >
-              <div className='absolute top-2 right-2'>
+              {/* <div className='absolute top-2 right-2'>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant='ghost' size='icon' aria-label='Open menu'>
@@ -181,7 +180,7 @@ export default function CertificatesPage() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
+              </div> */}
 
               <div>
                 <h2 className="font-semibold text-lg mb-1">{cert.certificate_type}</h2>
@@ -204,7 +203,7 @@ export default function CertificatesPage() {
                   <p className="text-sm text-red-500">Not available for download</p>
                 )}
               </div>
-            </div>
+            </Link>
 
 
 

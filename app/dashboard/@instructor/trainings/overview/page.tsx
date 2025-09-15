@@ -2,7 +2,7 @@
 
 import { deactivateClassDefinitionMutation, getClassDefinitionsForInstructorOptions, getClassDefinitionsForInstructorQueryKey } from '@/services/client/@tanstack/react-query.gen';
 import { useRouter } from 'next/navigation';
-import { ClassDialog, ScheduleDialog } from '../../_components/class-management-form';
+import { ClassDialog, ScheduleDialog, TimetableScheduleDialog } from '../../_components/class-management-form';
 
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
@@ -52,6 +52,12 @@ export default function TrainingsPage() {
   const openRecurrentSchedule = (id: any) => {
     setEditingClassId(id);
     setScheduleModal(true);
+  };
+
+  const [timetableModal, setTimetableModal] = useState(false);
+  const openTimetableSchedule = (id: any) => {
+    setEditingClassId(id);
+    setTimetableModal(true);
   };
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -149,6 +155,13 @@ export default function TrainingsPage() {
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       variant='default'
+                      onClick={() => openTimetableSchedule(cl.uuid)}
+                    >
+                      <Calendar className='mr-2 h-4 w-4' />
+                      Timetable Schedule
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant='default'
                       onClick={() => openRecurrentSchedule(cl.uuid)}
                     >
                       <Calendar className='mr-2 h-4 w-4' />
@@ -214,6 +227,14 @@ export default function TrainingsPage() {
         setOpen={setScheduleModal}
         editingClassId={editingClassId as string}
         onCancel={() => setScheduleModal(false)}
+      />
+
+      <TimetableScheduleDialog
+        isOpen={timetableModal}
+        setOpen={setTimetableModal}
+        editingClassId={editingClassId as string}
+        onCancel={() => setTimetableModal(false)}
+        status={'SCHEDULED'}
       />
 
       <DeleteModal

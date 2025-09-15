@@ -31,7 +31,7 @@ import {
   getClassDefinitionOptions,
   getClassDefinitionsForInstructorQueryKey,
   searchTrainingProgramsOptions,
-  updateClassDefinitionMutation,
+  updateClassDefinitionMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -106,7 +106,9 @@ export default function ClassCreationPage() {
   const handleSubmit = async (values: ClassFormValues) => {
     const payload = {
       ...values,
-      recurrence_pattern_uuid: recurringUuid as string,
+      course_uuid: values?.course_uuid || classData?.course_uuid,
+      location_type: values?.location_type || classData?.location_type,
+      recurrence_pattern_uuid: classData?.recurrence_pattern_uuid || recurringUuid as string,
       default_instructor_uuid: instructor?.uuid as string,
     };
 
@@ -144,7 +146,10 @@ export default function ClassCreationPage() {
   };
 
   useEffect(() => {
-    if (classData) {
+    if (
+      classData &&
+      courses?.data?.content
+    ) {
       form.reset({
         title: classData.title ?? '',
         description: classData.description ?? '',
@@ -158,7 +163,8 @@ export default function ClassCreationPage() {
         is_active: classData.is_active,
       });
     }
-  }, [classData, form]);
+  }, [classData, courses?.data?.content, programs?.data?.content, form]);
+
 
   return (
     <Card className='container mx-auto p-6 pb-16'>
@@ -179,7 +185,7 @@ export default function ClassCreationPage() {
         </div>
       </div>
 
-      {isLoading ? (
+      {(isLoading) ? (
         <div className='mx-auto items-center justify-center'>
           <Spinner />
         </div>
