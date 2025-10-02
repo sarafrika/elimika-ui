@@ -20,17 +20,25 @@ import { useInstructor } from '@/context/instructor-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
+  Clock,
   EyeIcon,
   FilePenIcon,
   LucideFileWarning,
+  MapPin,
   MoreVertical,
   PenIcon,
-  PlusIcon
+  PlusIcon,
+  Repeat,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { RecurrenceDaysCell, RecurrencePatternCell } from '../component/recurring-patterns';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../../components/ui/card';
+import { Skeleton } from '../../../../../components/ui/skeleton';
+import ClassCourseDisplay from '../component/class-course-dislay';
+import { RecurrenceDaysCell } from '../component/recurring-patterns';
+
 
 export default function TrainingsPage() {
   const router = useRouter();
@@ -38,13 +46,14 @@ export default function TrainingsPage() {
   const instructor = useInstructor();
   const [openAddClass, setOpenAddClass] = useState(false);
 
-  const { data, isLoading, } = useQuery(
+  const { data, isLoading, isPending } = useQuery(
     getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructor?.uuid as string },
       query: { activeOnly: false },
     })
   );
-  const classes = data?.data;
+
+  const classes = data?.data
 
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
 
@@ -82,34 +91,62 @@ export default function TrainingsPage() {
 
   return (
     <div className='space-y-6'>
-      <div className='mb-6 flex items-end justify-between'>
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className='text-2xl font-semibold'>Your Classes</h1>
-          <p className='text-muted-foreground mt-1 text-base'>You have {classes?.length} classes</p>
+          <h1 className="text-2xl font-semibold">Your Classes</h1>
+          <p className="text-muted-foreground">Manage your classes and schedules</p>
         </div>
-        <Button
-          onClick={() => router.push(`/dashboard/trainings/create-new`)}
-          type='button'
-          className='cursor-pointer px-4 py-2 text-sm'
-          asChild
-        >
-          <div>
-            <PlusIcon className='mr-1 h-4 w-4' />
-            New Class
-          </div>
+        <Button onClick={() => router.push(`/dashboard/trainings/create-new`)} size="lg" className="gap-2">
+          <PlusIcon className="w-5 h-5" />
+          Create New Class
         </Button>
       </div>
 
+      {isLoading || isPending ?
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        : <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="">
+              <CardTitle className="text-sm text-muted-foreground">Total Classes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-semibold">{classes?.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="">
+              <CardTitle className="text-sm text-muted-foreground">Published Classes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-semibold">{0}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="">
+              <CardTitle className="text-sm text-muted-foreground">Draft Classes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-semibold">{0}</div>
+            </CardContent>
+          </Card>
+        </div>}
+
+
       {classes?.length === 0 && !isLoading && (
-        <div className='bg-muted/20 rounded-md border py-12 text-center'>
+        <div className='space-y-4 bg-muted/20 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
-          <h3 className='mt-4 text-lg font-medium'>No classes found</h3>
-          <p className='text-muted-foreground mt-2'>
-            You don&apos;t have any classes yet. Start by creating a new class.
-          </p>
+
+          <div>
+            <h3 className="text-lg font-semibold">No classes yet</h3>
+            <p className="text-muted-foreground">Get started by creating your first class</p>
+          </div>
+
           <Button
             onClick={() => router.push('/dashboard/trainings/create-new')}
-            className='mt-4'
             asChild
           >
             <div>Create Your First Class</div>
@@ -117,7 +154,7 @@ export default function TrainingsPage() {
         </div>
       )}
 
-      {isLoading ? (
+      {isLoading || isPending ? (
         <PageLoader />
       ) : (
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
@@ -179,36 +216,81 @@ export default function TrainingsPage() {
                 </DropdownMenu>
               </div>
 
+
               {/* Title & description */}
               <h3 className='pr-6 text-lg font-semibold'>{cl.title}</h3>
+              {cl.subtitle && (
+                <p className="text-muted-foreground mt-1">{cl.subtitle}</p>
+              )}
               <div className='text-muted-foreground mb-1 line-clamp-2 text-sm'>
                 <HTMLTextPreview htmlContent={cl?.description as string} />
               </div>
 
               <div className='mb-2 flex justify-end'>
-                <Badge>{cl.is_active ? 'Active' : 'Inactive'}</Badge>
+                <Badge variant={cl.is_active === true ? 'default' : 'secondary'}>
+                  {cl.is_active ? 'Active' : 'Inactive'}
+                </Badge>
               </div>
 
-              {/* Class details */}
-              <ul className='space-y-2.5 text-sm'>
-                <li>
-                  <strong>📅 Days:</strong>{' '}
-                  <RecurrenceDaysCell recurrenceUuid={cl.recurrence_pattern_uuid} />
-                </li>
-                <li>
-                  <strong>🕒 Time:</strong> {cl.default_start_time} - {cl.default_end_time}
-                </li>
-                <li>
-                  <strong>📍 Location:</strong> {cl.location_type}
-                </li>
-                <li>
-                  <strong>🔁 Recurrence:</strong>{' '}
-                  <RecurrencePatternCell recurrenceUuid={cl.recurrence_pattern_uuid} />
-                </li>
-                <li>
-                  <strong>👥 Participants:</strong> {cl.max_participants}
-                </li>
-              </ul>
+              <div className='space-y-3' >
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Users className="w-4 h-4" />
+                  <span>Instructor: {cl.default_instructor_uuid}</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  <span>
+                    Sep 1, 2025 - Dec 15, 2025
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Repeat className="w-4 h-4" />
+                  <span>
+                    <RecurrenceDaysCell recurrenceUuid={cl.recurrence_pattern_uuid} />
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>
+                    {cl.default_start_time} - {cl.default_end_time}                  </span>
+                </div>
+
+
+                {cl.location_type && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span>{cl.location_type} • {cl.max_participants} students</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span>8 lessons • {cl.duration_formatted} total</span>
+                </div>
+
+                {/* {!classData.visibility.isFree && (
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="w-4 h-4 text-muted-foreground" />
+                    <span>${classData.visibility.price}</span>
+                  </div>
+                )} */}
+
+                {/* <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline" className="text-xs">{classData.category}</Badge>
+                  {classData.targetAudience.map((audience, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">{audience}</Badge>
+                  ))}
+                </div> */}
+              </div>
+
+
+              {/* Course details */}
+              <div className='mt-4'>
+                <ClassCourseDisplay courseUuid={cl.course_uuid} />
+              </div>
             </div>
           ))}
         </div>

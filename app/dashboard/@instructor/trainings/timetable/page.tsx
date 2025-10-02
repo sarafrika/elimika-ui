@@ -9,19 +9,19 @@ const localizer = momentLocalizer(moment);
 
 const ClassCalendar = () => {
     const [date, setDate] = useState(new Date());
-    const [view, setView] = useState(Views.MONTH);
+    const [view, setView] = useState(Views.WEEK);
 
     const handleToday = () => {
         setDate(new Date());
     };
 
     const handlePrev = () => {
-        const newDate = moment(date).subtract(1, view === 'month' ? 'month' : view === 'week' ? 'week' : 'day').toDate();
+        const newDate = moment(date).subtract(1, view === 'week' ? 'week' : view === 'month' ? 'month' : 'day').toDate();
         setDate(newDate);
     };
 
     const handleNext = () => {
-        const newDate = moment(date).add(1, view === 'month' ? 'month' : view === 'week' ? 'week' : 'day').toDate();
+        const newDate = moment(date).add(1, view === 'week' ? 'week' : view === 'month' ? 'month' : 'day').toDate();
         setDate(newDate);
     };
 
@@ -29,30 +29,78 @@ const ClassCalendar = () => {
         setView(newView);
     };
 
+
+    const eventPropGetter = (event: any) => {
+        const backgroundColor = event.color || '#3174ad'; // Default color
+        return {
+            style: {
+                backgroundColor,
+                color: 'white',
+                borderRadius: '4px',
+                border: 'none',
+                padding: '4px',
+            },
+        };
+    };
+
+
+    const dayPropGetter = (date: Date) => {
+        const isSunday = date.getDay() === 0;
+        const isSaturday = date.getDay() === 6;
+
+        if (isSunday || isSaturday) {
+            return {
+                style: {
+                    backgroundColor: '#f8d7da',
+                },
+            };
+        }
+
+        return {};
+    };
+
+    const slotPropGetter = (date: Date) => {
+        const hour = date.getHours();
+
+        if (hour >= 12 && hour < 13) {
+            return {
+                style: {
+                    // backgroundColor: '#ffeeba',
+                },
+            };
+        }
+
+        return {};
+    };
+
     return (
         <div>
-            <h1>Calendar View template</h1>
-
-            <div style={{ marginBottom: 16, display: 'flex', gap: 10 }}>
+            {/* <div style={{ marginBottom: 16, display: 'flex', gap: 10 }}>
                 <button onClick={handleToday}>Today</button>
                 <button onClick={handlePrev}>Previous</button>
                 <button onClick={handleNext}>Next</button>
                 <button onClick={() => handleViewChange(Views.MONTH)}>Month</button>
                 <button onClick={() => handleViewChange(Views.WEEK)}>Week</button>
                 <button onClick={() => handleViewChange(Views.DAY)}>Day</button>
-            </div>
+            </div> */}
+
+            <h1 className='bg-red-500' >Availability and Class schedules to be on a single calendar UI... single components</h1>
 
             <Calendar
                 localizer={localizer}
                 events={events}
                 startAccessor="start"
                 endAccessor="end"
-                style={{ height: 600 }}
+                style={{ height: 700 }}
                 date={date}
                 view={view}
                 onNavigate={(newDate) => setDate(newDate)}
                 onView={(newView) => setView(newView as any)}
                 views={[Views.MONTH, Views.WEEK, Views.DAY]}
+                eventPropGetter={eventPropGetter}
+                dayPropGetter={dayPropGetter}
+                slotPropGetter={slotPropGetter}
+            // onDoubleClickEvent={() => {}}
             />
         </div>
     );
@@ -69,6 +117,7 @@ const events = [
             location: 'Room A1',
             instructor: 'Dr. Smith',
         },
+        color: "red"
     },
     {
         title: 'Eng 101',
@@ -78,6 +127,8 @@ const events = [
             location: 'Room B1',
             instructor: 'Dr. Alan',
         },
+        color: "red"
+
     },
     {
         title: 'Phy 101',
@@ -87,6 +138,8 @@ const events = [
             location: 'Room A1',
             instructor: 'Dr. Smith',
         },
+        color: "blue"
+
     },
     {
         title: 'Physics 201',
@@ -105,6 +158,8 @@ const events = [
             location: 'Lab C1',
             instructor: 'Dr. Newton',
         },
+        color: "blue"
+
     },
     {
         title: 'History of Art',
@@ -132,6 +187,8 @@ const events = [
             location: 'Room F5',
             instructor: 'Prof. Tolkien',
         },
+        color: "blue"
+
     },
     {
         title: 'Biology Basics',
@@ -150,6 +207,8 @@ const events = [
             location: 'Room H4',
             instructor: 'Prof. Atlas',
         },
+        color: "orange"
+
     },
     {
         title: 'Algebra II',
@@ -195,6 +254,8 @@ const events = [
             location: 'Room L5',
             instructor: 'Dr. Wordsworth',
         },
+        color: "orange"
+
     },
     {
         title: 'Data Structures',
@@ -213,6 +274,8 @@ const events = [
             location: 'Room N3',
             instructor: 'Prof. Bach',
         },
+        color: "gray"
+
     },
     {
         title: 'Psychology 101',
@@ -222,6 +285,8 @@ const events = [
             location: 'Room O6',
             instructor: 'Dr. Freud',
         },
+        color: "gray"
+
     },
     {
         title: 'Microeconomics',
@@ -240,6 +305,8 @@ const events = [
             location: 'Room Q8',
             instructor: 'Dr. Tesla',
         },
+        color: "gray"
+
     },
     {
         title: 'Environmental Science',
@@ -258,6 +325,8 @@ const events = [
             location: 'Observatory',
             instructor: 'Prof. Hubble',
         },
+        color: "cyan"
+
     },
     {
         title: 'Drama Class',
@@ -267,6 +336,8 @@ const events = [
             location: 'Room S9',
             instructor: 'Dr. Shakespeare',
         },
+        color: "purple"
+
     },
     {
         title: 'French 101',
@@ -276,6 +347,8 @@ const events = [
             location: 'Room T5',
             instructor: 'Prof. Hugo',
         },
+        color: "cyan"
+
     },
     {
         title: 'Digital Marketing',
@@ -294,6 +367,8 @@ const events = [
             location: 'Room V3',
             instructor: 'Prof. Machiavelli',
         },
+        color: "purple"
+
     },
     {
         title: 'Linear Algebra',
@@ -305,4 +380,18 @@ const events = [
         },
     },
 ];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
