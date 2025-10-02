@@ -7,6 +7,7 @@ import {
   Building,
   Building2,
   Calendar,
+  CalendarCheck,
   CheckSquare,
   ClipboardList,
   DollarSign,
@@ -197,6 +198,11 @@ export default {
       title: 'Students',
       url: '/dashboard/students',
       icon: Users,
+    },
+    {
+      title: 'Availability',
+      url: '/dashboard/availability',
+      icon: CalendarCheck,
     },
     {
       title: 'Earnings',

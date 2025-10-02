@@ -57,7 +57,10 @@ const WEEK_DAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRID
 
 export const classSchema = z.object({
   title: z.string().min(1, 'Title is required'),
+  sub_title: z.string().optional(),
   description: z.string().optional(),
+  categories: z.string().array().optional(),
+  class_banner: z.any().optional(),
   default_instructor_uuid: z.string().optional(),
   organisation_uuid: z.string().optional(),
   course_uuid: z.string().optional(),
@@ -362,7 +365,7 @@ export const recurrenceSchema = z.object({
   recurrence_type: z.string().min(1, 'Recurrence type is required'),
   interval_value: z.any().optional(),
   days_of_week: z.any().optional(),
-  day_of_month: z.number().optional(),
+  day_of_month: z.any().optional(),
   end_date: z.any().optional(), // Accepts strings like "2024-12-31"
   occurrence_count: z.number().int().positive().optional(),
 });
@@ -382,9 +385,21 @@ function RecurrencForm({
   initialValues: any;
   className: any;
 }) {
+  function normalizeInitialValues(data: any): RecurrenceFormValues {
+    return {
+      ...data,
+      days_of_week: typeof data.days_of_week === 'string'
+        ? data.days_of_week.split(',').map((day: any) => day.trim())
+        : [],
+      end_date: data.end_date
+        ? new Date(data.end_date).toISOString().split('T')[0]
+        : '',
+    };
+  }
+
   const form = useForm<RecurrenceFormValues>({
     resolver: zodResolver(recurrenceSchema),
-    defaultValues: {},
+    defaultValues: normalizeInitialValues(initialValues) || {},
   });
 
   const qc = useQueryClient();
@@ -393,7 +408,6 @@ function RecurrencForm({
   const createClassRecurrence = useMutation(createClassRecurrencePatternMutation());
   const updateClassRecurrence = useMutation(updateClassRecurrencePatternMutation());
 
-  // "recurrence_uuid": "ef03be37-e977-47c6-b19c-83d27e27fea8",
   const handleSubmit = async (values: RecurrenceFormValues) => {
     const payload = {
       ...values,
@@ -408,7 +422,7 @@ function RecurrencForm({
         {
           onSuccess: (data) => {
             qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
+              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: recurrenceId as string } }),
             });
             toast.success(data?.message);
             onCancel();
@@ -422,7 +436,7 @@ function RecurrencForm({
         {
           onSuccess: (data: any) => {
             qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
+              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: recurrenceId as string } }),
             });
             toast.success(data?.message);
             onCancel();
@@ -533,7 +547,6 @@ function RecurrencForm({
                     </Badge>
                   ))}
                 </div>
-
                 <FormMessage />
               </FormItem>
             )}

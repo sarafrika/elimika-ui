@@ -120,6 +120,15 @@ export type CourseFormRef = {
   submit: () => void;
 };
 
+type UploadKey = 'thumbnail' | 'banner' | 'intro_video';
+
+export type UploadOptions = {
+  key: UploadKey;
+  setPreview: (val: string) => void;
+  mutation: any;
+  onChange: (val: string) => void;
+};
+
 export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
   function CourseCreationForm(
     { showSubmitButton, initialValues, editingCourseId, courseId, successResponse },
@@ -158,14 +167,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       name: 'categories',
     });
 
-    type UploadKey = 'thumbnail' | 'banner' | 'intro_video';
 
-    type UploadOptions = {
-      key: UploadKey;
-      setPreview: (val: string) => void;
-      mutation: any;
-      onChange: (val: string) => void;
-    };
 
     const queryClient = useQueryClient();
     const instructor = useInstructor();

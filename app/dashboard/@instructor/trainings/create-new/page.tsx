@@ -1,488 +1,210 @@
 'use client';
 
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import Spinner from '@/components/ui/spinner';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useInstructor } from '@/context/instructor-context';
-import { LocationTypeEnum } from '@/services/client';
-import {
-  createClassDefinitionMutation,
-  getAllCoursesOptions,
-  getClassDefinitionOptions,
-  getClassDefinitionsForInstructorQueryKey,
-  searchTrainingProgramsOptions,
-  updateClassDefinitionMutation
-} from '@/services/client/@tanstack/react-query.gen';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import {
-  ClassFormValues,
-  classSchema,
-  RecurrenceDialog,
-} from '../../_components/class-management-form';
+import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { Progress } from '../../../../../components/ui/progress';
+import { getClassDefinitionOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import { AcademicPeriodForm, ClassData } from './academic-period-form';
+import ClassDetailsForm from './class-details-form';
+import { ResourcesForm } from './resources-form';
+import { ReviewPublishForm } from './review-class-form';
+import { ScheduleForm } from './schedule-form';
+import { TimetableForm } from './time-table-form';
+import { VisibilityForm } from './visibility-form';
+
+const steps = [
+    { id: 'details', title: 'Class Details', description: 'Basic information about your class' },
+    { id: 'period', title: 'Academic Period', description: 'Start and end dates' },
+    { id: 'timetable', title: 'Timetable', description: 'Days, times, and schedule' },
+    { id: 'schedule', title: 'Schedule', description: 'Skills, lessons, and instructor' },
+    { id: 'visibility', title: 'Visibility & Enrollment', description: 'Pricing and enrollment settings' },
+    { id: 'resources', title: 'Resources', description: 'Materials and assessments' },
+    { id: 'review', title: 'Review & Publish', description: 'Final review and publish' }
+];
+
 
 export default function ClassCreationPage() {
-  const router = useRouter();
-  const instructor = useInstructor();
-  const searchParams = new URLSearchParams(location.search);
-  const classId = searchParams.get('id');
-  const qc = useQueryClient();
-  const { replaceBreadcrumbs } = useBreadcrumb();
-  const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
-  const { data: programs } = useQuery(searchTrainingProgramsOptions({ query: { pageable: {}, searchParams: { instructorUuid: instructor?.uuid } } }))
+    const searchParams = useSearchParams();
+    const classId = searchParams.get('id');
+    const [createdClassId, setCreatedClassId] = useState<string | null>(null);
+    const resolveId = classId ? (classId as string) : (createdClassId as string);
 
-  useEffect(() => {
-    if (!classId) return;
+    const { data, isLoading } = useQuery({
+        ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
+        enabled: !!classId,
+    });
+    const clData = data?.data;
 
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      {
-        id: 'trainings',
-        title: 'Training Classes',
-        url: '/dashboard/trainings',
-      },
-      {
-        id: 'manage-training',
-        title: 'Manage Training',
-        url: `/dashboard/trainings/create-new?id=${classId}`,
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs, classId]);
+    const [currentStep, setCurrentStep] = useState(5);
+    const [classData, setClassData] = useState<Partial<ClassData>>({
+        courseTitle: '',
+        classTitle: '',
+        subtitle: '',
+        category: '',
+        targetAudience: [],
+        description: '',
+        academicPeriod: {
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+        },
+        registrationPeriod: {
+            startDate: new Date(),
+        },
+        timetable: {
+            selectedDays: [],
+            timeSlots: [],
+            duration: '60',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            classType: 'online'
+        },
+        schedule: {
+            instructor: '',
+            skills: []
+        },
+        visibility: {
+            publicity: 'public',
+            enrollmentLimit: 20,
+            price: 0,
+            isFree: true
+        },
+        resources: [],
+        assessments: [],
+        status: 'draft'
+    });
 
-  const form = useForm<ClassFormValues>({
-    resolver: zodResolver(classSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      course_uuid: '',
-      organisation_uuid: '',
-      default_start_time: '',
-      default_end_time: '',
-      max_participants: 0,
-      recurrence_pattern_uuid: '',
-      location_type: '',
-      is_active: false,
-    },
-  });
-
-  const [recurringUuid, setRecurringUuid] = useState<string | null>(null)
-  const [recurringData, setRecurringData] = useState<any | null>(null)
-  const [openAddRecurrenceModal, setOpenAddRecurrenceModal] = useState(false);
-
-  const { data, isLoading } = useQuery({
-    ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
-    enabled: !!classId,
-  });
-  const classData = data?.data;
-
-  const createAssignment = useMutation(createClassDefinitionMutation());
-  const updateAssignment = useMutation(updateClassDefinitionMutation());
-
-  const handleSubmit = async (values: ClassFormValues) => {
-    const payload = {
-      ...values,
-      course_uuid: values?.course_uuid || classData?.course_uuid,
-      location_type: values?.location_type || classData?.location_type,
-      recurrence_pattern_uuid: classData?.recurrence_pattern_uuid || recurringUuid as string,
-      default_instructor_uuid: instructor?.uuid as string,
+    const updateClassData = (updates: Partial<ClassData>) => {
+        setClassData(prev => ({ ...prev, ...updates }));
     };
 
-    if (classId) {
-      updateAssignment.mutate(
-        { path: { uuid: classId }, body: payload as any },
-        {
-          onSuccess: data => {
-            qc.invalidateQueries({
-              queryKey: getClassDefinitionsForInstructorQueryKey({
-                path: { instructorUuid: instructor?.uuid as string },
-              }),
-            });
-            toast.success(data?.message);
-            router.push('/dashboard/trainings');
-          },
+    const nextStep = () => {
+        if (currentStep < steps.length - 1) {
+            setCurrentStep(prev => prev + 1);
         }
-      );
-    } else {
-      createAssignment.mutate(
-        { body: payload as any },
-        {
-          onSuccess: data => {
-            qc.invalidateQueries({
-              queryKey: getClassDefinitionsForInstructorQueryKey({
-                path: { instructorUuid: instructor?.uuid as string },
-              }),
-            });
-            toast.success(data?.message);
-            router.push('/dashboard/trainings');
-          },
+    };
+
+    const prevStep = () => {
+        if (currentStep > 0) {
+            setCurrentStep(prev => prev - 1);
         }
-      );
-    }
-  };
+    };
 
-  useEffect(() => {
-    if (
-      classData &&
-      courses?.data?.content
-    ) {
-      form.reset({
-        title: classData.title ?? '',
-        description: classData.description ?? '',
-        course_uuid: classData.course_uuid ?? '',
-        organisation_uuid: classData.organisation_uuid ?? '',
-        default_start_time: classData.default_start_time ?? '',
-        default_end_time: classData.default_end_time ?? '',
-        max_participants: classData.max_participants ?? 0,
-        recurrence_pattern_uuid: classData.recurrence_pattern_uuid ?? '',
-        location_type: classData.location_type ?? '',
-        is_active: classData.is_active,
-      });
-    }
-  }, [classData, courses?.data?.content, programs?.data?.content, form]);
+    const progress = ((currentStep + 1) / steps.length) * 100;
 
+    const handleComplete = (status: 'draft' | 'published') => {
+        const finalClassData = {
+            ...classData,
+            status
+        } as ClassData;
 
-  return (
-    <Card className='container mx-auto p-6 pb-16'>
-      <div className='mb-10 block lg:flex lg:items-start lg:space-x-4'>
-        <div className='w-full'>
-          <h3 className='text-2xl leading-none font-semibold tracking-tight'>
-            Basic Class Training Information
-          </h3>
-          <p className='text-muted-foreground mt-1 text-sm'>
-            This section provides an overview of the fundamental aspects of the training classes
-            offered. It includes essential details such as the course objectives, the target
-            audience, prerequisites (if any), and the expected outcomes upon completion. The
-            training sessions are designed to equip participants with the foundational knowledge and
-            practical skills necessary for advancing in their respective fields. Whether you are a
-            beginner or looking to refresh your skills, this class offers a structured curriculum to
-            support your learning journey.
-          </p>
-        </div>
-      </div>
+    };
 
-      {(isLoading) ? (
-        <div className='mx-auto items-center justify-center'>
-          <Spinner />
-        </div>
-      ) : (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8`}>
-            <FormField
-              control={form.control}
-              name='title'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Class Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Enter class title' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='description'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <SimpleEditor value={field.value} onChange={field.onChange} />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='course_uuid'
-              render={({ field }) => (
-                <FormItem className='w-full flex-1'>
-                  <FormLabel>Assign Course or Program</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select course or program' />
-                    </SelectTrigger>
-                    <SelectContent className='pb-4' >
-                      <p className='pl-3 py-2'>Courses</p>
-                      {courses?.data?.content?.map(course => (
-                        <SelectItem className='pb-1' key={course.uuid} value={course.uuid as string}>
-                          {course.name}
-                        </SelectItem>
-                      ))}
-                      <Separator className='my-2' />
-                      <p className='pl-3 py-2'>Programs</p>
-                      {programs?.data?.content?.map(program => (
-                        <SelectItem className='pb-1' key={program.uuid} value={program.uuid as string}>
-                          {program.title}
-                        </SelectItem>
-                      ))}
-
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='organisation_uuid'
-              render={({ field }) => (
-                <FormItem className='w-full flex-1'>
-                  <FormLabel>Organisation here</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select organisation' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courses?.data?.content?.map(course => (
-                        <SelectItem key={course.uuid} value={course.uuid as string}>
-                          {course.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className='flex flex-col items-start gap-6 sm:flex-row'>
-              <FormField
-                control={form.control}
-                name='default_start_time'
-                render={({ field }) => (
-                  <FormItem className='w-full'>
-                    <FormLabel>Start Time</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='time'
-                        step='60'
-                        {...field}
-                        onChange={e => field.onChange(e.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='default_end_time'
-                render={({ field }) => (
-                  <FormItem className='w-full'>
-                    <FormLabel>End Time</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='time'
-                        step='60'
-                        {...field}
-                        onChange={e => field.onChange(e.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name='max_participants'
-              render={({ field }) => (
-                <FormItem className='w-full'>
-                  <FormLabel>Class Limit</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='number'
-                      placeholder='e.g. 25'
-                      {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
+    const renderStepContent = () => {
+        switch (steps[currentStep]?.id) {
+            case 'details':
+                return (
+                    <ClassDetailsForm isLoading={isLoading} handleNextStep={nextStep} classData={clData} />
+                );
+            case 'period':
+                return (
+                    <AcademicPeriodForm
+                        classId={resolveId as string}
+                        onNext={nextStep}
+                        onPrev={prevStep}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                );
+            case 'timetable':
+                return (
+                    <TimetableForm
+                        data={{}}
+                        classId={resolveId as string}
+                        onNext={nextStep}
+                        onPrev={prevStep}
+                        onUpdate={() => { }}
+                    />
+                );
+            case 'schedule':
+                return (
+                    <ScheduleForm
+                        data={classData}
+                        onUpdate={updateClassData}
+                        onNext={nextStep}
+                        onPrev={prevStep}
+                    />);
+            case 'visibility':
+                return (
+                    <VisibilityForm
+                        data={clData as any}
+                        onUpdate={updateClassData}
+                        onNext={nextStep}
+                        onPrev={prevStep}
+                    />
+                );
+            case 'resources':
+                return (
+                    <ResourcesForm
+                        onNext={() => {
+                            nextStep();
+                        }}
+                        onPrev={prevStep}
+                        data={clData}
+                    />
+                );
+            case 'review':
+                return (
+                    <ReviewPublishForm
+                        data={classData as ClassData}
+                        onComplete={handleComplete}
+                        onPrev={prevStep}
+                    />);
+            default:
+                return null;
+        }
+    };
 
-            <div className='flex flex-row items-end gap-4'>
-              <FormField
-                control={form.control}
-                name='recurrence_pattern_uuid'
-                render={({ field }) => (
-                  <FormItem className='w-full flex-1 items-center'>
-                    <FormLabel>Recurrence (Frequency)</FormLabel>
-                    <div className="rounded-md border p-3.5 bg-muted/30 space-y-2 text-sm text-muted-foreground">
 
-                      {recurringData?.days_of_week && (
-                        <div>
-                          <span className="font-medium text-foreground">Day(s) of week:</span>{' '}
-                          {recurringData?.days_of_week}
-                        </div>
-                      )}
-
-                      {recurringData?.day_of_month && (
-                        <div>
-                          <span className="font-medium text-foreground">Day of month:</span>{' '}
-                          {recurringData.day_of_month}
-                        </div>
-                      )}
-
-                      {recurringData?.end_date && (
-                        <div>
-                          <span className="font-medium text-foreground">Ends on:</span>{' '}
-                          {new Date(recurringData?.end_date).toLocaleDateString()}
-                        </div>
-                      )}
-
-                      {/* {recurringData?.occurrence_count && (
-                        <div>
-                          <span className="font-medium text-foreground">Occurrences:</span>{' '}
-                          {recurringData?.occurrence_count}
-                        </div>
-                      )} */}
-
-                      {/* <div>
-                        <span className="font-medium text-foreground">Status:</span>{' '}
-                        {recurringData?.is_active ? 'Active' : 'Inactive'}
-                      </div> */}
-
-                      <div className="pt-2 italic text-foreground">
-                        {recurringData?.pattern_description}
-                      </div>
-                    </div>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                onClick={() => setOpenAddRecurrenceModal(true)}
-                type='button'
-                className='mt-[22px] h-10'
-              >
-                Add New
-              </Button>
+    return (
+        <Card className='container mx-auto p-6 pb-16'>
+            <div className='mb-2 block lg:flex lg:items-start lg:space-x-4'>
+                <div className='w-full'>
+                    <h3 className='text-2xl leading-none font-semibold tracking-tight'>
+                        Basic Class Training Information
+                    </h3>
+                    <p className='text-muted-foreground mt-1 text-sm'>
+                        This section provides an overview of the fundamental aspects of the training classes
+                        offered. It includes essential details such as the course objectives, the target
+                        audience, prerequisites (if any), and the expected outcomes upon completion. The
+                        training sessions are designed to equip participants with the foundational knowledge and
+                        practical skills necessary for advancing in their respective fields. Whether you are a
+                        beginner or looking to refresh your skills, this class offers a structured curriculum to
+                        support your learning journey.
+                    </p>
+                </div>
             </div>
 
-            <FormField
-              control={form.control}
-              name='location_type'
-              render={({ field }) => (
-                <FormItem className='w-full flex-1'>
-                  <FormLabel>Location</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select location type' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(LocationTypeEnum)
-                        .map(([key, value]) => ({
-                          key,
-                          value,
-                        }))
-                        .map(option => (
-                          <SelectItem key={option.key} value={option.value}>
-                            {option.value}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Required Toggle */}
-            <FormField
-              control={form.control}
-              name='is_active'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Is Active</FormLabel>
-                  <div className='flex items-center gap-2'>
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <FormLabel>Set this class training to active?</FormLabel>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <div className='flex justify-end gap-2 pt-6'>
-              <Button type='button' variant='outline' onClick={() => { }}>
-                Cancel
-              </Button>
-              <Button
-                type='submit'
-                className='flex min-w-[120px] items-center justify-center gap-2'
-                disabled={createAssignment.isPending || updateAssignment.isPending}
-              >
-                {(createAssignment.isPending || updateAssignment.isPending) && <Spinner />}
-                {classId ? 'Update Class Traninig' : 'Create Class Traninig'}
-              </Button>
+            <div className="flex items-center gap-4">
+                <div className="flex-1">
+                    <p className="text-muted-foreground">Step {currentStep + 1} of {steps.length}</p>
+                </div>
             </div>
-          </form>
-        </Form>
-      )}
 
-      <RecurrenceDialog
-        isOpen={openAddRecurrenceModal}
-        setOpen={setOpenAddRecurrenceModal}
-        onCancel={() => setOpenAddRecurrenceModal(false)}
-        onSuccess={(data: any) => {
-          setRecurringUuid(data?.data?.uuid as string)
-          setRecurringData(data?.data)
+            {/* Progress */}
+            <div className="space-y-2">
+                <Progress value={progress} className="h-2" />
+                <div className="flex justify-between text-sm text-muted-foreground">
+                    {steps.map((step, index) => (
+                        <div key={step.id} className={`text-center ${index === currentStep ? 'text-foreground font-medium' : ''}`}>
+                            <div className="hidden md:block">{step.title}</div>
+                            <div className="md:hidden">{index + 1}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
-          // example success response
-          // {
-          //   success: true,
-          //   data: {
-          //       uuid: "f6a1984d-fce2-48b3-9947-3813299e90bf",
-          //       recurrence_type: "WEEKLY",
-          //       interval_value: 1,
-          //       days_of_week: "MONDAY,FRIDAY",
-          //       day_of_month: null,
-          //       end_date: "2025-12-12",
-          //       occurrence_count: null,
-          //       is_active: true,
-          //       is_indefinite: false,
-          //       pattern_description: "Every week on MONDAY, FRIDAY until 2025-12-12"
-          //    },
-          //    message: "Recurrence pattern created successfully"
-          // }
-        }}
-      />
-    </Card>
-  );
+            <main className='mt-2 px-2' >
+                {renderStepContent()}
+            </main>
+        </Card>
+    );
 }

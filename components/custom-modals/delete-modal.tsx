@@ -18,6 +18,7 @@ interface DeleteModalProps {
   onConfirm: () => void;
   isLoading?: boolean;
   confirmText?: string;
+  variant?: 'default' | 'destructive';
 }
 
 export default function DeleteModal({
@@ -28,6 +29,7 @@ export default function DeleteModal({
   onConfirm,
   isLoading = false,
   confirmText = 'Delete',
+  variant = 'destructive',
 }: DeleteModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -42,7 +44,7 @@ export default function DeleteModal({
             Cancel
           </Button>
           <Button
-            variant='destructive'
+            variant={variant}
             className='min-w-[100px]'
             onClick={onConfirm}
             disabled={isLoading}
