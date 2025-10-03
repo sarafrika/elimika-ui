@@ -59,7 +59,7 @@ export function VisibilityForm({
     const watchPrice = form.watch('price') ?? 0;
 
     const totalLessons =
-        data.schedule?.skills.reduce(
+        data?.schedule?.skills?.reduce(
             (acc: any, skill: any) => acc + skill.lessons.length,
             0
         ) || 0;

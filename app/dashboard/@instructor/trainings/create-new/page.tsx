@@ -37,7 +37,7 @@ export default function ClassCreationPage() {
     });
     const clData = data?.data;
 
-    const [currentStep, setCurrentStep] = useState(5);
+    const [currentStep, setCurrentStep] = useState(0);
     const [classData, setClassData] = useState<Partial<ClassData>>({
         courseTitle: '',
         classTitle: '',
@@ -104,7 +104,11 @@ export default function ClassCreationPage() {
         switch (steps[currentStep]?.id) {
             case 'details':
                 return (
-                    <ClassDetailsForm isLoading={isLoading} handleNextStep={nextStep} classData={clData} />
+                    <ClassDetailsForm
+                        isLoading={isLoading}
+                        handleNextStep={nextStep}
+                        classData={clData}
+                    />
                 );
             case 'period':
                 return (

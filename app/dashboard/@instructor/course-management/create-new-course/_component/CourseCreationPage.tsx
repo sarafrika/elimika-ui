@@ -225,33 +225,33 @@ export default function CourseCreationPage() {
   const content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
-          const matchedType = Array.isArray(contentTypeList?.data)
-            ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-            : undefined;
+        const matchedType = Array.isArray(contentTypeList?.data)
+          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
+          : undefined;
 
-          const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
+        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
 
-          return {
-            contentType: typeName.toUpperCase() as
-              | 'AUDIO'
-              | 'VIDEO'
-              | 'TEXT'
-              | 'LINK'
-              | 'PDF'
-              | 'YOUTUBE',
-            title: item?.title || '',
-            uuid: item?.uuid || '',
-            value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-            duration:
-              typeof item?.estimated_duration === 'string'
-                ? parseInt(item.estimated_duration) || 0
-                : 0,
-            durationHours: item?.duration_hours || 0,
-            durationMinutes: item?.duration_minutes || 0,
-            contentTypeUuid: item?.content_type || '',
-            contentCategory: matchedType?.upload_category ?? '',
-          };
-        })
+        return {
+          contentType: typeName.toUpperCase() as
+            | 'AUDIO'
+            | 'VIDEO'
+            | 'TEXT'
+            | 'LINK'
+            | 'PDF'
+            | 'YOUTUBE',
+          title: item?.title || '',
+          uuid: item?.uuid || '',
+          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
+          duration:
+            typeof item?.estimated_duration === 'string'
+              ? parseInt(item.estimated_duration) || 0
+              : 0,
+          durationHours: item?.duration_hours || 0,
+          durationMinutes: item?.duration_minutes || 0,
+          contentTypeUuid: item?.content_type || '',
+          contentCategory: matchedType?.upload_category ?? '',
+        };
+      })
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
@@ -306,7 +306,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   // DELETE LESSON MUTATION
@@ -331,7 +331,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
@@ -358,7 +358,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   if (courseId && !courseInitialValues) {
@@ -421,7 +421,7 @@ export default function CourseCreationPage() {
               onAddLesson={openAddLessonModal}
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
-              onReorderLessons={() => {}}
+              onReorderLessons={() => { }}
               // lesson content
               lessonContentsMap={lessonContentMap}
               onAddLessonContent={openAddContentModal}
@@ -446,7 +446,7 @@ export default function CourseCreationPage() {
                 courseId={courseId as string}
                 lessonId={selectedLesson?.uuid}
                 initialValues={lessonInitialValues}
-                onCancel={() => {}}
+                onCancel={() => { }}
                 onSuccess={data => {
                   setCreatedCourseId(data?.uuid);
 
