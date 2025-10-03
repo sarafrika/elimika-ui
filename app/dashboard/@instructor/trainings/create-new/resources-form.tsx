@@ -65,8 +65,6 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-
-
     const addResource = () => {
         setResources([
             ...resources,
@@ -170,7 +168,6 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
                                 })}
                             </div>
                         ))}
-
                     </CardContent>
                 </Card>
             </div>

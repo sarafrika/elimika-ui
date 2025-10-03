@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { ClassDialog, ScheduleDialog, TimetableScheduleDialog } from '../../_components/class-management-form';
 
 import DeleteModal from '@/components/custom-modals/delete-modal';
-import HTMLTextPreview from '@/components/editors/html-text-preview';
 import PageLoader from '@/components/page-loader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,28 +16,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
-  Clock,
   EyeIcon,
   FilePenIcon,
   LucideFileWarning,
-  MapPin,
   MoreVertical,
   PenIcon,
-  PlusIcon,
-  Repeat,
-  Users
+  PlusIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../../../components/ui/card';
-import { Skeleton } from '../../../../../components/ui/skeleton';
 import ClassCourseDisplay from '../component/class-course-dislay';
-import { RecurrenceDaysCell } from '../component/recurring-patterns';
 
 
 export default function TrainingsPage() {
@@ -52,7 +46,6 @@ export default function TrainingsPage() {
       query: { activeOnly: false },
     })
   );
-
   const classes = data?.data
 
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
@@ -161,10 +154,14 @@ export default function TrainingsPage() {
           {classes?.map((cl: any) => (
             <div
               key={cl.uuid}
-              className='relative min-h-[250px] rounded-lg border bg-white p-5 shadow-sm transition hover:shadow-md'
+              className='relative min-h-[250px] rounded-lg border bg-white py-8 px-6 shadow-sm transition hover:shadow-md'
             >
               {/* Actions dropdown */}
-              <div className='absolute top-2 right-2'>
+              <div className='absolute flex flex-row items-center top-2 right-2 gap-4'>
+                <Badge variant={cl.is_active === true ? 'default' : 'secondary'}>
+                  {cl.is_active ? 'Active Class' : 'Inactive Class'}
+                </Badge>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant='ghost' size='icon' aria-label='Open menu'>
@@ -216,80 +213,8 @@ export default function TrainingsPage() {
                 </DropdownMenu>
               </div>
 
-
-              {/* Title & description */}
-              <h3 className='pr-6 text-lg font-semibold'>{cl.title}</h3>
-              {cl.subtitle && (
-                <p className="text-muted-foreground mt-1">{cl.subtitle}</p>
-              )}
-              <div className='text-muted-foreground mb-1 line-clamp-2 text-sm'>
-                <HTMLTextPreview htmlContent={cl?.description as string} />
-              </div>
-
-              <div className='mb-2 flex justify-end'>
-                <Badge variant={cl.is_active === true ? 'default' : 'secondary'}>
-                  {cl.is_active ? 'Active' : 'Inactive'}
-                </Badge>
-              </div>
-
-              <div className='space-y-3' >
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  <span>Instructor: {cl.default_instructor_uuid}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>
-                    Sep 1, 2025 - Dec 15, 2025
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Repeat className="w-4 h-4" />
-                  <span>
-                    <RecurrenceDaysCell recurrenceUuid={cl.recurrence_pattern_uuid} />
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    {cl.default_start_time} - {cl.default_end_time}                  </span>
-                </div>
-
-
-                {cl.location_type && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span>{cl.location_type} • {cl.max_participants} students</span>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>8 lessons • {cl.duration_formatted} total</span>
-                </div>
-
-                {/* {!classData.visibility.isFree && (
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="w-4 h-4 text-muted-foreground" />
-                    <span>${classData.visibility.price}</span>
-                  </div>
-                )} */}
-
-                {/* <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline" className="text-xs">{classData.category}</Badge>
-                  {classData.targetAudience.map((audience, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">{audience}</Badge>
-                  ))}
-                </div> */}
-              </div>
-
-
-              {/* Course details */}
-              <div className='mt-4'>
-                <ClassCourseDisplay courseUuid={cl.course_uuid} />
+              <div className='mt-12'>
+                <ClassCourseDisplay courseUuid={cl.course_uuid} classInfo={cl} />
               </div>
             </div>
           ))}
