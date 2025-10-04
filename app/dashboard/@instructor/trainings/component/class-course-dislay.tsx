@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useInstructorInfo } from '@/hooks/use-instructor-info'
 import { getCourseByUuidOptions, getCourseLessonsOptions } from '@/services/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import { Calendar, Clock, MapPin, Users } from 'lucide-react'
@@ -24,6 +25,8 @@ export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {
         }),
         enabled: !!courseUuid,
     });
+
+    const { instructorInfo } = useInstructorInfo({ instructorUuid: classInfo?.default_instructor_uuid as string })
 
     if (isLoading) {
         return (
@@ -64,14 +67,14 @@ export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {
                             </div>
                         </div> */}
                     </div>
-                    <Badge variant={course?.status === 'published' ? 'default' : 'secondary'}>
-                        {`${course?.status?.charAt(0).toUpperCase() + course?.status?.slice(1)} Course`}
-                    </Badge>
-
                 </div>
             </div>
 
             <div className="space-y-3">
+                <Badge variant={course?.status === 'published' ? 'default' : 'secondary'}>
+                    {`${course?.status?.charAt(0).toUpperCase() + course?.status?.slice(1)} Course`}
+                </Badge>
+
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="w-4 h-4" />
                     <span className='italic'>
@@ -88,7 +91,8 @@ export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Users className="w-4 h-4" />
-                    <span>Instructor: {classInfo?.default_instructor_uuid}</span>
+                    {/* @ts-ignore */}
+                    <span>Instructor: {instructorInfo?.data?.full_name}</span>
                 </div>
 
                 {classInfo.location_type && (

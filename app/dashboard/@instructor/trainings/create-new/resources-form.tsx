@@ -1,41 +1,22 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Spinner from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
+import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { getResourceIcon } from '@/lib/resources-icon';
+import { getCourseAssessmentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Eye, FileQuestion, Plus, Trash2, Upload } from 'lucide-react';
 import React, { useState } from 'react';
-import { Input } from '../../../../../components/ui/input';
-import { Label } from '../../../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
-import Spinner from '../../../../../components/ui/spinner';
-import { Textarea } from '../../../../../components/ui/textarea';
-import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
-import { getResourceIcon } from '../../../../../lib/resources-icon';
-import { getCourseAssessmentsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 
 interface ResourcesFormProps {
     onNext: () => void;
     onPrev: () => void;
     data: any
 }
-
-// export const getResourceIcon = (type: string) => {
-//     switch (type) {
-//         case 'pdf':
-//         case 'text':
-//         case 'file':
-//             return <FileText className="w-4 h-4" />;
-//         case 'video':
-//             return <Video className="w-4 h-4" />;
-//         case 'audio':
-//             return <Volume2 className="w-4 h-4" />;
-//         case 'image':
-//             return <ImageIcon className="w-4 h-4" />;
-//         case 'link':
-//             return <Link className="w-4 h-4" />;
-//         default:
-//             return <FileText className="w-4 h-4" />;
-//     }
-// };
 
 export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
     const searchParams = new URLSearchParams(location.search);
@@ -52,7 +33,6 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
         lessons: lessonsWithContent,
         contentTypeMap,
     } = useCourseLessonsWithContent({ courseUuid: data?.course_uuid as string });
-
 
     // NEW
     const [resources, setResources] = useState([

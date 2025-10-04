@@ -1,16 +1,16 @@
+import HTMLTextPreview from '@/components/editors/html-text-preview';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Spinner from '@/components/ui/spinner';
+import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { getResourceIcon } from '@/lib/resources-icon';
+import { getClassDefinitionOptions, getCourseLessonsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, FileQuestion } from 'lucide-react';
 import { useState } from 'react';
-import HTMLTextPreview from '../../../../../components/editors/html-text-preview';
-import { Button } from '../../../../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../../../components/ui/card';
-import { Input } from '../../../../../components/ui/input';
-import { Label } from '../../../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
-import Spinner from '../../../../../components/ui/spinner';
-import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
-import { getResourceIcon } from '../../../../../lib/resources-icon';
-import { getClassDefinitionOptions, getCourseLessonsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { ClassData } from './academic-period-form';
 
 interface ScheduleFormProps {

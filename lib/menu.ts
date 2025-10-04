@@ -21,7 +21,7 @@ import {
   UserCircle,
   UserCog,
   UserIcon,
-  Users,
+  Users
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -121,9 +121,14 @@ export default {
       icon: LayoutDashboard,
     },
     {
+      title: 'Browse Courses',
+      url: '/dashboard/browse-courses',
+      icon: Book,
+    },
+    {
       title: 'My Courses',
       url: '/dashboard/my-courses',
-      icon: Book,
+      icon: BookOpen,
     },
     {
       title: 'My Schedule',

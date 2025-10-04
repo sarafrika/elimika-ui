@@ -201,6 +201,15 @@
 .accordion-trigger-no-underline {
   text-decoration: none !important; /* Use !important if necessary to override existing styles */
 }
+/* Hide scrollbar for all browsers */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
 
 /* styles.css */
 .html-text-preview ul {

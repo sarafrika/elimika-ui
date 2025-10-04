@@ -1,15 +1,15 @@
-import React from 'react';
-import { LayoutDashboard, Book, Calendar, Award, Star, UserCircle } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { Award, BookOpen, Calendar, LayoutDashboard, Star, UserCircle } from 'lucide-react';
 import Link from 'next/link';
+import React from 'react';
 
 const studentMenuItems = [
   {
@@ -20,7 +20,7 @@ const studentMenuItems = [
   {
     title: 'My Courses',
     url: '/dashboard/my-courses',
-    icon: Book,
+    icon: BookOpen,
   },
   {
     title: 'My Schedule',

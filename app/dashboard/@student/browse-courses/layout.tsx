@@ -11,9 +11,9 @@ export default function CoursesLayout({ children }: CoursesLayoutProps) {
         <div className='space-y-8 p-4 pb-16 md:p-10'>
             <div className='flex w-full items-center justify-between lg:max-w-[75%]'>
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">My Courses</h2>
+                    <h2 className="text-2xl font-bold tracking-tight">Browse Courses</h2>
                     <p className="text-gray-600 mt-1">
-                        Explore and manage the courses you’re currently enrolled in. Track your progress, access course materials, and stay up to date with lessons.
+                        Discover courses across various categories.
                     </p>
                 </div>
             </div>
