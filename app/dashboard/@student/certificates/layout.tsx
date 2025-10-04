@@ -14,14 +14,13 @@ export default function CertificateLayout({ children }: CertificateLayoutProps) 
                     <h2 className='text-2xl font-bold tracking-tight'>My Certificates</h2>
                     <p className='text-muted-foreground'>
                         <p className="text-gray-600 mt-1">
-                            View and download the certificates you’ve earned for completing courses and programs.
-                        </p>
+                            Academic Achievements & Certifications                        </p>
                     </p>
                 </div>
             </div>
             <Separator />
             <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
-                <div className='flex-1 lg:max-w-4xl'>{children}</div>
+                <div className='flex-1 lg:max-w-6xl'>{children}</div>
             </div>
         </div>
     );
