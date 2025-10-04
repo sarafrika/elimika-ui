@@ -83,7 +83,7 @@ export default function TrainingsPage() {
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 mb-20'>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Your Classes</h1>
@@ -157,7 +157,7 @@ export default function TrainingsPage() {
               className='relative min-h-[250px] rounded-lg border bg-white py-8 px-6 shadow-sm transition hover:shadow-md'
             >
               {/* Actions dropdown */}
-              <div className='absolute flex flex-row items-center top-2 right-2 gap-4'>
+              <div className='absolute flex flex-row items-center top-6 right-2 gap-4'>
                 <Badge variant={cl.is_active === true ? 'default' : 'secondary'}>
                   {cl.is_active ? 'Active Class' : 'Inactive Class'}
                 </Badge>

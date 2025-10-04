@@ -1,11 +1,17 @@
 'use client';
 
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { useInstructorInfo } from '@/hooks/use-instructor-info';
+import { getResourceIcon } from '@/lib/resources-icon';
 import {
     getClassDefinitionOptions,
     getCourseAssessmentsOptions,
@@ -15,20 +21,15 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, CalendarDays, CheckCircle, Clock, Copy, DollarSign, Edit, Eye, Facebook, FileQuestion, FileText, Link, Linkedin, Mail, MapPin, MessageCircle, Twitter, Users } from 'lucide-react';
 import moment from 'moment';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import RichTextRenderer from '../../../../../../components/editors/richTextRenders';
-import { Skeleton } from '../../../../../../components/ui/skeleton';
-import Spinner from '../../../../../../components/ui/spinner';
-import { useCourseLessonsWithContent } from '../../../../../../hooks/use-courselessonwithcontent';
-import { useInstructorInfo } from '../../../../../../hooks/use-instructor-info';
-import { getResourceIcon } from '../../../../../../lib/resources-icon';
 
 const localizer = momentLocalizer(moment);
 
 export default function ClassPreviewPage() {
+    const router = useRouter()
     const params = useParams();
     const classId = params?.id as string;
     const { replaceBreadcrumbs } = useBreadcrumb();
@@ -52,13 +53,13 @@ export default function ClassPreviewPage() {
         ]);
     }, [replaceBreadcrumbs, classId]);
 
-    const { data } = useQuery({
+    const { data, isLoading: classIsLoading } = useQuery({
         ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
         enabled: !!classId,
     });
     const classData = data?.data;
 
-    const { data: courseDetail, isLoading, isError } = useQuery({
+    const { data: courseDetail, isLoading, isFetched } = useQuery({
         ...getCourseByUuidOptions({ path: { uuid: classData?.course_uuid as string } }),
         enabled: !!classData?.course_uuid,
     })
@@ -78,7 +79,6 @@ export default function ClassPreviewPage() {
         lessons: lessonsWithContent,
         contentTypeMap,
     } = useCourseLessonsWithContent({ courseUuid: classData?.course_uuid as string });
-
 
     const [registrationLink] = useState(`https://elimika.sarafrika.com/trainings/${classData?.uuid}/register`);
     const [copied, setCopied] = useState(false);
@@ -123,12 +123,17 @@ export default function ClassPreviewPage() {
         }
     };
 
-    if (isLoading) {
+    if (isLoading || isAllLessonsDataLoading || classIsLoading) {
         return (
-            <div className='space-y-2'>
-                <Skeleton className='h-4 w-2/3' />
-                <Skeleton className='h-4 w-1/2' />
-                <Skeleton className='h-4 w-1/4' />
+            <div className='space-y-2 flex flex-col gap-6'>
+                <Skeleton className='h-[150px] w-full' />
+
+                <div className='flex flex-row items-center justify-between gap-4'>
+                    <Skeleton className='h-[250px] w-2/3' />
+                    <Skeleton className='h-[250px] w-1/3' />
+                </div>
+
+                <Skeleton className='h-[100px] w-full' />
             </div>
         )
     }
@@ -143,7 +148,9 @@ export default function ClassPreviewPage() {
                         <p className="text-muted-foreground">Your class is now live and ready for students</p>
                     </div>
                 </div>
-                <Button onClick={() => { }} variant="outline" className="gap-2">
+                <Button
+                    onClick={() => router.push(`/dashboard/trainings/create-new?id=${classData?.uuid}`)}
+                    variant="outline" className="gap-2">
                     <Edit className="w-4 h-4" />
                     Edit Class
                 </Button>
@@ -223,7 +230,7 @@ export default function ClassPreviewPage() {
                         <div className="flex items-center gap-2">
                             <BookOpen className="w-4 h-4 text-muted-foreground" />
                             <div>
-                                <div className="font-medium">totalLessons - 8</div>
+                                <div className="font-medium">{lessonsWithContent?.length}</div>
                                 <div className="text-muted-foreground">Lessons</div>
                             </div>
                         </div>
