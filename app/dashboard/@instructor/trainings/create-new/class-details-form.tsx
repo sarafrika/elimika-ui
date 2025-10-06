@@ -28,7 +28,7 @@ import {
   getAllCoursesOptions,
   getClassRecurrencePatternOptions,
   searchTrainingProgramsOptions,
-  updateClassDefinitionMutation
+  updateClassDefinitionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -48,12 +48,16 @@ import {
 import { UploadOptions } from '../../_components/course-creation-form';
 
 interface ClassDetailsProps {
-  handleNextStep: () => void,
-  classData: any,
-  isLoading: boolean
+  handleNextStep: () => void;
+  classData: any;
+  isLoading: boolean;
 }
 
-export default function ClassDetailsForm({ handleNextStep, classData, isLoading }: ClassDetailsProps) {
+export default function ClassDetailsForm({
+  handleNextStep,
+  classData,
+  isLoading,
+}: ClassDetailsProps) {
   const router = useRouter();
   const instructor = useInstructor();
   const searchParams = new URLSearchParams(location.search);
@@ -62,7 +66,11 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
-  const { data: programs } = useQuery(searchTrainingProgramsOptions({ query: { pageable: {}, searchParams: { instructorUuid: instructor?.uuid } } }))
+  const { data: programs } = useQuery(
+    searchTrainingProgramsOptions({
+      query: { pageable: {}, searchParams: { instructorUuid: instructor?.uuid } },
+    })
+  );
 
   useEffect(() => {
     if (!classId) return;
@@ -110,15 +118,17 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
     name: 'categories',
   });
 
-  const [recurringUuid, setRecurringUuid] = useState<string | null>(null)
-  const [recurringData, setRecurringData] = useState<any | null>(null)
+  const [recurringUuid, setRecurringUuid] = useState<string | null>(null);
+  const [recurringData, setRecurringData] = useState<any | null>(null);
   const [openAddRecurrenceModal, setOpenAddRecurrenceModal] = useState(false);
 
-  const [editingRecurrenceId, setEditingRecurrenceId] = useState<string | null>(null)
+  const [editingRecurrenceId, setEditingRecurrenceId] = useState<string | null>(null);
   const { data: recurrenceData, isLoading: recurrenceLoading } = useQuery({
-    ...getClassRecurrencePatternOptions({ path: { uuid: classData?.recurrence_pattern_uuid as string } }),
+    ...getClassRecurrencePatternOptions({
+      path: { uuid: classData?.recurrence_pattern_uuid as string },
+    }),
     enabled: !!classData?.recurrence_pattern_uuid,
-  })
+  });
 
   const createAssignment = useMutation(createClassDefinitionMutation());
   const updateAssignment = useMutation(updateClassDefinitionMutation());
@@ -134,12 +144,11 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
       course_uuid: values?.course_uuid || classData?.course_uuid,
       max_participants: values?.max_participants || classData?.max_participants,
       location_type: values?.location_type || classData?.location_type,
-      recurrence_pattern_uuid: classData?.recurrence_pattern_uuid || recurringUuid as string,
+      recurrence_pattern_uuid: classData?.recurrence_pattern_uuid || (recurringUuid as string),
       default_instructor_uuid: instructor?.uuid as string,
     };
 
-    handleNextStep()
-
+    handleNextStep();
 
     // if (classId) {
     //   updateAssignment.mutate(
@@ -177,13 +186,9 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
     //     }
     //   );
     // }
-
   };
 
-  const courseBannerMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/courses/{uuid}/banner'
-  );
+  const courseBannerMutation = tanstackClient.useMutation('post', '/api/v1/courses/{uuid}/banner');
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [uploadedUrls, setUploadedUrls] = useState<{
     class_banner?: string;
@@ -234,12 +239,8 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
     );
   };
 
-
   useEffect(() => {
-    if (
-      classData &&
-      courses?.data?.content
-    ) {
+    if (classData && courses?.data?.content) {
       form.reset({
         title: classData.title ?? '',
         description: classData.description ?? '',
@@ -255,7 +256,6 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
     }
   }, [classData, courses?.data?.content, programs?.data?.content, form, bannerPreview]);
 
-
   return (
     <main className=''>
       {/* <div className='mb-10 block lg:flex lg:items-start lg:space-x-4'>
@@ -269,7 +269,7 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
         </div>
       </div> */}
 
-      {(isLoading) ? (
+      {isLoading ? (
         <div className='mx-auto items-center justify-center'>
           <Spinner />
         </div>
@@ -283,16 +283,19 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
                 <FormItem className='w-full flex-1'>
                   <FormLabel>Assign Course or Program</FormLabel>
                   <Select
-                    onValueChange={(value) => {
+                    onValueChange={value => {
                       field.onChange(value); // Set selected UUID
 
                       // Try to find the selected course or program
-                      const selectedCourse =
-                        courses?.data?.content?.find(course => course.uuid === value);
-                      const selectedProgram =
-                        programs?.data?.content?.find(program => program.uuid === value);
+                      const selectedCourse = courses?.data?.content?.find(
+                        course => course.uuid === value
+                      );
+                      const selectedProgram = programs?.data?.content?.find(
+                        program => program.uuid === value
+                      );
 
-                      const maxParticipants = selectedCourse?.class_limit ?? selectedProgram?.class_limit;
+                      const maxParticipants =
+                        selectedCourse?.class_limit ?? selectedProgram?.class_limit;
 
                       if (maxParticipants !== undefined) {
                         form.setValue('max_participants', maxParticipants);
@@ -304,16 +307,24 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
                       <SelectValue placeholder='Select a course' />
                     </SelectTrigger>
                     <SelectContent className='pb-4'>
-                      <p className='pl-3 py-2'>Courses</p>
+                      <p className='py-2 pl-3'>Courses</p>
                       {courses?.data?.content?.map(course => (
-                        <SelectItem className='pb-1' key={course.uuid} value={course.uuid as string}>
+                        <SelectItem
+                          className='pb-1'
+                          key={course.uuid}
+                          value={course.uuid as string}
+                        >
                           {course.name}
                         </SelectItem>
                       ))}
                       <Separator className='my-2' />
-                      <p className='pl-3 py-2'>Programs</p>
+                      <p className='py-2 pl-3'>Programs</p>
                       {programs?.data?.content?.map(program => (
-                        <SelectItem className='pb-1' key={program.uuid} value={program.uuid as string}>
+                        <SelectItem
+                          className='pb-1'
+                          key={program.uuid}
+                          value={program.uuid as string}
+                        >
                           {program.title}
                         </SelectItem>
                       ))}
@@ -368,9 +379,7 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
                 <FormItem>
                   <FormLabel>Subtitle/Tagline (Optional)</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Brief subtitle or tagline"
-                      {...field} />
+                    <Input placeholder='Brief subtitle or tagline' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -508,46 +517,46 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
 
             <FormField
               control={form.control}
-              name="class_banner"
+              name='class_banner'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Class Banner</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 h-48 flex items-center justify-center relative overflow-hidden">
+                    <div className='relative'>
+                      <div className='relative flex h-48 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 p-6'>
                         {bannerPreview ? (
-                          <div className="relative w-full h-full">
+                          <div className='relative h-full w-full'>
                             <Image
                               src={bannerPreview}
-                              alt="Banner Preview"
+                              alt='Banner Preview'
                               fill
-                              className="object-cover rounded-lg"
+                              className='rounded-lg object-cover'
                             />
                             <Button
-                              type="button"
-                              size="sm"
-                              variant="destructive"
-                              className="absolute top-2 right-2 z-10"
+                              type='button'
+                              size='sm'
+                              variant='destructive'
+                              className='absolute top-2 right-2 z-10'
                               onClick={() => {
                                 setBannerPreview('');
                                 field.onChange(null);
                               }}
                             >
-                              <X className="w-4 h-4" />
+                              <X className='h-4 w-4' />
                             </Button>
                           </div>
                         ) : (
-                          <div className="text-center text-gray-600 pointer-events-none">
-                            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                            <p className="text-sm">Click to upload or drag and drop</p>
-                            <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
+                          <div className='pointer-events-none text-center text-gray-600'>
+                            <Upload className='mx-auto mb-2 h-12 w-12 text-gray-400' />
+                            <p className='text-sm'>Click to upload or drag and drop</p>
+                            <p className='text-xs text-gray-500'>PNG, JPG up to 10MB</p>
                           </div>
                         )}
 
                         {/* Invisible file input over the entire box */}
                         <input
-                          type="file"
-                          accept="image/*"
+                          type='file'
+                          accept='image/*'
                           onChange={e =>
                             handleFileUpload(e, {
                               key: 'banner',
@@ -556,7 +565,7 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
                               onChange: field.onChange,
                             })
                           }
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                          className='absolute inset-0 z-20 h-full w-full cursor-pointer opacity-0'
                         />
                       </div>
                     </div>
@@ -609,8 +618,8 @@ export default function ClassDetailsForm({ handleNextStep, classData, isLoading 
         editingRecurrenceId={editingRecurrenceId}
         initialValues={recurrenceData?.data}
         onSuccess={(data: any) => {
-          setRecurringUuid(data?.data?.uuid as string)
-          setRecurringData(data?.data)
+          setRecurringUuid(data?.data?.uuid as string);
+          setRecurringData(data?.data);
         }}
       />
     </main>

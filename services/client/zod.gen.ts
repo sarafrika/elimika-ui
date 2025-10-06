@@ -309,9 +309,9 @@ export const zStudent = z
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.'
       )
       .optional(),
-    secondaryGuardianContact: z.string().optional(),
-    primaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
+    primaryGuardianContact: z.string().optional(),
+    secondaryGuardianContact: z.string().optional(),
     created_date: z
       .string()
       .datetime()
@@ -1650,6 +1650,13 @@ export const zOrganisation = z
       .number()
       .describe("**[OPTIONAL]** Longitude coordinate for the organisation's location.")
       .optional(),
+    admin_verified: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates whether the organisation has been verified/approved by an admin. Only verified organisations can access certain platform features and are displayed with verification badges.'
+      )
+      .readonly()
+      .optional(),
     created_date: z
       .string()
       .datetime()
@@ -1782,6 +1789,13 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    is_profile_complete: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
+      )
+      .readonly()
+      .optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
@@ -1793,13 +1807,6 @@ export const zInstructor = z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
-      )
-      .readonly()
-      .optional(),
-    is_profile_complete: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
       )
       .readonly()
       .optional(),
@@ -1898,6 +1905,13 @@ export const zApiResponseInstructorSkill = z.object({
 });
 
 /**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const zMembershipStatusEnum = z
+  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
+  .describe('**[READ-ONLY]** Current status of the membership.');
+
+/**
  * **[READ-ONLY]** Classification of organization type based on name keywords.
  */
 export const zOrganizationTypeEnum = z
@@ -1910,13 +1924,6 @@ export const zOrganizationTypeEnum = z
     'OTHER',
   ])
   .describe('**[READ-ONLY]** Classification of organization type based on name keywords.');
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const zMembershipStatusEnum = z
-  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
-  .describe('**[READ-ONLY]** Current status of the membership.');
 
 /**
  * Professional membership record for instructors including associations, industry bodies, and certification organizations
@@ -2008,14 +2015,30 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
     formatted_duration: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
       .readonly()
       .optional(),
-    is_complete: z
+    membership_status: zMembershipStatusEnum.optional(),
+    membership_period: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted membership period showing start and end dates.')
+      .readonly()
+      .optional(),
+    is_long_standing_member: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .describe('**[READ-ONLY]** Indicates if this membership has been held for 5 years or more.')
+      .readonly()
+      .optional(),
+    has_membership_number: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership has a membership number documented.')
       .readonly()
       .optional(),
     organization_type: zOrganizationTypeEnum.optional(),
@@ -2035,22 +2058,6 @@ export const zInstructorProfessionalMembership = z
       .describe(
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
       )
-      .readonly()
-      .optional(),
-    membership_status: zMembershipStatusEnum.optional(),
-    membership_period: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted membership period showing start and end dates.')
-      .readonly()
-      .optional(),
-    is_long_standing_member: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this membership has been held for 5 years or more.')
-      .readonly()
-      .optional(),
-    has_membership_number: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership has a membership number documented.')
       .readonly()
       .optional(),
   })
@@ -2172,15 +2179,9 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    experience_level: zExperienceLevelEnum.optional(),
-    is_recent_experience: z
+    is_complete: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).')
-      .readonly()
-      .optional(),
-    calculated_years: z
-      .number()
-      .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
     duration_in_months: z
@@ -2211,9 +2212,15 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Indicates if the position has responsibilities documented.')
       .readonly()
       .optional(),
-    is_complete: z
+    experience_level: zExperienceLevelEnum.optional(),
+    is_recent_experience: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+      .describe('**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).')
+      .readonly()
+      .optional(),
+    calculated_years: z
+      .number()
+      .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
       .readonly()
       .optional(),
   })
@@ -2318,6 +2325,11 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .readonly()
+      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
@@ -2342,11 +2354,6 @@ export const zInstructorEducation = z
     formatted_completion: z
       .string()
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -2556,6 +2563,11 @@ export const zInstructorDocument = z
       .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
+    file_size_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted file size.')
+      .readonly()
+      .optional(),
     days_until_expiry: z
       .number()
       .int()
@@ -2575,11 +2587,6 @@ export const zInstructorDocument = z
       .readonly()
       .optional(),
     verification_status: zVerificationStatusEnum.optional(),
-    file_size_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted file size.')
-      .readonly()
-      .optional(),
   })
   .describe(
     'Document record for instructor credential verification including educational certificates, experience documents, and professional memberships'
@@ -2588,6 +2595,171 @@ export const zInstructorDocument = z
 export const zApiResponseInstructorDocument = z.object({
   success: z.boolean().optional(),
   data: zInstructorDocument.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * **[REQUIRED]** Type of availability pattern.
+ */
+export const zAvailabilityTypeEnum = z
+  .enum(['daily', 'weekly', 'monthly', 'custom'])
+  .describe('**[REQUIRED]** Type of availability pattern.');
+
+export const zLocalTime = z.object({
+  hour: z.number().int().optional(),
+  minute: z.number().int().optional(),
+  second: z.number().int().optional(),
+  nano: z.number().int().optional(),
+});
+
+/**
+ * Instructor availability slot that defines when an instructor is available for teaching
+ */
+export const zAvailabilitySlot = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** Unique system identifier for the availability slot. Auto-generated by the system.'
+      )
+      .readonly()
+      .optional(),
+    instructor_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Reference to the instructor UUID for this availability slot.'),
+    availability_type: zAvailabilityTypeEnum,
+    day_of_week: z
+      .number()
+      .int()
+      .gte(1)
+      .lte(7)
+      .describe(
+        '**[CONDITIONAL]** Day of the week (1=Monday, 7=Sunday). Required for weekly availability type.'
+      )
+      .optional(),
+    day_of_month: z
+      .number()
+      .int()
+      .gte(1)
+      .lte(31)
+      .describe(
+        '**[CONDITIONAL]** Day of the month (1-31). Required for monthly availability type.'
+      )
+      .optional(),
+    specific_date: z
+      .string()
+      .date()
+      .describe(
+        '**[CONDITIONAL]** Specific date for one-time availability. Used with custom patterns.'
+      )
+      .optional(),
+    start_time: zLocalTime,
+    end_time: zLocalTime,
+    custom_pattern: z
+      .string()
+      .max(255)
+      .describe(
+        '**[CONDITIONAL]** Custom pattern expression for complex availability rules. Required for custom availability type.'
+      )
+      .optional(),
+    is_available: z
+      .boolean()
+      .describe(
+        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).'
+      )
+      .optional(),
+    recurrence_interval: z
+      .number()
+      .int()
+      .gte(1)
+      .lte(52)
+      .describe(
+        '**[OPTIONAL]** Interval for recurrence. For example, 2 means every 2 weeks for weekly type.'
+      )
+      .optional(),
+    effective_start_date: z
+      .string()
+      .date()
+      .describe('**[OPTIONAL]** Date when this availability pattern becomes effective.')
+      .optional(),
+    effective_end_date: z
+      .string()
+      .date()
+      .describe('**[OPTIONAL]** Date when this availability pattern expires.')
+      .optional(),
+    color_code: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .describe(
+        '**[OPTIONAL]** Hex color code for blocked time visualization (e.g., for categorizing different types of blocked times).'
+      )
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe(
+        '**[READ-ONLY]** Timestamp when the availability slot was first created. Automatically set by the system.'
+      )
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe(
+        '**[READ-ONLY]** Timestamp when the availability slot was last modified. Automatically updated by the system.'
+      )
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** Email or username of the user who created this availability slot.')
+      .readonly()
+      .optional(),
+    updated_by: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Email or username of the user who last modified this availability slot.'
+      )
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
+    time_range: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable time range.')
+      .readonly()
+      .optional(),
+    is_currently_active: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the availability slot is currently active based on effective dates.'
+      )
+      .readonly()
+      .optional(),
+    availability_description: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable description of the availability pattern.')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    'Instructor availability slot that defines when an instructor is available for teaching'
+  );
+
+export const zApiResponseAvailabilitySlot = z.object({
+  success: z.boolean().optional(),
+  data: zAvailabilitySlot.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -2612,11 +2784,11 @@ export const zCourse = z
       .describe(
         '**[REQUIRED]** Course title. Should be descriptive and engaging for potential students.'
       ),
-    instructor_uuid: z
+    course_creator_uuid: z
       .string()
       .uuid()
       .describe(
-        "**[REQUIRED]** Reference to the instructor's UUID who created and owns this course."
+        "**[REQUIRED]** Reference to the course creator's UUID who created and owns this course."
       ),
     category_uuids: z
       .array(z.string().uuid())
@@ -2766,6 +2938,20 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
       .readonly()
       .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
+      .readonly()
+      .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
+      .readonly()
+      .optional(),
     is_archived: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is archived and no longer available.')
@@ -2781,6 +2967,11 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
       .readonly()
       .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
     has_multiple_categories: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
@@ -2790,25 +2981,6 @@ export const zCourse = z
       .number()
       .int()
       .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
-      .readonly()
-      .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
-      .readonly()
-      .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
       .readonly()
       .optional(),
   })
@@ -3288,11 +3460,6 @@ export const zCourseAssessment = z
       .describe('**[READ-ONLY]** Category classification of the assessment type.')
       .readonly()
       .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3301,6 +3468,11 @@ export const zCourseAssessment = z
     contribution_level: z
       .string()
       .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -3312,6 +3484,104 @@ export const zApiResponseCourseAssessment = z.object({
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
+
+/**
+ * Course creator profile for users dedicated to educational content creation
+ */
+export const zCourseCreator = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** Unique system identifier for the course creator profile. Auto-generated by the system.'
+      )
+      .readonly()
+      .optional(),
+    user_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[REQUIRED]** Reference to the base user account UUID. Links course creator profile to user authentication and personal details.'
+      ),
+    full_name: z
+      .string()
+      .min(1)
+      .max(255)
+      .describe(
+        '**[REQUIRED]** Complete name of the course creator. Used in course authorship and creator profiles.'
+      ),
+    bio: z
+      .string()
+      .min(0)
+      .max(2000)
+      .describe(
+        "**[OPTIONAL]** Professional biography describing course creator's background, expertise, and content creation philosophy. Used in creator profiles and course descriptions."
+      )
+      .optional(),
+    professional_headline: z
+      .string()
+      .min(0)
+      .max(500)
+      .describe(
+        "**[OPTIONAL]** Professional headline or title that summarizes course creator's expertise and role. Used in search results and creator listings."
+      )
+      .optional(),
+    website: z
+      .string()
+      .url()
+      .min(0)
+      .max(500)
+      .describe(
+        "**[OPTIONAL]** Professional website or portfolio URL. Used to showcase course creator's work and additional credentials."
+      )
+      .optional(),
+    admin_verified: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates whether the course creator has been verified by an administrator. True if verified, false if not verified.'
+      )
+      .readonly()
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe(
+        '**[READ-ONLY]** Timestamp when the course creator profile was first created. Automatically set by the system.'
+      )
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Email or username of the user who created this course creator profile. Used for audit trails and administrative purposes.'
+      )
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe(
+        '**[READ-ONLY]** Timestamp when the course creator profile was last modified. Automatically updated by the system on any changes.'
+      )
+      .readonly()
+      .optional(),
+    updated_by: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Email or username of the user who last modified this course creator profile. Used for audit trails and administrative purposes.'
+      )
+      .readonly()
+      .optional(),
+    is_profile_complete: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course creator profile is considered complete. Requires bio and professional headline.'
+      )
+      .readonly()
+      .optional(),
+  })
+  .describe('Course creator profile for users dedicated to educational content creation');
 
 /**
  * Grading scale level with points and ordering for assessments
@@ -3656,13 +3926,6 @@ export const zApiResponseCategory = z.object({
   data: zCategory.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
-});
-
-export const zLocalTime = z.object({
-  hour: z.number().int().optional(),
-  minute: z.number().int().optional(),
-  second: z.number().int().optional(),
-  nano: z.number().int().optional(),
 });
 
 /**
@@ -4147,11 +4410,6 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    grade_letter: z
-      .string()
-      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
-      .readonly()
-      .optional(),
     certificate_type: z
       .string()
       .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
@@ -4160,6 +4418,11 @@ export const zCertificate = z
     is_downloadable: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
+      .readonly()
+      .optional(),
+    grade_letter: z
+      .string()
+      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
       .readonly()
       .optional(),
     validity_status: z
@@ -4272,157 +4535,6 @@ export const zCertificateTemplate = z
 export const zApiResponseCertificateTemplate = z.object({
   success: z.boolean().optional(),
   data: zCertificateTemplate.optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
-/**
- * **[REQUIRED]** Type of availability pattern.
- */
-export const zAvailabilityTypeEnum = z
-  .enum(['daily', 'weekly', 'monthly', 'custom'])
-  .describe('**[REQUIRED]** Type of availability pattern.');
-
-/**
- * Instructor availability slot that defines when an instructor is available for teaching
- */
-export const zAvailabilitySlot = z
-  .object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[READ-ONLY]** Unique system identifier for the availability slot. Auto-generated by the system.'
-      )
-      .readonly()
-      .optional(),
-    instructor_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Reference to the instructor UUID for this availability slot.'),
-    availability_type: zAvailabilityTypeEnum,
-    day_of_week: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(7)
-      .describe(
-        '**[CONDITIONAL]** Day of the week (1=Monday, 7=Sunday). Required for weekly availability type.'
-      )
-      .optional(),
-    day_of_month: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(31)
-      .describe(
-        '**[CONDITIONAL]** Day of the month (1-31). Required for monthly availability type.'
-      )
-      .optional(),
-    specific_date: z
-      .string()
-      .date()
-      .describe(
-        '**[CONDITIONAL]** Specific date for one-time availability. Used with custom patterns.'
-      )
-      .optional(),
-    start_time: zLocalTime,
-    end_time: zLocalTime,
-    custom_pattern: z
-      .string()
-      .max(255)
-      .describe(
-        '**[CONDITIONAL]** Custom pattern expression for complex availability rules. Required for custom availability type.'
-      )
-      .optional(),
-    is_available: z
-      .boolean()
-      .describe(
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).'
-      )
-      .optional(),
-    recurrence_interval: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(52)
-      .describe(
-        '**[OPTIONAL]** Interval for recurrence. For example, 2 means every 2 weeks for weekly type.'
-      )
-      .optional(),
-    effective_start_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this availability pattern becomes effective.')
-      .optional(),
-    effective_end_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this availability pattern expires.')
-      .optional(),
-    created_date: z
-      .string()
-      .datetime()
-      .describe(
-        '**[READ-ONLY]** Timestamp when the availability slot was first created. Automatically set by the system.'
-      )
-      .readonly()
-      .optional(),
-    updated_date: z
-      .string()
-      .datetime()
-      .describe(
-        '**[READ-ONLY]** Timestamp when the availability slot was last modified. Automatically updated by the system.'
-      )
-      .readonly()
-      .optional(),
-    created_by: z
-      .string()
-      .describe('**[READ-ONLY]** Email or username of the user who created this availability slot.')
-      .readonly()
-      .optional(),
-    updated_by: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Email or username of the user who last modified this availability slot.'
-      )
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
-      .readonly()
-      .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
-    time_range: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable time range.')
-      .readonly()
-      .optional(),
-    is_currently_active: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the availability slot is currently active based on effective dates.'
-      )
-      .readonly()
-      .optional(),
-    availability_description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the availability pattern.')
-      .readonly()
-      .optional(),
-  })
-  .describe(
-    'Instructor availability slot that defines when an instructor is available for teaching'
-  );
-
-export const zApiResponseAvailabilitySlot = z.object({
-  success: z.boolean().optional(),
-  data: zAvailabilitySlot.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -4993,215 +5105,12 @@ export const zApiResponse = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-/**
- * Weekly recurring availability slot for instructor scheduling
- */
-export const zWeeklyAvailabilitySlot = z
-  .object({
-    instructor_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Reference to the instructor UUID for this availability slot.'),
-    day_of_week: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(7)
-      .describe('**[REQUIRED]** Day of the week (1=Monday, 2=Tuesday, ..., 7=Sunday).'),
-    start_time: zLocalTime,
-    end_time: zLocalTime,
-    is_available: z
-      .boolean()
-      .describe(
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).'
-      )
-      .optional(),
-    recurrence_interval: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(52)
-      .describe(
-        '**[OPTIONAL]** Interval for weekly recurrence. For example, 2 means every 2 weeks.'
-      )
-      .optional(),
-    effective_start_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this weekly availability pattern becomes effective.')
-      .optional(),
-    effective_end_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this weekly availability pattern expires.')
-      .optional(),
-    description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the weekly availability.')
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
-      .readonly()
-      .optional(),
-    day_name: z.string().describe('**[READ-ONLY]** Human-readable day name.').readonly().optional(),
-  })
-  .describe('Weekly recurring availability slot for instructor scheduling');
-
-/**
- * Monthly recurring availability slot for instructor scheduling
- */
-export const zMonthlyAvailabilitySlot = z
-  .object({
-    instructor_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Reference to the instructor UUID for this availability slot.'),
-    day_of_month: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(31)
-      .describe('**[REQUIRED]** Day of the month (1-31) when the instructor is available.'),
-    start_time: zLocalTime,
-    end_time: zLocalTime,
-    is_available: z
-      .boolean()
-      .describe(
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).'
-      )
-      .optional(),
-    recurrence_interval: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(12)
-      .describe(
-        '**[OPTIONAL]** Interval for monthly recurrence. For example, 2 means every 2 months.'
-      )
-      .optional(),
-    effective_start_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this monthly availability pattern becomes effective.')
-      .optional(),
-    effective_end_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this monthly availability pattern expires.')
-      .optional(),
-    description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the monthly availability.')
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
-      .readonly()
-      .optional(),
-  })
-  .describe('Monthly recurring availability slot for instructor scheduling');
-
-/**
- * Daily recurring availability slot for instructor scheduling
- */
-export const zDailyAvailabilitySlot = z
-  .object({
-    instructor_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Reference to the instructor UUID for this availability slot.'),
-    start_time: zLocalTime,
-    end_time: zLocalTime,
-    is_available: z
-      .boolean()
-      .describe(
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).'
-      )
-      .optional(),
-    recurrence_interval: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(365)
-      .describe('**[OPTIONAL]** Interval for daily recurrence. For example, 2 means every 2 days.')
-      .optional(),
-    effective_start_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this daily availability pattern becomes effective.')
-      .optional(),
-    effective_end_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this daily availability pattern expires.')
-      .optional(),
-    description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the daily availability.')
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
-      .readonly()
-      .optional(),
-  })
-  .describe('Daily recurring availability slot for instructor scheduling');
-
-/**
- * Custom availability slot with complex scheduling patterns
- */
-export const zCustomAvailabilitySlot = z
-  .object({
-    instructor_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Reference to the instructor UUID for this availability slot.'),
-    custom_pattern: z
-      .string()
-      .min(0)
-      .max(255)
-      .describe(
-        '**[REQUIRED]** Custom pattern expression for complex availability rules. Supports cron-like expressions.'
-      ),
-    start_time: zLocalTime,
-    end_time: zLocalTime,
-    is_available: z
-      .boolean()
-      .describe(
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).'
-      )
-      .optional(),
-    effective_start_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this custom availability pattern becomes effective.')
-      .optional(),
-    effective_end_date: z
-      .string()
-      .date()
-      .describe('**[OPTIONAL]** Date when this custom availability pattern expires.')
-      .optional(),
-    description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the custom availability pattern.')
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
-      .readonly()
-      .optional(),
-    pattern_description: z
-      .string()
-      .describe('**[READ-ONLY]** Simplified description for common cron patterns.')
-      .readonly()
-      .optional(),
-  })
-  .describe('Custom availability slot with complex scheduling patterns');
+export const zApiResponseCourseCreator = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreator.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
 
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
@@ -5311,6 +5220,11 @@ export const zAssignmentSubmission = z
       )
       .readonly()
       .optional(),
+    is_graded: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
+      .readonly()
+      .optional(),
     submission_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
@@ -5333,11 +5247,6 @@ export const zAssignmentSubmission = z
       .describe('**[READ-ONLY]** Summary of files attached to this submission.')
       .readonly()
       .optional(),
-    is_graded: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
-      .readonly()
-      .optional(),
   })
   .describe('Student submission for an assignment with grading and feedback information');
 
@@ -5347,6 +5256,31 @@ export const zApiResponseAssignmentSubmission = z.object({
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
+
+export const zSchemaEnum2 = z.enum(['admin', 'organisation_user']);
+
+/**
+ * Type of assignment - global or organization-specific
+ */
+export const zAssignmentTypeEnum = z
+  .enum(['global', 'organization'])
+  .describe('Type of assignment - global or organization-specific');
+
+/**
+ * Admin domain assignment request containing domain type, reason, and effective date
+ */
+export const zAdminDomainAssignmentRequest = z
+  .object({
+    domain_name: zSchemaEnum2,
+    assignment_type: zAssignmentTypeEnum,
+    reason: z.string().min(0).max(500).describe('Reason for assigning admin privileges').optional(),
+    effective_date: z
+      .string()
+      .date()
+      .describe('Effective date for the admin assignment')
+      .optional(),
+  })
+  .describe('Admin domain assignment request containing domain type, reason, and effective date');
 
 export const zPageable = z.object({
   page: z.number().int().gte(0).optional(),
@@ -5683,11 +5617,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -5701,6 +5630,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -5846,6 +5780,11 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
@@ -5863,11 +5802,6 @@ export const zProgramEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
-      .readonly()
-      .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
   })
@@ -6059,6 +5993,13 @@ export const zApiResponseListInstructorEducation = z.object({
 export const zApiResponseListInstructorDocument = z.object({
   success: z.boolean().optional(),
   data: z.array(zInstructorDocument).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseListAvailabilitySlot = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zAvailabilitySlot).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -6335,6 +6276,11 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
@@ -6352,11 +6298,6 @@ export const zCourseEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
-      .readonly()
-      .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
   })
@@ -6501,6 +6442,19 @@ export const zApiResponsePagedDtoCourseCategoryMapping = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+export const zPagedDtoCourseCreator = z.object({
+  content: z.array(zCourseCreator).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCourseCreator = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCourseCreator.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 export const zPagedDtoGradingLevel = z.object({
   content: z.array(zGradingLevel).optional(),
   metadata: zPageMetadata.optional(),
@@ -6588,13 +6542,6 @@ export const zApiResponseListCertificate = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-export const zApiResponseListAvailabilitySlot = z.object({
-  success: z.boolean().optional(),
-  data: z.array(zAvailabilitySlot).optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
 export const zPagedDtoAssignment = z.object({
   content: z.array(zAssignment).optional(),
   metadata: zPageMetadata.optional(),
@@ -6624,6 +6571,93 @@ export const zPagedDtoAssignmentSubmission = z.object({
 export const zApiResponsePagedDtoAssignmentSubmission = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoAssignmentSubmission.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * User metrics for dashboard
+ */
+export const zUserMetrics = z
+  .object({
+    total_users: z.coerce.bigint().optional(),
+    active_users_24h: z.coerce.bigint().optional(),
+    new_registrations_7d: z.coerce.bigint().optional(),
+    suspended_accounts: z.coerce.bigint().optional(),
+  })
+  .describe('User metrics for dashboard');
+
+/**
+ * Organization metrics for dashboard
+ */
+export const zOrganizationMetrics = z
+  .object({
+    total_organizations: z.coerce.bigint().optional(),
+    pending_approvals: z.coerce.bigint().optional(),
+    active_organizations: z.coerce.bigint().optional(),
+    suspended_organizations: z.coerce.bigint().optional(),
+  })
+  .describe('Organization metrics for dashboard');
+
+/**
+ * Content metrics for dashboard
+ */
+export const zContentMetrics = z
+  .object({
+    total_courses: z.coerce.bigint().optional(),
+    pending_moderation: z.coerce.bigint().optional(),
+    reported_content: z.coerce.bigint().optional(),
+    average_quality_score: z.number().optional(),
+  })
+  .describe('Content metrics for dashboard');
+
+/**
+ * System performance metrics
+ */
+export const zSystemPerformance = z
+  .object({
+    server_uptime: z.string().optional(),
+    average_response_time: z.string().optional(),
+    error_rate: z.string().optional(),
+    storage_usage: z.string().optional(),
+  })
+  .describe('System performance metrics');
+
+/**
+ * Admin-specific metrics
+ */
+export const zAdminMetrics = z
+  .object({
+    total_admins: z.coerce.bigint().optional(),
+    active_admin_sessions: z.coerce.bigint().optional(),
+    admin_actions_today: z.coerce.bigint().optional(),
+    system_admins: z.coerce.bigint().optional(),
+    organization_admins: z.coerce.bigint().optional(),
+  })
+  .describe('Admin-specific metrics');
+
+/**
+ * Comprehensive statistics for the admin dashboard
+ */
+export const zAdminDashboardStats = z
+  .object({
+    timestamp: z
+      .string()
+      .datetime()
+      .describe('Timestamp when statistics were generated')
+      .optional(),
+    overall_health: z.string().describe('Overall system health status').optional(),
+    user_metrics: zUserMetrics.optional(),
+    organization_metrics: zOrganizationMetrics.optional(),
+    content_metrics: zContentMetrics.optional(),
+    system_performance: zSystemPerformance.optional(),
+    admin_metrics: zAdminMetrics.optional(),
+  })
+  .describe('Comprehensive statistics for the admin dashboard');
+
+export const zApiResponseAdminDashboardStats = z.object({
+  success: z.boolean().optional(),
+  data: zAdminDashboardStats.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -7426,6 +7460,48 @@ export const zUpdateInstructorDocumentData = z.object({
  */
 export const zUpdateInstructorDocumentResponse = zApiResponseInstructorDocument;
 
+export const zDeleteAvailabilitySlotData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+    slotUuid: z.string().uuid().describe('UUID of the availability slot'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Availability slot deleted successfully
+ */
+export const zDeleteAvailabilitySlotResponse = zApiResponseVoid;
+
+export const zGetAvailabilitySlotData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+    slotUuid: z.string().uuid().describe('UUID of the availability slot'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Availability slot retrieved successfully
+ */
+export const zGetAvailabilitySlotResponse = zApiResponseAvailabilitySlot;
+
+export const zUpdateAvailabilitySlotData = z.object({
+  body: zAvailabilitySlot,
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+    slotUuid: z.string().uuid().describe('UUID of the availability slot'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Availability slot updated successfully
+ */
+export const zUpdateAvailabilitySlotResponse = zApiResponseAvailabilitySlot;
+
 export const zDeleteCourseData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -7602,6 +7678,47 @@ export const zUpdateCourseAssessmentData = z.object({
  * OK
  */
 export const zUpdateCourseAssessmentResponse = zApiResponseCourseAssessment;
+
+export const zDeleteCourseCreatorData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Course creator deleted successfully
+ */
+export const zDeleteCourseCreatorResponse = z
+  .void()
+  .describe('Course creator deleted successfully');
+
+export const zGetCourseCreatorByUuidData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Course creator found
+ */
+export const zGetCourseCreatorByUuidResponse = zCourseCreator;
+
+export const zUpdateCourseCreatorData = z.object({
+  body: zCourseCreator,
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Course creator updated successfully
+ */
+export const zUpdateCourseCreatorResponse = zCourseCreator;
 
 export const zDeleteGradingLevelData = z.object({
   body: z.never().optional(),
@@ -7900,45 +8017,6 @@ export const zUpdateCertificateTemplateData = z.object({
  * OK
  */
 export const zUpdateCertificateTemplateResponse = zApiResponseCertificateTemplate;
-
-export const zDeleteInstructorAvailabilitySlotData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the availability slot to delete'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Availability slot deleted successfully
- */
-export const zDeleteInstructorAvailabilitySlotResponse = zApiResponseVoid;
-
-export const zGetInstructorAvailabilitySlotData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the availability slot to retrieve'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Availability slot retrieved successfully
- */
-export const zGetInstructorAvailabilitySlotResponse = zApiResponseAvailabilitySlot;
-
-export const zUpdateInstructorAvailabilitySlotData = z.object({
-  body: zAvailabilitySlot,
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the availability slot to update'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Availability slot updated successfully
- */
-export const zUpdateInstructorAvailabilitySlotResponse = zApiResponseAvailabilitySlot;
 
 export const zDeleteAssignmentData = z.object({
   body: z.never().optional(),
@@ -8935,6 +9013,60 @@ export const zVerifyDocumentData = z.object({
  */
 export const zVerifyDocumentResponse = zApiResponseInstructorDocument;
 
+export const zCreateAvailabilitySlotData = z.object({
+  body: zAvailabilitySlot,
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Availability slot created successfully
+ */
+export const zCreateAvailabilitySlotResponse = zApiResponseAvailabilitySlot;
+
+export const zSetAvailabilityPatternsData = z.object({
+  body: z.record(z.unknown()),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.object({
+    pattern_type: z.string().describe('Pattern type: weekly, daily, monthly, or custom'),
+  }),
+});
+
+/**
+ * Availability patterns set successfully
+ */
+export const zSetAvailabilityPatternsResponse = zApiResponseVoid;
+
+export const zBlockTimeData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.object({
+    start: z
+      .string()
+      .datetime()
+      .describe('Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+    end: z
+      .string()
+      .datetime()
+      .describe('End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+    color_code: z
+      .string()
+      .describe('Optional hex color code for UI visualization (e.g., #FF6B6B)')
+      .optional(),
+  }),
+});
+
+/**
+ * Time blocked successfully
+ */
+export const zBlockTimeResponse = zApiResponseVoid;
+
 export const zEnrollStudentData = z.object({
   body: zEnrollmentRequest,
   path: z.never().optional(),
@@ -9239,6 +9371,64 @@ export const zAddCourseAssessmentData = z.object({
  */
 export const zAddCourseAssessmentResponse = zApiResponseCourseAssessment;
 
+export const zGetAllCourseCreatorsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetAllCourseCreatorsResponse = zApiResponsePagedDtoCourseCreator;
+
+export const zCreateCourseCreatorData = z.object({
+  body: zCourseCreator,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Course creator created successfully
+ */
+export const zCreateCourseCreatorResponse = zCourseCreator;
+
+export const zVerifyCourseCreatorData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z
+    .object({
+      reason: z.string().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Course creator verified successfully
+ */
+export const zVerifyCourseCreatorResponse = zCourseCreator;
+
+export const zUnverifyCourseCreatorData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z
+    .object({
+      reason: z.string().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Course creator unverified successfully
+ */
+export const zUnverifyCourseCreatorResponse = zCourseCreator;
+
 export const zGetAllGradingLevelsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -9474,91 +9664,6 @@ export const zGenerateCourseCertificateData = z.object({
  */
 export const zGenerateCourseCertificateResponse = zApiResponseCertificate;
 
-export const zCreateInstructorAvailabilitySlotData = z.object({
-  body: zAvailabilitySlot,
-  path: z.never().optional(),
-  query: z.never().optional(),
-});
-
-/**
- * Availability slot created successfully
- */
-export const zCreateInstructorAvailabilitySlotResponse = zApiResponseAvailabilitySlot;
-
-export const zSetInstructorWeeklyAvailabilityData = z.object({
-  body: z.array(zWeeklyAvailabilitySlot),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Weekly availability set successfully
- */
-export const zSetInstructorWeeklyAvailabilityResponse = zApiResponseVoid;
-
-export const zSetInstructorMonthlyAvailabilityData = z.object({
-  body: z.array(zMonthlyAvailabilitySlot),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Monthly availability set successfully
- */
-export const zSetInstructorMonthlyAvailabilityResponse = zApiResponseVoid;
-
-export const zSetInstructorDailyAvailabilityData = z.object({
-  body: z.array(zDailyAvailabilitySlot),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Daily availability set successfully
- */
-export const zSetInstructorDailyAvailabilityResponse = zApiResponseVoid;
-
-export const zSetInstructorCustomAvailabilityData = z.object({
-  body: z.array(zCustomAvailabilitySlot),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Custom availability set successfully
- */
-export const zSetInstructorCustomAvailabilityResponse = zApiResponseVoid;
-
-export const zBlockInstructorTimeData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.object({
-    start: z
-      .string()
-      .datetime()
-      .describe('Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
-    end: z
-      .string()
-      .datetime()
-      .describe('End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
-  }),
-});
-
-/**
- * Time blocked successfully
- */
-export const zBlockInstructorTimeResponse = zApiResponseVoid;
-
 export const zGetAllAssignmentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -9633,6 +9738,106 @@ export const zGradeSubmissionData = z.object({
  * OK
  */
 export const zGradeSubmissionResponse = zApiResponseAssignmentSubmission;
+
+export const zAssignAdminDomainData = z.object({
+  body: zAdminDomainAssignmentRequest,
+  path: z.object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('UUID of the user to assign admin domain to. User must exist in the system.'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Admin domain assigned successfully
+ */
+export const zAssignAdminDomainResponse = zApiResponseUser;
+
+export const zVerifyOrganisationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('UUID of the organization to verify. Must be an existing organization identifier.'),
+  }),
+  query: z
+    .object({
+      reason: z.string().describe('Optional reason for verification').optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Organization verified successfully
+ */
+export const zVerifyOrganisationResponse = zApiResponseOrganisation;
+
+export const zUnverifyOrganisationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe(
+        'UUID of the organization to remove verification from. Must be an existing organization identifier.'
+      ),
+  }),
+  query: z
+    .object({
+      reason: z.string().describe('Optional reason for removing verification').optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Organization verification removed successfully
+ */
+export const zUnverifyOrganisationResponse = zApiResponseOrganisation;
+
+export const zVerifyInstructorData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('UUID of the instructor to verify. Must be an existing instructor identifier.'),
+  }),
+  query: z
+    .object({
+      reason: z.string().describe('Optional reason for verification').optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Instructor verified successfully
+ */
+export const zVerifyInstructorResponse = zApiResponseInstructor;
+
+export const zUnverifyInstructorData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe(
+        'UUID of the instructor to remove verification from. Must be an existing instructor identifier.'
+      ),
+  }),
+  query: z
+    .object({
+      reason: z.string().describe('Optional reason for removing verification').optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Instructor verification removed successfully
+ */
+export const zUnverifyInstructorResponse = zApiResponseInstructor;
 
 export const zUpdateScheduledInstanceStatusData = z.object({
   body: z.never().optional(),
@@ -10543,6 +10748,94 @@ export const zGetPendingInvitationsForEmailData = z.object({
  */
 export const zGetPendingInvitationsForEmailResponse = zApiResponseListInvitation;
 
+export const zClearInstructorAvailabilityData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Availability cleared successfully
+ */
+export const zClearInstructorAvailabilityResponse = zApiResponseVoid;
+
+export const zGetInstructorAvailabilityData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Availability retrieved successfully
+ */
+export const zGetInstructorAvailabilityResponse = zApiResponseListAvailabilitySlot;
+
+export const zSearchAvailabilityData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.object({
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Search results returned successfully
+ */
+export const zSearchAvailabilityResponse = zPage;
+
+export const zGetAvailabilityForDateData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+    date: z.string().date().describe('Date to check (YYYY-MM-DD)'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Availability for date retrieved successfully
+ */
+export const zGetAvailabilityForDateResponse = zApiResponseListAvailabilitySlot;
+
+export const zCheckAvailabilityData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.object({
+    start: z.string().datetime().describe('Start date and time (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+    end: z.string().datetime().describe('End date and time (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+  }),
+});
+
+/**
+ * Availability check completed
+ */
+export const zCheckAvailabilityResponse = zApiResponseBoolean;
+
+export const zFindAvailableSlotsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.object({
+    start_date: z.string().date().describe('Start date of search range (YYYY-MM-DD)'),
+    end_date: z.string().date().describe('End date of search range (YYYY-MM-DD)'),
+  }),
+});
+
+/**
+ * Available slots found successfully
+ */
+export const zFindAvailableSlotsResponse = zApiResponseListAvailabilitySlot;
+
 export const zSearchSkillsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -10991,6 +11284,72 @@ export const zGetActiveCoursesData = z.object({
  */
 export const zGetActiveCoursesResponse = zApiResponsePagedDtoCourse;
 
+export const zIsCourseCreatorVerifiedData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Verification status retrieved
+ */
+export const zIsCourseCreatorVerifiedResponse = zApiResponseBoolean;
+
+export const zGetVerifiedCourseCreatorsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Verified course creators retrieved successfully
+ */
+export const zGetVerifiedCourseCreatorsResponse = zApiResponsePagedDtoCourseCreator;
+
+export const zGetUnverifiedCourseCreatorsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Unverified course creators retrieved successfully
+ */
+export const zGetUnverifiedCourseCreatorsResponse = zApiResponsePagedDtoCourseCreator;
+
+export const zSearchCourseCreatorsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    searchParams: z.record(z.string()),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Search results returned successfully
+ */
+export const zSearchCourseCreatorsResponse = zPage;
+
+export const zCountCourseCreatorsByVerificationStatusData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    verified: z.boolean(),
+  }),
+});
+
+/**
+ * Count retrieved successfully
+ */
+export const zCountCourseCreatorsByVerificationStatusResponse = zApiResponseLong;
+
 export const zSearchContentTypesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -11282,106 +11641,6 @@ export const zGetCourseCertificatesData = z.object({
  */
 export const zGetCourseCertificatesResponse = zApiResponseListCertificate;
 
-export const zClearInstructorAvailabilityData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Availability cleared successfully
- */
-export const zClearInstructorAvailabilityResponse = zApiResponseVoid;
-
-export const zGetInstructorAvailabilityData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Instructor availability retrieved successfully
- */
-export const zGetInstructorAvailabilityResponse = zApiResponseListAvailabilitySlot;
-
-export const zFindInstructorAvailableSlotsData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.object({
-    startDate: z.string().date().describe('Start date of the search range (YYYY-MM-DD)'),
-    endDate: z.string().date().describe('End date of the search range (YYYY-MM-DD)'),
-  }),
-});
-
-/**
- * Available slots found successfully
- */
-export const zFindInstructorAvailableSlotsResponse = zApiResponseListAvailabilitySlot;
-
-export const zGetInstructorAvailabilityForDateData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-    date: z.string().date().describe('Date to check availability for (YYYY-MM-DD)'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Availability for date retrieved successfully
- */
-export const zGetInstructorAvailabilityForDateResponse = zApiResponseListAvailabilitySlot;
-
-export const zCheckInstructorAvailabilityData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.object({
-    start: z.string().datetime().describe('Start date and time (ISO format: YYYY-MM-DDTHH:mm:ss)'),
-    end: z.string().datetime().describe('End date and time (ISO format: YYYY-MM-DDTHH:mm:ss)'),
-  }),
-});
-
-/**
- * Availability check completed
- */
-export const zCheckInstructorAvailabilityResponse = zApiResponseBoolean;
-
-export const zGetInstructorBlockedSlotsData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-    date: z.string().date().describe('Date to check for blocked slots (YYYY-MM-DD)'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Blocked slots retrieved successfully
- */
-export const zGetInstructorBlockedSlotsResponse = zApiResponseListAvailabilitySlot;
-
-export const zGetInstructorAvailableSlotsData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-    date: z.string().date().describe('Date to check for available slots (YYYY-MM-DD)'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Available slots retrieved successfully
- */
-export const zGetInstructorAvailableSlotsResponse = zApiResponseListAvailabilitySlot;
-
 export const zGetAssignmentSubmissionsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -11474,6 +11733,123 @@ export const zGetPendingGradingData = z.object({
  * OK
  */
 export const zGetPendingGradingResponse = zApiResponseListAssignmentSubmission;
+
+export const zIsUserSystemAdminData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the user to check for system admin privileges'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * System admin status check completed
+ */
+export const zIsUserSystemAdminResponse = zApiResponseBoolean;
+
+export const zIsUserAdminData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the user to check for admin privileges'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Admin status check completed
+ */
+export const zIsUserAdminResponse = zApiResponseBoolean;
+
+export const zGetSystemAdminUsersData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * System admin users retrieved successfully
+ */
+export const zGetSystemAdminUsersResponse = zApiResponsePagedDtoUser;
+
+export const zGetOrganizationAdminUsersData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Organization admin users retrieved successfully
+ */
+export const zGetOrganizationAdminUsersResponse = zApiResponsePagedDtoUser;
+
+export const zGetAdminEligibleUsersData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    search: z.string().describe('Optional search term to filter users by name or email').optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Eligible users retrieved successfully
+ */
+export const zGetAdminEligibleUsersResponse = zApiResponsePagedDtoUser;
+
+export const zGetAdminUsersData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    filters: z.record(z.unknown()).describe('Optional filters for admin user search'),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Admin users retrieved successfully
+ */
+export const zGetAdminUsersResponse = zApiResponsePagedDtoUser;
+
+export const zIsOrganisationVerifiedData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the organization to check verification status for.'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Verification status check completed
+ */
+export const zIsOrganisationVerifiedResponse = zApiResponseBoolean;
+
+export const zIsInstructorVerifiedData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the instructor to check verification status for.'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Verification status check completed
+ */
+export const zIsInstructorVerifiedResponse = zApiResponseBoolean;
+
+export const zGetDashboardStatisticsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Dashboard statistics retrieved successfully
+ */
+export const zGetDashboardStatisticsResponse = zApiResponseAdminDashboardStats;
 
 export const zCancelInvitationData = z.object({
   body: z.never().optional(),
@@ -11568,3 +11944,21 @@ export const zRemoveCategoryFromCourseData = z.object({
  * OK
  */
 export const zRemoveCategoryFromCourseResponse = zApiResponseString;
+
+export const zRemoveAdminDomainData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the user to remove admin domain from'),
+    domain: zSchemaEnum2,
+  }),
+  query: z
+    .object({
+      reason: z.string().describe('Reason for removing admin privileges').optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Admin domain removed successfully
+ */
+export const zRemoveAdminDomainResponse = zApiResponseUser;

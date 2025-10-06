@@ -50,7 +50,13 @@ export default function Courses({
               </CardHeader>
 
               {course.thumbnail_url && course.thumbnail_url.length > 0 ? (
-                <Image width={12} height={12} alt={course.name} src={course.thumbnail_url} className='object-fit w-full rounded-sm' />
+                <Image
+                  width={12}
+                  height={12}
+                  alt={course.name}
+                  src={course.thumbnail_url}
+                  className='object-fit w-full rounded-sm'
+                />
               ) : (
                 <Book size={256} color='gray-500' />
               )}

@@ -8,14 +8,18 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
-import { getStudentByIdOptions, getStudentByIdQueryKey, updateStudentMutation } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getStudentByIdOptions,
+  getStudentByIdQueryKey,
+  updateStudentMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Suspense, useEffect } from 'react';
@@ -33,14 +37,14 @@ const guardianInfoSchema = z.object({
 type GuardianInfoFormValues = z.infer<typeof guardianInfoSchema>;
 
 function CertificationsSettingsContent() {
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
-  const student = useStudent()
-  const updateGuardianInfo = useMutation(updateStudentMutation())
-  const { data } = useQuery(getStudentByIdOptions({ path: { uuid: student?.uuid as string } }))
+  const student = useStudent();
+  const updateGuardianInfo = useMutation(updateStudentMutation());
+  const { data } = useQuery(getStudentByIdOptions({ path: { uuid: student?.uuid as string } }));
   // @ts-ignore
-  const studentInfo = data?.data
+  const studentInfo = data?.data;
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -60,7 +64,7 @@ function CertificationsSettingsContent() {
       first_guardian_mobile: '',
       first_guardian_name: '',
       second_guardian_mobile: '',
-      second_guardian_name: ''
+      second_guardian_name: '',
     },
   });
 
@@ -70,40 +74,41 @@ function CertificationsSettingsContent() {
         first_guardian_mobile: studentInfo?.first_guardian_mobile || '',
         first_guardian_name: studentInfo?.first_guardian_name || '',
         second_guardian_mobile: studentInfo?.second_guardian_mobile || '',
-        second_guardian_name: studentInfo?.second_guardian_name || ''
+        second_guardian_name: studentInfo?.second_guardian_name || '',
       });
     }
   }, [studentInfo, form]);
 
-
   const onSubmit = async (data: GuardianInfoFormValues) => {
-    updateGuardianInfo.mutate({
-      body:
+    updateGuardianInfo.mutate(
       {
-        ...data as any,
-        user_uuid: student?.user_uuid as string,
-        updated_by: student?.user_uuid
+        body: {
+          ...(data as any),
+          user_uuid: student?.user_uuid as string,
+          updated_by: student?.user_uuid,
+        },
+        path: { uuid: student?.uuid as string },
       },
-      path: { uuid: student?.uuid as string }
-    }, {
-      onSuccess: (data: any) => {
-        qc.invalidateQueries({ queryKey: getStudentByIdQueryKey({ path: { uuid: student?.uuid as string } }) })
-        toast.success(data?.message || "Information updated successfully")
-      },
-      onError: (error: any, data) => {
-        const errorMessage =
-          error?.error
+      {
+        onSuccess: (data: any) => {
+          qc.invalidateQueries({
+            queryKey: getStudentByIdQueryKey({ path: { uuid: student?.uuid as string } }),
+          });
+          toast.success(data?.message || 'Information updated successfully');
+        },
+        onError: (error: any, data) => {
+          const errorMessage = error?.error
             ? Object.values(error.error)[0]
-            : error?.message || "An error occurred";
+            : error?.message || 'An error occurred';
 
-        toast.error(errorMessage);
+          toast.error(errorMessage);
+        },
       }
-    })
-
+    );
   };
 
   return (
-    <div className='space-y-6 w-full sm:max-w-3/4'>
+    <div className='w-full space-y-6 sm:max-w-3/4'>
       <div>
         <h1 className='text-2xl font-semibold'>Guardian Information</h1>
         <p className='text-muted-foreground text-sm'>
@@ -116,9 +121,7 @@ function CertificationsSettingsContent() {
           <Card>
             <CardHeader>
               <CardTitle>Guardian Information</CardTitle>
-              <CardDescription>
-                Add guardian details for students under 18.
-              </CardDescription>
+              <CardDescription>Add guardian details for students under 18.</CardDescription>
             </CardHeader>
 
             <CardContent className='space-y-4'>
@@ -183,8 +186,8 @@ function CertificationsSettingsContent() {
               </div>
 
               <div className='flex justify-end pt-4'>
-                <Button type='submit' className='min-w-30' >
-                  {updateGuardianInfo.isPending ? <Spinner /> : "Save"}
+                <Button type='submit' className='min-w-30'>
+                  {updateGuardianInfo.isPending ? <Spinner /> : 'Save'}
                 </Button>
               </div>
             </CardContent>

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import moment from 'moment';
 import { useState } from 'react';
@@ -16,12 +16,16 @@ const MySchedulePage = () => {
   };
 
   const handlePrev = () => {
-    const newDate = moment(date).subtract(1, view === 'month' ? 'month' : view === 'week' ? 'week' : 'day').toDate();
+    const newDate = moment(date)
+      .subtract(1, view === 'month' ? 'month' : view === 'week' ? 'week' : 'day')
+      .toDate();
     setDate(newDate);
   };
 
   const handleNext = () => {
-    const newDate = moment(date).add(1, view === 'month' ? 'month' : view === 'week' ? 'week' : 'day').toDate();
+    const newDate = moment(date)
+      .add(1, view === 'month' ? 'month' : view === 'week' ? 'week' : 'day')
+      .toDate();
     setDate(newDate);
   };
 
@@ -30,7 +34,7 @@ const MySchedulePage = () => {
   };
 
   return (
-    <div className='space-y-6' >
+    <div className='space-y-6'>
       <div style={{ marginBottom: 16, display: 'flex', gap: 10 }}>
         <button onClick={handleToday}>Today</button>
         <button onClick={handlePrev}>Previous</button>
@@ -43,13 +47,13 @@ const MySchedulePage = () => {
       <Calendar
         localizer={localizer}
         events={events}
-        startAccessor="start"
-        endAccessor="end"
+        startAccessor='start'
+        endAccessor='end'
         style={{ height: 600 }}
         date={date}
         view={view}
-        onNavigate={(newDate) => setDate(newDate)}
-        onView={(newView) => setView(newView as any)}
+        onNavigate={newDate => setDate(newDate)}
+        onView={newView => setView(newView as any)}
         views={[Views.MONTH, Views.WEEK, Views.DAY]}
       />
     </div>
@@ -303,4 +307,3 @@ const events = [
     },
   },
 ];
-

@@ -55,6 +55,9 @@ import {
   updateInstructorEducation,
   deleteInstructorDocument,
   updateInstructorDocument,
+  deleteAvailabilitySlot,
+  getAvailabilitySlot,
+  updateAvailabilitySlot,
   deleteCourse,
   getCourseByUuid,
   updateCourse,
@@ -69,6 +72,9 @@ import {
   updateLessonContent,
   deleteCourseAssessment,
   updateCourseAssessment,
+  deleteCourseCreator,
+  getCourseCreatorByUuid,
+  updateCourseCreator,
   deleteGradingLevel,
   updateGradingLevel,
   deleteDifficultyLevel,
@@ -92,9 +98,6 @@ import {
   updateCertificate,
   deleteCertificateTemplate,
   updateCertificateTemplate,
-  deleteInstructorAvailabilitySlot,
-  getInstructorAvailabilitySlot,
-  updateInstructorAvailabilitySlot,
   deleteAssignment,
   getAssignmentByUuid,
   updateAssignment,
@@ -161,6 +164,9 @@ import {
   getInstructorDocuments,
   addInstructorDocument,
   verifyDocument,
+  createAvailabilitySlot,
+  setAvailabilityPatterns,
+  blockTime,
   enrollStudent,
   getAllCourses,
   createCourse,
@@ -181,6 +187,10 @@ import {
   reorderLessonContent,
   getCourseAssessments,
   addCourseAssessment,
+  getAllCourseCreators,
+  createCourseCreator,
+  verifyCourseCreator,
+  unverifyCourseCreator,
   getAllGradingLevels,
   createGradingLevel,
   getAllDifficultyLevels,
@@ -200,17 +210,16 @@ import {
   createCertificateTemplate,
   generateProgramCertificate,
   generateCourseCertificate,
-  createInstructorAvailabilitySlot,
-  setInstructorWeeklyAvailability,
-  setInstructorMonthlyAvailability,
-  setInstructorDailyAvailability,
-  setInstructorCustomAvailability,
-  blockInstructorTime,
   getAllAssignments,
   createAssignment,
   submitAssignment,
   returnSubmission,
   gradeSubmission,
+  assignAdminDomain,
+  verifyOrganisation,
+  unverifyOrganisation,
+  verifyInstructor,
+  unverifyInstructor,
   updateScheduledInstanceStatus,
   reorderScoringLevels,
   markAttendance,
@@ -272,6 +281,12 @@ import {
   getInvitationByToken,
   previewInvitation,
   getPendingInvitationsForEmail,
+  clearInstructorAvailability,
+  getInstructorAvailability,
+  searchAvailability,
+  getAvailabilityForDate,
+  checkAvailability,
+  findAvailableSlots,
   searchSkills,
   searchInstructors,
   searchMemberships,
@@ -304,6 +319,11 @@ import {
   searchCategoryMappings,
   searchAssessments,
   getActiveCourses,
+  isCourseCreatorVerified,
+  getVerifiedCourseCreators,
+  getUnverifiedCourseCreators,
+  searchCourseCreators,
+  countCourseCreatorsByVerificationStatus,
   searchContentTypes,
   checkMimeTypeSupport,
   getMediaContentTypes,
@@ -325,13 +345,6 @@ import {
   getProgramCertificates1,
   getCertificateByNumber,
   getCourseCertificates,
-  clearInstructorAvailability,
-  getInstructorAvailability,
-  findInstructorAvailableSlots,
-  getInstructorAvailabilityForDate,
-  checkInstructorAvailability,
-  getInstructorBlockedSlots,
-  getInstructorAvailableSlots,
   getAssignmentSubmissions,
   getHighPerformanceSubmissions,
   getAverageScore,
@@ -339,11 +352,21 @@ import {
   searchSubmissions,
   searchAssignments,
   getPendingGrading,
+  isUserSystemAdmin,
+  isUserAdmin,
+  getSystemAdminUsers,
+  getOrganizationAdminUsers,
+  getAdminEligibleUsers,
+  getAdminUsers,
+  isOrganisationVerified,
+  isInstructorVerified,
+  getDashboardStatistics,
   cancelInvitation,
   cleanupOldInvitations,
   dissociateRubric,
   dissociateRubricByContext,
   removeCategoryFromCourse,
+  removeAdminDomain,
 } from '../sdk.gen';
 import {
   type UseMutationOptions,
@@ -479,6 +502,13 @@ import type {
   UpdateInstructorDocumentData,
   UpdateInstructorDocumentError,
   UpdateInstructorDocumentResponse,
+  DeleteAvailabilitySlotData,
+  DeleteAvailabilitySlotError,
+  DeleteAvailabilitySlotResponse,
+  GetAvailabilitySlotData,
+  UpdateAvailabilitySlotData,
+  UpdateAvailabilitySlotError,
+  UpdateAvailabilitySlotResponse,
   DeleteCourseData,
   DeleteCourseError,
   DeleteCourseResponse,
@@ -513,6 +543,13 @@ import type {
   UpdateCourseAssessmentData,
   UpdateCourseAssessmentError,
   UpdateCourseAssessmentResponse,
+  DeleteCourseCreatorData,
+  DeleteCourseCreatorError,
+  DeleteCourseCreatorResponse,
+  GetCourseCreatorByUuidData,
+  UpdateCourseCreatorData,
+  UpdateCourseCreatorError,
+  UpdateCourseCreatorResponse,
   DeleteGradingLevelData,
   DeleteGradingLevelError,
   UpdateGradingLevelData,
@@ -572,13 +609,6 @@ import type {
   UpdateCertificateTemplateData,
   UpdateCertificateTemplateError,
   UpdateCertificateTemplateResponse,
-  DeleteInstructorAvailabilitySlotData,
-  DeleteInstructorAvailabilitySlotError,
-  DeleteInstructorAvailabilitySlotResponse,
-  GetInstructorAvailabilitySlotData,
-  UpdateInstructorAvailabilitySlotData,
-  UpdateInstructorAvailabilitySlotError,
-  UpdateInstructorAvailabilitySlotResponse,
   DeleteAssignmentData,
   DeleteAssignmentError,
   DeleteAssignmentResponse,
@@ -763,6 +793,15 @@ import type {
   VerifyDocumentData,
   VerifyDocumentError,
   VerifyDocumentResponse,
+  CreateAvailabilitySlotData,
+  CreateAvailabilitySlotError,
+  CreateAvailabilitySlotResponse,
+  SetAvailabilityPatternsData,
+  SetAvailabilityPatternsError,
+  SetAvailabilityPatternsResponse,
+  BlockTimeData,
+  BlockTimeError,
+  BlockTimeResponse,
   EnrollStudentData,
   EnrollStudentError,
   EnrollStudentResponse,
@@ -821,6 +860,18 @@ import type {
   AddCourseAssessmentData,
   AddCourseAssessmentError,
   AddCourseAssessmentResponse,
+  GetAllCourseCreatorsData,
+  GetAllCourseCreatorsError,
+  GetAllCourseCreatorsResponse,
+  CreateCourseCreatorData,
+  CreateCourseCreatorError,
+  CreateCourseCreatorResponse,
+  VerifyCourseCreatorData,
+  VerifyCourseCreatorError,
+  VerifyCourseCreatorResponse,
+  UnverifyCourseCreatorData,
+  UnverifyCourseCreatorError,
+  UnverifyCourseCreatorResponse,
   GetAllGradingLevelsData,
   GetAllGradingLevelsError,
   GetAllGradingLevelsResponse,
@@ -876,24 +927,6 @@ import type {
   GenerateCourseCertificateData,
   GenerateCourseCertificateError,
   GenerateCourseCertificateResponse,
-  CreateInstructorAvailabilitySlotData,
-  CreateInstructorAvailabilitySlotError,
-  CreateInstructorAvailabilitySlotResponse,
-  SetInstructorWeeklyAvailabilityData,
-  SetInstructorWeeklyAvailabilityError,
-  SetInstructorWeeklyAvailabilityResponse,
-  SetInstructorMonthlyAvailabilityData,
-  SetInstructorMonthlyAvailabilityError,
-  SetInstructorMonthlyAvailabilityResponse,
-  SetInstructorDailyAvailabilityData,
-  SetInstructorDailyAvailabilityError,
-  SetInstructorDailyAvailabilityResponse,
-  SetInstructorCustomAvailabilityData,
-  SetInstructorCustomAvailabilityError,
-  SetInstructorCustomAvailabilityResponse,
-  BlockInstructorTimeData,
-  BlockInstructorTimeError,
-  BlockInstructorTimeResponse,
   GetAllAssignmentsData,
   GetAllAssignmentsError,
   GetAllAssignmentsResponse,
@@ -909,6 +942,21 @@ import type {
   GradeSubmissionData,
   GradeSubmissionError,
   GradeSubmissionResponse,
+  AssignAdminDomainData,
+  AssignAdminDomainError,
+  AssignAdminDomainResponse,
+  VerifyOrganisationData,
+  VerifyOrganisationError,
+  VerifyOrganisationResponse,
+  UnverifyOrganisationData,
+  UnverifyOrganisationError,
+  UnverifyOrganisationResponse,
+  VerifyInstructorData,
+  VerifyInstructorError,
+  VerifyInstructorResponse,
+  UnverifyInstructorData,
+  UnverifyInstructorError,
+  UnverifyInstructorResponse,
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusError,
   UpdateScheduledInstanceStatusResponse,
@@ -1042,6 +1090,18 @@ import type {
   GetInvitationByTokenData,
   PreviewInvitationData,
   GetPendingInvitationsForEmailData,
+  ClearInstructorAvailabilityData,
+  ClearInstructorAvailabilityError,
+  ClearInstructorAvailabilityResponse,
+  GetInstructorAvailabilityData,
+  SearchAvailabilityData,
+  SearchAvailabilityError,
+  SearchAvailabilityResponse,
+  GetAvailabilityForDateData,
+  CheckAvailabilityData,
+  CheckAvailabilityError,
+  CheckAvailabilityResponse,
+  FindAvailableSlotsData,
   SearchSkillsData,
   SearchSkillsError,
   SearchSkillsResponse,
@@ -1118,6 +1178,17 @@ import type {
   GetActiveCoursesData,
   GetActiveCoursesError,
   GetActiveCoursesResponse,
+  IsCourseCreatorVerifiedData,
+  GetVerifiedCourseCreatorsData,
+  GetVerifiedCourseCreatorsError,
+  GetVerifiedCourseCreatorsResponse,
+  GetUnverifiedCourseCreatorsData,
+  GetUnverifiedCourseCreatorsError,
+  GetUnverifiedCourseCreatorsResponse,
+  SearchCourseCreatorsData,
+  SearchCourseCreatorsError,
+  SearchCourseCreatorsResponse,
+  CountCourseCreatorsByVerificationStatusData,
   SearchContentTypesData,
   SearchContentTypesError,
   SearchContentTypesResponse,
@@ -1147,17 +1218,6 @@ import type {
   GetProgramCertificates1Data,
   GetCertificateByNumberData,
   GetCourseCertificatesData,
-  ClearInstructorAvailabilityData,
-  ClearInstructorAvailabilityError,
-  ClearInstructorAvailabilityResponse,
-  GetInstructorAvailabilityData,
-  FindInstructorAvailableSlotsData,
-  GetInstructorAvailabilityForDateData,
-  CheckInstructorAvailabilityData,
-  CheckInstructorAvailabilityError,
-  CheckInstructorAvailabilityResponse,
-  GetInstructorBlockedSlotsData,
-  GetInstructorAvailableSlotsData,
   GetAssignmentSubmissionsData,
   GetHighPerformanceSubmissionsData,
   GetAverageScoreData,
@@ -1169,6 +1229,23 @@ import type {
   SearchAssignmentsError,
   SearchAssignmentsResponse,
   GetPendingGradingData,
+  IsUserSystemAdminData,
+  IsUserAdminData,
+  GetSystemAdminUsersData,
+  GetSystemAdminUsersError,
+  GetSystemAdminUsersResponse,
+  GetOrganizationAdminUsersData,
+  GetOrganizationAdminUsersError,
+  GetOrganizationAdminUsersResponse,
+  GetAdminEligibleUsersData,
+  GetAdminEligibleUsersError,
+  GetAdminEligibleUsersResponse,
+  GetAdminUsersData,
+  GetAdminUsersError,
+  GetAdminUsersResponse,
+  IsOrganisationVerifiedData,
+  IsInstructorVerifiedData,
+  GetDashboardStatisticsData,
   CancelInvitationData,
   CancelInvitationError,
   CancelInvitationResponse,
@@ -1184,6 +1261,9 @@ import type {
   RemoveCategoryFromCourseData,
   RemoveCategoryFromCourseError,
   RemoveCategoryFromCourseResponse,
+  RemoveAdminDomainData,
+  RemoveAdminDomainError,
+  RemoveAdminDomainResponse,
 } from '../types.gen';
 import { client as _heyApiClient } from '../client.gen';
 
@@ -2594,6 +2674,84 @@ export const updateInstructorDocumentMutation = (
 };
 
 /**
+ * Delete an availability slot
+ * Removes a specific availability slot
+ */
+export const deleteAvailabilitySlotMutation = (
+  options?: Partial<Options<DeleteAvailabilitySlotData>>
+): UseMutationOptions<
+  DeleteAvailabilitySlotResponse,
+  DeleteAvailabilitySlotError,
+  Options<DeleteAvailabilitySlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteAvailabilitySlotResponse,
+    DeleteAvailabilitySlotError,
+    Options<DeleteAvailabilitySlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteAvailabilitySlot({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getAvailabilitySlotQueryKey = (options: Options<GetAvailabilitySlotData>) =>
+  createQueryKey('getAvailabilitySlot', options);
+
+/**
+ * Get a specific availability slot
+ * Retrieves a single availability slot by its UUID
+ */
+export const getAvailabilitySlotOptions = (options: Options<GetAvailabilitySlotData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAvailabilitySlot({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAvailabilitySlotQueryKey(options),
+  });
+};
+
+/**
+ * Update an availability slot
+ * Updates an existing availability slot
+ */
+export const updateAvailabilitySlotMutation = (
+  options?: Partial<Options<UpdateAvailabilitySlotData>>
+): UseMutationOptions<
+  UpdateAvailabilitySlotResponse,
+  UpdateAvailabilitySlotError,
+  Options<UpdateAvailabilitySlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateAvailabilitySlotResponse,
+    UpdateAvailabilitySlotError,
+    Options<UpdateAvailabilitySlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateAvailabilitySlot({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete course
  * Permanently removes a course, its category associations, and all associated data.
  */
@@ -2656,6 +2814,8 @@ export const getCourseByUuidOptions = (options: Options<GetCourseByUuidData>) =>
  * - To add categories, include existing + new category UUIDs
  * - To remove all categories, provide an empty array
  * - Changes to categories are applied atomically
+ *
+ * **Authorization:** Only the course owner can update the course.
  *
  */
 export const updateCourseMutation = (
@@ -2987,6 +3147,84 @@ export const updateCourseAssessmentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCourseAssessment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a course creator
+ * Removes a course creator profile from the system. This will cascade delete associated data.
+ */
+export const deleteCourseCreatorMutation = (
+  options?: Partial<Options<DeleteCourseCreatorData>>
+): UseMutationOptions<
+  DeleteCourseCreatorResponse,
+  DeleteCourseCreatorError,
+  Options<DeleteCourseCreatorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteCourseCreatorResponse,
+    DeleteCourseCreatorError,
+    Options<DeleteCourseCreatorData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreator({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCourseCreatorByUuidQueryKey = (options: Options<GetCourseCreatorByUuidData>) =>
+  createQueryKey('getCourseCreatorByUuid', options);
+
+/**
+ * Get course creator by UUID
+ * Fetches a course creator profile by their unique identifier.
+ */
+export const getCourseCreatorByUuidOptions = (options: Options<GetCourseCreatorByUuidData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorByUuid({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorByUuidQueryKey(options),
+  });
+};
+
+/**
+ * Update a course creator
+ * Updates an existing course creator profile. Only allows updating mutable fields like bio, professional headline, and website.
+ */
+export const updateCourseCreatorMutation = (
+  options?: Partial<Options<UpdateCourseCreatorData>>
+): UseMutationOptions<
+  UpdateCourseCreatorResponse,
+  UpdateCourseCreatorError,
+  Options<UpdateCourseCreatorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorResponse,
+    UpdateCourseCreatorError,
+    Options<UpdateCourseCreatorData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreator({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -3613,84 +3851,6 @@ export const updateCertificateTemplateMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCertificateTemplate({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete an availability slot
- */
-export const deleteInstructorAvailabilitySlotMutation = (
-  options?: Partial<Options<DeleteInstructorAvailabilitySlotData>>
-): UseMutationOptions<
-  DeleteInstructorAvailabilitySlotResponse,
-  DeleteInstructorAvailabilitySlotError,
-  Options<DeleteInstructorAvailabilitySlotData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteInstructorAvailabilitySlotResponse,
-    DeleteInstructorAvailabilitySlotError,
-    Options<DeleteInstructorAvailabilitySlotData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await deleteInstructorAvailabilitySlot({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getInstructorAvailabilitySlotQueryKey = (
-  options: Options<GetInstructorAvailabilitySlotData>
-) => createQueryKey('getInstructorAvailabilitySlot', options);
-
-/**
- * Get an availability slot by UUID
- */
-export const getInstructorAvailabilitySlotOptions = (
-  options: Options<GetInstructorAvailabilitySlotData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getInstructorAvailabilitySlot({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorAvailabilitySlotQueryKey(options),
-  });
-};
-
-/**
- * Update an existing availability slot
- */
-export const updateInstructorAvailabilitySlotMutation = (
-  options?: Partial<Options<UpdateInstructorAvailabilitySlotData>>
-): UseMutationOptions<
-  UpdateInstructorAvailabilitySlotResponse,
-  UpdateInstructorAvailabilitySlotError,
-  Options<UpdateInstructorAvailabilitySlotData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateInstructorAvailabilitySlotResponse,
-    UpdateInstructorAvailabilitySlotError,
-    Options<UpdateInstructorAvailabilitySlotData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await updateInstructorAvailabilitySlot({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -7150,6 +7310,268 @@ export const verifyDocumentMutation = (
   return mutationOptions;
 };
 
+export const createAvailabilitySlotQueryKey = (options: Options<CreateAvailabilitySlotData>) =>
+  createQueryKey('createAvailabilitySlot', options);
+
+/**
+ * Create a new availability slot
+ * Creates a single availability slot for an instructor
+ */
+export const createAvailabilitySlotOptions = (options: Options<CreateAvailabilitySlotData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createAvailabilitySlot({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createAvailabilitySlotQueryKey(options),
+  });
+};
+
+/**
+ * Create a new availability slot
+ * Creates a single availability slot for an instructor
+ */
+export const createAvailabilitySlotMutation = (
+  options?: Partial<Options<CreateAvailabilitySlotData>>
+): UseMutationOptions<
+  CreateAvailabilitySlotResponse,
+  CreateAvailabilitySlotError,
+  Options<CreateAvailabilitySlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateAvailabilitySlotResponse,
+    CreateAvailabilitySlotError,
+    Options<CreateAvailabilitySlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createAvailabilitySlot({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const setAvailabilityPatternsQueryKey = (options: Options<SetAvailabilityPatternsData>) =>
+  createQueryKey('setAvailabilityPatterns', options);
+
+/**
+ * Set availability patterns
+ * Sets recurring availability patterns for an instructor.
+ *
+ * Supports multiple pattern types:
+ * - **weekly**: Patterns based on day of week (Monday-Sunday)
+ * - **daily**: Patterns that repeat daily
+ * - **monthly**: Patterns based on day of month (1-31)
+ * - **custom**: Custom recurring patterns with specific rules
+ *
+ * The pattern type is determined by the request body structure.
+ * Use the appropriate DTO for the pattern type you want to set.
+ *
+ * Examples:
+ * - Weekly: Set availability every Monday and Wednesday 9am-5pm
+ * - Daily: Set availability every day 2pm-4pm
+ * - Monthly: Set availability on the 1st and 15th of every month
+ * - Custom: Set availability with custom recurrence rules
+ *
+ */
+export const setAvailabilityPatternsOptions = (options: Options<SetAvailabilityPatternsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await setAvailabilityPatterns({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: setAvailabilityPatternsQueryKey(options),
+  });
+};
+
+/**
+ * Set availability patterns
+ * Sets recurring availability patterns for an instructor.
+ *
+ * Supports multiple pattern types:
+ * - **weekly**: Patterns based on day of week (Monday-Sunday)
+ * - **daily**: Patterns that repeat daily
+ * - **monthly**: Patterns based on day of month (1-31)
+ * - **custom**: Custom recurring patterns with specific rules
+ *
+ * The pattern type is determined by the request body structure.
+ * Use the appropriate DTO for the pattern type you want to set.
+ *
+ * Examples:
+ * - Weekly: Set availability every Monday and Wednesday 9am-5pm
+ * - Daily: Set availability every day 2pm-4pm
+ * - Monthly: Set availability on the 1st and 15th of every month
+ * - Custom: Set availability with custom recurrence rules
+ *
+ */
+export const setAvailabilityPatternsMutation = (
+  options?: Partial<Options<SetAvailabilityPatternsData>>
+): UseMutationOptions<
+  SetAvailabilityPatternsResponse,
+  SetAvailabilityPatternsError,
+  Options<SetAvailabilityPatternsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SetAvailabilityPatternsResponse,
+    SetAvailabilityPatternsError,
+    Options<SetAvailabilityPatternsData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await setAvailabilityPatterns({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const blockTimeQueryKey = (options: Options<BlockTimeData>) =>
+  createQueryKey('blockTime', options);
+
+/**
+ * Block time for an instructor
+ * Blocks a specific time period for an instructor, making them unavailable.
+ *
+ * This creates availability slots with isAvailable = false, which override
+ * any existing availability patterns for that time period.
+ *
+ * You can optionally provide a color code (hex format) to categorize and
+ * visually distinguish different types of blocked times on the frontend.
+ *
+ * Common use cases:
+ * - Marking vacation time (e.g., color_code: "#FF6B6B" - red)
+ * - Blocking time for meetings (e.g., color_code: "#FFD93D" - yellow)
+ * - Indicating sick leave (e.g., color_code: "#FFA07A" - orange)
+ * - Personal time off (e.g., color_code: "#95E1D3" - teal)
+ *
+ */
+export const blockTimeOptions = (options: Options<BlockTimeData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await blockTime({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: blockTimeQueryKey(options),
+  });
+};
+
+export const blockTimeInfiniteQueryKey = (
+  options: Options<BlockTimeData>
+): QueryKey<Options<BlockTimeData>> => createQueryKey('blockTime', options, true);
+
+/**
+ * Block time for an instructor
+ * Blocks a specific time period for an instructor, making them unavailable.
+ *
+ * This creates availability slots with isAvailable = false, which override
+ * any existing availability patterns for that time period.
+ *
+ * You can optionally provide a color code (hex format) to categorize and
+ * visually distinguish different types of blocked times on the frontend.
+ *
+ * Common use cases:
+ * - Marking vacation time (e.g., color_code: "#FF6B6B" - red)
+ * - Blocking time for meetings (e.g., color_code: "#FFD93D" - yellow)
+ * - Indicating sick leave (e.g., color_code: "#FFA07A" - orange)
+ * - Personal time off (e.g., color_code: "#95E1D3" - teal)
+ *
+ */
+export const blockTimeInfiniteOptions = (options: Options<BlockTimeData>) => {
+  return infiniteQueryOptions<
+    BlockTimeResponse,
+    BlockTimeError,
+    InfiniteData<BlockTimeResponse>,
+    QueryKey<Options<BlockTimeData>>,
+    Date | Pick<QueryKey<Options<BlockTimeData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<BlockTimeData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await blockTime({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: blockTimeInfiniteQueryKey(options),
+    }
+  );
+};
+
+/**
+ * Block time for an instructor
+ * Blocks a specific time period for an instructor, making them unavailable.
+ *
+ * This creates availability slots with isAvailable = false, which override
+ * any existing availability patterns for that time period.
+ *
+ * You can optionally provide a color code (hex format) to categorize and
+ * visually distinguish different types of blocked times on the frontend.
+ *
+ * Common use cases:
+ * - Marking vacation time (e.g., color_code: "#FF6B6B" - red)
+ * - Blocking time for meetings (e.g., color_code: "#FFD93D" - yellow)
+ * - Indicating sick leave (e.g., color_code: "#FFA07A" - orange)
+ * - Personal time off (e.g., color_code: "#95E1D3" - teal)
+ *
+ */
+export const blockTimeMutation = (
+  options?: Partial<Options<BlockTimeData>>
+): UseMutationOptions<BlockTimeResponse, BlockTimeError, Options<BlockTimeData>> => {
+  const mutationOptions: UseMutationOptions<
+    BlockTimeResponse,
+    BlockTimeError,
+    Options<BlockTimeData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await blockTime({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const enrollStudentQueryKey = (options: Options<EnrollStudentData>) =>
   createQueryKey('enrollStudent', options);
 
@@ -8395,6 +8817,225 @@ export const addCourseAssessmentMutation = (
   return mutationOptions;
 };
 
+export const getAllCourseCreatorsQueryKey = (options: Options<GetAllCourseCreatorsData>) =>
+  createQueryKey('getAllCourseCreators', options);
+
+/**
+ * Get all course creators
+ * Fetches a paginated list of all course creator profiles in the system.
+ */
+export const getAllCourseCreatorsOptions = (options: Options<GetAllCourseCreatorsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAllCourseCreators({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAllCourseCreatorsQueryKey(options),
+  });
+};
+
+export const getAllCourseCreatorsInfiniteQueryKey = (
+  options: Options<GetAllCourseCreatorsData>
+): QueryKey<Options<GetAllCourseCreatorsData>> =>
+  createQueryKey('getAllCourseCreators', options, true);
+
+/**
+ * Get all course creators
+ * Fetches a paginated list of all course creator profiles in the system.
+ */
+export const getAllCourseCreatorsInfiniteOptions = (options: Options<GetAllCourseCreatorsData>) => {
+  return infiniteQueryOptions<
+    GetAllCourseCreatorsResponse,
+    GetAllCourseCreatorsError,
+    InfiniteData<GetAllCourseCreatorsResponse>,
+    QueryKey<Options<GetAllCourseCreatorsData>>,
+    | number
+    | Pick<QueryKey<Options<GetAllCourseCreatorsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetAllCourseCreatorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAllCourseCreators({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAllCourseCreatorsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const createCourseCreatorQueryKey = (options: Options<CreateCourseCreatorData>) =>
+  createQueryKey('createCourseCreator', options);
+
+/**
+ * Create a new course creator
+ * Saves a new course creator profile in the system. The course creator will be unverified by default and require admin verification.
+ */
+export const createCourseCreatorOptions = (options: Options<CreateCourseCreatorData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createCourseCreator({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createCourseCreatorQueryKey(options),
+  });
+};
+
+/**
+ * Create a new course creator
+ * Saves a new course creator profile in the system. The course creator will be unverified by default and require admin verification.
+ */
+export const createCourseCreatorMutation = (
+  options?: Partial<Options<CreateCourseCreatorData>>
+): UseMutationOptions<
+  CreateCourseCreatorResponse,
+  CreateCourseCreatorError,
+  Options<CreateCourseCreatorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCourseCreatorResponse,
+    CreateCourseCreatorError,
+    Options<CreateCourseCreatorData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createCourseCreator({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const verifyCourseCreatorQueryKey = (options: Options<VerifyCourseCreatorData>) =>
+  createQueryKey('verifyCourseCreator', options);
+
+/**
+ * Verify a course creator
+ * Marks a course creator as verified by an administrator. Only system admins can perform this operation.
+ */
+export const verifyCourseCreatorOptions = (options: Options<VerifyCourseCreatorData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await verifyCourseCreator({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: verifyCourseCreatorQueryKey(options),
+  });
+};
+
+/**
+ * Verify a course creator
+ * Marks a course creator as verified by an administrator. Only system admins can perform this operation.
+ */
+export const verifyCourseCreatorMutation = (
+  options?: Partial<Options<VerifyCourseCreatorData>>
+): UseMutationOptions<
+  VerifyCourseCreatorResponse,
+  VerifyCourseCreatorError,
+  Options<VerifyCourseCreatorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    VerifyCourseCreatorResponse,
+    VerifyCourseCreatorError,
+    Options<VerifyCourseCreatorData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await verifyCourseCreator({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const unverifyCourseCreatorQueryKey = (options: Options<UnverifyCourseCreatorData>) =>
+  createQueryKey('unverifyCourseCreator', options);
+
+/**
+ * Unverify a course creator
+ * Removes verification status from a course creator. Only system admins can perform this operation.
+ */
+export const unverifyCourseCreatorOptions = (options: Options<UnverifyCourseCreatorData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await unverifyCourseCreator({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: unverifyCourseCreatorQueryKey(options),
+  });
+};
+
+/**
+ * Unverify a course creator
+ * Removes verification status from a course creator. Only system admins can perform this operation.
+ */
+export const unverifyCourseCreatorMutation = (
+  options?: Partial<Options<UnverifyCourseCreatorData>>
+): UseMutationOptions<
+  UnverifyCourseCreatorResponse,
+  UnverifyCourseCreatorError,
+  Options<UnverifyCourseCreatorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UnverifyCourseCreatorResponse,
+    UnverifyCourseCreatorError,
+    Options<UnverifyCourseCreatorData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await unverifyCourseCreator({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAllGradingLevelsQueryKey = (options: Options<GetAllGradingLevelsData>) =>
   createQueryKey('getAllGradingLevels', options);
 
@@ -9414,355 +10055,6 @@ export const generateCourseCertificateMutation = (
   return mutationOptions;
 };
 
-export const createInstructorAvailabilitySlotQueryKey = (
-  options: Options<CreateInstructorAvailabilitySlotData>
-) => createQueryKey('createInstructorAvailabilitySlot', options);
-
-/**
- * Create a new availability slot
- */
-export const createInstructorAvailabilitySlotOptions = (
-  options: Options<CreateInstructorAvailabilitySlotData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await createInstructorAvailabilitySlot({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: createInstructorAvailabilitySlotQueryKey(options),
-  });
-};
-
-/**
- * Create a new availability slot
- */
-export const createInstructorAvailabilitySlotMutation = (
-  options?: Partial<Options<CreateInstructorAvailabilitySlotData>>
-): UseMutationOptions<
-  CreateInstructorAvailabilitySlotResponse,
-  CreateInstructorAvailabilitySlotError,
-  Options<CreateInstructorAvailabilitySlotData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateInstructorAvailabilitySlotResponse,
-    CreateInstructorAvailabilitySlotError,
-    Options<CreateInstructorAvailabilitySlotData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await createInstructorAvailabilitySlot({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const setInstructorWeeklyAvailabilityQueryKey = (
-  options: Options<SetInstructorWeeklyAvailabilityData>
-) => createQueryKey('setInstructorWeeklyAvailability', options);
-
-/**
- * Set weekly availability patterns for an instructor
- */
-export const setInstructorWeeklyAvailabilityOptions = (
-  options: Options<SetInstructorWeeklyAvailabilityData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await setInstructorWeeklyAvailability({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: setInstructorWeeklyAvailabilityQueryKey(options),
-  });
-};
-
-/**
- * Set weekly availability patterns for an instructor
- */
-export const setInstructorWeeklyAvailabilityMutation = (
-  options?: Partial<Options<SetInstructorWeeklyAvailabilityData>>
-): UseMutationOptions<
-  SetInstructorWeeklyAvailabilityResponse,
-  SetInstructorWeeklyAvailabilityError,
-  Options<SetInstructorWeeklyAvailabilityData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    SetInstructorWeeklyAvailabilityResponse,
-    SetInstructorWeeklyAvailabilityError,
-    Options<SetInstructorWeeklyAvailabilityData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await setInstructorWeeklyAvailability({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const setInstructorMonthlyAvailabilityQueryKey = (
-  options: Options<SetInstructorMonthlyAvailabilityData>
-) => createQueryKey('setInstructorMonthlyAvailability', options);
-
-/**
- * Set monthly availability patterns for an instructor
- */
-export const setInstructorMonthlyAvailabilityOptions = (
-  options: Options<SetInstructorMonthlyAvailabilityData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await setInstructorMonthlyAvailability({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: setInstructorMonthlyAvailabilityQueryKey(options),
-  });
-};
-
-/**
- * Set monthly availability patterns for an instructor
- */
-export const setInstructorMonthlyAvailabilityMutation = (
-  options?: Partial<Options<SetInstructorMonthlyAvailabilityData>>
-): UseMutationOptions<
-  SetInstructorMonthlyAvailabilityResponse,
-  SetInstructorMonthlyAvailabilityError,
-  Options<SetInstructorMonthlyAvailabilityData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    SetInstructorMonthlyAvailabilityResponse,
-    SetInstructorMonthlyAvailabilityError,
-    Options<SetInstructorMonthlyAvailabilityData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await setInstructorMonthlyAvailability({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const setInstructorDailyAvailabilityQueryKey = (
-  options: Options<SetInstructorDailyAvailabilityData>
-) => createQueryKey('setInstructorDailyAvailability', options);
-
-/**
- * Set daily availability patterns for an instructor
- */
-export const setInstructorDailyAvailabilityOptions = (
-  options: Options<SetInstructorDailyAvailabilityData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await setInstructorDailyAvailability({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: setInstructorDailyAvailabilityQueryKey(options),
-  });
-};
-
-/**
- * Set daily availability patterns for an instructor
- */
-export const setInstructorDailyAvailabilityMutation = (
-  options?: Partial<Options<SetInstructorDailyAvailabilityData>>
-): UseMutationOptions<
-  SetInstructorDailyAvailabilityResponse,
-  SetInstructorDailyAvailabilityError,
-  Options<SetInstructorDailyAvailabilityData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    SetInstructorDailyAvailabilityResponse,
-    SetInstructorDailyAvailabilityError,
-    Options<SetInstructorDailyAvailabilityData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await setInstructorDailyAvailability({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const setInstructorCustomAvailabilityQueryKey = (
-  options: Options<SetInstructorCustomAvailabilityData>
-) => createQueryKey('setInstructorCustomAvailability', options);
-
-/**
- * Set custom availability patterns for an instructor
- */
-export const setInstructorCustomAvailabilityOptions = (
-  options: Options<SetInstructorCustomAvailabilityData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await setInstructorCustomAvailability({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: setInstructorCustomAvailabilityQueryKey(options),
-  });
-};
-
-/**
- * Set custom availability patterns for an instructor
- */
-export const setInstructorCustomAvailabilityMutation = (
-  options?: Partial<Options<SetInstructorCustomAvailabilityData>>
-): UseMutationOptions<
-  SetInstructorCustomAvailabilityResponse,
-  SetInstructorCustomAvailabilityError,
-  Options<SetInstructorCustomAvailabilityData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    SetInstructorCustomAvailabilityResponse,
-    SetInstructorCustomAvailabilityError,
-    Options<SetInstructorCustomAvailabilityData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await setInstructorCustomAvailability({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const blockInstructorTimeQueryKey = (options: Options<BlockInstructorTimeData>) =>
-  createQueryKey('blockInstructorTime', options);
-
-/**
- * Block time for an instructor
- */
-export const blockInstructorTimeOptions = (options: Options<BlockInstructorTimeData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await blockInstructorTime({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: blockInstructorTimeQueryKey(options),
-  });
-};
-
-export const blockInstructorTimeInfiniteQueryKey = (
-  options: Options<BlockInstructorTimeData>
-): QueryKey<Options<BlockInstructorTimeData>> =>
-  createQueryKey('blockInstructorTime', options, true);
-
-/**
- * Block time for an instructor
- */
-export const blockInstructorTimeInfiniteOptions = (options: Options<BlockInstructorTimeData>) => {
-  return infiniteQueryOptions<
-    BlockInstructorTimeResponse,
-    BlockInstructorTimeError,
-    InfiniteData<BlockInstructorTimeResponse>,
-    QueryKey<Options<BlockInstructorTimeData>>,
-    | Date
-    | Pick<QueryKey<Options<BlockInstructorTimeData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<BlockInstructorTimeData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  start: pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await blockInstructorTime({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: blockInstructorTimeInfiniteQueryKey(options),
-    }
-  );
-};
-
-/**
- * Block time for an instructor
- */
-export const blockInstructorTimeMutation = (
-  options?: Partial<Options<BlockInstructorTimeData>>
-): UseMutationOptions<
-  BlockInstructorTimeResponse,
-  BlockInstructorTimeError,
-  Options<BlockInstructorTimeData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    BlockInstructorTimeResponse,
-    BlockInstructorTimeError,
-    Options<BlockInstructorTimeData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await blockInstructorTime({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const getAllAssignmentsQueryKey = (options: Options<GetAllAssignmentsData>) =>
   createQueryKey('getAllAssignments', options);
 
@@ -10021,6 +10313,256 @@ export const gradeSubmissionMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await gradeSubmission({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const assignAdminDomainQueryKey = (options: Options<AssignAdminDomainData>) =>
+  createQueryKey('assignAdminDomain', options);
+
+/**
+ * Assign admin domain to user
+ * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organizational contexts. Only existing system administrators can perform this operation.
+ */
+export const assignAdminDomainOptions = (options: Options<AssignAdminDomainData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await assignAdminDomain({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: assignAdminDomainQueryKey(options),
+  });
+};
+
+/**
+ * Assign admin domain to user
+ * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organizational contexts. Only existing system administrators can perform this operation.
+ */
+export const assignAdminDomainMutation = (
+  options?: Partial<Options<AssignAdminDomainData>>
+): UseMutationOptions<
+  AssignAdminDomainResponse,
+  AssignAdminDomainError,
+  Options<AssignAdminDomainData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AssignAdminDomainResponse,
+    AssignAdminDomainError,
+    Options<AssignAdminDomainData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await assignAdminDomain({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const verifyOrganisationQueryKey = (options: Options<VerifyOrganisationData>) =>
+  createQueryKey('verifyOrganisation', options);
+
+/**
+ * Verify an organization
+ * Verifies/approves an organization by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified organizations gain access to additional platform features and display verification badges.
+ */
+export const verifyOrganisationOptions = (options: Options<VerifyOrganisationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await verifyOrganisation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: verifyOrganisationQueryKey(options),
+  });
+};
+
+/**
+ * Verify an organization
+ * Verifies/approves an organization by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified organizations gain access to additional platform features and display verification badges.
+ */
+export const verifyOrganisationMutation = (
+  options?: Partial<Options<VerifyOrganisationData>>
+): UseMutationOptions<
+  VerifyOrganisationResponse,
+  VerifyOrganisationError,
+  Options<VerifyOrganisationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    VerifyOrganisationResponse,
+    VerifyOrganisationError,
+    Options<VerifyOrganisationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await verifyOrganisation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const unverifyOrganisationQueryKey = (options: Options<UnverifyOrganisationData>) =>
+  createQueryKey('unverifyOrganisation', options);
+
+/**
+ * Remove verification from an organization
+ * Removes verification from an organization by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
+ */
+export const unverifyOrganisationOptions = (options: Options<UnverifyOrganisationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await unverifyOrganisation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: unverifyOrganisationQueryKey(options),
+  });
+};
+
+/**
+ * Remove verification from an organization
+ * Removes verification from an organization by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
+ */
+export const unverifyOrganisationMutation = (
+  options?: Partial<Options<UnverifyOrganisationData>>
+): UseMutationOptions<
+  UnverifyOrganisationResponse,
+  UnverifyOrganisationError,
+  Options<UnverifyOrganisationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UnverifyOrganisationResponse,
+    UnverifyOrganisationError,
+    Options<UnverifyOrganisationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await unverifyOrganisation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const verifyInstructorQueryKey = (options: Options<VerifyInstructorData>) =>
+  createQueryKey('verifyInstructor', options);
+
+/**
+ * Verify an instructor
+ * Verifies/approves an instructor by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified instructors gain access to additional platform features and display verification badges.
+ */
+export const verifyInstructorOptions = (options: Options<VerifyInstructorData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await verifyInstructor({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: verifyInstructorQueryKey(options),
+  });
+};
+
+/**
+ * Verify an instructor
+ * Verifies/approves an instructor by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified instructors gain access to additional platform features and display verification badges.
+ */
+export const verifyInstructorMutation = (
+  options?: Partial<Options<VerifyInstructorData>>
+): UseMutationOptions<
+  VerifyInstructorResponse,
+  VerifyInstructorError,
+  Options<VerifyInstructorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    VerifyInstructorResponse,
+    VerifyInstructorError,
+    Options<VerifyInstructorData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await verifyInstructor({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const unverifyInstructorQueryKey = (options: Options<UnverifyInstructorData>) =>
+  createQueryKey('unverifyInstructor', options);
+
+/**
+ * Remove verification from an instructor
+ * Removes verification from an instructor by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
+ */
+export const unverifyInstructorOptions = (options: Options<UnverifyInstructorData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await unverifyInstructor({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: unverifyInstructorQueryKey(options),
+  });
+};
+
+/**
+ * Remove verification from an instructor
+ * Removes verification from an instructor by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
+ */
+export const unverifyInstructorMutation = (
+  options?: Partial<Options<UnverifyInstructorData>>
+): UseMutationOptions<
+  UnverifyInstructorResponse,
+  UnverifyInstructorError,
+  Options<UnverifyInstructorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UnverifyInstructorResponse,
+    UnverifyInstructorError,
+    Options<UnverifyInstructorData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await unverifyInstructor({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12889,7 +13431,17 @@ export const search2QueryKey = (options: Options<Search2Data>) =>
 
 /**
  * Search organisations
- * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting.
+ * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting. Available filters include:
+ * - `name` - Filter by organisation name (partial match)
+ * - `active` - Filter by active status (true/false)
+ * - `admin_verified` - Filter by verification status (true/false)
+ * - `country` - Filter by country
+ * - `location` - Filter by location
+ *
+ * Examples:
+ * - `/search?admin_verified=true` - Get verified organisations
+ * - `/search?admin_verified=false` - Get unverified organisations
+ * - `/search?active=true&admin_verified=true` - Get active verified organisations
  */
 export const search2Options = (options: Options<Search2Data>) => {
   return queryOptions({
@@ -12912,7 +13464,17 @@ export const search2InfiniteQueryKey = (
 
 /**
  * Search organisations
- * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting.
+ * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting. Available filters include:
+ * - `name` - Filter by organisation name (partial match)
+ * - `active` - Filter by active status (true/false)
+ * - `admin_verified` - Filter by verification status (true/false)
+ * - `country` - Filter by country
+ * - `location` - Filter by location
+ *
+ * Examples:
+ * - `/search?admin_verified=true` - Get verified organisations
+ * - `/search?admin_verified=false` - Get unverified organisations
+ * - `/search?active=true&admin_verified=true` - Get active verified organisations
  */
 export const search2InfiniteOptions = (options: Options<Search2Data>) => {
   return infiniteQueryOptions<
@@ -13048,6 +13610,322 @@ export const getPendingInvitationsForEmailOptions = (
       return data;
     },
     queryKey: getPendingInvitationsForEmailQueryKey(options),
+  });
+};
+
+/**
+ * Clear all availability for an instructor
+ * Removes all availability slots and patterns for an instructor. Use with caution.
+ */
+export const clearInstructorAvailabilityMutation = (
+  options?: Partial<Options<ClearInstructorAvailabilityData>>
+): UseMutationOptions<
+  ClearInstructorAvailabilityResponse,
+  ClearInstructorAvailabilityError,
+  Options<ClearInstructorAvailabilityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClearInstructorAvailabilityResponse,
+    ClearInstructorAvailabilityError,
+    Options<ClearInstructorAvailabilityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await clearInstructorAvailability({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getInstructorAvailabilityQueryKey = (
+  options: Options<GetInstructorAvailabilityData>
+) => createQueryKey('getInstructorAvailability', options);
+
+/**
+ * Get all availability for an instructor
+ * Retrieves all availability slots for a specific instructor, including all patterns and blocked times
+ */
+export const getInstructorAvailabilityOptions = (
+  options: Options<GetInstructorAvailabilityData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorAvailabilityQueryKey(options),
+  });
+};
+
+export const searchAvailabilityQueryKey = (options: Options<SearchAvailabilityData>) =>
+  createQueryKey('searchAvailability', options);
+
+/**
+ * Search availability slots with flexible filtering
+ *  Search and filter availability slots using dynamic query parameters.
+ *
+ * **Supported filter operators:**
+ * - `_eq` - equals (e.g., `is_available=true`)
+ * - `_ne` or `_noteq` - not equals (e.g., `availability_type_ne=DAILY`)
+ * - `_like` - contains (for strings, e.g., `custom_pattern_like=BLOCK`)
+ * - `_gt` - greater than (e.g., `day_of_week_gt=3`)
+ * - `_gte` - greater than or equal (e.g., `start_time_gte=09:00:00`)
+ * - `_lt` - less than (e.g., `day_of_month_lt=15`)
+ * - `_lte` - less than or equal (e.g., `end_time_lte=17:00:00`)
+ * - `_in` - in list (comma-separated, e.g., `availability_type_in=WEEKLY,MONTHLY`)
+ *
+ * **Example queries:**
+ * - Get all available slots: `?is_available=true`
+ * - Get blocked times: `?is_available=false`
+ * - Get weekly patterns for Monday: `?availability_type=WEEKLY&day_of_week=1`
+ * - Get slots with specific color: `?color_code=#FF6B6B`
+ * - Get slots by date range: `?specific_date_gte=2024-01-01&specific_date_lte=2024-12-31`
+ * - Combined: `?is_available=false&color_code_like=FF6B`
+ *
+ * **Pagination:** Use standard Spring pagination parameters:
+ * - `page` - page number (0-indexed)
+ * - `size` - page size
+ * - `sort` - sorting (e.g., `start_time,asc` or `specific_date,desc`)
+ *
+ * **Examples:**
+ * - `/search?is_available=true&page=0&size=20&sort=start_time,asc`
+ * - `/search?availability_type_in=WEEKLY,MONTHLY&day_of_week_gte=1&day_of_week_lte=5`
+ * - `/search?is_available=false&specific_date_gte=2024-10-01`
+ *
+ */
+export const searchAvailabilityOptions = (options: Options<SearchAvailabilityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchAvailabilityQueryKey(options),
+  });
+};
+
+export const searchAvailabilityInfiniteQueryKey = (
+  options: Options<SearchAvailabilityData>
+): QueryKey<Options<SearchAvailabilityData>> => createQueryKey('searchAvailability', options, true);
+
+/**
+ * Search availability slots with flexible filtering
+ *  Search and filter availability slots using dynamic query parameters.
+ *
+ * **Supported filter operators:**
+ * - `_eq` - equals (e.g., `is_available=true`)
+ * - `_ne` or `_noteq` - not equals (e.g., `availability_type_ne=DAILY`)
+ * - `_like` - contains (for strings, e.g., `custom_pattern_like=BLOCK`)
+ * - `_gt` - greater than (e.g., `day_of_week_gt=3`)
+ * - `_gte` - greater than or equal (e.g., `start_time_gte=09:00:00`)
+ * - `_lt` - less than (e.g., `day_of_month_lt=15`)
+ * - `_lte` - less than or equal (e.g., `end_time_lte=17:00:00`)
+ * - `_in` - in list (comma-separated, e.g., `availability_type_in=WEEKLY,MONTHLY`)
+ *
+ * **Example queries:**
+ * - Get all available slots: `?is_available=true`
+ * - Get blocked times: `?is_available=false`
+ * - Get weekly patterns for Monday: `?availability_type=WEEKLY&day_of_week=1`
+ * - Get slots with specific color: `?color_code=#FF6B6B`
+ * - Get slots by date range: `?specific_date_gte=2024-01-01&specific_date_lte=2024-12-31`
+ * - Combined: `?is_available=false&color_code_like=FF6B`
+ *
+ * **Pagination:** Use standard Spring pagination parameters:
+ * - `page` - page number (0-indexed)
+ * - `size` - page size
+ * - `sort` - sorting (e.g., `start_time,asc` or `specific_date,desc`)
+ *
+ * **Examples:**
+ * - `/search?is_available=true&page=0&size=20&sort=start_time,asc`
+ * - `/search?availability_type_in=WEEKLY,MONTHLY&day_of_week_gte=1&day_of_week_lte=5`
+ * - `/search?is_available=false&specific_date_gte=2024-10-01`
+ *
+ */
+export const searchAvailabilityInfiniteOptions = (options: Options<SearchAvailabilityData>) => {
+  return infiniteQueryOptions<
+    SearchAvailabilityResponse,
+    SearchAvailabilityError,
+    InfiniteData<SearchAvailabilityResponse>,
+    QueryKey<Options<SearchAvailabilityData>>,
+    | number
+    | Pick<QueryKey<Options<SearchAvailabilityData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchAvailabilityData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchAvailability({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchAvailabilityInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getAvailabilityForDateQueryKey = (options: Options<GetAvailabilityForDateData>) =>
+  createQueryKey('getAvailabilityForDate', options);
+
+/**
+ * Get availability for a specific date
+ * Retrieves all availability slots (including from patterns) for an instructor on a specific date
+ */
+export const getAvailabilityForDateOptions = (options: Options<GetAvailabilityForDateData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAvailabilityForDate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAvailabilityForDateQueryKey(options),
+  });
+};
+
+export const checkAvailabilityQueryKey = (options: Options<CheckAvailabilityData>) =>
+  createQueryKey('checkAvailability', options);
+
+/**
+ * Check if instructor is available during a time period
+ * Checks whether an instructor is available for the entire specified time period.
+ *
+ * Returns true only if the instructor is available for the ENTIRE duration.
+ * This considers:
+ * - All availability patterns
+ * - Blocked time slots
+ * - Existing bookings (if integrated with scheduling)
+ *
+ * Useful for validating booking requests before creating them.
+ *
+ */
+export const checkAvailabilityOptions = (options: Options<CheckAvailabilityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await checkAvailability({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: checkAvailabilityQueryKey(options),
+  });
+};
+
+export const checkAvailabilityInfiniteQueryKey = (
+  options: Options<CheckAvailabilityData>
+): QueryKey<Options<CheckAvailabilityData>> => createQueryKey('checkAvailability', options, true);
+
+/**
+ * Check if instructor is available during a time period
+ * Checks whether an instructor is available for the entire specified time period.
+ *
+ * Returns true only if the instructor is available for the ENTIRE duration.
+ * This considers:
+ * - All availability patterns
+ * - Blocked time slots
+ * - Existing bookings (if integrated with scheduling)
+ *
+ * Useful for validating booking requests before creating them.
+ *
+ */
+export const checkAvailabilityInfiniteOptions = (options: Options<CheckAvailabilityData>) => {
+  return infiniteQueryOptions<
+    CheckAvailabilityResponse,
+    CheckAvailabilityError,
+    InfiniteData<CheckAvailabilityResponse>,
+    QueryKey<Options<CheckAvailabilityData>>,
+    Date | Pick<QueryKey<Options<CheckAvailabilityData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<CheckAvailabilityData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await checkAvailability({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: checkAvailabilityInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const findAvailableSlotsQueryKey = (options: Options<FindAvailableSlotsData>) =>
+  createQueryKey('findAvailableSlots', options);
+
+/**
+ * Find available slots within a date range
+ * Finds all available time slots for an instructor within a specified date range.
+ *
+ * This is useful for scheduling systems that need to:
+ * - Show available booking slots
+ * - Find the next available time
+ * - Display a calendar of availability
+ *
+ * Only returns slots where isAvailable = true (excludes blocked times).
+ *
+ */
+export const findAvailableSlotsOptions = (options: Options<FindAvailableSlotsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await findAvailableSlots({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: findAvailableSlotsQueryKey(options),
   });
 };
 
@@ -15091,6 +15969,344 @@ export const getActiveCoursesInfiniteOptions = (options: Options<GetActiveCourse
   );
 };
 
+export const isCourseCreatorVerifiedQueryKey = (options: Options<IsCourseCreatorVerifiedData>) =>
+  createQueryKey('isCourseCreatorVerified', options);
+
+/**
+ * Check if course creator is verified
+ * Returns the verification status of a course creator.
+ */
+export const isCourseCreatorVerifiedOptions = (options: Options<IsCourseCreatorVerifiedData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await isCourseCreatorVerified({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: isCourseCreatorVerifiedQueryKey(options),
+  });
+};
+
+export const getVerifiedCourseCreatorsQueryKey = (
+  options: Options<GetVerifiedCourseCreatorsData>
+) => createQueryKey('getVerifiedCourseCreators', options);
+
+/**
+ * Get verified course creators
+ * Fetches a paginated list of all verified course creators.
+ */
+export const getVerifiedCourseCreatorsOptions = (
+  options: Options<GetVerifiedCourseCreatorsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getVerifiedCourseCreators({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getVerifiedCourseCreatorsQueryKey(options),
+  });
+};
+
+export const getVerifiedCourseCreatorsInfiniteQueryKey = (
+  options: Options<GetVerifiedCourseCreatorsData>
+): QueryKey<Options<GetVerifiedCourseCreatorsData>> =>
+  createQueryKey('getVerifiedCourseCreators', options, true);
+
+/**
+ * Get verified course creators
+ * Fetches a paginated list of all verified course creators.
+ */
+export const getVerifiedCourseCreatorsInfiniteOptions = (
+  options: Options<GetVerifiedCourseCreatorsData>
+) => {
+  return infiniteQueryOptions<
+    GetVerifiedCourseCreatorsResponse,
+    GetVerifiedCourseCreatorsError,
+    InfiniteData<GetVerifiedCourseCreatorsResponse>,
+    QueryKey<Options<GetVerifiedCourseCreatorsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetVerifiedCourseCreatorsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetVerifiedCourseCreatorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getVerifiedCourseCreators({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getVerifiedCourseCreatorsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getUnverifiedCourseCreatorsQueryKey = (
+  options: Options<GetUnverifiedCourseCreatorsData>
+) => createQueryKey('getUnverifiedCourseCreators', options);
+
+/**
+ * Get unverified course creators
+ * Fetches a paginated list of all unverified course creators pending admin review.
+ */
+export const getUnverifiedCourseCreatorsOptions = (
+  options: Options<GetUnverifiedCourseCreatorsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getUnverifiedCourseCreators({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getUnverifiedCourseCreatorsQueryKey(options),
+  });
+};
+
+export const getUnverifiedCourseCreatorsInfiniteQueryKey = (
+  options: Options<GetUnverifiedCourseCreatorsData>
+): QueryKey<Options<GetUnverifiedCourseCreatorsData>> =>
+  createQueryKey('getUnverifiedCourseCreators', options, true);
+
+/**
+ * Get unverified course creators
+ * Fetches a paginated list of all unverified course creators pending admin review.
+ */
+export const getUnverifiedCourseCreatorsInfiniteOptions = (
+  options: Options<GetUnverifiedCourseCreatorsData>
+) => {
+  return infiniteQueryOptions<
+    GetUnverifiedCourseCreatorsResponse,
+    GetUnverifiedCourseCreatorsError,
+    InfiniteData<GetUnverifiedCourseCreatorsResponse>,
+    QueryKey<Options<GetUnverifiedCourseCreatorsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetUnverifiedCourseCreatorsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetUnverifiedCourseCreatorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getUnverifiedCourseCreators({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getUnverifiedCourseCreatorsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const searchCourseCreatorsQueryKey = (options: Options<SearchCourseCreatorsData>) =>
+  createQueryKey('searchCourseCreators', options);
+
+/**
+ * Search course creators
+ *  Search for course creators using flexible criteria with advanced operators.
+ *
+ * **Basic Search:**
+ * - `field=value` - Exact match (default operation)
+ * - `fullName=John` - Find course creators with fullName exactly "John"
+ *
+ * **Comparison Operators:**
+ * - `field_gt=value` - Greater than
+ * - `field_lt=value` - Less than
+ * - `field_gte=value` - Greater than or equal
+ * - `field_lte=value` - Less than or equal
+ * - `createdDate_gte=2024-01-01T00:00:00` - Created after Jan 1, 2024
+ *
+ * **String Operations:**
+ * - `field_like=value` - Contains (case-insensitive)
+ * - `field_startswith=value` - Starts with (case-insensitive)
+ * - `field_endswith=value` - Ends with (case-insensitive)
+ * - `fullName_like=alice` - Full name contains "alice"
+ *
+ * **Boolean Operations:**
+ * - `adminVerified=true` - Only verified course creators
+ * - `adminVerified=false` - Only unverified course creators
+ *
+ * **List Operations:**
+ * - `field_in=val1,val2,val3` - Field is in list
+ * - `field_notin=val1,val2` - Field is not in list
+ *
+ * **Negation:**
+ * - `field_noteq=value` - Not equal to value
+ *
+ * **Examples:**
+ * - `/search?fullName_like=john&adminVerified=true`
+ * - `/search?createdDate_gte=2024-01-01T00:00:00`
+ * - `/search?professionalHeadline_like=content`
+ *
+ */
+export const searchCourseCreatorsOptions = (options: Options<SearchCourseCreatorsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchCourseCreators({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchCourseCreatorsQueryKey(options),
+  });
+};
+
+export const searchCourseCreatorsInfiniteQueryKey = (
+  options: Options<SearchCourseCreatorsData>
+): QueryKey<Options<SearchCourseCreatorsData>> =>
+  createQueryKey('searchCourseCreators', options, true);
+
+/**
+ * Search course creators
+ *  Search for course creators using flexible criteria with advanced operators.
+ *
+ * **Basic Search:**
+ * - `field=value` - Exact match (default operation)
+ * - `fullName=John` - Find course creators with fullName exactly "John"
+ *
+ * **Comparison Operators:**
+ * - `field_gt=value` - Greater than
+ * - `field_lt=value` - Less than
+ * - `field_gte=value` - Greater than or equal
+ * - `field_lte=value` - Less than or equal
+ * - `createdDate_gte=2024-01-01T00:00:00` - Created after Jan 1, 2024
+ *
+ * **String Operations:**
+ * - `field_like=value` - Contains (case-insensitive)
+ * - `field_startswith=value` - Starts with (case-insensitive)
+ * - `field_endswith=value` - Ends with (case-insensitive)
+ * - `fullName_like=alice` - Full name contains "alice"
+ *
+ * **Boolean Operations:**
+ * - `adminVerified=true` - Only verified course creators
+ * - `adminVerified=false` - Only unverified course creators
+ *
+ * **List Operations:**
+ * - `field_in=val1,val2,val3` - Field is in list
+ * - `field_notin=val1,val2` - Field is not in list
+ *
+ * **Negation:**
+ * - `field_noteq=value` - Not equal to value
+ *
+ * **Examples:**
+ * - `/search?fullName_like=john&adminVerified=true`
+ * - `/search?createdDate_gte=2024-01-01T00:00:00`
+ * - `/search?professionalHeadline_like=content`
+ *
+ */
+export const searchCourseCreatorsInfiniteOptions = (options: Options<SearchCourseCreatorsData>) => {
+  return infiniteQueryOptions<
+    SearchCourseCreatorsResponse,
+    SearchCourseCreatorsError,
+    InfiniteData<SearchCourseCreatorsResponse>,
+    QueryKey<Options<SearchCourseCreatorsData>>,
+    | number
+    | Pick<QueryKey<Options<SearchCourseCreatorsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreators({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const countCourseCreatorsByVerificationStatusQueryKey = (
+  options: Options<CountCourseCreatorsByVerificationStatusData>
+) => createQueryKey('countCourseCreatorsByVerificationStatus', options);
+
+/**
+ * Get course creator count by verification status
+ * Returns the total count of course creators filtered by verification status.
+ */
+export const countCourseCreatorsByVerificationStatusOptions = (
+  options: Options<CountCourseCreatorsByVerificationStatusData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await countCourseCreatorsByVerificationStatus({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: countCourseCreatorsByVerificationStatusQueryKey(options),
+  });
+};
+
 export const searchContentTypesQueryKey = (options: Options<SearchContentTypesData>) =>
   createQueryKey('searchContentTypes', options);
 
@@ -15834,228 +17050,6 @@ export const getCourseCertificatesOptions = (options?: Options<GetCourseCertific
   });
 };
 
-/**
- * Clear all availability for an instructor
- */
-export const clearInstructorAvailabilityMutation = (
-  options?: Partial<Options<ClearInstructorAvailabilityData>>
-): UseMutationOptions<
-  ClearInstructorAvailabilityResponse,
-  ClearInstructorAvailabilityError,
-  Options<ClearInstructorAvailabilityData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ClearInstructorAvailabilityResponse,
-    ClearInstructorAvailabilityError,
-    Options<ClearInstructorAvailabilityData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await clearInstructorAvailability({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getInstructorAvailabilityQueryKey = (
-  options: Options<GetInstructorAvailabilityData>
-) => createQueryKey('getInstructorAvailability', options);
-
-/**
- * Get all availability for an instructor
- */
-export const getInstructorAvailabilityOptions = (
-  options: Options<GetInstructorAvailabilityData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getInstructorAvailability({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorAvailabilityQueryKey(options),
-  });
-};
-
-export const findInstructorAvailableSlotsQueryKey = (
-  options: Options<FindInstructorAvailableSlotsData>
-) => createQueryKey('findInstructorAvailableSlots', options);
-
-/**
- * Find available slots for an instructor within a date range
- */
-export const findInstructorAvailableSlotsOptions = (
-  options: Options<FindInstructorAvailableSlotsData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await findInstructorAvailableSlots({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: findInstructorAvailableSlotsQueryKey(options),
-  });
-};
-
-export const getInstructorAvailabilityForDateQueryKey = (
-  options: Options<GetInstructorAvailabilityForDateData>
-) => createQueryKey('getInstructorAvailabilityForDate', options);
-
-/**
- * Get availability for an instructor on a specific date
- */
-export const getInstructorAvailabilityForDateOptions = (
-  options: Options<GetInstructorAvailabilityForDateData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getInstructorAvailabilityForDate({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorAvailabilityForDateQueryKey(options),
-  });
-};
-
-export const checkInstructorAvailabilityQueryKey = (
-  options: Options<CheckInstructorAvailabilityData>
-) => createQueryKey('checkInstructorAvailability', options);
-
-/**
- * Check if an instructor is available during a time period
- */
-export const checkInstructorAvailabilityOptions = (
-  options: Options<CheckInstructorAvailabilityData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await checkInstructorAvailability({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: checkInstructorAvailabilityQueryKey(options),
-  });
-};
-
-export const checkInstructorAvailabilityInfiniteQueryKey = (
-  options: Options<CheckInstructorAvailabilityData>
-): QueryKey<Options<CheckInstructorAvailabilityData>> =>
-  createQueryKey('checkInstructorAvailability', options, true);
-
-/**
- * Check if an instructor is available during a time period
- */
-export const checkInstructorAvailabilityInfiniteOptions = (
-  options: Options<CheckInstructorAvailabilityData>
-) => {
-  return infiniteQueryOptions<
-    CheckInstructorAvailabilityResponse,
-    CheckInstructorAvailabilityError,
-    InfiniteData<CheckInstructorAvailabilityResponse>,
-    QueryKey<Options<CheckInstructorAvailabilityData>>,
-    | Date
-    | Pick<
-        QueryKey<Options<CheckInstructorAvailabilityData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      >
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<CheckInstructorAvailabilityData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  start: pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await checkInstructorAvailability({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: checkInstructorAvailabilityInfiniteQueryKey(options),
-    }
-  );
-};
-
-export const getInstructorBlockedSlotsQueryKey = (
-  options: Options<GetInstructorBlockedSlotsData>
-) => createQueryKey('getInstructorBlockedSlots', options);
-
-/**
- * Get blocked slots for an instructor on a specific date
- */
-export const getInstructorBlockedSlotsOptions = (
-  options: Options<GetInstructorBlockedSlotsData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getInstructorBlockedSlots({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorBlockedSlotsQueryKey(options),
-  });
-};
-
-export const getInstructorAvailableSlotsQueryKey = (
-  options: Options<GetInstructorAvailableSlotsData>
-) => createQueryKey('getInstructorAvailableSlots', options);
-
-/**
- * Get available slots for an instructor on a specific date
- */
-export const getInstructorAvailableSlotsOptions = (
-  options: Options<GetInstructorAvailableSlotsData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getInstructorAvailableSlots({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorAvailableSlotsQueryKey(options),
-  });
-};
-
 export const getAssignmentSubmissionsQueryKey = (options: Options<GetAssignmentSubmissionsData>) =>
   createQueryKey('getAssignmentSubmissions', options);
 
@@ -16341,6 +17335,400 @@ export const getPendingGradingOptions = (options: Options<GetPendingGradingData>
   });
 };
 
+export const isUserSystemAdminQueryKey = (options: Options<IsUserSystemAdminData>) =>
+  createQueryKey('isUserSystemAdmin', options);
+
+/**
+ * Check if user is system admin
+ * Checks whether a specific user has system administrator privileges. System admins have platform-wide administrative access.
+ */
+export const isUserSystemAdminOptions = (options: Options<IsUserSystemAdminData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await isUserSystemAdmin({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: isUserSystemAdminQueryKey(options),
+  });
+};
+
+export const isUserAdminQueryKey = (options: Options<IsUserAdminData>) =>
+  createQueryKey('isUserAdmin', options);
+
+/**
+ * Check if user is admin
+ * Checks whether a specific user has any type of administrative privileges. Returns true if the user has either system admin or organization admin roles.
+ */
+export const isUserAdminOptions = (options: Options<IsUserAdminData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await isUserAdmin({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: isUserAdminQueryKey(options),
+  });
+};
+
+export const getSystemAdminUsersQueryKey = (options: Options<GetSystemAdminUsersData>) =>
+  createQueryKey('getSystemAdminUsers', options);
+
+/**
+ * Get system admin users
+ * Retrieves a paginated list of users with global system administrator privileges. These users have platform-wide administrative access.
+ */
+export const getSystemAdminUsersOptions = (options: Options<GetSystemAdminUsersData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSystemAdminUsers({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSystemAdminUsersQueryKey(options),
+  });
+};
+
+export const getSystemAdminUsersInfiniteQueryKey = (
+  options: Options<GetSystemAdminUsersData>
+): QueryKey<Options<GetSystemAdminUsersData>> =>
+  createQueryKey('getSystemAdminUsers', options, true);
+
+/**
+ * Get system admin users
+ * Retrieves a paginated list of users with global system administrator privileges. These users have platform-wide administrative access.
+ */
+export const getSystemAdminUsersInfiniteOptions = (options: Options<GetSystemAdminUsersData>) => {
+  return infiniteQueryOptions<
+    GetSystemAdminUsersResponse,
+    GetSystemAdminUsersError,
+    InfiniteData<GetSystemAdminUsersResponse>,
+    QueryKey<Options<GetSystemAdminUsersData>>,
+    | number
+    | Pick<QueryKey<Options<GetSystemAdminUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetSystemAdminUsersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getSystemAdminUsers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getSystemAdminUsersInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getOrganizationAdminUsersQueryKey = (
+  options: Options<GetOrganizationAdminUsersData>
+) => createQueryKey('getOrganizationAdminUsers', options);
+
+/**
+ * Get organization admin users
+ * Retrieves a paginated list of users with organization administrator privileges. These users have administrative access within specific organizational contexts.
+ */
+export const getOrganizationAdminUsersOptions = (
+  options: Options<GetOrganizationAdminUsersData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganizationAdminUsers({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganizationAdminUsersQueryKey(options),
+  });
+};
+
+export const getOrganizationAdminUsersInfiniteQueryKey = (
+  options: Options<GetOrganizationAdminUsersData>
+): QueryKey<Options<GetOrganizationAdminUsersData>> =>
+  createQueryKey('getOrganizationAdminUsers', options, true);
+
+/**
+ * Get organization admin users
+ * Retrieves a paginated list of users with organization administrator privileges. These users have administrative access within specific organizational contexts.
+ */
+export const getOrganizationAdminUsersInfiniteOptions = (
+  options: Options<GetOrganizationAdminUsersData>
+) => {
+  return infiniteQueryOptions<
+    GetOrganizationAdminUsersResponse,
+    GetOrganizationAdminUsersError,
+    InfiniteData<GetOrganizationAdminUsersResponse>,
+    QueryKey<Options<GetOrganizationAdminUsersData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetOrganizationAdminUsersData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetOrganizationAdminUsersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getOrganizationAdminUsers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getOrganizationAdminUsersInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getAdminEligibleUsersQueryKey = (options: Options<GetAdminEligibleUsersData>) =>
+  createQueryKey('getAdminEligibleUsers', options);
+
+/**
+ * Get users eligible for admin promotion
+ * Retrieves a paginated list of users who can be promoted to administrator roles. Excludes users who already have administrative privileges. Supports search by name or email.
+ */
+export const getAdminEligibleUsersOptions = (options: Options<GetAdminEligibleUsersData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAdminEligibleUsers({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAdminEligibleUsersQueryKey(options),
+  });
+};
+
+export const getAdminEligibleUsersInfiniteQueryKey = (
+  options: Options<GetAdminEligibleUsersData>
+): QueryKey<Options<GetAdminEligibleUsersData>> =>
+  createQueryKey('getAdminEligibleUsers', options, true);
+
+/**
+ * Get users eligible for admin promotion
+ * Retrieves a paginated list of users who can be promoted to administrator roles. Excludes users who already have administrative privileges. Supports search by name or email.
+ */
+export const getAdminEligibleUsersInfiniteOptions = (
+  options: Options<GetAdminEligibleUsersData>
+) => {
+  return infiniteQueryOptions<
+    GetAdminEligibleUsersResponse,
+    GetAdminEligibleUsersError,
+    InfiniteData<GetAdminEligibleUsersResponse>,
+    QueryKey<Options<GetAdminEligibleUsersData>>,
+    | number
+    | Pick<QueryKey<Options<GetAdminEligibleUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetAdminEligibleUsersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAdminEligibleUsers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAdminEligibleUsersInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getAdminUsersQueryKey = (options: Options<GetAdminUsersData>) =>
+  createQueryKey('getAdminUsers', options);
+
+/**
+ * Get all admin users
+ * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organization administrators. Supports filtering by admin level, status, and other criteria.
+ */
+export const getAdminUsersOptions = (options: Options<GetAdminUsersData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAdminUsers({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAdminUsersQueryKey(options),
+  });
+};
+
+export const getAdminUsersInfiniteQueryKey = (
+  options: Options<GetAdminUsersData>
+): QueryKey<Options<GetAdminUsersData>> => createQueryKey('getAdminUsers', options, true);
+
+/**
+ * Get all admin users
+ * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organization administrators. Supports filtering by admin level, status, and other criteria.
+ */
+export const getAdminUsersInfiniteOptions = (options: Options<GetAdminUsersData>) => {
+  return infiniteQueryOptions<
+    GetAdminUsersResponse,
+    GetAdminUsersError,
+    InfiniteData<GetAdminUsersResponse>,
+    QueryKey<Options<GetAdminUsersData>>,
+    number | Pick<QueryKey<Options<GetAdminUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetAdminUsersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getAdminUsers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getAdminUsersInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const isOrganisationVerifiedQueryKey = (options: Options<IsOrganisationVerifiedData>) =>
+  createQueryKey('isOrganisationVerified', options);
+
+/**
+ * Check if organization is verified
+ * Checks whether a specific organization has been verified by an admin. Returns true if the organization has admin verification status.
+ */
+export const isOrganisationVerifiedOptions = (options: Options<IsOrganisationVerifiedData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await isOrganisationVerified({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: isOrganisationVerifiedQueryKey(options),
+  });
+};
+
+export const isInstructorVerifiedQueryKey = (options: Options<IsInstructorVerifiedData>) =>
+  createQueryKey('isInstructorVerified', options);
+
+/**
+ * Check if instructor is verified
+ * Checks whether a specific instructor has been verified by an admin. Returns true if the instructor has admin verification status.
+ */
+export const isInstructorVerifiedOptions = (options: Options<IsInstructorVerifiedData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await isInstructorVerified({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: isInstructorVerifiedQueryKey(options),
+  });
+};
+
+export const getDashboardStatisticsQueryKey = (options?: Options<GetDashboardStatisticsData>) =>
+  createQueryKey('getDashboardStatistics', options);
+
+/**
+ * Get admin dashboard statistics
+ * Retrieves comprehensive statistics for the admin dashboard including user metrics, organization metrics, content metrics, system performance, and admin-specific data.
+ */
+export const getDashboardStatisticsOptions = (options?: Options<GetDashboardStatisticsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getDashboardStatistics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getDashboardStatisticsQueryKey(options),
+  });
+};
+
 /**
  * Cancel pending invitation
  * Cancels a pending invitation within this organization, preventing it from being accepted or declined. Only the original inviter or an organization administrator can cancel invitations. This action is irreversible and the invitation cannot be reactivated.
@@ -16471,6 +17859,34 @@ export const removeCategoryFromCourseMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await removeCategoryFromCourse({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove admin domain from user
+ * Removes admin domain privileges from a user. This revokes the user's administrative access for the specified domain type. Only system administrators can perform this operation.
+ */
+export const removeAdminDomainMutation = (
+  options?: Partial<Options<RemoveAdminDomainData>>
+): UseMutationOptions<
+  RemoveAdminDomainResponse,
+  RemoveAdminDomainError,
+  Options<RemoveAdminDomainData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RemoveAdminDomainResponse,
+    RemoveAdminDomainError,
+    Options<RemoveAdminDomainData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await removeAdminDomain({
         ...options,
         ...localOptions,
         throwOnError: true,

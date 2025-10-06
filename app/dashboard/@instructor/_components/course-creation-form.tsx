@@ -167,8 +167,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       name: 'categories',
     });
 
-
-
     const queryClient = useQueryClient();
     const instructor = useInstructor();
     const { setActiveStep } = useStepper();

@@ -1,11 +1,11 @@
-import React from 'react';
-import { Separator } from '@/components/ui/separator';
-import { Building2, Globe, Hash, Phone, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Organisation as OrganisationDto } from '@/services/api/schema';
+import { Separator } from '@/components/ui/separator';
+import { BadgeCheckIcon, Building2, Globe, Phone } from 'lucide-react';
+import React from 'react';
 
 interface OrganizationDetailsProps {
-  organization: OrganisationDto;
+  organization: any;
   getStatusBadgeComponent: (organizationId: string) => React.ReactElement;
 }
 
@@ -47,6 +47,16 @@ export default function OrganizationDetails({
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>Status:</p>
                   {organization.uuid && getStatusBadgeComponent(organization.uuid)}
+                  <Badge variant={organization?.admin_verified ? 'success' : 'secondary'}>
+                    {organization?.admin_verified ? (
+                      <>
+                        <BadgeCheckIcon />
+                        Verified
+                      </>
+                    ) : (
+                      'Pending'
+                    )}
+                  </Badge>
                 </div>
               </div>
             </div>

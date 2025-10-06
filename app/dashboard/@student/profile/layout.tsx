@@ -44,8 +44,8 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
         </SidebarContent>
       </Sidebar> */}
 
-      <main className='flex-1 flex flex-col overflow-auto px-6 py-3 gap-8'>
-        <ul className="flex gap-5 mt-4 ">
+      <main className='flex flex-1 flex-col gap-8 overflow-auto px-6 py-3'>
+        <ul className='mt-4 flex gap-5'>
           {sections.map(sec => {
             const isActive = pathname.startsWith(sec.href);
 
@@ -53,8 +53,9 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
               <li key={sec.name}>
                 <Link
                   href={sec.href}
-                  className={`px-3 py-1 rounded-md transition-colors ${isActive ? 'bg-gray-200 text-black' : 'hover:bg-gray-100 text-gray-700'
-                    }`}
+                  className={`rounded-md px-3 py-1 transition-colors ${
+                    isActive ? 'bg-gray-200 text-black' : 'text-gray-700 hover:bg-gray-100'
+                  }`}
                 >
                   {sec.name}
                 </Link>

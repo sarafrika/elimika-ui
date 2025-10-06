@@ -1,18 +1,36 @@
 'use client';
 
+import ErrorPage from '@/components/ErrorPage';
 import { Badge } from '@/components/ui/badge';
 import { Organisation as OrganisationDto } from '@/services/api/schema';
+import {
+  getAllOrganisationsOptions,
+  getAllOrganisationsQueryKey,
+  unverifyOrganisationMutation,
+  verifyOrganisationMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { sampleOrganizations } from '../../overview/sample-admin-data';
 import OrganizationDetailsPanel from './OrganizationDetailsPanel';
 import OrganizationMobileModal from './OrganizationMobileModal';
 import OrganizationsList from './OrganizationsList';
 
-type Props = {
-  organizations: OrganisationDto[];
-};
+export default function OrganizationsPage() {
+  const qc = useQueryClient();
 
-export default function OrganizationsPage({ organizations }: Props) {
+  const { data, error } = useQuery(
+    getAllOrganisationsOptions({ query: { pageable: { page: 0, size: 100 } } })
+  );
+
+  // Use sample data if API returns no organizations
+  const organizations =
+    data?.data?.content && data?.data?.content.length > 0
+      ? data?.data?.content
+      : sampleOrganizations;
+
   const [selectedOrganization, setSelectedOrganization] = useState<OrganisationDto | null>(
     organizations[0] || null
   );
@@ -35,13 +53,28 @@ export default function OrganizationsPage({ organizations }: Props) {
     setOrganizationStatuses(mockStatuses);
   }, [organizations]);
 
+  useEffect(() => {
+    if (organizations.length > 0 && !selectedOrganization) {
+      setSelectedOrganization(organizations[0] as any);
+    }
+  }, [organizations, selectedOrganization]);
+
+  const verifyOrganisation = useMutation(verifyOrganisationMutation());
+  const unVerifyOrganisation = useMutation(unverifyOrganisationMutation());
+
   const handleApproveOrganization = async (organization: OrganisationDto) => {
     try {
-      // In a real implementation, you would call an API to approve the organization
-      // For now, we'll just update the local state
-      const newStatuses = new Map(organizationStatuses);
-      newStatuses.set(organization.uuid!, 'approved');
-      setOrganizationStatuses(newStatuses);
+      verifyOrganisation.mutate(
+        { path: { uuid: organization.uuid! }, query: { reason: '' } },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getAllOrganisationsQueryKey({ query: { pageable: {} } }),
+            });
+            toast.success(data?.message);
+          },
+        }
+      );
 
       router.refresh();
     } catch (error) {
@@ -53,9 +86,17 @@ export default function OrganizationsPage({ organizations }: Props) {
     try {
       // In a real implementation, you would call an API to reject the organization
       // For now, we'll just update the local state
-      const newStatuses = new Map(organizationStatuses);
-      newStatuses.set(organization.uuid!, 'rejected');
-      setOrganizationStatuses(newStatuses);
+      unVerifyOrganisation.mutate(
+        { path: { uuid: organization.uuid! }, query: { reason: '' } },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getAllOrganisationsQueryKey({ query: { pageable: {} } }),
+            });
+            toast.success(data?.message);
+          },
+        }
+      );
 
       router.refresh();
     } catch (error) {
@@ -134,6 +175,12 @@ export default function OrganizationsPage({ organizations }: Props) {
       }
     });
 
+  if (error) {
+    return (
+      <ErrorPage message={error.message || 'Something went wrong while fetching organizations'} />
+    );
+  }
+
   return (
     <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
       {/* Left Sidebar - Organization List */}
@@ -157,6 +204,8 @@ export default function OrganizationsPage({ organizations }: Props) {
         onApprove={handleApproveOrganization}
         onReject={handleRejectOrganization}
         getStatusBadgeComponent={getStatusBadgeComponent}
+        isVerifyPending={verifyOrganisation.isPending}
+        isUnverifyPending={unVerifyOrganisation.isPending}
       />
 
       {/* Mobile Modal */}

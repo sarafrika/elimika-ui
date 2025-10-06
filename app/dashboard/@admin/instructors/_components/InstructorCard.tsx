@@ -1,6 +1,7 @@
-import React from 'react';
-import { Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Instructor } from '@/services/api/schema';
+import { BadgeCheckIcon, Trash2 } from 'lucide-react';
+import React from 'react';
 
 interface InstructorCardProps {
   instructor: Instructor;
@@ -33,6 +34,16 @@ export default function InstructorCard({
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
               {getStatusBadgeComponent(instructor.uuid!)}
+              <Badge variant={instructor?.admin_verified ? 'success' : 'secondary'}>
+                {instructor?.admin_verified ? (
+                  <>
+                    <BadgeCheckIcon />
+                    Verified
+                  </>
+                ) : (
+                  'Pending'
+                )}
+              </Badge>
               <span className='text-muted-foreground text-xs'>
                 {instructor.created_date
                   ? new Date(instructor.created_date).toLocaleDateString()

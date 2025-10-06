@@ -10,20 +10,24 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
 import { tanstackClient } from '@/services/api/tanstack-client';
-import {
-  updateUserMutation
-} from '@/services/client/@tanstack/react-query.gen';
+import { updateUserMutation } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -49,7 +53,7 @@ const StudentProfileSchema = z.object({
 type StudentProfileType = z.infer<typeof StudentProfileSchema>;
 
 export default function StudentProfileGeneralForm() {
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const user = useUserProfile();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
@@ -105,7 +109,7 @@ export default function StudentProfileGeneralForm() {
     });
   }
 
-  const [profileUrl, setProfileUrl] = useState<string | null>(user?.profile_image_url as string)
+  const [profileUrl, setProfileUrl] = useState<string | null>(user?.profile_image_url as string);
 
   async function uploadProfileImage(
     file: File,
@@ -143,19 +147,22 @@ export default function StudentProfileGeneralForm() {
 
   const onSubmit = async (data: StudentProfileType) => {
     try {
-      await userMutation.mutateAsync({
-        body: {
-          ...data,
-          dob: data.dob ?? '',
-          active: user?.active as boolean
+      await userMutation.mutateAsync(
+        {
+          body: {
+            ...data,
+            dob: data.dob ?? '',
+            active: user?.active as boolean,
+          },
+          path: { uuid: user!.uuid as string },
         },
-        path: { uuid: user!.uuid as string },
-      }, {
-        onSuccess: (data) => {
-          qc.invalidateQueries({ queryKey: ['profile'] });
-          toast.success(data?.message)
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({ queryKey: ['profile'] });
+            toast.success(data?.message);
+          },
         }
-      });
+      );
     } catch (error) {
       // console.error('Error updating user profile:', error);
     }
@@ -165,9 +172,7 @@ export default function StudentProfileGeneralForm() {
     <div className='w-full sm:max-w-3/4'>
       <div className='mb-6'>
         <h1 className='text-2xl font-semibold'>General Info</h1>
-        <p className='text-muted-foreground text-sm'>
-          Update your basic profile information
-        </p>
+        <p className='text-muted-foreground text-sm'>Update your basic profile information</p>
       </div>
 
       <Form {...form}>
@@ -198,12 +203,12 @@ export default function StudentProfileGeneralForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <div className='flex flex-col items-center gap-4 mb-8'>
+                      <div className='mb-8 flex flex-col items-center gap-4'>
                         <Input
-                          type="file"
-                          accept="image/*"
+                          type='file'
+                          accept='image/*'
                           className='hidden'
-                          id="profile-image-input"
+                          id='profile-image-input'
                           onChange={e => {
                             const file = e.target.files?.[0];
                             if (!file) return;
@@ -212,17 +217,17 @@ export default function StudentProfileGeneralForm() {
                               file,
                               user?.uuid as string,
                               pictureMutation.mutate,
-                              (url) => {
+                              url => {
                                 setProfileUrl(url);
                                 toast.success('Uploaded successfully');
                                 field.onChange(url);
                               },
-                              (error) => { }
+                              error => {}
                             );
                           }}
                         />
 
-                        <div className='flex flex-row items-center gap-4' >
+                        <div className='flex flex-row items-center gap-4'>
                           {/* Avatar preview or initials */}
                           {profileUrl ? (
                             <div className='h-32 w-32 overflow-hidden rounded-full border border-gray-300'>
@@ -231,7 +236,7 @@ export default function StudentProfileGeneralForm() {
                                 alt='Profile Preview'
                                 height={128}
                                 width={128}
-                                className='h-full w-full object-cover rounded-full'
+                                className='h-full w-full rounded-full object-cover'
                               />
                             </div>
                           ) : (
@@ -240,26 +245,25 @@ export default function StudentProfileGeneralForm() {
                             </div>
                           )}
 
-                          <p className='text-muted-foreground text-sm text-center'>
-                            Square images work best.<br />
+                          <p className='text-muted-foreground text-center text-sm'>
+                            Square images work best.
+                            <br />
                             Max size: 5MB
                           </p>
                         </div>
 
                         <label
-                          htmlFor="profile-image-input"
-                          className='cursor-pointer border rounded-md px-4 py-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                          htmlFor='profile-image-input'
+                          className='cursor-pointer rounded-md border px-4 py-2 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
                         >
                           Change
                         </label>
-
                       </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
 
               <div className='flex flex-col gap-5 md:flex-row'>
                 <FormField
@@ -390,13 +394,12 @@ export default function StudentProfileGeneralForm() {
                   )}
                 />
               </div>
-
             </CardContent>
           </Card>
 
           <div className='flex justify-end pt-2'>
-            <Button type='submit' className='px-6 min-w-30'>
-              {userMutation.isPending ? <Spinner /> : "Save Changes"}
+            <Button type='submit' className='min-w-30 px-6'>
+              {userMutation.isPending ? <Spinner /> : 'Save Changes'}
             </Button>
           </div>
         </form>
@@ -404,4 +407,3 @@ export default function StudentProfileGeneralForm() {
     </div>
   );
 }
-

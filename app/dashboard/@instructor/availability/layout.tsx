@@ -12,8 +12,9 @@ export default function AvailabilityLayout({ children }: AvailabilityLayoutProps
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Availability</h2>
-          <p className="text-muted-foreground">
-            Set your availability to take on more classes. Create, edit, and manage your schedule so students and admins know when you&apos;re open to teach.
+          <p className='text-muted-foreground'>
+            Set your availability to take on more classes. Create, edit, and manage your schedule so
+            students and admins know when you&apos;re open to teach.
           </p>
         </div>
       </div>

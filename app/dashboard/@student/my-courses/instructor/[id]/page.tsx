@@ -1,14 +1,12 @@
-'use client'
+'use client';
 
-import { useParams } from "next/navigation";
+import { useParams } from 'next/navigation';
 
 const CourseInstructorDetails = () => {
-    const params = useParams();
-    const instructorId = params?.id as string;
+  const params = useParams();
+  const instructorId = params?.id as string;
 
-    return (
-        <div>CourseInstructorDetails</div>
-    )
-}
+  return <div>CourseInstructorDetails</div>;
+};
 
-export default CourseInstructorDetails
+export default CourseInstructorDetails;

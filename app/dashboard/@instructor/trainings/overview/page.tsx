@@ -1,8 +1,16 @@
 'use client';
 
-import { deactivateClassDefinitionMutation, getClassDefinitionsForInstructorOptions, getClassDefinitionsForInstructorQueryKey } from '@/services/client/@tanstack/react-query.gen';
+import {
+  deactivateClassDefinitionMutation,
+  getClassDefinitionsForInstructorOptions,
+  getClassDefinitionsForInstructorQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useRouter } from 'next/navigation';
-import { ClassDialog, ScheduleDialog, TimetableScheduleDialog } from '../../_components/class-management-form';
+import {
+  ClassDialog,
+  ScheduleDialog,
+  TimetableScheduleDialog,
+} from '../../_components/class-management-form';
 
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import PageLoader from '@/components/page-loader';
@@ -26,17 +34,16 @@ import {
   LucideFileWarning,
   MoreVertical,
   PenIcon,
-  PlusIcon
+  PlusIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import ClassCourseDisplay from '../component/class-course-dislay';
 
-
 export default function TrainingsPage() {
   const router = useRouter();
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const instructor = useInstructor();
   const [openAddClass, setOpenAddClass] = useState(false);
 
@@ -46,7 +53,7 @@ export default function TrainingsPage() {
       query: { activeOnly: false },
     })
   );
-  const classes = data?.data
+  const classes = data?.data;
 
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
 
@@ -69,79 +76,86 @@ export default function TrainingsPage() {
     setDeleteModal(true);
   };
 
-  const deactivateClass = useMutation(deactivateClassDefinitionMutation())
+  const deactivateClass = useMutation(deactivateClassDefinitionMutation());
   const confirmDelete = () => {
-    deactivateClass.mutate({ path: { uuid: deleteId as string } }, {
-      onSuccess: (data) => {
-        qc.invalidateQueries({
-          queryKey: getClassDefinitionsForInstructorQueryKey({ path: { instructorUuid: instructor?.uuid as string } }),
-        });
-        setDeleteModal(false);
-        toast.message(data?.message || `Class definition deactivated successfully`);
+    deactivateClass.mutate(
+      { path: { uuid: deleteId as string } },
+      {
+        onSuccess: data => {
+          qc.invalidateQueries({
+            queryKey: getClassDefinitionsForInstructorQueryKey({
+              path: { instructorUuid: instructor?.uuid as string },
+            }),
+          });
+          setDeleteModal(false);
+          toast.message(data?.message || `Class definition deactivated successfully`);
+        },
       }
-    })
+    );
   };
 
   return (
-    <div className='space-y-6 mb-20'>
-      <div className="flex items-center justify-between">
+    <div className='mb-20 space-y-6'>
+      <div className='flex items-center justify-between'>
         <div>
-          <h1 className="text-2xl font-semibold">Your Classes</h1>
-          <p className="text-muted-foreground">Manage your classes and schedules</p>
+          <h1 className='text-2xl font-semibold'>Your Classes</h1>
+          <p className='text-muted-foreground'>Manage your classes and schedules</p>
         </div>
-        <Button onClick={() => router.push(`/dashboard/trainings/create-new`)} size="lg" className="gap-2">
-          <PlusIcon className="w-5 h-5" />
+        <Button
+          onClick={() => router.push(`/dashboard/trainings/create-new`)}
+          size='lg'
+          className='gap-2'
+        >
+          <PlusIcon className='h-5 w-5' />
           Create New Class
         </Button>
       </div>
 
-      {isLoading || isPending ?
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-32" />
+      {isLoading || isPending ? (
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+          <Skeleton className='h-4 w-32' />
+          <Skeleton className='h-4 w-32' />
+          <Skeleton className='h-4 w-32' />
         </div>
-        : <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      ) : (
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
           <Card>
-            <CardHeader className="">
-              <CardTitle className="text-sm text-muted-foreground">Total Classes</CardTitle>
+            <CardHeader className=''>
+              <CardTitle className='text-muted-foreground text-sm'>Total Classes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-semibold">{classes?.length}</div>
+              <div className='text-3xl font-semibold'>{classes?.length}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="">
-              <CardTitle className="text-sm text-muted-foreground">Published Classes</CardTitle>
+            <CardHeader className=''>
+              <CardTitle className='text-muted-foreground text-sm'>Published Classes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-semibold">{0}</div>
+              <div className='text-3xl font-semibold'>{0}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="">
-              <CardTitle className="text-sm text-muted-foreground">Draft Classes</CardTitle>
+            <CardHeader className=''>
+              <CardTitle className='text-muted-foreground text-sm'>Draft Classes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-semibold">{0}</div>
+              <div className='text-3xl font-semibold'>{0}</div>
             </CardContent>
           </Card>
-        </div>}
-
+        </div>
+      )}
 
       {classes?.length === 0 && !isLoading && (
-        <div className='space-y-4 bg-muted/20 rounded-md border py-12 text-center'>
+        <div className='bg-muted/20 space-y-4 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
 
           <div>
-            <h3 className="text-lg font-semibold">No classes yet</h3>
-            <p className="text-muted-foreground">Get started by creating your first class</p>
+            <h3 className='text-lg font-semibold'>No classes yet</h3>
+            <p className='text-muted-foreground'>Get started by creating your first class</p>
           </div>
 
-          <Button
-            onClick={() => router.push('/dashboard/trainings/create-new')}
-            asChild
-          >
+          <Button onClick={() => router.push('/dashboard/trainings/create-new')} asChild>
             <div>Create Your First Class</div>
           </Button>
         </div>
@@ -154,10 +168,10 @@ export default function TrainingsPage() {
           {classes?.map((cl: any) => (
             <div
               key={cl.uuid}
-              className='relative min-h-[250px] rounded-lg border bg-white py-8 px-6 shadow-sm transition hover:shadow-md'
+              className='relative min-h-[250px] rounded-lg border bg-white px-6 py-8 shadow-sm transition hover:shadow-md'
             >
               {/* Actions dropdown */}
-              <div className='absolute flex flex-row items-center top-6 right-2 gap-4'>
+              <div className='absolute top-6 right-2 flex flex-row items-center gap-4'>
                 <Badge variant={cl.is_active === true ? 'default' : 'secondary'}>
                   {cl.is_active ? 'Active Class' : 'Inactive Class'}
                 </Badge>
