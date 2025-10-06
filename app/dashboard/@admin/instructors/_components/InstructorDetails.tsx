@@ -1,11 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { MapPin, User, Globe, Award, Briefcase, GraduationCap } from 'lucide-react';
-import { Instructor, InstructorEducation } from '@/services/api/schema';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { fetchClient } from '@/services/api/fetch-client';
-import { tanstackClient } from '@/services/api/tanstack-client';
+import { Instructor } from '@/services/api/schema';
+import {
+  getInstructorEducationOptions,
+  getInstructorExperienceOptions,
+  getInstructorMembershipsOptions,
+  getUserByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { Award, BadgeCheckIcon, Briefcase, Globe, GraduationCap, MapPin, User } from 'lucide-react';
+import React from 'react';
 
 interface InstructorDetailsProps {
   instructor: Instructor;
@@ -13,37 +18,48 @@ interface InstructorDetailsProps {
   className?: string;
 }
 
-const { useQuery } = tanstackClient;
-
 export default function InstructorDetails({
   instructor,
   getStatusBadgeComponent,
   className = '',
 }: InstructorDetailsProps) {
-  const educationQuery = useQuery('get', '/api/v1/instructors/{instructorUuid}/education', {
-    params: { path: { instructorUuid: instructor.uuid! } },
+  const { data: instructorInfo } = useQuery({
+    ...getUserByUuidOptions({ path: { uuid: instructor?.user_uuid as string } }),
+    enabled: !!instructor?.user_uuid,
   });
 
-  const profBodyQuery = useQuery('get', '/api/v1/instructors/{instructorUuid}/memberships', {
-    params: {
-      path: { instructorUuid: instructor.uuid! },
-      query: {
-        //@ts-ignore
-        page: 0,
-        size: 10,
-      },
-    },
+  const {
+    data: education,
+    isPending: educationIsPending,
+    isSuccess: educationIsSuccess,
+  } = useQuery(
+    getInstructorEducationOptions({ path: { instructorUuid: instructor?.uuid as string } })
+  );
+
+  const {
+    data: membership,
+    isPending: membershipIsPending,
+    isSuccess: membershipIsSuccess,
+    isError: membershipIsError,
+  } = useQuery({
+    ...getInstructorMembershipsOptions({
+      path: { instructorUuid: instructor?.uuid as string },
+      query: { pageable: { page: 0, size: 20 } },
+    }),
+    enabled: !!instructor.uuid,
   });
 
-  const expQuery = useQuery('get', '/api/v1/instructors/{instructorUuid}/experience', {
-    params: {
-      path: { instructorUuid: instructor.uuid! },
-      query: {
-        //@ts-ignore
-        page: 0,
-        size: 10,
-      },
-    },
+  const {
+    data: experience,
+    isPending: experienceIsPending,
+    isSuccess: experienceIsSuccess,
+    isError: experienceIsError,
+  } = useQuery({
+    ...getInstructorExperienceOptions({
+      path: { instructorUuid: instructor?.uuid as string },
+      query: { pageable: { page: 0, size: 20 } },
+    }),
+    enabled: !!instructor.uuid,
   });
 
   return (
@@ -73,27 +89,37 @@ export default function InstructorDetails({
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>Status:</p>
                   {getStatusBadgeComponent(instructor.uuid!)}
+                  <Badge variant={instructor?.admin_verified ? 'success' : 'secondary'}>
+                    {instructor?.admin_verified ? (
+                      <>
+                        <BadgeCheckIcon />
+                        Verified
+                      </>
+                    ) : (
+                      'Pending'
+                    )}
+                  </Badge>
                 </div>
               </div>
             </div>
 
-            <div className='grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-4'>
+            <div className='grid grid-cols-2 gap-4 border-t pt-4'>
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Phone:</p>
-                <p className='text-sm'>Not available</p>
+                <p className='text-sm'>{instructorInfo?.data?.phone_number || 'Not specified'}</p>
               </div>
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Email:</p>
-                <p className='text-sm'>Not available</p>
+                <p className='text-sm'>{instructorInfo?.data?.email || 'Not specified'}</p>
               </div>
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Profile Complete:</p>
                 <p className='text-sm'>{instructor.is_profile_complete ? 'Yes' : 'No'}</p>
               </div>
               {/* <div>
-                                <p className="text-sm font-medium text-muted-foreground">Credentials:</p>
-                                <p className="text-sm">{instructor.totalProfessionalCredentials || 0}</p>
-                            </div> */}
+                <p className="text-sm font-medium text-muted-foreground">Credentials:</p>
+                <p className="text-sm">{instructor.totalProfessionalCredentials || 0}</p>
+              </div> */}
             </div>
           </div>
         </CardHeader>
@@ -112,11 +138,13 @@ export default function InstructorDetails({
             <div className='grid grid-cols-2 gap-4'>
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Gender</p>
-                <p className='text-sm'>Not specified</p>
+                <p className='text-sm'>{instructorInfo?.data?.gender || 'Not specified'}</p>
               </div>
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Date of birth</p>
-                <p className='text-sm'>Not specified</p>
+                <p className='text-sm'>
+                  {instructorInfo?.data?.dob.toDateString() || 'Not specified'}
+                </p>
               </div>
             </div>
             <div className='grid grid-cols-2 gap-4'>
@@ -170,14 +198,15 @@ export default function InstructorDetails({
             </CardTitle>
           </CardHeader>
           <CardContent className='space-y-4'>
-            {!educationQuery.isPending &&
-            educationQuery.isSuccess &&
-            educationQuery.data.data!.length > 0 ? (
-              educationQuery.data.data!.map((ed, index) => (
+            {!educationIsPending && educationIsSuccess && Number(education?.data?.length) > 0 ? (
+              education?.data?.map((ed, index) => (
                 <div key={index} className='space-y-2'>
                   <div className='flex items-start justify-between'>
                     <div className='flex-1'>
-                      <p className='text-sm font-medium'>Certificate</p>
+                      {/* <p className='text-sm font-medium'>Certificate</p> */}
+                      <p className='text-muted-foreground text-sm'>
+                        {ed.qualification ?? 'Qualification not specified'}
+                      </p>
                       <p className='text-muted-foreground text-sm'>
                         {ed.school_name ?? 'Institution not specified'}
                       </p>
@@ -215,14 +244,31 @@ export default function InstructorDetails({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {profBodyQuery.isSuccess &&
-          !profBodyQuery.isError &&
-          profBodyQuery.data.data!.content!.length > 0 ? (
-            <div className='flex flex-wrap gap-2'>
-              {profBodyQuery.data.data!.content!.map((body, index) => (
-                <Badge key={index} variant='outline' className='text-xs'>
-                  {body.organization_name || 'N/A'}
-                </Badge>
+          {!membershipIsPending &&
+          !membershipIsError &&
+          Number(membership?.data?.content?.length) > 0 ? (
+            <div className='grid grid-cols-2 justify-between gap-4'>
+              {/* @ts-ignore */}
+              {membership?.data?.content?.map((body: any, index) => (
+                <div key={index} className='rounded-lg border bg-white p-4 shadow-sm'>
+                  <div className='mb-2 flex items-center gap-4'>
+                    <Badge variant='outline' className='text-xs'>
+                      {body?.organization_name || 'N/A'}
+                    </Badge>
+                    <span
+                      className={`text-xs font-medium ${
+                        body?.is_active ? 'text-green-600' : 'text-red-500'
+                      }`}
+                    >
+                      {body?.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  <div className='text-muted-foreground space-y-1 text-sm'>
+                    <p>Status: {body?.membership_status || 'Unknown'}</p>
+                    <p>Period: {body?.membership_period || 'N/A'}</p>
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
@@ -242,8 +288,10 @@ export default function InstructorDetails({
           </CardTitle>
         </CardHeader>
         <CardContent className='space-y-4'>
-          {expQuery.isSuccess && !expQuery.isError && expQuery.data.data!.content!.length > 0 ? (
-            expQuery.data.data!.content!.map((exp, index) => (
+          {experienceIsSuccess &&
+          !experienceIsError &&
+          Number(experience?.data?.content?.length) > 0 ? (
+            experience?.data?.content?.map((exp, index) => (
               <div key={index} className='space-y-2'>
                 <div className='flex items-start justify-between'>
                   <div className='flex-1'>

@@ -1,35 +1,37 @@
 'use client';
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
-import { Bell } from 'lucide-react';
+import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { Bell, Building2, CheckCircle, User } from 'lucide-react';
 import Link from 'next/link';
 import {
-  stats,
-  approvalStats,
-  tasks,
-  topPerformers,
-  recentActivity,
-  revenueGraphData,
-} from './sample-admin-data';
-import {
-  LineChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
 } from 'recharts';
+import {
+  approvalStats,
+  recentActivity,
+  revenueGraphData,
+  stats,
+  tasks,
+  topPerformers,
+} from './sample-admin-data';
 
 // Prepare data for Recharts
 const chartData = revenueGraphData.labels.map((label, i) => ({
@@ -39,15 +41,14 @@ const chartData = revenueGraphData.labels.map((label, i) => ({
 
 export default function AdminOverviewPage() {
   // const { data: session } = useSession()
-
-  // You can now use sampleInstructors and sampleOrganizations for any additional widgets or stats
+  const { data } = useQuery(getDashboardStatisticsOptions());
 
   return (
     <div className='flex flex-col gap-6 px-2 py-4 md:px-6'>
       {/* Approval Cards - Main Admin Role */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2'>
         {approvalStats.map((stat, i) => (
-          <Link key={i} href={stat.route} className='hover:opacity-90'>
+          <Link key={i} href={'/dashboard/instructors'} className='hover:opacity-90'>
             <Card className='border-warning/40 bg-warning/10 flex cursor-pointer flex-row items-center gap-4 border-2 p-4 transition-shadow hover:shadow-lg'>
               <div className='bg-warning/20 rounded-full p-3'>
                 <stat.icon className='text-warning h-6 w-6' />
@@ -64,10 +65,29 @@ export default function AdminOverviewPage() {
             </Card>
           </Link>
         ))}
+
+        <Link href={'/dashboard/instructors'} className='hover:opacity-90'>
+          <Card className='border-warning/40 bg-warning/10 flex cursor-pointer flex-row items-center gap-4 border-2 p-4 transition-shadow hover:shadow-lg'>
+            <div className='bg-warning/20 rounded-full p-3'>
+              <CheckCircle className='text-warning h-6 w-6' />
+            </div>
+            <div className='flex-1'>
+              <CardTitle className='text-lg font-semibold'>
+                {data?.data?.organization_metrics?.pending_approvals}
+              </CardTitle>
+              <CardDescription className='flex items-center gap-2'>
+                {'Organisation Pending Approval'}
+                <Badge variant={'warning'} className='ml-2'>
+                  Pending
+                </Badge>
+              </CardDescription>
+            </div>
+          </Card>
+        </Link>
       </div>
 
       {/* Welcome and Quick Stats */}
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
         {stats.map((stat, i) => (
           <Card key={i} className='flex flex-row items-center gap-4 p-4'>
             <div className='bg-primary/10 rounded-full p-3'>
@@ -84,6 +104,40 @@ export default function AdminOverviewPage() {
             </div>
           </Card>
         ))}
+
+        <Card className='flex flex-row items-center gap-4 p-4'>
+          <div className='bg-primary/10 rounded-full p-3'>
+            <User className='text-primary h-6 w-6' />
+          </div>
+          <div className='flex-1'>
+            <CardTitle className='text-lg font-semibold'>
+              {data?.data?.user_metrics?.total_users}
+            </CardTitle>
+            <CardDescription className='flex items-center gap-2'>
+              {'Total Users'}
+              <Badge variant={'success'} className='ml-2'>
+                {'+0%'}
+              </Badge>
+            </CardDescription>
+          </div>
+        </Card>
+
+        <Card className='flex flex-row items-center gap-4 p-4'>
+          <div className='bg-primary/10 rounded-full p-3'>
+            <Building2 className='text-primary h-6 w-6' />
+          </div>
+          <div className='flex-1'>
+            <CardTitle className='text-lg font-semibold'>
+              {data?.data?.organization_metrics?.active_organizations}
+            </CardTitle>
+            <CardDescription className='flex items-center gap-2'>
+              {'Active Organizations'}
+              <Badge variant={'success'} className='ml-2'>
+                {'+0%'}
+              </Badge>
+            </CardDescription>
+          </div>
+        </Card>
       </div>
 
       {/* Main Content Grid: Tasks left, Graph right */}

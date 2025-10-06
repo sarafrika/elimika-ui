@@ -451,17 +451,17 @@ export const StudentSchema = {
       minLength: 0,
       pattern: '^(\\+254|0)?[17]\\d{8}$',
     },
-    secondaryGuardianContact: {
-      type: 'string',
-    },
-    primaryGuardianContact: {
-      type: 'string',
-    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
+    },
+    primaryGuardianContact: {
+      type: 'string',
+    },
+    secondaryGuardianContact: {
+      type: 'string',
     },
     created_date: {
       type: 'string',
@@ -2253,6 +2253,7 @@ export const OrganisationSchema = {
     slug: 'sarafrika-university',
     latitude: -1.2921,
     longitude: 36.8219,
+    admin_verified: true,
     created_date: '2024-01-01T09:00:00',
     updated_date: '2024-04-15T14:30:00',
   },
@@ -2320,6 +2321,13 @@ export const OrganisationSchema = {
       type: 'number',
       description: "**[OPTIONAL]** Longitude coordinate for the organisation's location.",
       example: 36.8219,
+    },
+    admin_verified: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates whether the organisation has been verified/approved by an admin. Only verified organisations can access certain platform features and are displayed with verification badges.',
+      example: true,
+      readOnly: true,
     },
     created_date: {
       type: 'string',
@@ -2481,6 +2489,13 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_profile_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
+      example: true,
+      readOnly: true,
+    },
     has_location_coordinates: {
       type: 'boolean',
       description:
@@ -2493,13 +2508,6 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
-    is_profile_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
       readOnly: true,
     },
   },
@@ -2743,16 +2751,39 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: 4,
       readOnly: true,
     },
-    is_complete: {
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
+    },
+    membership_period: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
+      example: 'Mar 2020 - Present',
+      readOnly: true,
+    },
+    is_long_standing_member: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+        '**[READ-ONLY]** Indicates if this membership has been held for 5 years or more.',
+      example: true,
+      readOnly: true,
+    },
+    has_membership_number: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership has a membership number documented.',
       example: true,
       readOnly: true,
     },
@@ -2779,29 +2810,6 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
-      readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
-    membership_period: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
-      example: 'Mar 2020 - Present',
-      readOnly: true,
-    },
-    is_long_standing_member: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if this membership has been held for 5 years or more.',
-      example: true,
-      readOnly: true,
-    },
-    has_membership_number: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership has a membership number documented.',
-      example: true,
       readOnly: true,
     },
   },
@@ -2957,21 +2965,11 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    experience_level: {
-      $ref: '#/components/schemas/ExperienceLevelEnum',
-    },
-    is_recent_experience: {
+    is_complete: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).',
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
       example: true,
-      readOnly: true,
-    },
-    calculated_years: {
-      type: 'number',
-      format: 'double',
-      description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
-      example: 5.46,
       readOnly: true,
     },
     duration_in_months: {
@@ -3006,11 +3004,21 @@ export const InstructorExperienceSchema = {
       example: true,
       readOnly: true,
     },
-    is_complete: {
+    experience_level: {
+      $ref: '#/components/schemas/ExperienceLevelEnum',
+    },
+    is_recent_experience: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+        '**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).',
       example: true,
+      readOnly: true,
+    },
+    calculated_years: {
+      type: 'number',
+      format: 'double',
+      description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
+      example: 5.46,
       readOnly: true,
     },
   },
@@ -3142,6 +3150,13 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     is_recent_qualification: {
       type: 'boolean',
       description:
@@ -3170,13 +3185,6 @@ export const InstructorEducationSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
       example: 2020,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3428,6 +3436,12 @@ export const InstructorDocumentSchema = {
       example: false,
       readOnly: true,
     },
+    file_size_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted file size.',
+      example: 2,
+      readOnly: true,
+    },
     days_until_expiry: {
       type: 'integer',
       format: 'int32',
@@ -3451,12 +3465,6 @@ export const InstructorDocumentSchema = {
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum',
     },
-    file_size_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted file size.',
-      example: 2,
-      readOnly: true,
-    },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
 } as const;
@@ -3479,6 +3487,231 @@ export const ApiResponseInstructorDocumentSchema = {
   },
 } as const;
 
+export const AvailabilitySlotSchema = {
+  type: 'object',
+  description:
+    'Instructor availability slot that defines when an instructor is available for teaching',
+  example: {
+    uuid: 'as123456-7890-abcd-ef01-234567890abc',
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    availability_type: 'weekly',
+    day_of_week: 1,
+    day_of_month: null,
+    specific_date: null,
+    start_time: '09:00:00',
+    end_time: '17:00:00',
+    custom_pattern: null,
+    is_available: true,
+    recurrence_interval: 1,
+    effective_start_date: '2024-09-01',
+    effective_end_date: '2024-12-31',
+    created_date: '2024-09-05T10:00:00',
+    updated_date: '2024-09-05T15:30:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Unique system identifier for the availability slot. Auto-generated by the system.',
+      example: 'as123456-7890-abcd-ef01-234567890abc',
+      readOnly: true,
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the instructor UUID for this availability slot.',
+      example: 'inst1234-5678-90ab-cdef-123456789abc',
+    },
+    availability_type: {
+      $ref: '#/components/schemas/AvailabilityTypeEnum',
+    },
+    day_of_week: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[CONDITIONAL]** Day of the week (1=Monday, 7=Sunday). Required for weekly availability type.',
+      example: 1,
+      maximum: 7,
+      minimum: 1,
+    },
+    day_of_month: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[CONDITIONAL]** Day of the month (1-31). Required for monthly availability type.',
+      example: 15,
+      maximum: 31,
+      minimum: 1,
+    },
+    specific_date: {
+      type: 'string',
+      format: 'date',
+      description:
+        '**[CONDITIONAL]** Specific date for one-time availability. Used with custom patterns.',
+      example: '2024-09-15',
+    },
+    start_time: {
+      format: 'time',
+      $ref: '#/components/schemas/LocalTime',
+      description: '**[REQUIRED]** Start time of the availability slot.',
+      example: '09:00:00',
+    },
+    end_time: {
+      format: 'time',
+      $ref: '#/components/schemas/LocalTime',
+      description: '**[REQUIRED]** End time of the availability slot.',
+      example: '17:00:00',
+    },
+    custom_pattern: {
+      type: 'string',
+      description:
+        '**[CONDITIONAL]** Custom pattern expression for complex availability rules. Required for custom availability type.',
+      example: 0,
+      maxLength: 255,
+    },
+    is_available: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).',
+      example: true,
+    },
+    recurrence_interval: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Interval for recurrence. For example, 2 means every 2 weeks for weekly type.',
+      example: 1,
+      maximum: 52,
+      minimum: 1,
+    },
+    effective_start_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Date when this availability pattern becomes effective.',
+      example: '2024-09-01',
+    },
+    effective_end_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Date when this availability pattern expires.',
+      example: '2024-12-31',
+    },
+    color_code: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Hex color code for blocked time visualization (e.g., for categorizing different types of blocked times).',
+      example: '#FF6B6B',
+      pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** Timestamp when the availability slot was first created. Automatically set by the system.',
+      example: '2024-09-05T10:00:00',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** Timestamp when the availability slot was last modified. Automatically updated by the system.',
+      example: '2024-09-05T15:30:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Email or username of the user who created this availability slot.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Email or username of the user who last modified this availability slot.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
+      example: 480,
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '8h',
+      readOnly: true,
+    },
+    time_range: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable time range.',
+      example: '09:00 - 17:00',
+      readOnly: true,
+    },
+    is_currently_active: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the availability slot is currently active based on effective dates.',
+      example: true,
+      readOnly: true,
+    },
+    availability_description: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable description of the availability pattern.',
+      example: 'Weekly on Monday',
+      readOnly: true,
+    },
+  },
+  required: ['availability_type', 'end_time', 'instructor_uuid', 'start_time'],
+} as const;
+
+export const LocalTimeSchema = {
+  type: 'object',
+  properties: {
+    hour: {
+      type: 'integer',
+      format: 'int32',
+    },
+    minute: {
+      type: 'integer',
+      format: 'int32',
+    },
+    second: {
+      type: 'integer',
+      format: 'int32',
+    },
+    nano: {
+      type: 'integer',
+      format: 'int32',
+    },
+  },
+} as const;
+
+export const ApiResponseAvailabilitySlotSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AvailabilitySlot',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const CourseSchema = {
   type: 'object',
   description:
@@ -3486,7 +3719,7 @@ export const CourseSchema = {
   example: {
     uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
     name: 'Advanced Java Programming',
-    instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
     category_uuids: [
       'c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl',
       'p1r2o3g4-5r6a-7m8m-9i10-abcdefghijkl',
@@ -3533,12 +3766,12 @@ export const CourseSchema = {
       maxLength: 255,
       minLength: 0,
     },
-    instructor_uuid: {
+    course_creator_uuid: {
       type: 'string',
       format: 'uuid',
       description:
-        "**[REQUIRED]** Reference to the instructor's UUID who created and owns this course.",
-      example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+        "**[REQUIRED]** Reference to the course creator's UUID who created and owns this course.",
+      example: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
     },
     category_uuids: {
       type: 'array',
@@ -3716,6 +3949,20 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
+    lifecycle_stage: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
+      example: 'Published and Active',
+      readOnly: true,
+    },
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      example: true,
+      readOnly: true,
+    },
     is_archived: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is archived and no longer available.',
@@ -3734,6 +3981,12 @@ export const CourseSchema = {
       example: false,
       readOnly: true,
     },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: 40,
+      readOnly: true,
+    },
     has_multiple_categories: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
@@ -3747,28 +4000,8 @@ export const CourseSchema = {
       example: 2,
       readOnly: true,
     },
-    lifecycle_stage: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
-      example: 'Published and Active',
-      readOnly: true,
-    },
-    accepts_new_enrollments: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
-      example: true,
-      readOnly: true,
-    },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: 40,
-      readOnly: true,
-    },
   },
-  required: ['duration_hours', 'duration_minutes', 'instructor_uuid', 'name', 'status'],
+  required: ['course_creator_uuid', 'duration_hours', 'duration_minutes', 'name', 'status'],
 } as const;
 
 export const ApiResponseCourseSchema = {
@@ -4457,12 +4690,6 @@ export const CourseAssessmentSchema = {
       example: 'Participation Component',
       readOnly: true,
     },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -4473,6 +4700,12 @@ export const CourseAssessmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
       example: 'Standard Contribution',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -4495,6 +4728,121 @@ export const ApiResponseCourseAssessmentSchema = {
       type: 'object',
     },
   },
+} as const;
+
+export const CourseCreatorSchema = {
+  type: 'object',
+  description: 'Course creator profile for users dedicated to educational content creation',
+  example: {
+    uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    user_uuid: 'u1s2e3r4-5a6c-7t89-0abc-defghijklmno',
+    full_name: 'Alice Johnson',
+    bio: 'Passionate content creator with expertise in designing engaging online courses. Specializes in technical training materials and interactive learning experiences.',
+    professional_headline: 'Educational Content Designer & Course Architect',
+    website: 'https://alicejohnson.com',
+    admin_verified: true,
+    created_date: '2024-09-30T10:00:00',
+    created_by: 'admin@sarafrika.com',
+    updated_date: '2024-09-30T15:30:00',
+    updated_by: 'admin@sarafrika.com',
+    is_profile_complete: true,
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Unique system identifier for the course creator profile. Auto-generated by the system.',
+      example: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+      readOnly: true,
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the base user account UUID. Links course creator profile to user authentication and personal details.',
+      example: 'u1s2e3r4-5a6c-7t89-0abc-defghijklmno',
+    },
+    full_name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Complete name of the course creator. Used in course authorship and creator profiles.',
+      example: 'Alice Johnson',
+      maxLength: 255,
+      minLength: 1,
+    },
+    bio: {
+      type: 'string',
+      description:
+        "**[OPTIONAL]** Professional biography describing course creator's background, expertise, and content creation philosophy. Used in creator profiles and course descriptions.",
+      example:
+        'Passionate content creator with expertise in designing engaging online courses. Specializes in technical training materials and interactive learning experiences.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    professional_headline: {
+      type: 'string',
+      description:
+        "**[OPTIONAL]** Professional headline or title that summarizes course creator's expertise and role. Used in search results and creator listings.",
+      example: 'Educational Content Designer & Course Architect',
+      maxLength: 500,
+      minLength: 0,
+    },
+    website: {
+      type: 'string',
+      format: 'uri',
+      description:
+        "**[OPTIONAL]** Professional website or portfolio URL. Used to showcase course creator's work and additional credentials.",
+      example: 'https://alicejohnson.com',
+      maxLength: 500,
+      minLength: 0,
+    },
+    admin_verified: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates whether the course creator has been verified by an administrator. True if verified, false if not verified.',
+      example: true,
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** Timestamp when the course creator profile was first created. Automatically set by the system.',
+      example: '2024-09-30T10:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Email or username of the user who created this course creator profile. Used for audit trails and administrative purposes.',
+      example: 'admin@sarafrika.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** Timestamp when the course creator profile was last modified. Automatically updated by the system on any changes.',
+      example: '2024-09-30T15:30:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Email or username of the user who last modified this course creator profile. Used for audit trails and administrative purposes.',
+      example: 'admin@sarafrika.com',
+      readOnly: true,
+    },
+    is_profile_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the course creator profile is considered complete. Requires bio and professional headline.',
+      example: true,
+      readOnly: true,
+    },
+  },
+  required: ['full_name', 'user_uuid'],
 } as const;
 
 export const GradingLevelSchema = {
@@ -5152,28 +5500,6 @@ export const ClassDefinitionSchema = {
   ],
 } as const;
 
-export const LocalTimeSchema = {
-  type: 'object',
-  properties: {
-    hour: {
-      type: 'integer',
-      format: 'int32',
-    },
-    minute: {
-      type: 'integer',
-      format: 'int32',
-    },
-    second: {
-      type: 'integer',
-      format: 'int32',
-    },
-    nano: {
-      type: 'integer',
-      format: 'int32',
-    },
-  },
-} as const;
-
 export const ApiResponseClassDefinitionSchema = {
   type: 'object',
   properties: {
@@ -5625,12 +5951,6 @@ export const CertificateSchema = {
       example: 'system',
       readOnly: true,
     },
-    grade_letter: {
-      type: 'string',
-      description: '**[READ-ONLY]** Letter grade representation of the final grade.',
-      example: 'B+',
-      readOnly: true,
-    },
     certificate_type: {
       type: 'string',
       description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
@@ -5641,6 +5961,12 @@ export const CertificateSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
       example: true,
+      readOnly: true,
+    },
+    grade_letter: {
+      type: 'string',
+      description: '**[READ-ONLY]** Letter grade representation of the final grade.',
+      example: 'B+',
       readOnly: true,
     },
     validity_status: {
@@ -5793,202 +6119,6 @@ export const ApiResponseCertificateTemplateSchema = {
     },
     data: {
       $ref: '#/components/schemas/CertificateTemplate',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
-    },
-  },
-} as const;
-
-export const AvailabilitySlotSchema = {
-  type: 'object',
-  description:
-    'Instructor availability slot that defines when an instructor is available for teaching',
-  example: {
-    uuid: 'as123456-7890-abcd-ef01-234567890abc',
-    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-    availability_type: 'weekly',
-    day_of_week: 1,
-    day_of_month: null,
-    specific_date: null,
-    start_time: '09:00:00',
-    end_time: '17:00:00',
-    custom_pattern: null,
-    is_available: true,
-    recurrence_interval: 1,
-    effective_start_date: '2024-09-01',
-    effective_end_date: '2024-12-31',
-    created_date: '2024-09-05T10:00:00',
-    updated_date: '2024-09-05T15:30:00',
-    created_by: 'instructor@sarafrika.com',
-    updated_by: 'instructor@sarafrika.com',
-  },
-  properties: {
-    uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[READ-ONLY]** Unique system identifier for the availability slot. Auto-generated by the system.',
-      example: 'as123456-7890-abcd-ef01-234567890abc',
-      readOnly: true,
-    },
-    instructor_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Reference to the instructor UUID for this availability slot.',
-      example: 'inst1234-5678-90ab-cdef-123456789abc',
-    },
-    availability_type: {
-      $ref: '#/components/schemas/AvailabilityTypeEnum',
-    },
-    day_of_week: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[CONDITIONAL]** Day of the week (1=Monday, 7=Sunday). Required for weekly availability type.',
-      example: 1,
-      maximum: 7,
-      minimum: 1,
-    },
-    day_of_month: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[CONDITIONAL]** Day of the month (1-31). Required for monthly availability type.',
-      example: 15,
-      maximum: 31,
-      minimum: 1,
-    },
-    specific_date: {
-      type: 'string',
-      format: 'date',
-      description:
-        '**[CONDITIONAL]** Specific date for one-time availability. Used with custom patterns.',
-      example: '2024-09-15',
-    },
-    start_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** Start time of the availability slot.',
-      example: '09:00:00',
-    },
-    end_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** End time of the availability slot.',
-      example: '17:00:00',
-    },
-    custom_pattern: {
-      type: 'string',
-      description:
-        '**[CONDITIONAL]** Custom pattern expression for complex availability rules. Required for custom availability type.',
-      example: 0,
-      maxLength: 255,
-    },
-    is_available: {
-      type: 'boolean',
-      description:
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).',
-      example: true,
-    },
-    recurrence_interval: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[OPTIONAL]** Interval for recurrence. For example, 2 means every 2 weeks for weekly type.',
-      example: 1,
-      maximum: 52,
-      minimum: 1,
-    },
-    effective_start_date: {
-      type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this availability pattern becomes effective.',
-      example: '2024-09-01',
-    },
-    effective_end_date: {
-      type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this availability pattern expires.',
-      example: '2024-12-31',
-    },
-    created_date: {
-      type: 'string',
-      format: 'date-time',
-      description:
-        '**[READ-ONLY]** Timestamp when the availability slot was first created. Automatically set by the system.',
-      example: '2024-09-05T10:00:00',
-      readOnly: true,
-    },
-    updated_date: {
-      type: 'string',
-      format: 'date-time',
-      description:
-        '**[READ-ONLY]** Timestamp when the availability slot was last modified. Automatically updated by the system.',
-      example: '2024-09-05T15:30:00',
-      readOnly: true,
-    },
-    created_by: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Email or username of the user who created this availability slot.',
-      example: 'instructor@sarafrika.com',
-      readOnly: true,
-    },
-    updated_by: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Email or username of the user who last modified this availability slot.',
-      example: 'instructor@sarafrika.com',
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '8h',
-      readOnly: true,
-    },
-    time_range: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable time range.',
-      example: '09:00 - 17:00',
-      readOnly: true,
-    },
-    is_currently_active: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the availability slot is currently active based on effective dates.',
-      example: true,
-      readOnly: true,
-    },
-    availability_description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the availability pattern.',
-      example: 'Weekly on Monday',
-      readOnly: true,
-    },
-  },
-  required: ['availability_type', 'end_time', 'instructor_uuid', 'start_time'],
-} as const;
-
-export const ApiResponseAvailabilitySlotSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/AvailabilitySlot',
     },
     message: {
       type: 'string',
@@ -6843,333 +6973,22 @@ export const ApiResponseSchema = {
   },
 } as const;
 
-export const WeeklyAvailabilitySlotSchema = {
+export const ApiResponseCourseCreatorSchema = {
   type: 'object',
-  description: 'Weekly recurring availability slot for instructor scheduling',
-  example: {
-    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-    day_of_week: 1,
-    start_time: '09:00:00',
-    end_time: '17:00:00',
-    is_available: true,
-    recurrence_interval: 1,
-    effective_start_date: '2024-09-01',
-    effective_end_date: '2024-12-31',
-  },
   properties: {
-    instructor_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Reference to the instructor UUID for this availability slot.',
-      example: 'inst1234-5678-90ab-cdef-123456789abc',
-    },
-    day_of_week: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[REQUIRED]** Day of the week (1=Monday, 2=Tuesday, ..., 7=Sunday).',
-      example: 1,
-      maximum: 7,
-      minimum: 1,
-    },
-    start_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** Start time of the availability slot.',
-      example: '09:00:00',
-    },
-    end_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** End time of the availability slot.',
-      example: '17:00:00',
-    },
-    is_available: {
+    success: {
       type: 'boolean',
-      description:
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).',
-      example: true,
     },
-    recurrence_interval: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[OPTIONAL]** Interval for weekly recurrence. For example, 2 means every 2 weeks.',
-      example: 1,
-      maximum: 52,
-      minimum: 1,
+    data: {
+      $ref: '#/components/schemas/CourseCreator',
     },
-    effective_start_date: {
+    message: {
       type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this weekly availability pattern becomes effective.',
-      example: '2024-09-01',
     },
-    effective_end_date: {
-      type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this weekly availability pattern expires.',
-      example: '2024-12-31',
-    },
-    description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the weekly availability.',
-      example: 'Every Monday from 09:00 to 17:00',
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
-      readOnly: true,
-    },
-    day_name: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable day name.',
-      example: 'Monday',
-      readOnly: true,
+    error: {
+      type: 'object',
     },
   },
-  required: ['day_of_week', 'end_time', 'instructor_uuid', 'start_time'],
-} as const;
-
-export const MonthlyAvailabilitySlotSchema = {
-  type: 'object',
-  description: 'Monthly recurring availability slot for instructor scheduling',
-  example: {
-    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-    day_of_month: 15,
-    start_time: '09:00:00',
-    end_time: '17:00:00',
-    is_available: true,
-    recurrence_interval: 1,
-    effective_start_date: '2024-09-01',
-    effective_end_date: '2024-12-31',
-  },
-  properties: {
-    instructor_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Reference to the instructor UUID for this availability slot.',
-      example: 'inst1234-5678-90ab-cdef-123456789abc',
-    },
-    day_of_month: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[REQUIRED]** Day of the month (1-31) when the instructor is available.',
-      example: 15,
-      maximum: 31,
-      minimum: 1,
-    },
-    start_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** Start time of the availability slot.',
-      example: '09:00:00',
-    },
-    end_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** End time of the availability slot.',
-      example: '17:00:00',
-    },
-    is_available: {
-      type: 'boolean',
-      description:
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).',
-      example: true,
-    },
-    recurrence_interval: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[OPTIONAL]** Interval for monthly recurrence. For example, 2 means every 2 months.',
-      example: 1,
-      maximum: 12,
-      minimum: 1,
-    },
-    effective_start_date: {
-      type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this monthly availability pattern becomes effective.',
-      example: '2024-09-01',
-    },
-    effective_end_date: {
-      type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this monthly availability pattern expires.',
-      example: '2024-12-31',
-    },
-    description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the monthly availability.',
-      example: 'Every month on the 15th from 09:00 to 17:00',
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
-      readOnly: true,
-    },
-  },
-  required: ['day_of_month', 'end_time', 'instructor_uuid', 'start_time'],
-} as const;
-
-export const DailyAvailabilitySlotSchema = {
-  type: 'object',
-  description: 'Daily recurring availability slot for instructor scheduling',
-  example: {
-    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-    start_time: '09:00:00',
-    end_time: '17:00:00',
-    is_available: true,
-    recurrence_interval: 1,
-    effective_start_date: '2024-09-01',
-    effective_end_date: '2024-12-31',
-  },
-  properties: {
-    instructor_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Reference to the instructor UUID for this availability slot.',
-      example: 'inst1234-5678-90ab-cdef-123456789abc',
-    },
-    start_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** Start time of the daily availability slot.',
-      example: '09:00:00',
-    },
-    end_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** End time of the daily availability slot.',
-      example: '17:00:00',
-    },
-    is_available: {
-      type: 'boolean',
-      description:
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).',
-      example: true,
-    },
-    recurrence_interval: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[OPTIONAL]** Interval for daily recurrence. For example, 2 means every 2 days.',
-      example: 1,
-      maximum: 365,
-      minimum: 1,
-    },
-    effective_start_date: {
-      type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this daily availability pattern becomes effective.',
-      example: '2024-09-01',
-    },
-    effective_end_date: {
-      type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this daily availability pattern expires.',
-      example: '2024-12-31',
-    },
-    description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the daily availability.',
-      example: 'Every day from 09:00 to 17:00',
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
-      readOnly: true,
-    },
-  },
-  required: ['end_time', 'instructor_uuid', 'start_time'],
-} as const;
-
-export const CustomAvailabilitySlotSchema = {
-  type: 'object',
-  description: 'Custom availability slot with complex scheduling patterns',
-  example: {
-    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
-    custom_pattern: '0 0 9 ? * MON-FRI',
-    start_time: '09:00:00',
-    end_time: '17:00:00',
-    is_available: true,
-    effective_start_date: '2024-09-01',
-    effective_end_date: '2024-12-31',
-  },
-  properties: {
-    instructor_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[REQUIRED]** Reference to the instructor UUID for this availability slot.',
-      example: 'inst1234-5678-90ab-cdef-123456789abc',
-    },
-    custom_pattern: {
-      type: 'string',
-      description:
-        '**[REQUIRED]** Custom pattern expression for complex availability rules. Supports cron-like expressions.',
-      example: 0,
-      maxLength: 255,
-      minLength: 0,
-    },
-    start_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** Start time of the availability slot.',
-      example: '09:00:00',
-    },
-    end_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** End time of the availability slot.',
-      example: '17:00:00',
-    },
-    is_available: {
-      type: 'boolean',
-      description:
-        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).',
-      example: true,
-    },
-    effective_start_date: {
-      type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this custom availability pattern becomes effective.',
-      example: '2024-09-01',
-    },
-    effective_end_date: {
-      type: 'string',
-      format: 'date',
-      description: '**[OPTIONAL]** Date when this custom availability pattern expires.',
-      example: '2024-12-31',
-    },
-    description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the custom availability pattern.',
-      example: 'Custom pattern (0 0 9 ? * MON-FRI) from 09:00 to 17:00',
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
-      readOnly: true,
-    },
-    pattern_description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Simplified description for common cron patterns.',
-      example: 'Weekdays (Monday to Friday)',
-      readOnly: true,
-    },
-  },
-  required: ['custom_pattern', 'end_time', 'instructor_uuid', 'start_time'],
 } as const;
 
 export const ApiResponseAssignmentSubmissionSchema = {
@@ -7341,6 +7160,12 @@ export const AssignmentSubmissionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_graded: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
+      example: true,
+      readOnly: true,
+    },
     submission_category: {
       type: 'string',
       description:
@@ -7367,14 +7192,35 @@ export const AssignmentSubmissionSchema = {
       example: 2,
       readOnly: true,
     },
-    is_graded: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
-      example: true,
-      readOnly: true,
-    },
   },
   required: ['assignment_uuid', 'enrollment_uuid', 'status'],
+} as const;
+
+export const AdminDomainAssignmentRequestSchema = {
+  type: 'object',
+  description: 'Admin domain assignment request containing domain type, reason, and effective date',
+  properties: {
+    domain_name: {
+      $ref: '#/components/schemas/SchemaEnum2',
+    },
+    assignment_type: {
+      $ref: '#/components/schemas/AssignmentTypeEnum',
+    },
+    reason: {
+      type: 'string',
+      description: 'Reason for assigning admin privileges',
+      example: 'Promoted to system administrator role',
+      maxLength: 500,
+      minLength: 0,
+    },
+    effective_date: {
+      type: 'string',
+      format: 'date',
+      description: 'Effective date for the admin assignment',
+      example: '2024-12-01',
+    },
+  },
+  required: ['assignment_type', 'domain_name'],
 } as const;
 
 export const PageableSchema = {
@@ -8191,12 +8037,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -8213,6 +8053,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
       readOnly: true,
     },
   },
@@ -8473,6 +8319,12 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
+      readOnly: true,
+    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
@@ -8491,12 +8343,6 @@ export const ProgramEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed program with final grade of 87.25',
-      readOnly: true,
-    },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
       readOnly: true,
     },
   },
@@ -8944,6 +8790,27 @@ export const ApiResponseListInstructorDocumentSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/InstructorDocument',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseListAvailabilitySlotSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AvailabilitySlot',
       },
     },
     message: {
@@ -9511,6 +9378,12 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
+      readOnly: true,
+    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
@@ -9529,12 +9402,6 @@ export const CourseEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed with final grade of 85.50',
-      readOnly: true,
-    },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
       readOnly: true,
     },
   },
@@ -9771,6 +9638,42 @@ export const PagedDTOCourseCategoryMappingSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/CourseCategoryMapping',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreator',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOCourseCreatorSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreator',
       },
     },
     metadata: {
@@ -10031,27 +9934,6 @@ export const ApiResponseListCertificateSchema = {
   },
 } as const;
 
-export const ApiResponseListAvailabilitySlotSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/AvailabilitySlot',
-      },
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
-    },
-  },
-} as const;
-
 export const ApiResponsePagedDTOAssignmentSchema = {
   type: 'object',
   properties: {
@@ -10141,6 +10023,175 @@ export const PagedDTOAssignmentSubmissionSchema = {
     },
     links: {
       $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const AdminDashboardStatsSchema = {
+  type: 'object',
+  description: 'Comprehensive statistics for the admin dashboard',
+  properties: {
+    timestamp: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Timestamp when statistics were generated',
+    },
+    overall_health: {
+      type: 'string',
+      description: 'Overall system health status',
+    },
+    user_metrics: {
+      $ref: '#/components/schemas/UserMetrics',
+      description: 'User-related metrics',
+    },
+    organization_metrics: {
+      $ref: '#/components/schemas/OrganizationMetrics',
+      description: 'Organization-related metrics',
+    },
+    content_metrics: {
+      $ref: '#/components/schemas/ContentMetrics',
+      description: 'Content-related metrics',
+    },
+    system_performance: {
+      $ref: '#/components/schemas/SystemPerformance',
+      description: 'System performance metrics',
+    },
+    admin_metrics: {
+      $ref: '#/components/schemas/AdminMetrics',
+      description: 'Admin-specific metrics',
+    },
+  },
+} as const;
+
+export const AdminMetricsSchema = {
+  type: 'object',
+  description: 'Admin-specific metrics',
+  properties: {
+    total_admins: {
+      type: 'integer',
+      format: 'int64',
+    },
+    active_admin_sessions: {
+      type: 'integer',
+      format: 'int64',
+    },
+    admin_actions_today: {
+      type: 'integer',
+      format: 'int64',
+    },
+    system_admins: {
+      type: 'integer',
+      format: 'int64',
+    },
+    organization_admins: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const ApiResponseAdminDashboardStatsSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AdminDashboardStats',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ContentMetricsSchema = {
+  type: 'object',
+  description: 'Content metrics for dashboard',
+  properties: {
+    total_courses: {
+      type: 'integer',
+      format: 'int64',
+    },
+    pending_moderation: {
+      type: 'integer',
+      format: 'int64',
+    },
+    reported_content: {
+      type: 'integer',
+      format: 'int64',
+    },
+    average_quality_score: {
+      type: 'number',
+      format: 'double',
+    },
+  },
+} as const;
+
+export const OrganizationMetricsSchema = {
+  type: 'object',
+  description: 'Organization metrics for dashboard',
+  properties: {
+    total_organizations: {
+      type: 'integer',
+      format: 'int64',
+    },
+    pending_approvals: {
+      type: 'integer',
+      format: 'int64',
+    },
+    active_organizations: {
+      type: 'integer',
+      format: 'int64',
+    },
+    suspended_organizations: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const SystemPerformanceSchema = {
+  type: 'object',
+  description: 'System performance metrics',
+  properties: {
+    server_uptime: {
+      type: 'string',
+    },
+    average_response_time: {
+      type: 'string',
+    },
+    error_rate: {
+      type: 'string',
+    },
+    storage_usage: {
+      type: 'string',
+    },
+  },
+} as const;
+
+export const UserMetricsSchema = {
+  type: 'object',
+  description: 'User metrics for dashboard',
+  properties: {
+    total_users: {
+      type: 'integer',
+      format: 'int64',
+    },
+    active_users_24h: {
+      type: 'integer',
+      format: 'int64',
+    },
+    new_registrations_7d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    suspended_accounts: {
+      type: 'integer',
+      format: 'int64',
     },
   },
 } as const;
@@ -10243,6 +10294,11 @@ export const SchemaEnumSchema = {
   enum: ['draft', 'in_review', 'published', 'archived'],
 } as const;
 
+export const SchemaEnum2Schema = {
+  type: 'string',
+  enum: ['admin', 'organisation_user'],
+} as const;
+
 export const GenderEnumSchema = {
   type: 'string',
   description:
@@ -10287,6 +10343,14 @@ export const ProficiencyLevelEnumSchema = {
   example: 'EXPERT',
 } as const;
 
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
+  readOnly: true,
+} as const;
+
 export const OrganizationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organization type based on name keywords.',
@@ -10299,14 +10363,6 @@ export const OrganizationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
-  readOnly: true,
-} as const;
-
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
   readOnly: true,
 } as const;
 
@@ -10343,6 +10399,13 @@ export const VerificationStatusEnumSchema = {
   readOnly: true,
 } as const;
 
+export const AvailabilityTypeEnumSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Type of availability pattern.',
+  enum: ['daily', 'weekly', 'monthly', 'custom'],
+  example: 'weekly',
+} as const;
+
 export const LocationTypeEnumSchema = {
   type: 'string',
   description: '**[REQUIRED]** Default delivery format for the class.',
@@ -10370,13 +10433,6 @@ export const TemplateTypeEnumSchema = {
   description: '**[REQUIRED]** Type of certificate this template is designed for.',
   enum: ['COURSE_COMPLETION', 'PARTICIPATION', 'ACHIEVEMENT', 'CUSTOM'],
   example: 'COURSE_COMPLETION',
-} as const;
-
-export const AvailabilityTypeEnumSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Type of availability pattern.',
-  enum: ['daily', 'weekly', 'monthly', 'custom'],
-  example: 'weekly',
 } as const;
 
 export const DomainNameEnumSchema = {
@@ -10413,6 +10469,13 @@ export const StatusEnum6Schema = {
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
   example: 'GRADED',
+} as const;
+
+export const AssignmentTypeEnumSchema = {
+  type: 'string',
+  description: 'Type of assignment - global or organization-specific',
+  enum: ['global', 'organization'],
+  example: 'global',
 } as const;
 
 export const StatusEnum7Schema = {

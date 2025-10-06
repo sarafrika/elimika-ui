@@ -33,6 +33,8 @@ import type {
   UpdateInstructorExperienceResponse,
   UpdateInstructorEducationResponse,
   UpdateInstructorDocumentResponse,
+  GetAvailabilitySlotResponse,
+  UpdateAvailabilitySlotResponse,
   GetCourseByUuidResponse,
   UpdateCourseResponse,
   SetPrimaryRubricResponse,
@@ -42,6 +44,8 @@ import type {
   UpdateCourseLessonResponse,
   UpdateLessonContentResponse,
   UpdateCourseAssessmentResponse,
+  GetCourseCreatorByUuidResponse,
+  UpdateCourseCreatorResponse,
   UpdateGradingLevelResponse,
   UpdateDifficultyLevelResponse,
   UpdateContentTypeResponse,
@@ -56,8 +60,6 @@ import type {
   GetCertificateByUuidResponse,
   UpdateCertificateResponse,
   UpdateCertificateTemplateResponse,
-  GetInstructorAvailabilitySlotResponse,
-  UpdateInstructorAvailabilitySlotResponse,
   GetAssignmentByUuidResponse,
   UpdateAssignmentResponse,
   AcceptInvitationResponse,
@@ -112,6 +114,7 @@ import type {
   GetInstructorDocumentsResponse,
   AddInstructorDocumentResponse,
   VerifyDocumentResponse,
+  CreateAvailabilitySlotResponse,
   EnrollStudentResponse,
   GetAllCoursesResponse,
   CreateCourseResponse,
@@ -131,6 +134,10 @@ import type {
   AddLessonContentResponse,
   GetCourseAssessmentsResponse,
   AddCourseAssessmentResponse,
+  GetAllCourseCreatorsResponse,
+  CreateCourseCreatorResponse,
+  VerifyCourseCreatorResponse,
+  UnverifyCourseCreatorResponse,
   GetAllGradingLevelsResponse,
   CreateGradingLevelResponse,
   GetAllDifficultyLevelsResponse,
@@ -148,12 +155,16 @@ import type {
   CreateCertificateTemplateResponse,
   GenerateProgramCertificateResponse,
   GenerateCourseCertificateResponse,
-  CreateInstructorAvailabilitySlotResponse,
   GetAllAssignmentsResponse,
   CreateAssignmentResponse,
   SubmitAssignmentResponse,
   ReturnSubmissionResponse,
   GradeSubmissionResponse,
+  AssignAdminDomainResponse,
+  VerifyOrganisationResponse,
+  UnverifyOrganisationResponse,
+  VerifyInstructorResponse,
+  UnverifyInstructorResponse,
   GetAllUsersResponse,
   GetInvitationsSentByUserResponse,
   GetPendingInvitationsForUserResponse,
@@ -200,6 +211,10 @@ import type {
   GetInvitationByTokenResponse,
   PreviewInvitationResponse,
   GetPendingInvitationsForEmailResponse,
+  GetInstructorAvailabilityResponse,
+  SearchAvailabilityResponse,
+  GetAvailabilityForDateResponse,
+  FindAvailableSlotsResponse,
   SearchSkillsResponse,
   SearchInstructorsResponse,
   SearchMembershipsResponse,
@@ -225,6 +240,10 @@ import type {
   SearchCategoryMappingsResponse,
   SearchAssessmentsResponse,
   GetActiveCoursesResponse,
+  GetVerifiedCourseCreatorsResponse,
+  GetUnverifiedCourseCreatorsResponse,
+  SearchCourseCreatorsResponse,
+  CountCourseCreatorsByVerificationStatusResponse,
   SearchContentTypesResponse,
   GetMediaContentTypesResponse,
   GetSubCategoriesResponse,
@@ -244,16 +263,17 @@ import type {
   GetProgramCertificates1Response,
   GetCertificateByNumberResponse,
   GetCourseCertificatesResponse,
-  GetInstructorAvailabilityResponse,
-  FindInstructorAvailableSlotsResponse,
-  GetInstructorAvailabilityForDateResponse,
-  GetInstructorBlockedSlotsResponse,
-  GetInstructorAvailableSlotsResponse,
   GetAssignmentSubmissionsResponse,
   GetHighPerformanceSubmissionsResponse,
   SearchSubmissionsResponse,
   SearchAssignmentsResponse,
   GetPendingGradingResponse,
+  GetSystemAdminUsersResponse,
+  GetOrganizationAdminUsersResponse,
+  GetAdminEligibleUsersResponse,
+  GetAdminUsersResponse,
+  GetDashboardStatisticsResponse,
+  RemoveAdminDomainResponse,
 } from './types.gen';
 
 const userOrganisationAffiliationDtoSchemaResponseTransformer = (data: any) => {
@@ -863,6 +883,49 @@ export const updateInstructorDocumentResponseTransformer = async (
   return data;
 };
 
+const availabilitySlotSchemaResponseTransformer = (data: any) => {
+  if (data.specific_date) {
+    data.specific_date = new Date(data.specific_date);
+  }
+  if (data.effective_start_date) {
+    data.effective_start_date = new Date(data.effective_start_date);
+  }
+  if (data.effective_end_date) {
+    data.effective_end_date = new Date(data.effective_end_date);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  if (data.duration_minutes) {
+    data.duration_minutes = BigInt(data.duration_minutes.toString());
+  }
+  return data;
+};
+
+const apiResponseAvailabilitySlotSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = availabilitySlotSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAvailabilitySlotResponseTransformer = async (
+  data: any
+): Promise<GetAvailabilitySlotResponse> => {
+  data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateAvailabilitySlotResponseTransformer = async (
+  data: any
+): Promise<UpdateAvailabilitySlotResponse> => {
+  data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
+  return data;
+};
+
 const courseSchemaResponseTransformer = (data: any) => {
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
@@ -1029,6 +1092,30 @@ export const updateCourseAssessmentResponseTransformer = async (
   data: any
 ): Promise<UpdateCourseAssessmentResponse> => {
   data = apiResponseCourseAssessmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseCreatorSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+export const getCourseCreatorByUuidResponseTransformer = async (
+  data: any
+): Promise<GetCourseCreatorByUuidResponse> => {
+  data = courseCreatorSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateCourseCreatorResponseTransformer = async (
+  data: any
+): Promise<UpdateCourseCreatorResponse> => {
+  data = courseCreatorSchemaResponseTransformer(data);
   return data;
 };
 
@@ -1294,49 +1381,6 @@ export const updateCertificateTemplateResponseTransformer = async (
   data: any
 ): Promise<UpdateCertificateTemplateResponse> => {
   data = apiResponseCertificateTemplateSchemaResponseTransformer(data);
-  return data;
-};
-
-const availabilitySlotSchemaResponseTransformer = (data: any) => {
-  if (data.specific_date) {
-    data.specific_date = new Date(data.specific_date);
-  }
-  if (data.effective_start_date) {
-    data.effective_start_date = new Date(data.effective_start_date);
-  }
-  if (data.effective_end_date) {
-    data.effective_end_date = new Date(data.effective_end_date);
-  }
-  if (data.created_date) {
-    data.created_date = new Date(data.created_date);
-  }
-  if (data.updated_date) {
-    data.updated_date = new Date(data.updated_date);
-  }
-  if (data.duration_minutes) {
-    data.duration_minutes = BigInt(data.duration_minutes.toString());
-  }
-  return data;
-};
-
-const apiResponseAvailabilitySlotSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = availabilitySlotSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const getInstructorAvailabilitySlotResponseTransformer = async (
-  data: any
-): Promise<GetInstructorAvailabilitySlotResponse> => {
-  data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
-export const updateInstructorAvailabilitySlotResponseTransformer = async (
-  data: any
-): Promise<UpdateInstructorAvailabilitySlotResponse> => {
-  data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2117,6 +2161,13 @@ export const verifyDocumentResponseTransformer = async (
   return data;
 };
 
+export const createAvailabilitySlotResponseTransformer = async (
+  data: any
+): Promise<CreateAvailabilitySlotResponse> => {
+  data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
+  return data;
+};
+
 const enrollmentSchemaResponseTransformer = (data: any) => {
   if (data.attendance_marked_at) {
     data.attendance_marked_at = new Date(data.attendance_marked_at);
@@ -2372,6 +2423,53 @@ export const addCourseAssessmentResponseTransformer = async (
   return data;
 };
 
+const pagedDtoCourseCreatorSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseCreatorSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseCreatorSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseCreatorSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAllCourseCreatorsResponseTransformer = async (
+  data: any
+): Promise<GetAllCourseCreatorsResponse> => {
+  data = apiResponsePagedDtoCourseCreatorSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createCourseCreatorResponseTransformer = async (
+  data: any
+): Promise<CreateCourseCreatorResponse> => {
+  data = courseCreatorSchemaResponseTransformer(data);
+  return data;
+};
+
+export const verifyCourseCreatorResponseTransformer = async (
+  data: any
+): Promise<VerifyCourseCreatorResponse> => {
+  data = courseCreatorSchemaResponseTransformer(data);
+  return data;
+};
+
+export const unverifyCourseCreatorResponseTransformer = async (
+  data: any
+): Promise<UnverifyCourseCreatorResponse> => {
+  data = courseCreatorSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoGradingLevelSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -2595,13 +2693,6 @@ export const generateCourseCertificateResponseTransformer = async (
   return data;
 };
 
-export const createInstructorAvailabilitySlotResponseTransformer = async (
-  data: any
-): Promise<CreateInstructorAvailabilitySlotResponse> => {
-  data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
 const pagedDtoAssignmentSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -2676,6 +2767,48 @@ export const gradeSubmissionResponseTransformer = async (
   data: any
 ): Promise<GradeSubmissionResponse> => {
   data = apiResponseAssignmentSubmissionSchemaResponseTransformer(data);
+  return data;
+};
+
+export const assignAdminDomainResponseTransformer = async (
+  data: any
+): Promise<AssignAdminDomainResponse> => {
+  data = apiResponseUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const verifyOrganisationResponseTransformer = async (
+  data: any
+): Promise<VerifyOrganisationResponse> => {
+  data = apiResponseOrganisationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const unverifyOrganisationResponseTransformer = async (
+  data: any
+): Promise<UnverifyOrganisationResponse> => {
+  data = apiResponseOrganisationSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseInstructorSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = instructorSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const verifyInstructorResponseTransformer = async (
+  data: any
+): Promise<VerifyInstructorResponse> => {
+  data = apiResponseInstructorSchemaResponseTransformer(data);
+  return data;
+};
+
+export const unverifyInstructorResponseTransformer = async (
+  data: any
+): Promise<UnverifyInstructorResponse> => {
+  data = apiResponseInstructorSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3158,6 +3291,43 @@ export const getPendingInvitationsForEmailResponseTransformer = async (
   return data;
 };
 
+const apiResponseListAvailabilitySlotSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return availabilitySlotSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getInstructorAvailabilityResponseTransformer = async (
+  data: any
+): Promise<GetInstructorAvailabilityResponse> => {
+  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
+  return data;
+};
+
+export const searchAvailabilityResponseTransformer = async (
+  data: any
+): Promise<SearchAvailabilityResponse> => {
+  data = pageSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getAvailabilityForDateResponseTransformer = async (
+  data: any
+): Promise<GetAvailabilityForDateResponse> => {
+  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
+  return data;
+};
+
+export const findAvailableSlotsResponseTransformer = async (
+  data: any
+): Promise<FindAvailableSlotsResponse> => {
+  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
+  return data;
+};
+
 export const searchSkillsResponseTransformer = async (data: any): Promise<SearchSkillsResponse> => {
   data = apiResponsePagedDtoInstructorSkillSchemaResponseTransformer(data);
   return data;
@@ -3502,6 +3672,34 @@ export const getActiveCoursesResponseTransformer = async (
   return data;
 };
 
+export const getVerifiedCourseCreatorsResponseTransformer = async (
+  data: any
+): Promise<GetVerifiedCourseCreatorsResponse> => {
+  data = apiResponsePagedDtoCourseCreatorSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getUnverifiedCourseCreatorsResponseTransformer = async (
+  data: any
+): Promise<GetUnverifiedCourseCreatorsResponse> => {
+  data = apiResponsePagedDtoCourseCreatorSchemaResponseTransformer(data);
+  return data;
+};
+
+export const searchCourseCreatorsResponseTransformer = async (
+  data: any
+): Promise<SearchCourseCreatorsResponse> => {
+  data = pageSchemaResponseTransformer(data);
+  return data;
+};
+
+export const countCourseCreatorsByVerificationStatusResponseTransformer = async (
+  data: any
+): Promise<CountCourseCreatorsByVerificationStatusResponse> => {
+  data = apiResponseLongSchemaResponseTransformer(data);
+  return data;
+};
+
 export const searchContentTypesResponseTransformer = async (
   data: any
 ): Promise<SearchContentTypesResponse> => {
@@ -3671,50 +3869,6 @@ export const getCourseCertificatesResponseTransformer = async (
   return data;
 };
 
-const apiResponseListAvailabilitySlotSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = data.data.map((item: any) => {
-      return availabilitySlotSchemaResponseTransformer(item);
-    });
-  }
-  return data;
-};
-
-export const getInstructorAvailabilityResponseTransformer = async (
-  data: any
-): Promise<GetInstructorAvailabilityResponse> => {
-  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
-export const findInstructorAvailableSlotsResponseTransformer = async (
-  data: any
-): Promise<FindInstructorAvailableSlotsResponse> => {
-  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getInstructorAvailabilityForDateResponseTransformer = async (
-  data: any
-): Promise<GetInstructorAvailabilityForDateResponse> => {
-  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getInstructorBlockedSlotsResponseTransformer = async (
-  data: any
-): Promise<GetInstructorBlockedSlotsResponse> => {
-  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getInstructorAvailableSlotsResponseTransformer = async (
-  data: any
-): Promise<GetInstructorAvailableSlotsResponse> => {
-  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
 const apiResponseListAssignmentSubmissionSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = data.data.map((item: any) => {
@@ -3775,5 +3929,139 @@ export const getPendingGradingResponseTransformer = async (
   data: any
 ): Promise<GetPendingGradingResponse> => {
   data = apiResponseListAssignmentSubmissionSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getSystemAdminUsersResponseTransformer = async (
+  data: any
+): Promise<GetSystemAdminUsersResponse> => {
+  data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getOrganizationAdminUsersResponseTransformer = async (
+  data: any
+): Promise<GetOrganizationAdminUsersResponse> => {
+  data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getAdminEligibleUsersResponseTransformer = async (
+  data: any
+): Promise<GetAdminEligibleUsersResponse> => {
+  data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getAdminUsersResponseTransformer = async (
+  data: any
+): Promise<GetAdminUsersResponse> => {
+  data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
+  return data;
+};
+
+const userMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.total_users) {
+    data.total_users = BigInt(data.total_users.toString());
+  }
+  if (data.active_users_24h) {
+    data.active_users_24h = BigInt(data.active_users_24h.toString());
+  }
+  if (data.new_registrations_7d) {
+    data.new_registrations_7d = BigInt(data.new_registrations_7d.toString());
+  }
+  if (data.suspended_accounts) {
+    data.suspended_accounts = BigInt(data.suspended_accounts.toString());
+  }
+  return data;
+};
+
+const organizationMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.total_organizations) {
+    data.total_organizations = BigInt(data.total_organizations.toString());
+  }
+  if (data.pending_approvals) {
+    data.pending_approvals = BigInt(data.pending_approvals.toString());
+  }
+  if (data.active_organizations) {
+    data.active_organizations = BigInt(data.active_organizations.toString());
+  }
+  if (data.suspended_organizations) {
+    data.suspended_organizations = BigInt(data.suspended_organizations.toString());
+  }
+  return data;
+};
+
+const contentMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.total_courses) {
+    data.total_courses = BigInt(data.total_courses.toString());
+  }
+  if (data.pending_moderation) {
+    data.pending_moderation = BigInt(data.pending_moderation.toString());
+  }
+  if (data.reported_content) {
+    data.reported_content = BigInt(data.reported_content.toString());
+  }
+  return data;
+};
+
+const adminMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.total_admins) {
+    data.total_admins = BigInt(data.total_admins.toString());
+  }
+  if (data.active_admin_sessions) {
+    data.active_admin_sessions = BigInt(data.active_admin_sessions.toString());
+  }
+  if (data.admin_actions_today) {
+    data.admin_actions_today = BigInt(data.admin_actions_today.toString());
+  }
+  if (data.system_admins) {
+    data.system_admins = BigInt(data.system_admins.toString());
+  }
+  if (data.organization_admins) {
+    data.organization_admins = BigInt(data.organization_admins.toString());
+  }
+  return data;
+};
+
+const adminDashboardStatsSchemaResponseTransformer = (data: any) => {
+  if (data.timestamp) {
+    data.timestamp = new Date(data.timestamp);
+  }
+  if (data.user_metrics) {
+    data.user_metrics = userMetricsSchemaResponseTransformer(data.user_metrics);
+  }
+  if (data.organization_metrics) {
+    data.organization_metrics = organizationMetricsSchemaResponseTransformer(
+      data.organization_metrics
+    );
+  }
+  if (data.content_metrics) {
+    data.content_metrics = contentMetricsSchemaResponseTransformer(data.content_metrics);
+  }
+  if (data.admin_metrics) {
+    data.admin_metrics = adminMetricsSchemaResponseTransformer(data.admin_metrics);
+  }
+  return data;
+};
+
+const apiResponseAdminDashboardStatsSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = adminDashboardStatsSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getDashboardStatisticsResponseTransformer = async (
+  data: any
+): Promise<GetDashboardStatisticsResponse> => {
+  data = apiResponseAdminDashboardStatsSchemaResponseTransformer(data);
+  return data;
+};
+
+export const removeAdminDomainResponseTransformer = async (
+  data: any
+): Promise<RemoveAdminDomainResponse> => {
+  data = apiResponseUserSchemaResponseTransformer(data);
   return data;
 };

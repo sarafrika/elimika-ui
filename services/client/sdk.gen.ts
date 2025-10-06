@@ -166,6 +166,15 @@ import type {
   UpdateInstructorDocumentData,
   UpdateInstructorDocumentResponses,
   UpdateInstructorDocumentErrors,
+  DeleteAvailabilitySlotData,
+  DeleteAvailabilitySlotResponses,
+  DeleteAvailabilitySlotErrors,
+  GetAvailabilitySlotData,
+  GetAvailabilitySlotResponses,
+  GetAvailabilitySlotErrors,
+  UpdateAvailabilitySlotData,
+  UpdateAvailabilitySlotResponses,
+  UpdateAvailabilitySlotErrors,
   DeleteCourseData,
   DeleteCourseResponses,
   DeleteCourseErrors,
@@ -208,6 +217,15 @@ import type {
   UpdateCourseAssessmentData,
   UpdateCourseAssessmentResponses,
   UpdateCourseAssessmentErrors,
+  DeleteCourseCreatorData,
+  DeleteCourseCreatorResponses,
+  DeleteCourseCreatorErrors,
+  GetCourseCreatorByUuidData,
+  GetCourseCreatorByUuidResponses,
+  GetCourseCreatorByUuidErrors,
+  UpdateCourseCreatorData,
+  UpdateCourseCreatorResponses,
+  UpdateCourseCreatorErrors,
   DeleteGradingLevelData,
   DeleteGradingLevelResponses,
   DeleteGradingLevelErrors,
@@ -277,15 +295,6 @@ import type {
   UpdateCertificateTemplateData,
   UpdateCertificateTemplateResponses,
   UpdateCertificateTemplateErrors,
-  DeleteInstructorAvailabilitySlotData,
-  DeleteInstructorAvailabilitySlotResponses,
-  DeleteInstructorAvailabilitySlotErrors,
-  GetInstructorAvailabilitySlotData,
-  GetInstructorAvailabilitySlotResponses,
-  GetInstructorAvailabilitySlotErrors,
-  UpdateInstructorAvailabilitySlotData,
-  UpdateInstructorAvailabilitySlotResponses,
-  UpdateInstructorAvailabilitySlotErrors,
   DeleteAssignmentData,
   DeleteAssignmentResponses,
   DeleteAssignmentErrors,
@@ -484,6 +493,15 @@ import type {
   VerifyDocumentData,
   VerifyDocumentResponses,
   VerifyDocumentErrors,
+  CreateAvailabilitySlotData,
+  CreateAvailabilitySlotResponses,
+  CreateAvailabilitySlotErrors,
+  SetAvailabilityPatternsData,
+  SetAvailabilityPatternsResponses,
+  SetAvailabilityPatternsErrors,
+  BlockTimeData,
+  BlockTimeResponses,
+  BlockTimeErrors,
   EnrollStudentData,
   EnrollStudentResponses,
   EnrollStudentErrors,
@@ -544,6 +562,18 @@ import type {
   AddCourseAssessmentData,
   AddCourseAssessmentResponses,
   AddCourseAssessmentErrors,
+  GetAllCourseCreatorsData,
+  GetAllCourseCreatorsResponses,
+  GetAllCourseCreatorsErrors,
+  CreateCourseCreatorData,
+  CreateCourseCreatorResponses,
+  CreateCourseCreatorErrors,
+  VerifyCourseCreatorData,
+  VerifyCourseCreatorResponses,
+  VerifyCourseCreatorErrors,
+  UnverifyCourseCreatorData,
+  UnverifyCourseCreatorResponses,
+  UnverifyCourseCreatorErrors,
   GetAllGradingLevelsData,
   GetAllGradingLevelsResponses,
   GetAllGradingLevelsErrors,
@@ -601,24 +631,6 @@ import type {
   GenerateCourseCertificateData,
   GenerateCourseCertificateResponses,
   GenerateCourseCertificateErrors,
-  CreateInstructorAvailabilitySlotData,
-  CreateInstructorAvailabilitySlotResponses,
-  CreateInstructorAvailabilitySlotErrors,
-  SetInstructorWeeklyAvailabilityData,
-  SetInstructorWeeklyAvailabilityResponses,
-  SetInstructorWeeklyAvailabilityErrors,
-  SetInstructorMonthlyAvailabilityData,
-  SetInstructorMonthlyAvailabilityResponses,
-  SetInstructorMonthlyAvailabilityErrors,
-  SetInstructorDailyAvailabilityData,
-  SetInstructorDailyAvailabilityResponses,
-  SetInstructorDailyAvailabilityErrors,
-  SetInstructorCustomAvailabilityData,
-  SetInstructorCustomAvailabilityResponses,
-  SetInstructorCustomAvailabilityErrors,
-  BlockInstructorTimeData,
-  BlockInstructorTimeResponses,
-  BlockInstructorTimeErrors,
   GetAllAssignmentsData,
   GetAllAssignmentsResponses,
   GetAllAssignmentsErrors,
@@ -634,6 +646,21 @@ import type {
   GradeSubmissionData,
   GradeSubmissionResponses,
   GradeSubmissionErrors,
+  AssignAdminDomainData,
+  AssignAdminDomainResponses,
+  AssignAdminDomainErrors,
+  VerifyOrganisationData,
+  VerifyOrganisationResponses,
+  VerifyOrganisationErrors,
+  UnverifyOrganisationData,
+  UnverifyOrganisationResponses,
+  UnverifyOrganisationErrors,
+  VerifyInstructorData,
+  VerifyInstructorResponses,
+  VerifyInstructorErrors,
+  UnverifyInstructorData,
+  UnverifyInstructorResponses,
+  UnverifyInstructorErrors,
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusResponses,
   UpdateScheduledInstanceStatusErrors,
@@ -817,6 +844,24 @@ import type {
   GetPendingInvitationsForEmailData,
   GetPendingInvitationsForEmailResponses,
   GetPendingInvitationsForEmailErrors,
+  ClearInstructorAvailabilityData,
+  ClearInstructorAvailabilityResponses,
+  ClearInstructorAvailabilityErrors,
+  GetInstructorAvailabilityData,
+  GetInstructorAvailabilityResponses,
+  GetInstructorAvailabilityErrors,
+  SearchAvailabilityData,
+  SearchAvailabilityResponses,
+  SearchAvailabilityErrors,
+  GetAvailabilityForDateData,
+  GetAvailabilityForDateResponses,
+  GetAvailabilityForDateErrors,
+  CheckAvailabilityData,
+  CheckAvailabilityResponses,
+  CheckAvailabilityErrors,
+  FindAvailableSlotsData,
+  FindAvailableSlotsResponses,
+  FindAvailableSlotsErrors,
   SearchSkillsData,
   SearchSkillsResponses,
   SearchSkillsErrors,
@@ -913,6 +958,21 @@ import type {
   GetActiveCoursesData,
   GetActiveCoursesResponses,
   GetActiveCoursesErrors,
+  IsCourseCreatorVerifiedData,
+  IsCourseCreatorVerifiedResponses,
+  IsCourseCreatorVerifiedErrors,
+  GetVerifiedCourseCreatorsData,
+  GetVerifiedCourseCreatorsResponses,
+  GetVerifiedCourseCreatorsErrors,
+  GetUnverifiedCourseCreatorsData,
+  GetUnverifiedCourseCreatorsResponses,
+  GetUnverifiedCourseCreatorsErrors,
+  SearchCourseCreatorsData,
+  SearchCourseCreatorsResponses,
+  SearchCourseCreatorsErrors,
+  CountCourseCreatorsByVerificationStatusData,
+  CountCourseCreatorsByVerificationStatusResponses,
+  CountCourseCreatorsByVerificationStatusErrors,
   SearchContentTypesData,
   SearchContentTypesResponses,
   SearchContentTypesErrors,
@@ -976,27 +1036,6 @@ import type {
   GetCourseCertificatesData,
   GetCourseCertificatesResponses,
   GetCourseCertificatesErrors,
-  ClearInstructorAvailabilityData,
-  ClearInstructorAvailabilityResponses,
-  ClearInstructorAvailabilityErrors,
-  GetInstructorAvailabilityData,
-  GetInstructorAvailabilityResponses,
-  GetInstructorAvailabilityErrors,
-  FindInstructorAvailableSlotsData,
-  FindInstructorAvailableSlotsResponses,
-  FindInstructorAvailableSlotsErrors,
-  GetInstructorAvailabilityForDateData,
-  GetInstructorAvailabilityForDateResponses,
-  GetInstructorAvailabilityForDateErrors,
-  CheckInstructorAvailabilityData,
-  CheckInstructorAvailabilityResponses,
-  CheckInstructorAvailabilityErrors,
-  GetInstructorBlockedSlotsData,
-  GetInstructorBlockedSlotsResponses,
-  GetInstructorBlockedSlotsErrors,
-  GetInstructorAvailableSlotsData,
-  GetInstructorAvailableSlotsResponses,
-  GetInstructorAvailableSlotsErrors,
   GetAssignmentSubmissionsData,
   GetAssignmentSubmissionsResponses,
   GetAssignmentSubmissionsErrors,
@@ -1018,6 +1057,33 @@ import type {
   GetPendingGradingData,
   GetPendingGradingResponses,
   GetPendingGradingErrors,
+  IsUserSystemAdminData,
+  IsUserSystemAdminResponses,
+  IsUserSystemAdminErrors,
+  IsUserAdminData,
+  IsUserAdminResponses,
+  IsUserAdminErrors,
+  GetSystemAdminUsersData,
+  GetSystemAdminUsersResponses,
+  GetSystemAdminUsersErrors,
+  GetOrganizationAdminUsersData,
+  GetOrganizationAdminUsersResponses,
+  GetOrganizationAdminUsersErrors,
+  GetAdminEligibleUsersData,
+  GetAdminEligibleUsersResponses,
+  GetAdminEligibleUsersErrors,
+  GetAdminUsersData,
+  GetAdminUsersResponses,
+  GetAdminUsersErrors,
+  IsOrganisationVerifiedData,
+  IsOrganisationVerifiedResponses,
+  IsOrganisationVerifiedErrors,
+  IsInstructorVerifiedData,
+  IsInstructorVerifiedResponses,
+  IsInstructorVerifiedErrors,
+  GetDashboardStatisticsData,
+  GetDashboardStatisticsResponses,
+  GetDashboardStatisticsErrors,
   CancelInvitationData,
   CancelInvitationResponses,
   CancelInvitationErrors,
@@ -1033,6 +1099,9 @@ import type {
   RemoveCategoryFromCourseData,
   RemoveCategoryFromCourseResponses,
   RemoveCategoryFromCourseErrors,
+  RemoveAdminDomainData,
+  RemoveAdminDomainResponses,
+  RemoveAdminDomainErrors,
 } from './types.gen';
 import { client as _heyApiClient } from './client.gen';
 import {
@@ -1068,6 +1137,8 @@ import {
   updateInstructorExperienceResponseTransformer,
   updateInstructorEducationResponseTransformer,
   updateInstructorDocumentResponseTransformer,
+  getAvailabilitySlotResponseTransformer,
+  updateAvailabilitySlotResponseTransformer,
   getCourseByUuidResponseTransformer,
   updateCourseResponseTransformer,
   setPrimaryRubricResponseTransformer,
@@ -1077,6 +1148,8 @@ import {
   updateCourseLessonResponseTransformer,
   updateLessonContentResponseTransformer,
   updateCourseAssessmentResponseTransformer,
+  getCourseCreatorByUuidResponseTransformer,
+  updateCourseCreatorResponseTransformer,
   updateGradingLevelResponseTransformer,
   updateDifficultyLevelResponseTransformer,
   updateContentTypeResponseTransformer,
@@ -1091,8 +1164,6 @@ import {
   getCertificateByUuidResponseTransformer,
   updateCertificateResponseTransformer,
   updateCertificateTemplateResponseTransformer,
-  getInstructorAvailabilitySlotResponseTransformer,
-  updateInstructorAvailabilitySlotResponseTransformer,
   getAssignmentByUuidResponseTransformer,
   updateAssignmentResponseTransformer,
   acceptInvitationResponseTransformer,
@@ -1147,6 +1218,7 @@ import {
   getInstructorDocumentsResponseTransformer,
   addInstructorDocumentResponseTransformer,
   verifyDocumentResponseTransformer,
+  createAvailabilitySlotResponseTransformer,
   enrollStudentResponseTransformer,
   getAllCoursesResponseTransformer,
   createCourseResponseTransformer,
@@ -1166,6 +1238,10 @@ import {
   addLessonContentResponseTransformer,
   getCourseAssessmentsResponseTransformer,
   addCourseAssessmentResponseTransformer,
+  getAllCourseCreatorsResponseTransformer,
+  createCourseCreatorResponseTransformer,
+  verifyCourseCreatorResponseTransformer,
+  unverifyCourseCreatorResponseTransformer,
   getAllGradingLevelsResponseTransformer,
   createGradingLevelResponseTransformer,
   getAllDifficultyLevelsResponseTransformer,
@@ -1183,12 +1259,16 @@ import {
   createCertificateTemplateResponseTransformer,
   generateProgramCertificateResponseTransformer,
   generateCourseCertificateResponseTransformer,
-  createInstructorAvailabilitySlotResponseTransformer,
   getAllAssignmentsResponseTransformer,
   createAssignmentResponseTransformer,
   submitAssignmentResponseTransformer,
   returnSubmissionResponseTransformer,
   gradeSubmissionResponseTransformer,
+  assignAdminDomainResponseTransformer,
+  verifyOrganisationResponseTransformer,
+  unverifyOrganisationResponseTransformer,
+  verifyInstructorResponseTransformer,
+  unverifyInstructorResponseTransformer,
   getAllUsersResponseTransformer,
   getInvitationsSentByUserResponseTransformer,
   getPendingInvitationsForUserResponseTransformer,
@@ -1235,6 +1315,10 @@ import {
   getInvitationByTokenResponseTransformer,
   previewInvitationResponseTransformer,
   getPendingInvitationsForEmailResponseTransformer,
+  getInstructorAvailabilityResponseTransformer,
+  searchAvailabilityResponseTransformer,
+  getAvailabilityForDateResponseTransformer,
+  findAvailableSlotsResponseTransformer,
   searchSkillsResponseTransformer,
   searchInstructorsResponseTransformer,
   searchMembershipsResponseTransformer,
@@ -1260,6 +1344,10 @@ import {
   searchCategoryMappingsResponseTransformer,
   searchAssessmentsResponseTransformer,
   getActiveCoursesResponseTransformer,
+  getVerifiedCourseCreatorsResponseTransformer,
+  getUnverifiedCourseCreatorsResponseTransformer,
+  searchCourseCreatorsResponseTransformer,
+  countCourseCreatorsByVerificationStatusResponseTransformer,
   searchContentTypesResponseTransformer,
   getMediaContentTypesResponseTransformer,
   getSubCategoriesResponseTransformer,
@@ -1279,16 +1367,17 @@ import {
   getProgramCertificates1ResponseTransformer,
   getCertificateByNumberResponseTransformer,
   getCourseCertificatesResponseTransformer,
-  getInstructorAvailabilityResponseTransformer,
-  findInstructorAvailableSlotsResponseTransformer,
-  getInstructorAvailabilityForDateResponseTransformer,
-  getInstructorBlockedSlotsResponseTransformer,
-  getInstructorAvailableSlotsResponseTransformer,
   getAssignmentSubmissionsResponseTransformer,
   getHighPerformanceSubmissionsResponseTransformer,
   searchSubmissionsResponseTransformer,
   searchAssignmentsResponseTransformer,
   getPendingGradingResponseTransformer,
+  getSystemAdminUsersResponseTransformer,
+  getOrganizationAdminUsersResponseTransformer,
+  getAdminEligibleUsersResponseTransformer,
+  getAdminUsersResponseTransformer,
+  getDashboardStatisticsResponseTransformer,
+  removeAdminDomainResponseTransformer,
 } from './transformers.gen';
 
 export type Options<
@@ -2844,6 +2933,93 @@ export const updateInstructorDocument = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Delete an availability slot
+ * Removes a specific availability slot
+ */
+export const deleteAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteAvailabilitySlotResponses,
+    DeleteAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/slots/{slotUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get a specific availability slot
+ * Retrieves a single availability slot by its UUID
+ */
+export const getAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<GetAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAvailabilitySlotResponses,
+    GetAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAvailabilitySlotResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/slots/{slotUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update an availability slot
+ * Updates an existing availability slot
+ */
+export const updateAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateAvailabilitySlotResponses,
+    UpdateAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateAvailabilitySlotResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/slots/{slotUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete course
  * Permanently removes a course, its category associations, and all associated data.
  */
@@ -2915,6 +3091,8 @@ export const getCourseByUuid = <ThrowOnError extends boolean = false>(
  * - To add categories, include existing + new category UUIDs
  * - To remove all categories, provide an empty array
  * - Changes to categories are applied atomically
+ *
+ * **Authorization:** Only the course owner can update the course.
  *
  */
 export const updateCourse = <ThrowOnError extends boolean = false>(
@@ -3286,6 +3464,93 @@ export const updateCourseAssessment = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete a course creator
+ * Removes a course creator profile from the system. This will cascade delete associated data.
+ */
+export const deleteCourseCreator = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorResponses,
+    DeleteCourseCreatorErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get course creator by UUID
+ * Fetches a course creator profile by their unique identifier.
+ */
+export const getCourseCreatorByUuid = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorByUuidData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorByUuidResponses,
+    GetCourseCreatorByUuidErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorByUuidResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a course creator
+ * Updates an existing course creator profile. Only allows updating mutable fields like bio, professional headline, and website.
+ */
+export const updateCourseCreator = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorResponses,
+    UpdateCourseCreatorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{uuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -3944,90 +4209,6 @@ export const updateCertificateTemplate = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/certificates/templates/{templateUuid}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Delete an availability slot
- */
-export const deleteInstructorAvailabilitySlot = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteInstructorAvailabilitySlotData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).delete<
-    DeleteInstructorAvailabilitySlotResponses,
-    DeleteInstructorAvailabilitySlotErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/slots/{uuid}',
-    ...options,
-  });
-};
-
-/**
- * Get an availability slot by UUID
- */
-export const getInstructorAvailabilitySlot = <ThrowOnError extends boolean = false>(
-  options: Options<GetInstructorAvailabilitySlotData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetInstructorAvailabilitySlotResponses,
-    GetInstructorAvailabilitySlotErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getInstructorAvailabilitySlotResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/slots/{uuid}',
-    ...options,
-  });
-};
-
-/**
- * Update an existing availability slot
- */
-export const updateInstructorAvailabilitySlot = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateInstructorAvailabilitySlotData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).put<
-    UpdateInstructorAvailabilitySlotResponses,
-    UpdateInstructorAvailabilitySlotErrors,
-    ThrowOnError
-  >({
-    responseTransformer: updateInstructorAvailabilitySlotResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/slots/{uuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -6008,6 +6189,121 @@ export const verifyDocument = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Create a new availability slot
+ * Creates a single availability slot for an instructor
+ */
+export const createAvailabilitySlot = <ThrowOnError extends boolean = false>(
+  options: Options<CreateAvailabilitySlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateAvailabilitySlotResponses,
+    CreateAvailabilitySlotErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createAvailabilitySlotResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/slots',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Set availability patterns
+ * Sets recurring availability patterns for an instructor.
+ *
+ * Supports multiple pattern types:
+ * - **weekly**: Patterns based on day of week (Monday-Sunday)
+ * - **daily**: Patterns that repeat daily
+ * - **monthly**: Patterns based on day of month (1-31)
+ * - **custom**: Custom recurring patterns with specific rules
+ *
+ * The pattern type is determined by the request body structure.
+ * Use the appropriate DTO for the pattern type you want to set.
+ *
+ * Examples:
+ * - Weekly: Set availability every Monday and Wednesday 9am-5pm
+ * - Daily: Set availability every day 2pm-4pm
+ * - Monthly: Set availability on the 1st and 15th of every month
+ * - Custom: Set availability with custom recurrence rules
+ *
+ */
+export const setAvailabilityPatterns = <ThrowOnError extends boolean = false>(
+  options: Options<SetAvailabilityPatternsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SetAvailabilityPatternsResponses,
+    SetAvailabilityPatternsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/patterns',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Block time for an instructor
+ * Blocks a specific time period for an instructor, making them unavailable.
+ *
+ * This creates availability slots with isAvailable = false, which override
+ * any existing availability patterns for that time period.
+ *
+ * You can optionally provide a color code (hex format) to categorize and
+ * visually distinguish different types of blocked times on the frontend.
+ *
+ * Common use cases:
+ * - Marking vacation time (e.g., color_code: "#FF6B6B" - red)
+ * - Blocking time for meetings (e.g., color_code: "#FFD93D" - yellow)
+ * - Indicating sick leave (e.g., color_code: "#FFA07A" - orange)
+ * - Personal time off (e.g., color_code: "#95E1D3" - teal)
+ *
+ */
+export const blockTime = <ThrowOnError extends boolean = false>(
+  options: Options<BlockTimeData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<BlockTimeResponses, BlockTimeErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/block',
+    ...options,
+  });
+};
+
+/**
  * Enroll a student in a scheduled class instance
  */
 export const enrollStudent = <ThrowOnError extends boolean = false>(
@@ -6713,6 +7009,122 @@ export const addCourseAssessment = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get all course creators
+ * Fetches a paginated list of all course creator profiles in the system.
+ */
+export const getAllCourseCreators = <ThrowOnError extends boolean = false>(
+  options: Options<GetAllCourseCreatorsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAllCourseCreatorsResponses,
+    GetAllCourseCreatorsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAllCourseCreatorsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators',
+    ...options,
+  });
+};
+
+/**
+ * Create a new course creator
+ * Saves a new course creator profile in the system. The course creator will be unverified by default and require admin verification.
+ */
+export const createCourseCreator = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCourseCreatorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateCourseCreatorResponses,
+    CreateCourseCreatorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createCourseCreatorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Verify a course creator
+ * Marks a course creator as verified by an administrator. Only system admins can perform this operation.
+ */
+export const verifyCourseCreator = <ThrowOnError extends boolean = false>(
+  options: Options<VerifyCourseCreatorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    VerifyCourseCreatorResponses,
+    VerifyCourseCreatorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: verifyCourseCreatorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{uuid}/verify',
+    ...options,
+  });
+};
+
+/**
+ * Unverify a course creator
+ * Removes verification status from a course creator. Only system admins can perform this operation.
+ */
+export const unverifyCourseCreator = <ThrowOnError extends boolean = false>(
+  options: Options<UnverifyCourseCreatorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UnverifyCourseCreatorResponses,
+    UnverifyCourseCreatorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: unverifyCourseCreatorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{uuid}/unverify',
+    ...options,
+  });
+};
+
+/**
  * Get all grading levels
  * Retrieves paginated list of all grading levels.
  */
@@ -7277,183 +7689,6 @@ export const generateCourseCertificate = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create a new availability slot
- */
-export const createInstructorAvailabilitySlot = <ThrowOnError extends boolean = false>(
-  options: Options<CreateInstructorAvailabilitySlotData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    CreateInstructorAvailabilitySlotResponses,
-    CreateInstructorAvailabilitySlotErrors,
-    ThrowOnError
-  >({
-    responseTransformer: createInstructorAvailabilitySlotResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Set weekly availability patterns for an instructor
- */
-export const setInstructorWeeklyAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<SetInstructorWeeklyAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    SetInstructorWeeklyAvailabilityResponses,
-    SetInstructorWeeklyAvailabilityErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/weekly',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Set monthly availability patterns for an instructor
- */
-export const setInstructorMonthlyAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<SetInstructorMonthlyAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    SetInstructorMonthlyAvailabilityResponses,
-    SetInstructorMonthlyAvailabilityErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/monthly',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Set daily availability patterns for an instructor
- */
-export const setInstructorDailyAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<SetInstructorDailyAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    SetInstructorDailyAvailabilityResponses,
-    SetInstructorDailyAvailabilityErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/daily',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Set custom availability patterns for an instructor
- */
-export const setInstructorCustomAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<SetInstructorCustomAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    SetInstructorCustomAvailabilityResponses,
-    SetInstructorCustomAvailabilityErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/custom',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Block time for an instructor
- */
-export const blockInstructorTime = <ThrowOnError extends boolean = false>(
-  options: Options<BlockInstructorTimeData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    BlockInstructorTimeResponses,
-    BlockInstructorTimeErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/block',
-    ...options,
-  });
-};
-
-/**
  * Get all assignments
  * Retrieves paginated list of all assignments with filtering support.
  */
@@ -7593,6 +7828,150 @@ export const gradeSubmission = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/assignments/{assignmentUuid}/submissions/{submissionUuid}/grade',
+    ...options,
+  });
+};
+
+/**
+ * Assign admin domain to user
+ * Assigns admin domain privileges to a user. This grants the user administrative access either globally (system admin) or within specific organizational contexts. Only existing system administrators can perform this operation.
+ */
+export const assignAdminDomain = <ThrowOnError extends boolean = false>(
+  options: Options<AssignAdminDomainData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AssignAdminDomainResponses,
+    AssignAdminDomainErrors,
+    ThrowOnError
+  >({
+    responseTransformer: assignAdminDomainResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/{uuid}/domains',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Verify an organization
+ * Verifies/approves an organization by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified organizations gain access to additional platform features and display verification badges.
+ */
+export const verifyOrganisation = <ThrowOnError extends boolean = false>(
+  options: Options<VerifyOrganisationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    VerifyOrganisationResponses,
+    VerifyOrganisationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: verifyOrganisationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/organizations/{uuid}/verify',
+    ...options,
+  });
+};
+
+/**
+ * Remove verification from an organization
+ * Removes verification from an organization by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
+ */
+export const unverifyOrganisation = <ThrowOnError extends boolean = false>(
+  options: Options<UnverifyOrganisationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UnverifyOrganisationResponses,
+    UnverifyOrganisationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: unverifyOrganisationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/organizations/{uuid}/unverify',
+    ...options,
+  });
+};
+
+/**
+ * Verify an instructor
+ * Verifies/approves an instructor by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified instructors gain access to additional platform features and display verification badges.
+ */
+export const verifyInstructor = <ThrowOnError extends boolean = false>(
+  options: Options<VerifyInstructorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    VerifyInstructorResponses,
+    VerifyInstructorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: verifyInstructorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/instructors/{uuid}/verify',
+    ...options,
+  });
+};
+
+/**
+ * Remove verification from an instructor
+ * Removes verification from an instructor by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
+ */
+export const unverifyInstructor = <ThrowOnError extends boolean = false>(
+  options: Options<UnverifyInstructorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UnverifyInstructorResponses,
+    UnverifyInstructorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: unverifyInstructorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/instructors/{uuid}/unverify',
     ...options,
   });
 };
@@ -9211,7 +9590,17 @@ export const getBranchUsersByDomain = <ThrowOnError extends boolean = false>(
 
 /**
  * Search organisations
- * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting.
+ * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting. Available filters include:
+ * - `name` - Filter by organisation name (partial match)
+ * - `active` - Filter by active status (true/false)
+ * - `admin_verified` - Filter by verification status (true/false)
+ * - `country` - Filter by country
+ * - `location` - Filter by location
+ *
+ * Examples:
+ * - `/search?admin_verified=true` - Get verified organisations
+ * - `/search?admin_verified=false` - Get unverified organisations
+ * - `/search?active=true&admin_verified=true` - Get active verified organisations
  */
 export const search2 = <ThrowOnError extends boolean = false>(
   options: Options<Search2Data, ThrowOnError>
@@ -9352,6 +9741,218 @@ export const getPendingInvitationsForEmail = <ThrowOnError extends boolean = fal
       },
     ],
     url: '/api/v1/invitations/pending',
+    ...options,
+  });
+};
+
+/**
+ * Clear all availability for an instructor
+ * Removes all availability slots and patterns for an instructor. Use with caution.
+ */
+export const clearInstructorAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<ClearInstructorAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    ClearInstructorAvailabilityResponses,
+    ClearInstructorAvailabilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability',
+    ...options,
+  });
+};
+
+/**
+ * Get all availability for an instructor
+ * Retrieves all availability slots for a specific instructor, including all patterns and blocked times
+ */
+export const getInstructorAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorAvailabilityResponses,
+    GetInstructorAvailabilityErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorAvailabilityResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability',
+    ...options,
+  });
+};
+
+/**
+ * Search availability slots with flexible filtering
+ *  Search and filter availability slots using dynamic query parameters.
+ *
+ * **Supported filter operators:**
+ * - `_eq` - equals (e.g., `is_available=true`)
+ * - `_ne` or `_noteq` - not equals (e.g., `availability_type_ne=DAILY`)
+ * - `_like` - contains (for strings, e.g., `custom_pattern_like=BLOCK`)
+ * - `_gt` - greater than (e.g., `day_of_week_gt=3`)
+ * - `_gte` - greater than or equal (e.g., `start_time_gte=09:00:00`)
+ * - `_lt` - less than (e.g., `day_of_month_lt=15`)
+ * - `_lte` - less than or equal (e.g., `end_time_lte=17:00:00`)
+ * - `_in` - in list (comma-separated, e.g., `availability_type_in=WEEKLY,MONTHLY`)
+ *
+ * **Example queries:**
+ * - Get all available slots: `?is_available=true`
+ * - Get blocked times: `?is_available=false`
+ * - Get weekly patterns for Monday: `?availability_type=WEEKLY&day_of_week=1`
+ * - Get slots with specific color: `?color_code=#FF6B6B`
+ * - Get slots by date range: `?specific_date_gte=2024-01-01&specific_date_lte=2024-12-31`
+ * - Combined: `?is_available=false&color_code_like=FF6B`
+ *
+ * **Pagination:** Use standard Spring pagination parameters:
+ * - `page` - page number (0-indexed)
+ * - `size` - page size
+ * - `sort` - sorting (e.g., `start_time,asc` or `specific_date,desc`)
+ *
+ * **Examples:**
+ * - `/search?is_available=true&page=0&size=20&sort=start_time,asc`
+ * - `/search?availability_type_in=WEEKLY,MONTHLY&day_of_week_gte=1&day_of_week_lte=5`
+ * - `/search?is_available=false&specific_date_gte=2024-10-01`
+ *
+ */
+export const searchAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<SearchAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchAvailabilityResponses,
+    SearchAvailabilityErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchAvailabilityResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/search',
+    ...options,
+  });
+};
+
+/**
+ * Get availability for a specific date
+ * Retrieves all availability slots (including from patterns) for an instructor on a specific date
+ */
+export const getAvailabilityForDate = <ThrowOnError extends boolean = false>(
+  options: Options<GetAvailabilityForDateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAvailabilityForDateResponses,
+    GetAvailabilityForDateErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAvailabilityForDateResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/date/{date}',
+    ...options,
+  });
+};
+
+/**
+ * Check if instructor is available during a time period
+ * Checks whether an instructor is available for the entire specified time period.
+ *
+ * Returns true only if the instructor is available for the ENTIRE duration.
+ * This considers:
+ * - All availability patterns
+ * - Blocked time slots
+ * - Existing bookings (if integrated with scheduling)
+ *
+ * Useful for validating booking requests before creating them.
+ *
+ */
+export const checkAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<CheckAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    CheckAvailabilityResponses,
+    CheckAvailabilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/check',
+    ...options,
+  });
+};
+
+/**
+ * Find available slots within a date range
+ * Finds all available time slots for an instructor within a specified date range.
+ *
+ * This is useful for scheduling systems that need to:
+ * - Show available booking slots
+ * - Find the next available time
+ * - Display a calendar of availability
+ *
+ * Only returns slots where isAvailable = true (excludes blocked times).
+ *
+ */
+export const findAvailableSlots = <ThrowOnError extends boolean = false>(
+  options: Options<FindAvailableSlotsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    FindAvailableSlotsResponses,
+    FindAvailableSlotsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: findAvailableSlotsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/available',
     ...options,
   });
 };
@@ -10455,6 +11056,179 @@ export const getActiveCourses = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Check if course creator is verified
+ * Returns the verification status of a course creator.
+ */
+export const isCourseCreatorVerified = <ThrowOnError extends boolean = false>(
+  options: Options<IsCourseCreatorVerifiedData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    IsCourseCreatorVerifiedResponses,
+    IsCourseCreatorVerifiedErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{uuid}/verification-status',
+    ...options,
+  });
+};
+
+/**
+ * Get verified course creators
+ * Fetches a paginated list of all verified course creators.
+ */
+export const getVerifiedCourseCreators = <ThrowOnError extends boolean = false>(
+  options: Options<GetVerifiedCourseCreatorsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetVerifiedCourseCreatorsResponses,
+    GetVerifiedCourseCreatorsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getVerifiedCourseCreatorsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/verified',
+    ...options,
+  });
+};
+
+/**
+ * Get unverified course creators
+ * Fetches a paginated list of all unverified course creators pending admin review.
+ */
+export const getUnverifiedCourseCreators = <ThrowOnError extends boolean = false>(
+  options: Options<GetUnverifiedCourseCreatorsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetUnverifiedCourseCreatorsResponses,
+    GetUnverifiedCourseCreatorsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getUnverifiedCourseCreatorsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/unverified',
+    ...options,
+  });
+};
+
+/**
+ * Search course creators
+ *  Search for course creators using flexible criteria with advanced operators.
+ *
+ * **Basic Search:**
+ * - `field=value` - Exact match (default operation)
+ * - `fullName=John` - Find course creators with fullName exactly "John"
+ *
+ * **Comparison Operators:**
+ * - `field_gt=value` - Greater than
+ * - `field_lt=value` - Less than
+ * - `field_gte=value` - Greater than or equal
+ * - `field_lte=value` - Less than or equal
+ * - `createdDate_gte=2024-01-01T00:00:00` - Created after Jan 1, 2024
+ *
+ * **String Operations:**
+ * - `field_like=value` - Contains (case-insensitive)
+ * - `field_startswith=value` - Starts with (case-insensitive)
+ * - `field_endswith=value` - Ends with (case-insensitive)
+ * - `fullName_like=alice` - Full name contains "alice"
+ *
+ * **Boolean Operations:**
+ * - `adminVerified=true` - Only verified course creators
+ * - `adminVerified=false` - Only unverified course creators
+ *
+ * **List Operations:**
+ * - `field_in=val1,val2,val3` - Field is in list
+ * - `field_notin=val1,val2` - Field is not in list
+ *
+ * **Negation:**
+ * - `field_noteq=value` - Not equal to value
+ *
+ * **Examples:**
+ * - `/search?fullName_like=john&adminVerified=true`
+ * - `/search?createdDate_gte=2024-01-01T00:00:00`
+ * - `/search?professionalHeadline_like=content`
+ *
+ */
+export const searchCourseCreators = <ThrowOnError extends boolean = false>(
+  options: Options<SearchCourseCreatorsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchCourseCreatorsResponses,
+    SearchCourseCreatorsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchCourseCreatorsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/search',
+    ...options,
+  });
+};
+
+/**
+ * Get course creator count by verification status
+ * Returns the total count of course creators filtered by verification status.
+ */
+export const countCourseCreatorsByVerificationStatus = <ThrowOnError extends boolean = false>(
+  options: Options<CountCourseCreatorsByVerificationStatusData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    CountCourseCreatorsByVerificationStatusResponses,
+    CountCourseCreatorsByVerificationStatusErrors,
+    ThrowOnError
+  >({
+    responseTransformer: countCourseCreatorsByVerificationStatusResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/count',
+    ...options,
+  });
+};
+
+/**
  * Search content types
  * Search content types with filtering options.
  *
@@ -11072,193 +11846,6 @@ export const getCourseCertificates = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Clear all availability for an instructor
- */
-export const clearInstructorAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<ClearInstructorAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).delete<
-    ClearInstructorAvailabilityResponses,
-    ClearInstructorAvailabilityErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}',
-    ...options,
-  });
-};
-
-/**
- * Get all availability for an instructor
- */
-export const getInstructorAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<GetInstructorAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetInstructorAvailabilityResponses,
-    GetInstructorAvailabilityErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getInstructorAvailabilityResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}',
-    ...options,
-  });
-};
-
-/**
- * Find available slots for an instructor within a date range
- */
-export const findInstructorAvailableSlots = <ThrowOnError extends boolean = false>(
-  options: Options<FindInstructorAvailableSlotsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    FindInstructorAvailableSlotsResponses,
-    FindInstructorAvailableSlotsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: findInstructorAvailableSlotsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/find-available',
-    ...options,
-  });
-};
-
-/**
- * Get availability for an instructor on a specific date
- */
-export const getInstructorAvailabilityForDate = <ThrowOnError extends boolean = false>(
-  options: Options<GetInstructorAvailabilityForDateData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetInstructorAvailabilityForDateResponses,
-    GetInstructorAvailabilityForDateErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getInstructorAvailabilityForDateResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/date/{date}',
-    ...options,
-  });
-};
-
-/**
- * Check if an instructor is available during a time period
- */
-export const checkInstructorAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<CheckInstructorAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    CheckInstructorAvailabilityResponses,
-    CheckInstructorAvailabilityErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/check',
-    ...options,
-  });
-};
-
-/**
- * Get blocked slots for an instructor on a specific date
- */
-export const getInstructorBlockedSlots = <ThrowOnError extends boolean = false>(
-  options: Options<GetInstructorBlockedSlotsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetInstructorBlockedSlotsResponses,
-    GetInstructorBlockedSlotsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getInstructorBlockedSlotsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/blocked/{date}',
-    ...options,
-  });
-};
-
-/**
- * Get available slots for an instructor on a specific date
- */
-export const getInstructorAvailableSlots = <ThrowOnError extends boolean = false>(
-  options: Options<GetInstructorAvailableSlotsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetInstructorAvailableSlotsResponses,
-    GetInstructorAvailableSlotsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getInstructorAvailableSlotsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/availability/instructors/{instructorUuid}/available/{date}',
-    ...options,
-  });
-};
-
-/**
  * Get assignment submissions
  * Retrieves all submissions for a specific assignment.
  */
@@ -11471,6 +12058,254 @@ export const getPendingGrading = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Check if user is system admin
+ * Checks whether a specific user has system administrator privileges. System admins have platform-wide administrative access.
+ */
+export const isUserSystemAdmin = <ThrowOnError extends boolean = false>(
+  options: Options<IsUserSystemAdminData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    IsUserSystemAdminResponses,
+    IsUserSystemAdminErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/{uuid}/is-system-admin',
+    ...options,
+  });
+};
+
+/**
+ * Check if user is admin
+ * Checks whether a specific user has any type of administrative privileges. Returns true if the user has either system admin or organization admin roles.
+ */
+export const isUserAdmin = <ThrowOnError extends boolean = false>(
+  options: Options<IsUserAdminData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    IsUserAdminResponses,
+    IsUserAdminErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/{uuid}/is-admin',
+    ...options,
+  });
+};
+
+/**
+ * Get system admin users
+ * Retrieves a paginated list of users with global system administrator privileges. These users have platform-wide administrative access.
+ */
+export const getSystemAdminUsers = <ThrowOnError extends boolean = false>(
+  options: Options<GetSystemAdminUsersData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetSystemAdminUsersResponses,
+    GetSystemAdminUsersErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getSystemAdminUsersResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/system-admins',
+    ...options,
+  });
+};
+
+/**
+ * Get organization admin users
+ * Retrieves a paginated list of users with organization administrator privileges. These users have administrative access within specific organizational contexts.
+ */
+export const getOrganizationAdminUsers = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganizationAdminUsersData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetOrganizationAdminUsersResponses,
+    GetOrganizationAdminUsersErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getOrganizationAdminUsersResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/organization-admins',
+    ...options,
+  });
+};
+
+/**
+ * Get users eligible for admin promotion
+ * Retrieves a paginated list of users who can be promoted to administrator roles. Excludes users who already have administrative privileges. Supports search by name or email.
+ */
+export const getAdminEligibleUsers = <ThrowOnError extends boolean = false>(
+  options: Options<GetAdminEligibleUsersData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAdminEligibleUsersResponses,
+    GetAdminEligibleUsersErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAdminEligibleUsersResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/eligible',
+    ...options,
+  });
+};
+
+/**
+ * Get all admin users
+ * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organization administrators. Supports filtering by admin level, status, and other criteria.
+ */
+export const getAdminUsers = <ThrowOnError extends boolean = false>(
+  options: Options<GetAdminUsersData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAdminUsersResponses,
+    GetAdminUsersErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAdminUsersResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/admins',
+    ...options,
+  });
+};
+
+/**
+ * Check if organization is verified
+ * Checks whether a specific organization has been verified by an admin. Returns true if the organization has admin verification status.
+ */
+export const isOrganisationVerified = <ThrowOnError extends boolean = false>(
+  options: Options<IsOrganisationVerifiedData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    IsOrganisationVerifiedResponses,
+    IsOrganisationVerifiedErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/organizations/{uuid}/verification-status',
+    ...options,
+  });
+};
+
+/**
+ * Check if instructor is verified
+ * Checks whether a specific instructor has been verified by an admin. Returns true if the instructor has admin verification status.
+ */
+export const isInstructorVerified = <ThrowOnError extends boolean = false>(
+  options: Options<IsInstructorVerifiedData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    IsInstructorVerifiedResponses,
+    IsInstructorVerifiedErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/instructors/{uuid}/verification-status',
+    ...options,
+  });
+};
+
+/**
+ * Get admin dashboard statistics
+ * Retrieves comprehensive statistics for the admin dashboard including user metrics, organization metrics, content metrics, system performance, and admin-specific data.
+ */
+export const getDashboardStatistics = <ThrowOnError extends boolean = false>(
+  options?: Options<GetDashboardStatisticsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetDashboardStatisticsResponses,
+    GetDashboardStatisticsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getDashboardStatisticsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/dashboard/statistics',
+    ...options,
+  });
+};
+
+/**
  * Cancel pending invitation
  * Cancels a pending invitation within this organization, preventing it from being accepted or declined. Only the original inviter or an organization administrator can cancel invitations. This action is irreversible and the invitation cannot be reactivated.
  */
@@ -11601,6 +12436,34 @@ export const removeCategoryFromCourse = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/categories/{categoryUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Remove admin domain from user
+ * Removes admin domain privileges from a user. This revokes the user's administrative access for the specified domain type. Only system administrators can perform this operation.
+ */
+export const removeAdminDomain = <ThrowOnError extends boolean = false>(
+  options: Options<RemoveAdminDomainData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    RemoveAdminDomainResponses,
+    RemoveAdminDomainErrors,
+    ThrowOnError
+  >({
+    responseTransformer: removeAdminDomainResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/{uuid}/domains/{domain}',
     ...options,
   });
 };

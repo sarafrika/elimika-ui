@@ -30,7 +30,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function BranchesPage() {
-  const qc = useQueryClient()
+  const qc = useQueryClient();
   const trainingCenter = useTrainingCenter();
   const [pageable, setPageable] = useState<{ page: number; size: number }>({ page: 0, size: 10 });
 
@@ -53,20 +53,23 @@ export default function BranchesPage() {
   const deleteOrgBranch = (branch_uuid: string) => {
     setDeletingBranchId(branch_uuid);
     setDeleteBranchModalOpen(true);
-  }
+  };
 
-  const deleteBranchMutation = useMutation(deleteTrainingBranchMutation())
+  const deleteBranchMutation = useMutation(deleteTrainingBranchMutation());
   const confirmDeleteOption = () => {
     if (!deletingBranchId) return;
-    deleteBranchMutation.mutate({ path: { uuid: deletingBranchId } }, {
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: ['branches'] })
-        toast.success('Training branch deleted successfully');
-        setDeleteBranchModalOpen(false);
-        setDeletingBranchId(null);
+    deleteBranchMutation.mutate(
+      { path: { uuid: deletingBranchId } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: ['branches'] });
+          toast.success('Training branch deleted successfully');
+          setDeleteBranchModalOpen(false);
+          setDeletingBranchId(null);
+        },
       }
-    })
-  }
+    );
+  };
 
   if (!trainingCenter) {
     return <CustomLoader />;
@@ -92,7 +95,7 @@ export default function BranchesPage() {
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
         {!trainingCenter.branches || trainingCenter.branches.length === 0 ? (
-          <div className='flex flex-col mt-20 items-center justify-center'>
+          <div className='mt-20 flex flex-col items-center justify-center'>
             <h3>There are no branches for this organization</h3>
             {/* If organization owner or admin show the add button */}
             <Button>Add New Branch</Button>
@@ -143,7 +146,10 @@ export default function BranchesPage() {
                           </Link>
                         </DropdownMenuCheckboxItem>
                         <DropdownMenuCheckboxItem>
-                          <div onClick={() => deleteOrgBranch(branch.uuid as string)} className='flex gap-3'>
+                          <div
+                            onClick={() => deleteOrgBranch(branch.uuid as string)}
+                            className='flex gap-3'
+                          >
                             <Trash /> <span className='text-red-500'>Delete</span>
                           </div>
                         </DropdownMenuCheckboxItem>

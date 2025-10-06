@@ -9,6 +9,7 @@ import InviteList from './InviteList';
 
 export default function InvitesPage() {
   const trainingCenter = useTrainingCenter();
+
   return (
     <div className='space-y-6 p-4 pb-16 md:py-10'>
       <div className='flex items-end justify-between'>

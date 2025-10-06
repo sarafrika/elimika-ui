@@ -1,27 +1,37 @@
 'use client';
 
+import ErrorPage from '@/components/ErrorPage';
 import { Badge } from '@/components/ui/badge';
 import { Instructor } from '@/services/api/schema';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import {
+  getAllInstructorsOptions,
+  getAllInstructorsQueryKey,
+  unverifyInstructorMutation,
+  verifyInstructorMutation,
+} from '../../../../../services/client/@tanstack/react-query.gen';
 import InstructorDetailsPanel from './InstructorDetailsPanel';
 import InstructorMobileModal from './InstructorMobileModal';
 import InstructorsList from './InstructorsList';
 
-type Props = {
-  instructors: Instructor[];
-};
-
-export default function InstructorsPage({ instructors }: Props) {
-  const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(
-    instructors[0] || null
+export default function InstructorsPage() {
+  const { data, error, isLoading } = useQuery(
+    getAllInstructorsOptions({ query: { pageable: { page: 0, size: 20, sort: ['desc'] } } })
   );
+
+  const instructors = data?.data?.content || [];
+  const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [instructorStatuses, setInstructorStatuses] = useState<Map<string, string>>(new Map());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
+  const qc = useQueryClient();
 
   // Mock status data - in real app this would come from API
   useEffect(() => {
@@ -30,32 +40,45 @@ export default function InstructorsPage({ instructors }: Props) {
     setInstructorStatuses(mockStatuses);
   }, []);
 
+  useEffect(() => {
+    if (instructors.length > 0 && !selectedInstructor) {
+      setSelectedInstructor(instructors[0] as any);
+    }
+  }, [instructors, selectedInstructor]);
+
+  const approveInstrucor = useMutation(verifyInstructorMutation());
+  const rejectInstructor = useMutation(unverifyInstructorMutation());
+
   const handleApproveInstructor = async (instructor: Instructor) => {
     try {
-      // In a real implementation, you would call an API to approve the instructor
-      // For now, we'll just update the local state
-      const newStatuses = new Map(instructorStatuses);
-      newStatuses.set(instructor.uuid!, 'approved');
-      setInstructorStatuses(newStatuses);
-
-      router.refresh();
-    } catch (error) {
-      //console.log('Error approving instructor:', error);
-    }
+      approveInstrucor.mutate(
+        { path: { uuid: instructor.uuid! }, query: { reason: '' } },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getAllInstructorsQueryKey({ query: { pageable: {} } }),
+            });
+            toast.success(data?.message);
+          },
+        }
+      );
+    } catch (error) {}
   };
 
   const handleRejectInstructor = async (instructor: Instructor) => {
     try {
-      // In a real implementation, you would call an API to reject the instructor
-      // For now, we'll just update the local state
-      const newStatuses = new Map(instructorStatuses);
-      newStatuses.set(instructor.uuid!, 'rejected');
-      setInstructorStatuses(newStatuses);
-
-      router.refresh();
-    } catch (error) {
-      //console.log('Error rejecting instructor:', error);
-    }
+      rejectInstructor.mutate(
+        { path: { uuid: instructor.uuid! }, query: { reason: '' } },
+        {
+          onSuccess: () => {
+            qc.invalidateQueries({
+              queryKey: getAllInstructorsQueryKey({ query: { pageable: {} } }),
+            });
+            toast.success(data?.message);
+          },
+        }
+      );
+    } catch (error) {}
   };
 
   const getStatusBadge = (instructorId: string) => {
@@ -117,11 +140,17 @@ export default function InstructorsPage({ instructors }: Props) {
       }
     });
 
+  if (error) {
+    return (
+      <ErrorPage message={error?.message || 'Something went wrong while fetching instructors'} />
+    );
+  }
+
   return (
     <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
       {/* Left Sidebar - Instructor List */}
       <InstructorsList
-        instructors={filteredAndSortedInstructors}
+        instructors={filteredAndSortedInstructors as any}
         selectedInstructor={selectedInstructor}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -132,6 +161,7 @@ export default function InstructorsPage({ instructors }: Props) {
         onInstructorSelect={handleInstructorSelect}
         onInstructorDelete={handleInstructorDelete}
         getStatusBadgeComponent={getStatusBadgeComponent}
+        isLoading={isLoading}
       />
 
       {/* Right Panel - Instructor Details (Desktop only) */}
@@ -140,6 +170,8 @@ export default function InstructorsPage({ instructors }: Props) {
         onApprove={handleApproveInstructor}
         onReject={handleRejectInstructor}
         getStatusBadgeComponent={getStatusBadgeComponent}
+        isApprovePending={approveInstrucor.isPending}
+        isRejectPending={rejectInstructor.isPending}
       />
 
       {/* Mobile Modal */}

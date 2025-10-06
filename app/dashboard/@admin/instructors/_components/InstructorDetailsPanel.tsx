@@ -1,7 +1,8 @@
-import React from 'react';
-import { Edit, Trash2, User } from 'lucide-react';
-import { Instructor } from '@/services/api/schema';
 import { Button } from '@/components/ui/button';
+import { Instructor } from '@/services/api/schema';
+import { Edit, Trash2, User } from 'lucide-react';
+import React from 'react';
+import Spinner from '../../../../../components/ui/spinner';
 import InstructorDetails from './InstructorDetails';
 
 interface InstructorDetailsPanelProps {
@@ -9,6 +10,8 @@ interface InstructorDetailsPanelProps {
   onApprove: (instructor: Instructor) => void;
   onReject: (instructor: Instructor) => void;
   getStatusBadgeComponent: (instructorId: string) => React.ReactElement;
+  isApprovePending: boolean;
+  isRejectPending: boolean;
 }
 
 export default function InstructorDetailsPanel({
@@ -16,6 +19,8 @@ export default function InstructorDetailsPanel({
   onApprove,
   onReject,
   getStatusBadgeComponent,
+  isApprovePending,
+  isRejectPending,
 }: InstructorDetailsPanelProps) {
   if (!instructor) {
     return (
@@ -63,14 +68,18 @@ export default function InstructorDetailsPanel({
         <div className='flex gap-3'>
           <Button
             onClick={() => onApprove(instructor)}
-            className='bg-blue-600 text-white hover:bg-blue-700'
+            className='min-w-[110px] bg-blue-600 text-white hover:bg-blue-700'
           >
             <Edit className='mr-2 h-4 w-4' />
-            Approve
+            {isApprovePending ? <Spinner /> : 'Approve/Verify'}
           </Button>
-          <Button variant='destructive' onClick={() => onReject(instructor)}>
+          <Button
+            variant='destructive'
+            onClick={() => onReject(instructor)}
+            className='min-w-[100px]'
+          >
             <Trash2 className='mr-2 h-4 w-4' />
-            Reject
+            {isRejectPending ? <Spinner /> : 'Reject/Unverify'}
           </Button>
         </div>
       </div>

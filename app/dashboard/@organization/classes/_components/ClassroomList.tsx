@@ -1,5 +1,7 @@
 'use client';
+
 import { DialogDescription, DialogTitle } from '@radix-ui/react-dialog';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../../../../components/ui/button';
 import { Card, CardContent } from '../../../../../components/ui/card';
 import {
@@ -16,9 +18,19 @@ import {
   TableHeader,
   TableRow,
 } from '../../../../../components/ui/table';
+import { useUserProfile } from '../../../../../context/profile-context';
+import { getClassDefinitionsForOrganisationOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import CreateClassroomForm from './CreateClassroomForm';
 
 export default function ClassroomList() {
+  const profile = useUserProfile();
+
+  const { data } = useQuery(
+    getClassDefinitionsForOrganisationOptions({
+      path: { organisationUuid: profile?.uuid as string },
+    })
+  );
+
   return (
     <>
       <div className='flex items-center justify-between space-y-6'>

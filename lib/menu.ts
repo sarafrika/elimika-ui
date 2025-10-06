@@ -21,7 +21,7 @@ import {
   UserCircle,
   UserCog,
   UserIcon,
-  Users
+  Users,
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -186,8 +186,8 @@ export default {
           title: 'Timetable',
           url: '/dashboard/trainings/timetable',
           icon: Calendar,
-        }
-      ]
+        },
+      ],
     },
     {
       title: 'Rubrics Management',

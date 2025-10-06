@@ -4,11 +4,7 @@ import { markActiveMenuItem, MenuItem } from '@/lib/menu';
 import { UserDomain } from '@/lib/types';
 import Link from 'next/link';
 import { useState } from 'react';
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from './ui/sidebar';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from './ui/sidebar';
 
 export function NavMain({
   items,
@@ -44,17 +40,14 @@ function MenuItemWithAccordion({ item }: { item: MenuItem }) {
       {hasChildren ? (
         <>
           {/* Toggle Button for Accordion */}
-          <SidebarMenuButton
-            isActive={item.isActive}
-            onClick={() => setIsOpen(!isOpen)}
-          >
+          <SidebarMenuButton isActive={item.isActive} onClick={() => setIsOpen(!isOpen)}>
             {item.icon && <item.icon />}
             <span>{item.title}</span>
           </SidebarMenuButton>
 
           {/* Nested Items */}
           {isOpen && (
-            <div className="ml-4">
+            <div className='ml-4'>
               {item.items!.map((child, index) => (
                 <MenuItemWithAccordion key={index} item={child} />
               ))}

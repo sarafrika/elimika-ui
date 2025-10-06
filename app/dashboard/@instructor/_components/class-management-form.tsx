@@ -388,12 +388,11 @@ function RecurrencForm({
   function normalizeInitialValues(data: any): RecurrenceFormValues {
     return {
       ...data,
-      days_of_week: typeof data.days_of_week === 'string'
-        ? data.days_of_week.split(',').map((day: any) => day.trim())
-        : [],
-      end_date: data.end_date
-        ? new Date(data.end_date).toISOString().split('T')[0]
-        : '',
+      days_of_week:
+        typeof data.days_of_week === 'string'
+          ? data.days_of_week.split(',').map((day: any) => day.trim())
+          : [],
+      end_date: data.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
     };
   }
 
@@ -420,9 +419,11 @@ function RecurrencForm({
       updateClassRecurrence.mutate(
         { path: { uuid: recurrenceId }, body: payload as any },
         {
-          onSuccess: (data) => {
+          onSuccess: data => {
             qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: recurrenceId as string } }),
+              queryKey: getClassRecurrencePatternQueryKey({
+                path: { uuid: recurrenceId as string },
+              }),
             });
             toast.success(data?.message);
             onCancel();
@@ -436,7 +437,9 @@ function RecurrencForm({
         {
           onSuccess: (data: any) => {
             qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: recurrenceId as string } }),
+              queryKey: getClassRecurrencePatternQueryKey({
+                path: { uuid: recurrenceId as string },
+              }),
             });
             toast.success(data?.message);
             onCancel();
@@ -760,7 +763,7 @@ function ScheduleForm({
 export const timetableScheduleSchema = z.object({
   start_time: z.any(), // e.g. "2024-12-31"
   end_time: z.any(), // e.g. "2024-12-31"
-  timezone: z.any()
+  timezone: z.any(),
 });
 
 export type TimetableScheduleFormValues = z.infer<typeof timetableScheduleSchema>;
@@ -772,7 +775,7 @@ function TimetableScheduleForm({
   initialValues,
   onCancel,
   className,
-  status
+  status,
 }: {
   timetableScheduleId?: string;
   onSuccess: any;
@@ -780,7 +783,7 @@ function TimetableScheduleForm({
   onCancel: () => void;
   initialValues: any;
   className: any;
-  status: StatusEnum3
+  status: StatusEnum3;
 }) {
   const form = useForm<TimetableScheduleFormValues>({
     resolver: zodResolver(timetableScheduleSchema),
@@ -797,7 +800,7 @@ function TimetableScheduleForm({
     const payload = {
       ...values,
       class_definition_uuid: classId,
-      instructor_uuid: instructor?.uuid as string
+      instructor_uuid: instructor?.uuid as string,
     };
 
     if (timetableScheduleId) {
@@ -813,8 +816,8 @@ function TimetableScheduleForm({
             onSuccess();
           },
           onError: (error: any) => {
-            toast.error(error?.message)
-          }
+            toast.error(error?.message);
+          },
         }
       );
     } else {
@@ -830,8 +833,8 @@ function TimetableScheduleForm({
             onSuccess();
           },
           onError: (error: any) => {
-            toast.error(error?.message)
-          }
+            toast.error(error?.message);
+          },
         }
       );
     }
@@ -848,8 +851,8 @@ function TimetableScheduleForm({
               <FormLabel>Start Time</FormLabel>
               <FormControl>
                 <Input
-                  type="datetime-local"
-                  step="60" // 1-minute steps; adjust as needed
+                  type='datetime-local'
+                  step='60' // 1-minute steps; adjust as needed
                   {...field}
                   onChange={e => field.onChange(e.target.value)}
                 />
@@ -867,8 +870,8 @@ function TimetableScheduleForm({
               <FormLabel>End Time</FormLabel>
               <FormControl>
                 <Input
-                  type="datetime-local"
-                  step="60" // 1-minute steps; adjust as needed
+                  type='datetime-local'
+                  step='60' // 1-minute steps; adjust as needed
                   {...field}
                   onChange={e => field.onChange(e.target.value)}
                 />
@@ -905,7 +908,9 @@ function TimetableScheduleForm({
             className='flex min-w-[120px] items-center justify-center gap-2'
             disabled={createTimetableSchedule.isPending || updateTimetableSchedule.isPending}
           >
-            {(createTimetableSchedule.isPending || updateTimetableSchedule.isPending) && <Spinner />}
+            {(createTimetableSchedule.isPending || updateTimetableSchedule.isPending) && (
+              <Spinner />
+            )}
             {initialValues ? 'Update Timetable Schedule' : 'Create Timetable Schedule'}
           </Button>
         </div>
@@ -913,7 +918,6 @@ function TimetableScheduleForm({
     </Form>
   );
 }
-
 
 interface ClassDialogProps {
   isOpen: boolean;
@@ -1051,7 +1055,6 @@ function ScheduleDialog({
   );
 }
 
-
 interface TimetableScheduleDialogProps {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
@@ -1060,7 +1063,7 @@ interface TimetableScheduleDialogProps {
   editingClassId?: string;
   initialValues?: any;
   onCancel: () => any;
-  status: StatusEnum3
+  status: StatusEnum3;
 }
 
 function TimetableScheduleDialog({
@@ -1071,7 +1074,7 @@ function TimetableScheduleDialog({
   editingClassId,
   initialValues,
   onCancel,
-  status
+  status,
 }: TimetableScheduleDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setOpen}>
@@ -1106,4 +1109,3 @@ function TimetableScheduleDialog({
 }
 
 export { ClassDialog, RecurrenceDialog, ScheduleDialog, TimetableScheduleDialog };
-

@@ -1,5 +1,4 @@
-import React from 'react';
-import { MoreVertical, Building2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -9,9 +8,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Organisation as OrganisationDto } from '@/services/api/schema';
+import { BadgeCheckIcon, Building2, MoreVertical } from 'lucide-react';
+import React from 'react';
 
 interface OrganizationCardProps {
-  organization: OrganisationDto;
+  organization: any;
   isSelected: boolean;
   onSelect: (organization: OrganisationDto) => void;
   onDelete: (organization: OrganisationDto) => void;
@@ -53,6 +54,16 @@ export default function OrganizationCard({
               <h3 className='mb-1 truncate text-sm font-medium'>{organization.name}</h3>
               <div className='flex items-center'>
                 {organization.uuid && getStatusBadgeComponent(organization.uuid)}
+                <Badge variant={organization?.admin_verified ? 'success' : 'secondary'}>
+                  {organization?.admin_verified ? (
+                    <>
+                      <BadgeCheckIcon />
+                      Verified
+                    </>
+                  ) : (
+                    'Pending'
+                  )}
+                </Badge>
               </div>
             </div>
             <p className='text-muted-foreground truncate text-xs'>{organization.domain}</p>

@@ -1,7 +1,8 @@
-import React from 'react';
-import { Edit, Trash2, Building2 } from 'lucide-react';
-import { Organisation as OrganisationDto } from '@/services/api/schema';
 import { Button } from '@/components/ui/button';
+import Spinner from '@/components/ui/spinner';
+import { Organisation as OrganisationDto } from '@/services/api/schema';
+import { Building2, Edit, Trash2 } from 'lucide-react';
+import React from 'react';
 import OrganizationDetails from './OrganizationDetails';
 
 interface OrganizationDetailsPanelProps {
@@ -9,6 +10,8 @@ interface OrganizationDetailsPanelProps {
   onApprove: (organization: OrganisationDto) => void;
   onReject: (organization: OrganisationDto) => void;
   getStatusBadgeComponent: (organizationId: string) => React.ReactElement;
+  isVerifyPending: boolean;
+  isUnverifyPending: boolean;
 }
 
 export default function OrganizationDetailsPanel({
@@ -16,6 +19,8 @@ export default function OrganizationDetailsPanel({
   onApprove,
   onReject,
   getStatusBadgeComponent,
+  isUnverifyPending,
+  isVerifyPending,
 }: OrganizationDetailsPanelProps) {
   if (!organization) {
     return (
@@ -63,13 +68,21 @@ export default function OrganizationDetailsPanel({
       {/* Action Buttons */}
       <div className='bg-background border-t p-6'>
         <div className='flex gap-3'>
-          <Button onClick={() => onApprove(organization)} variant='success'>
+          <Button
+            onClick={() => onApprove(organization)}
+            variant='success'
+            className='min-w-[120px]'
+          >
             <Edit className='mr-2 h-4 w-4' />
-            Approve
+            {isVerifyPending ? <Spinner /> : 'Approve/Verify'}
           </Button>
-          <Button variant='destructive' onClick={() => onReject(organization)}>
+          <Button
+            variant='destructive'
+            onClick={() => onReject(organization)}
+            className='min-w-[120px]'
+          >
             <Trash2 className='mr-2 h-4 w-4' />
-            Reject
+            {isUnverifyPending ? <Spinner /> : 'Reject/Unverify'}
           </Button>
         </div>
       </div>
