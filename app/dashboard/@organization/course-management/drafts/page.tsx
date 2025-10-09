@@ -1,7 +1,7 @@
 'use client';
 
 import { useInstructor } from '../../../../../context/instructor-context';
-import DraftCoursesComponent from '../../../@instructor/course-management/drafts/draftCourse-component';
+import DraftCoursesComponent from '../../../@creator/course-management/drafts/draftCourse-component';
 
 function Page() {
   const instructor = useInstructor();

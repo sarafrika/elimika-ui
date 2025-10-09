@@ -18,6 +18,7 @@ import {
   Star,
   UserCircle,
   Users,
+  WalletMinimal,
 } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
@@ -62,6 +63,11 @@ const instructorMenuItems = [
     title: 'Earnings',
     url: '/dashboard/earnings',
     icon: DollarSign,
+  },
+  {
+    title: 'Rate Card',
+    url: '/dashboard/rate-card',
+    icon: WalletMinimal,
   },
   {
     title: 'Reviews',

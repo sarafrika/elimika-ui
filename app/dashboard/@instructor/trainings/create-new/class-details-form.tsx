@@ -26,6 +26,8 @@ import { useInstructor } from '@/context/instructor-context';
 import {
   createClassDefinitionMutation,
   getAllCoursesOptions,
+  getClassDefinitionQueryKey,
+  getClassDefinitionsForInstructorQueryKey,
   getClassRecurrencePatternOptions,
   searchTrainingProgramsOptions,
   updateClassDefinitionMutation,
@@ -143,49 +145,60 @@ export default function ClassDetailsForm({
       ...values,
       course_uuid: values?.course_uuid || classData?.course_uuid,
       max_participants: values?.max_participants || classData?.max_participants,
-      location_type: values?.location_type || classData?.location_type,
+      // location_type: values?.location_type || classData?.location_type,
       recurrence_pattern_uuid: classData?.recurrence_pattern_uuid || (recurringUuid as string),
       default_instructor_uuid: instructor?.uuid as string,
+      default_start_time: '2025-10-05T10:00:00',
+      default_end_time: '2026-10-05T10:00:00',
+      location_type: 'HYBRID',
+      class_time_validy: "2 months"
     };
 
-    handleNextStep();
+    if (classId) {
+      updateAssignment.mutate(
+        { path: { uuid: classId }, body: payload as any },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getClassDefinitionsForInstructorQueryKey({
+                path: { instructorUuid: instructor?.uuid as string },
+              }),
+            });
+            qc.invalidateQueries({
+              queryKey: getClassDefinitionQueryKey({
+                path: { uuid: classId as string },
+              }),
+            });
+            toast.success(data?.message);
+            // router.push('/dashboard/trainings');
+            handleNextStep();
+          },
+          onError: (error: any) => {
+            toast.error(JSON.stringify(error?.error));
+          }
+        }
+      );
+    } else {
+      createAssignment.mutate(
+        { body: payload as any },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getClassDefinitionsForInstructorQueryKey({
+                path: { instructorUuid: instructor?.uuid as string },
+              }),
+            });
+            toast.success(data?.message);
+            // router.push('/dashboard/trainings');
+            handleNextStep();
 
-    // if (classId) {
-    //   updateAssignment.mutate(
-    //     { path: { uuid: classId }, body: payload as any },
-    //     {
-    //       onSuccess: data => {
-    //         qc.invalidateQueries({
-    //           queryKey: getClassDefinitionsForInstructorQueryKey({
-    //             path: { instructorUuid: instructor?.uuid as string },
-    //           }),
-    //         });
-    //         qc.invalidateQueries({
-    //           queryKey: getClassDefinitionQueryKey({
-    //             path: { uuid: classId as string },
-    //           }),
-    //         });
-    //         toast.success(data?.message);
-    //         router.push('/dashboard/trainings');
-    //       },
-    //     }
-    //   );
-    // } else {
-    //   createAssignment.mutate(
-    //     { body: payload as any },
-    //     {
-    //       onSuccess: data => {
-    //         qc.invalidateQueries({
-    //           queryKey: getClassDefinitionsForInstructorQueryKey({
-    //             path: { instructorUuid: instructor?.uuid as string },
-    //           }),
-    //         });
-    //         toast.success(data?.message);
-    //         router.push('/dashboard/trainings');
-    //       },
-    //     }
-    //   );
-    // }
+          },
+          onError: (error: any) => {
+            toast.error(JSON.stringify(error?.error));
+          }
+        }
+      );
+    }
   };
 
   const courseBannerMutation = tanstackClient.useMutation('post', '/api/v1/courses/{uuid}/banner');
@@ -307,7 +320,7 @@ export default function ClassDetailsForm({
                       <SelectValue placeholder='Select a course' />
                     </SelectTrigger>
                     <SelectContent className='pb-4'>
-                      <p className='py-2 pl-3'>Courses</p>
+                      <p className='py-2 pl-3'>List of courses you are auhtorized to train</p>
                       {courses?.data?.content?.map(course => (
                         <SelectItem
                           className='pb-1'
@@ -318,7 +331,7 @@ export default function ClassDetailsForm({
                         </SelectItem>
                       ))}
                       <Separator className='my-2' />
-                      <p className='py-2 pl-3'>Programs</p>
+                      <p className='py-2 pl-3'>List of programs you are auhtorized to train</p>
                       {programs?.data?.content?.map(program => (
                         <SelectItem
                           className='pb-1'
@@ -335,7 +348,7 @@ export default function ClassDetailsForm({
               )}
             />
 
-            <FormField
+            {/* <FormField
               control={form.control}
               name='organisation_uuid'
               render={({ field }) => (
@@ -356,7 +369,7 @@ export default function ClassDetailsForm({
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
 
             <FormField
               control={form.control}

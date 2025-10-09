@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { CustomPagination } from '../../../../components/pagination';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { getAllCoursesOptions } from '../../../../services/client/@tanstack/react-query.gen';
-import { CourseCard } from '../_components/course-card';
+import { CourseCard } from '../../_components/course-card';
 
 const SAMPLE_COURSES = [
   {

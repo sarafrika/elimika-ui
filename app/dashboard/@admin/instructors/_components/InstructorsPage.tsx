@@ -62,7 +62,7 @@ export default function InstructorsPage() {
           },
         }
       );
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const handleRejectInstructor = async (instructor: Instructor) => {
@@ -78,7 +78,7 @@ export default function InstructorsPage() {
           },
         }
       );
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const getStatusBadge = (instructorId: string) => {

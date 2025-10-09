@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { CourseCard } from '../_components/course-card';
+import { CourseCard } from '../../_components/course-card';
 
 const CATEGORIES = [
   { id: 'all', name: 'All Categories', icon: '📚', subcategories: [] },
@@ -114,7 +114,8 @@ export default function MyCoursesPage() {
     const matchesSearch =
       searchQuery === '' ||
       course?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      course?.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    // course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesCategory =
       selectedCategory === 'all' ||
@@ -223,6 +224,7 @@ export default function MyCoursesPage() {
             <CourseCard
               key={course.uuid}
               course={course as any}
+              isStudent={true}
               handleClick={() => router.push(`/dashboard/browse-courses/${course.uuid}`)}
             />
           ))}

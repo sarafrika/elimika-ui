@@ -5,9 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
-import { useInstructorInfo } from '@/hooks/use-instructor-info';
 import { Course } from '@/services/client';
-import { getAllDifficultyLevelsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAllDifficultyLevelsOptions, getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
 import Image from 'next/image';
@@ -16,9 +15,10 @@ import { useRouter } from 'next/navigation';
 interface CourseCardProps {
   course: Course;
   handleClick: () => void;
+  isStudent: boolean
 }
 
-export function CourseCard({ course, handleClick }: CourseCardProps) {
+export function CourseCard({ course, handleClick, isStudent }: CourseCardProps) {
   const router = useRouter();
 
   const getInitials = (name: string) => {
@@ -29,11 +29,9 @@ export function CourseCard({ course, handleClick }: CourseCardProps) {
       .toUpperCase();
   };
 
-  const { instructorInfo } = useInstructorInfo({
-    instructorUuid: course?.instructor_uuid as string,
-  });
+  const { data: creator } = useQuery(getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } }))
   // @ts-ignore
-  const instructor = instructorInfo?.data;
+  const courseCreator = creator?.data
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -136,15 +134,15 @@ export function CourseCard({ course, handleClick }: CourseCardProps) {
           </div>
 
           {/* Instructor */}
-          <div className='mb-3 flex items-center gap-2 bg-blue-200'>
-            <Avatar className='h-6 w-6'>
-              <AvatarImage src={course?.instructor_uuid} />
+          <div className='mb-3 flex items-center gap-2'>
+            <Avatar className='min-h-9 min-w-9'>
+              <AvatarImage src={course?.course_creator_uuid} />
               <AvatarFallback className='text-xs'>
-                {getInitials(instructor?.full_name) || 'XY'}
+                {getInitials(courseCreator?.full_name) || 'XY'}
               </AvatarFallback>
             </Avatar>
             <span className='text-muted-foreground text-sm'>
-              {instructor?.full_name || 'Creator Name'}
+              {courseCreator?.full_name || 'Creator Name'}
             </span>
           </div>
 
@@ -175,14 +173,15 @@ export function CourseCard({ course, handleClick }: CourseCardProps) {
             </div>
           </div>
 
-          <div className='flex justify-between gap-2 pt-4'>
-            <Button
+          <div className='flex items-end self-end justify-between gap-2 pt-4'>
+            {isStudent && <Button
               onClick={() => router.push(`/dashboard/browse-courses/instructor/123`)}
               size='sm'
               variant='outline'
             >
               Search Instructor
-            </Button>
+            </Button>}
+
             <Button size='sm'>Enroll</Button>
           </div>
         </CardContent>

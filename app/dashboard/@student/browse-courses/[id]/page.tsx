@@ -13,9 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import {
+  getAllAssignmentsOptions,
   getAllDifficultyLevelsOptions,
+  getAllQuizzesOptions,
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
+  getCourseCreatorByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -27,7 +30,7 @@ import {
   FileQuestion,
   FileText,
   ImageIcon,
-  Link,
+  Link2,
   Play,
   Star,
   Users,
@@ -36,111 +39,6 @@ import {
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-
-// Mock course data - in a real app this would come from an API
-const COURSE_DATA = {
-  id: '1',
-  title: 'Complete React Development Bootcamp',
-  subtitle: 'Build modern web applications with React, TypeScript, and Next.js',
-  description:
-    "This comprehensive course will take you from React beginner to advanced developer. You'll learn modern React patterns, TypeScript integration, state management, testing, and deployment strategies.",
-  category: 'Technology',
-  subcategory: 'Web Development',
-  instructor: {
-    name: 'John Smith',
-    title: 'Senior React Developer',
-    avatar: '',
-    bio: 'Full-stack developer with 8+ years of experience in React and modern web technologies.',
-  },
-  rating: 4.8,
-  enrolledCount: 2341,
-  duration: '40 hours',
-  difficulty: 'Intermediate',
-  price: '$89',
-  originalPrice: '$149',
-  coverImage: null,
-  promoVideo: null,
-  requirements: [
-    'Basic knowledge of HTML, CSS, and JavaScript',
-    'Understanding of ES6+ features',
-    'Node.js installed on your computer',
-  ],
-  equipment: 'Computer with internet connection, code editor (VS Code recommended)',
-  skills: [
-    {
-      id: '1',
-      title: 'React Fundamentals',
-      description: 'Learn the core concepts of React including components, JSX, and props',
-      resources: [
-        { type: 'video', title: 'Introduction to React', url: '#', duration: '45 min' },
-        { type: 'pdf', title: 'React Cheat Sheet', url: '#' },
-        { type: 'link', title: 'Official React Docs', url: 'https://react.dev' },
-      ],
-      completed: true,
-    },
-    {
-      id: '2',
-      title: 'State Management',
-      description: 'Master useState, useEffect, and other essential React hooks',
-      resources: [
-        { type: 'video', title: 'React Hooks Deep Dive', url: '#', duration: '60 min' },
-        { type: 'file', title: 'Hooks Examples', url: '#' },
-      ],
-      completed: true,
-    },
-    {
-      id: '3',
-      title: 'TypeScript Integration',
-      description: 'Add type safety to your React applications',
-      resources: [
-        { type: 'video', title: 'React + TypeScript Setup', url: '#', duration: '30 min' },
-        { type: 'pdf', title: 'TypeScript Types Reference', url: '#' },
-      ],
-      completed: false,
-    },
-  ],
-  quizzes: [
-    {
-      id: '1',
-      skillId: '1',
-      title: 'React Fundamentals Quiz',
-      questions: 10,
-      timeLimit: '15 minutes',
-    },
-    {
-      id: '2',
-      skillId: '2',
-      title: 'Hooks and State Quiz',
-      questions: 8,
-      timeLimit: '12 minutes',
-    },
-  ],
-  assignments: [
-    {
-      id: '1',
-      skillId: '1',
-      title: 'Build a Todo App',
-      description: 'Create a functional todo application using React fundamentals',
-      dueDate: '2025-01-15',
-    },
-    {
-      id: '2',
-      skillId: '2',
-      title: 'Shopping Cart with Hooks',
-      description: 'Implement a shopping cart using React hooks for state management',
-      dueDate: '2025-01-22',
-    },
-  ],
-  assessments: [
-    {
-      id: '1',
-      title: 'Final Project Assessment',
-      type: 'project',
-      description: 'Build a full-stack React application demonstrating all learned concepts',
-    },
-  ],
-};
 
 export default function CourseDetailsPage() {
   const router = useRouter();
@@ -149,13 +47,16 @@ export default function CourseDetailsPage() {
 
   const [activeTab, setActiveTab] = useState('overview');
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const course = COURSE_DATA;
 
   const { data, isFetching } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
     enabled: !!courseId,
   });
   const courseData = data?.data;
+
+  const { data: creator } = useQuery({ ...getCourseCreatorByUuidOptions({ path: { uuid: courseData?.course_creator_uuid as string } }), enabled: !!courseData?.course_creator_uuid })
+  // @ts-ignore
+  const courseCreator = creator?.data
 
   const { data: cAssesssment } = useQuery({
     ...getCourseAssessmentsOptions({
@@ -164,6 +65,14 @@ export default function CourseDetailsPage() {
     }),
     enabled: !!courseId,
   });
+
+  const { data: cAssignments } = useQuery({
+    ...getAllAssignmentsOptions({ query: { pageable: {} } })
+  })
+
+  const { data: cQuizzes } = useQuery({
+    ...getAllQuizzesOptions({ query: { pageable: {} } })
+  })
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -183,7 +92,7 @@ export default function CourseDetailsPage() {
       replaceBreadcrumbs([
         { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
         {
-          id: 'browse-courses',
+          id: 'courses',
           title: 'Browse Courses',
           url: `/dashboard/browse-courses`,
         },
@@ -195,9 +104,6 @@ export default function CourseDetailsPage() {
       ]);
     }
   }, [replaceBreadcrumbs, courseId, courseData]);
-
-  const completedSkills = course.skills.filter(skill => skill.completed).length;
-  const progressPercentage = (completedSkills / course.skills.length) * 100;
 
   const getResourceIcon = (type: string): JSX.Element => {
     switch (type) {
@@ -212,17 +118,17 @@ export default function CourseDetailsPage() {
       case 'image':
         return <ImageIcon className='h-4 w-4' />;
       case 'link':
-        return <Link className='h-4 w-4' />;
+        return <Link2 className='h-4 w-4' />;
       default:
         return <FileText className='h-4 w-4' />;
     }
   };
 
-  if (!course) {
+  if (isFetching) {
     return (
       <div className='bg-background flex min-h-screen items-center justify-center'>
         <div className='text-center'>
-          <h2>Course not found</h2>
+          <h2>Loading...</h2>
         </div>
       </div>
     );
@@ -264,12 +170,12 @@ export default function CourseDetailsPage() {
             </div>
 
             <h1 className='mb-2 text-lg font-bold'>{courseData?.name}</h1>
-            <p className='text-muted-foreground mb-4 bg-blue-200'>{course?.subtitle}</p>
+            <p className='text-muted-foreground text-[15px] italic mb-4'>{courseData?.is_free || "N/A - Subtitle/tagline"}</p>
 
             <div className='mb-4 flex items-center gap-6'>
               <div className='flex items-center gap-1'>
                 <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
-                <span className='bg-blue-200'>{course.rating}</span>
+                <span>{'N/A'}</span>
               </div>
               <div className='flex items-center gap-1'>
                 <Users className='h-4 w-4' />
@@ -282,19 +188,19 @@ export default function CourseDetailsPage() {
             </div>
 
             {/* Instructor */}
-            <div className='flex items-center gap-3 bg-blue-200'>
-              <Avatar>
-                <AvatarImage src={course.instructor.avatar} />
+            <div className='flex items-center gap-3'>
+              <Avatar className='min-w-12 min-h-12' >
+                {/* <AvatarImage src={courseData.instructor.avatar} /> */}
                 <AvatarFallback>
-                  {course.instructor.name
+                  {courseCreator?.full_name
                     .split(' ')
-                    .map(n => n[0])
+                    .map((n: any) => n[0])
                     .join('')}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p>{course.instructor.name}</p>
-                <p className='text-muted-foreground text-sm'>{course.instructor.title}</p>
+                <p>{courseCreator?.full_name}</p>
+                <p className='text-muted-foreground text-sm'>{courseCreator?.professional_headline}</p>
               </div>
             </div>
           </div>
@@ -331,20 +237,20 @@ export default function CourseDetailsPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className='space-y-3'>
+                <div className='space-y-3 flex flex-col gap-1'>
                   <Button
-                    onClick={() => {
-                      toast.message('Implement enrol here');
-                    }}
+                    onClick={() => { router.push(`/dashboard/browse-courses/enroll/${courseData?.uuid}`) }}
                     className='w-full'
                     size='lg'
                   >
                     Enroll Now
                   </Button>
+
                   <Button
-                    onClick={() => router.push(`/dashboard/browse-courses/instructor/123`)}
-                    variant='outline'
+                    onClick={() => { router.push(`/dashboard/browse-courses/instructor/${courseData?.uuid}`) }}
                     className='w-full'
+                    size='lg'
+                    variant={"outline"}
                   >
                     Search Instructor
                   </Button>
@@ -355,12 +261,13 @@ export default function CourseDetailsPage() {
                   <div className='mb-2 flex items-center justify-between'>
                     <span className='text-sm'>Course Progress</span>
                     <span className='text-sm'>
-                      {completedSkills}/{course.skills.length} skills
+                      {/* {completedSkills}/{courseData.skills.length} skills */}
+                      7/8 skills
                     </span>
                   </div>
-                  <Progress value={progressPercentage} className='mb-2' />
+                  <Progress value={25} className='mb-2' />
                   <p className='text-muted-foreground text-xs'>
-                    {Math.round(progressPercentage)}% Complete
+                    {Math.round(25)}% Complete
                   </p>
                 </div>
               </CardContent>
@@ -408,23 +315,23 @@ export default function CourseDetailsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Instructor</CardTitle>
+                <CardTitle>Course Creator</CardTitle>
               </CardHeader>
-              <CardContent className='bg-blue-200'>
+              <CardContent>
                 <div className='flex items-start gap-4'>
-                  <Avatar className='h-16 w-16'>
-                    <AvatarImage src={course.instructor.avatar} />
+                  <Avatar className='min-h-16 min-w-16'>
+                    <AvatarImage src={courseCreator?.uuid} />
                     <AvatarFallback>
-                      {course.instructor.name
+                      {courseCreator?.full_name
                         .split(' ')
-                        .map(n => n[0])
+                        .map((n: any) => n[0])
                         .join('')}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h4>{course.instructor.name}</h4>
-                    <p className='text-muted-foreground mb-2 text-sm'>{course.instructor.title}</p>
-                    <p className='text-sm'>{course.instructor.bio}</p>
+                    <h4>{courseCreator?.full_name}</h4>
+                    <p className='text-muted-foreground mb-2 text-sm'>{courseCreator?.professional_headline}</p>
+                    <p className='text-sm'>{courseCreator?.bio}</p>
                   </div>
                 </div>
               </CardContent>
@@ -445,11 +352,10 @@ export default function CourseDetailsPage() {
                 <CardHeader className='flex flex-row items-center space-y-0'>
                   <div className='flex flex-1 items-center gap-3'>
                     <div
-                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${
-                        skill?.lesson?.active
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
+                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${skill?.lesson?.active
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-muted text-muted-foreground'
+                        }`}
                     >
                       {skill?.lesson?.active ? (
                         <CheckCircle className='h-4 w-4' />
@@ -462,6 +368,10 @@ export default function CourseDetailsPage() {
                       <div className='text-muted-foreground text-sm'>
                         <HTMLTextPreview htmlContent={skill?.lesson?.description as string} />
                       </div>
+                      <p className='text-muted-foreground text-sm'>
+                        {skill?.lesson?.duration_display}
+                      </p>
+
                     </div>
                   </div>
                 </CardHeader>
@@ -475,7 +385,7 @@ export default function CourseDetailsPage() {
                       return (
                         <div
                           key={resourceIndex}
-                          className='bg-muted/20 flex items-center gap-3 rounded p-3'
+                          className='bg-muted/40 flex items-center gap-3 rounded px-3 py-4'
                         >
                           {getResourceIcon(contentTypeName)}
 
@@ -484,7 +394,7 @@ export default function CourseDetailsPage() {
                             {/* {resource.duration && (
                                                             <p className="text-xs text-muted-foreground">{resource.duration}</p>
                                                         )} */}
-                            <p className='text-muted-foreground bg-blue-200 text-xs'>2 mins</p>
+                            <p className='text-muted-foreground text-xs'>Duration: </p>
                           </div>
                           <Button size='sm' variant='outline'>
                             {contentTypeName === 'video' ? (
@@ -502,18 +412,32 @@ export default function CourseDetailsPage() {
             ))}
           </TabsContent>
 
-          <TabsContent value='quizzes' className='space-y-4 bg-red-300'>
-            <p>Sample Quiz Data</p>
+          <TabsContent value='quizzes' className='space-y-4'>
+            <p className='italic bg-red-200 text-xs'>Currently fetching all quizzes, shuold only fetch quizzes for this course</p>
 
-            {course.quizzes.map(quiz => (
-              <Card key={quiz.id}>
+            {cQuizzes?.data?.content?.length === 0 && (
+              <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
+                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <h3 className='text-lg font-semibold'>No Quiz Found</h3>
+                <p className='mt-1 text-sm'>There are no quizzes under this course.</p>
+              </div>
+            )}
+
+            {cQuizzes?.data?.content?.map(quiz => (
+              <Card key={quiz.uuid}>
                 <CardContent className='p-6'>
                   <div className='flex items-center justify-between'>
                     <div>
                       <h4>{quiz.title}</h4>
+                      <div className='text-sm mt-2 gap-1' >
+                        <p>Instructions:</p>
+                        <p>{quiz.instructions}</p>
+                      </div>
                       <div className='text-muted-foreground mt-1 flex items-center gap-4 text-sm'>
-                        <span>{quiz.questions} questions</span>
-                        <span>{quiz.timeLimit}</span>
+                        {/* <span>{quiz.questions} questions</span> */}
+                        <span>{quiz.time_limit_display}</span>
+                        <span>Attempts allowed: {quiz.attempts_allowed}</span>
+
                       </div>
                     </div>
                     <Button>Start Quiz</Button>
@@ -523,20 +447,40 @@ export default function CourseDetailsPage() {
             ))}
           </TabsContent>
 
-          <TabsContent value='assignments' className='space-y-4 bg-red-300'>
-            <p>Sample Assignment Data</p>
+          <TabsContent value='assignments' className='space-y-4'>
+            <p className='italic bg-red-200 text-xs'>Currently fetching all assignments, shuold only fetch assignments for this course</p>
 
-            {course.assignments.map(assignment => (
-              <Card key={assignment.id}>
+            {cAssignments?.data?.content?.length === 0 && (
+              <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
+                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <h3 className='text-lg font-semibold'>No Assignment Found</h3>
+                <p className='mt-1 text-sm'>There are no assignments under this course.</p>
+              </div>
+            )}
+
+            {cAssignments?.data?.content?.map(assignment => (
+              <Card key={assignment.uuid}>
                 <CardContent className='p-6'>
                   <div className='flex items-start justify-between'>
                     <div className='flex-1'>
                       <h4>{assignment.title}</h4>
-                      <p className='text-muted-foreground mt-1 mb-2 text-sm'>
-                        {assignment.description}
-                      </p>
+                      <div className='text-muted-foreground mt-1 mb-2 text-sm'>
+                        <RichTextRenderer htmlString={assignment.description as string} maxChars={100} />
+                      </div>
+                      <div className='flex flex-col text-muted-foreground mt-1 mb-2 text-sm'>
+                        <p>Instruction:</p>
+                        <RichTextRenderer htmlString={assignment.instructions as string} maxChars={100} />
+                      </div>
                       <p className='text-sm'>
-                        Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                        Due: {new Date(assignment?.due_date as any).toLocaleString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric', hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                          timeZoneName: 'short'
+                        })}
                       </p>
                     </div>
                     <Button>View Assignment</Button>
@@ -547,6 +491,14 @@ export default function CourseDetailsPage() {
           </TabsContent>
 
           <TabsContent value='assessments' className='space-y-4'>
+            {cAssesssment?.data?.content?.length === 0 && (
+              <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
+                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <h3 className='text-lg font-semibold'>No Assessment Found</h3>
+                <p className='mt-1 text-sm'>There are no assessments under this course.</p>
+              </div>
+            )}
+
             {cAssesssment?.data?.content?.map(assessment => (
               <Card key={assessment.uuid}>
                 <CardContent className='p-6'>

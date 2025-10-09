@@ -144,7 +144,7 @@ export default function StudentsPage() {
   //console.log(studentData, 'single student');
 
   return (
-    <div className='space-y-6 p-4 md:p-10'>
+    <div className='space-y-6'>
       <h2 className='text-2xl font-bold tracking-tight'>Your Students</h2>
       <Card>
         <CardHeader>

@@ -51,7 +51,7 @@ import {
   EditProgramDialog,
   ProgramFormValues,
   ProgramRequirementDialog,
-} from '../_components/program-management-form';
+} from '../../@creator/_components/program-management-form';
 
 export default function ClassesPage() {
   const queryClient = useQueryClient();

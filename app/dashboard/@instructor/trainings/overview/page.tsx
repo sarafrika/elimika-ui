@@ -1,17 +1,5 @@
 'use client';
 
-import {
-  deactivateClassDefinitionMutation,
-  getClassDefinitionsForInstructorOptions,
-  getClassDefinitionsForInstructorQueryKey,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useRouter } from 'next/navigation';
-import {
-  ClassDialog,
-  ScheduleDialog,
-  TimetableScheduleDialog,
-} from '../../_components/class-management-form';
-
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import PageLoader from '@/components/page-loader';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +14,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
+import {
+  deactivateClassDefinitionMutation,
+  getClassDefinitionsForInstructorOptions,
+  getClassDefinitionsForInstructorQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
@@ -37,9 +30,12 @@ import {
   PlusIcon,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { ClassDialog, ScheduleDialog, TimetableScheduleDialog } from '../../_components/class-management-form';
 import ClassCourseDisplay from '../component/class-course-dislay';
+
 
 export default function TrainingsPage() {
   const router = useRouter();

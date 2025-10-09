@@ -85,7 +85,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { useUserProfile } from '../../../../context/profile-context';
-import { useRubricsWithCriteriaAndScoring } from '../rubric-management/rubric-chaining';
+import { useRubricsWithCriteriaAndScoring } from '../../@instructor/rubric-management/rubric-chaining';
 
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
@@ -632,7 +632,7 @@ function LessonCreationForm({
       status: course?.status as any,
       active: course?.active,
       is_published: course?.is_published,
-      created_by: course?.instructor_uuid,
+      created_by: course?.course_creator_uuid,
       lesson_number: values?.number,
       lesson_sequence: `Lesson ${values?.number}`,
     };
@@ -879,7 +879,7 @@ function LessonEditingForm({
       status: courseData?.data?.status,
       active: courseData?.data?.active,
       is_published: courseData?.data?.is_published,
-      created_by: courseData?.data?.instructor_uuid,
+      created_by: courseData?.data?.course_creator_uuid,
       lesson_number: values?.number,
       lesson_sequence: `Lesson ${values?.number}`,
     };
@@ -1319,7 +1319,7 @@ function LessonContentForm({
                       {contentTypeData.map((value: any) => {
                         const Icon =
                           ContentTypeIcons[
-                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1618,7 +1618,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   return (
@@ -2232,5 +2232,6 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList,
+  LessonList
 };
+

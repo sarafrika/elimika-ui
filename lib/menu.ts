@@ -18,10 +18,12 @@ import {
   Mails,
   Settings,
   Star,
+  UserCheck,
   UserCircle,
   UserCog,
   UserIcon,
   Users,
+  WalletMinimal
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -163,6 +165,11 @@ export default {
       icon: BookOpen,
     },
     {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: BookOpen,
+    },
+    {
       title: 'Invites',
       url: '/dashboard/invites',
       icon: Mails,
@@ -187,7 +194,17 @@ export default {
           url: '/dashboard/trainings/timetable',
           icon: Calendar,
         },
+        {
+          title: 'Students',
+          url: '/dashboard/trainings/students',
+          icon: Users,
+        },
       ],
+    },
+    {
+      title: 'Apply to train',
+      url: '/dashboard/apply-to-train',
+      icon: UserCheck,
     },
     {
       title: 'Rubrics Management',
@@ -199,11 +216,7 @@ export default {
       url: '/dashboard/assignments',
       icon: Award,
     },
-    {
-      title: 'Students',
-      url: '/dashboard/students',
-      icon: Users,
-    },
+
     {
       title: 'Availability',
       url: '/dashboard/availability',
@@ -213,6 +226,11 @@ export default {
       title: 'Earnings',
       url: '/dashboard/earnings',
       icon: DollarSign,
+    },
+    {
+      title: 'Rate Card',
+      url: '/dashboard/rate-card',
+      icon: WalletMinimal,
     },
     {
       title: 'Reviews',

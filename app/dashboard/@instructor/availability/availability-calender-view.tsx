@@ -9,7 +9,7 @@ import moment from 'moment';
 import { useState } from 'react';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { AvailabilitySlotDialog } from '../_components/availability-forms';
+import { AvailabilitySlotDialog } from '../../@creator/_components/availability-forms';
 import DateTimeModal from './block-modal';
 
 const localizer = momentLocalizer(moment);
@@ -261,7 +261,7 @@ const AvailabilityCalendar = () => {
           setSelectedEvent(null);
         }}
         initialValues={selectedEvent}
-        onSuccess={() => {}}
+        onSuccess={() => { }}
         slotId={selectedEvent?.uuid}
       />
 
@@ -270,7 +270,7 @@ const AvailabilityCalendar = () => {
         onClose={() => setShowModal(false)}
         onSave={handleSave}
         pending={false}
-        // pending={blockAvailability.isPending}
+      // pending={blockAvailability.isPending}
       />
     </div>
   );

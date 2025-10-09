@@ -1,19 +1,5 @@
 'use client';
 
-import {
-  CourseCreationForm,
-  CourseFormRef,
-} from '@/app/dashboard/@instructor/_components/course-creation-form';
-import {
-  AssessmentDialog,
-  AssessmentList,
-  ContentFormValues,
-  EditLessonDialog,
-  LessonContentDialog,
-  LessonDialog,
-  LessonFormValues,
-  LessonList,
-} from '@/app/dashboard/@instructor/_components/lesson-management-form';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { DifficultyLabel } from '@/components/labels/difficulty-label';
@@ -43,7 +29,21 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AssignmentDialog } from '../../../_components/assignment-management-form';
+import {
+  CourseCreationForm,
+  CourseFormRef,
+} from '../../../_components/course-creation-form';
 import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
+import {
+  AssessmentDialog,
+  AssessmentList,
+  ContentFormValues,
+  EditLessonDialog,
+  LessonContentDialog,
+  LessonDialog,
+  LessonFormValues,
+  LessonList,
+} from '../../../_components/lesson-management-form';
 
 export default function CourseCreationPage() {
   const router = useRouter();
@@ -126,7 +126,7 @@ export default function CourseCreationPage() {
     setCourseInitialValues({
       name: c.name || '',
       description: c.description || '',
-      instructor: c.instructor_uuid || '',
+      instructor: c.course_creator_uuid || '',
       is_free: c.is_free ?? false,
       price: c.price ?? 0,
       sale_price: c.price ?? 0,
@@ -225,33 +225,33 @@ export default function CourseCreationPage() {
   const content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
-          const matchedType = Array.isArray(contentTypeList?.data)
-            ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-            : undefined;
+        const matchedType = Array.isArray(contentTypeList?.data)
+          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
+          : undefined;
 
-          const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
+        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
 
-          return {
-            contentType: typeName.toUpperCase() as
-              | 'AUDIO'
-              | 'VIDEO'
-              | 'TEXT'
-              | 'LINK'
-              | 'PDF'
-              | 'YOUTUBE',
-            title: item?.title || '',
-            uuid: item?.uuid || '',
-            value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-            duration:
-              typeof item?.estimated_duration === 'string'
-                ? parseInt(item.estimated_duration) || 0
-                : 0,
-            durationHours: item?.duration_hours || 0,
-            durationMinutes: item?.duration_minutes || 0,
-            contentTypeUuid: item?.content_type || '',
-            contentCategory: matchedType?.upload_category ?? '',
-          };
-        })
+        return {
+          contentType: typeName.toUpperCase() as
+            | 'AUDIO'
+            | 'VIDEO'
+            | 'TEXT'
+            | 'LINK'
+            | 'PDF'
+            | 'YOUTUBE',
+          title: item?.title || '',
+          uuid: item?.uuid || '',
+          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
+          duration:
+            typeof item?.estimated_duration === 'string'
+              ? parseInt(item.estimated_duration) || 0
+              : 0,
+          durationHours: item?.duration_hours || 0,
+          durationMinutes: item?.duration_minutes || 0,
+          contentTypeUuid: item?.content_type || '',
+          contentCategory: matchedType?.upload_category ?? '',
+        };
+      })
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
@@ -306,7 +306,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   // DELETE LESSON MUTATION
@@ -331,7 +331,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
@@ -358,7 +358,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   if (courseId && !courseInitialValues) {
@@ -421,7 +421,7 @@ export default function CourseCreationPage() {
               onAddLesson={openAddLessonModal}
               onEditLesson={openEditLessonModal}
               onDeleteLesson={handleDeleteLesson}
-              onReorderLessons={() => {}}
+              onReorderLessons={() => { }}
               // lesson content
               lessonContentsMap={lessonContentMap}
               onAddLessonContent={openAddContentModal}
@@ -446,7 +446,7 @@ export default function CourseCreationPage() {
                 courseId={courseId as string}
                 lessonId={selectedLesson?.uuid}
                 initialValues={lessonInitialValues}
-                onCancel={() => {}}
+                onCancel={() => { }}
                 onSuccess={data => {
                   setCreatedCourseId(data?.uuid);
 
