@@ -50,8 +50,8 @@ export const ClassCard = ({ classData, course, onViewClass }: { classData: any; 
                         queryKey: getStudentScheduleQueryKey({
                             path: { studentUuid: student?.uuid as string },
                             query: {
-                                start: new Date('2025-09-15'),
-                                end: new Date('2040-09-15'),
+                                start: new Date('2025-11-02'),
+                                end: new Date('2025-12-19'),
                             },
                         }),
                     });

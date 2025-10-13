@@ -16,6 +16,7 @@ import {
   getClassDefinitionOptions,
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
+  getInstructorScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -123,16 +124,12 @@ export default function ClassPreviewPage() {
   const totalFee = 499.99;
   const totalAssignments = cAssesssment?.data?.content?.length || 0;
 
-  // const formatDate = (date: Date) => {
-  //     return format(date, 'MMM dd, yyyy');
-  // };
-
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const shareToSocial = (platform: string) => {
@@ -151,6 +148,16 @@ export default function ClassPreviewPage() {
       window.open(urls[platform as keyof typeof urls], '_blank', 'width=600,height=400');
     }
   };
+
+  const { data: timetable } = useQuery({
+    ...getInstructorScheduleOptions({
+      path: { instructorUuid: classData?.default_instructor_uuid as string }, query: {
+        start: "2026-11-02" as any,
+        end: "2026-12-19" as any
+      }
+    })
+  })
+
 
   if (isLoading || isAllLessonsDataLoading || classIsLoading) {
     return (
@@ -393,6 +400,41 @@ export default function ClassPreviewPage() {
                                     );
                                 })}
                             </div> */}
+
+              <div>
+                {timetable?.data?.map((s) => {
+                  const isCancelled = s?.status === "CANCELLED";
+                  const isActive = s?.is_currently_active;
+
+                  return (
+                    <div
+                      key={s.uuid}
+                      className={`flex items-center justify-between p-4 mb-4 rounded shadow-sm ${isCancelled ? "bg-red-100" : "bg-white"
+                        }`}
+                    >
+                      <div>
+                        <p className="font-semibold">{s?.title} - {s?.location_type}</p>
+                        {/* <p>{s?.start_time as any} - {s.end_time as any}</p> */}
+                        <p>{s?.time_range}</p>
+                        <p>{s?.max_participants} Participants</p>
+                        <p>{s?.status} - {s?.cancellation_reason}</p>
+                      </div>
+
+                      {/* Active / Not Active Badge */}
+                      <div>
+                        <span
+                          className={`text-sm font-medium px-3 py-1 rounded-full ${isActive ? "bg-green-500 text-white" : "bg-red-500 text-white"
+                            }`}
+                        >
+                          {isActive ? "Active" : "Not active"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+
             </CardContent>
           </Card>
         </TabsContent>
@@ -490,6 +532,26 @@ export default function ClassPreviewPage() {
             <CardHeader>
               <CardTitle>Enrolled Students</CardTitle>
             </CardHeader>
+
+            {/* {
+              "uuid": "a86051ad-709a-4792-82b6-0316c103d048",
+            "user_uuid": "9ea88844-83f3-42e2-8b6f-4b138ea09252",
+            "first_guardian_name": "Ayhomi Parent",
+            "first_guardian_mobile": "0712478085",
+            "second_guardian_name": "Ayhomi Parent",
+            "second_guardian_mobile": "0712478086",
+            "primaryGuardianContact": "Ayhomi Parent (0712478085)",
+            "allGuardianContacts": [
+            "Ayhomi Parent (0712478085)",
+            "Ayhomi Parent (0712478086)"
+            ],
+            "secondaryGuardianContact": "Ayhomi Parent (0712478086)",
+            "created_date": "2025-09-08T11:24:39.882443",
+            "created_by": "636568a2-76e0-4a02-9dcf-53bb513087bc",
+            "updated_date": "2025-09-15T17:49:15.03044",
+            "updated_by": "636568a2-76e0-4a02-9dcf-53bb513087bc"
+      }, */}
+
             <CardContent>
               <div className='py-8 text-center'>
                 <Users className='mx-auto mb-4 h-12 w-12 text-gray-400' />

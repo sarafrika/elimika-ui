@@ -42,12 +42,12 @@ import { FieldErrors, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
 import { tanstackClient } from '../../../../../services/api/tanstack-client';
+import { UploadOptions } from '../../../@creator/_components/course-creation-form';
 import {
   ClassFormValues,
   classSchema,
   RecurrenceDialog,
 } from '../../_components/class-management-form';
-import { UploadOptions } from '../../_components/course-creation-form';
 
 interface ClassDetailsProps {
   handleNextStep: () => void;
@@ -64,6 +64,10 @@ export default function ClassDetailsForm({
   const instructor = useInstructor();
   const searchParams = new URLSearchParams(location.search);
   const classId = searchParams.get('id');
+
+  const [createdClassId, setCreatedClassId] = useState<string | null>(null)
+  const resolveId = classId ? (classId as string) : (createdClassId as string);
+
   const qc = useQueryClient();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
@@ -75,7 +79,7 @@ export default function ClassDetailsForm({
   );
 
   useEffect(() => {
-    if (!classId) return;
+    if (!resolveId) return;
 
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
@@ -87,11 +91,11 @@ export default function ClassDetailsForm({
       {
         id: 'manage-training',
         title: 'Manage Training',
-        url: `/dashboard/trainings/create-new?id=${classId}`,
+        url: `/dashboard/trainings/create-new?id=${resolveId}`,
         isLast: true,
       },
     ]);
-  }, [replaceBreadcrumbs, classId]);
+  }, [replaceBreadcrumbs, resolveId]);
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
@@ -132,8 +136,8 @@ export default function ClassDetailsForm({
     enabled: !!classData?.recurrence_pattern_uuid,
   });
 
-  const createAssignment = useMutation(createClassDefinitionMutation());
-  const updateAssignment = useMutation(updateClassDefinitionMutation());
+  const createClassDefinition = useMutation(createClassDefinitionMutation());
+  const updateClassDefinition = useMutation(updateClassDefinitionMutation());
 
   const handleError = (errors: FieldErrors) => {
     // console.error("Form validation errors:", errors);
@@ -146,17 +150,17 @@ export default function ClassDetailsForm({
       course_uuid: values?.course_uuid || classData?.course_uuid,
       max_participants: values?.max_participants || classData?.max_participants,
       // location_type: values?.location_type || classData?.location_type,
-      recurrence_pattern_uuid: classData?.recurrence_pattern_uuid || (recurringUuid as string),
+      recurrence_pattern_uuid: "08e567cc-bec5-4893-9217-03ff19f44895",
       default_instructor_uuid: instructor?.uuid as string,
       default_start_time: '2025-10-05T10:00:00',
-      default_end_time: '2026-10-05T10:00:00',
+      default_end_time: '2026-10-05T12:00:00',
       location_type: 'HYBRID',
       class_time_validy: "2 months"
     };
 
-    if (classId) {
-      updateAssignment.mutate(
-        { path: { uuid: classId }, body: payload as any },
+    if (resolveId) {
+      updateClassDefinition.mutate(
+        { path: { uuid: resolveId }, body: payload as any },
         {
           onSuccess: data => {
             qc.invalidateQueries({
@@ -166,7 +170,7 @@ export default function ClassDetailsForm({
             });
             qc.invalidateQueries({
               queryKey: getClassDefinitionQueryKey({
-                path: { uuid: classId as string },
+                path: { uuid: resolveId as string },
               }),
             });
             toast.success(data?.message);
@@ -179,7 +183,7 @@ export default function ClassDetailsForm({
         }
       );
     } else {
-      createAssignment.mutate(
+      createClassDefinition.mutate(
         { body: payload as any },
         {
           onSuccess: data => {
@@ -189,6 +193,7 @@ export default function ClassDetailsForm({
               }),
             });
             toast.success(data?.message);
+            setCreatedClassId(data?.data?.uuid as string)
             // router.push('/dashboard/trainings');
             handleNextStep();
 
@@ -228,7 +233,7 @@ export default function ClassDetailsForm({
     formData.append(key, file);
 
     mutation(
-      { body: formData, params: { path: { uuid: classId as string } } },
+      { body: formData, params: { path: { uuid: resolveId as string } } },
       {
         onSuccess: (data: any) => {
           onChange(previewUrl);
@@ -614,10 +619,10 @@ export default function ClassDetailsForm({
               <Button
                 type='submit'
                 className='flex min-w-[120px] items-center justify-center gap-2'
-                disabled={createAssignment.isPending || updateAssignment.isPending}
+                disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
               >
-                {(createAssignment.isPending || updateAssignment.isPending) && <Spinner />}
-                {classId ? 'Update Class Traninig' : 'Create Class Traninig'}
+                {(createClassDefinition.isPending || updateClassDefinition.isPending) && <Spinner />}
+                {resolveId ? 'Update Class Traninig' : 'Create Class Traninig'}
               </Button>
             </div>
           </form>

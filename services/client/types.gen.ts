@@ -542,13 +542,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -761,13 +761,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1213,13 +1213,13 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
-   */
-  readonly has_location_coordinates?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
   readonly is_profile_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   */
+  readonly has_location_coordinates?: boolean;
   /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
@@ -1339,6 +1339,10 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
@@ -1368,10 +1372,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1444,6 +1444,10 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
@@ -1472,10 +1476,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
-  /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1536,6 +1536,10 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1552,10 +1556,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -1917,22 +1917,6 @@ export type Course = {
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
-  /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is archived and no longer available.
    */
   readonly is_archived?: boolean;
@@ -1948,6 +1932,22 @@ export type Course = {
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
   readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
 };
 
 export type ApiResponseCourse = {
@@ -2591,6 +2591,87 @@ export type ApiResponseCategory = {
 };
 
 /**
+ * Payload for creating or updating catalog mappings
+ */
+export type CommerceCatalogItemUpsertRequest = {
+  /**
+   * Course UUID to associate
+   */
+  course_uuid?: string;
+  /**
+   * Class definition UUID to associate
+   */
+  class_definition_uuid?: string;
+  /**
+   * Medusa product identifier
+   */
+  medusa_product_id: string;
+  /**
+   * Medusa variant identifier
+   */
+  medusa_variant_id: string;
+  /**
+   * Currency code for the variant
+   */
+  currency_code?: string;
+  /**
+   * Active flag
+   */
+  active?: boolean;
+};
+
+export type ApiResponseCommerceCatalogItem = {
+  success?: boolean;
+  data?: CommerceCatalogItem;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Mapping between Elimika courses/classes and Medusa catalog variants
+ */
+export type CommerceCatalogItem = {
+  /**
+   * Catalog item UUID
+   */
+  uuid?: string;
+  /**
+   * Associated course UUID if mapping is course level
+   */
+  course_uuid?: string;
+  /**
+   * Associated class definition UUID if mapping is class specific
+   */
+  class_definition_uuid?: string;
+  /**
+   * Medusa product identifier
+   */
+  medusa_product_id?: string;
+  /**
+   * Medusa variant identifier
+   */
+  medusa_variant_id?: string;
+  /**
+   * Currency code configured for the variant
+   */
+  currency_code?: string;
+  /**
+   * Whether this mapping is active
+   */
+  active?: boolean;
+  /**
+   * Created timestamp
+   */
+  created_date?: Date;
+  /**
+   * Last updated timestamp
+   */
+  updated_date?: Date;
+};
+
+/**
  * Class definition template that defines what a class is, independent of scheduling
  */
 export type ClassDefinition = {
@@ -2668,10 +2749,6 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
    * **[READ-ONLY]** Indicates if the class definition has a recurrence pattern configured.
    */
   readonly has_recurrence?: boolean;
@@ -2679,6 +2756,10 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
 };
 
 export type ApiResponseClassDefinition = {
@@ -3419,6 +3500,171 @@ export type ApiResponseCourseCreator = {
   };
 };
 
+/**
+ * A single line item attached to a cart
+ */
+export type CartItemResponse = {
+  /**
+   * Unique identifier of the line item
+   */
+  id?: string;
+  /**
+   * Human friendly name of the product
+   */
+  title?: string;
+  /**
+   * Quantity of the product variant
+   */
+  quantity?: number;
+  /**
+   * Medusa variant identifier
+   */
+  variant_id?: string;
+  /**
+   * Custom metadata captured for the line item
+   */
+  metadata?: {
+    [key: string]: {
+      [key: string]: unknown;
+    };
+  };
+};
+
+/**
+ * Order information synchronised from Medusa
+ */
+export type OrderResponse = {
+  /**
+   * Unique Medusa identifier of the order
+   */
+  id?: string;
+  /**
+   * Human friendly order number
+   */
+  display_id?: string;
+  /**
+   * Payment status reported by Medusa
+   */
+  payment_status?: string;
+  /**
+   * Timestamp when the order was created
+   */
+  created_at?: Date;
+  items?: Array<CartItemResponse>;
+};
+
+/**
+ * Checkout payload that orchestrates Medusa cart completion
+ */
+export type CheckoutRequest = {
+  /**
+   * Identifier of the cart being checked out
+   */
+  cart_id: string;
+  /**
+   * Email address of the purchasing customer
+   */
+  customer_email: string;
+  /**
+   * Optional shipping address identifier to attach to the order
+   */
+  shipping_address_id?: string;
+  /**
+   * Optional billing address identifier
+   */
+  billing_address_id?: string;
+  /**
+   * Payment provider identifier to use for the checkout
+   */
+  payment_provider_id: string;
+};
+
+/**
+ * Cart summary returned to clients consuming the commerce APIs
+ */
+export type CartResponse = {
+  /**
+   * Unique Medusa identifier of the cart
+   */
+  id?: string;
+  /**
+   * Region identifier the cart is scoped to
+   */
+  region_id?: string;
+  /**
+   * Associated Medusa customer identifier
+   */
+  customer_id?: string;
+  /**
+   * Timestamp when the cart was created
+   */
+  created_at?: Date;
+  /**
+   * Timestamp when the cart was last updated
+   */
+  updated_at?: Date;
+  items?: Array<CartItemResponse>;
+};
+
+/**
+ * Line item definition used when creating or updating a cart
+ */
+export type CartLineItemRequest = {
+  /**
+   * Identifier of the Medusa product variant to add to the cart
+   */
+  variant_id: string;
+  /**
+   * Quantity of the variant to add to the cart
+   */
+  quantity: number;
+  /**
+   * Optional metadata forwarded to Medusa and persisted with the line item
+   */
+  metadata?: {
+    [key: string]: {
+      [key: string]: unknown;
+    };
+  };
+};
+
+/**
+ * Request body for creating a new cart that synchronises with Medusa
+ */
+export type CreateCartRequest = {
+  /**
+   * Identifier of the Medusa region the cart belongs to
+   */
+  region_id: string;
+  /**
+   * Medusa customer identifier to associate with the cart
+   */
+  customer_id?: string;
+  /**
+   * Sales channel identifier configured in Medusa
+   */
+  sales_channel_id?: string;
+  /**
+   * Arbitrary metadata forwarded to Medusa
+   */
+  metadata?: {
+    [key: string]: {
+      [key: string]: unknown;
+    };
+  };
+  items?: Array<CartLineItemRequest>;
+};
+
+/**
+ * Specifies the payment provider to use for a cart
+ */
+export type SelectPaymentSessionRequest = {
+  /**
+   * Identifier of the Medusa payment provider (e.g. 'manual', 'stripe')
+   */
+  provider_id: string;
+};
+
 export type ApiResponseAssignmentSubmission = {
   success?: boolean;
   data?: AssignmentSubmission;
@@ -3498,6 +3744,10 @@ export type AssignmentSubmission = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
+   */
+  readonly is_graded?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the submission based on its content type.
    */
   readonly submission_category?: string;
@@ -3513,10 +3763,6 @@ export type AssignmentSubmission = {
    * **[READ-ONLY]** Summary of files attached to this submission.
    */
   readonly file_count_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
-   */
-  readonly is_graded?: boolean;
 };
 
 /**
@@ -3533,6 +3779,36 @@ export type AdminDomainAssignmentRequest = {
    * Effective date for the admin assignment
    */
   effective_date?: Date;
+};
+
+/**
+ * Fields that can be patched on an existing cart
+ */
+export type UpdateCartRequest = {
+  /**
+   * Email address of the customer
+   */
+  email?: string;
+  /**
+   * Medusa customer identifier to associate with the cart
+   */
+  customer_id?: string;
+  /**
+   * Medusa shipping address identifier
+   */
+  shipping_address_id?: string;
+  /**
+   * Medusa billing address identifier
+   */
+  billing_address_id?: string;
+  /**
+   * Optional metadata map forwarded to Medusa
+   */
+  metadata?: {
+    [key: string]: {
+      [key: string]: unknown;
+    };
+  };
 };
 
 export type Pageable = {
@@ -3885,6 +4161,10 @@ export type QuizAttempt = {
    */
   readonly time_display?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -3892,10 +4172,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -4703,6 +4979,15 @@ export type PagedDtoCategory = {
 export type ApiResponseListCategory = {
   success?: boolean;
   data?: Array<Category>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type ApiResponseListCommerceCatalogItem = {
+  success?: boolean;
+  data?: Array<CommerceCatalogItem>;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -8105,6 +8390,38 @@ export type UpdateCategoryResponses = {
 };
 
 export type UpdateCategoryResponse = UpdateCategoryResponses[keyof UpdateCategoryResponses];
+
+export type UpdateCatalogItemData = {
+  body: CommerceCatalogItemUpsertRequest;
+  path: {
+    catalogUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/catalog/{catalogUuid}';
+};
+
+export type UpdateCatalogItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCatalogItemError = UpdateCatalogItemErrors[keyof UpdateCatalogItemErrors];
+
+export type UpdateCatalogItemResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCommerceCatalogItem;
+};
+
+export type UpdateCatalogItemResponse =
+  UpdateCatalogItemResponses[keyof UpdateCatalogItemResponses];
 
 export type DeactivateClassDefinitionData = {
   body?: never;
@@ -12209,6 +12526,168 @@ export type CreateCategoryResponses = {
 
 export type CreateCategoryResponse = CreateCategoryResponses[keyof CreateCategoryResponses];
 
+export type CompleteCheckoutData = {
+  body: CheckoutRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/commerce/orders/checkout';
+};
+
+export type CompleteCheckoutErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CompleteCheckoutError = CompleteCheckoutErrors[keyof CompleteCheckoutErrors];
+
+export type CompleteCheckoutResponses = {
+  /**
+   * Order created
+   */
+  201: OrderResponse;
+};
+
+export type CompleteCheckoutResponse = CompleteCheckoutResponses[keyof CompleteCheckoutResponses];
+
+export type CreateCartData = {
+  body: CreateCartRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/commerce/carts';
+};
+
+export type CreateCartErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateCartError = CreateCartErrors[keyof CreateCartErrors];
+
+export type CreateCartResponses = {
+  /**
+   * Cart created successfully
+   */
+  201: CartResponse;
+};
+
+export type CreateCartResponse = CreateCartResponses[keyof CreateCartResponses];
+
+export type SelectPaymentSessionData = {
+  body: SelectPaymentSessionRequest;
+  path: {
+    /**
+     * Identifier of the cart to update
+     */
+    cartId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/carts/{cartId}/payment-session';
+};
+
+export type SelectPaymentSessionErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SelectPaymentSessionError =
+  SelectPaymentSessionErrors[keyof SelectPaymentSessionErrors];
+
+export type SelectPaymentSessionResponses = {
+  /**
+   * Payment session selected
+   */
+  200: CartResponse;
+};
+
+export type SelectPaymentSessionResponse =
+  SelectPaymentSessionResponses[keyof SelectPaymentSessionResponses];
+
+export type AddItemData = {
+  body: CartLineItemRequest;
+  path: {
+    /**
+     * Identifier of the cart to update
+     */
+    cartId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/carts/{cartId}/items';
+};
+
+export type AddItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddItemError = AddItemErrors[keyof AddItemErrors];
+
+export type AddItemResponses = {
+  /**
+   * Item added
+   */
+  200: CartResponse;
+};
+
+export type AddItemResponse = AddItemResponses[keyof AddItemResponses];
+
+export type CompleteCartData = {
+  body?: never;
+  path: {
+    /**
+     * Identifier of the cart to finalise
+     */
+    cartId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/carts/{cartId}/complete';
+};
+
+export type CompleteCartErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CompleteCartError = CompleteCartErrors[keyof CompleteCartErrors];
+
+export type CompleteCartResponses = {
+  /**
+   * Cart completed
+   */
+  200: OrderResponse;
+};
+
+export type CompleteCartResponse = CompleteCartResponses[keyof CompleteCartResponses];
+
 export type CreateClassDefinitionData = {
   body: ClassDefinition;
   path?: never;
@@ -13070,6 +13549,74 @@ export type MarkAttendanceResponses = {
 };
 
 export type MarkAttendanceResponse = MarkAttendanceResponses[keyof MarkAttendanceResponses];
+
+export type GetCartData = {
+  body?: never;
+  path: {
+    /**
+     * Identifier of the cart to load
+     */
+    cartId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/carts/{cartId}';
+};
+
+export type GetCartErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCartError = GetCartErrors[keyof GetCartErrors];
+
+export type GetCartResponses = {
+  /**
+   * Cart retrieved
+   */
+  200: CartResponse;
+};
+
+export type GetCartResponse = GetCartResponses[keyof GetCartResponses];
+
+export type UpdateCartData = {
+  body: UpdateCartRequest;
+  path: {
+    /**
+     * Identifier of the cart to update
+     */
+    cartId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/carts/{cartId}';
+};
+
+export type UpdateCartErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCartError = UpdateCartErrors[keyof UpdateCartErrors];
+
+export type UpdateCartResponses = {
+  /**
+   * Cart updated
+   */
+  200: CartResponse;
+};
+
+export type UpdateCartResponse = UpdateCartResponses[keyof UpdateCartResponses];
 
 export type GetAllUsersData = {
   body?: never;
@@ -16935,6 +17482,133 @@ export type GetRootCategoriesResponses = {
 
 export type GetRootCategoriesResponse =
   GetRootCategoriesResponses[keyof GetRootCategoriesResponses];
+
+export type GetOrderData = {
+  body?: never;
+  path: {
+    /**
+     * Medusa order identifier
+     */
+    orderId: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/orders/{orderId}';
+};
+
+export type GetOrderErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetOrderError = GetOrderErrors[keyof GetOrderErrors];
+
+export type GetOrderResponses = {
+  /**
+   * Order retrieved
+   */
+  200: OrderResponse;
+};
+
+export type GetOrderResponse = GetOrderResponses[keyof GetOrderResponses];
+
+export type ListCatalogItemsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    active_only?: boolean;
+  };
+  url: '/api/v1/commerce/catalog';
+};
+
+export type ListCatalogItemsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListCatalogItemsError = ListCatalogItemsErrors[keyof ListCatalogItemsErrors];
+
+export type ListCatalogItemsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCommerceCatalogItem;
+};
+
+export type ListCatalogItemsResponse = ListCatalogItemsResponses[keyof ListCatalogItemsResponses];
+
+export type GetByCourseData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/catalog/by-course/{courseUuid}';
+};
+
+export type GetByCourseErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetByCourseError = GetByCourseErrors[keyof GetByCourseErrors];
+
+export type GetByCourseResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCommerceCatalogItem;
+};
+
+export type GetByCourseResponse = GetByCourseResponses[keyof GetByCourseResponses];
+
+export type GetByClassData = {
+  body?: never;
+  path: {
+    classUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/commerce/catalog/by-class/{classUuid}';
+};
+
+export type GetByClassErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetByClassError = GetByClassErrors[keyof GetByClassErrors];
+
+export type GetByClassResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCommerceCatalogItem;
+};
+
+export type GetByClassResponse = GetByClassResponses[keyof GetByClassResponses];
 
 export type PreviewRecurringClassScheduleData = {
   body?: never;

@@ -51,6 +51,7 @@ import type {
   UpdateContentTypeResponse,
   GetCategoryByUuidResponse,
   UpdateCategoryResponse,
+  UpdateCatalogItemResponse,
   GetClassDefinitionResponse,
   UpdateClassDefinitionResponse,
   ScheduleRecurringClassFromDefinitionResponse,
@@ -146,6 +147,11 @@ import type {
   CreateContentTypeResponse,
   GetAllCategoriesResponse,
   CreateCategoryResponse,
+  CompleteCheckoutResponse,
+  CreateCartResponse,
+  SelectPaymentSessionResponse,
+  AddItemResponse,
+  CompleteCartResponse,
   CreateClassDefinitionResponse,
   CreateClassRecurrencePatternResponse,
   GetAllCertificatesResponse,
@@ -165,6 +171,8 @@ import type {
   UnverifyOrganisationResponse,
   VerifyInstructorResponse,
   UnverifyInstructorResponse,
+  GetCartResponse,
+  UpdateCartResponse,
   GetAllUsersResponse,
   GetInvitationsSentByUserResponse,
   GetPendingInvitationsForUserResponse,
@@ -249,6 +257,10 @@ import type {
   GetSubCategoriesResponse,
   SearchCategoriesResponse,
   GetRootCategoriesResponse,
+  GetOrderResponse,
+  ListCatalogItemsResponse,
+  GetByCourseResponse,
+  GetByClassResponse,
   PreviewRecurringClassScheduleResponse,
   CheckClassSchedulingConflictsResponse,
   GetClassDefinitionsForOrganisationResponse,
@@ -1219,6 +1231,30 @@ export const updateCategoryResponseTransformer = async (
   data: any
 ): Promise<UpdateCategoryResponse> => {
   data = apiResponseCategorySchemaResponseTransformer(data);
+  return data;
+};
+
+const commerceCatalogItemSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCommerceCatalogItemSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = commerceCatalogItemSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateCatalogItemResponseTransformer = async (
+  data: any
+): Promise<UpdateCatalogItemResponse> => {
+  data = apiResponseCommerceCatalogItemSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2592,6 +2628,52 @@ export const createCategoryResponseTransformer = async (
   return data;
 };
 
+const orderResponseSchemaResponseTransformer = (data: any) => {
+  if (data.created_at) {
+    data.created_at = new Date(data.created_at);
+  }
+  return data;
+};
+
+export const completeCheckoutResponseTransformer = async (
+  data: any
+): Promise<CompleteCheckoutResponse> => {
+  data = orderResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const cartResponseSchemaResponseTransformer = (data: any) => {
+  if (data.created_at) {
+    data.created_at = new Date(data.created_at);
+  }
+  if (data.updated_at) {
+    data.updated_at = new Date(data.updated_at);
+  }
+  return data;
+};
+
+export const createCartResponseTransformer = async (data: any): Promise<CreateCartResponse> => {
+  data = cartResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const selectPaymentSessionResponseTransformer = async (
+  data: any
+): Promise<SelectPaymentSessionResponse> => {
+  data = cartResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addItemResponseTransformer = async (data: any): Promise<AddItemResponse> => {
+  data = cartResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const completeCartResponseTransformer = async (data: any): Promise<CompleteCartResponse> => {
+  data = orderResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 export const createClassDefinitionResponseTransformer = async (
   data: any
 ): Promise<CreateClassDefinitionResponse> => {
@@ -2809,6 +2891,16 @@ export const unverifyInstructorResponseTransformer = async (
   data: any
 ): Promise<UnverifyInstructorResponse> => {
   data = apiResponseInstructorSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getCartResponseTransformer = async (data: any): Promise<GetCartResponse> => {
+  data = cartResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateCartResponseTransformer = async (data: any): Promise<UpdateCartResponse> => {
+  data = cartResponseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3750,6 +3842,37 @@ export const getRootCategoriesResponseTransformer = async (
   data: any
 ): Promise<GetRootCategoriesResponse> => {
   data = apiResponseListCategorySchemaResponseTransformer(data);
+  return data;
+};
+
+export const getOrderResponseTransformer = async (data: any): Promise<GetOrderResponse> => {
+  data = orderResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListCommerceCatalogItemSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return commerceCatalogItemSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listCatalogItemsResponseTransformer = async (
+  data: any
+): Promise<ListCatalogItemsResponse> => {
+  data = apiResponseListCommerceCatalogItemSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getByCourseResponseTransformer = async (data: any): Promise<GetByCourseResponse> => {
+  data = apiResponseCommerceCatalogItemSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getByClassResponseTransformer = async (data: any): Promise<GetByClassResponse> => {
+  data = apiResponseCommerceCatalogItemSchemaResponseTransformer(data);
   return data;
 };
 

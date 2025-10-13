@@ -84,6 +84,7 @@ import {
   deleteCategory,
   getCategoryByUuid,
   updateCategory,
+  updateCatalogItem,
   deactivateClassDefinition,
   getClassDefinition,
   updateClassDefinition,
@@ -200,6 +201,11 @@ import {
   createContentType,
   getAllCategories,
   createCategory,
+  completeCheckout,
+  createCart,
+  selectPaymentSession,
+  addItem,
+  completeCart,
   createClassDefinition,
   createClassRecurrencePattern,
   getAllCertificates,
@@ -223,6 +229,8 @@ import {
   updateScheduledInstanceStatus,
   reorderScoringLevels,
   markAttendance,
+  getCart,
+  updateCart,
   getAllUsers,
   getInvitationsSentByUser,
   getPendingInvitationsForUser,
@@ -330,6 +338,10 @@ import {
   getSubCategories,
   searchCategories,
   getRootCategories,
+  getOrder,
+  listCatalogItems,
+  getByCourse,
+  getByClass,
   previewRecurringClassSchedule,
   checkClassSchedulingConflicts,
   getClassDefinitionsForOrganisation,
@@ -574,6 +586,9 @@ import type {
   UpdateCategoryData,
   UpdateCategoryError,
   UpdateCategoryResponse,
+  UpdateCatalogItemData,
+  UpdateCatalogItemError,
+  UpdateCatalogItemResponse,
   DeactivateClassDefinitionData,
   DeactivateClassDefinitionError,
   DeactivateClassDefinitionResponse,
@@ -897,6 +912,21 @@ import type {
   CreateCategoryData,
   CreateCategoryError,
   CreateCategoryResponse,
+  CompleteCheckoutData,
+  CompleteCheckoutError,
+  CompleteCheckoutResponse,
+  CreateCartData,
+  CreateCartError,
+  CreateCartResponse,
+  SelectPaymentSessionData,
+  SelectPaymentSessionError,
+  SelectPaymentSessionResponse,
+  AddItemData,
+  AddItemError,
+  AddItemResponse,
+  CompleteCartData,
+  CompleteCartError,
+  CompleteCartResponse,
   CreateClassDefinitionData,
   CreateClassDefinitionError,
   CreateClassDefinitionResponse,
@@ -966,6 +996,10 @@ import type {
   MarkAttendanceData,
   MarkAttendanceError,
   MarkAttendanceResponse,
+  GetCartData,
+  UpdateCartData,
+  UpdateCartError,
+  UpdateCartResponse,
   GetAllUsersData,
   GetAllUsersError,
   GetAllUsersResponse,
@@ -1199,6 +1233,10 @@ import type {
   SearchCategoriesError,
   SearchCategoriesResponse,
   GetRootCategoriesData,
+  GetOrderData,
+  ListCatalogItemsData,
+  GetByCourseData,
+  GetByClassData,
   PreviewRecurringClassScheduleData,
   CheckClassSchedulingConflictsData,
   GetClassDefinitionsForOrganisationData,
@@ -3459,6 +3497,34 @@ export const updateCategoryMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCategory({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update catalog mapping
+ * Updates Medusa identifiers or status for an existing mapping
+ */
+export const updateCatalogItemMutation = (
+  options?: Partial<Options<UpdateCatalogItemData>>
+): UseMutationOptions<
+  UpdateCatalogItemResponse,
+  UpdateCatalogItemError,
+  Options<UpdateCatalogItemData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCatalogItemResponse,
+    UpdateCatalogItemError,
+    Options<UpdateCatalogItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCatalogItem({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9508,6 +9574,240 @@ export const createCategoryMutation = (
   return mutationOptions;
 };
 
+export const completeCheckoutQueryKey = (options: Options<CompleteCheckoutData>) =>
+  createQueryKey('completeCheckout', options);
+
+/**
+ * Complete checkout
+ * Performs the full Medusa checkout flow including customer association and payment selection
+ */
+export const completeCheckoutOptions = (options: Options<CompleteCheckoutData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await completeCheckout({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: completeCheckoutQueryKey(options),
+  });
+};
+
+/**
+ * Complete checkout
+ * Performs the full Medusa checkout flow including customer association and payment selection
+ */
+export const completeCheckoutMutation = (
+  options?: Partial<Options<CompleteCheckoutData>>
+): UseMutationOptions<
+  CompleteCheckoutResponse,
+  CompleteCheckoutError,
+  Options<CompleteCheckoutData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CompleteCheckoutResponse,
+    CompleteCheckoutError,
+    Options<CompleteCheckoutData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await completeCheckout({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const createCartQueryKey = (options: Options<CreateCartData>) =>
+  createQueryKey('createCart', options);
+
+/**
+ * Create a new cart
+ * Initialises a new cart in Medusa that can be used for checkout flows
+ */
+export const createCartOptions = (options: Options<CreateCartData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createCart({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createCartQueryKey(options),
+  });
+};
+
+/**
+ * Create a new cart
+ * Initialises a new cart in Medusa that can be used for checkout flows
+ */
+export const createCartMutation = (
+  options?: Partial<Options<CreateCartData>>
+): UseMutationOptions<CreateCartResponse, CreateCartError, Options<CreateCartData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCartResponse,
+    CreateCartError,
+    Options<CreateCartData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createCart({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const selectPaymentSessionQueryKey = (options: Options<SelectPaymentSessionData>) =>
+  createQueryKey('selectPaymentSession', options);
+
+/**
+ * Select payment session
+ * Locks the cart to a particular Medusa payment provider
+ */
+export const selectPaymentSessionOptions = (options: Options<SelectPaymentSessionData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await selectPaymentSession({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: selectPaymentSessionQueryKey(options),
+  });
+};
+
+/**
+ * Select payment session
+ * Locks the cart to a particular Medusa payment provider
+ */
+export const selectPaymentSessionMutation = (
+  options?: Partial<Options<SelectPaymentSessionData>>
+): UseMutationOptions<
+  SelectPaymentSessionResponse,
+  SelectPaymentSessionError,
+  Options<SelectPaymentSessionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SelectPaymentSessionResponse,
+    SelectPaymentSessionError,
+    Options<SelectPaymentSessionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await selectPaymentSession({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const addItemQueryKey = (options: Options<AddItemData>) =>
+  createQueryKey('addItem', options);
+
+/**
+ * Add an item to a cart
+ * Adds or increments a line item on an existing cart
+ */
+export const addItemOptions = (options: Options<AddItemData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addItem({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addItemQueryKey(options),
+  });
+};
+
+/**
+ * Add an item to a cart
+ * Adds or increments a line item on an existing cart
+ */
+export const addItemMutation = (
+  options?: Partial<Options<AddItemData>>
+): UseMutationOptions<AddItemResponse, AddItemError, Options<AddItemData>> => {
+  const mutationOptions: UseMutationOptions<AddItemResponse, AddItemError, Options<AddItemData>> = {
+    mutationFn: async localOptions => {
+      const { data } = await addItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const completeCartQueryKey = (options: Options<CompleteCartData>) =>
+  createQueryKey('completeCart', options);
+
+/**
+ * Complete cart
+ * Finalises the cart in Medusa and creates an order
+ */
+export const completeCartOptions = (options: Options<CompleteCartData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await completeCart({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: completeCartQueryKey(options),
+  });
+};
+
+/**
+ * Complete cart
+ * Finalises the cart in Medusa and creates an order
+ */
+export const completeCartMutation = (
+  options?: Partial<Options<CompleteCartData>>
+): UseMutationOptions<CompleteCartResponse, CompleteCartError, Options<CompleteCartData>> => {
+  const mutationOptions: UseMutationOptions<
+    CompleteCartResponse,
+    CompleteCartError,
+    Options<CompleteCartData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await completeCart({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const createClassDefinitionQueryKey = (options: Options<CreateClassDefinitionData>) =>
   createQueryKey('createClassDefinition', options);
 
@@ -10641,6 +10941,52 @@ export const markAttendanceMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await markAttendance({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCartQueryKey = (options: Options<GetCartData>) =>
+  createQueryKey('getCart', options);
+
+/**
+ * Retrieve cart details
+ * Fetches the latest cart representation from Medusa
+ */
+export const getCartOptions = (options: Options<GetCartData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCart({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCartQueryKey(options),
+  });
+};
+
+/**
+ * Update cart attributes
+ * Updates cart metadata such as customer or addresses
+ */
+export const updateCartMutation = (
+  options?: Partial<Options<UpdateCartData>>
+): UseMutationOptions<UpdateCartResponse, UpdateCartError, Options<UpdateCartData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCartResponse,
+    UpdateCartError,
+    Options<UpdateCartData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCart({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -16553,6 +16899,92 @@ export const getRootCategoriesOptions = (options?: Options<GetRootCategoriesData
       return data;
     },
     queryKey: getRootCategoriesQueryKey(options),
+  });
+};
+
+export const getOrderQueryKey = (options: Options<GetOrderData>) =>
+  createQueryKey('getOrder', options);
+
+/**
+ * Get order details
+ * Retrieves an order from Medusa to support order tracking
+ */
+export const getOrderOptions = (options: Options<GetOrderData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrder({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrderQueryKey(options),
+  });
+};
+
+export const listCatalogItemsQueryKey = (options?: Options<ListCatalogItemsData>) =>
+  createQueryKey('listCatalogItems', options);
+
+/**
+ * List catalog mappings
+ * Returns catalog items optionally filtered by active status
+ */
+export const listCatalogItemsOptions = (options?: Options<ListCatalogItemsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listCatalogItems({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listCatalogItemsQueryKey(options),
+  });
+};
+
+export const getByCourseQueryKey = (options: Options<GetByCourseData>) =>
+  createQueryKey('getByCourse', options);
+
+/**
+ * Get catalog mapping by course
+ */
+export const getByCourseOptions = (options: Options<GetByCourseData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getByCourse({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getByCourseQueryKey(options),
+  });
+};
+
+export const getByClassQueryKey = (options: Options<GetByClassData>) =>
+  createQueryKey('getByClass', options);
+
+/**
+ * Get catalog mapping by class definition
+ */
+export const getByClassOptions = (options: Options<GetByClassData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getByClass({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getByClassQueryKey(options),
   });
 };
 

@@ -11,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { tanstackClient } from '@/services/api/tanstack-client';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { getAllStudentsOptions, getStudentScheduleOptions, getUserByUuidOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 
 const studentsData = [
   {
@@ -122,26 +123,30 @@ const sampleEnrollmentData = {
 };
 
 export default function StudentsPage() {
-  const { data } = tanstackClient.useQuery('get', '/api/v1/courses/{courseUuid}/enrollments', {
-    params: {
-      query: {
-        //@ts-ignore
-        page: 0,
-        size: 1,
-      },
-    },
-  });
-  //console.log(data, 'students');
+  const { data: sData } = useQuery(getAllStudentsOptions({
+    query: { pageable: { page: 0, size: 50 } }
+  }));
+  const students = sData?.data?.content ?? []
 
-  const studentId = '';
-  const { data: studentData } = tanstackClient.useQuery('get', '/api/v1/students/{uuid}', {
-    params: {
-      path: {
-        uuid: studentId!,
-      },
-    },
-  });
-  //console.log(studentData, 'single student');
+  const studentDetailQueries = useQueries({
+    queries: students.map((student) => ({
+      ...getUserByUuidOptions({ path: { uuid: student.user_uuid as string } }),
+      enabled: !!student.uuid,
+    }))
+  })
+  const detailedStudents = studentDetailQueries.map(q => q.data?.data)
+
+  const studentEnrollmentQueries = useQueries({
+    queries: students.map((student) => ({
+      ...getStudentScheduleOptions({
+        path: { studentUuid: student.uuid as string },
+        query: { start: "2025-10-10" as any, end: "2026-12-19" as any }
+      }),
+      enabled: !!student.uuid
+    }))
+  })
+  const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data)
+
 
   return (
     <div className='space-y-6'>
@@ -160,23 +165,23 @@ export default function StudentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {studentsData.map(student => (
-                <TableRow key={student.id}>
+              {detailedStudents?.map((student: any) => (
+                <TableRow key={student?.uuid}>
                   <TableCell>
                     <div className='flex items-center gap-4'>
                       <Avatar>
-                        <AvatarImage src={student.avatarUrl} />
-                        <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={student?.avatarUrl ?? ""} />
+                        <AvatarFallback>{student?.display_name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className='font-medium'>{student.name}</p>
-                        <p className='text-muted-foreground text-sm'>{student.email}</p>
+                        <p className='font-medium'>{student?.display_name}</p>
+                        <p className='text-muted-foreground text-sm'>{student?.username}</p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className='space-y-2'>
-                      {student.enrolledCourses.map((course, index) => (
+                      {/* {student.enrolledCourses.map((course: any, index: any) => (
                         <div key={index}>
                           <div className='flex justify-between'>
                             <p className='font-medium'>{course.name}</p>
@@ -184,7 +189,7 @@ export default function StudentsPage() {
                           </div>
                           <Progress value={course.progress} />
                         </div>
-                      ))}
+                      ))} */}
                     </div>
                   </TableCell>
                 </TableRow>

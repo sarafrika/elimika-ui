@@ -253,6 +253,9 @@ import type {
   UpdateCategoryData,
   UpdateCategoryResponses,
   UpdateCategoryErrors,
+  UpdateCatalogItemData,
+  UpdateCatalogItemResponses,
+  UpdateCatalogItemErrors,
   DeactivateClassDefinitionData,
   DeactivateClassDefinitionResponses,
   DeactivateClassDefinitionErrors,
@@ -601,6 +604,21 @@ import type {
   CreateCategoryData,
   CreateCategoryResponses,
   CreateCategoryErrors,
+  CompleteCheckoutData,
+  CompleteCheckoutResponses,
+  CompleteCheckoutErrors,
+  CreateCartData,
+  CreateCartResponses,
+  CreateCartErrors,
+  SelectPaymentSessionData,
+  SelectPaymentSessionResponses,
+  SelectPaymentSessionErrors,
+  AddItemData,
+  AddItemResponses,
+  AddItemErrors,
+  CompleteCartData,
+  CompleteCartResponses,
+  CompleteCartErrors,
   CreateClassDefinitionData,
   CreateClassDefinitionResponses,
   CreateClassDefinitionErrors,
@@ -670,6 +688,12 @@ import type {
   MarkAttendanceData,
   MarkAttendanceResponses,
   MarkAttendanceErrors,
+  GetCartData,
+  GetCartResponses,
+  GetCartErrors,
+  UpdateCartData,
+  UpdateCartResponses,
+  UpdateCartErrors,
   GetAllUsersData,
   GetAllUsersResponses,
   GetAllUsersErrors,
@@ -991,6 +1015,18 @@ import type {
   GetRootCategoriesData,
   GetRootCategoriesResponses,
   GetRootCategoriesErrors,
+  GetOrderData,
+  GetOrderResponses,
+  GetOrderErrors,
+  ListCatalogItemsData,
+  ListCatalogItemsResponses,
+  ListCatalogItemsErrors,
+  GetByCourseData,
+  GetByCourseResponses,
+  GetByCourseErrors,
+  GetByClassData,
+  GetByClassResponses,
+  GetByClassErrors,
   PreviewRecurringClassScheduleData,
   PreviewRecurringClassScheduleResponses,
   PreviewRecurringClassScheduleErrors,
@@ -1155,6 +1191,7 @@ import {
   updateContentTypeResponseTransformer,
   getCategoryByUuidResponseTransformer,
   updateCategoryResponseTransformer,
+  updateCatalogItemResponseTransformer,
   getClassDefinitionResponseTransformer,
   updateClassDefinitionResponseTransformer,
   scheduleRecurringClassFromDefinitionResponseTransformer,
@@ -1250,6 +1287,11 @@ import {
   createContentTypeResponseTransformer,
   getAllCategoriesResponseTransformer,
   createCategoryResponseTransformer,
+  completeCheckoutResponseTransformer,
+  createCartResponseTransformer,
+  selectPaymentSessionResponseTransformer,
+  addItemResponseTransformer,
+  completeCartResponseTransformer,
   createClassDefinitionResponseTransformer,
   createClassRecurrencePatternResponseTransformer,
   getAllCertificatesResponseTransformer,
@@ -1269,6 +1311,8 @@ import {
   unverifyOrganisationResponseTransformer,
   verifyInstructorResponseTransformer,
   unverifyInstructorResponseTransformer,
+  getCartResponseTransformer,
+  updateCartResponseTransformer,
   getAllUsersResponseTransformer,
   getInvitationsSentByUserResponseTransformer,
   getPendingInvitationsForUserResponseTransformer,
@@ -1353,6 +1397,10 @@ import {
   getSubCategoriesResponseTransformer,
   searchCategoriesResponseTransformer,
   getRootCategoriesResponseTransformer,
+  getOrderResponseTransformer,
+  listCatalogItemsResponseTransformer,
+  getByCourseResponseTransformer,
+  getByClassResponseTransformer,
   previewRecurringClassScheduleResponseTransformer,
   checkClassSchedulingConflictsResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
@@ -3815,6 +3863,38 @@ export const updateCategory = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/config/categories/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Update catalog mapping
+ * Updates Medusa identifiers or status for an existing mapping
+ */
+export const updateCatalogItem = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCatalogItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCatalogItemResponses,
+    UpdateCatalogItemErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCatalogItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/catalog/{catalogUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7396,6 +7476,158 @@ export const createCategory = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Complete checkout
+ * Performs the full Medusa checkout flow including customer association and payment selection
+ */
+export const completeCheckout = <ThrowOnError extends boolean = false>(
+  options: Options<CompleteCheckoutData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CompleteCheckoutResponses,
+    CompleteCheckoutErrors,
+    ThrowOnError
+  >({
+    responseTransformer: completeCheckoutResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/orders/checkout',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Create a new cart
+ * Initialises a new cart in Medusa that can be used for checkout flows
+ */
+export const createCart = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCartData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateCartResponses,
+    CreateCartErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createCartResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/carts',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Select payment session
+ * Locks the cart to a particular Medusa payment provider
+ */
+export const selectPaymentSession = <ThrowOnError extends boolean = false>(
+  options: Options<SelectPaymentSessionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SelectPaymentSessionResponses,
+    SelectPaymentSessionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: selectPaymentSessionResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/carts/{cartId}/payment-session',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Add an item to a cart
+ * Adds or increments a line item on an existing cart
+ */
+export const addItem = <ThrowOnError extends boolean = false>(
+  options: Options<AddItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<AddItemResponses, AddItemErrors, ThrowOnError>({
+    responseTransformer: addItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/carts/{cartId}/items',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Complete cart
+ * Finalises the cart in Medusa and creates an order
+ */
+export const completeCart = <ThrowOnError extends boolean = false>(
+  options: Options<CompleteCartData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CompleteCartResponses,
+    CompleteCartErrors,
+    ThrowOnError
+  >({
+    responseTransformer: completeCartResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/carts/{cartId}/complete',
+    ...options,
+  });
+};
+
+/**
  * Create a new class definition
  */
 export const createClassDefinition = <ThrowOnError extends boolean = false>(
@@ -8056,6 +8288,62 @@ export const markAttendance = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/enrollment/{enrollmentUuid}/attendance',
     ...options,
+  });
+};
+
+/**
+ * Retrieve cart details
+ * Fetches the latest cart representation from Medusa
+ */
+export const getCart = <ThrowOnError extends boolean = false>(
+  options: Options<GetCartData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetCartResponses, GetCartErrors, ThrowOnError>({
+    responseTransformer: getCartResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/carts/{cartId}',
+    ...options,
+  });
+};
+
+/**
+ * Update cart attributes
+ * Updates cart metadata such as customer or addresses
+ */
+export const updateCart = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCartData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    UpdateCartResponses,
+    UpdateCartErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCartResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/carts/{cartId}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -11406,6 +11694,110 @@ export const getRootCategories = <ThrowOnError extends boolean = false>(
     url: '/api/v1/config/categories/root',
     ...options,
   });
+};
+
+/**
+ * Get order details
+ * Retrieves an order from Medusa to support order tracking
+ */
+export const getOrder = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrderData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetOrderResponses, GetOrderErrors, ThrowOnError>({
+    responseTransformer: getOrderResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/orders/{orderId}',
+    ...options,
+  });
+};
+
+/**
+ * List catalog mappings
+ * Returns catalog items optionally filtered by active status
+ */
+export const listCatalogItems = <ThrowOnError extends boolean = false>(
+  options?: Options<ListCatalogItemsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListCatalogItemsResponses,
+    ListCatalogItemsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listCatalogItemsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/catalog',
+    ...options,
+  });
+};
+
+/**
+ * Get catalog mapping by course
+ */
+export const getByCourse = <ThrowOnError extends boolean = false>(
+  options: Options<GetByCourseData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetByCourseResponses,
+    GetByCourseErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getByCourseResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/catalog/by-course/{courseUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get catalog mapping by class definition
+ */
+export const getByClass = <ThrowOnError extends boolean = false>(
+  options: Options<GetByClassData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetByClassResponses, GetByClassErrors, ThrowOnError>(
+    {
+      responseTransformer: getByClassResponseTransformer,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/commerce/catalog/by-class/{classUuid}',
+      ...options,
+    }
+  );
 };
 
 /**

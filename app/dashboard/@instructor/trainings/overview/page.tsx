@@ -43,7 +43,7 @@ export default function TrainingsPage() {
   const instructor = useInstructor();
   const [openAddClass, setOpenAddClass] = useState(false);
 
-  const { data, isLoading, isPending } = useQuery(
+  const { data, isLoading, isPending, isFetching } = useQuery(
     getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructor?.uuid as string },
       query: { activeOnly: false },
@@ -107,7 +107,7 @@ export default function TrainingsPage() {
         </Button>
       </div>
 
-      {isLoading || isPending ? (
+      {isLoading || isFetching ? (
         <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
           <Skeleton className='h-4 w-32' />
           <Skeleton className='h-4 w-32' />
@@ -142,7 +142,7 @@ export default function TrainingsPage() {
         </div>
       )}
 
-      {classes?.length === 0 && !isLoading && (
+      {classes?.length === 0 && !isFetching && (
         <div className='bg-muted/20 space-y-4 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
 
@@ -157,7 +157,7 @@ export default function TrainingsPage() {
         </div>
       )}
 
-      {isLoading || isPending ? (
+      {isLoading || isFetching ? (
         <PageLoader />
       ) : (
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>

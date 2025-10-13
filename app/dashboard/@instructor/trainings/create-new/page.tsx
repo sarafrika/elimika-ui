@@ -106,27 +106,34 @@ export default function ClassCreationPage() {
     switch (steps[currentStep]?.id) {
       case 'details':
         return (
-          <ClassDetailsForm isLoading={isLoading} handleNextStep={nextStep} classData={clData} />
+          <ClassDetailsForm
+            isLoading={isLoading}
+            handleNextStep={nextStep}
+            classData={clData}
+          />
         );
       case 'period':
         return (
-          <AcademicPeriodForm classId={resolveId as string} onNext={nextStep} onPrev={prevStep} />
+          <AcademicPeriodForm
+            classId={resolveId as string}
+            onNext={nextStep}
+            onPrev={prevStep}
+            classData={clData}
+          />
         );
       case 'timetable':
         return (
           <TimetableForm
-            data={{}}
+            data={clData}
             classId={resolveId as string}
             onNext={nextStep}
             onPrev={prevStep}
-            onUpdate={() => {}}
           />
         );
       case 'schedule':
         return (
           <ScheduleForm
-            data={classData}
-            onUpdate={updateClassData}
+            data={clData}
             onNext={nextStep}
             onPrev={prevStep}
           />

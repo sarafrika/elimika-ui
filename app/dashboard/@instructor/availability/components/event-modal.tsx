@@ -19,30 +19,30 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
   BookOpen,
-  Briefcase,
   Calendar,
   Clock,
   Coffee,
   Copy,
-  Heart,
   MapPin,
   Trash2,
-  Users,
+  Users
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { useInstructor } from '../../../../../context/instructor-context';
+import { AvailabilityTypeEnum, LocalTime } from '../../../../../services/client';
+import { createAvailabilitySlotMutation, getInstructorAvailabilityQueryKey, getScheduledInstanceQueryKey, scheduleClassMutation } from '../../../../../services/client/@tanstack/react-query.gen';
 import { CalendarEvent } from '../page';
 
 export type EventType =
-  | 'class'
-  | 'meeting'
-  | 'break'
-  | 'personal'
-  | 'appointment'
-  | 'workshop'
-  | 'conference';
+  | 'booked'
+  | 'unavailable'
+  | 'available'
+  | 'reserved'
 
 interface EventModalProps {
   isOpen: boolean;
@@ -58,14 +58,39 @@ interface EventModalProps {
 }
 
 const eventTypes = [
-  { value: 'class', label: 'Class/Lesson', icon: BookOpen, color: 'bg-blue-500' },
-  { value: 'meeting', label: 'Meeting', icon: Users, color: 'bg-purple-500' },
-  { value: 'break', label: 'Break', icon: Coffee, color: 'bg-orange-500' },
-  { value: 'personal', label: 'Personal', icon: Heart, color: 'bg-pink-500' },
-  { value: 'appointment', label: 'Appointment', icon: Calendar, color: 'bg-green-500' },
-  { value: 'workshop', label: 'Workshop', icon: Briefcase, color: 'bg-indigo-500' },
-  { value: 'conference', label: 'Conference', icon: Briefcase, color: 'bg-gray-500' },
+  { value: 'booked', label: 'Class', icon: BookOpen, color: 'bg-blue-500' },
+  { value: 'unavailable', label: 'Unavailable', icon: Coffee, color: 'bg-orange-500' },
+  { value: 'available', label: 'Available', icon: Calendar, color: 'bg-green-500' },
+  { value: 'reserved', label: 'Reserved', icon: Users, color: 'bg-yellow-500' }
 ];
+
+function extractDateTimeParts(date: Date) {
+  const pad = (num: number) => String(num).padStart(2, '0');
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1); // Months are 0-based
+  const day = pad(date.getDate());
+
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+
+  const localDate = `${year}-${month}-${day}`;
+  const localTime = `${hours}:${minutes}:${seconds}`;
+  const localDateTime = `${localDate}T${localTime}`;
+
+  return {
+    localDate,
+    localTime,
+    localDateTime
+  };
+}
+
+function getDayOfWeek1To7(date: Date): number {
+  const jsDay = date.getDay(); // 0 (Sun) - 6 (Sat)
+  return jsDay === 0 ? 7 : jsDay; // Convert Sunday (0) to 7
+}
+
 
 export function EventModal({
   isOpen,
@@ -78,7 +103,7 @@ export function EventModal({
   const [formData, setFormData] = useState<Partial<CalendarEvent>>({
     title: '',
     description: '',
-    type: 'class',
+    type: 'available',
     startTime: '',
     endTime: '',
     location: '',
@@ -100,7 +125,7 @@ export function EventModal({
       setFormData({
         title: '',
         description: '',
-        type: 'class',
+        type: 'available',
         startTime: selectedSlot.time,
         endTime: endTime,
         day: selectedSlot.day,
@@ -128,9 +153,9 @@ export function EventModal({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.title?.trim()) {
-      newErrors.title = 'Title is required';
-    }
+    // if (!formData.title?.trim()) {
+    //   newErrors.title = 'Title is required';
+    // }
 
     if (!formData.startTime) {
       newErrors.startTime = 'Start time is required';
@@ -151,6 +176,11 @@ export function EventModal({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const instrucor = useInstructor()
+  const qc = useQueryClient()
+  const scheduleClass = useMutation(scheduleClassMutation())
+  const createAvailability = useMutation(createAvailabilitySlotMutation())
 
   const handleSave = () => {
     if (!validateForm()) return;
@@ -174,8 +204,59 @@ export function EventModal({
       notes: formData.notes,
     };
 
-    onSave(eventData);
-    onClose();
+    const { localDate, localTime, localDateTime } = extractDateTimeParts(eventData?.date);
+
+    if (eventData?.type === "available" || eventData?.type === "unavailable") {
+      createAvailability.mutate({
+        body: {
+          instructor_uuid: instrucor?.uuid as string,
+          availability_type: AvailabilityTypeEnum.DAILY,
+          day_of_week: getDayOfWeek1To7(eventData?.date),
+          start_time: eventData?.startTime as LocalTime,
+          end_time: eventData?.endTime as LocalTime,
+          is_available: eventData?.type === "available",
+          recurrence_interval: 1,
+          effective_start_date: eventData?.date,
+          effective_end_date: new Date("2026-03-15"),
+          color_code: eventData?.color
+        },
+        path: { instructorUuid: instrucor?.uuid as string }
+      }, {
+        onSuccess: (data) => {
+          qc.invalidateQueries({
+            queryKey: getInstructorAvailabilityQueryKey({ path: { instructorUuid: instrucor?.uuid as string } }),
+          });
+          toast.success(data?.message)
+          onClose();
+        },
+        onError: (error) => {
+          toast.error(error?.message)
+          onClose()
+        }
+      });
+    } else if (eventData?.type === "booked") {
+      scheduleClass.mutate({
+        body: {
+          instructor_uuid: instrucor?.uuid as string,
+          class_definition_uuid: "ee1c94df-ddea-410d-a1a3-c44f9068ab48",
+          start_time: localDateTime as any,
+          end_time: "2026-09-15T10:30:00" as any,
+          timezone: "UTC"
+        }
+      }, {
+        onSuccess: (data) => {
+          qc.invalidateQueries({
+            queryKey: getScheduledInstanceQueryKey({ path: { instanceUuid: data?.data?.uuid as string } }),
+          });
+          toast.success(data?.message)
+          onClose();
+        },
+        onError: (error) => {
+          toast.error(error?.message)
+          onClose()
+        }
+      });
+    }
   };
 
   const handleDelete = () => {
@@ -208,64 +289,67 @@ export function EventModal({
           </DialogTitle>
         </DialogHeader>
 
+        <div className='space-y-2 w-full my-4'>
+          <Label htmlFor='type'>Event Type</Label>
+          <Select
+            value={formData.type}
+            onValueChange={value =>
+              setFormData(prev => ({ ...prev, type: value as EventType }))
+            }
+          >
+            <SelectTrigger className='w-full'>
+              <SelectValue placeholder='Select event type' />
+            </SelectTrigger>
+            <SelectContent>
+              {eventTypes.map(type => (
+                <SelectItem key={type.value} value={type.value}>
+                  <div className='flex items-center gap-2'>
+                    <div className={`h-3 w-3 rounded ${type.color}`} />
+                    <type.icon className='h-4 w-4' />
+                    {type.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className='space-y-6'>
           {/* Basic Information */}
-          <div className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='title'>Event Title *</Label>
-              <Input
-                id='title'
-                value={formData.title || ''}
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder='Enter event title...'
-                className={errors.title ? 'border-red-500' : ''}
-              />
-              {errors.title && (
-                <p className='flex items-center gap-1 text-sm text-red-500'>
-                  <AlertCircle className='h-3 w-3' />
-                  {errors.title}
-                </p>
-              )}
-            </div>
+          {selectedEventType?.value === "booked" &&
+            <div className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='title'>Event Title *</Label>
+                <Input
+                  id='title'
+                  value={formData.title || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder='Enter event title...'
+                  className={errors.title ? 'border-red-500' : ''}
+                />
+                {errors.title && (
+                  <p className='flex items-center gap-1 text-sm text-red-500'>
+                    <AlertCircle className='h-3 w-3' />
+                    {errors.title}
+                  </p>
+                )}
+              </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='type'>Event Type</Label>
-              <Select
-                value={formData.type}
-                onValueChange={value =>
-                  setFormData(prev => ({ ...prev, type: value as EventType }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select event type' />
-                </SelectTrigger>
-                <SelectContent>
-                  {eventTypes.map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className='flex items-center gap-2'>
-                        <div className={`h-3 w-3 rounded ${type.color}`} />
-                        <type.icon className='h-4 w-4' />
-                        {type.label}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className='space-y-2'>
+                <Label htmlFor='description'>Description</Label>
+                <Textarea
+                  id='description'
+                  value={formData.description || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder='Add a description...'
+                  rows={3}
+                />
+              </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='description'>Description</Label>
-              <Textarea
-                id='description'
-                value={formData.description || ''}
-                onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder='Add a description...'
-                rows={3}
-              />
+              <Separator />
             </div>
-          </div>
+          }
 
-          <Separator />
 
           {/* Date & Time */}
           <div className='space-y-4'>
@@ -353,69 +437,72 @@ export function EventModal({
             )}
           </div>
 
-          <Separator />
 
           {/* Additional Details */}
-          <div className='space-y-4'>
-            <h4 className='flex items-center gap-2 font-medium'>
-              <MapPin className='h-4 w-4' />
-              Additional Details
-            </h4>
+          {selectedEventType?.value === "booked" &&
+            <div className='space-y-4'>
+              <Separator />
 
-            <div className='grid grid-cols-2 gap-4'>
+              <h4 className='flex items-center gap-2 font-medium'>
+                <MapPin className='h-4 w-4' />
+                Additional Details
+              </h4>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='location'>Location</Label>
+                  <Input
+                    id='location'
+                    value={formData.location || ''}
+                    onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder='Meeting room, online, etc.'
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='attendees'>Expected Attendees</Label>
+                  <Input
+                    id='attendees'
+                    type='number'
+                    min='1'
+                    value={formData.attendees || 1}
+                    onChange={e =>
+                      setFormData(prev => ({ ...prev, attendees: Number(e.target.value) }))
+                    }
+                  />
+                </div>
+              </div>
+
               <div className='space-y-2'>
-                <Label htmlFor='location'>Location</Label>
-                <Input
-                  id='location'
-                  value={formData.location || ''}
-                  onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder='Meeting room, online, etc.'
+                <Label htmlFor='notes'>Notes</Label>
+                <Textarea
+                  id='notes'
+                  value={formData.notes || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder='Additional notes or instructions...'
+                  rows={2}
                 />
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='attendees'>Expected Attendees</Label>
-                <Input
-                  id='attendees'
-                  type='number'
-                  min='1'
-                  value={formData.attendees || 1}
-                  onChange={e =>
-                    setFormData(prev => ({ ...prev, attendees: Number(e.target.value) }))
-                  }
-                />
+                <Label>Status</Label>
+                <Select
+                  value={formData.status || 'booked'}
+                  onValueChange={value => setFormData(prev => ({ ...prev, status: value as any }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='available'>Available</SelectItem>
+                    <SelectItem value='booked'>Booked</SelectItem>
+                    <SelectItem value='reserved'>Reserved</SelectItem>
+                    <SelectItem value='unavailable'>Unavailable</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='notes'>Notes</Label>
-              <Textarea
-                id='notes'
-                value={formData.notes || ''}
-                onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder='Additional notes or instructions...'
-                rows={2}
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label>Status</Label>
-              <Select
-                value={formData.status || 'booked'}
-                onValueChange={value => setFormData(prev => ({ ...prev, status: value as any }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='available'>Available</SelectItem>
-                  <SelectItem value='booked'>Booked</SelectItem>
-                  <SelectItem value='reserved'>Reserved</SelectItem>
-                  <SelectItem value='unavailable'>Unavailable</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          }
         </div>
 
         <DialogFooter className='flex items-center justify-between border-t pt-6'>

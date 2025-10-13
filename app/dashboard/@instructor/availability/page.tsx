@@ -24,7 +24,7 @@ export type CalendarEvent = {
   id: string;
   title: string;
   description?: string;
-  type: 'class' | 'meeting' | 'break' | 'personal' | 'appointment' | 'workshop' | 'conference';
+  type: 'booked' | 'available' | 'unavailable' | 'reserved';
   startTime: string;
   endTime: string;
   date: Date;
@@ -179,7 +179,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-1',
     title: 'Team Standup',
-    type: 'meeting',
+    type: 'booked',
     startTime: '09:00',
     endTime: '09:30',
     date: new Date('2025-10-01'),
@@ -196,7 +196,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-2',
     title: 'Client Presentation',
-    type: 'appointment',
+    type: 'reserved',
     startTime: '11:00',
     endTime: '12:00',
     date: new Date('2025-10-02'),
@@ -210,7 +210,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-3',
     title: 'Lunch Break',
-    type: 'break',
+    type: 'unavailable',
     startTime: '12:30',
     endTime: '13:30',
     date: new Date('2025-10-01'),
@@ -223,7 +223,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-4',
     title: 'Yoga Session',
-    type: 'personal',
+    type: 'unavailable',
     startTime: '07:00',
     endTime: '08:00',
     date: new Date('2025-10-03'),
@@ -236,7 +236,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-5',
     title: 'React Workshop',
-    type: 'workshop',
+    type: 'unavailable',
     startTime: '14:00',
     endTime: '16:00',
     date: new Date('2025-10-05'),
@@ -250,7 +250,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-6',
     title: '1:1 Check-in with Manager',
-    type: 'meeting',
+    type: 'unavailable',
     startTime: '10:00',
     endTime: '10:30',
     date: new Date('2025-10-07'),
@@ -264,7 +264,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-7',
     title: 'Doctor Appointment',
-    type: 'appointment',
+    type: 'unavailable',
     startTime: '16:00',
     endTime: '17:00',
     date: new Date('2025-10-04'),
@@ -277,7 +277,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-8',
     title: 'Weekly Strategy Session',
-    type: 'meeting',
+    type: 'booked',
     startTime: '15:00',
     endTime: '16:00',
     date: new Date('2025-10-03'),
@@ -293,7 +293,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-9',
     title: 'Annual Tech Conference',
-    type: 'conference',
+    type: 'booked',
     startTime: '09:00',
     endTime: '17:00',
     date: new Date('2025-10-10'),
@@ -307,7 +307,7 @@ const calendarEvents: CalendarEvent[] = [
   {
     id: 'event-10',
     title: 'Reading Time',
-    type: 'personal',
+    type: 'unavailable',
     startTime: '20:00',
     endTime: '21:00',
     date: new Date('2025-10-02'),

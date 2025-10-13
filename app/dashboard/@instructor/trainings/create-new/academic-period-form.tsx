@@ -73,15 +73,44 @@ import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
 
+import { scheduleClassMutation, scheduleRecurringClassFromDefinitionMutation, updateClassDefinitionMutation } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+
+function formatToYYYYMMDD(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function convertToCustomDateTimeString(
+  dateInput: string | Date,
+  time = '09:00:00' // default time
+): string {
+  const date = new Date(dateInput);
+
+  // Extract date components in UTC
+  const yyyy = date.getUTCFullYear();
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+
+  // Combine with provided time
+  return `${yyyy}-${mm}-${dd}T${time}`;
+}
+
+
 
 interface AcademicFormProps {
   onNext: () => void;
   onPrev: () => void;
   classId: string;
+  classData: any
 }
 
 const academicPeriodSchema = z.object({
@@ -97,7 +126,7 @@ const academicPeriodSchema = z.object({
 
 type AcademicPeriodFormValues = z.infer<typeof academicPeriodSchema>;
 
-export function AcademicPeriodForm({ onNext, onPrev, classId }: AcademicFormProps) {
+export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: AcademicFormProps) {
   const form = useForm<AcademicPeriodFormValues>({
     resolver: zodResolver(academicPeriodSchema),
     defaultValues: {
@@ -113,10 +142,47 @@ export function AcademicPeriodForm({ onNext, onPrev, classId }: AcademicFormProp
   });
 
   const [continuousRegistration, setContinuousRegistration] = useState(false);
+  const updateClassMutation = useMutation(updateClassDefinitionMutation())
+
+  const createClassSchdeule = useMutation(scheduleRecurringClassFromDefinitionMutation())
+  const scheduleClass = useMutation(scheduleClassMutation())
 
   const onSubmit = (values: AcademicPeriodFormValues) => {
-    // console.log("✅ Submitted values:", values, classId);
-    onNext();
+    if (!classId) return
+    // updateClassMutation.mutate({
+    //   body: {
+    //     ...classData,
+    //     default_start_time: "2025-11-02",
+    //     default_end_time: "2025-12-19"
+    //     // default_start_time: new Date(values?.academicPeriod?.startDate),
+    //     // default_end_time: new Date(values?.academicPeriod?.endDate)
+    //     // registration_start_period: values?.registrationPeriod?.startDate
+    //     // registration_end_period: values?.registrationPeriod?.endDate
+    //   },
+    //   path: { uuid: classId }
+    // }, {
+    //   onSuccess: () => {
+    //     // onNext();
+    //   }
+    // })
+
+    scheduleClass.mutate({
+      body: {
+        class_definition_uuid: classData?.uuid,
+        instructor_uuid: classData?.default_instructor_uuid as string,
+        // @ts-ignore
+        start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
+        // @ts-ignore
+        end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
+        timezone: "UTC"
+      }
+    }, {
+      onSuccess: (data) => {
+        toast.success(data?.message);
+        onNext();
+      }
+    });
+
   };
 
   return (
