@@ -1,15 +1,19 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import moment from 'moment';
 import { useState } from 'react';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { previewRecurringClassScheduleOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 
 const localizer = momentLocalizer(moment);
 
 const ClassCalendar = () => {
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState(Views.WEEK);
+
+  const { data } = useQuery(previewRecurringClassScheduleOptions({ path: { uuid: "2897f950-8299-4860-bf8d-b99978d6b600" }, query: { startDate: new Date("2025-08-09") } }))
 
   const handleToday = () => {
     setDate(new Date());
@@ -104,7 +108,7 @@ const ClassCalendar = () => {
         eventPropGetter={eventPropGetter}
         dayPropGetter={dayPropGetter}
         slotPropGetter={slotPropGetter}
-        // onDoubleClickEvent={() => {}}
+      // onDoubleClickEvent={() => {}}
       />
     </div>
   );

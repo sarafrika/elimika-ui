@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserDomain } from '@/lib/types';
-import { GraduationCap, Users, BookOpen } from 'lucide-react';
+import { BookOpen, GraduationCap, Sparkles, Users } from 'lucide-react';
 import { useState } from 'react';
 
 interface DomainSelectionProps {
@@ -28,6 +28,14 @@ const domainConfig = {
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
     borderColor: 'border-emerald-200 dark:border-emerald-800',
+  },
+  creator: {
+    icon: Sparkles,
+    title: 'Creator Dashboard',
+    description: 'Design, publish, and manage your content across the platform.',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    borderColor: 'border-purple-200 dark:border-purple-800',
   },
   organisation_user: {
     icon: Users,
@@ -91,11 +99,10 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
             return (
               <Card
                 key={domain}
-                className={`cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg ${
-                  isSelected
+                className={`cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg ${isSelected
                     ? `ring-offset-background ring-2 ring-offset-2 ${config.borderColor} ${config.bgColor}`
                     : 'hover:border-slate-300 dark:hover:border-slate-600'
-                }`}
+                  }`}
                 onClick={() => handleDomainSelect(domain)}
               >
                 <CardHeader className='pb-4 text-center'>

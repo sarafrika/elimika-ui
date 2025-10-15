@@ -7,7 +7,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Award, BookOpen, Calendar, LayoutDashboard, Star, UserCircle } from 'lucide-react';
+import { Award, BookOpen, Calendar, LayoutDashboard, Star, UserCircle, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
@@ -26,6 +26,11 @@ const studentMenuItems = [
     title: 'My Schedule',
     url: '/dashboard/my-schedule',
     icon: Calendar,
+  },
+  {
+    title: 'Skills Fund',
+    url: '/dashboard/skills-fund',
+    icon: Wallet,
   },
   {
     title: 'My Grades',

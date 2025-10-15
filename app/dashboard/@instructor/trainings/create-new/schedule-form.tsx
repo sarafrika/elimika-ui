@@ -3,13 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { getResourceIcon } from '@/lib/resources-icon';
@@ -20,18 +13,16 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, FileQuestion } from 'lucide-react';
 import { useState } from 'react';
-import { ClassData } from './academic-period-form';
 
 interface ScheduleFormProps {
-  data: Partial<ClassData>;
-  onUpdate: (updates: Partial<ClassData>) => void;
+  data: any;
   onNext: () => void;
   onPrev: () => void;
 }
 
 const instructors = ['Fetch org. instructors'];
 
-export function ScheduleForm({ data, onUpdate, onNext, onPrev }: ScheduleFormProps) {
+export function ScheduleForm({ data, onNext, onPrev }: ScheduleFormProps) {
   const searchParams = new URLSearchParams(location.search);
   const classId = searchParams.get('id');
 
@@ -93,9 +84,9 @@ export function ScheduleForm({ data, onUpdate, onNext, onPrev }: ScheduleFormPro
   return (
     <div className='space-y-6'>
       {/* Instructor Selection */}
-      <div className='space-y-2'>
+      {/* <div className='space-y-2'>
         <Label>Assign Instructor *</Label>
-        <Select value={''} onValueChange={value => {}}>
+        <Select value={''} onValueChange={value => { }}>
           <SelectTrigger>
             <SelectValue placeholder='Select an instructor' />
           </SelectTrigger>
@@ -108,7 +99,7 @@ export function ScheduleForm({ data, onUpdate, onNext, onPrev }: ScheduleFormPro
           </SelectContent>
         </Select>
         {errors.instructor && <p className='text-destructive text-sm'>{errors.instructor}</p>}
-      </div>
+      </div> */}
 
       {/* Skills and Lessons */}
       <div className='space-y-4'>
@@ -137,7 +128,7 @@ export function ScheduleForm({ data, onUpdate, onNext, onPrev }: ScheduleFormPro
               <CardContent className='space-y-4'>
                 <div className='space-y-2'>
                   <Label>Skill Title</Label>
-                  <Input value={skill.lesson?.title} onChange={e => {}} />
+                  <Input value={skill.lesson?.title} onChange={e => { }} />
                   <div className='text-muted-foreground mb-1 line-clamp-2 text-sm'>
                     <HTMLTextPreview htmlContent={skill?.lesson?.description as string} />
                   </div>

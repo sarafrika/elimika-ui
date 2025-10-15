@@ -14,14 +14,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { updateClassDefinitionMutation } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, Clock, MapPin } from 'lucide-react';
-import { useEffect } from 'react';
 
 interface TimetableFormProps {
   classId: string;
   data: any;
-  onUpdate: (updates: any) => void;
   onNext: () => void;
   onPrev: () => void;
 }
@@ -63,21 +63,20 @@ const AvailabilityDaySchema = z.object({
 });
 
 const TimetableSchema = z.object({
-  classType: z.enum(['online', 'in-person', 'hybrid']),
+  location_type: z.any(),
   location: z.string().optional(),
-  duration: z.string(),
+  duration: z.any(),
   timezone: z.string(),
   availability: z.array(AvailabilityDaySchema),
 });
 
 type TimetableFormData = z.infer<typeof TimetableSchema>;
 
-export function TimetableForm({ classId, data, onUpdate, onNext, onPrev }: TimetableFormProps) {
-  // Prepare default values for react-hook-form
+export function TimetableForm({ classId, data, onNext, onPrev }: TimetableFormProps) {
   const defaultValues: TimetableFormData = {
-    classType: data.timetable?.classType ?? 'online',
-    location: data.timetable?.location ?? '',
-    duration: data.timetable?.duration ?? '60',
+    location_type: data?.location_type ?? '',
+    location: data?.location_type ?? '',
+    duration: data?.duration_minutes ?? '',
     timezone: data.timetable?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
     availability:
       daysOfWeek.map(day => {
@@ -103,15 +102,8 @@ export function TimetableForm({ classId, data, onUpdate, onNext, onPrev }: Timet
     defaultValues,
     mode: 'onBlur',
   });
-
-  // Watch the form to sync data upward
   const watchedValues = watch();
 
-  useEffect(() => {
-    onUpdate({ timetable: watchedValues });
-  }, [watchedValues, onUpdate]);
-
-  // FieldArray for availability to manage days and slots
   const {
     fields: availabilityFields,
     append,
@@ -158,9 +150,24 @@ export function TimetableForm({ classId, data, onUpdate, onNext, onPrev }: Timet
     });
   };
 
+  const updateClassMutation = useMutation(updateClassDefinitionMutation())
   const onSubmit = (values: TimetableFormData) => {
-    // console.log("✅ Submitted values:", values, classId);
-    onNext();
+    if (!classId) return
+
+    // onNext();
+
+    updateClassMutation.mutate({
+      body: {
+        ...data,
+        location_type: values?.location_type || data?.location_type,
+        duration_minutes: values?.duration || data?.duration_minutes,
+      },
+      path: { uuid: classId }
+    }, {
+      onSuccess: () => {
+        onNext();
+      }
+    })
   };
 
   return (
@@ -169,20 +176,18 @@ export function TimetableForm({ classId, data, onUpdate, onNext, onPrev }: Timet
       <div className='w-full space-y-2'>
         <Label>Class Type *</Label>
         <Controller
-          name='classType'
+          name='location_type'
           control={control}
           render={({ field }) => (
             <div className='w-full'>
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger className='w-full'>
-                  {' '}
-                  {/* Make trigger full width */}
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='online'>Online</SelectItem>
-                  <SelectItem value='in-person'>In-person</SelectItem>
-                  <SelectItem value='hybrid'>Hybrid</SelectItem>
+                  <SelectItem value='ONLINE'>ONLINE</SelectItem>
+                  <SelectItem value='IN_PERSON'>IN_PERSON</SelectItem>
+                  <SelectItem value='HYBRID'>HYBRID</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -190,8 +195,7 @@ export function TimetableForm({ classId, data, onUpdate, onNext, onPrev }: Timet
         />
       </div>
 
-      {/* Location (conditionally required) */}
-      {['in-person', 'hybrid'].includes(watchedValues.classType) && (
+      {['IN_PERSON', 'HYBRID'].includes(watchedValues.location_type) && (
         <div className='space-y-2'>
           <Label>Location *</Label>
           <div className='flex gap-2'>
@@ -213,9 +217,8 @@ export function TimetableForm({ classId, data, onUpdate, onNext, onPrev }: Timet
         {availabilityFields.map((day, dayIndex) => (
           <div
             key={day.id}
-            className={`flex flex-col items-start justify-between gap-12 rounded-md border p-4 sm:flex-row ${
-              day.enabled ? 'bg-white' : 'bg-gray-100 opacity-60'
-            }`}
+            className={`flex flex-col items-start justify-between gap-12 rounded-md border p-4 sm:flex-row ${day.enabled ? 'bg-white' : 'bg-gray-100 opacity-60'
+              }`}
           >
             {/* Day Toggle */}
             <div className='mb-2 flex min-w-[150px] items-center justify-between'>
@@ -318,7 +321,7 @@ export function TimetableForm({ classId, data, onUpdate, onNext, onPrev }: Timet
               )}
             />
           </div>
-          {errors.duration && <p className='text-destructive text-sm'>{errors.duration.message}</p>}
+          {/* {errors.duration && <p className='text-destructive text-sm'>{errors.duration.message}</p>} */}
         </div>
 
         <div className='space-y-2'>

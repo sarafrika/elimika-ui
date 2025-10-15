@@ -26,10 +26,13 @@ import { Instructor, InstructorSkill } from '@/services/api/schema';
 import { tanstackClient } from '@/services/api/tanstack-client';
 import { schemas } from '@/services/api/zod-client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
+import { addInstructorSkillMutation, getInstructorSkillsQueryKey } from '../../../../../../services/client/@tanstack/react-query.gen';
 
 const SkillSchema = schemas.InstructorSkill;
 const skillsSchema = z.object({
@@ -48,6 +51,7 @@ export default function SkillsSettings({
   instructor: Instructor;
   instructorSkills: InstructorSkill[];
 }) {
+  const qc = useQueryClient()
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -91,15 +95,24 @@ export default function SkillsSettings({
     //console.log('Form values', form.getValues());
   }
 
-  const addSkillMutation = tanstackClient.useMutation(
-    'post',
-    '/api/v1/instructors/{instructorUuid}/skills'
-  );
+  const addSkillMutation = useMutation(addInstructorSkillMutation())
+  // const addSkillMutation = tanstackClient.useMutation(
+  //   'post',
+  //   '/api/v1/instructors/{instructorUuid}/skills'
+  // );
   const updateSkillMutation = tanstackClient.useMutation(
     'put',
     '/api/v1/instructors/{instructorUuid}/skills/{skillUuid}'
   );
   const { submitting } = useMultiMutations([addSkillMutation, updateSkillMutation]);
+
+
+
+
+
+
+
+
 
   const onSubmit = (data: SkillsFormValues) => {
     //console.log(data);
@@ -121,18 +134,21 @@ export default function SkillsSettings({
           body: skillData,
         });
       } else {
-        const resp = await addSkillMutation.mutateAsync({
-          params: {
-            path: {
-              instructorUuid: instructor.uuid!,
-            },
+        addSkillMutation.mutate({
+          body: {
+            instructor_uuid: instructor.uuid!,
+            skill_name: skillData.skill_name,
+            proficiency_level: skillData.proficiency_level,
+            proficiency_description: skillData.proficiency_description,
+            summary: skillData.summary,
           },
-          body: skillData,
-        });
-
-        const skills = form.getValues('skills');
-        skills[index] = passSkill(resp.data!);
-        form.setValue('skills', skills);
+          path: { instructorUuid: instructor.uuid! }
+        }, {
+          onSuccess: (data) => {
+            toast.success(data?.message || "Skill added successfully")
+            qc.invalidateQueries({ queryKey: getInstructorSkillsQueryKey({ query: { pageable: {} }, path: { instructorUuid: instructor.uuid! } }) })
+          }
+        })
       }
     });
   };

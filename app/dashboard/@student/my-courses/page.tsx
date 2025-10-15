@@ -8,79 +8,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CustomPagination } from '../../../../components/pagination';
 import { Skeleton } from '../../../../components/ui/skeleton';
-import { getAllCoursesOptions } from '../../../../services/client/@tanstack/react-query.gen';
-import { CourseCard } from '../_components/course-card';
-
-const SAMPLE_COURSES = [
-  {
-    id: '1',
-    title: 'Complete React Development Bootcamp',
-    subtitle: 'Build modern web applications with React, TypeScript, and Next.js',
-    category: 'Technology',
-    subcategory: 'Web Development',
-    instructor: 'John Smith',
-    instructorAvatar: '',
-    rating: 4.8,
-    enrolledCount: 2341,
-    duration: '40 hours',
-    difficulty: 'Intermediate',
-    price: '$89',
-    originalPrice: '$149',
-    coverImage: null,
-    hasVideo: true,
-  },
-  {
-    id: '2',
-    title: 'UI/UX Design Fundamentals',
-    subtitle: 'Learn design principles and create beautiful user interfaces',
-    category: 'Design',
-    subcategory: 'UI/UX Design',
-    instructor: 'Sarah Johnson',
-    instructorAvatar: '',
-    rating: 4.9,
-    enrolledCount: 1856,
-    duration: '25 hours',
-    difficulty: 'Beginner',
-    price: 'Free',
-    originalPrice: null,
-    coverImage: null,
-    hasVideo: true,
-  },
-  {
-    id: '3',
-    title: 'Digital Marketing Strategy',
-    subtitle: 'Master SEO, social media, and content marketing',
-    category: 'Business',
-    subcategory: 'Marketing',
-    instructor: 'Mike Wilson',
-    instructorAvatar: '',
-    rating: 4.7,
-    enrolledCount: 3247,
-    duration: '30 hours',
-    difficulty: 'Intermediate',
-    price: '$129',
-    originalPrice: '$199',
-    coverImage: null,
-    hasVideo: false,
-  },
-  {
-    id: '4',
-    title: 'Data Science with Python',
-    subtitle: 'Learn Python, pandas, and machine learning from scratch',
-    category: 'Technology',
-    subcategory: 'Data Science',
-    instructor: 'Dr. Lisa Chen',
-    instructorAvatar: '',
-    rating: 4.6,
-    enrolledCount: 1923,
-    duration: '50 hours',
-    difficulty: 'Advanced',
-    price: '$199',
-    originalPrice: '$299',
-    coverImage: null,
-    hasVideo: true,
-  },
-];
+import { getAllCoursesOptions, listCatalogItemsOptions } from '../../../../services/client/@tanstack/react-query.gen';
+import { CourseCard } from '../../_components/course-card';
 
 export default function MyCoursesPage() {
   const router = useRouter();
@@ -94,6 +23,11 @@ export default function MyCoursesPage() {
   const { data, isLoading } = useQuery(
     getAllCoursesOptions({ query: { pageable: { page, size } } })
   );
+
+  const { data: c, isLoading: cIsLoading } = useQuery(
+    listCatalogItemsOptions({ query: { active_only: false } })
+  )
+
   const courses = data?.data?.content || [];
   const paginationMetadata = data?.data?.metadata;
 
@@ -161,6 +95,7 @@ export default function MyCoursesPage() {
             <CourseCard
               key={course.uuid}
               course={course as any}
+              isStudent={true}
               handleClick={() => router.push(`/dashboard/my-courses/${course.uuid}`)}
             />
           ))}

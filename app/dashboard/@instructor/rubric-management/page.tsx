@@ -30,7 +30,7 @@ import {
   ScoringLevelDialog,
   ScoringLevelFormValues,
   Visibility,
-} from '../_components/rubric-management-form';
+} from '../../@creator/_components/rubric-management-form';
 import { useRubricsWithCriteriaAndScoring } from './rubric-chaining';
 import RubricTable from './rubric-table-render';
 

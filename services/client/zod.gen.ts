@@ -309,8 +309,8 @@ export const zStudent = z
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.'
       )
       .optional(),
-    allGuardianContacts: z.array(z.string()).optional(),
     primaryGuardianContact: z.string().optional(),
+    allGuardianContacts: z.array(z.string()).optional(),
     secondaryGuardianContact: z.string().optional(),
     created_date: z
       .string()
@@ -771,17 +771,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1100,14 +1100,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
-      .readonly()
-      .optional(),
     question_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
   })
@@ -2938,20 +2938,6 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
       .readonly()
       .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
-      .readonly()
-      .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
-      .readonly()
-      .optional(),
     is_archived: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is archived and no longer available.')
@@ -2981,6 +2967,20 @@ export const zCourse = z
       .number()
       .int()
       .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
+      .readonly()
+      .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
       .readonly()
       .optional(),
   })
@@ -3460,6 +3460,11 @@ export const zCourseAssessment = z
       .describe('**[READ-ONLY]** Category classification of the assessment type.')
       .readonly()
       .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3468,11 +3473,6 @@ export const zCourseAssessment = z
     contribution_level: z
       .string()
       .describe('**[READ-ONLY]** Level of contribution to final grade based on weight.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -3929,6 +3929,56 @@ export const zApiResponseCategory = z.object({
 });
 
 /**
+ * Payload for creating or updating catalog mappings
+ */
+export const zCommerceCatalogItemUpsertRequest = z
+  .object({
+    course_uuid: z.string().uuid().describe('Course UUID to associate').optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe('Class definition UUID to associate')
+      .optional(),
+    medusa_product_id: z.string().describe('Medusa product identifier'),
+    medusa_variant_id: z.string().describe('Medusa variant identifier'),
+    currency_code: z.string().describe('Currency code for the variant').optional(),
+    active: z.boolean().describe('Active flag').optional(),
+  })
+  .describe('Payload for creating or updating catalog mappings');
+
+/**
+ * Mapping between Elimika courses/classes and Medusa catalog variants
+ */
+export const zCommerceCatalogItem = z
+  .object({
+    uuid: z.string().uuid().describe('Catalog item UUID').optional(),
+    course_uuid: z
+      .string()
+      .uuid()
+      .describe('Associated course UUID if mapping is course level')
+      .optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe('Associated class definition UUID if mapping is class specific')
+      .optional(),
+    medusa_product_id: z.string().describe('Medusa product identifier').optional(),
+    medusa_variant_id: z.string().describe('Medusa variant identifier').optional(),
+    currency_code: z.string().describe('Currency code configured for the variant').optional(),
+    active: z.boolean().describe('Whether this mapping is active').optional(),
+    created_date: z.string().datetime().describe('Created timestamp').optional(),
+    updated_date: z.string().datetime().describe('Last updated timestamp').optional(),
+  })
+  .describe('Mapping between Elimika courses/classes and Medusa catalog variants');
+
+export const zApiResponseCommerceCatalogItem = z.object({
+  success: z.boolean().optional(),
+  data: zCommerceCatalogItem.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
  * **[REQUIRED]** Default delivery format for the class.
  */
 export const zLocationTypeEnum = z
@@ -4050,11 +4100,6 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
     has_recurrence: z
       .boolean()
       .describe(
@@ -4067,6 +4112,11 @@ export const zClassDefinition = z
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -5113,6 +5163,116 @@ export const zApiResponseCourseCreator = z.object({
 });
 
 /**
+ * A single line item attached to a cart
+ */
+export const zCartItemResponse = z
+  .object({
+    id: z.string().describe('Unique identifier of the line item').optional(),
+    title: z.string().describe('Human friendly name of the product').optional(),
+    quantity: z.number().int().describe('Quantity of the product variant').optional(),
+    variant_id: z.string().describe('Medusa variant identifier').optional(),
+    metadata: z
+      .record(z.record(z.unknown()))
+      .describe('Custom metadata captured for the line item')
+      .optional(),
+  })
+  .describe('A single line item attached to a cart');
+
+/**
+ * Order information synchronised from Medusa
+ */
+export const zOrderResponse = z
+  .object({
+    id: z.string().describe('Unique Medusa identifier of the order').optional(),
+    display_id: z.string().describe('Human friendly order number').optional(),
+    payment_status: z.string().describe('Payment status reported by Medusa').optional(),
+    created_at: z.string().datetime().describe('Timestamp when the order was created').optional(),
+    items: z.array(zCartItemResponse).optional(),
+  })
+  .describe('Order information synchronised from Medusa');
+
+/**
+ * Checkout payload that orchestrates Medusa cart completion
+ */
+export const zCheckoutRequest = z
+  .object({
+    cart_id: z.string().describe('Identifier of the cart being checked out'),
+    customer_email: z.string().describe('Email address of the purchasing customer'),
+    shipping_address_id: z
+      .string()
+      .describe('Optional shipping address identifier to attach to the order')
+      .optional(),
+    billing_address_id: z.string().describe('Optional billing address identifier').optional(),
+    payment_provider_id: z.string().describe('Payment provider identifier to use for the checkout'),
+  })
+  .describe('Checkout payload that orchestrates Medusa cart completion');
+
+/**
+ * Cart summary returned to clients consuming the commerce APIs
+ */
+export const zCartResponse = z
+  .object({
+    id: z.string().describe('Unique Medusa identifier of the cart').optional(),
+    region_id: z.string().describe('Region identifier the cart is scoped to').optional(),
+    customer_id: z.string().describe('Associated Medusa customer identifier').optional(),
+    created_at: z.string().datetime().describe('Timestamp when the cart was created').optional(),
+    updated_at: z
+      .string()
+      .datetime()
+      .describe('Timestamp when the cart was last updated')
+      .optional(),
+    items: z.array(zCartItemResponse).optional(),
+  })
+  .describe('Cart summary returned to clients consuming the commerce APIs');
+
+/**
+ * Line item definition used when creating or updating a cart
+ */
+export const zCartLineItemRequest = z
+  .object({
+    variant_id: z.string().describe('Identifier of the Medusa product variant to add to the cart'),
+    quantity: z.number().int().gte(1).describe('Quantity of the variant to add to the cart'),
+    metadata: z
+      .record(z.record(z.unknown()))
+      .describe('Optional metadata forwarded to Medusa and persisted with the line item')
+      .optional(),
+  })
+  .describe('Line item definition used when creating or updating a cart');
+
+/**
+ * Request body for creating a new cart that synchronises with Medusa
+ */
+export const zCreateCartRequest = z
+  .object({
+    region_id: z.string().describe('Identifier of the Medusa region the cart belongs to'),
+    customer_id: z
+      .string()
+      .describe('Medusa customer identifier to associate with the cart')
+      .optional(),
+    sales_channel_id: z
+      .string()
+      .describe('Sales channel identifier configured in Medusa')
+      .optional(),
+    metadata: z
+      .record(z.record(z.unknown()))
+      .describe('Arbitrary metadata forwarded to Medusa')
+      .optional(),
+    items: z.array(zCartLineItemRequest).optional(),
+  })
+  .describe('Request body for creating a new cart that synchronises with Medusa');
+
+/**
+ * Specifies the payment provider to use for a cart
+ */
+export const zSelectPaymentSessionRequest = z
+  .object({
+    provider_id: z
+      .string()
+      .describe("Identifier of the Medusa payment provider (e.g. 'manual', 'stripe')"),
+  })
+  .describe('Specifies the payment provider to use for a cart');
+
+/**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
 export const zStatusEnum6 = z
@@ -5281,6 +5441,25 @@ export const zAdminDomainAssignmentRequest = z
       .optional(),
   })
   .describe('Admin domain assignment request containing domain type, reason, and effective date');
+
+/**
+ * Fields that can be patched on an existing cart
+ */
+export const zUpdateCartRequest = z
+  .object({
+    email: z.string().describe('Email address of the customer').optional(),
+    customer_id: z
+      .string()
+      .describe('Medusa customer identifier to associate with the cart')
+      .optional(),
+    shipping_address_id: z.string().describe('Medusa shipping address identifier').optional(),
+    billing_address_id: z.string().describe('Medusa billing address identifier').optional(),
+    metadata: z
+      .record(z.record(z.unknown()))
+      .describe('Optional metadata map forwarded to Medusa')
+      .optional(),
+  })
+  .describe('Fields that can be patched on an existing cart');
 
 export const zPageable = z.object({
   page: z.number().int().gte(0).optional(),
@@ -5622,6 +5801,11 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     attempt_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
@@ -5630,11 +5814,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -6511,6 +6690,13 @@ export const zApiResponsePagedDtoCategory = z.object({
 export const zApiResponseListCategory = z.object({
   success: z.boolean().optional(),
   data: z.array(zCategory).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseListCommerceCatalogItem = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCommerceCatalogItem).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -7831,6 +8017,19 @@ export const zUpdateCategoryData = z.object({
  * OK
  */
 export const zUpdateCategoryResponse = zApiResponseCategory;
+
+export const zUpdateCatalogItemData = z.object({
+  body: zCommerceCatalogItemUpsertRequest,
+  path: z.object({
+    catalogUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCatalogItemResponse = zApiResponseCommerceCatalogItem;
 
 export const zDeactivateClassDefinitionData = z.object({
   body: z.never().optional(),
@@ -9534,6 +9733,67 @@ export const zCreateCategoryData = z.object({
  */
 export const zCreateCategoryResponse = zApiResponseCategory;
 
+export const zCompleteCheckoutData = z.object({
+  body: zCheckoutRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Order created
+ */
+export const zCompleteCheckoutResponse = zOrderResponse;
+
+export const zCreateCartData = z.object({
+  body: zCreateCartRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Cart created successfully
+ */
+export const zCreateCartResponse = zCartResponse;
+
+export const zSelectPaymentSessionData = z.object({
+  body: zSelectPaymentSessionRequest,
+  path: z.object({
+    cartId: z.string().describe('Identifier of the cart to update'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Payment session selected
+ */
+export const zSelectPaymentSessionResponse = zCartResponse;
+
+export const zAddItemData = z.object({
+  body: zCartLineItemRequest,
+  path: z.object({
+    cartId: z.string().describe('Identifier of the cart to update'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Item added
+ */
+export const zAddItemResponse = zCartResponse;
+
+export const zCompleteCartData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    cartId: z.string().describe('Identifier of the cart to finalise'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Cart completed
+ */
+export const zCompleteCartResponse = zOrderResponse;
+
 export const zCreateClassDefinitionData = z.object({
   body: zClassDefinition,
   path: z.never().optional(),
@@ -9881,6 +10141,32 @@ export const zMarkAttendanceData = z.object({
  * Attendance marked successfully
  */
 export const zMarkAttendanceResponse = zApiResponseVoid;
+
+export const zGetCartData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    cartId: z.string().describe('Identifier of the cart to load'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Cart retrieved
+ */
+export const zGetCartResponse = zCartResponse;
+
+export const zUpdateCartData = z.object({
+  body: zUpdateCartRequest,
+  path: z.object({
+    cartId: z.string().describe('Identifier of the cart to update'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Cart updated
+ */
+export const zUpdateCartResponse = zCartResponse;
 
 export const zGetAllUsersData = z.object({
   body: z.never().optional(),
@@ -11425,6 +11711,60 @@ export const zGetRootCategoriesData = z.object({
  * OK
  */
 export const zGetRootCategoriesResponse = zApiResponseListCategory;
+
+export const zGetOrderData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    orderId: z.string().describe('Medusa order identifier'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Order retrieved
+ */
+export const zGetOrderResponse = zOrderResponse;
+
+export const zListCatalogItemsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      active_only: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zListCatalogItemsResponse = zApiResponseListCommerceCatalogItem;
+
+export const zGetByCourseData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetByCourseResponse = zApiResponseCommerceCatalogItem;
+
+export const zGetByClassData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    classUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetByClassResponse = zApiResponseCommerceCatalogItem;
 
 export const zPreviewRecurringClassScheduleData = z.object({
   body: z.never().optional(),

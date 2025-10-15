@@ -1,17 +1,5 @@
 'use client';
 
-import {
-  deactivateClassDefinitionMutation,
-  getClassDefinitionsForInstructorOptions,
-  getClassDefinitionsForInstructorQueryKey,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useRouter } from 'next/navigation';
-import {
-  ClassDialog,
-  ScheduleDialog,
-  TimetableScheduleDialog,
-} from '../../_components/class-management-form';
-
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import PageLoader from '@/components/page-loader';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +14,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
+import {
+  deactivateClassDefinitionMutation,
+  getClassDefinitionsForInstructorOptions,
+  getClassDefinitionsForInstructorQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
@@ -37,9 +30,12 @@ import {
   PlusIcon,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { ClassDialog, ScheduleDialog, TimetableScheduleDialog } from '../../_components/class-management-form';
 import ClassCourseDisplay from '../component/class-course-dislay';
+
 
 export default function TrainingsPage() {
   const router = useRouter();
@@ -47,7 +43,7 @@ export default function TrainingsPage() {
   const instructor = useInstructor();
   const [openAddClass, setOpenAddClass] = useState(false);
 
-  const { data, isLoading, isPending } = useQuery(
+  const { data, isLoading, isPending, isFetching } = useQuery(
     getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructor?.uuid as string },
       query: { activeOnly: false },
@@ -111,7 +107,7 @@ export default function TrainingsPage() {
         </Button>
       </div>
 
-      {isLoading || isPending ? (
+      {isLoading || isFetching ? (
         <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
           <Skeleton className='h-4 w-32' />
           <Skeleton className='h-4 w-32' />
@@ -146,7 +142,7 @@ export default function TrainingsPage() {
         </div>
       )}
 
-      {classes?.length === 0 && !isLoading && (
+      {classes?.length === 0 && !isFetching && (
         <div className='bg-muted/20 space-y-4 rounded-md border py-12 text-center'>
           <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
 
@@ -161,7 +157,7 @@ export default function TrainingsPage() {
         </div>
       )}
 
-      {isLoading || isPending ? (
+      {isLoading || isFetching ? (
         <PageLoader />
       ) : (
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>

@@ -451,14 +451,14 @@ export const StudentSchema = {
       minLength: 0,
       pattern: '^(\\+254|0)?[17]\\d{8}$',
     },
+    primaryGuardianContact: {
+      type: 'string',
+    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
-    },
-    primaryGuardianContact: {
-      type: 'string',
     },
     secondaryGuardianContact: {
       type: 'string',
@@ -1128,19 +1128,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1570,16 +1570,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: 2,
-      readOnly: true,
-    },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: 2,
       readOnly: true,
     },
   },
@@ -3949,20 +3949,6 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
-    lifecycle_stage: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
-      example: 'Published and Active',
-      readOnly: true,
-    },
-    accepts_new_enrollments: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
-      example: true,
-      readOnly: true,
-    },
     is_archived: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is archived and no longer available.',
@@ -3998,6 +3984,20 @@ export const CourseSchema = {
       format: 'int32',
       description: '**[READ-ONLY]** Number of categories this course belongs to.',
       example: 2,
+      readOnly: true,
+    },
+    lifecycle_stage: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
+      example: 'Published and Active',
+      readOnly: true,
+    },
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      example: true,
       readOnly: true,
     },
   },
@@ -4690,6 +4690,12 @@ export const CourseAssessmentSchema = {
       example: 'Participation Component',
       readOnly: true,
     },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -4700,12 +4706,6 @@ export const CourseAssessmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Level of contribution to final grade based on weight.',
       example: 'Standard Contribution',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -5316,6 +5316,109 @@ export const ApiResponseCategorySchema = {
   },
 } as const;
 
+export const CommerceCatalogItemUpsertRequestSchema = {
+  type: 'object',
+  description: 'Payload for creating or updating catalog mappings',
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Course UUID to associate',
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Class definition UUID to associate',
+    },
+    medusa_product_id: {
+      type: 'string',
+      description: 'Medusa product identifier',
+      example: 'prod_01J0ABCXYZ',
+    },
+    medusa_variant_id: {
+      type: 'string',
+      description: 'Medusa variant identifier',
+      example: 'variant_01J0ABCXYZ',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'Currency code for the variant',
+      example: 'USD',
+    },
+    active: {
+      type: 'boolean',
+      description: 'Active flag',
+    },
+  },
+  required: ['medusa_product_id', 'medusa_variant_id'],
+} as const;
+
+export const ApiResponseCommerceCatalogItemSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CommerceCatalogItem',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CommerceCatalogItemSchema = {
+  type: 'object',
+  description: 'Mapping between Elimika courses/classes and Medusa catalog variants',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Catalog item UUID',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Associated course UUID if mapping is course level',
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Associated class definition UUID if mapping is class specific',
+    },
+    medusa_product_id: {
+      type: 'string',
+      description: 'Medusa product identifier',
+    },
+    medusa_variant_id: {
+      type: 'string',
+      description: 'Medusa variant identifier',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'Currency code configured for the variant',
+    },
+    active: {
+      type: 'boolean',
+      description: 'Whether this mapping is active',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Created timestamp',
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Last updated timestamp',
+    },
+  },
+} as const;
+
 export const ClassDefinitionSchema = {
   type: 'object',
   description: 'Class definition template that defines what a class is, independent of scheduling',
@@ -5470,12 +5573,6 @@ export const ClassDefinitionSchema = {
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     has_recurrence: {
       type: 'boolean',
       description:
@@ -5488,6 +5585,12 @@ export const ClassDefinitionSchema = {
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -6991,6 +7094,232 @@ export const ApiResponseCourseCreatorSchema = {
   },
 } as const;
 
+export const CartItemResponseSchema = {
+  type: 'object',
+  description: 'A single line item attached to a cart',
+  properties: {
+    id: {
+      type: 'string',
+      description: 'Unique identifier of the line item',
+      example: 'item_01HZX2KJ6ZG5R2Y4B4S4G0QJZY',
+    },
+    title: {
+      type: 'string',
+      description: 'Human friendly name of the product',
+      example: 'Advanced Excel Course',
+    },
+    quantity: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Quantity of the product variant',
+      example: 1,
+    },
+    variant_id: {
+      type: 'string',
+      description: 'Medusa variant identifier',
+      example: 'variant_01HZX1Y4K8R0HVWZ4Q6CF6M1AP',
+    },
+    metadata: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+      },
+      description: 'Custom metadata captured for the line item',
+    },
+  },
+} as const;
+
+export const OrderResponseSchema = {
+  type: 'object',
+  description: 'Order information synchronised from Medusa',
+  properties: {
+    id: {
+      type: 'string',
+      description: 'Unique Medusa identifier of the order',
+      example: 'order_01HZX2Z2C2MBK8C6Y8PF0YTW30',
+    },
+    display_id: {
+      type: 'string',
+      description: 'Human friendly order number',
+      example: 100012,
+    },
+    payment_status: {
+      type: 'string',
+      description: 'Payment status reported by Medusa',
+      example: 'captured',
+    },
+    created_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Timestamp when the order was created',
+      example: '2024-07-20T09:55:00Z',
+    },
+    items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CartItemResponse',
+      },
+    },
+  },
+} as const;
+
+export const CheckoutRequestSchema = {
+  type: 'object',
+  description: 'Checkout payload that orchestrates Medusa cart completion',
+  properties: {
+    cart_id: {
+      type: 'string',
+      description: 'Identifier of the cart being checked out',
+      example: 'cart_01HZX25RFMBW79S99RWQYJXWCM',
+    },
+    customer_email: {
+      type: 'string',
+      description: 'Email address of the purchasing customer',
+      example: 'learner@example.com',
+    },
+    shipping_address_id: {
+      type: 'string',
+      description: 'Optional shipping address identifier to attach to the order',
+      example: 'addr_01HZX2F2Z6E0Y0T8VJX3W6PC66',
+    },
+    billing_address_id: {
+      type: 'string',
+      description: 'Optional billing address identifier',
+      example: 'addr_01HZX2F7GZ92P2X9YBQB0NQ9E3',
+    },
+    payment_provider_id: {
+      type: 'string',
+      description: 'Payment provider identifier to use for the checkout',
+      example: 'manual',
+    },
+  },
+  required: ['cart_id', 'customer_email', 'payment_provider_id'],
+} as const;
+
+export const CartResponseSchema = {
+  type: 'object',
+  description: 'Cart summary returned to clients consuming the commerce APIs',
+  properties: {
+    id: {
+      type: 'string',
+      description: 'Unique Medusa identifier of the cart',
+      example: 'cart_01HZX25RFMBW79S99RWQYJXWCM',
+    },
+    region_id: {
+      type: 'string',
+      description: 'Region identifier the cart is scoped to',
+      example: 'reg_01HZX1W8GX9YYB01X54MB2F15C',
+    },
+    customer_id: {
+      type: 'string',
+      description: 'Associated Medusa customer identifier',
+      example: 'cus_01HZX1X6QAQCCYT11S3R6G9KVN',
+    },
+    created_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Timestamp when the cart was created',
+      example: '2024-07-20T09:45:00Z',
+    },
+    updated_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Timestamp when the cart was last updated',
+      example: '2024-07-20T10:15:00Z',
+    },
+    items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CartItemResponse',
+      },
+    },
+  },
+} as const;
+
+export const CartLineItemRequestSchema = {
+  type: 'object',
+  description: 'Line item definition used when creating or updating a cart',
+  properties: {
+    variant_id: {
+      type: 'string',
+      description: 'Identifier of the Medusa product variant to add to the cart',
+      example: 'variant_01HZX1Y4K8R0HVWZ4Q6CF6M1AP',
+    },
+    quantity: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Quantity of the variant to add to the cart',
+      example: 2,
+      minimum: 1,
+    },
+    metadata: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+      },
+      description: 'Optional metadata forwarded to Medusa and persisted with the line item',
+      example: {
+        course_uuid: '5f5e0f54-59bb-4c77-b21d-6d496dd1b4b2',
+        class_definition_uuid: '0f6b8eaa-1f22-4a1b-9a3e-37cf582f58b7',
+        student_uuid: '8f4544d3-1741-47ba-aacc-5c9e0fbcd410',
+      },
+    },
+  },
+  required: ['quantity', 'variant_id'],
+} as const;
+
+export const CreateCartRequestSchema = {
+  type: 'object',
+  description: 'Request body for creating a new cart that synchronises with Medusa',
+  properties: {
+    region_id: {
+      type: 'string',
+      description: 'Identifier of the Medusa region the cart belongs to',
+      example: 'reg_01HZX1W8GX9YYB01X54MB2F15C',
+    },
+    customer_id: {
+      type: 'string',
+      description: 'Medusa customer identifier to associate with the cart',
+      example: 'cus_01HZX1X6QAQCCYT11S3R6G9KVN',
+    },
+    sales_channel_id: {
+      type: 'string',
+      description: 'Sales channel identifier configured in Medusa',
+      example: 'sc_01HZX20Y4D9CK3R6RHY9PRF20C',
+    },
+    metadata: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+      },
+      description: 'Arbitrary metadata forwarded to Medusa',
+      example: {
+        campaign: 'back-to-school',
+      },
+    },
+    items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CartLineItemRequest',
+      },
+    },
+  },
+  required: ['region_id'],
+} as const;
+
+export const SelectPaymentSessionRequestSchema = {
+  type: 'object',
+  description: 'Specifies the payment provider to use for a cart',
+  properties: {
+    provider_id: {
+      type: 'string',
+      description: "Identifier of the Medusa payment provider (e.g. 'manual', 'stripe')",
+      example: 'manual',
+    },
+  },
+  required: ['provider_id'],
+} as const;
+
 export const ApiResponseAssignmentSubmissionSchema = {
   type: 'object',
   properties: {
@@ -7221,6 +7550,43 @@ export const AdminDomainAssignmentRequestSchema = {
     },
   },
   required: ['assignment_type', 'domain_name'],
+} as const;
+
+export const UpdateCartRequestSchema = {
+  type: 'object',
+  description: 'Fields that can be patched on an existing cart',
+  properties: {
+    email: {
+      type: 'string',
+      description: 'Email address of the customer',
+      example: 'learner@example.com',
+    },
+    customer_id: {
+      type: 'string',
+      description: 'Medusa customer identifier to associate with the cart',
+      example: 'cus_01HZX1X6QAQCCYT11S3R6G9KVN',
+    },
+    shipping_address_id: {
+      type: 'string',
+      description: 'Medusa shipping address identifier',
+      example: 'addr_01HZX2F2Z6E0Y0T8VJX3W6PC66',
+    },
+    billing_address_id: {
+      type: 'string',
+      description: 'Medusa billing address identifier',
+      example: 'addr_01HZX2F7GZ92P2X9YBQB0NQ9E3',
+    },
+    metadata: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+      },
+      description: 'Optional metadata map forwarded to Medusa',
+      example: {
+        cohort: 'Q3-2024',
+      },
+    },
+  },
 } as const;
 
 export const PageableSchema = {
@@ -8043,6 +8409,12 @@ export const QuizAttemptSchema = {
       example: 1,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -8053,12 +8425,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
   },
@@ -9845,6 +10211,27 @@ export const ApiResponseListCategorySchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/Category',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseListCommerceCatalogItemSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CommerceCatalogItem',
       },
     },
     message: {
