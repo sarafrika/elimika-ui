@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Image, Upload, Video, X } from 'lucide-react';
+import { ImageIcon, Upload, Video, X } from 'lucide-react';
+import Image from 'next/image';
 import { useState } from 'react';
 
 interface CourseBrandingProps {
@@ -66,7 +67,7 @@ export function CourseBranding({ data, onDataChange }: CourseBrandingProps) {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <Image className="w-5 h-5" />
+                        <ImageIcon className="w-5 h-5" />
                         Cover Image/Thumbnail
                     </CardTitle>
                 </CardHeader>
@@ -92,7 +93,7 @@ export function CourseBranding({ data, onDataChange }: CourseBrandingProps) {
                         </div>
                     ) : (
                         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                            <Image className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                            <ImageIcon className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
                             <h4 className="mb-2">Upload Cover Image</h4>
                             <p className="text-sm text-muted-foreground mb-4">
                                 Recommended: 1280x720px (16:9 ratio), JPG or PNG format
@@ -217,13 +218,16 @@ export function CourseBranding({ data, onDataChange }: CourseBrandingProps) {
                         <div className="flex gap-4">
                             <div className="w-24 h-16 bg-muted rounded flex items-center justify-center">
                                 {coverImage ? (
-                                    <img
-                                        src={coverImage.url}
+                                    <Image
+                                        width={24}
+                                        height={24}
+                                        // src={coverImage.url || ""}
+                                        src={""}
                                         alt="Course cover"
                                         className="w-full h-full object-cover rounded"
                                     />
                                 ) : (
-                                    <Image className="w-8 h-8 text-muted-foreground" />
+                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
                                 )}
                             </div>
                             <div className="flex-1">

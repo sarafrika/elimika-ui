@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useQueries, useQuery } from '@tanstack/react-query';
+import Spinner from '../../../../../components/ui/spinner';
 import { getAllStudentsOptions, getStudentScheduleOptions, getUserByUuidOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 
 const studentsData = [
@@ -135,6 +136,8 @@ export default function StudentsPage() {
     }))
   })
   const detailedStudents = studentDetailQueries.map(q => q.data?.data)
+  const isLoading = studentDetailQueries.some(q => q.isLoading);
+  const isFetching = studentDetailQueries.some(q => q.isFetching);
 
   const studentEnrollmentQueries = useQueries({
     queries: students.map((student) => ({
@@ -156,32 +159,37 @@ export default function StudentsPage() {
           <CardTitle>Enrolled Students</CardTitle>
           <CardDescription>A list of students currently enrolled in your courses.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Enrolled Courses</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {detailedStudents?.map((student: any) => (
-                <TableRow key={student?.uuid}>
-                  <TableCell>
-                    <div className='flex items-center gap-4'>
-                      <Avatar>
-                        <AvatarImage src={student?.avatarUrl ?? ""} />
-                        <AvatarFallback>{student?.display_name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className='font-medium'>{student?.display_name}</p>
-                        <p className='text-muted-foreground text-sm'>{student?.username}</p>
+
+        {isLoading || isFetching ?
+          <div className='flex mx-auto items-center justify-center' >
+            <Spinner />
+          </div> :
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Enrolled Courses</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {detailedStudents?.map((student: any) => (
+                  <TableRow key={student?.uuid}>
+                    <TableCell>
+                      <div className='flex items-center gap-4'>
+                        <Avatar>
+                          <AvatarImage src={student?.avatarUrl ?? ""} />
+                          <AvatarFallback>{student?.display_name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className='font-medium'>{student?.display_name}</p>
+                          <p className='text-muted-foreground text-sm'>{student?.username}</p>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className='space-y-2'>
-                      {/* {student.enrolledCourses.map((course: any, index: any) => (
+                    </TableCell>
+                    <TableCell>
+                      <div className='space-y-2'>
+                        {/* {student.enrolledCourses.map((course: any, index: any) => (
                         <div key={index}>
                           <div className='flex justify-between'>
                             <p className='font-medium'>{course.name}</p>
@@ -190,45 +198,45 @@ export default function StudentsPage() {
                           <Progress value={course.progress} />
                         </div>
                       ))} */}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
 
-            <TableBody>
-              {sampleEnrollmentData?.data?.content?.map(student => (
-                <TableRow key={student.uuid}>
-                  <TableCell>
-                    <div className='flex items-center gap-4'>
-                      <Avatar>
-                        <AvatarImage src={''} />
-                        {/* <AvatarFallback>{"Student name"}</AvatarFallback> */}
-                      </Avatar>
-                      <div>
-                        <p className='font-medium'>{'student name'}</p>
-                        <p className='text-muted-foreground text-sm'>{student?.created_by}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className='space-y-2'>
-                      <div>
-                        <div className='flex justify-between'>
-                          <p className='font-medium'>{'course.name'}</p>
-                          <p className='text-muted-foreground text-sm'>
-                            {student.progress_display}
-                          </p>
+              <TableBody>
+                {sampleEnrollmentData?.data?.content?.map(student => (
+                  <TableRow key={student.uuid}>
+                    <TableCell>
+                      <div className='flex items-center gap-4'>
+                        <Avatar>
+                          <AvatarImage src={''} />
+                          {/* <AvatarFallback>{"Student name"}</AvatarFallback> */}
+                        </Avatar>
+                        <div>
+                          <p className='font-medium'>{'student name'}</p>
+                          <p className='text-muted-foreground text-sm'>{student?.created_by}</p>
                         </div>
-                        <Progress value={student.progress_percentage} />
                       </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
+                    </TableCell>
+                    <TableCell>
+                      <div className='space-y-2'>
+                        <div>
+                          <div className='flex justify-between'>
+                            <p className='font-medium'>{'course.name'}</p>
+                            <p className='text-muted-foreground text-sm'>
+                              {student.progress_display}
+                            </p>
+                          </div>
+                          <Progress value={student.progress_percentage} />
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>}
       </Card>
     </div>
   );

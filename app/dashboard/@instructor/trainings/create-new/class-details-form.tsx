@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
+import { tanstackClient } from '@/services/api/tanstack-client';
 import {
   createClassDefinitionMutation,
   getAllCoursesOptions,
@@ -41,7 +42,6 @@ import { useEffect, useState } from 'react';
 import { FieldErrors, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
-import { tanstackClient } from '../../../../../services/api/tanstack-client';
 import { UploadOptions } from '../../../@creator/_components/course-creation-form';
 import {
   ClassFormValues,

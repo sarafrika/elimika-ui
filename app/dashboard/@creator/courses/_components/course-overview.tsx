@@ -61,7 +61,7 @@ export function CourseOverview({ data }: CourseOverviewProps) {
                 categories: Array.isArray(data.categories) ? data.categories : [],
             });
         }
-    }, [data, defaultValues]);
+    }, [form, data, defaultValues]);
 
     const {
         fields: objectiveFields,

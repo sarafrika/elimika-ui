@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from '../../../../components/ui/select';
 import { useInstructor } from '../../../../context/instructor-context';
+import { daysOfWeekOptions } from '../../../../lib/day-of-week';
 import { AvailabilityTypeEnum } from '../../../../services/client';
 
 export const availabilitySlotSchema = z.object({
@@ -124,21 +125,6 @@ function AvailabilitySlotForm({
   const availabilityOptions = Object.entries(AvailabilityTypeEnum).map(([key, value]) => ({
     id: value,
     label: key.charAt(0) + key.slice(1).toLowerCase(), // "DAILY" -> "Daily"
-  }));
-
-  const DaysOfWeekEnum = {
-    MONDAY: 1,
-    TUESDAY: 2,
-    WEDNESDAY: 3,
-    THURSDAY: 4,
-    FRIDAY: 5,
-    SATURDAY: 6,
-    SUNDAY: 0, // Sunday = 0 as per JS Date.getDay()
-  } as const;
-
-  const daysOfWeekOptions = Object.entries(DaysOfWeekEnum).map(([key, value]) => ({
-    id: value.toString(), // value must be string for select value
-    label: key.charAt(0) + key.slice(1).toLowerCase(), // 'MONDAY' -> 'Monday'
   }));
 
   return (
@@ -346,7 +332,7 @@ function AvailabilitySlotForm({
           <Button
             type='submit'
             className='flex min-w-[180px] items-center justify-center gap-2'
-            // disabled={createSlot.isPending || updateSlot.isPending}
+          // disabled={createSlot.isPending || updateSlot.isPending}
           >
             {/* {(createSlot.isPending || updateSlot.isPending) && <Spinner />} */}
             {initialValues ? 'Update Availability Slot' : 'Create Availability Slot'}

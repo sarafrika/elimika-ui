@@ -4,61 +4,30 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Building, Upload, User, X } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { getTotalExperienceYears } from './apply-to-train';
 
 interface ProfileAndSkillsProps {
     data: any;
+    skills: any;
+    education: any;
+    certifications: any;
+    profile: any;
     onDataChange: (data: any) => void;
 }
 
-export function ProfileAndSkills({ data, onDataChange }: ProfileAndSkillsProps) {
-    const [profileType, setProfileType] = useState(data?.profileType || 'instructor');
-    const [skills, setSkills] = useState<string[]>(data?.skills || []);
-    const [certifications, setCertifications] = useState<string[]>(data?.certifications || []);
+export function ProfileAndSkills({ data, skills, education, profile, certifications, onDataChange }: ProfileAndSkillsProps) {
 
-    const handleProfileTypeChange = (type: string) => {
-        setProfileType(type);
-        onDataChange({ ...data, profileType: type });
-    };
-
-    const addSkill = (skill: string) => {
-        if (skill && !skills.includes(skill)) {
-            const newSkills = [...skills, skill];
-            setSkills(newSkills);
-            onDataChange({ ...data, skills: newSkills });
-        }
-    };
-
-    const removeSkill = (skill: string) => {
-        const newSkills = skills.filter(s => s !== skill);
-        setSkills(newSkills);
-        onDataChange({ ...data, skills: newSkills });
-    };
-
-    const addCertification = (cert: string) => {
-        if (cert && !certifications.includes(cert)) {
-            const newCerts = [...certifications, cert];
-            setCertifications(newCerts);
-            onDataChange({ ...data, certifications: newCerts });
-        }
-    };
-
-    const removeCertification = (cert: string) => {
-        const newCerts = certifications.filter(c => c !== cert);
-        setCertifications(newCerts);
-        onDataChange({ ...data, certifications: newCerts });
-    };
+    const totalExperienceYears = getTotalExperienceYears(data?.experience || []);
 
     return (
         <div className="space-y-6">
             {/* Profile Type Selection */}
-            <Card>
+            {/* <Card>
                 <CardHeader>
                     <CardTitle>Application Type</CardTitle>
                 </CardHeader>
@@ -90,9 +59,9 @@ export function ProfileAndSkills({ data, onDataChange }: ProfileAndSkillsProps) 
                         </div>
                     </RadioGroup>
                 </CardContent>
-            </Card>
+            </Card> */}
 
-            <Tabs value={profileType} className="space-y-6">
+            <Tabs value={profile.user_domain[0]} className="space-y-6">
                 <TabsContent value="instructor" className="space-y-6">
                     {/* Instructor Profile */}
                     <Card>
@@ -103,136 +72,114 @@ export function ProfileAndSkills({ data, onDataChange }: ProfileAndSkillsProps) 
                             {/* Profile Picture */}
                             <div className="flex items-center gap-6">
                                 <Avatar className="w-24 h-24">
-                                    <AvatarImage src={data?.profilePicture} />
+                                    <AvatarImage src={profile?.profile_image_url} />
                                     <AvatarFallback>
                                         <User className="w-12 h-12" />
                                     </AvatarFallback>
                                 </Avatar>
-                                <div>
-                                    <Label>Profile Picture</Label>
-                                    <div className="flex gap-2 mt-2">
-                                        <Button variant="outline" size="sm">
-                                            <Upload className="w-4 h-4 mr-2" />
-                                            Upload Photo
-                                        </Button>
-                                        {data?.profilePicture && (
-                                            <Button variant="outline" size="sm">Remove</Button>
-                                        )}
+
+                            </div>
+
+                            {/* Basic Information */}
+                            <div className="bg-white p-6 rounded-md shadow-sm border">
+                                <h2 className="text-lg font-semibold mb-4">Profile Information</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Full Name</dt>
+                                        <dd className="text-base text-gray-900">{data?.full_name || '—'}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Email Address</dt>
+                                        <dd className="text-base text-gray-900">{profile?.email || '—'}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
+                                        <dd className="text-base text-gray-900">{profile?.phone_number || '—'}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Years of Teaching Experience</dt>
+                                        <dd className="text-base text-gray-900">{totalExperienceYears ?? '—'}</dd>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Basic Information */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="fullName">Full Name *</Label>
-                                    <Input
-                                        id="fullName"
-                                        placeholder="Enter your full name"
-                                        value={data?.fullName || ''}
-                                        onChange={(e) => onDataChange({ ...data, fullName: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email Address *</Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="your.email@example.com"
-                                        value={data?.email || ''}
-                                        onChange={(e) => onDataChange({ ...data, email: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="phone">Phone Number</Label>
-                                    <Input
-                                        id="phone"
-                                        placeholder="+1 (555) 123-4567"
-                                        value={data?.phone || ''}
-                                        onChange={(e) => onDataChange({ ...data, phone: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="experienceYears">Years of Teaching Experience</Label>
-                                    <Select onValueChange={(value) => onDataChange({ ...data, experienceYears: value })}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select experience level" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="0-1">0-1 years</SelectItem>
-                                            <SelectItem value="1-3">1-3 years</SelectItem>
-                                            <SelectItem value="3-5">3-5 years</SelectItem>
-                                            <SelectItem value="5-10">5-10 years</SelectItem>
-                                            <SelectItem value="10+">10+ years</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
 
                             {/* Education & Qualifications */}
                             <div className="space-y-2">
                                 <Label htmlFor="education">Education & Qualifications</Label>
-                                <Textarea
-                                    id="education"
-                                    placeholder="Describe your educational background, degrees, and relevant qualifications..."
-                                    rows={4}
-                                    value={data?.education || ''}
-                                    onChange={(e) => onDataChange({ ...data, education: e.target.value })}
-                                />
+
+                                {education?.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {education?.map((edu: any) => (
+                                            <div key={edu.uuid} className="p-2 rounded-md">
+                                                <div className="font-medium">{edu.qualification} — {edu.school_name}</div>
+                                                <div className="text-sm text-muted-foreground">
+                                                    Completed in {edu.year_completed}
+                                                </div>
+                                                {edu.has_certificate_number && (
+                                                    <div className="text-sm text-muted-foreground">
+                                                        Certificate No: <span className="font-mono">{edu.certificate_number}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-muted-foreground italic">
+                                        No education records available. You can add one in your{' '}
+                                        <a href="/dashboard/profile" className="underline hover:text-primary">
+                                            profile settings
+                                        </a>.
+                                    </div>
+                                )}
                             </div>
+
 
                             {/* Skills */}
                             <div className="space-y-3">
                                 <Label>Technical Skills & Expertise</Label>
                                 <div className="flex flex-wrap gap-2">
-                                    {skills.map((skill) => (
+                                    {skills?.map((skill: any) => (
                                         <Badge key={skill} variant="secondary">
                                             {skill}
                                             <button
-                                                onClick={() => removeSkill(skill)}
                                                 className="ml-2 hover:text-destructive"
                                             >
                                                 <X className="w-3 h-3" />
                                             </button>
                                         </Badge>
                                     ))}
+
+                                    {skills.length === 0 && (
+                                        <div className="text-sm text-muted-foreground italic">
+                                            No skills included. You can update your skills in your <a href="/dashboard/profile" className="underline hover:text-primary">profile settings</a>.
+                                        </div>
+                                    )}
                                 </div>
-                                <Input
-                                    placeholder="Add a skill and press Enter"
-                                    onKeyPress={(e) => {
-                                        if (e.key === 'Enter') {
-                                            addSkill((e.target as HTMLInputElement).value);
-                                            (e.target as HTMLInputElement).value = '';
-                                        }
-                                    }}
-                                />
                             </div>
 
                             {/* Certifications */}
                             <div className="space-y-3">
                                 <Label>Professional Certifications</Label>
                                 <div className="flex flex-wrap gap-2">
-                                    {certifications.map((cert) => (
+                                    {certifications?.map((cert: any) => (
                                         <Badge key={cert} variant="outline">
                                             {cert}
                                             <button
-                                                onClick={() => removeCertification(cert)}
                                                 className="ml-2 hover:text-destructive"
                                             >
                                                 <X className="w-3 h-3" />
                                             </button>
                                         </Badge>
                                     ))}
+
+                                    {certifications.length === 0 && (
+                                        <div className="text-sm text-muted-foreground italic">
+                                            No profession certificates uploaded. You can upload your certifcates in your <a href="/dashboard/profile" className="underline hover:text-primary">profile settings</a>.
+                                        </div>
+                                    )}
                                 </div>
-                                <Input
-                                    placeholder="Add a certification and press Enter"
-                                    onKeyPress={(e) => {
-                                        if (e.key === 'Enter') {
-                                            addCertification((e.target as HTMLInputElement).value);
-                                            (e.target as HTMLInputElement).value = '';
-                                        }
-                                    }}
-                                />
+
                             </div>
 
                             {/* CV/Portfolio Upload */}

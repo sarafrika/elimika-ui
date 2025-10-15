@@ -21,13 +21,20 @@ import {
     User
 } from 'lucide-react';
 import { useState } from 'react';
+import RichTextRenderer from '../../../../../components/editors/richTextRenders';
+import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
+import { getTotalExperienceYears } from './apply-to-train';
 
 interface ReviewAndSubmitProps {
     data: any;
-    onDataChange: (data: any) => void;
+    profile: any;
+    selectedCourse: any;
 }
 
-export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
+export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubmitProps) {
+    const { difficultyMap } = useDifficultyLevels()
+    const totalExperienceYears = getTotalExperienceYears(data?.experience || []);
+
     const [finalConfirmations, setFinalConfirmations] = useState<string[]>(data?.finalConfirmations || []);
     const [showPreview, setShowPreview] = useState(false);
 
@@ -37,14 +44,14 @@ export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
             : finalConfirmations.filter(id => id !== confirmationId);
 
         setFinalConfirmations(updated);
-        onDataChange({ ...data, finalConfirmations: updated });
+        // console.log(finalConfirmations, "final comfirmations")
     };
 
     const getCompletionStatus = () => {
         const requiredFields = [
-            data?.fullName || data?.organizationName,
-            data?.email || data?.organizationEmail,
-            data?.selectedCourse,
+            data?.full_name || data?.organizationName,
+            profile?.email || data?.organizationEmail,
+            selectedCourse,
             data?.trainingMode,
             finalConfirmations.includes('accuracy'),
             finalConfirmations.includes('terms')
@@ -96,7 +103,7 @@ export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
                     {/* Applicant Information */}
                     <div>
                         <h4 className="flex items-center gap-2 mb-3">
-                            {data?.profileType === 'organization' ? (
+                            {profile.user_domain?.includes('organisation') ? (
                                 <Building className="w-4 h-4" />
                             ) : (
                                 <User className="w-4 h-4" />
@@ -104,7 +111,7 @@ export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
                             Applicant Information
                         </h4>
                         <div className="bg-muted/20 p-4 rounded-lg">
-                            {data?.profileType === 'organization' ? (
+                            {profile.user_domain?.includes('organisation') ? (
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-3">
                                         <div className="w-12 h-12 border rounded-lg flex items-center justify-center bg-background">
@@ -132,28 +139,29 @@ export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-3">
                                         <Avatar className="w-12 h-12">
-                                            <AvatarImage src={data?.profilePicture} />
+                                            <AvatarImage src={profile?.profile_image_url} />
                                             <AvatarFallback>
                                                 <User className="w-6 h-6" />
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <h4>{data?.fullName || 'Full Name'}</h4>
+                                            <h4>{data?.full_name || 'Full Name'}</h4>
                                             <p className="text-sm text-muted-foreground">
-                                                {data?.experienceYears || 'Experience'} experience
+                                                {totalExperienceYears || "0"} years experience
                                             </p>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
                                         <div>
                                             <span className="text-muted-foreground">Email:</span>
-                                            <p>{data?.email || 'Not provided'}</p>
+                                            <p>{profile?.email || 'Not provided'}</p>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">Phone:</span>
-                                            <p>{data?.phone || 'Not provided'}</p>
+                                            <p>{profile?.phone_number || 'Not provided'}</p>
                                         </div>
                                     </div>
+
                                     {data?.skills && data.skills.length > 0 && (
                                         <div className="mt-3">
                                             <span className="text-muted-foreground text-sm">Skills:</span>
@@ -185,21 +193,36 @@ export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
                             Course Proposal
                         </h4>
                         <div className="bg-muted/20 p-4 rounded-lg">
-                            {data?.selectedCourse ? (
+                            {selectedCourse ? (
                                 <div>
-                                    <h4>{data.selectedCourse.title}</h4>
-                                    <p className="text-sm text-muted-foreground mb-2">{data.selectedCourse.description}</p>
+                                    <h4>{selectedCourse.name}</h4>
+
+                                    <div className="text-sm text-muted-foreground mb-2">
+                                        <RichTextRenderer htmlString={selectedCourse.description} maxChars={150} /> </div>
+
                                     <div className="flex gap-2 flex-wrap">
-                                        <Badge variant="outline">{data.selectedCourse.category}</Badge>
-                                        <Badge variant="outline">{data.selectedCourse.difficulty}</Badge>
-                                        {data?.courseFormat && <Badge variant="outline">{data.courseFormat}</Badge>}
+                                        <div>
+                                            {selectedCourse.category_names.map((category: string, index: number) => (
+                                                <Badge key={index} variant="outline" className="text-xs mr-1">
+                                                    {category}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                        <div>
+                                            {difficultyMap && selectedCourse.difficulty_uuid && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {difficultyMap[selectedCourse.difficulty_uuid]}
+                                                </Badge>
+                                            )}
+                                        </div>
+
                                     </div>
-                                    {data?.targetAudience && data.targetAudience.length > 0 && (
+                                    {/* {targetAudience && targetAudience.length > 0 && (
                                         <div className="mt-3">
                                             <span className="text-sm text-muted-foreground">Target Audience:</span>
-                                            <p className="text-sm">{data.targetAudience.join(', ')}</p>
+                                            <p className="text-sm">{targetAudience.join(', ')}</p>
                                         </div>
-                                    )}
+                                    )} */}
                                 </div>
                             ) : (
                                 <p className="text-muted-foreground">No course selected</p>
@@ -210,7 +233,7 @@ export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
                     <Separator />
 
                     {/* Training Details */}
-                    <div>
+                    <div className='bg-red-100'>
                         <h4 className="flex items-center gap-2 mb-3">
                             <Calendar className="w-4 h-4" />
                             Training Schedule & Delivery
@@ -258,7 +281,7 @@ export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
                     <Separator />
 
                     {/* Resources Summary */}
-                    <div>
+                    <div className='bg-red-100'>
                         <h4 className="flex items-center gap-2 mb-3">
                             <Monitor className="w-4 h-4" />
                             Resources & Support
@@ -294,7 +317,7 @@ export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
                     <Separator />
 
                     {/* Compliance Status */}
-                    <div>
+                    <div className='bg-red-100'>
                         <h4 className="flex items-center gap-2 mb-3">
                             <Shield className="w-4 h-4" />
                             Compliance Status
@@ -356,12 +379,12 @@ export function ReviewAndSubmit({ data, onDataChange }: ReviewAndSubmitProps) {
                             <div className="space-y-4 text-sm">
                                 <div className="flex justify-between">
                                     <span>Course:</span>
-                                    <span className="font-medium">{data?.selectedCourse?.title || 'Not selected'}</span>
+                                    <span className="font-medium">{selectedCourse?.name || 'Not selected'}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Applicant:</span>
                                     <span className="font-medium">
-                                        {data?.fullName || data?.organizationName || 'Not provided'}
+                                        {data?.full_name || data?.organizationName || 'Not provided'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">

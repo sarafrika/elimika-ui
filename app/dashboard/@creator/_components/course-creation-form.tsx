@@ -39,8 +39,7 @@ import { tanstackClient } from '@/services/api/tanstack-client';
 import { createCategory, updateCourse } from '@/services/client';
 import {
   createCourseMutation,
-  getAllCategoriesOptions,
-  getAllDifficultyLevelsOptions,
+  getAllCategoriesOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -52,11 +51,12 @@ import React, {
   useEffect,
   useImperativeHandle,
   useRef,
-  useState,
+  useState
 } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 4MB
 const MAX_VIDEO_SIZE_MB = 150; // Adjust according to your backend limit
@@ -170,6 +170,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const queryClient = useQueryClient();
     const instructor = useInstructor();
     const { setActiveStep } = useStepper();
+    const { difficultyLevels, isLoading: difficultyIsLoading } = useDifficultyLevels()
 
     // states
     const [categoryInput, setCategoryInput] = useState('');
@@ -224,12 +225,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       'post',
       '/api/v1/courses/{uuid}/intro-video'
     );
-
-    // GET COURSE DIFFICULTY LEVEL
-    const { data: difficulty, isLoading: difficultyIsLoading } = useQuery(
-      getAllDifficultyLevelsOptions()
-    );
-    const difficultyLevels = difficulty?.data;
 
     // GET COURSE CATEGORIES
     const { data: categories } = useQuery(
@@ -371,7 +366,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               total_duration_display: '',
               updated_by: instructor?.full_name,
               created_by: instructor?.full_name,
-              instructor_uuid: instructor?.uuid as string,
+              course_creator_uuid: instructor?.uuid as string,
               name: data?.name,
               description: data?.description,
               objectives: data?.objectives,

@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
     Calendar as CalendarIcon,
@@ -25,7 +27,9 @@ import { useState } from 'react';
 
 interface ScheduleAndDeliveryProps {
     data: any;
+    profile: any;
     onDataChange: (data: any) => void;
+    selectedCourse: any
 }
 
 // Mock instructor data for organizations
@@ -88,7 +92,17 @@ const TIME_ZONES = [
     'UTC+12:00 (New Zealand)'
 ];
 
-export function ScheduleAndDelivery({ data, onDataChange }: ScheduleAndDeliveryProps) {
+export function ScheduleAndDelivery({ data, profile, selectedCourse, onDataChange }: ScheduleAndDeliveryProps) {
+    const { data: courseDetails } = useQuery({
+        ...getCourseByUuidOptions({ path: { uuid: selectedCourse?.uuid as string } }),
+        enabled: !!selectedCourse?.uuid
+    })
+
+    // const { data: instructorAvailability } = useQuery({
+    //     ...getInstructorAvailabilityOptions({ path: { instructorUuid: data?.uuid as string } }),
+    //     enabled: !!data?.uuid
+    // })
+
     const [leadTrainer, setLeadTrainer] = useState(data?.leadTrainer || null);
     const [supportTrainers, setSupportTrainers] = useState<any[]>(data?.supportTrainers || []);
     const [trainingMode, setTrainingMode] = useState(data?.trainingMode || '');
@@ -132,161 +146,165 @@ export function ScheduleAndDelivery({ data, onDataChange }: ScheduleAndDeliveryP
 
     return (
         <div className="space-y-6">
-            {/* Lead Trainer */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Lead Trainer</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {data?.profileType === 'organization' ? (
-                        <>
-                            {leadTrainer ? (
-                                <Card className="border-primary/20 bg-primary/5">
-                                    <CardContent className="pt-6">
-                                        <div className="flex items-center justify-between">
+            {profile.user_domain?.includes('organisation') && (
+                <div>
+                    {/* Lead Trainer */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Lead Trainer</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {data?.profileType === 'organization' ? (
+                                <>
+                                    {leadTrainer ? (
+                                        <Card className="border-primary/20 bg-primary/5">
+                                            <CardContent className="pt-6">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar>
+                                                            <AvatarImage src={leadTrainer.avatar} />
+                                                            <AvatarFallback>
+                                                                {leadTrainer.name.split(' ').map((n: string) => n[0]).join('')}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <h4>{leadTrainer.name}</h4>
+                                                            <p className="text-sm text-muted-foreground">{leadTrainer.title}</p>
+                                                            <div className="flex gap-1 mt-1">
+                                                                {leadTrainer.specialties.slice(0, 3).map((specialty: string) => (
+                                                                    <Badge key={specialty} variant="outline" className="text-xs">
+                                                                        {specialty}
+                                                                    </Badge>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setLeadTrainer(null);
+                                                            onDataChange({ ...data, leadTrainer: null });
+                                                        }}
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => setShowInstructorSearch(!showInstructorSearch)}
+                                                >
+                                                    <Search className="w-4 h-4 mr-2" />
+                                                    Search Existing Instructors
+                                                </Button>
+                                                <Button variant="outline">
+                                                    <Plus className="w-4 h-4 mr-2" />
+                                                    Add New Instructor
+                                                </Button>
+                                            </div>
+
+                                            {showInstructorSearch && (
+                                                <div className="space-y-3">
+                                                    <h4>Available Instructors</h4>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        {AVAILABLE_INSTRUCTORS.map((instructor) => (
+                                                            <Card
+                                                                key={instructor.id}
+                                                                className="cursor-pointer hover:shadow-md transition-shadow"
+                                                                onClick={() => handleLeadTrainerSelect(instructor)}
+                                                            >
+                                                                <CardContent className="pt-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <Avatar className="w-10 h-10">
+                                                                            <AvatarImage src={instructor.avatar} />
+                                                                            <AvatarFallback>
+                                                                                {instructor.name.split(' ').map(n => n[0]).join('')}
+                                                                            </AvatarFallback>
+                                                                        </Avatar>
+                                                                        <div>
+                                                                            <h4 className="text-sm font-medium">{instructor.name}</h4>
+                                                                            <p className="text-xs text-muted-foreground">{instructor.title}</p>
+                                                                            <div className="flex gap-1 mt-1">
+                                                                                {instructor.specialties.slice(0, 2).map((specialty) => (
+                                                                                    <Badge key={specialty} variant="outline" className="text-xs">
+                                                                                        {specialty}
+                                                                                    </Badge>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </CardContent>
+                                                            </Card>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="p-4 bg-muted/20 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                        <User className="w-5 h-5 text-primary" />
+                                        <span>You will be the lead trainer for this course</span>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Support Trainers */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle>Support Trainers/Staff (Optional)</CardTitle>
+                                {data?.profileType === 'organization' && (
+                                    <Button variant="outline" size="sm">
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Add Support Trainer
+                                    </Button>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {supportTrainers.length > 0 ? (
+                                <div className="space-y-3">
+                                    {supportTrainers.map((trainer) => (
+                                        <div key={trainer.id} className="flex items-center justify-between p-3 border rounded">
                                             <div className="flex items-center gap-3">
-                                                <Avatar>
-                                                    <AvatarImage src={leadTrainer.avatar} />
+                                                <Avatar className="w-8 h-8">
+                                                    <AvatarImage src={trainer.avatar} />
                                                     <AvatarFallback>
-                                                        {leadTrainer.name.split(' ').map((n: string) => n[0]).join('')}
+                                                        {trainer.name.split(' ').map((n: string) => n[0]).join('')}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <h4>{leadTrainer.name}</h4>
-                                                    <p className="text-sm text-muted-foreground">{leadTrainer.title}</p>
-                                                    <div className="flex gap-1 mt-1">
-                                                        {leadTrainer.specialties.slice(0, 3).map((specialty: string) => (
-                                                            <Badge key={specialty} variant="outline" className="text-xs">
-                                                                {specialty}
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
+                                                    <p className="text-sm font-medium">{trainer.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{trainer.title}</p>
                                                 </div>
                                             </div>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => {
-                                                    setLeadTrainer(null);
-                                                    onDataChange({ ...data, leadTrainer: null });
-                                                }}
+                                                onClick={() => removeSupportTrainer(trainer.id)}
                                             >
                                                 <X className="w-4 h-4" />
                                             </Button>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                    ))}
+                                </div>
                             ) : (
-                                <div className="space-y-4">
-                                    <div className="flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setShowInstructorSearch(!showInstructorSearch)}
-                                        >
-                                            <Search className="w-4 h-4 mr-2" />
-                                            Search Existing Instructors
-                                        </Button>
-                                        <Button variant="outline">
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Add New Instructor
-                                        </Button>
-                                    </div>
-
-                                    {showInstructorSearch && (
-                                        <div className="space-y-3">
-                                            <h4>Available Instructors</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {AVAILABLE_INSTRUCTORS.map((instructor) => (
-                                                    <Card
-                                                        key={instructor.id}
-                                                        className="cursor-pointer hover:shadow-md transition-shadow"
-                                                        onClick={() => handleLeadTrainerSelect(instructor)}
-                                                    >
-                                                        <CardContent className="pt-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <Avatar className="w-10 h-10">
-                                                                    <AvatarImage src={instructor.avatar} />
-                                                                    <AvatarFallback>
-                                                                        {instructor.name.split(' ').map(n => n[0]).join('')}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <div>
-                                                                    <h4 className="text-sm font-medium">{instructor.name}</h4>
-                                                                    <p className="text-xs text-muted-foreground">{instructor.title}</p>
-                                                                    <div className="flex gap-1 mt-1">
-                                                                        {instructor.specialties.slice(0, 2).map((specialty) => (
-                                                                            <Badge key={specialty} variant="outline" className="text-xs">
-                                                                                {specialty}
-                                                                            </Badge>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </CardContent>
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                <p className="text-sm text-muted-foreground">No support trainers added</p>
                             )}
-                        </>
-                    ) : (
-                        <div className="p-4 bg-muted/20 rounded-lg">
-                            <div className="flex items-center gap-2">
-                                <User className="w-5 h-5 text-primary" />
-                                <span>You will be the lead trainer for this course</span>
-                            </div>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            {/* Support Trainers */}
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle>Support Trainers/Staff (Optional)</CardTitle>
-                        {data?.profileType === 'organization' && (
-                            <Button variant="outline" size="sm">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add Support Trainer
-                            </Button>
-                        )}
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {supportTrainers.length > 0 ? (
-                        <div className="space-y-3">
-                            {supportTrainers.map((trainer) => (
-                                <div key={trainer.id} className="flex items-center justify-between p-3 border rounded">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="w-8 h-8">
-                                            <AvatarImage src={trainer.avatar} />
-                                            <AvatarFallback>
-                                                {trainer.name.split(' ').map((n: string) => n[0]).join('')}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="text-sm font-medium">{trainer.name}</p>
-                                            <p className="text-xs text-muted-foreground">{trainer.title}</p>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => removeSupportTrainer(trainer.id)}
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">No support trainers added</p>
-                    )}
-                </CardContent>
-            </Card>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
 
             {/* Training Mode */}
             <Card>
@@ -392,24 +410,21 @@ export function ScheduleAndDelivery({ data, onDataChange }: ScheduleAndDeliveryP
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="maxStudents">Maximum Students</Label>
-                            <Input
-                                id="maxStudents"
-                                type="number"
-                                placeholder="25"
-                                value={data?.maxStudents || ''}
-                                onChange={(e) => onDataChange({ ...data, maxStudents: e.target.value })}
-                            />
+                            <div
+                                className="border border-input rounded-md px-3 py-2 text-sm text-muted-foreground bg-muted/30"
+                            >
+                                {courseDetails?.data?.class_limit || '—'}
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="optimalSize">Optimal Class Size</Label>
-                            <Input
-                                id="optimalSize"
-                                type="number"
-                                placeholder="15"
-                                value={data?.optimalSize || ''}
-                                onChange={(e) => onDataChange({ ...data, optimalSize: e.target.value })}
-                            />
+                            <div
+                                className="border border-input rounded-md px-3 py-2 text-sm text-muted-foreground bg-muted/30"
+                            >
+                                {courseDetails?.data?.class_limit || '—'}
+                            </div>
                         </div>
+
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -426,7 +441,7 @@ export function ScheduleAndDelivery({ data, onDataChange }: ScheduleAndDeliveryP
             </Card>
 
             {/* Availability */}
-            <Card>
+            <Card className='bg-red-100'>
                 <CardHeader>
                     <CardTitle>Availability</CardTitle>
                 </CardHeader>

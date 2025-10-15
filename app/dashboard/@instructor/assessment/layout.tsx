@@ -2,17 +2,19 @@
 
 import { Separator } from '@/components/ui/separator';
 
-interface AssignmentLayoutProps {
+interface AssessmentLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AssignmentLayout({ children }: AssignmentLayoutProps) {
+export default function AssessmentLayout({ children }: AssessmentLayoutProps) {
   return (
     <div className='space-y-6 p-4 pb-16 md:p-10'>
       <div className='flex items-center justify-between'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight'>Manage Assignments</h2>
-          <p className='text-muted-foreground'>Manage and track assignments.</p>
+          <h2 className='text-2xl font-bold tracking-tight'>Manage Assessments</h2>
+          <p className="text-muted-foreground">
+            Oversee all student assessments including assignments, quizzes, and exams.
+          </p>
         </div>
       </div>
       <Separator />

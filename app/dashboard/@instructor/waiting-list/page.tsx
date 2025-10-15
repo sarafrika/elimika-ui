@@ -5,7 +5,7 @@ import { useUserProfile } from '../../../../context/profile-context';
 import { getInvitationsSentByUser } from '../../../../services/client';
 import InviteList from '../../@organization/invites/_components/InviteList';
 
-export default function InvitesPage() {
+export default function WaitingListPage() {
   const user = useUserProfile();
   return (
     <div className='space-y-6 p-4 pb-16 md:py-10'>

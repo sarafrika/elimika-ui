@@ -5,7 +5,7 @@ import { getClassDefinitionsForCourseOptions, getCourseByUuidOptions } from "@/s
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
-import { ClassCard } from "../../../../_components/class-card";
+import { EnrollmentCards } from "../../../../_components/enroll-card";
 
 const EnrollmentPage = () => {
     const params = useParams();
@@ -65,7 +65,7 @@ const EnrollmentPage = () => {
             ) : (
                 <ul className="flex flex-row flex-wrap gap-4">
                     {classes.map((cls: any) => (
-                        <ClassCard
+                        <EnrollmentCards
                             key={cls?.uuid}
                             course={courseData?.data}
                             classData={cls}

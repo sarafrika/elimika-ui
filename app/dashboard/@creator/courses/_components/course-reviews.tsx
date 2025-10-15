@@ -12,6 +12,7 @@ import {
     Users,
     Video
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface CourseReviewProps {
     data: any;
@@ -71,7 +72,9 @@ export function CourseReview({ data }: CourseReviewProps) {
                         {/* Course Image */}
                         <div className="w-32 h-20 bg-muted rounded flex items-center justify-center">
                             {data?.coverImage ? (
-                                <img
+                                <Image
+                                    width={24}
+                                    height={24}
                                     src={data.coverImage.url}
                                     alt="Course cover"
                                     className="w-full h-full object-cover rounded"

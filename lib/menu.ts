@@ -1,5 +1,6 @@
 import {
   Award,
+  Bell,
   BoltIcon,
   Book,
   BookOpen,
@@ -8,22 +9,29 @@ import {
   Building2,
   Calendar,
   CalendarCheck,
-  CheckSquare,
+  CalendarClock,
+  ChartNoAxesCombined,
   ClipboardList,
   DollarSign,
+  FileCheck,
   FileText,
-  Layers,
+  GraduationCap,
+  Handshake,
   LayoutDashboard,
   LibraryIcon,
+  ListChecks,
+  LucideBookUser,
   Mails,
   Settings,
   Star,
-  UserCheck,
   UserCircle,
   UserCog,
   UserIcon,
+  UserPlus,
   Users,
-  WalletMinimal
+  Wallet,
+  WalletMinimal,
+  Wrench
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -138,6 +146,11 @@ export default {
       icon: Calendar,
     },
     {
+      title: 'Skills Fund',
+      url: '/dashboard/skills-fund',
+      icon: Wallet,
+    },
+    {
       title: 'My Grades',
       url: '/dashboard/grades',
       icon: Award,
@@ -160,24 +173,9 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Course Management',
-      url: '/dashboard/course-management',
-      icon: BookOpen,
-    },
-    {
       title: 'Courses',
       url: '/dashboard/courses',
       icon: BookOpen,
-    },
-    {
-      title: 'Invites',
-      url: '/dashboard/invites',
-      icon: Mails,
-    },
-    {
-      title: 'Programs',
-      url: '/dashboard/programs',
-      icon: Layers,
     },
     {
       title: 'Trainings',
@@ -202,25 +200,74 @@ export default {
       ],
     },
     {
-      title: 'Apply to train',
-      url: '/dashboard/apply-to-train',
-      icon: UserCheck,
+      title: 'Assessment',
+      url: '/dashboard/assessment',
+      icon: ClipboardList,
+      items: [
+        {
+          title: 'Assignments',
+          url: '/dashboard/assessment/assignments',
+          icon: FileText,
+        },
+        {
+          title: 'Quiz',
+          url: '/dashboard/assessment/quiz',
+          icon: ListChecks,
+        },
+        {
+          title: 'Exams',
+          url: '/dashboard/assessment/exams',
+          icon: FileCheck,
+        },
+      ],
     },
     {
-      title: 'Rubrics Management',
-      url: '/dashboard/rubric-management',
-      icon: CheckSquare,
+      title: 'Waiting List',
+      url: '/dashboard/waiting-list',
+      icon: Mails,
     },
     {
-      title: 'Assignments',
-      url: '/dashboard/assignments',
-      icon: Award,
+      title: 'Learning',
+      url: '/dashboard/learning',
+      icon: GraduationCap,
     },
+    {
+      title: 'Bookings',
+      url: '/dashboard/bookings',
+      icon: CalendarClock,
+    },
+    {
+      title: 'Skills Fund',
+      url: '/dashboard/skills-fund',
+      icon: Wallet,
+    },
+    {
 
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
+      items: [
+        {
+          title: 'Jobs',
+          url: '/dashboard/opportunities/jobs',
+          icon: Briefcase,
+        },
+        {
+          title: 'Apprenticeships',
+          url: '/dashboard/opportunities/apprenticeships',
+          icon: Wrench,
+        },
+        {
+          title: 'Attachment',
+          url: '/dashboard/opportunities/attachment',
+          icon: UserPlus,
+        },
+      ],
+    },
     {
-      title: 'Availability',
-      url: '/dashboard/availability',
-      icon: CalendarCheck,
+      title: 'Libraries',
+      url: '/dashboard/libraries',
+      icon: LucideBookUser,
     },
     {
       title: 'Earnings',
@@ -228,19 +275,67 @@ export default {
       icon: DollarSign,
     },
     {
-      title: 'Rate Card',
-      url: '/dashboard/rate-card',
-      icon: WalletMinimal,
+      title: 'Notifications',
+      url: '/dashboard/notifications',
+      icon: Bell,
     },
     {
-      title: 'Reviews',
-      url: '/dashboard/reviews',
-      icon: Star,
+      title: 'Analytics',
+      url: '/dashboard/analytics',
+      icon: ChartNoAxesCombined,
     },
     {
       title: 'Profile',
       url: '/dashboard/profile',
       icon: UserCircle,
+    },
+    {
+      title: 'Skils Card',
+      url: '/dashboard/skill-card',
+      icon: WalletMinimal,
+    },
+    {
+      title: 'Certificates',
+      url: '/dashboard/certificates',
+      icon: UserCircle,
+    },
+    {
+      title: 'Availability',
+      url: '/dashboard/availability',
+      icon: CalendarCheck,
+    },
+    {
+      title: 'Rate Card',
+      url: '/dashboard/rate-card',
+      icon: WalletMinimal,
+    },
+    ///
+    ///
+    ///
+    // {
+    //   title: 'Course Management',
+    //   url: '/dashboard/course-management',
+    //   icon: BookOpen,
+    // },
+    // {
+    //   title: 'Programs',
+    //   url: '/dashboard/programs',
+    //   icon: Layers,
+    // },
+    // {
+    //   title: 'Rubrics Management',
+    //   url: '/dashboard/rubric-management',
+    //   icon: CheckSquare,
+    // },
+    // {
+    //   title: 'Apply to train',
+    //   url: '/dashboard/apply-to-train',
+    //   icon: UserCheck,
+    // },
+    {
+      title: 'Reviews',
+      url: '/dashboard/reviews',
+      icon: Star,
     },
   ],
   admin: [
@@ -295,6 +390,11 @@ export default {
       title: 'Branches',
       url: '/dashboard/branches',
       icon: Building,
+    },
+    {
+      title: 'Skills Fund',
+      url: '/dashboard/skills-fund',
+      icon: Wallet,
     },
     {
       title: 'Users',

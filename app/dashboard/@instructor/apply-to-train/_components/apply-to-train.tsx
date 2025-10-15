@@ -3,6 +3,9 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useInstructor } from '@/context/instructor-context';
+import { getInstructorDocumentsOptions, getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Eye, Save, UserCheck } from 'lucide-react';
 import { useState } from 'react';
 import { ComplianceRequirements } from './compliance-requirement';
@@ -21,9 +24,28 @@ const STEPS = [
     { id: 6, title: 'Review & Submit', component: ReviewAndSubmit },
 ];
 
+export function getTotalExperienceYears(experiences: any[]): number {
+    const totalYears = experiences.reduce((sum, exp) => {
+        return sum + (exp.calculated_years ?? 0);
+    }, 0);
+
+    return Math.round(totalYears);
+}
+
 export function ApplyToTrain() {
     const [currentStep, setCurrentStep] = useState(1);
-    const [applicationData, setApplicationData] = useState({});
+    const [selectedCourse, setSelectedCourse] = useState<any>(null);
+
+
+    const instructor = useInstructor();
+    const { data } = useQuery(getUserByUuidOptions({ path: { uuid: instructor?.user_uuid as string } }))
+    const instructorProfile = data?.data || {}
+
+    const { data: instructorCertifications } = useQuery({
+        ...getInstructorDocumentsOptions({
+            path: { instructorUuid: instructor?.uuid as string },
+        }), enabled: !!instructor?.uuid
+    })
 
     const progress = (currentStep / STEPS.length) * 100;
     const CurrentStepComponent = STEPS.find(step => step.id === currentStep)?.component;
@@ -45,7 +67,7 @@ export function ApplyToTrain() {
     };
 
     const handleDataChange = (stepData: any) => {
-        setApplicationData(prev => ({ ...prev, ...stepData }));
+        // setApplicationData(prev => ({ ...prev, ...stepData }));
     };
 
     const handleSaveDraft = () => {
@@ -130,8 +152,18 @@ export function ApplyToTrain() {
                     <CardContent>
                         {CurrentStepComponent && (
                             <CurrentStepComponent
-                                data={applicationData}
+                                data={instructor}
+                                // @ts-ignore
+                                skills={instructor?.skills || []}
+                                // @ts-ignore
+                                education={instructor?.educations || []}
+                                certifications={instructorCertifications?.data || []}
+                                profile={instructorProfile}
                                 onDataChange={handleDataChange}
+                                selectedCourse={selectedCourse}
+                                onCourseSelect={(course) => {
+                                    setSelectedCourse(course);
+                                }}
                             />
                         )}
                     </CardContent>

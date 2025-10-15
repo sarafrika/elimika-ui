@@ -1,4 +1,5 @@
 
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,62 +8,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import { getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Search, X } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface CourseProposalProps {
     data: any;
     onDataChange: (data: any) => void;
+    selectedCourse: any;
+    onCourseSelect?: (course: any | null) => void;
 }
-
-// Mock available courses
-const AVAILABLE_COURSES = [
-    {
-        id: '1',
-        title: 'Advanced React Development',
-        category: 'Technology',
-        subcategory: 'Web Development',
-        description: 'Build modern web applications with React, TypeScript, and Next.js',
-        difficulty: 'Intermediate',
-        estimatedDuration: '40 hours'
-    },
-    {
-        id: '2',
-        title: 'Data Science Fundamentals',
-        category: 'Technology',
-        subcategory: 'Data Science',
-        description: 'Learn Python, pandas, and machine learning from scratch',
-        difficulty: 'Beginner',
-        estimatedDuration: '50 hours'
-    },
-    {
-        id: '3',
-        title: 'Digital Marketing Strategy',
-        category: 'Business',
-        subcategory: 'Marketing',
-        description: 'Master SEO, social media, and content marketing',
-        difficulty: 'Intermediate',
-        estimatedDuration: '30 hours'
-    },
-    {
-        id: '4',
-        title: 'UI/UX Design Fundamentals',
-        category: 'Design',
-        subcategory: 'User Experience',
-        description: 'Learn design principles and create beautiful user interfaces',
-        difficulty: 'Beginner',
-        estimatedDuration: '25 hours'
-    }
-];
 
 const CATEGORIES = [
     'All Categories',
-    'Technology',
-    'Business',
-    'Design',
+    'Music',
+    'Violin',
+    'Piano',
     'Health & Fitness',
     'Arts & Crafts',
-    'Languages'
+    'Languages',
+    'Testing'
+
 ];
 
 const TARGET_AUDIENCES = [
@@ -89,32 +58,55 @@ const COURSE_FORMATS = [
     'Professional Development Series'
 ];
 
-export function CourseProposal({ data, onDataChange }: CourseProposalProps) {
+export function CourseProposal({ data, onCourseSelect, onDataChange }: CourseProposalProps) {
+    const { difficultyMap } = useDifficultyLevels();
+
+    const { data: trainCourses } = useQuery({
+        ...getAllCoursesOptions({
+            query: { pageable: { page: 0, size: 100 } }
+        }),
+    })
+    // const { data: trainCourses } = useQuery({
+    //     ...getCoursesByInstructorOptions({
+    //         query: { pageable: { page: 0, size: 100 } }, path: { instructorUuid: data?.uuid as string }
+    //     }),
+    //     enabled: !!data?.uuid
+    // })
+
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All Categories');
     const [selectedCourse, setSelectedCourse] = useState(data?.selectedCourse || null);
     const [targetAudience, setTargetAudience] = useState<string[]>(data?.targetAudience || []);
 
-    const filteredCourses = AVAILABLE_COURSES.filter(course => {
+    const filteredCourses = trainCourses?.data?.content?.filter(course => {
         const matchesSearch = searchTerm === '' ||
-            course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            course.description.toLowerCase().includes(searchTerm.toLowerCase());
+            course?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            course?.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            course?.objectives?.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesCategory = selectedCategory === 'All Categories' ||
-            course.category === selectedCategory;
+            course?.category_names?.includes(selectedCategory);
 
         return matchesSearch && matchesCategory;
     });
 
     const handleCourseSelect = (course: any) => {
         setSelectedCourse(course);
+
+        // Update form data
         onDataChange({
             ...data,
             selectedCourse: course,
             category: course.category,
             subcategory: course.subcategory
         });
+
+        // Notify parent specifically about selected course
+        if (onCourseSelect) {
+            onCourseSelect(course);
+        }
     };
+
 
     const handleTargetAudienceChange = (audience: string, checked: boolean) => {
         let newAudience;
@@ -126,6 +118,12 @@ export function CourseProposal({ data, onDataChange }: CourseProposalProps) {
         setTargetAudience(newAudience);
         onDataChange({ ...data, targetAudience: newAudience });
     };
+
+    const handleCourseProposal = () => {
+        toast.message(selectedCourse)
+        toast.message(targetAudience)
+    }
+
 
     return (
         <div className="space-y-6">
@@ -163,15 +161,33 @@ export function CourseProposal({ data, onDataChange }: CourseProposalProps) {
                     {/* Selected Course Display */}
                     {selectedCourse && (
                         <Card className="border-primary/20 bg-primary/5">
-                            <CardContent className="pt-6">
+                            <CardContent className="pt-4 pb-2">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="text-primary">{selectedCourse.title}</h4>
-                                        <p className="text-sm text-muted-foreground mb-2">{selectedCourse.description}</p>
+                                        <BookOpen className="w-5 h-5 text-primary mb-2" />
+                                        <h4 className="text-primary">
+                                            {selectedCourse.name.charAt(0).toUpperCase() + selectedCourse.name.slice(1)}
+                                        </h4>
+                                        <div className="text-sm text-muted-foreground mb-2">
+                                            <RichTextRenderer htmlString={selectedCourse.description} maxChars={100} />
+                                        </div>
                                         <div className="flex gap-2 flex-wrap">
-                                            <Badge variant="outline">{selectedCourse.category}</Badge>
-                                            <Badge variant="outline">{selectedCourse.difficulty}</Badge>
-                                            <Badge variant="outline">{selectedCourse.estimatedDuration}</Badge>
+                                            <div>
+                                                {selectedCourse.category_names.map((category: string, index: number) => (
+                                                    <Badge key={index} variant="outline" className="text-xs mr-1">
+                                                        {category}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                            <div>
+                                                {difficultyMap && selectedCourse.difficulty_uuid && (
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {difficultyMap[selectedCourse.difficulty_uuid]}
+                                                    </Badge>
+                                                )}
+                                            </div>
+
+                                            <Badge variant="outline">{selectedCourse.total_duration_display}</Badge>
                                         </div>
                                     </div>
                                     <Button
@@ -194,9 +210,9 @@ export function CourseProposal({ data, onDataChange }: CourseProposalProps) {
                         <div className="space-y-4">
                             <h4>Available Courses</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-                                {filteredCourses.map((course) => (
+                                {filteredCourses?.map((course: any) => (
                                     <Card
-                                        key={course.id}
+                                        key={course.uuid}
                                         className="cursor-pointer hover:shadow-md transition-shadow"
                                         onClick={() => handleCourseSelect(course)}
                                     >
@@ -204,13 +220,28 @@ export function CourseProposal({ data, onDataChange }: CourseProposalProps) {
                                             <div className="flex items-start gap-3">
                                                 <BookOpen className="w-5 h-5 text-primary mt-1" />
                                                 <div className="flex-1">
-                                                    <h4 className="text-sm font-medium mb-1">{course.title}</h4>
-                                                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                                                        {course.description}
-                                                    </p>
-                                                    <div className="flex gap-1 flex-wrap">
-                                                        <Badge variant="outline" className="text-xs">{course.category}</Badge>
-                                                        <Badge variant="outline" className="text-xs">{course.difficulty}</Badge>
+                                                    <h4 className="text-sm font-medium mb-1">
+                                                        {course.name.charAt(0).toUpperCase() + course.name.slice(1)}
+                                                    </h4>
+                                                    <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                                                        <RichTextRenderer htmlString={course?.description} />
+                                                    </div>
+                                                    <div className="flex flex-col gap-1 flex-wrap">
+                                                        <div>
+                                                            {course.category_names.map((category: string, index: number) => (
+                                                                <Badge key={index} variant="outline" className="text-xs mr-1">
+                                                                    {category}
+                                                                </Badge>
+                                                            ))}
+                                                        </div>
+
+                                                        <div>
+                                                            {difficultyMap && course.difficulty_uuid && (
+                                                                <Badge variant="outline" className="text-xs">
+                                                                    {difficultyMap[course.difficulty_uuid]}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -219,7 +250,7 @@ export function CourseProposal({ data, onDataChange }: CourseProposalProps) {
                                 ))}
                             </div>
 
-                            {filteredCourses.length === 0 && (
+                            {filteredCourses?.length === 0 && (
                                 <div className="text-center py-8 text-muted-foreground">
                                     <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
                                     <p>No courses found matching your criteria</p>
@@ -304,7 +335,7 @@ export function CourseProposal({ data, onDataChange }: CourseProposalProps) {
                     {/* Additional Proposal Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Additional Information</CardTitle>
+                            <CardTitle>Additional Information (Optional)</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
@@ -352,6 +383,10 @@ export function CourseProposal({ data, onDataChange }: CourseProposalProps) {
                             </div>
                         </CardContent>
                     </Card>
+
+                    <div className='flex justify-end'>
+                        <Button onClick={handleCourseProposal}>Save Changes</Button>
+                    </div>
                 </>
             )}
         </div>

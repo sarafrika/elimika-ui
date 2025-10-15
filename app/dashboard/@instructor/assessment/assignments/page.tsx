@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Spinner from '@/components/ui/spinner';
 import {
   deleteAssignmentMutation,
   getAllAssignmentsOptions,
@@ -20,8 +21,8 @@ import { BookOpen, Eye, Grip, MoreVertical, PenLine, Trash } from 'lucide-react'
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import Spinner from '../../../../components/ui/spinner';
-import { AssignmentDialog } from '../../@creator/_components/assignment-management-form';
+import { AssignmentDialog } from '../../../@creator/_components/assignment-management-form';
+
 
 export default function AssignmentsPage() {
   const qc = useQueryClient();
