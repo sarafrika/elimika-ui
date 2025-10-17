@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Instructor } from '@/services/api/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   getAllInstructorsOptions,
@@ -22,7 +22,7 @@ export default function InstructorsPage() {
     getAllInstructorsOptions({ query: { pageable: { page: 0, size: 20, sort: ['desc'] } } })
   );
 
-  const instructors = data?.data?.content || [];
+  const instructors = useMemo(() => data?.data?.content ?? [], [data?.data?.content]);
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
