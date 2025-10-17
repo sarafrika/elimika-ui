@@ -82,7 +82,7 @@ export default function CourseCreatorProfilePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-3 text-sm'>
-          <div className='rounded-lg border border-dashed border-border/60 bg-muted/40 p-3'>
+          <div className='rounded-lg border border-dashed border-blue-200/40 bg-blue-50/60 p-3'>
             <p className='text-xs uppercase tracking-wide text-muted-foreground'>Marketplace</p>
             <p className='font-semibold'>
               {data.assignments.hasGlobalAccess

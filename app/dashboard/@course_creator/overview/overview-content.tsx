@@ -63,7 +63,7 @@ export default function CourseCreatorOverviewContent() {
 
       <section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
         {metrics.map(metric => (
-          <Card key={metric.title} className='border-border/60'>
+          <Card key={metric.title} className='border-blue-200/40'>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-3'>
               <CardTitle className='text-sm font-medium text-muted-foreground'>
                 {metric.title}
@@ -125,7 +125,7 @@ function MonetizationCard({
   monetization: CourseCreatorMonetizationSummary;
 }) {
   return (
-    <Card className='border-border/60'>
+    <Card className='border-blue-200/40'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
           <DollarSign className='text-purple-500 h-5 w-5' />
@@ -182,7 +182,7 @@ function TrainingRequirementsCard({
   trainingRequirements: CourseCreatorTrainingRequirementSummary;
 }) {
   return (
-    <Card className='border-border/60'>
+    <Card className='border-blue-200/40'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
           <ListCheck className='text-purple-500 h-5 w-5' />
@@ -211,7 +211,7 @@ function TrainingRequirementsCard({
 
 function RequirementStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className='rounded-lg border border-dashed border-border/60 bg-muted/30 p-4'>
+    <div className='rounded-lg border border-dashed border-blue-200/40 bg-blue-50/60 p-4'>
       <p className='text-muted-foreground text-xs uppercase tracking-wide'>{label}</p>
       <p className='text-xl font-semibold'>{value}</p>
     </div>
@@ -220,7 +220,7 @@ function RequirementStat({ label, value }: { label: string; value: number }) {
 
 function AssignmentsCard({ assignmentsCount, hasGlobal }: { assignmentsCount: number; hasGlobal: boolean }) {
   return (
-    <Card className='border-border/60'>
+    <Card className='border-blue-200/40'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
           <ShieldCheck className='text-purple-500 h-5 w-5' />
@@ -275,7 +275,7 @@ function VerificationCard({ verification }: { verification: CourseCreatorVerific
     : 'Not recorded';
 
   return (
-    <Card className='border-border/60'>
+    <Card className='border-blue-200/40'>
       <CardHeader className='flex flex-row items-center justify-between space-y-0'>
         <div>
           <CardTitle className='flex items-center gap-2 text-base font-semibold'>
@@ -324,7 +324,7 @@ function QuickActionsCard() {
   ];
 
   return (
-    <Card className='border-border/60'>
+    <Card className='border-blue-200/40'>
       <CardHeader>
         <CardTitle className='text-base font-semibold'>Quick actions</CardTitle>
         <CardDescription>Keep momentum by maintaining course quality and visibility.</CardDescription>
@@ -333,7 +333,7 @@ function QuickActionsCard() {
         {actions.map(action => (
           <div
             key={action.title}
-            className='flex h-full flex-col justify-between rounded-lg border border-dashed border-border/60 p-4'
+            className='flex h-full flex-col justify-between rounded-lg border border-dashed border-blue-200/40 p-4'
           >
             <div>
               <h3 className='text-sm font-semibold'>{action.title}</h3>

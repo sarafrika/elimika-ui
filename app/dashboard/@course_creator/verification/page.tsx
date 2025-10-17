@@ -163,7 +163,7 @@ export default function CourseCreatorVerificationPage() {
 
 function StatusPill({ heading, value }: { heading: string; value: string }) {
   return (
-    <div className='rounded-lg border border-dashed border-border/60 bg-muted/40 p-4'>
+    <div className='rounded-lg border border-dashed border-blue-200/40 bg-blue-50/60 p-4'>
       <p className='text-xs uppercase tracking-wide text-muted-foreground'>{heading}</p>
       <p className='text-sm font-semibold'>{value}</p>
     </div>
