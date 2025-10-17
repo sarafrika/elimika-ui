@@ -8,7 +8,6 @@ import {
   Building,
   Building2,
   Calendar,
-  CalendarCheck,
   CalendarClock,
   ChartNoAxesCombined,
   ClipboardList,
@@ -30,7 +29,6 @@ import {
   UserPlus,
   Users,
   Wallet,
-  WalletMinimal,
   Wrench
 } from 'lucide-react';
 import { ComponentType } from 'react';
@@ -289,26 +287,6 @@ export default {
       url: '/dashboard/profile',
       icon: UserCircle,
     },
-    {
-      title: 'Skils Card',
-      url: '/dashboard/skill-card',
-      icon: WalletMinimal,
-    },
-    {
-      title: 'Certificates',
-      url: '/dashboard/certificates',
-      icon: UserCircle,
-    },
-    {
-      title: 'Availability',
-      url: '/dashboard/availability',
-      icon: CalendarCheck,
-    },
-    {
-      title: 'Rate Card',
-      url: '/dashboard/rate-card',
-      icon: WalletMinimal,
-    },
     ///
     ///
     ///
@@ -331,12 +309,7 @@ export default {
     //   title: 'Apply to train',
     //   url: '/dashboard/apply-to-train',
     //   icon: UserCheck,
-    // },
-    {
-      title: 'Reviews',
-      url: '/dashboard/reviews',
-      icon: Star,
-    },
+    // }
   ],
   admin: [
     {

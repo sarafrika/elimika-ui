@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { TrainCourseCard } from '../../../_components/train-course-card';
+import { CourseCard } from '../../../_components/course-card';
 
 const SAMPLE_COURSES = [
     {
@@ -160,10 +160,11 @@ export default function CourseMangementPage() {
                 {/* Course Grid */}
                 <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
                     {filteredCourses.map(course => (
-                        <TrainCourseCard
+                        <CourseCard
                             key={course.uuid}
                             course={course as any}
-                            handleClick={() => router.push(`/dashboard/courses/${course.uuid}`)}
+                            isStudent={false}
+                            handleClick={() => router.push(`/dashboard/learning/${course.uuid}`)}
                         />
                     ))}
                 </div>

@@ -19,13 +19,18 @@ const sections = [
   { name: 'General', href: '/dashboard/profile/general' },
   { name: 'Education', href: '/dashboard/profile/education' },
   { name: 'Experience', href: '/dashboard/profile/experience' },
+  { name: 'Certificates', href: '/dashboard/profile/certificates' },
+
   {
     name: 'Professional Memberships',
     href: '/dashboard/profile/professional-membership',
   },
-  { name: 'Skills', href: '/dashboard/profile/skills' },
+  { name: 'Skill Card', href: '/dashboard/profile/skill-card' },
   { name: 'Training Areas', href: '/dashboard/profile/training-areas' },
-  { name: 'Availability & Rates', href: '/dashboard/profile/availability' },
+  { name: 'Availability', href: '/dashboard/profile/availability' },
+  { name: 'Rate Card', href: '/dashboard/profile/rate-card' },
+  { name: 'Reviews', href: '/dashboard/profile/reviews' },
+
 ];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {

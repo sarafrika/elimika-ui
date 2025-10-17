@@ -4,15 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useInstructor } from '@/context/instructor-context';
-import { getInstructorDocumentsOptions, getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getCourseByUuidOptions, getInstructorDocumentsOptions, getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Eye, Save, UserCheck } from 'lucide-react';
-import { useState } from 'react';
-import { ComplianceRequirements } from './compliance-requirement';
-import { CourseProposal } from './course-proposal';
-import { ResourcesAndRequirements } from './resources-and-requirements';
-import { ReviewAndSubmit } from './review-and-submit';
-import { ScheduleAndDelivery } from './schedule-and-delivery';
+import { useEffect, useState } from 'react';
+
+import { useParams } from 'next/navigation';
+import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
+import { ComplianceRequirements } from '../_components/compliance-requirement';
+import { CourseProposal } from '../_components/course-proposal';
+import { ResourcesAndRequirements } from '../_components/resources-and-requirements';
+import { ReviewAndSubmit } from '../_components/review-and-submit';
+import { ScheduleAndDelivery } from '../_components/schedule-and-delivery';
 
 const STEPS = [
     // { id: 1, title: 'Profile & Skills', component: ProfileAndSkills },
@@ -31,11 +34,39 @@ export function getTotalExperienceYears(experiences: any[]): number {
     return Math.round(totalYears);
 }
 
-export function ApplyToTrain() {
+export default function ApplyToTrain() {
+    const params = useParams();
+    const courseId = params?.id as string;
+    const { replaceBreadcrumbs } = useBreadcrumb();
+
+    useEffect(() => {
+        if (courseId) {
+            replaceBreadcrumbs([
+                { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+                {
+                    id: 'courses',
+                    title: 'Courses',
+                    url: `/dashboard/courses`,
+                },
+                {
+                    id: 'apply-to-train',
+                    title: `Apply To Trains`,
+                    url: `/dashboard/apply-to-train/${courseId}`,
+                },
+            ]);
+        }
+    }, [replaceBreadcrumbs, courseId]);
+
     const [currentStep, setCurrentStep] = useState(1);
-    const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
     const instructor = useInstructor();
+    const { data: course } = useQuery({
+        ...getCourseByUuidOptions({
+            path: { uuid: courseId as string },
+        }),
+    })
+    const selectedCourse = course?.data
+
     const { data } = useQuery(getUserByUuidOptions({ path: { uuid: instructor?.user_uuid as string } }))
     const instructorProfile = data?.data || {}
 

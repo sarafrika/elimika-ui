@@ -1,186 +1,558 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarDays } from 'lucide-react';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { useUserProfile } from '@/context/profile-context';
+import { getInstructorAvailabilityOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { ClassData } from '../../trainings/create-new/academic-period-form';
+import AvailabilityManager from './components/availability-manager';
 
-const availabilitySchema = z.object({
-  calComLink: z.string().url().optional().or(z.literal('')),
-  rates: z.object({
-    privateInPerson: z.number().optional(),
-    privateVirtual: z.number().optional(),
-    groupInPerson: z.number().optional(),
-    groupVirtual: z.number().optional(),
-  }),
-});
+export type AvailabilitySlot = {
+  id: string;
+  day: string;
+  startTime: string;
+  endTime: string;
+  date?: Date;
+  status: 'available' | 'unavailable' | 'reserved' | 'booked';
+  recurring?: boolean;
+  note?: string;
+  is_available?: boolean;
+  custom_pattern?: string;
+};
 
-type AvailabilityFormValues = z.infer<typeof availabilitySchema>;
+export type CalendarEvent = {
+  id: string;
+  title: string;
+  description?: string;
+  type: 'booked' | 'available' | 'unavailable' | 'reserved';
+  startTime: string;
+  endTime: string;
+  date: Date;
+  day: string;
+  location?: string;
+  attendees?: number;
+  isRecurring?: boolean;
+  recurringDays?: string[];
+  status: 'available' | 'unavailable' | 'reserved' | 'booked';
+  color?: string;
+  reminders?: number[];
+  notes?: string;
+};
 
-const classTypes = [
+export type AvailabilityData = {
+  slots: AvailabilitySlot[];
+  events: CalendarEvent[];
+  settings: {
+    timezone: string;
+    autoAcceptBookings: boolean;
+    bufferTime: number; // minutes between slots
+    workingHours: {
+      start: string;
+      end: string;
+    };
+  };
+};
+
+function transformAvailabilityArray(dataArray: any[]) {
+  const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  return dataArray?.map(data => ({
+    id: data.uuid,
+    day: dayMap[data.day_of_week ?? 0],
+    startTime: data.start_time?.slice(0, 5),
+    endTime: data.end_time?.slice(0, 5),
+    status: data.is_available ? 'available' : 'unavailable',
+    recurring: data.availability_type === 'weekly',
+    note: data.availability_description || '',
+    is_available: data.is_available,
+    custom_pattern: data.custom_pattern || '',
+  }));
+}
+
+const availabilitySlots: AvailabilitySlot[] = [
   {
-    type: 'Private Classes',
-    description: 'Personalized one-on-one instruction tailored to individual needs.',
-    methods: [
-      { name: 'In-Person', key: 'privateInPerson' },
-      { name: 'Virtual', key: 'privateVirtual' },
-    ],
+    id: '1de5a1c7-1d9d-4d1d-9339-0080384c3150',
+    day: 'Tuesday',
+    startTime: '12:00',
+    endTime: '18:30',
+    status: 'available',
+    recurring: true,
+    note: 'Weekly on Tuesday',
+    is_available: true,
+    custom_pattern: '',
   },
   {
-    type: 'Group Classes',
-    description: 'Engaging sessions for workshops, camps, and group projects.',
-    methods: [
-      { name: 'In-Person', key: 'groupInPerson' },
-      { name: 'Virtual', key: 'groupVirtual' },
-    ],
+    id: 'slot-1',
+    day: 'Monday',
+    startTime: '09:00',
+    endTime: '10:00',
+    status: 'available',
+    recurring: true,
+    note: 'Morning availability',
+    is_available: true,
+    custom_pattern: '',
+  },
+  {
+    id: 'slot-2',
+    day: 'Monday',
+    startTime: '10:30',
+    endTime: '11:30',
+    status: 'booked',
+    date: new Date('2025-10-06'),
+    is_available: false,
+  },
+  {
+    id: 'slot-3',
+    day: 'Tuesday',
+    startTime: '13:00',
+    endTime: '14:00',
+    status: 'available',
+    recurring: true,
+    is_available: true,
+  },
+  {
+    id: 'slot-4',
+    day: 'Tuesday',
+    startTime: '15:00',
+    endTime: '16:00',
+    status: 'unavailable',
+    note: 'Out of office',
+    is_available: false,
+  },
+  {
+    id: 'slot-5',
+    day: 'Wednesday',
+    startTime: '08:00',
+    endTime: '09:00',
+    status: 'reserved',
+    date: new Date('2025-10-08'),
+    is_available: false,
+  },
+  {
+    id: 'slot-6',
+    day: 'Wednesday',
+    startTime: '11:00',
+    endTime: '12:00',
+    status: 'available',
+    recurring: true,
+    is_available: true,
+  },
+  {
+    id: 'slot-7',
+    day: 'Thursday',
+    startTime: '14:00',
+    endTime: '15:00',
+    status: 'booked',
+    date: new Date('2025-10-09'),
+    is_available: false,
+  },
+  {
+    id: 'slot-8',
+    day: 'Thursday',
+    startTime: '16:00',
+    endTime: '17:00',
+    status: 'available',
+    is_available: true,
+  },
+  {
+    id: 'slot-9',
+    day: 'Friday',
+    startTime: '09:00',
+    endTime: '10:00',
+    status: 'reserved',
+    date: new Date('2025-10-10'),
+    is_available: true,
+  },
+  {
+    id: 'slot-10',
+    day: 'Friday',
+    startTime: '10:30',
+    endTime: '11:30',
+    status: 'available',
+    recurring: true,
+    note: 'Weekly check-in slot',
+    is_available: true,
   },
 ];
 
-export default function AvailabilitySettings() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
+const calendarEvents: CalendarEvent[] = [
+  {
+    id: 'event-1',
+    title: 'Team Standup',
+    type: 'booked',
+    startTime: '09:00',
+    endTime: '09:30',
+    date: new Date('2025-10-01'),
+    day: 'Wednesday',
+    location: 'Zoom',
+    attendees: 6,
+    isRecurring: true,
+    recurringDays: ['Monday', 'Wednesday', 'Friday'],
+    status: 'booked',
+    color: '#1E90FF',
+    reminders: [10],
+    notes: 'Daily team sync-up',
+  },
+  {
+    id: 'event-2',
+    title: 'Client Presentation',
+    type: 'reserved',
+    startTime: '11:00',
+    endTime: '12:00',
+    date: new Date('2025-10-02'),
+    day: 'Thursday',
+    location: 'Client HQ',
+    attendees: 3,
+    status: 'booked',
+    color: '#FF6347',
+    reminders: [30, 10],
+  },
+  {
+    id: 'event-3',
+    title: 'Lunch Break',
+    type: 'unavailable',
+    startTime: '12:30',
+    endTime: '13:30',
+    date: new Date('2025-10-01'),
+    day: 'Wednesday',
+    status: 'unavailable',
+    color: '#98FB98',
+    isRecurring: true,
+    recurringDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+  },
+  {
+    id: 'event-4',
+    title: 'Yoga Session',
+    type: 'unavailable',
+    startTime: '07:00',
+    endTime: '08:00',
+    date: new Date('2025-10-03'),
+    day: 'Friday',
+    location: 'Home Gym',
+    status: 'available',
+    color: '#FFD700',
+    reminders: [60],
+  },
+  {
+    id: 'event-5',
+    title: 'React Workshop',
+    type: 'unavailable',
+    startTime: '14:00',
+    endTime: '16:00',
+    date: new Date('2025-10-05'),
+    day: 'Sunday',
+    location: 'Tech Center Room B',
+    attendees: 25,
+    status: 'booked',
+    color: '#00CED1',
+    notes: 'Bring laptop and charger',
+  },
+  {
+    id: 'event-6',
+    title: '1:1 Check-in with Manager',
+    type: 'unavailable',
+    startTime: '10:00',
+    endTime: '10:30',
+    date: new Date('2025-10-07'),
+    day: 'Tuesday',
+    location: 'Office Room 402',
+    attendees: 2,
+    status: 'reserved',
+    color: '#9370DB',
+    reminders: [15],
+  },
+  {
+    id: 'event-7',
+    title: 'Doctor Appointment',
+    type: 'unavailable',
+    startTime: '16:00',
+    endTime: '17:00',
+    date: new Date('2025-10-04'),
+    day: 'Saturday',
+    location: 'Health Clinic',
+    status: 'booked',
+    reminders: [1440, 60],
+    color: '#DC143C',
+  },
+  {
+    id: 'event-8',
+    title: 'Weekly Strategy Session',
+    type: 'booked',
+    startTime: '15:00',
+    endTime: '16:00',
+    date: new Date('2025-10-03'),
+    day: 'Friday',
+    location: 'Board Room',
+    attendees: 8,
+    isRecurring: true,
+    recurringDays: ['Friday'],
+    status: 'booked',
+    color: '#4682B4',
+    reminders: [30],
+  },
+  {
+    id: 'event-9',
+    title: 'Annual Tech Conference',
+    type: 'booked',
+    startTime: '09:00',
+    endTime: '17:00',
+    date: new Date('2025-10-10'),
+    day: 'Friday',
+    location: 'Convention Center',
+    attendees: 150,
+    status: 'booked',
+    color: '#FF8C00',
+    notes: 'All-day event. RSVP required.',
+  },
+  {
+    id: 'event-10',
+    title: 'Reading Time',
+    type: 'unavailable',
+    startTime: '20:00',
+    endTime: '21:00',
+    date: new Date('2025-10-02'),
+    day: 'Thursday',
+    status: 'available',
+    color: '#8FBC8F',
+    isRecurring: true,
+    recurringDays: ['Tuesday', 'Thursday'],
+  },
+];
 
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'profile', title: 'Profile', url: '/dashboard/profile' },
+const sampleClassData: ClassData[] = [
+  {
+    courseTitle: 'Introduction to Web Development',
+    classTitle: 'Frontend Bootcamp - Beginner',
+    category: 'Programming',
+    targetAudience: ['Beginners', 'Aspiring Developers'],
+    description: 'A beginner-friendly bootcamp to learn HTML, CSS, and JavaScript from scratch.',
+    academicPeriod: {
+      startDate: new Date('2025-10-10'),
+      endDate: new Date('2026-01-10'),
+    },
+    registrationPeriod: {
+      startDate: new Date('2025-09-01'),
+      endDate: new Date('2025-10-05'),
+    },
+    timetable: {
+      selectedDays: ['Monday', 'Wednesday', 'Friday'],
+      timeSlots: [
+        { day: 'Monday', startTime: '09:00', endTime: '11:00' },
+        { day: 'Wednesday', startTime: '09:00', endTime: '11:00' },
+        { day: 'Friday', startTime: '09:00', endTime: '11:00' },
+      ],
+      duration: '2h',
+      timezone: 'UTC+1',
+      classType: 'online',
+    },
+    schedule: {
+      instructor: 'instructor-123',
+      skills: [
+        {
+          id: 'skill-html',
+          title: 'HTML Basics',
+          lessons: [
+            {
+              id: 'lesson-1',
+              title: 'Intro to HTML',
+              duration: '30m',
+              date: new Date('2025-10-10'),
+              time: '09:00',
+            },
+            { id: 'lesson-2', title: 'Semantic Tags', duration: '30m' },
+          ],
+        },
+      ],
+    },
+    visibility: {
+      publicity: 'public',
+      enrollmentLimit: 30,
+      price: 0,
+      isFree: true,
+    },
+    resources: [
+      { id: 'res-1', type: 'link', name: 'HTML Cheat Sheet', url: 'https://htmlcheatsheet.com' },
+    ],
+    assessments: [
       {
-        id: 'availability',
-        title: 'Availability',
-        url: '/dashboard/profile/availability',
-        isLast: true,
+        id: 'assess-1',
+        type: 'quiz',
+        title: 'HTML Basics Quiz',
+        description: 'A short quiz to test your HTML knowledge.',
       },
-    ]);
-  }, [replaceBreadcrumbs]);
+    ],
+    status: 'published',
+  },
 
-  const form = useForm<AvailabilityFormValues>({
-    resolver: zodResolver(availabilitySchema),
-    defaultValues: {
-      calComLink: '',
-      rates: {},
+  {
+    courseTitle: 'Creative Graphic Design',
+    classTitle: 'Photoshop Mastery',
+    subtitle: 'Level up your design skills',
+    category: 'Design',
+    targetAudience: ['Design Students', 'Marketing Teams'],
+    description:
+      'Learn Adobe Photoshop from industry experts. Build real-world projects for your portfolio.',
+    academicPeriod: {
+      startDate: new Date('2025-11-01'),
+      endDate: new Date('2026-02-15'),
+    },
+    registrationPeriod: {
+      startDate: new Date('2025-10-01'),
+      endDate: new Date('2025-10-30'),
+    },
+    timetable: {
+      selectedDays: ['Tuesday', 'Thursday'],
+      timeSlots: [
+        { day: 'Tuesday', startTime: '14:00', endTime: '16:00' },
+        { day: 'Thursday', startTime: '14:00', endTime: '16:00' },
+      ],
+      duration: '2h',
+      timezone: 'UTC+1',
+      classType: 'hybrid',
+      location: 'Design Studio, Lagos',
+    },
+    schedule: {
+      instructor: 'instructor-456',
+      skills: [
+        {
+          id: 'skill-ps',
+          title: 'Photoshop Fundamentals',
+          lessons: [
+            { id: 'lesson-3', title: 'Tools Overview', duration: '1h' },
+            { id: 'lesson-4', title: 'Layers and Masks', duration: '1h' },
+          ],
+        },
+      ],
+    },
+    visibility: {
+      publicity: 'private',
+      enrollmentLimit: 15,
+      price: 150,
+      isFree: false,
+    },
+    resources: [
+      {
+        id: 'res-2',
+        type: 'file',
+        name: 'Design Assets.zip',
+        url: 'https://example.com/assets.zip',
+      },
+    ],
+    assessments: [
+      {
+        id: 'assess-2',
+        type: 'assignment',
+        title: 'Portfolio Project',
+        description: 'Design a brand poster using learned techniques.',
+      },
+    ],
+    status: 'published',
+  },
+
+  {
+    courseTitle: 'Startup Business 101',
+    classTitle: 'Entrepreneurship Essentials',
+    subtitle: 'Build your business from idea to execution',
+    category: 'Business',
+    targetAudience: ['Aspiring Entrepreneurs', 'Small Business Owners'],
+    description:
+      'This course guides you through the key steps in starting and running a successful business.',
+    academicPeriod: {
+      startDate: new Date('2026-01-05'),
+      endDate: new Date('2026-03-30'),
+    },
+    registrationPeriod: {
+      startDate: new Date('2025-12-01'),
+    },
+    timetable: {
+      selectedDays: ['Saturday'],
+      timeSlots: [{ day: 'Saturday', startTime: '10:00', endTime: '13:00' }],
+      duration: '3h',
+      timezone: 'UTC',
+      classType: 'in-person',
+      location: 'Startup Hub, Abuja',
+    },
+    schedule: {
+      instructor: 'instructor-789',
+      skills: [
+        {
+          id: 'skill-biz',
+          title: 'Business Planning',
+          lessons: [
+            { id: 'lesson-5', title: 'Business Models', duration: '1h' },
+            { id: 'lesson-6', title: 'Market Research', duration: '1h' },
+          ],
+        },
+      ],
+    },
+    visibility: {
+      publicity: 'public',
+      enrollmentLimit: 50,
+      price: 200,
+      isFree: false,
+    },
+    resources: [
+      {
+        id: 'res-3',
+        type: 'link',
+        name: 'Business Model Canvas',
+        url: 'https://strategyzer.com/canvas/business-model-canvas',
+      },
+    ],
+    assessments: [
+      {
+        id: 'assess-3',
+        type: 'assignment',
+        title: 'Business Plan Draft',
+        description: 'Submit your initial business plan for feedback.',
+      },
+    ],
+    status: 'draft',
+  },
+];
+
+const Page = () => {
+  const user = useUserProfile();
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
+
+  const { data: availabilitySlotss, refetch } = useQuery(
+    getInstructorAvailabilityOptions({ path: { instructorUuid: user?.instructor?.uuid as string } })
+  );
+
+  const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
+    slots: transformedSlots as any,
+    events: calendarEvents,
+    settings: {
+      timezone: 'UTC',
+      autoAcceptBookings: false,
+      bufferTime: 15,
+      workingHours: {
+        start: '08:00',
+        end: '18:00',
+      },
     },
   });
 
-  const onSubmit = (data: AvailabilityFormValues) => {
-    //console.log(data);
-    // TODO: Implement submission logic. The Instructor schema does not have fields for this data.
-  };
+  useEffect(() => {
+    if (availabilitySlotss?.data) {
+      const slots = transformAvailabilityArray(availabilitySlotss.data);
+      setTransformedSlots(slots);
+
+      setAvailabilityData((prev: any) => ({
+        ...prev,
+        slots,
+      }));
+    }
+  }, [availabilitySlotss?.data]);
 
   return (
-    <div className='space-y-6'>
-      <div>
-        <h1 className='text-2xl font-semibold'>Availability & Rates</h1>
-        <p className='text-muted-foreground text-sm'>
-          Manage your schedule and set your hourly rates.
-        </p>
-      </div>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Scheduling</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className='text-muted-foreground mb-4 text-sm'>
-                Connect your Cal.com calendar to allow students to book sessions with you directly.
-              </p>
-              <a
-                href='https://cal.com/signup'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='inline-flex items-center gap-2'
-              >
-                <Button variant='outline' type='button'>
-                  <CalendarDays className='mr-2 h-4 w-4' />
-                  Set Up Availability on Cal.com
-                </Button>
-              </a>
-
-              <FormField
-                control={form.control}
-                name='calComLink'
-                render={({ field }) => (
-                  <FormItem className='mt-6'>
-                    <FormLabel>Your Cal.com Link</FormLabel>
-                    <FormControl>
-                      <Input type='url' placeholder='https://cal.com/your-username' {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Paste your public Cal.com scheduling page URL here.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Class Types & Hourly Rates</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {classTypes.map(ct => (
-                <div key={ct.type} className='rounded-lg border bg-gray-50/50 p-4'>
-                  <h3 className='mb-1 text-lg font-semibold'>{ct.type}</h3>
-                  <p className='text-muted-foreground mb-4 text-sm'>{ct.description}</p>
-                  <div className='space-y-4'>
-                    {ct.methods.map(method => (
-                      <FormField
-                        key={method.key}
-                        control={form.control}
-                        name={`rates.${method.key as keyof AvailabilityFormValues['rates']}`}
-                        render={({ field }) => (
-                          <FormItem className='flex flex-col gap-2 rounded-md border bg-white p-3 sm:flex-row sm:items-center sm:justify-between'>
-                            <FormLabel className='font-medium'>
-                              {method.name === 'In-Person' ? '🏢' : '💻'} {method.name} Rate (per
-                              hour)
-                            </FormLabel>
-                            <div className='flex items-center gap-x-2'>
-                              <FormControl>
-                                <Input
-                                  type='number'
-                                  min='0'
-                                  step='0.01'
-                                  placeholder='e.g., 50.00'
-                                  className='w-32 text-right'
-                                  {...field}
-                                  onChange={e => field.onChange(parseFloat(e.target.value))}
-                                />
-                              </FormControl>
-                              <span className='text-muted-foreground text-sm'>USD</span>
-                            </div>
-                            <FormMessage className='sm:absolute sm:right-4 sm:bottom-[-20px]' />
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <div className='flex justify-end pt-2'>
-            <Button type='submit' className='px-6'>
-              Save Changes
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+    <AvailabilityManager
+      availabilityData={availabilityData || []}
+      onAvailabilityUpdate={setAvailabilityData}
+      classes={classes || []}
+    />
   );
-}
+};
+
+export default Page;

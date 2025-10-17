@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import ImageSelector, { ImageType } from '@/components/image-selector';
+import LocationInput from '@/components/locationInput';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -33,19 +34,19 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { useUserProfile } from '@/context/profile-context';
+import { useReverseGeocode } from '@/hooks/use-reverse-geocode';
+import { queryClient } from '@/lib/query-client';
 import { cn, profilePicSvg } from '@/lib/utils';
-import { zInstructor, zUser } from '@/services/client/zod.gen';
-import { CalendarIcon } from 'lucide-react';
-import { toast } from 'sonner';
-import LocationInput from '../../../../../../components/locationInput';
-import { useUserProfile } from '../../../../../../context/profile-context';
-import { queryClient } from '../../../../../../lib/query-client';
 import {
   createInstructor,
   updateInstructor,
   updateUser,
   uploadProfileImage,
-} from '../../../../../../services/client';
+} from '@/services/client';
+import { zInstructor, zUser } from '@/services/client/zod.gen';
+import { CalendarIcon, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
 
 const generalProfileSchema = z.object({
   user: zUser
@@ -89,6 +90,8 @@ export default function InstructorProfile() {
 
   const user = useUserProfile();
   const { instructor, invalidateQuery } = user!;
+  const { addressComponents } = useReverseGeocode(Number(instructor?.latitude), Number(instructor?.longitude));
+
 
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
@@ -139,14 +142,14 @@ export default function InstructorProfile() {
     const manageInstructor = () =>
       instructor
         ? updateInstructor({
-            path: {
-              uuid: instructor.uuid!,
-            },
-            body: updatedProfileData.instructor,
-          })
+          path: {
+            uuid: instructor.uuid!,
+          },
+          body: updatedProfileData.instructor,
+        })
         : createInstructor({
-            body: updatedProfileData.instructor,
-          });
+          body: updatedProfileData.instructor,
+        });
 
     const response = await Promise.all([
       updateUser({
@@ -381,12 +384,21 @@ export default function InstructorProfile() {
                   </div>
                 </div>
 
+
+
                 <FormField
                   control={form.control}
                   name='instructor.location'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Location</FormLabel>
+
+                      {instructor?.latitude && instructor?.longitude &&
+                        <div className='flex flex-row items-center gap-2'>
+                          <MapPin className='w-4 h-4' />
+                          <FormDescription> {addressComponents?.city}, {addressComponents?.state}, {addressComponents?.country}  </FormDescription>
+                        </div>}
+
                       <FormControl>
                         <LocationInput
                           {...field}
