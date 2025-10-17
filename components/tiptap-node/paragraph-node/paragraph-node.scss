@@ -178,7 +178,7 @@
     }
   }
 
-  // Block thread styles with images
+  // Block thread styles with logos
   .tiptap-thread.tiptap-thread--unresolved.tiptap-thread--block {
     &:has(img) {
       outline: 0.125rem solid var(--tt-color-yellow-base);
@@ -196,7 +196,7 @@
       }
     }
 
-    // Block thread styles without images
+    // Block thread styles without logos
     &:not(:has(img)) {
       border-radius: 0.25rem;
       border-bottom: 0.125rem dashed var(--tt-color-yellow-base);

@@ -1619,8 +1619,8 @@ export interface paths {
      *
      *     **Usage Guidelines:**
      *     - Thumbnails should clearly represent the course content
-     *     - Use high-quality, professional images
-     *     - Avoid images with too much text or small details
+     *     - Use high-quality, professional logos
+     *     - Avoid logos with too much text or small details
      *     - Consider accessibility and contrast for text overlays
      *
      *     **Storage Details:**
@@ -1726,7 +1726,7 @@ export interface paths {
      *     **Usage Guidelines:**
      *     - Banners should be visually striking and professional
      *     - Consider responsive design - banner should work on mobile and desktop
-     *     - Use images that complement your course branding
+     *     - Use logos that complement your course branding
      *     - Ensure good contrast if overlaying text
      *
      *     **Storage Details:**
@@ -3794,7 +3794,7 @@ export interface paths {
     };
     /**
      * Get media content types
-     * @description Retrieves content types for media files (video, audio, images).
+     * @description Retrieves content types for media files (video, audio, logos).
      */
     get: operations['getMediaContentTypes'];
     put?: never;

@@ -6623,8 +6623,8 @@ export const unpublishCourse = <ThrowOnError extends boolean = false>(
  *
  * **Usage Guidelines:**
  * - Thumbnails should clearly represent the course content
- * - Use high-quality, professional images
- * - Avoid images with too much text or small details
+ * - Use high-quality, professional logos
+ * - Avoid logos with too much text or small details
  * - Consider accessibility and contrast for text overlays
  *
  * **Storage Details:**
@@ -6758,7 +6758,7 @@ export const uploadCourseIntroVideo = <ThrowOnError extends boolean = false>(
  * **Usage Guidelines:**
  * - Banners should be visually striking and professional
  * - Consider responsive design - banner should work on mobile and desktop
- * - Use images that complement your course branding
+ * - Use logos that complement your course branding
  * - Ensure good contrast if overlaying text
  *
  * **Storage Details:**
@@ -11713,7 +11713,7 @@ export const checkMimeTypeSupport = <ThrowOnError extends boolean = false>(
 
 /**
  * Get media content types
- * Retrieves content types for media files (video, audio, images).
+ * Retrieves content types for media files (video, audio, logos).
  */
 export const getMediaContentTypes = <ThrowOnError extends boolean = false>(
   options?: Options<GetMediaContentTypesData, ThrowOnError>

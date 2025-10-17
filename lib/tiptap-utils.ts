@@ -251,7 +251,7 @@ export const handleImageUpload = async (
     onProgress?.({ progress });
   }
 
-  return '/images/tiptap-ui-placeholder-image.jpg';
+  return '/logos/tiptap-ui-placeholder-image.jpg';
 };
 
 type ProtocolOptions = {
