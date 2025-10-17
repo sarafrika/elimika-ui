@@ -37,9 +37,9 @@ export default function Home() {
             <Image
               alt='Elimika logo'
               src='/logos/elimika/Elimika Logo Design-02.svg'
-              width={168}
-              height={48}
-              className='h-12 w-auto drop-shadow-sm'
+              width={240}
+              height={72}
+              className='h-16 w-auto drop-shadow-sm'
               priority
             />
             <span className='hidden text-sm font-medium text-purple-700 sm:block'>
@@ -216,16 +216,16 @@ export default function Home() {
             <Image
               alt='Elimika mark'
               src='/logos/elimika/Elimika Logo Design-03.svg'
-              width={120}
-              height={36}
-              className='h-9 w-auto'
+              width={192}
+              height={60}
+              className='h-12 w-auto'
             />
             <Image
               alt='Sarafrika mark'
               src='/logos/sarafrika/Sarafrika Logo-03.svg'
-              width={120}
-              height={36}
-              className='h-9 w-auto'
+              width={192}
+              height={60}
+              className='h-12 w-auto'
             />
           </div>
           <div className='text-xs text-slate-500'>
