@@ -130,13 +130,18 @@ type FormSectionProps = {
 };
 
 const FormSection = ({ title, description, children }: FormSectionProps) => (
-  <div className='block lg:flex lg:items-start lg:space-x-4'>
-    <div className='w-full lg:w-1/4'>
-      <h3 className='leading-none font-semibold tracking-tight'>{title}</h3>
-      <p className='text-muted-foreground mt-1 text-sm'>{description}</p>
+  <section className='rounded-3xl border border-purple-200/40 bg-white/90 p-6 shadow-lg shadow-purple-200/40 transition dark:border-purple-500/25 dark:bg-purple-950/30 lg:p-8'>
+    <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10'>
+      <div className='lg:w-1/3'>
+        <p className='text-xs font-semibold uppercase tracking-[0.4em] text-purple-500/80 dark:text-purple-200'>
+          Section
+        </p>
+        <h3 className='mt-2 text-lg font-semibold text-slate-900 dark:text-purple-50'>{title}</h3>
+        <p className='mt-2 text-sm text-slate-600 dark:text-slate-200'>{description}</p>
+      </div>
+      <div className='lg:flex-1'>{children}</div>
     </div>
-    <div className='w-full lg:w-3/4'>{children}</div>
-  </div>
+  </section>
 );
 
 export type CourseFormProps = {
@@ -533,7 +538,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className='space-y-8 rounded-[32px] border border-purple-200/40 bg-gradient-to-br from-white via-purple-50 to-purple-100/60 p-6 shadow-xl shadow-purple-200/40 transition dark:border-purple-500/25 dark:from-purple-950/60 dark:via-purple-900/40 dark:to-slate-950/80 dark:shadow-purple-900/20 lg:p-10'
+        >
           {/* Course Name */}
           <FormSection
             title='Course Name'

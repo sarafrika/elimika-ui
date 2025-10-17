@@ -6,24 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useCourseCreator } from '@/context/course-creator-context';
 import { Globe, Mail, MapPin, Pencil } from 'lucide-react';
 import Link from 'next/link';
+import { CourseCreatorEmptyState, CourseCreatorLoadingState } from '../_components/loading-state';
 
 export default function CourseCreatorProfilePage() {
-  const { profile, data } = useCourseCreator();
+  const { profile, data, isLoading } = useCourseCreator();
+
+  if (isLoading) {
+    return <CourseCreatorLoadingState headline='Loading your creator profile…' />;
+  }
 
   if (!profile) {
-    return (
-      <div className='mx-auto flex h-full max-w-3xl flex-col items-center justify-center gap-4 px-4 py-20 text-center'>
-        <h1 className='text-2xl font-semibold'>No creator profile found</h1>
-        <p className='text-muted-foreground text-sm'>
-          Create a course creator record during onboarding or contact support to restore access.
-        </p>
-        <Button asChild>
-          <Link prefetch href='/dashboard/overview'>
-            Return to overview
-          </Link>
-        </Button>
-      </div>
-    );
+    return <CourseCreatorEmptyState />;
   }
 
   return (

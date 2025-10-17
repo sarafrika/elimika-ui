@@ -4,9 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { format } from 'date-fns';
+import { CourseCreatorEmptyState, CourseCreatorLoadingState } from '../_components/loading-state';
 
 export default function CourseCreatorAnalyticsPage() {
-  const { data } = useCourseCreator();
+  const { data, isLoading, profile } = useCourseCreator();
+
+  if (isLoading) {
+    return <CourseCreatorLoadingState headline='Loading course creator analytics…' />;
+  }
+
+  if (!profile) {
+    return <CourseCreatorEmptyState />;
+  }
+
   const { analytics, monetization, trainingRequirements, verification } = data;
 
   const totalCourses = analytics.totalCourses || 1; // avoid divide by zero

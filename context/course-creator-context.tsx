@@ -19,6 +19,8 @@ type CourseCreatorContextValue = {
   profile: CourseCreatorDashboardData['profile'];
   courses: Course[];
   refresh: () => void;
+  isLoading: boolean;
+  isReady: boolean;
 };
 
 const CourseCreatorContext = createContext<CourseCreatorContextValue | null>(null);
@@ -31,6 +33,7 @@ type CourseCreatorProviderProps = {
 export function CourseCreatorProvider({ children, initialData }: CourseCreatorProviderProps) {
   const router = useRouter();
   const profile = useUserProfile();
+  const profileLoading = profile?.isLoading ?? false;
 
   const mergedData = useMemo(() => {
     const base = initialData ?? emptyCourseCreatorDashboardData;
@@ -87,14 +90,18 @@ export function CourseCreatorProvider({ children, initialData }: CourseCreatorPr
 
   const refresh = useCallback(() => router.refresh(), [router]);
 
+  const hasProfile = Boolean(mergedData.profile);
+
   const value = useMemo<CourseCreatorContextValue>(
     () => ({
       data: mergedData,
       profile: mergedData.profile,
       courses: mergedData.courses,
       refresh,
+      isLoading: profileLoading && !hasProfile,
+      isReady: hasProfile && !profileLoading,
     }),
-    [mergedData, refresh]
+    [mergedData, refresh, profileLoading, hasProfile]
   );
 
   return <CourseCreatorContext.Provider value={value}>{children}</CourseCreatorContext.Provider>;

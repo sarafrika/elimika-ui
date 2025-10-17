@@ -44,6 +44,8 @@ import {
   LessonFormValues,
   LessonList,
 } from '../../../_components/lesson-management-form';
+import { CourseCreatorEmptyState, CourseCreatorLoadingState } from '../../../_components/loading-state';
+import { useCourseCreator } from '@/context/course-creator-context';
 
 export default function CourseCreationPage() {
   const router = useRouter();
@@ -51,7 +53,7 @@ export default function CourseCreationPage() {
   const courseId = searchParams.get('id');
   const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
   const resolveId = courseId ? (courseId as string) : (createdCourseId as string);
-
+  const { isLoading: creatorLoading, profile: creatorProfile } = useCourseCreator();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -377,17 +379,38 @@ export default function CourseCreationPage() {
     } catch (err) { }
   };
 
+  if (creatorLoading) {
+    return <CourseCreatorLoadingState headline='Preparing the course creation workspace…' />;
+  }
+
+  if (!creatorProfile) {
+    return <CourseCreatorEmptyState />;
+  }
+
   if (courseId && !courseInitialValues) {
-    return (
-      <div className='flex items-center justify-center'>
-        <Spinner />
-      </div>
-    );
+    return <CourseCreatorLoadingState headline='Loading existing course details…' />;
   }
 
   return (
-    <div className='container mx-auto'>
-      <StepperRoot>
+    <div className='relative overflow-hidden'>
+      <div className='absolute inset-0 -z-10 bg-gradient-to-b from-purple-900/10 via-purple-50 to-white dark:from-purple-950/60 dark:via-slate-950 dark:to-slate-950'></div>
+      <div className='absolute top-20 left-[-6rem] h-72 w-72 rounded-full bg-purple-400/20 blur-3xl'></div>
+      <div className='absolute bottom-[-4rem] right-[-4rem] h-80 w-80 rounded-full bg-indigo-400/20 blur-3xl'></div>
+
+      <div className='relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-12 lg:px-6 lg:py-16'>
+        <header className='rounded-[36px] border border-purple-200/40 bg-white/80 p-8 shadow-xl shadow-purple-200/30 backdrop-blur dark:border-purple-500/25 dark:bg-purple-950/40 dark:shadow-purple-900/20 lg:p-12'>
+          <span className='inline-flex items-center gap-2 rounded-full border border-purple-400/40 bg-purple-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-purple-600 dark:border-purple-500/40 dark:bg-purple-900/40 dark:text-purple-100'>
+            Course creator studio
+          </span>
+          <h1 className='mt-4 text-3xl font-semibold text-slate-900 dark:text-white sm:text-4xl'>
+            Design learning experiences that match your vision
+          </h1>
+          <p className='mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-300 sm:text-base'>
+            Outline your course blueprint, orchestrate lessons, and refine assessments with guardrails that echo the Elimika brand.
+          </p>
+        </header>
+
+        <StepperRoot>
         <StepperList>
           <StepperTrigger step={0} title='Course Details' icon={BookOpen} />
           <StepperTrigger step={1} title='Content' icon={List} />
@@ -727,6 +750,7 @@ export default function CourseCreationPage() {
           )}
         </StepperContent>
       </StepperRoot>
+      </div>
     </div>
   );
 }

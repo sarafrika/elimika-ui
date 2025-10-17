@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { format } from 'date-fns';
 import { CheckCircle2, FileText, HelpCircle, Upload, Verified } from 'lucide-react';
+import { CourseCreatorEmptyState, CourseCreatorLoadingState } from '../_components/loading-state';
 
 const STEPS = [
   {
@@ -34,7 +35,16 @@ const CRITERIA = [
 ];
 
 export default function CourseCreatorVerificationPage() {
-  const { data } = useCourseCreator();
+  const { data, isLoading, profile } = useCourseCreator();
+
+  if (isLoading) {
+    return <CourseCreatorLoadingState headline='Fetching your verification status…' />;
+  }
+
+  if (!profile) {
+    return <CourseCreatorEmptyState />;
+  }
+
   const { verification } = data;
 
   return (
