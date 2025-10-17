@@ -36,7 +36,7 @@ export default function Home() {
           <Link href='/' className='flex items-center gap-4'>
             <Image
               alt='Elimika logo'
-              src='/logos/elimika/Elimika_Logo_Design-02.svg'
+              src='/logos/elimika/Elimika Logo Design-02.svg'
               width={168}
               height={48}
               className='h-12 w-auto drop-shadow-sm'
@@ -215,7 +215,7 @@ export default function Home() {
           <div className='flex items-center gap-4'>
             <Image
               alt='Elimika mark'
-              src='/logos/elimika/Elimika_Logo_Design_Artboard.svg'
+              src='/logos/elimika/Elimika Logo Design-03.svg'
               width={120}
               height={36}
               className='h-9 w-auto'
