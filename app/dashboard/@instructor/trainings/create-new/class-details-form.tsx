@@ -42,12 +42,18 @@ import { useEffect, useState } from 'react';
 import { FieldErrors, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
-import { UploadOptions } from '../../../@creator/_components/course-creation-form';
 import {
   ClassFormValues,
   classSchema,
   RecurrenceDialog,
 } from '../../_components/class-management-form';
+
+type ClassUploadOptions = {
+  key: 'banner';
+  setPreview: (value: string | null) => void;
+  mutation: any;
+  onChange: (value: string | null) => void;
+};
 
 interface ClassDetailsProps {
   handleNextStep: () => void;
@@ -213,7 +219,7 @@ export default function ClassDetailsForm({
   }>({});
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    { key, setPreview, mutation, onChange }: UploadOptions
+    { key, setPreview, mutation, onChange }: ClassUploadOptions
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;

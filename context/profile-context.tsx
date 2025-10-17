@@ -4,12 +4,14 @@ import {
   getInstructorExperience,
   getInstructorMemberships,
   getInstructorSkills,
+  CourseCreator,
   Instructor,
   InstructorEducation,
   InstructorExperience,
   InstructorProfessionalMembership,
   InstructorSkill,
   search,
+  searchCourseCreators,
   searchInstructors,
   SearchResponse,
   searchStudents,
@@ -259,6 +261,34 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
         } catch (error) {
           console.warn('Failed to fetch instructor skills:', error);
         }
+      }
+    }
+
+    // Add course creator data if user is a course creator
+    if (user.user_domain.includes('course_creator') && user.uuid) {
+      try {
+        const courseCreatorResponse = await searchCourseCreators({
+          query: {
+            searchParams: {
+              user_uuid_eq: user.uuid,
+            },
+            pageable: {
+              page: 0,
+              size: 1,
+              sort: [],
+            },
+          },
+        });
+
+        const creatorData = courseCreatorResponse.data as SearchResponse;
+        const creatorProfile = Array.isArray(creatorData.data?.content)
+          ? (creatorData.data.content[0] as unknown as CourseCreator)
+          : undefined;
+        if (creatorProfile) {
+          user.courseCreator = creatorProfile;
+        }
+      } catch (error) {
+        console.warn('Failed to fetch course creator profile:', error);
       }
     }
   }

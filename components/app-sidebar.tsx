@@ -35,15 +35,15 @@ export function AppSidebar({
     return (menu as any)[menuKey] || [];
   };
 
+  const formatDomainName = (domain: string) =>
+    domain
+      .split('_')
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+
   // Label for the sidebar group
-  const groupLabel =
-    activeDomain === 'admin'
-      ? 'Admin Panel'
-      : activeDomain === 'student'
-        ? 'Student Panel'
-        : activeDomain
-          ? activeDomain.charAt(0).toUpperCase() + activeDomain.slice(1) + ' Panel'
-          : 'Panel';
+  const groupLabel = activeDomain ? `${formatDomainName(activeDomain)} Panel` : 'Panel';
 
   return (
     <Sidebar variant='inset' {...props}>

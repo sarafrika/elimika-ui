@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 interface CourseCardProps {
   course: Course;
   handleClick: () => void;
-  isStudent: boolean
+  isStudent: boolean;
 }
 
 export function CourseCard({ course, handleClick, isStudent }: CourseCardProps) {
@@ -173,17 +173,42 @@ export function CourseCard({ course, handleClick, isStudent }: CourseCardProps) 
             </div>
           </div>
 
-          <div className='flex items-end self-end justify-between gap-2 pt-4'>
-            {isStudent && <Button
-              onClick={() => router.push(`/dashboard/browse-courses/instructor/123`)}
+        <div className='flex items-end self-end justify-between gap-2 pt-4'>
+          {isStudent ? (
+            <>
+              <Button
+                onClick={e => {
+                  e.stopPropagation();
+                  router.push(`/dashboard/browse-courses/instructor/123`);
+                }}
+                size='sm'
+                variant='outline'
+              >
+                Search Instructor
+              </Button>
+              <Button
+                size='sm'
+                onClick={e => {
+                  e.stopPropagation();
+                  router.push(`/dashboard/browse-courses/enroll/${course.uuid}`);
+                }}
+              >
+                Enroll
+              </Button>
+            </>
+          ) : (
+            <Button
               size='sm'
               variant='outline'
+              onClick={e => {
+                e.stopPropagation();
+                handleClick();
+              }}
             >
-              Search Instructor
-            </Button>}
-
-            <Button size='sm'>Enroll</Button>
-          </div>
+              View details
+            </Button>
+          )}
+        </div>
         </CardContent>
       </div>
     </div>

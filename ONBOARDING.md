@@ -126,7 +126,8 @@ Elimika UI uses **Next.js App Router's parallel routes** to render dashboards fo
 | Role             | Capabilities                                                             | Main Routes (Parallel)     |
 | ---------------- | ------------------------------------------------------------------------ | -------------------------- |
 | **Admin**        | System management, user/org approvals, analytics, settings               | `/dashboard/@admin`        |
-| **Instructor**   | Course creation, class management, earnings, student management, profile | `/dashboard/@instructor`   |
+| **Course Creator** | Course design, publishing, monetization controls, verification | `/dashboard/@course_creator` |
+| **Instructor**   | Class delivery, availability, earnings, student management, profile | `/dashboard/@instructor`   |
 | **Student**      | Course enrollment, grades, certificates, schedule, profile               | `/dashboard/@student`      |
 | **Organisation** | Org management, branches, users, training centers, courses               | `/dashboard/@organization` |
 

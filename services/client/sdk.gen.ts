@@ -184,6 +184,12 @@ import type {
   UpdateCourseData,
   UpdateCourseResponses,
   UpdateCourseErrors,
+  DeleteCourseTrainingRequirementData,
+  DeleteCourseTrainingRequirementResponses,
+  DeleteCourseTrainingRequirementErrors,
+  UpdateCourseTrainingRequirementData,
+  UpdateCourseTrainingRequirementResponses,
+  UpdateCourseTrainingRequirementErrors,
   SetPrimaryRubricData,
   SetPrimaryRubricResponses,
   SetPrimaryRubricErrors,
@@ -532,6 +538,12 @@ import type {
   ArchiveCourseData,
   ArchiveCourseResponses,
   ArchiveCourseErrors,
+  GetCourseTrainingRequirementsData,
+  GetCourseTrainingRequirementsResponses,
+  GetCourseTrainingRequirementsErrors,
+  AddCourseTrainingRequirementData,
+  AddCourseTrainingRequirementResponses,
+  AddCourseTrainingRequirementErrors,
   GetCourseRubricsData,
   GetCourseRubricsResponses,
   GetCourseRubricsErrors,
@@ -1177,6 +1189,7 @@ import {
   updateAvailabilitySlotResponseTransformer,
   getCourseByUuidResponseTransformer,
   updateCourseResponseTransformer,
+  updateCourseTrainingRequirementResponseTransformer,
   setPrimaryRubricResponseTransformer,
   updateAssociationResponseTransformer,
   updateCourseRequirementResponseTransformer,
@@ -1265,6 +1278,8 @@ import {
   uploadCourseIntroVideoResponseTransformer,
   uploadCourseBannerResponseTransformer,
   archiveCourseResponseTransformer,
+  getCourseTrainingRequirementsResponseTransformer,
+  addCourseTrainingRequirementResponseTransformer,
   getCourseRubricsResponseTransformer,
   associateRubricResponseTransformer,
   getCourseRequirementsResponseTransformer,
@@ -3163,6 +3178,65 @@ export const updateCourse = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete training delivery requirement
+ * Removes a training delivery requirement from a course.
+ */
+export const deleteCourseTrainingRequirement = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseTrainingRequirementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseTrainingRequirementResponses,
+    DeleteCourseTrainingRequirementErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-requirements/{requirementUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update training delivery requirement
+ * Updates a specific training delivery requirement for a course.
+ */
+export const updateCourseTrainingRequirement = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseTrainingRequirementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseTrainingRequirementResponses,
+    UpdateCourseTrainingRequirementErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseTrainingRequirementResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-requirements/{requirementUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -6754,6 +6828,66 @@ export const archiveCourse = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/courses/{uuid}/archive',
     ...options,
+  });
+};
+
+/**
+ * Get training delivery requirements
+ * Retrieves all operational training requirements for a specific course.
+ */
+export const getCourseTrainingRequirements = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseTrainingRequirementsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseTrainingRequirementsResponses,
+    GetCourseTrainingRequirementsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseTrainingRequirementsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-requirements',
+    ...options,
+  });
+};
+
+/**
+ * Add training delivery requirement
+ * Adds a new material, equipment, or facility requirement necessary to deliver the course.
+ */
+export const addCourseTrainingRequirement = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseTrainingRequirementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseTrainingRequirementResponses,
+    AddCourseTrainingRequirementErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseTrainingRequirementResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-requirements',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 

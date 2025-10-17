@@ -4,7 +4,7 @@ import { useUserProfile } from '../context/profile-context';
 import { UserDomain } from '../lib/types';
 import { ELIMIKA_DASHBOARD_STORAGE_KEY } from '../lib/utils';
 
-export const AvailableViews = ['student', 'admin', 'instructor', 'organization'];
+export const AvailableViews = ['student', 'admin', 'instructor', 'course_creator', 'organization'];
 const dashboardViews = [...AvailableViews] as const;
 export type DashboardView = (typeof dashboardViews)[number];
 

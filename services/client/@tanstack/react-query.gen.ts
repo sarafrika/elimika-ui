@@ -61,6 +61,8 @@ import {
   deleteCourse,
   getCourseByUuid,
   updateCourse,
+  deleteCourseTrainingRequirement,
+  updateCourseTrainingRequirement,
   setPrimaryRubric,
   updateAssociation,
   deleteCourseRequirement,
@@ -177,6 +179,8 @@ import {
   uploadCourseIntroVideo,
   uploadCourseBanner,
   archiveCourse,
+  getCourseTrainingRequirements,
+  addCourseTrainingRequirement,
   getCourseRubrics,
   associateRubric,
   getCourseRequirements,
@@ -528,6 +532,11 @@ import type {
   UpdateCourseData,
   UpdateCourseError,
   UpdateCourseResponse,
+  DeleteCourseTrainingRequirementData,
+  DeleteCourseTrainingRequirementError,
+  UpdateCourseTrainingRequirementData,
+  UpdateCourseTrainingRequirementError,
+  UpdateCourseTrainingRequirementResponse,
   SetPrimaryRubricData,
   SetPrimaryRubricError,
   SetPrimaryRubricResponse,
@@ -844,6 +853,12 @@ import type {
   ArchiveCourseData,
   ArchiveCourseError,
   ArchiveCourseResponse,
+  GetCourseTrainingRequirementsData,
+  GetCourseTrainingRequirementsError,
+  GetCourseTrainingRequirementsResponse,
+  AddCourseTrainingRequirementData,
+  AddCourseTrainingRequirementError,
+  AddCourseTrainingRequirementResponse,
   GetCourseRubricsData,
   GetCourseRubricsError,
   GetCourseRubricsResponse,
@@ -2866,6 +2881,62 @@ export const updateCourseMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCourse({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete training delivery requirement
+ * Removes a training delivery requirement from a course.
+ */
+export const deleteCourseTrainingRequirementMutation = (
+  options?: Partial<Options<DeleteCourseTrainingRequirementData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseTrainingRequirementError,
+  Options<DeleteCourseTrainingRequirementData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseTrainingRequirementError,
+    Options<DeleteCourseTrainingRequirementData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseTrainingRequirement({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update training delivery requirement
+ * Updates a specific training delivery requirement for a course.
+ */
+export const updateCourseTrainingRequirementMutation = (
+  options?: Partial<Options<UpdateCourseTrainingRequirementData>>
+): UseMutationOptions<
+  UpdateCourseTrainingRequirementResponse,
+  UpdateCourseTrainingRequirementError,
+  Options<UpdateCourseTrainingRequirementData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseTrainingRequirementResponse,
+    UpdateCourseTrainingRequirementError,
+    Options<UpdateCourseTrainingRequirementData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseTrainingRequirement({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -8277,6 +8348,136 @@ export const archiveCourseMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await archiveCourse({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCourseTrainingRequirementsQueryKey = (
+  options: Options<GetCourseTrainingRequirementsData>
+) => createQueryKey('getCourseTrainingRequirements', options);
+
+/**
+ * Get training delivery requirements
+ * Retrieves all operational training requirements for a specific course.
+ */
+export const getCourseTrainingRequirementsOptions = (
+  options: Options<GetCourseTrainingRequirementsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseTrainingRequirements({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseTrainingRequirementsQueryKey(options),
+  });
+};
+
+export const getCourseTrainingRequirementsInfiniteQueryKey = (
+  options: Options<GetCourseTrainingRequirementsData>
+): QueryKey<Options<GetCourseTrainingRequirementsData>> =>
+  createQueryKey('getCourseTrainingRequirements', options, true);
+
+/**
+ * Get training delivery requirements
+ * Retrieves all operational training requirements for a specific course.
+ */
+export const getCourseTrainingRequirementsInfiniteOptions = (
+  options: Options<GetCourseTrainingRequirementsData>
+) => {
+  return infiniteQueryOptions<
+    GetCourseTrainingRequirementsResponse,
+    GetCourseTrainingRequirementsError,
+    InfiniteData<GetCourseTrainingRequirementsResponse>,
+    QueryKey<Options<GetCourseTrainingRequirementsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetCourseTrainingRequirementsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetCourseTrainingRequirementsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseTrainingRequirements({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseTrainingRequirementsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const addCourseTrainingRequirementQueryKey = (
+  options: Options<AddCourseTrainingRequirementData>
+) => createQueryKey('addCourseTrainingRequirement', options);
+
+/**
+ * Add training delivery requirement
+ * Adds a new material, equipment, or facility requirement necessary to deliver the course.
+ */
+export const addCourseTrainingRequirementOptions = (
+  options: Options<AddCourseTrainingRequirementData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseTrainingRequirement({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseTrainingRequirementQueryKey(options),
+  });
+};
+
+/**
+ * Add training delivery requirement
+ * Adds a new material, equipment, or facility requirement necessary to deliver the course.
+ */
+export const addCourseTrainingRequirementMutation = (
+  options?: Partial<Options<AddCourseTrainingRequirementData>>
+): UseMutationOptions<
+  AddCourseTrainingRequirementResponse,
+  AddCourseTrainingRequirementError,
+  Options<AddCourseTrainingRequirementData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseTrainingRequirementResponse,
+    AddCourseTrainingRequirementError,
+    Options<AddCourseTrainingRequirementData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseTrainingRequirement({
         ...options,
         ...localOptions,
         throwOnError: true,

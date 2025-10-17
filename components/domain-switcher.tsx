@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUserProfile } from '@/context/profile-context';
 import { UserDomain } from '@/lib/types';
-import { GraduationCap, Users, BookOpen, Shield, ChevronDown } from 'lucide-react';
+import { GraduationCap, Users, BookOpen, Shield, ChevronDown, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const domainConfig = {
@@ -23,6 +23,11 @@ const domainConfig = {
     icon: GraduationCap,
     title: 'Instructor Dashboard',
     color: 'text-emerald-600',
+  },
+  course_creator: {
+    icon: Sparkles,
+    title: 'Course Creator Dashboard',
+    color: 'text-purple-600',
   },
   organisation_user: {
     icon: Users,

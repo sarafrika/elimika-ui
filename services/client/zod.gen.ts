@@ -19,16 +19,25 @@ export const zGenderEnum = z
     "**[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose."
   );
 
+/**
+ * **[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values.
+ */
+export const zUserDomainEnum = z
+  .enum(['student', 'instructor', 'admin', 'organisation_user', 'course_creator'])
+  .describe(
+    "**[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values."
+  );
+
 export const zUserOrganisationAffiliationDto = z.object({
-  organisationUuid: z.string().uuid().optional(),
-  organisationName: z.string().optional(),
-  domainInOrganisation: z.string().optional(),
-  branchUuid: z.string().uuid().optional(),
-  branchName: z.string().optional(),
-  startDate: z.string().date().optional(),
-  endDate: z.string().date().optional(),
+  organisation_uuid: z.string().uuid().optional(),
+  organisation_name: z.string().optional(),
+  domain_in_organisation: z.string().optional(),
+  branch_uuid: z.string().uuid().optional(),
+  branch_name: z.string().optional(),
+  start_date: z.string().date().optional(),
+  end_date: z.string().date().optional(),
   active: z.boolean().optional(),
-  affiliatedDate: z.string().datetime().optional(),
+  affiliated_date: z.string().datetime().optional(),
 });
 
 /**
@@ -109,13 +118,7 @@ export const zUser = z
       )
       .optional(),
     gender: zGenderEnum.optional(),
-    user_domain: z
-      .array(z.string())
-      .describe(
-        "**[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values."
-      )
-      .readonly()
-      .optional(),
+    user_domain: zUserDomainEnum.optional(),
     profile_image_url: z
       .string()
       .url()
@@ -309,8 +312,8 @@ export const zStudent = z
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.'
       )
       .optional(),
-    primaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
+    primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
     created_date: z
       .string()
@@ -579,16 +582,16 @@ export const zRubricScoringLevel = z
       .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
       .readonly()
       .optional(),
+    css_color_class: z
+      .string()
+      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
+      .readonly()
+      .optional(),
     performance_indicator: z
       .string()
       .describe(
         '**[READ-ONLY]** Performance classification based on level order and passing status.'
       )
-      .readonly()
-      .optional(),
-    css_color_class: z
-      .string()
-      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
       .readonly()
       .optional(),
     is_highest_level: z
@@ -2765,6 +2768,91 @@ export const zApiResponseAvailabilitySlot = z.object({
 });
 
 /**
+ * **[REQUIRED]** Resource category.
+ */
+export const zRequirementTypeEnum2 = z
+  .enum(['material', 'equipment', 'facility', 'other'])
+  .describe('**[REQUIRED]** Resource category.');
+
+/**
+ * **[OPTIONAL]** Party responsible for providing this requirement.
+ */
+export const zProvidedByEnum = z
+  .enum(['course_creator', 'instructor', 'organisation', 'student'])
+  .describe('**[OPTIONAL]** Party responsible for providing this requirement.');
+
+/**
+ * Operational resources that must be available when delivering the course (materials, equipment, facilities).
+ */
+export const zCourseTrainingRequirement = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Identifier for this training requirement.')
+      .readonly()
+      .optional(),
+    course_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Course identifier this requirement belongs to.'),
+    requirement_type: zRequirementTypeEnum2,
+    name: z
+      .string()
+      .min(0)
+      .max(255)
+      .describe('**[REQUIRED]** Concise label for the resource or material.'),
+    description: z
+      .string()
+      .min(0)
+      .max(2000)
+      .describe('**[OPTIONAL]** Extra details or specifications for the resource.')
+      .optional(),
+    quantity: z
+      .number()
+      .int()
+      .gte(1)
+      .describe('**[OPTIONAL]** Quantity needed for each class session.')
+      .optional(),
+    unit: z
+      .string()
+      .min(0)
+      .max(50)
+      .describe('**[OPTIONAL]** Unit that the quantity refers to.')
+      .optional(),
+    provided_by: zProvidedByEnum.optional(),
+    is_mandatory: z
+      .boolean()
+      .describe('**[OPTIONAL]** Indicates if the requirement is mandatory.')
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the requirement was created.')
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** User who created the requirement.')
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the requirement was last updated.')
+      .readonly()
+      .optional(),
+    updated_by: z
+      .string()
+      .describe('**[READ-ONLY]** User who last updated the requirement.')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    'Operational resources that must be available when delivering the course (materials, equipment, facilities).'
+  );
+
+/**
  * Complete course with metadata, content organization, and publication status supporting multiple categories
  */
 export const zCourse = z
@@ -2844,7 +2932,36 @@ export const zCourse = z
       .number()
       .gte(0)
       .describe(
-        '**[OPTIONAL]** Course price in the system currency. Set to null or 0 for free courses.'
+        '**[OPTIONAL]** Legacy course list price. Leave blank while pricing workflows are under review.'
+      )
+      .optional(),
+    minimum_training_fee: z
+      .number()
+      .gte(0)
+      .describe(
+        '**[OPTIONAL]** Minimum training fee that any instructor-led class for this course must meet or exceed.'
+      )
+      .optional(),
+    creator_share_percentage: z
+      .number()
+      .gte(0)
+      .lte(100)
+      .describe(
+        '**[REQUIRED]** Percentage of training revenue allocated to the course creator. Must work with instructor share to total 100%.'
+      ),
+    instructor_share_percentage: z
+      .number()
+      .gte(0)
+      .lte(100)
+      .describe(
+        '**[REQUIRED]** Percentage of training revenue allocated to instructors. Must work with creator share to total 100%.'
+      ),
+    revenue_share_notes: z
+      .string()
+      .min(0)
+      .max(1000)
+      .describe(
+        '**[OPTIONAL]** Additional context explaining how revenue is allocated between course creator and instructors.'
       )
       .optional(),
     age_lower_limit: z
@@ -2891,6 +3008,13 @@ export const zCourse = z
         '**[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.'
       )
       .optional(),
+    training_requirements: z
+      .array(zCourseTrainingRequirement)
+      .describe(
+        '**[READ-ONLY]** Structured resources required to deliver this course during instructor-led training sessions.'
+      )
+      .readonly()
+      .optional(),
     category_names: z
       .array(z.string())
       .describe(
@@ -2933,9 +3057,21 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is offered for free.')
       .readonly()
       .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
+      .readonly()
+      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
+      .readonly()
+      .optional(),
+    is_draft: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
       .readonly()
       .optional(),
     is_archived: z
@@ -2946,11 +3082,6 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
-      .readonly()
-      .optional(),
-    is_draft: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
       .readonly()
       .optional(),
     total_duration_display: z
@@ -2976,13 +3107,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
-      .readonly()
-      .optional(),
   })
   .describe(
     'Complete course with metadata, content organization, and publication status supporting multiple categories'
@@ -2991,6 +3115,13 @@ export const zCourse = z
 export const zApiResponseCourse = z.object({
   success: z.boolean().optional(),
   data: zCourse.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseCourseTrainingRequirement = z.object({
+  success: z.boolean().optional(),
+  data: zCourseTrainingRequirement.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -4033,6 +4164,13 @@ export const zClassDefinition = z
         '**[OPTIONAL]** Reference to the course UUID if this class is part of a structured course.'
       )
       .optional(),
+    training_fee: z
+      .number()
+      .gte(0)
+      .describe(
+        '**[OPTIONAL]** Training fee charged for sessions created from this class definition. Must meet the course minimum training fee when a course is linked.'
+      )
+      .optional(),
     default_start_time: zLocalTime,
     default_end_time: zLocalTime,
     location_type: zLocationTypeEnum,
@@ -4100,6 +4238,11 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
     has_recurrence: z
       .boolean()
       .describe(
@@ -4112,11 +4255,6 @@ export const zClassDefinition = z
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
-      .readonly()
-      .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -4791,7 +4929,7 @@ export const zApiResponseString = z.object({
  * **[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.
  */
 export const zDomainNameEnum = z
-  .enum(['student', 'instructor', 'admin', 'organisation_user'])
+  .enum(['student', 'instructor', 'admin', 'organisation_user', 'course_creator'])
   .describe(
     '**[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.'
   );
@@ -5385,6 +5523,11 @@ export const zAssignmentSubmission = z
       .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
       .readonly()
       .optional(),
+    file_count_display: z
+      .string()
+      .describe('**[READ-ONLY]** Summary of files attached to this submission.')
+      .readonly()
+      .optional(),
     submission_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
@@ -5400,11 +5543,6 @@ export const zAssignmentSubmission = z
       .describe(
         '**[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.'
       )
-      .readonly()
-      .optional(),
-    file_count_display: z
-      .string()
-      .describe('**[READ-ONLY]** Summary of files attached to this submission.')
       .readonly()
       .optional(),
   })
@@ -5801,11 +5939,6 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     attempt_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
@@ -5814,6 +5947,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -5959,14 +6097,14 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -6098,7 +6236,7 @@ export const zInvitationPreview = z
     requires_registration: z
       .boolean()
       .describe(
-        'Indicates whether the recipient needs to register an account before accepting. True for student/instructor roles, false for admin/organisation_user roles.'
+        'Indicates whether the recipient needs to register an account before accepting. True for student/instructor/course_creator roles, false for admin/organisation_user roles.'
       ),
   })
   .describe('Public-safe invitation details shown to users before authentication');
@@ -6328,6 +6466,19 @@ export const zApiResponseListContentStatus = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+export const zPagedDtoCourseTrainingRequirement = z.object({
+  content: z.array(zCourseTrainingRequirement).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCourseTrainingRequirement = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCourseTrainingRequirement.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 export const zPagedDtoCourseRubricAssociation = z.object({
   content: z.array(zCourseRubricAssociation).optional(),
   metadata: zPageMetadata.optional(),
@@ -6455,14 +6606,14 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -7726,6 +7877,29 @@ export const zUpdateCourseData = z.object({
  * Course updated successfully
  */
 export const zUpdateCourseResponse = zApiResponseCourse;
+
+export const zDeleteCourseTrainingRequirementData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    requirementUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCourseTrainingRequirementData = z.object({
+  body: zCourseTrainingRequirement,
+  path: z.object({
+    courseUuid: z.string().uuid(),
+    requirementUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseTrainingRequirementResponse = zApiResponseCourseTrainingRequirement;
 
 export const zSetPrimaryRubricData = z.object({
   body: z.never().optional(),
@@ -9415,6 +9589,34 @@ export const zArchiveCourseData = z.object({
  * Course archived successfully
  */
 export const zArchiveCourseResponse = zApiResponseCourse;
+
+export const zGetCourseTrainingRequirementsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseTrainingRequirementsResponse = zApiResponsePagedDtoCourseTrainingRequirement;
+
+export const zAddCourseTrainingRequirementData = z.object({
+  body: zCourseTrainingRequirement,
+  path: z.object({
+    courseUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCourseTrainingRequirementResponse = zApiResponseCourseTrainingRequirement;
 
 export const zGetCourseRubricsData = z.object({
   body: z.never().optional(),

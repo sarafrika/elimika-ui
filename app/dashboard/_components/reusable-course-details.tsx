@@ -41,12 +41,16 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 type CourseDetailsProps = {
-    courseId?: string;
-    handleEnroll?: () => void
-    userRole?: string
+  courseId?: string;
+  handleEnroll?: () => void;
+  userRole?: string;
 };
 
-export default function ReusableCourseDetailsPage({ courseId: propCourseId, handleEnroll, userRole }: CourseDetailsProps) {
+export default function ReusableCourseDetailsPage({
+  courseId: propCourseId,
+  handleEnroll,
+  userRole,
+}: CourseDetailsProps) {
     const router = useRouter();
     const params = useParams();
     const courseId = propCourseId || (params?.id as string);
@@ -255,22 +259,28 @@ export default function ReusableCourseDetailsPage({ courseId: propCourseId, hand
 
                                 {/* Action Buttons */}
                                 <div className='space-y-3 flex flex-col gap-1'>
-                                    <Button
-                                        onClick={handleEnroll}
-                                        className='w-full'
-                                        size='lg'
-                                    >
-                                        Enroll For Programs/Classes
-                                    </Button>
+                                    {typeof handleEnroll === 'function' && (
+                                        <Button
+                                            onClick={handleEnroll}
+                                            className='w-full'
+                                            size='lg'
+                                        >
+                                            Enroll For Programs/Classes
+                                        </Button>
+                                    )}
 
-                                    <Button
-                                        onClick={() => { router.push(`/dashboard/browse-courses/instructor/${courseData?.uuid}`) }}
-                                        className='w-full'
-                                        size='lg'
-                                        variant={"outline"}
-                                    >
-                                        Search Instructor
-                                    </Button>
+                                    {userRole === 'student' && (
+                                        <Button
+                                            onClick={() => {
+                                                router.push(`/dashboard/browse-courses/instructor/${courseData?.uuid}`);
+                                            }}
+                                            className='w-full'
+                                            size='lg'
+                                            variant={'outline'}
+                                        >
+                                            Search Instructor
+                                        </Button>
+                                    )}
                                 </div>
 
                                 {/* Course Progress */}

@@ -22,8 +22,11 @@ import {
   ListChecks,
   LucideBookUser,
   Mails,
+  PlusCircle,
   Settings,
   Star,
+  ShieldCheck,
+  Sparkles,
   UserCircle,
   UserCog,
   UserIcon,
@@ -49,6 +52,7 @@ export type MenuItem = {
   student?: MenuItem[];
   instructor?: MenuItem[];
   organisation_user?: MenuItem[];
+  course_creator?: MenuItem[];
 };
 
 export function markActiveMenuItem(items: MenuItem[], currentPath: string): MenuItem[] {
@@ -84,6 +88,7 @@ type Menu = {
   student?: MenuItem[];
   instructor?: MenuItem[];
   organisation_user?: MenuItem[];
+  course_creator?: MenuItem[];
 };
 
 export default {
@@ -336,6 +341,55 @@ export default {
       title: 'Reviews',
       url: '/dashboard/reviews',
       icon: Star,
+    },
+  ],
+  course_creator: [
+    {
+      title: 'Overview',
+      url: '/dashboard/overview',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: BookOpen,
+    },
+    {
+      title: 'Course Management',
+      url: '/dashboard/course-management',
+      icon: ClipboardList,
+      items: [
+        {
+          title: 'Create New Course',
+          url: '/dashboard/course-management/create-new-course',
+          icon: PlusCircle,
+        },
+        {
+          title: 'Drafts',
+          url: '/dashboard/course-management/drafts',
+          icon: FileText,
+        },
+        {
+          title: 'Published',
+          url: '/dashboard/course-management/published',
+          icon: FileCheck,
+        },
+      ],
+    },
+    {
+      title: 'Analytics',
+      url: '/dashboard/analytics',
+      icon: ChartNoAxesCombined,
+    },
+    {
+      title: 'Verification',
+      url: '/dashboard/verification',
+      icon: ShieldCheck,
+    },
+    {
+      title: 'Profile',
+      url: '/dashboard/profile',
+      icon: UserCircle,
     },
   ],
   admin: [

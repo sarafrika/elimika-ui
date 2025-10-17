@@ -47,7 +47,7 @@ export const UserSchema = {
     created_by: 'system',
     updated_by: 'admin',
     gender: 'FEMALE',
-    user_domain: ['Student', 'Instructor'],
+    user_domain: ['Student', 'Instructor', 'Course Creator'],
   },
   properties: {
     uuid: {
@@ -133,14 +133,7 @@ export const UserSchema = {
       $ref: '#/components/schemas/GenderEnum',
     },
     user_domain: {
-      type: 'array',
-      description:
-        "**[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values.",
-      example: ['student', 'instructor'],
-      items: {
-        type: 'string',
-      },
-      readOnly: true,
+      $ref: '#/components/schemas/UserDomainEnum',
     },
     profile_image_url: {
       type: 'string',
@@ -219,35 +212,35 @@ export const UserSchema = {
 export const UserOrganisationAffiliationDTOSchema = {
   type: 'object',
   properties: {
-    organisationUuid: {
+    organisation_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    organisationName: {
+    organisation_name: {
       type: 'string',
     },
-    domainInOrganisation: {
+    domain_in_organisation: {
       type: 'string',
     },
-    branchUuid: {
+    branch_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    branchName: {
+    branch_name: {
       type: 'string',
     },
-    startDate: {
+    start_date: {
       type: 'string',
       format: 'date',
     },
-    endDate: {
+    end_date: {
       type: 'string',
       format: 'date',
     },
     active: {
       type: 'boolean',
     },
-    affiliatedDate: {
+    affiliated_date: {
       type: 'string',
       format: 'date-time',
     },
@@ -451,14 +444,14 @@ export const StudentSchema = {
       minLength: 0,
       pattern: '^(\\+254|0)?[17]\\d{8}$',
     },
-    primaryGuardianContact: {
-      type: 'string',
-    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
+    },
+    primaryGuardianContact: {
+      type: 'string',
     },
     secondaryGuardianContact: {
       type: 'string',
@@ -797,17 +790,17 @@ export const RubricScoringLevelSchema = {
       example: 'Excellent (4.0 pts)',
       readOnly: true,
     },
+    css_color_class: {
+      type: 'string',
+      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
+      example: 'level-green',
+      readOnly: true,
+    },
     performance_indicator: {
       type: 'string',
       description:
         '**[READ-ONLY]** Performance classification based on level order and passing status.',
       example: 'Exceeds Expectations',
-      readOnly: true,
-    },
-    css_color_class: {
-      type: 'string',
-      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
-      example: 'level-green',
       readOnly: true,
     },
     is_highest_level: {
@@ -3731,7 +3724,10 @@ export const CourseSchema = {
     duration_hours: 40,
     duration_minutes: 30,
     class_limit: 25,
-    price: 299.99,
+    minimum_training_fee: 180,
+    creator_share_percentage: 60,
+    instructor_share_percentage: 40,
+    revenue_share_notes: 'Creator retains 60% to cover tooling; instructors earn 40% net.',
     age_lower_limit: 18,
     age_upper_limit: 65,
     thumbnail_url: 'https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg',
@@ -3739,6 +3735,16 @@ export const CourseSchema = {
     banner_url: 'https://cdn.sarafrika.com/courses/java-advanced-banner.jpg',
     status: 'PUBLISHED',
     active: true,
+    training_requirements: [
+      {
+        uuid: '5a8074cc-8893-497b-8d58-4b151c994a80',
+        requirement_type: 'equipment',
+        name: 'Dual-screen instructor workstation',
+        quantity: 1,
+        unit: 'workstation',
+        is_mandatory: true,
+      },
+    ],
     created_date: '2024-04-01T12:00:00',
     created_by: 'instructor@sarafrika.com',
     updated_date: '2024-04-15T15:30:00',
@@ -3843,9 +3849,39 @@ export const CourseSchema = {
     price: {
       type: 'number',
       description:
-        '**[OPTIONAL]** Course price in the system currency. Set to null or 0 for free courses.',
-      example: 299.99,
+        '**[OPTIONAL]** Legacy course list price. Leave blank while pricing workflows are under review.',
       minimum: 0,
+    },
+    minimum_training_fee: {
+      type: 'number',
+      description:
+        '**[OPTIONAL]** Minimum training fee that any instructor-led class for this course must meet or exceed.',
+      example: 180,
+      minimum: 0,
+    },
+    creator_share_percentage: {
+      type: 'number',
+      description:
+        '**[REQUIRED]** Percentage of training revenue allocated to the course creator. Must work with instructor share to total 100%.',
+      example: 60,
+      maximum: 100,
+      minimum: 0,
+    },
+    instructor_share_percentage: {
+      type: 'number',
+      description:
+        '**[REQUIRED]** Percentage of training revenue allocated to instructors. Must work with creator share to total 100%.',
+      example: 40,
+      maximum: 100,
+      minimum: 0,
+    },
+    revenue_share_notes: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Additional context explaining how revenue is allocated between course creator and instructors.',
+      example: 'Creator retains 60% to cover tooling; instructors earn 40% net.',
+      maxLength: 1000,
+      minLength: 0,
     },
     age_lower_limit: {
       type: 'integer',
@@ -3897,6 +3933,15 @@ export const CourseSchema = {
         '**[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.',
       example: true,
     },
+    training_requirements: {
+      type: 'array',
+      description:
+        '**[READ-ONLY]** Structured resources required to deliver this course during instructor-led training sessions.',
+      items: {
+        $ref: '#/components/schemas/CourseTrainingRequirement',
+      },
+      readOnly: true,
+    },
     category_names: {
       type: 'array',
       description:
@@ -3943,10 +3988,23 @@ export const CourseSchema = {
       example: false,
       readOnly: true,
     },
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      example: true,
+      readOnly: true,
+    },
     is_published: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is published and discoverable.',
       example: true,
+      readOnly: true,
+    },
+    is_draft: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
+      example: false,
       readOnly: true,
     },
     is_archived: {
@@ -3958,12 +4016,6 @@ export const CourseSchema = {
     is_in_review: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is currently under review.',
-      example: false,
-      readOnly: true,
-    },
-    is_draft: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
       example: false,
       readOnly: true,
     },
@@ -3993,15 +4045,109 @@ export const CourseSchema = {
       example: 'Published and Active',
       readOnly: true,
     },
-    accepts_new_enrollments: {
+  },
+  required: [
+    'course_creator_uuid',
+    'creator_share_percentage',
+    'duration_hours',
+    'duration_minutes',
+    'instructor_share_percentage',
+    'name',
+    'status',
+  ],
+} as const;
+
+export const CourseTrainingRequirementSchema = {
+  type: 'object',
+  description:
+    'Operational resources that must be available when delivering the course (materials, equipment, facilities).',
+  example: {
+    uuid: '5a8074cc-8893-497b-8d58-4b151c994a80',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    requirement_type: 'equipment',
+    name: 'Dual-screen instructor workstation',
+    description: 'Instructor requires dual monitors with HDMI input and adjustable desk mount.',
+    quantity: 1,
+    unit: 'workstation',
+    provided_by: 'organisation',
+    is_mandatory: true,
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Identifier for this training requirement.',
+      readOnly: true,
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Course identifier this requirement belongs to.',
+      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    },
+    requirement_type: {
+      $ref: '#/components/schemas/RequirementTypeEnum2',
+    },
+    name: {
+      type: 'string',
+      description: '**[REQUIRED]** Concise label for the resource or material.',
+      example: 'Lab safety goggles',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Extra details or specifications for the resource.',
+      example: 'Provide ANSI Z87.1 certified safety goggles for each participant.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    quantity: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Quantity needed for each class session.',
+      example: 15,
+      minimum: 1,
+    },
+    unit: {
+      type: 'string',
+      description: '**[OPTIONAL]** Unit that the quantity refers to.',
+      example: 'sets',
+      maxLength: 50,
+      minLength: 0,
+    },
+    provided_by: {
+      $ref: '#/components/schemas/ProvidedByEnum',
+    },
+    is_mandatory: {
       type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      description: '**[OPTIONAL]** Indicates if the requirement is mandatory.',
       example: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the requirement was created.',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User who created the requirement.',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the requirement was last updated.',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User who last updated the requirement.',
       readOnly: true,
     },
   },
-  required: ['course_creator_uuid', 'duration_hours', 'duration_minutes', 'name', 'status'],
+  required: ['course_uuid', 'name', 'requirement_type'],
 } as const;
 
 export const ApiResponseCourseSchema = {
@@ -4012,6 +4158,24 @@ export const ApiResponseCourseSchema = {
     },
     data: {
       $ref: '#/components/schemas/Course',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseCourseTrainingRequirementSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseTrainingRequirement',
     },
     message: {
       type: 'string',
@@ -5430,6 +5594,7 @@ export const ClassDefinitionSchema = {
     default_instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
     organisation_uuid: 'org12345-6789-abcd-ef01-234567890abc',
     course_uuid: 'course123-4567-89ab-cdef-123456789abc',
+    training_fee: 240,
     duration_minutes: 90,
     location_type: 'HYBRID',
     max_participants: 25,
@@ -5487,6 +5652,13 @@ export const ClassDefinitionSchema = {
       description:
         '**[OPTIONAL]** Reference to the course UUID if this class is part of a structured course.',
       example: 'course123-4567-89ab-cdef-123456789abc',
+    },
+    training_fee: {
+      type: 'number',
+      description:
+        '**[OPTIONAL]** Training fee charged for sessions created from this class definition. Must meet the course minimum training fee when a course is linked.',
+      example: 220,
+      minimum: 0,
     },
     default_start_time: {
       format: 'time',
@@ -5573,6 +5745,12 @@ export const ClassDefinitionSchema = {
       example: 90,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     has_recurrence: {
       type: 'boolean',
       description:
@@ -5585,12 +5763,6 @@ export const ClassDefinitionSchema = {
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -7495,6 +7667,12 @@ export const AssignmentSubmissionSchema = {
       example: true,
       readOnly: true,
     },
+    file_count_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Summary of files attached to this submission.',
+      example: 2,
+      readOnly: true,
+    },
     submission_category: {
       type: 'string',
       description:
@@ -7513,12 +7691,6 @@ export const AssignmentSubmissionSchema = {
       description:
         '**[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.',
       example: 'Graded - Instructor Feedback Available',
-      readOnly: true,
-    },
-    file_count_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Summary of files attached to this submission.',
-      example: 2,
       readOnly: true,
     },
   },
@@ -8409,12 +8581,6 @@ export const QuizAttemptSchema = {
       example: 1,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -8425,6 +8591,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
       readOnly: true,
     },
   },
@@ -8685,16 +8857,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -8965,7 +9137,7 @@ export const InvitationPreviewSchema = {
     requires_registration: {
       type: 'boolean',
       description:
-        'Indicates whether the recipient needs to register an account before accepting. True for student/instructor roles, false for admin/organisation_user roles.',
+        'Indicates whether the recipient needs to register an account before accepting. True for student/instructor/course_creator roles, false for admin/organisation_user roles.',
       example: true,
     },
   },
@@ -9488,6 +9660,42 @@ export const ApiResponseListContentStatusSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOCourseTrainingRequirementSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseTrainingRequirement',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOCourseTrainingRequirementSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseTrainingRequirement',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOCourseRubricAssociationSchema = {
   type: 'object',
   properties: {
@@ -9744,16 +9952,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -10694,6 +10902,18 @@ export const GenderEnumSchema = {
   example: 'FEMALE',
 } as const;
 
+export const UserDomainEnumSchema = {
+  type: 'array',
+  description:
+    "**[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values.",
+  enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],
+  example: ['student', 'instructor', 'course_creator'],
+  items: {
+    type: 'string',
+  },
+  readOnly: true,
+} as const;
+
 export const StatusEnumSchema = {
   type: 'string',
   description: '**[REQUIRED]** Rubric publication status in the content workflow.',
@@ -10793,6 +11013,20 @@ export const AvailabilityTypeEnumSchema = {
   example: 'weekly',
 } as const;
 
+export const RequirementTypeEnum2Schema = {
+  type: 'string',
+  description: '**[REQUIRED]** Resource category.',
+  enum: ['material', 'equipment', 'facility', 'other'],
+  example: 'equipment',
+} as const;
+
+export const ProvidedByEnumSchema = {
+  type: 'string',
+  description: '**[OPTIONAL]** Party responsible for providing this requirement.',
+  enum: ['course_creator', 'instructor', 'organisation', 'student'],
+  example: 'organisation',
+} as const;
+
 export const LocationTypeEnumSchema = {
   type: 'string',
   description: '**[REQUIRED]** Default delivery format for the class.',
@@ -10826,7 +11060,7 @@ export const DomainNameEnumSchema = {
   type: 'string',
   description:
     '**[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.',
-  enum: ['student', 'instructor', 'admin', 'organisation_user'],
+  enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],
   example: 'instructor',
   externalDocs: {
     description: 'User Domain Roles Guide',

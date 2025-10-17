@@ -4,124 +4,45 @@ import { CustomPagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useInstructor } from '@/context/instructor-context';
+import { getCoursesByInstructorOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Plus, Search } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { CourseCard } from '../../../_components/course-card';
-
-const SAMPLE_COURSES = [
-    {
-        id: '1',
-        title: 'Complete React Development Bootcamp',
-        subtitle: 'Build modern web applications with React, TypeScript, and Next.js',
-        category: 'Technology',
-        subcategory: 'Web Development',
-        instructor: 'John Smith',
-        instructorAvatar: '',
-        rating: 4.8,
-        enrolledCount: 2341,
-        duration: '40 hours',
-        difficulty: 'Intermediate',
-        price: '$89',
-        originalPrice: '$149',
-        coverImage: null,
-        hasVideo: true,
-    },
-    {
-        id: '2',
-        title: 'UI/UX Design Fundamentals',
-        subtitle: 'Learn design principles and create beautiful user interfaces',
-        category: 'Design',
-        subcategory: 'UI/UX Design',
-        instructor: 'Sarah Johnson',
-        instructorAvatar: '',
-        rating: 4.9,
-        enrolledCount: 1856,
-        duration: '25 hours',
-        difficulty: 'Beginner',
-        price: 'Free',
-        originalPrice: null,
-        coverImage: null,
-        hasVideo: true,
-    },
-    {
-        id: '3',
-        title: 'Digital Marketing Strategy',
-        subtitle: 'Master SEO, social media, and content marketing',
-        category: 'Business',
-        subcategory: 'Marketing',
-        instructor: 'Mike Wilson',
-        instructorAvatar: '',
-        rating: 4.7,
-        enrolledCount: 3247,
-        duration: '30 hours',
-        difficulty: 'Intermediate',
-        price: '$129',
-        originalPrice: '$199',
-        coverImage: null,
-        hasVideo: false,
-    },
-    {
-        id: '4',
-        title: 'Data Science with Python',
-        subtitle: 'Learn Python, pandas, and machine learning from scratch',
-        category: 'Technology',
-        subcategory: 'Data Science',
-        instructor: 'Dr. Lisa Chen',
-        instructorAvatar: '',
-        rating: 4.6,
-        enrolledCount: 1923,
-        duration: '50 hours',
-        difficulty: 'Advanced',
-        price: '$199',
-        originalPrice: '$299',
-        coverImage: null,
-        hasVideo: true,
-    },
-];
-
-const sidebarNavItems = [
-    {
-        title: 'Drafts',
-        href: '/dashboard/courses/drafts',
-    },
-    {
-        title: 'Published',
-        href: '/dashboard/courses/published',
-    },
-];
-
 export default function CourseMangementPage() {
     const router = useRouter();
-    const pathname = usePathname();
+    const instructor = useInstructor();
 
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
     const size = 20;
     const [page, setPage] = useState(0);
 
-    const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery(
-        getAllCoursesOptions({ query: { pageable: { page, size } } })
-    );
-    const courses = data?.data?.content || [];
+    const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery({
+        ...getCoursesByInstructorOptions({
+            path: { instructorUuid: instructor?.uuid as string },
+            query: { pageable: { page, size, sort: [] } },
+        }),
+        enabled: !!instructor?.uuid,
+    });
+
+    const courses = data?.data?.content;
     const paginationMetadata = data?.data?.metadata;
 
-    const filteredCourses = courses?.filter((course: any) => {
-        const matchesSearch =
-            searchQuery === '' ||
-            course?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            course?.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        // course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredCourses = useMemo(() => {
+        if (!Array.isArray(courses)) return [];
 
-        const matchesSubcategory =
-            selectedSubcategory === '' || course.subcategory === selectedSubcategory;
-
-        return matchesSearch && matchesSubcategory;
-    });
+        return courses.filter(course => {
+            if (!searchQuery) return true;
+            const normalizedQuery = searchQuery.toLowerCase();
+            return (
+                course?.name?.toLowerCase().includes(normalizedQuery) ||
+                course?.description?.toLowerCase().includes(normalizedQuery)
+            );
+        });
+    }, [courses, searchQuery]);
 
     return (
         <div className='min-h-screen'>
@@ -145,7 +66,7 @@ export default function CourseMangementPage() {
                                 onChange={e => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <Button variant='outline'>
+                        <Button variant='outline' disabled>
                             <Filter className='mr-2 h-4 w-4' />
                             Filters
                         </Button>
@@ -159,7 +80,7 @@ export default function CourseMangementPage() {
                             List of courses you can train
                         </p>
                         <p className='text-muted-foreground text-sm'>
-                            {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
+                            {filteredCourses.length} course{filteredCourses.length === 1 ? '' : 's'} found
                         </p>
                     </div>
                 </div>
@@ -193,14 +114,14 @@ export default function CourseMangementPage() {
                 {!isFetching && isFetched && isSuccess && filteredCourses.length === 0 && (
                     <div className='py-16 text-center'>
                         <BookOpen className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
-                        <h3 className='mb-2'>No courses found</h3>
-                        <p className='text-muted-foreground mb-4'>Try adjusting your search or filters</p>
+                        <h3 className='mb-2'>No assigned courses yet</h3>
+                        <p className='text-muted-foreground mb-4'>
+                            You do not have any courses assigned. Reach out to a course creator to request access.
+                        </p>
                         <Button
                             variant='outline'
                             onClick={() => {
                                 setSearchQuery('');
-                                setSelectedCategory('all');
-                                setSelectedSubcategory('');
                             }}
                         >
                             Clear filters
