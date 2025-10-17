@@ -35,7 +35,7 @@ export default function Home() {
         <div className='mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5'>
           <Link href='/' className='flex items-center gap-4'>
             <Image
-              alt='elimika logo'
+              alt='Elimika logo'
               src='/logos/elimika/Elimika_Logo_Design-02.svg'
               width={168}
               height={48}
@@ -73,10 +73,10 @@ export default function Home() {
               Product experience
             </span>
             <h1 className='max-w-4xl text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-[56px]'>
-              elimika is the home of orchestrated learning experiences for Africa&rsquo;s creators and institutions.
+              Elimika is the home of orchestrated learning experiences for Africa&rsquo;s creators and institutions.
             </h1>
             <p className='max-w-3xl text-base text-slate-600 sm:text-lg'>
-              A product suite born from the elimika mark—layered gradients, confident geometry, and purposeful flows—designed to elevate every learning journey.
+              A product suite born from the Elimika mark—layered gradients, confident geometry, and purposeful flows—designed to elevate every learning journey.
             </p>
             <div className='flex flex-col gap-4 sm:flex-row'>
               <LoginButton />
@@ -144,7 +144,7 @@ export default function Home() {
             <div className='mb-12 text-center'>
               <p className='text-xs font-semibold uppercase tracking-[0.4em] text-purple-700'>Product pillars</p>
               <h2 className='mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl'>
-                The elimika platform at a glance
+                The Elimika platform at a glance
               </h2>
             </div>
 
@@ -175,14 +175,14 @@ export default function Home() {
                 Powered by Sarafrika
               </p>
               <h2 className='text-3xl font-semibold text-slate-900 sm:text-4xl'>
-                Product craftsmanship by Sarafrika, inspired by the elimika emblem
+                Product craftsmanship by Sarafrika, inspired by the Elimika emblem
               </h2>
               <p className='text-base text-slate-600'>
-                Sarafrika&rsquo;s product studios steward elimika&rsquo;s vision—from interface language to enabling technology—embedding sustainable design and engineering across every release.
+                Sarafrika&rsquo;s product studios steward Elimika&rsquo;s vision—from interface language to enabling technology—embedding sustainable design and engineering across every release.
               </p>
               <ul className='space-y-3 text-sm text-slate-600'>
                 {[
-                  'Unified design tokens capture the gradient language of the elimika bloom.',
+                  'Unified design tokens capture the gradient language of the Elimika bloom.',
                   'Inclusive typography and colour ensure accessibility without diluting brand character.',
                   'Scalable architecture supports institutions, educators, and lifelong learners alike.',
                 ].map(point => (
@@ -214,7 +214,7 @@ export default function Home() {
         <div className='mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex items-center gap-4'>
             <Image
-              alt='elimika mark'
+              alt='Elimika mark'
               src='/logos/elimika/Elimika_Logo_Design_Artboard.svg'
               width={120}
               height={36}
@@ -229,7 +229,7 @@ export default function Home() {
             />
           </div>
           <div className='text-xs text-slate-500'>
-            {'@copy;'} {currentYear} Sarafrika. elimika is owned and copyrighted by Sarafrika.
+            {'@copy;'} {currentYear} Sarafrika. Elimika is owned and copyrighted by Sarafrika.
           </div>
         </div>
       </footer>
