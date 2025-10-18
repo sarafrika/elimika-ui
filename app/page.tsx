@@ -208,7 +208,7 @@ export default function Home() {
       </main>
 
       <footer className='border-t border-blue-100/80 bg-white/90 py-10'>
-        <div className='mx-auto flex w-full max-w-6xl px-6'>
+        <div className='mx-auto flex w-full max-w-6xl justify-center px-6'>
           <div className='text-xs text-slate-500'>
             {'@copy;'} {currentYear} Sarafrika. Elimika is owned and copyrighted by Sarafrika.
           </div>
