@@ -1,7 +1,7 @@
 // components/layout/nav-user.tsx (or wherever NavUser is located)
 'use client';
 
-import { ChevronsUpDown, LogOut } from 'lucide-react';
+import { ChevronsUpDown, LogOut, UserPlus } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -123,6 +123,16 @@ export function NavUser({ items }: NavUserProps) {
                     <span>{item.title}</span>
                   </div>
                 ))}
+
+                {/* Add Profile Option */}
+                <div
+                  onClick={() => router.push('/dashboard/add-profile')}
+                  className='hover:bg-blue-50 text-blue-600 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
+                >
+                  <UserPlus className='size-4' />
+                  <span>Add New Profile</span>
+                </div>
+
                 <div
                   className='flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600'
                   onClick={async () => await signOut().then(() => user!.clearProfile())}
