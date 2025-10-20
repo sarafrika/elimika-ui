@@ -41,7 +41,7 @@ export function ImageShortcutBadge({
 }
 
 /**
- * Button component for uploading/inserting images in a Tiptap editor.
+ * Button component for uploading/inserting logos in a Tiptap editor.
  *
  * For custom button implementations, use the `useImage` hook instead.
  */

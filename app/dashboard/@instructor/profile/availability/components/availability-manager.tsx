@@ -22,12 +22,12 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useBreadcrumb } from '../../../../../../context/breadcrumb-provider';
+import { useInstructor } from '../../../../../../context/instructor-context';
 import { ClassData } from '../../../trainings/create-new/academic-period-form';
 import { AvailabilityData } from '../page';
 import { AvailabilityBooking } from './availability-booking';
 import { MonthlyAvailabilityGrid } from './monthly-availability-grid';
 import { WeeklyAvailabilityGrid } from './weekly-availability-grid';
-import { YearlyAvailabilityGrid } from './yearly-availability-grid';
 
 const availabilitySettings = {
   timezone: 'UTC',
@@ -53,6 +53,7 @@ export default function AvailabilityManager({
   classes,
 }: AvailabilityManagerProps) {
   const user = useUserProfile();
+  const instructor = useInstructor()
   const qc = useQueryClient();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
@@ -325,10 +326,10 @@ export default function AvailabilityManager({
         </CardHeader>
         <CardContent>
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList className='grid w-full grid-cols-3'>
+            <TabsList className='grid w-full grid-cols-2'>
               <TabsTrigger value='weekly'>Weekly View</TabsTrigger>
               <TabsTrigger value='monthly'>Monthly View</TabsTrigger>
-              <TabsTrigger value='yearly'>Yearly View</TabsTrigger>
+              {/* <TabsTrigger value='yearly'>Yearly View</TabsTrigger> */}
             </TabsList>
 
             <TabsContent value='weekly' className='mt-6'>
@@ -349,13 +350,13 @@ export default function AvailabilityManager({
               />
             </TabsContent>
 
-            <TabsContent value='yearly' className='mt-6'>
+            {/* <TabsContent value='yearly' className='mt-6'>
               <YearlyAvailabilityGrid
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
               />
-            </TabsContent>
+            </TabsContent> */}
           </Tabs>
         </CardContent>
       </Card>
@@ -452,3 +453,5 @@ export default function AvailabilityManager({
     </div>
   );
 }
+
+

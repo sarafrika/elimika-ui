@@ -24,7 +24,7 @@ import { BookOpen, Check, CheckCheck, Clock, CoinsIcon, Trash, Users } from 'luc
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { AddProgramCourseDialog } from '../../../../@creator/_components/program-management-form';
+import { AddProgramCourseDialog } from '../../../../@course_creator/_components/program-management-form';
 
 const cls = {
   uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',

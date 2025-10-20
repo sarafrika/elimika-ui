@@ -1,4 +1,4 @@
-import CourseCreationPage from "../../../@creator/course-management/create-new-course/_component/CourseCreationPage";
+import CourseCreationPage from "../../../@course_creator/course-management/create-new-course/_component/CourseCreationPage";
 
 
 function Page() {

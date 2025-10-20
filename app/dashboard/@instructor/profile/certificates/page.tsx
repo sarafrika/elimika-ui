@@ -1,17 +1,54 @@
 'use client';
 
-import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { getInstructorDocumentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
+import { Award, Eye, Medal, Star, Target, Trophy, Verified } from 'lucide-react';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { Badge } from '../../../../../components/ui/badge';
+import { Button } from '../../../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../../components/ui/card';
+import { Dialog, DialogContent, DialogDescription } from '../../../../../components/ui/dialog';
+import { Progress } from '../../../../../components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../../components/ui/tabs';
+import { CERTIFICATES_DATA } from '../../../@student/certificates/_components/certificate-page';
+import { CertificateCard } from './certificate-card';
 
 interface Certificate {
     id: number;
     name: string;
     fileUrl: string;
 }
+
+export const getTypeIcon = (type: string) => {
+    switch (type) {
+        case 'Course Completion':
+            return Award;
+        case 'Professional Badge':
+            return Medal;
+        case 'Skill Certification':
+            return Star;
+        case 'Bootcamp Certificate':
+            return Trophy;
+        default:
+            return Award;
+    }
+};
+
+export const getCategoryColor = (category: string) => {
+    switch (category) {
+        case 'Technology':
+            return 'bg-blue-100 text-blue-800';
+        case 'Business':
+            return 'bg-green-100 text-green-800';
+        case 'Design':
+            return 'bg-purple-100 text-purple-800';
+        default:
+            return 'bg-gray-100 text-gray-800';
+    }
+};
 
 export default function CertificatesPage() {
     const instructor = useInstructor()
@@ -29,13 +66,52 @@ export default function CertificatesPage() {
         ]);
     }, [replaceBreadcrumbs]);
 
+    const [activeTab, setActiveTab] = useState('verified');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedType, setSelectedType] = useState('all');
+    const [viewMode, setViewMode] = useState('grid');
+    const [viewCertificate, setViewCertificate] = useState(false)
+    const [selectedCertificate, setSelectedCertificate] = useState<any | null>(null)
+
+    const { certificates, inProgress } = CERTIFICATES_DATA;
+
+    const filteredCertificates = certificates.filter(cert => {
+        const matchesSearch =
+            searchTerm === '' ||
+            cert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            cert.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const matchesCategory = selectedCategory === 'all' || cert.category === selectedCategory;
+        const matchesType = selectedType === 'all' || cert.type === selectedType;
+
+        return matchesSearch && matchesCategory && matchesType;
+    });
+
+
+
+    const handleDownload = (certificateId: string) => {
+        toast.message(`Downloading certificate: ${certificateId}`);
+        // Implement download functionality
+    };
+
+    const handleShare = (certificateId: string) => {
+        toast.message(`Sharing certificate: ${certificateId}`);
+        // Implement share functionality
+    };
+
+    const handleVerify = (verificationUrl: string) => {
+        window.open(verificationUrl, '_blank');
+    };
+
+
+
     const { data: documents, isLoading, isFetching } = useQuery({
         ...getInstructorDocumentsOptions({ path: { instructorUuid: instructor?.uuid as string } }),
         enabled: !!instructor?.uuid
     })
     const loading = isLoading || isFetching
 
-    const [certificates, setCertificates] = useState<Certificate[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -50,8 +126,6 @@ export default function CertificatesPage() {
             name: uploadedFile?.name as any,
             fileUrl,
         };
-
-        setCertificates((prev) => [...prev, newCertificate]);
 
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -84,29 +158,149 @@ export default function CertificatesPage() {
             </div>
 
 
-            <div>
-                <h2 className='text-lg font-medium mb-2'>Uploaded Certificates</h2>
+            <div className='container mx-auto py-8'>
 
-                {loading && <div><Spinner /></div>}
+                {/* Main Content */}
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className='mb-3 grid w-full grid-cols-2'>
+                        <TabsTrigger value='verified'>Verified Certificates</TabsTrigger>
+                        <TabsTrigger value='pending'>Pending</TabsTrigger>
+                    </TabsList>
 
-                {!loading && certificates.length === 0 ? (
-                    <p className='text-sm text-gray-500'>No certificates uploaded yet.</p>
-                ) : (
-                    <ul className='space-y-3'>
-                        {certificates.map((cert) => (
-                            <li key={cert.id} className='border p-4 rounded-md bg-gray-50'>
-                                <p className='font-medium'>{cert.name}</p>
-                                <a
-                                    href={cert.fileUrl}
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                    className='text-blue-600 text-sm underline'
-                                >
-                                    View
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
+                    <TabsContent value='verified' className='space-y-6'>
+                        {/* Certificates Grid */}
+                        <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+                            {filteredCertificates.map(certificate => {
+                                const TypeIcon = getTypeIcon(certificate.type);
+                                return (
+                                    <Card
+                                        key={certificate.id}
+                                        className='overflow-hidden transition-shadow hover:shadow-lg'
+                                    >
+                                        <CardHeader className='pb-2'>
+                                            <div className='flex items-start justify-between'>
+                                                <div className='flex items-start gap-3'>
+                                                    <div className='bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg'>
+                                                        <TypeIcon className='text-primary h-6 w-6' />
+                                                    </div>
+                                                    <div>
+                                                        <CardTitle className='text-lg'>{certificate.title}</CardTitle>
+                                                        <p className='text-muted-foreground text-sm'>{certificate.issuer}</p>
+                                                    </div>
+                                                </div>
+                                                <div className='flex items-center gap-2'>
+                                                    {certificate.blockchain_verified && (
+                                                        <Badge className='bg-green-100 text-green-800'>
+                                                            <Verified className='mr-1 h-3 w-3' />
+                                                            Verified
+                                                        </Badge>
+                                                    )}
+                                                    <Badge className={getCategoryColor(certificate.category)}>
+                                                        {certificate.category}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+
+                                        <CardContent className='space-y-3'>
+                                            <div className='flex gap-2'>
+                                                <Button
+                                                    variant='outline'
+                                                    size='sm'
+                                                    className='flex-1'
+                                                    onClick={() => {
+                                                        setViewCertificate(true)
+                                                        setSelectedCertificate(certificate)
+                                                    }}
+                                                >
+                                                    <Eye className='mr-1 h-3 w-3' />
+                                                    View Certificate
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value='pending' className='space-y-6'>
+                        <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+                            {inProgress.map(program => {
+                                const TypeIcon = getTypeIcon(program.type);
+                                return (
+                                    <Card key={program.id}>
+                                        <CardHeader>
+                                            <div className='flex items-start gap-3'>
+                                                <div className='flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100'>
+                                                    <TypeIcon className='h-6 w-6 text-blue-600' />
+                                                </div>
+                                                <div>
+                                                    <CardTitle className='text-lg'>{program.title}</CardTitle>
+                                                    <p className='text-muted-foreground text-sm'>{program.issuer}</p>
+                                                    <p className='text-muted-foreground text-xs'>
+                                                        Instructor: {program.instructor}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className='space-y-4'>
+                                            <div>
+                                                <div className='mb-2 flex items-center justify-between'>
+                                                    <span className='text-sm'>Progress</span>
+                                                    <span className='text-sm font-medium'>{program.progress}%</span>
+                                                </div>
+                                                <Progress value={program.progress} className='h-3' />
+                                                <p className='text-muted-foreground mt-1 text-xs'>
+                                                    Current: {program.currentPhase}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p className='text-muted-foreground mb-2 text-sm'>Requirements:</p>
+                                                <ul className='space-y-1'>
+                                                    {program.requirements.map((req, index) => (
+                                                        <li key={index} className='flex items-center gap-2 text-sm'>
+                                                            <div className='bg-muted h-2 w-2 rounded-full' />
+                                                            {req}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+
+                                            <div className='flex justify-between text-sm'>
+                                                <span className='text-muted-foreground'>Expected Completion:</span>
+                                                <span className='font-medium'>
+                                                    {new Date(program.expectedCompletion).toLocaleDateString()}
+                                                </span>
+                                            </div>
+
+                                            <Button className='w-full'>
+                                                <Target className='mr-2 h-4 w-4' />
+                                                Continue Learning
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    </TabsContent>
+                </Tabs>
+
+
+                {viewCertificate && selectedCertificate && (
+                    <Dialog open={viewCertificate} onOpenChange={(open) => setViewCertificate(open)}>
+                        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                            <DialogDescription>{" "}</DialogDescription>
+                            <CertificateCard
+                                certificate={selectedCertificate}
+                                studentName={instructor?.full_name as string}
+                                onDownload={handleDownload}
+                                onShare={handleShare}
+                                onVerify={handleVerify}
+                            />
+                        </DialogContent>
+                    </Dialog>
                 )}
             </div>
         </div>

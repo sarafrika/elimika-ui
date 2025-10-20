@@ -1,6 +1,7 @@
 import { schemas } from '@/services/api/zod-client';
 import {
   Course,
+  CourseCreator,
   Instructor,
   InstructorEducation,
   InstructorExperience,
@@ -14,7 +15,13 @@ import {
 import { ReactNode } from 'react';
 import { z } from 'zod';
 
-export type UserDomain = 'student' | 'instructor' | 'admin' | 'organisation_user' | 'organisation';
+export type UserDomain =
+  | 'student'
+  | 'instructor'
+  | 'admin'
+  | 'course_creator'
+  | 'organisation_user'
+  | 'organisation';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -67,5 +74,6 @@ export type UserProfileType = User & {
     membership: InstructorProfessionalMembership[];
     skills: InstructorSkill[];
   };
+  courseCreator?: CourseCreator;
   organizations?: TrainingCenter[];
 };

@@ -57,10 +57,7 @@ export type User = {
    */
   keycloak_id?: string;
   gender?: GenderEnum;
-  /**
-   * **[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values.
-   */
-  readonly user_domain?: Array<string>;
+  user_domain?: UserDomainEnum;
   /**
    * **[READ-ONLY]** URL to the user's profile image/avatar. Automatically generated after image upload and cannot be directly modified.
    */
@@ -96,15 +93,15 @@ export type User = {
 };
 
 export type UserOrganisationAffiliationDto = {
-  organisationUuid?: string;
-  organisationName?: string;
-  domainInOrganisation?: string;
-  branchUuid?: string;
-  branchName?: string;
-  startDate?: Date;
-  endDate?: Date;
+  organisation_uuid?: string;
+  organisation_name?: string;
+  domain_in_organisation?: string;
+  branch_uuid?: string;
+  branch_name?: string;
+  start_date?: Date;
+  end_date?: Date;
   active?: boolean;
-  affiliatedDate?: Date;
+  affiliated_date?: Date;
 };
 
 export type ApiResponseUser = {
@@ -199,8 +196,8 @@ export type Student = {
    * **[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.
    */
   second_guardian_mobile?: string;
-  primaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
+  primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
@@ -370,13 +367,13 @@ export type RubricScoringLevel = {
    */
   readonly display_name?: string;
   /**
-   * **[READ-ONLY]** Performance classification based on level order and passing status.
-   */
-  readonly performance_indicator?: string;
-  /**
    * **[READ-ONLY]** CSS-safe color class name derived from the color code.
    */
   readonly css_color_class?: string;
+  /**
+   * **[READ-ONLY]** Performance classification based on level order and passing status.
+   */
+  readonly performance_indicator?: string;
   /**
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
@@ -1860,9 +1857,25 @@ export type Course = {
    */
   class_limit?: number;
   /**
-   * **[OPTIONAL]** Course price in the system currency. Set to null or 0 for free courses.
+   * **[OPTIONAL]** Legacy course list price. Leave blank while pricing workflows are under review.
    */
   price?: number;
+  /**
+   * **[OPTIONAL]** Minimum training fee that any instructor-led class for this course must meet or exceed.
+   */
+  minimum_training_fee?: number;
+  /**
+   * **[REQUIRED]** Percentage of training revenue allocated to the course creator. Must work with instructor share to total 100%.
+   */
+  creator_share_percentage: number;
+  /**
+   * **[REQUIRED]** Percentage of training revenue allocated to instructors. Must work with creator share to total 100%.
+   */
+  instructor_share_percentage: number;
+  /**
+   * **[OPTIONAL]** Additional context explaining how revenue is allocated between course creator and instructors.
+   */
+  revenue_share_notes?: string;
   /**
    * **[OPTIONAL]** Minimum age requirement for course enrollment.
    */
@@ -1889,6 +1902,10 @@ export type Course = {
    */
   active?: boolean;
   /**
+   * **[READ-ONLY]** Structured resources required to deliver this course during instructor-led training sessions.
+   */
+  readonly training_requirements?: Array<CourseTrainingRequirement>;
+  /**
    * **[READ-ONLY]** List of category names this course belongs to. Computed from category mappings.
    */
   readonly category_names?: Array<string>;
@@ -1913,9 +1930,17 @@ export type Course = {
    */
   readonly is_free?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is still in draft mode.
+   */
+  readonly is_draft?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the course is archived and no longer available.
    */
@@ -1924,10 +1949,6 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course is still in draft mode.
-   */
-  readonly is_draft?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
@@ -1944,15 +1965,72 @@ export type Course = {
    * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
    */
   readonly lifecycle_stage?: string;
+};
+
+/**
+ * Operational resources that must be available when delivering the course (materials, equipment, facilities).
+ */
+export type CourseTrainingRequirement = {
   /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   * **[READ-ONLY]** Identifier for this training requirement.
    */
-  readonly accepts_new_enrollments?: boolean;
+  readonly uuid?: string;
+  /**
+   * **[REQUIRED]** Course identifier this requirement belongs to.
+   */
+  course_uuid: string;
+  requirement_type: RequirementTypeEnum2;
+  /**
+   * **[REQUIRED]** Concise label for the resource or material.
+   */
+  name: string;
+  /**
+   * **[OPTIONAL]** Extra details or specifications for the resource.
+   */
+  description?: string;
+  /**
+   * **[OPTIONAL]** Quantity needed for each class session.
+   */
+  quantity?: number;
+  /**
+   * **[OPTIONAL]** Unit that the quantity refers to.
+   */
+  unit?: string;
+  provided_by?: ProvidedByEnum;
+  /**
+   * **[OPTIONAL]** Indicates if the requirement is mandatory.
+   */
+  is_mandatory?: boolean;
+  /**
+   * **[READ-ONLY]** Timestamp when the requirement was created.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** User who created the requirement.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the requirement was last updated.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** User who last updated the requirement.
+   */
+  readonly updated_by?: string;
 };
 
 export type ApiResponseCourse = {
   success?: boolean;
   data?: Course;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type ApiResponseCourseTrainingRequirement = {
+  success?: boolean;
+  data?: CourseTrainingRequirement;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -2700,6 +2778,10 @@ export type ClassDefinition = {
    */
   course_uuid?: string;
   /**
+   * **[OPTIONAL]** Training fee charged for sessions created from this class definition. Must meet the course minimum training fee when a course is linked.
+   */
+  training_fee?: number;
+  /**
    * **[REQUIRED]** Default start time for class sessions.
    */
   default_start_time: LocalTime;
@@ -2749,6 +2831,10 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
+  /**
    * **[READ-ONLY]** Indicates if the class definition has a recurrence pattern configured.
    */
   readonly has_recurrence?: boolean;
@@ -2756,10 +2842,6 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
 };
 
 export type ApiResponseClassDefinition = {
@@ -3748,6 +3830,10 @@ export type AssignmentSubmission = {
    */
   readonly is_graded?: boolean;
   /**
+   * **[READ-ONLY]** Summary of files attached to this submission.
+   */
+  readonly file_count_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the submission based on its content type.
    */
   readonly submission_category?: string;
@@ -3759,10 +3845,6 @@ export type AssignmentSubmission = {
    * **[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.
    */
   readonly submission_status_display?: string;
-  /**
-   * **[READ-ONLY]** Summary of files attached to this submission.
-   */
-  readonly file_count_display?: string;
 };
 
 /**
@@ -4161,10 +4243,6 @@ export type QuizAttempt = {
    */
   readonly time_display?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -4172,6 +4250,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -4288,13 +4370,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -4424,7 +4506,7 @@ export type InvitationPreview = {
    */
   is_expired: boolean;
   /**
-   * Indicates whether the recipient needs to register an account before accepting. True for student/instructor roles, false for admin/organisation_user roles.
+   * Indicates whether the recipient needs to register an account before accepting. True for student/instructor/course_creator roles, false for admin/organisation_user roles.
    */
   requires_registration: boolean;
 };
@@ -4654,6 +4736,21 @@ export type ApiResponseListContentStatus = {
   };
 };
 
+export type ApiResponsePagedDtoCourseTrainingRequirement = {
+  success?: boolean;
+  data?: PagedDtoCourseTrainingRequirement;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoCourseTrainingRequirement = {
+  content?: Array<CourseTrainingRequirement>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
 export type ApiResponsePagedDtoCourseRubricAssociation = {
   success?: boolean;
   data?: PagedDtoCourseRubricAssociation;
@@ -4771,13 +4868,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -5257,6 +5354,22 @@ export const GenderEnum = {
 export type GenderEnum = (typeof GenderEnum)[keyof typeof GenderEnum];
 
 /**
+ * **[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values.
+ */
+export const UserDomainEnum = {
+  STUDENT: 'student',
+  INSTRUCTOR: 'instructor',
+  ADMIN: 'admin',
+  ORGANISATION_USER: 'organisation_user',
+  COURSE_CREATOR: 'course_creator',
+} as const;
+
+/**
+ * **[READ-ONLY]** List of domain roles that define the user's functional areas within the system. Determines available features and workflows. Can contain multiple values.
+ */
+export type UserDomainEnum = (typeof UserDomainEnum)[keyof typeof UserDomainEnum];
+
+/**
  * **[REQUIRED]** Rubric publication status in the content workflow.
  */
 export const StatusEnum = {
@@ -5442,6 +5555,36 @@ export const AvailabilityTypeEnum = {
 export type AvailabilityTypeEnum = (typeof AvailabilityTypeEnum)[keyof typeof AvailabilityTypeEnum];
 
 /**
+ * **[REQUIRED]** Resource category.
+ */
+export const RequirementTypeEnum2 = {
+  MATERIAL: 'material',
+  EQUIPMENT: 'equipment',
+  FACILITY: 'facility',
+  OTHER: 'other',
+} as const;
+
+/**
+ * **[REQUIRED]** Resource category.
+ */
+export type RequirementTypeEnum2 = (typeof RequirementTypeEnum2)[keyof typeof RequirementTypeEnum2];
+
+/**
+ * **[OPTIONAL]** Party responsible for providing this requirement.
+ */
+export const ProvidedByEnum = {
+  COURSE_CREATOR: 'course_creator',
+  INSTRUCTOR: 'instructor',
+  ORGANISATION: 'organisation',
+  STUDENT: 'student',
+} as const;
+
+/**
+ * **[OPTIONAL]** Party responsible for providing this requirement.
+ */
+export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum];
+
+/**
  * **[REQUIRED]** Default delivery format for the class.
  */
 export const LocationTypeEnum = {
@@ -5507,6 +5650,7 @@ export const DomainNameEnum = {
   INSTRUCTOR: 'instructor',
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
+  COURSE_CREATOR: 'course_creator',
 } as const;
 
 /**
@@ -7622,6 +7766,71 @@ export type UpdateCourseResponses = {
 };
 
 export type UpdateCourseResponse = UpdateCourseResponses[keyof UpdateCourseResponses];
+
+export type DeleteCourseTrainingRequirementData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+    requirementUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/training-requirements/{requirementUuid}';
+};
+
+export type DeleteCourseTrainingRequirementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseTrainingRequirementError =
+  DeleteCourseTrainingRequirementErrors[keyof DeleteCourseTrainingRequirementErrors];
+
+export type DeleteCourseTrainingRequirementResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseTrainingRequirementData = {
+  body: CourseTrainingRequirement;
+  path: {
+    courseUuid: string;
+    requirementUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/training-requirements/{requirementUuid}';
+};
+
+export type UpdateCourseTrainingRequirementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseTrainingRequirementError =
+  UpdateCourseTrainingRequirementErrors[keyof UpdateCourseTrainingRequirementErrors];
+
+export type UpdateCourseTrainingRequirementResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseTrainingRequirement;
+};
+
+export type UpdateCourseTrainingRequirementResponse =
+  UpdateCourseTrainingRequirementResponses[keyof UpdateCourseTrainingRequirementResponses];
 
 export type SetPrimaryRubricData = {
   body?: never;
@@ -11737,6 +11946,74 @@ export type ArchiveCourseResponses = {
 };
 
 export type ArchiveCourseResponse = ArchiveCourseResponses[keyof ArchiveCourseResponses];
+
+export type GetCourseTrainingRequirementsData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/courses/{courseUuid}/training-requirements';
+};
+
+export type GetCourseTrainingRequirementsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseTrainingRequirementsError =
+  GetCourseTrainingRequirementsErrors[keyof GetCourseTrainingRequirementsErrors];
+
+export type GetCourseTrainingRequirementsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseTrainingRequirement;
+};
+
+export type GetCourseTrainingRequirementsResponse =
+  GetCourseTrainingRequirementsResponses[keyof GetCourseTrainingRequirementsResponses];
+
+export type AddCourseTrainingRequirementData = {
+  body: CourseTrainingRequirement;
+  path: {
+    courseUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/training-requirements';
+};
+
+export type AddCourseTrainingRequirementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseTrainingRequirementError =
+  AddCourseTrainingRequirementErrors[keyof AddCourseTrainingRequirementErrors];
+
+export type AddCourseTrainingRequirementResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseTrainingRequirement;
+};
+
+export type AddCourseTrainingRequirementResponse =
+  AddCourseTrainingRequirementResponses[keyof AddCourseTrainingRequirementResponses];
 
 export type GetCourseRubricsData = {
   body?: never;

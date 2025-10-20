@@ -29,10 +29,10 @@ const domainConfig = {
     bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
     borderColor: 'border-emerald-200 dark:border-emerald-800',
   },
-  creator: {
+  course_creator: {
     icon: Sparkles,
-    title: 'Creator Dashboard',
-    description: 'Design, publish, and manage your content across the platform.',
+    title: 'Course Creator Dashboard',
+    description: 'Design, publish, and monetise your courses across Elimika.',
     color: 'text-purple-600',
     bgColor: 'bg-purple-50 dark:bg-purple-900/20',
     borderColor: 'border-purple-200 dark:border-purple-800',

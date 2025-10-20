@@ -42,23 +42,39 @@ const scheduleSchema = z.object({
     trainingMode: z.enum(['ONLINE', 'IN_PERSON', 'HYBRID'], {
         required_error: 'Training mode is required',
     }),
-    // location fields are optional as requested
     trainingCity: z.string().optional(),
     trainingCountry: z.string().optional(),
     venueRequirements: z.string().optional(),
 
-    // handle empty string / undefined from inputs, then validate number >= 1 if present
     minStudents: z
         .preprocess((val) => {
             if (val === '' || val == null) return undefined;
-            // if it's already a number, return as-is; otherwise convert
             return typeof val === 'number' ? val : Number(val);
         }, z.number().min(1, { message: 'Minimum must be at least 1' }))
         .optional(),
 
     allowOneOnOne: z.boolean().optional(),
     max_students: z.any()
+}).superRefine((data, ctx) => {
+    if (data.trainingMode === 'IN_PERSON' || data.trainingMode === 'HYBRID') {
+        if (!data.trainingCity || data.trainingCity.trim() === '') {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['trainingCity'],
+                message: 'City is required for in-person or hybrid training',
+            });
+        }
+
+        if (!data.trainingCountry || data.trainingCountry.trim() === '') {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['trainingCountry'],
+                message: 'Country is required for in-person or hybrid training',
+            });
+        }
+    }
 });
+
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 

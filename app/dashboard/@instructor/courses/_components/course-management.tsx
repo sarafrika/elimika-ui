@@ -4,11 +4,12 @@ import { CustomPagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useInstructor } from '@/context/instructor-context';
+import { getAllCoursesOptions, getCoursesByInstructorOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Search } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { TrainCourseCard } from '../../../_components/train-course-card';
 
 const SAMPLE_COURSES = [
@@ -95,36 +96,41 @@ const sidebarNavItems = [
 
 export default function CourseMangementPage() {
     const router = useRouter();
-    const pathname = usePathname();
+    const instructor = useInstructor();
 
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
     const size = 20;
     const [page, setPage] = useState(0);
 
-    const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery(
-        getAllCoursesOptions({ query: { pageable: { page, size } } })
-    );
-    const courses = data?.data?.content || [];
-    const paginationMetadata = data?.data?.metadata;
-
-    const filteredCourses = courses?.filter((course: any) => {
-        const matchesSearch =
-            searchQuery === '' ||
-            course?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            course?.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        // course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
-
-        const matchesSubcategory =
-            selectedSubcategory === '' || course.subcategory === selectedSubcategory;
-
-        return matchesSearch && matchesSubcategory;
+    const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery({
+        ...getCoursesByInstructorOptions({
+            path: { instructorUuid: instructor?.uuid as string },
+            query: { pageable: { page, size, sort: [] } },
+        }),
+        enabled: !!instructor?.uuid,
     });
 
+    const { data: allCourses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }))
+
+    const courses = allCourses?.data?.content;
+    const paginationMetadata = data?.data?.metadata;
+
+    const filteredCourses = useMemo(() => {
+        if (!Array.isArray(courses)) return [];
+
+        return courses.filter(course => {
+            if (!searchQuery) return true;
+            const normalizedQuery = searchQuery.toLowerCase();
+            return (
+                course?.name?.toLowerCase().includes(normalizedQuery) ||
+                course?.description?.toLowerCase().includes(normalizedQuery)
+            );
+        });
+    }, [courses, searchQuery]);
+
     return (
-        <div className='min-h-screen'>
+        <div className='h-auto'>
             <div className='container mx-auto'>
                 {/* Search and Filters */}
                 <div className='mb-8'>
@@ -138,7 +144,7 @@ export default function CourseMangementPage() {
                                 onChange={e => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <Button variant='outline'>
+                        <Button variant='outline' disabled>
                             <Filter className='mr-2 h-4 w-4' />
                             Filters
                         </Button>
@@ -152,7 +158,7 @@ export default function CourseMangementPage() {
                             List of courses you can train
                         </p>
                         <p className='text-muted-foreground text-sm'>
-                            {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
+                            {filteredCourses.length} course{filteredCourses.length === 1 ? '' : 's'} found
                         </p>
                     </div>
                 </div>
@@ -185,14 +191,14 @@ export default function CourseMangementPage() {
                 {!isFetching && isFetched && isSuccess && filteredCourses.length === 0 && (
                     <div className='py-16 text-center'>
                         <BookOpen className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
-                        <h3 className='mb-2'>No courses found</h3>
-                        <p className='text-muted-foreground mb-4'>Try adjusting your search or filters</p>
+                        <h3 className='mb-2'>No assigned courses yet</h3>
+                        <p className='text-muted-foreground mb-4'>
+                            You do not have any courses assigned. Reach out to a course creator to request access.
+                        </p>
                         <Button
                             variant='outline'
                             onClick={() => {
                                 setSearchQuery('');
-                                setSelectedCategory('all');
-                                setSelectedSubcategory('');
                             }}
                         >
                             Clear filters

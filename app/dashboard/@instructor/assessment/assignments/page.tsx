@@ -21,7 +21,7 @@ import { BookOpen, Eye, Grip, MoreVertical, PenLine, Trash } from 'lucide-react'
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { AssignmentDialog } from '../../../@creator/_components/assignment-management-form';
+import { AssignmentDialog } from '../../../@course_creator/_components/assignment-management-form';
 
 
 export default function AssignmentsPage() {

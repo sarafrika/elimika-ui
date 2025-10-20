@@ -33,7 +33,7 @@ import { useUserProfile } from '../../../../../context/profile-context';
 import { useStudent } from '../../../../../context/student-context';
 
 // Mock certificates data
-const CERTIFICATES_DATA = {
+export const CERTIFICATES_DATA = {
     student: {
         name: 'Alice Johnson',
         studentId: 'SU2024-001',

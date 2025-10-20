@@ -166,9 +166,9 @@ export function TrainCourseCard({ course, handleClick }: TrainCourseCardProps) {
           {/* Price and Actions */}
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
-              <span className='text-primary font-bold'>{course?.price}</span>
+              <span className='text-primary font-bold'>{"KES"} {course?.price}</span>
               {course?.price && (
-                <span className='text-muted-foreground text-sm line-through'>{course?.price}</span>
+                <span className='text-muted-foreground text-sm line-through'>KES {course?.price}</span>
               )}
             </div>
           </div>

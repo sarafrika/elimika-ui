@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { useInstructor } from '@/context/instructor-context';
 import { getCourseByUuidOptions, getInstructorDocumentsOptions, getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Eye, Save, UserCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, UserCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { useParams } from 'next/navigation';
@@ -132,10 +132,10 @@ export default function ApplyToTrain() {
                                 <Save className="w-4 h-4 mr-2" />
                                 Save Draft
                             </Button>
-                            <Button variant="outline" size="sm">
+                            {/* <Button variant="outline" size="sm">
                                 <Eye className="w-4 h-4 mr-2" />
                                 Preview
-                            </Button>
+                            </Button> */}
                         </div>
                     </div>
                 </div>

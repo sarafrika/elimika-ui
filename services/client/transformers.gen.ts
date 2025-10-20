@@ -37,6 +37,7 @@ import type {
   UpdateAvailabilitySlotResponse,
   GetCourseByUuidResponse,
   UpdateCourseResponse,
+  UpdateCourseTrainingRequirementResponse,
   SetPrimaryRubricResponse,
   UpdateAssociationResponse,
   UpdateCourseRequirementResponse,
@@ -125,6 +126,8 @@ import type {
   UploadCourseIntroVideoResponse,
   UploadCourseBannerResponse,
   ArchiveCourseResponse,
+  GetCourseTrainingRequirementsResponse,
+  AddCourseTrainingRequirementResponse,
   GetCourseRubricsResponse,
   AssociateRubricResponse,
   GetCourseRequirementsResponse,
@@ -289,14 +292,14 @@ import type {
 } from './types.gen';
 
 const userOrganisationAffiliationDtoSchemaResponseTransformer = (data: any) => {
-  if (data.startDate) {
-    data.startDate = new Date(data.startDate);
+  if (data.start_date) {
+    data.start_date = new Date(data.start_date);
   }
-  if (data.endDate) {
-    data.endDate = new Date(data.endDate);
+  if (data.end_date) {
+    data.end_date = new Date(data.end_date);
   }
-  if (data.affiliatedDate) {
-    data.affiliatedDate = new Date(data.affiliatedDate);
+  if (data.affiliated_date) {
+    data.affiliated_date = new Date(data.affiliated_date);
   }
   return data;
 };
@@ -938,7 +941,22 @@ export const updateAvailabilitySlotResponseTransformer = async (
   return data;
 };
 
+const courseTrainingRequirementSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
 const courseSchemaResponseTransformer = (data: any) => {
+  if (data.training_requirements) {
+    data.training_requirements = data.training_requirements.map((item: any) => {
+      return courseTrainingRequirementSchemaResponseTransformer(item);
+    });
+  }
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
   }
@@ -964,6 +982,20 @@ export const getCourseByUuidResponseTransformer = async (
 
 export const updateCourseResponseTransformer = async (data: any): Promise<UpdateCourseResponse> => {
   data = apiResponseCourseSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseCourseTrainingRequirementSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseTrainingRequirementSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateCourseTrainingRequirementResponseTransformer = async (
+  data: any
+): Promise<UpdateCourseTrainingRequirementResponse> => {
+  data = apiResponseCourseTrainingRequirementSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2301,6 +2333,39 @@ export const archiveCourseResponseTransformer = async (
   data: any
 ): Promise<ArchiveCourseResponse> => {
   data = apiResponseCourseSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoCourseTrainingRequirementSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseTrainingRequirementSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseTrainingRequirementSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseTrainingRequirementSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseTrainingRequirementsResponseTransformer = async (
+  data: any
+): Promise<GetCourseTrainingRequirementsResponse> => {
+  data = apiResponsePagedDtoCourseTrainingRequirementSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addCourseTrainingRequirementResponseTransformer = async (
+  data: any
+): Promise<AddCourseTrainingRequirementResponse> => {
+  data = apiResponseCourseTrainingRequirementSchemaResponseTransformer(data);
   return data;
 };
 
