@@ -1,72 +1,21 @@
 'use client';
 
-import { Separator } from '@/components/ui/separator';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { ProfileSectionNav } from '@/components/profile/profile-section-nav';
 import { ReactNode } from 'react';
 
 const sections = [
-  { name: 'General', href: '/dashboard/profile/general' },
-  { name: 'Guardian Information', href: '/dashboard/profile/guardian-information' },
+  { label: 'Overview', href: '/dashboard/profile', exact: true },
+  { label: 'General', href: '/dashboard/profile/general' },
+  { label: 'Guardian information', href: '/dashboard/profile/guardian-information' },
 ];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-
   return (
-    <div className='relative min-h-screen p-0'>
-      {/* <Sidebar
-        variant="inset"
-        className="relative w-64 border-r bg-white p-0"
-        collapsible="none"
-      >
-        <SidebarContent className="border-none bg-white">
-          <SidebarGroup>
-            <SidebarGroupLabel className="px-4 py-2 text-sm text-gray-500">
-              PROFILE SETTINGS
-            </SidebarGroupLabel>
-            <SidebarMenu className="space-y-1 px-2">
-              {sections.map((section) => (
-                <SidebarMenuItem key={section.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === section.href}
-                    className="w-full rounded px-4 py-2 text-left transition hover:bg-gray-100"
-                  >
-                    <Link href={section.href}>
-                      <span>{section.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar> */}
-
-      <main className='flex flex-1 flex-col gap-8 overflow-auto px-6 py-3'>
-        <ul className='mt-4 flex gap-5'>
-          {sections.map(sec => {
-            const isActive = pathname.startsWith(sec.href);
-
-            return (
-              <li key={sec.name}>
-                <Link
-                  href={sec.href}
-                  className={`rounded-md px-3 py-1 transition-colors ${
-                    isActive ? 'bg-gray-200 text-black' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {sec.name}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-        <Separator />
-
-        {children}
-      </main>
+    <div className='flex min-h-screen flex-col gap-4 pb-14 pt-4'>
+      <ProfileSectionNav items={sections} />
+      <div className='flex-1'>
+        <div className='mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8'>{children}</div>
+      </div>
     </div>
   );
 }

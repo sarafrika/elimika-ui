@@ -1,8 +1,8 @@
 'use client';
 
+import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -116,37 +116,48 @@ export default function TrainingCenterForm() {
     return <CustomLoader />;
   }
 
+  const domainBadges =
+    userProfile?.user_domain?.map(domain =>
+      domain
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    ) ?? [];
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Training Center Profile</CardTitle>
-            <CardDescription>
-              Manage your organisation&apos;s core details, branding, and contact information.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-8'>
+    <ProfileFormShell
+      eyebrow='Organisation'
+      title='Training centre profile'
+      description='Keep your organisation details current so learners and partners know who they are working with.'
+      badges={domainBadges}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+          <ProfileFormSection
+            title='Branding & identity'
+            description='Upload your official logo and share a short overview of your centre.'
+          >
             <FormField
               control={form.control}
               name='logoUrl'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organisation Logo</FormLabel>
-                  <div className='flex items-center gap-x-4'>
-                    <Avatar className='h-20 w-20 rounded-lg'>
+                  <FormLabel>Organisation logo</FormLabel>
+                  <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6'>
+                    <Avatar className='h-20 w-20 rounded-lg ring-4 ring-background shadow-lg shadow-primary/5'>
                       <AvatarImage src={profilePic.url!} />
-                      <AvatarFallback className='rounded-lg'>Logo</AvatarFallback>
+                      <AvatarFallback className='rounded-lg text-sm font-medium'>
+                        Logo
+                      </AvatarFallback>
                     </Avatar>
                     <FormControl>
                       <ImageSelector onSelect={setProfilePic} {...{ fileElmentRef }}>
                         <Button
                           variant='outline'
-                          size='sm'
                           type='button'
                           onClick={() => fileElmentRef.current?.click()}
                         >
-                          Change
+                          Change logo
                         </Button>
                       </ImageSelector>
                     </FormControl>
@@ -156,29 +167,28 @@ export default function TrainingCenterForm() {
               )}
             />
 
-            <div className='flex gap-4'>
+            <div className='grid gap-6 sm:grid-cols-2'>
               <FormField
                 control={form.control}
                 name='name'
                 render={({ field }) => (
-                  <FormItem className='flex-grow'>
-                    <FormLabel>Organisation Name</FormLabel>
+                  <FormItem>
+                    <FormLabel>Organisation name</FormLabel>
                     <FormControl>
-                      <Input placeholder='Elimika' {...field} />
+                      <Input placeholder='Elimika Skills Centre' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name='licence_no'
                 render={({ field }) => (
-                  <FormItem className='flex-grow'>
-                    <FormLabel>Licence Number</FormLabel>
+                  <FormItem>
+                    <FormLabel>Licence number</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input placeholder='E12345/2024' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -191,12 +201,11 @@ export default function TrainingCenterForm() {
               name='description'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>About Your Organisation</FormLabel>
+                  <FormLabel>About your organisation</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder='Tell us a little about your organisation'
-                      className='resize-none'
-                      rows={4}
+                      placeholder='Introduce your training centre, target learners, and key programmes.'
+                      className='min-h-32 resize-y'
                       {...field}
                     />
                   </FormControl>
@@ -204,22 +213,19 @@ export default function TrainingCenterForm() {
                 </FormItem>
               )}
             />
-          </CardContent>
-        </Card>
+          </ProfileFormSection>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact Person</CardTitle>
-            <CardDescription>The person to contact regarding the institution</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+          <ProfileFormSection
+            title='Contact person'
+            description='We use these details when reaching out about your organisation.'
+          >
+            <div className='grid gap-6 sm:grid-cols-2'>
               <FormField
                 control={form.control}
                 name='contactPersonEmail'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Email</FormLabel>
+                    <FormLabel>Contact email</FormLabel>
                     <FormControl>
                       <Input type='email' placeholder='contact@elimika.org' {...field} />
                     </FormControl>
@@ -232,7 +238,7 @@ export default function TrainingCenterForm() {
                 name='contactPersonPhone'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Phone Number</FormLabel>
+                    <FormLabel>Contact phone number</FormLabel>
                     <FormControl>
                       <Input placeholder='+254 700 000 000' {...field} />
                     </FormControl>
@@ -241,30 +247,47 @@ export default function TrainingCenterForm() {
                 )}
               />
             </div>
-          </CardContent>
-        </Card>
+          </ProfileFormSection>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Location</CardTitle>
-            <CardDescription>Where the instituion is located</CardDescription>
-          </CardHeader>
-          <CardContent className='flex flex-col gap-5'>
-            {/* <div className='grid grid-cols-1 gap-6 md:grid-cols-2'> */}
+          <ProfileFormSection
+            title='Location & presence'
+            description='Let learners know where to find you and how to stay connected.'
+            footer={
+              <Button type='submit' disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? (
+                  <span className='flex items-center gap-2'>
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                    Updating…
+                  </span>
+                ) : (
+                  'Update profile'
+                )}
+              </Button>
+            }
+          >
             <FormField
               control={form.control}
               name='location'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Physical Address</FormLabel>
+                  <FormLabel>Physical address</FormLabel>
                   <FormControl>
                     <LocationInput
                       {...field}
-                      onRetrieve={d => {
-                        form.setValue('country', d.properties.context.country?.name);
-                        form.setValue('latitude', d.properties.coordinates.latitude);
-                        form.setValue('longitude', d.properties.coordinates.longitude);
-                        return d;
+                      onSuggest={result => {
+                        const feature = result.features[0];
+                        if (!feature) return;
+                        const coordinates = feature.properties?.coordinates;
+                        const countryName =
+                          (feature.properties?.context as any)?.country?.name ??
+                          feature.properties?.context?.country_name;
+                        if (coordinates?.latitude && coordinates?.longitude) {
+                          form.setValue('latitude', coordinates.latitude);
+                          form.setValue('longitude', coordinates.longitude);
+                        }
+                        if (countryName) {
+                          form.setValue('country', countryName);
+                        }
                       }}
                     />
                   </FormControl>
@@ -272,51 +295,23 @@ export default function TrainingCenterForm() {
                 </FormItem>
               )}
             />
-            {/* <FormField
-                                control={form.control}
-                                name='country'
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Country</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} readOnly />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            /> */}
-            {/* </div> */}
 
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <FormField
-                control={form.control}
-                name='website'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website</FormLabel>
-                    <FormControl>
-                      <Input placeholder='https://elimika.org' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className='flex justify-end'>
-          <Button type='submit' disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? (
-              <>
-                <Loader2 /> Updating....
-              </>
-            ) : (
-              'Update Profile'
-            )}
-          </Button>
-        </div>
-      </form>
-    </Form>
+            <FormField
+              control={form.control}
+              name='website'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Website</FormLabel>
+                  <FormControl>
+                    <Input placeholder='https://elimika.org' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </ProfileFormSection>
+        </form>
+      </Form>
+    </ProfileFormShell>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
+import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -20,17 +20,15 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import LocationInput from '../../../../../../components/locationInput';
-import { useUserProfile } from '../../../../../../context/profile-context';
 import { useTrainingCenter } from '../../../../../../context/training-center-provide';
+import { useUserProfile } from '../../../../../../context/profile-context';
 import { queryClient } from '../../../../../../lib/query-client';
 import {
   ApiResponse,
   createTrainingBranch,
   updateTrainingBranch,
 } from '../../../../../../services/client';
-import { zTrainingBranch, zUser } from '../../../../../../services/client/zod.gen';
-
-const userSchema = zUser.merge(z.object({ dob: z.date() }));
+import { zTrainingBranch } from '../../../../../../services/client/zod.gen';
 
 const branchSchema = zTrainingBranch
   .omit({
@@ -47,7 +45,6 @@ const branchesSchema = z.object({
   branches: z.array(branchSchema),
 });
 
-type UserType = z.infer<typeof userSchema>;
 type BranchType = z.infer<typeof branchSchema>;
 type BranchesFormValues = z.infer<typeof branchesSchema>;
 
@@ -66,9 +63,8 @@ export default function ManageBranch() {
     ]);
   }, [replaceBreadcrumbs]);
 
-  const user = useUserProfile();
+  const userProfile = useUserProfile();
   const trainingCenter = useTrainingCenter();
-  const { organizations } = user!;
 
   const defaultBranch = (): BranchType => ({
     branch_name: 'Main Campus',
@@ -77,6 +73,14 @@ export default function ManageBranch() {
     poc_email: '',
     poc_telephone: '',
   });
+
+  const domainBadges =
+    userProfile?.user_domain?.map(domain =>
+      domain
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    ) ?? [];
 
   const form = useForm<BranchesFormValues>({
     resolver: zodResolver(branchesSchema),
@@ -142,73 +146,73 @@ export default function ManageBranch() {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Manage Training Locations & Branches</CardTitle>
-            <CardDescription>
-              Add, edit, or remove your organisation&apos;s branches.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+    <ProfileFormShell
+      eyebrow='Organisation'
+      title='Branches'
+      description='Add, edit, and manage the training locations that learners can attend.'
+      badges={domainBadges}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <ProfileFormSection
+            title='Training locations'
+            description='Keep each branch up to date so learners and instructors know where programmes run.'
+            footer={
+              <div className='flex flex-col items-stretch gap-3 sm:flex-row sm:justify-between'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => append(defaultBranch())}
+                  className='sm:w-auto'
+                >
+                  <PlusCircle className='mr-2 h-4 w-4' />
+                  Add branch
+                </Button>
+                <Button type='submit' disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Saving…' : 'Save branches'}
+                </Button>
+              </div>
+            }
+          >
             <div className='space-y-8'>
               {fields.map((field, index) => (
-                <div key={field.id} className='bg-background/50 space-y-6 rounded-lg border p-6'>
-                  <div className='flex items-center justify-between'>
-                    <h3 className='text-xl font-semibold'>
-                      {form.getValues(`branches.${index}.branch_name`) || `Branch ${index + 1}`}
-                    </h3>
-                    <Button
-                      type='button'
-                      variant='destructive'
-                      size='sm'
-                      onClick={() => remove(index)}
-                    >
-                      <Trash2 className='mr-2 h-4 w-4' />
-                      Remove Branch
-                    </Button>
+                <div
+                  key={field.id}
+                  className='rounded-xl border border-border/60 bg-background/60 p-6 shadow-sm'
+                >
+                  <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+                    <div>
+                      <h3 className='text-lg font-semibold'>
+                        {form.watch(`branches.${index}.branch_name`) || `Branch ${index + 1}`}
+                      </h3>
+                      <p className='text-muted-foreground text-sm'>
+                        Outline where this branch is located and who to contact.
+                      </p>
+                    </div>
+                    {fields.length > 1 ? (
+                      <Button
+                        type='button'
+                        variant='destructive'
+                        size='sm'
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className='mr-2 h-4 w-4' />
+                        Remove
+                      </Button>
+                    ) : null}
                   </div>
 
-                  <Separator />
+                  <Separator className='my-4' />
 
-                  <FormField
-                    control={form.control}
-                    name={`branches.${index}.branch_name`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Branch Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder='e.g., Westlands Campus' {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`branches.${index}.address`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <LocationInput {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className='grid-col-2 grid gap-3'>
+                  <div className='space-y-6'>
                     <FormField
                       control={form.control}
-                      name={`branches.${index}.poc_name`}
+                      name={`branches.${index}.branch_name`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Point of contact name</FormLabel>
+                          <FormLabel>Branch name</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input placeholder='e.g. Westlands Campus' {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -217,55 +221,68 @@ export default function ManageBranch() {
 
                     <FormField
                       control={form.control}
-                      name={`branches.${index}.poc_email`}
+                      name={`branches.${index}.address`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Point of contact email</FormLabel>
+                          <FormLabel>Location</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <LocationInput {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name={`branches.${index}.poc_telephone`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Point of contact phone_number</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className='grid gap-4 sm:grid-cols-3'>
+                      <FormField
+                        control={form.control}
+                        name={`branches.${index}.poc_name`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Point of contact name</FormLabel>
+                            <FormControl>
+                              <Input placeholder='Jane Doe' {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`branches.${index}.poc_email`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Point of contact email</FormLabel>
+                            <FormControl>
+                              <Input placeholder='jane.doe@elimika.org' {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`branches.${index}.poc_telephone`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Point of contact phone</FormLabel>
+                            <FormControl>
+                              <Input placeholder='+254 700 000 000' {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
-
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='mt-4'
-                onClick={() => append(defaultBranch())}
-              >
-                <PlusCircle className='mr-2 h-4 w-4' />
-                Add Another Branch
-              </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <div className='flex justify-end'>
-          <Button type='submit' disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? <>Saving...</> : <>Save Branches</>}
-          </Button>
-        </div>
-      </form>
-    </Form>
+          </ProfileFormSection>
+        </form>
+      </Form>
+    </ProfileFormShell>
   );
 }
