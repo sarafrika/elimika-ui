@@ -9,7 +9,7 @@ import moment from 'moment';
 import { useState } from 'react';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { AvailabilitySlotDialog } from '../../@creator/_components/availability-forms';
+import { AvailabilitySlotDialog } from '../../../@course_creator/_components/availability-forms';
 import DateTimeModal from './block-modal';
 
 const localizer = momentLocalizer(moment);

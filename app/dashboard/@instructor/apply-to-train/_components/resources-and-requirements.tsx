@@ -247,7 +247,7 @@ export function ResourcesAndRequirements({ data, onDataChange }: ResourcesAndReq
         onDataChange(merged);
         form.reset(merged);
 
-        console.log(values, "values")
+        // console.log(values, "values")
     };
 
     return (

@@ -54,7 +54,7 @@ export default function ReviewsPage() {
       ) : reviews.length === 0 ? (
         <div className="text-center text-muted-foreground mt-10">
           <p className="text-lg">No reviews yet</p>
-          <p className="text-sm">Once students start leaving feedback, you'll see it here.</p>
+          <p className="text-sm">Once students start leaving feedback, you&apos;ll see it here.</p>
         </div>
       ) : (
         <div className="space-y-4">

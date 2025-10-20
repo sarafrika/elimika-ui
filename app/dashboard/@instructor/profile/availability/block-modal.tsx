@@ -1,5 +1,5 @@
+import Spinner from '@/components/ui/spinner';
 import React, { useState } from 'react';
-import Spinner from '../../../../components/ui/spinner';
 
 interface DateTimeModalProps {
   isOpen: boolean;

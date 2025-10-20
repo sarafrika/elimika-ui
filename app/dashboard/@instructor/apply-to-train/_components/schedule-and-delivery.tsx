@@ -155,7 +155,7 @@ export function ScheduleAndDelivery({
 
     const onSubmit = (values: ScheduleFormValues) => {
         onDataChange({ ...data, ...values });
-        console.log('✅ Submitted:', values);
+        // console.log('✅ Submitted:', values);
     };
 
     return (

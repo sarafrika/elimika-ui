@@ -581,10 +581,6 @@ const Page = () => {
     getInstructorAvailabilityOptions({ path: { instructorUuid: user?.instructor?.uuid as string } })
   );
 
-  console.log(availabilitySlotss, "here")
-
-  console.log(instructor, "TT")
-
   const { data: timetable } = useQuery({
     ...getInstructorScheduleOptions({
       path: { instructorUuid: instructor?.uuid as string },
@@ -592,7 +588,6 @@ const Page = () => {
     }),
     enabled: !!instructor?.uuid
   })
-  console.log(timetable, "TT")
 
   useEffect(() => {
     const slots = availabilitySlotss?.data

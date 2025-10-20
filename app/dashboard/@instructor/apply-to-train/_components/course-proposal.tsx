@@ -84,11 +84,11 @@ export function CourseProposal({ data, selectedCourse, onDataChange }: CoursePro
             onDataChange(value);
         });
         return () => subscription.unsubscribe();
-    }, [form.watch, onDataChange]);
+    }, [form, form.watch, onDataChange]);
 
     const onSubmit = (values: CourseProposalFormValues) => {
-        toast.success('Course proposal saved');
-        console.log(values);
+        toast.success('Send course proposal details to db');
+        // console.log(values);
     };
 
     return (
