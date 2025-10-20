@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BookOpen, Users, Building2 } from 'lucide-react';
+import { ArrowRight, BookOpen, Users, Building2, GraduationCap } from 'lucide-react';
 
 const accountTypes = [
   {
@@ -26,6 +26,17 @@ const accountTypes = [
     hoverBg: 'hover:bg-green-100',
   },
   {
+    id: 'course_creator',
+    title: 'Course Creator',
+    description: 'Design and publish courses, build your content library, and share your expertise.',
+    href: '/onboarding/course-creator',
+    icon: GraduationCap,
+    iconColor: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+    hoverBg: 'hover:bg-blue-100',
+  },
+  {
     id: 'organisation',
     title: 'Organisation',
     description: 'Manage your organization, oversee instructors, and track progress.',
@@ -40,7 +51,7 @@ const accountTypes = [
 
 export default function AccountTypeSelector() {
   return (
-    <div className='mx-auto grid max-w-5xl gap-8 md:grid-cols-3'>
+    <div className='mx-auto grid max-w-7xl gap-8 md:grid-cols-2 lg:grid-cols-4'>
       {accountTypes.map(type => {
         const Icon = type.icon;
 
