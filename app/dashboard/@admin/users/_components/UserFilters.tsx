@@ -10,13 +10,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface OrganizationFiltersProps {
+interface UserFiltersProps {
   searchQuery: string;
   setSearchQuery(query: string): void;
   activeFilter: string;
   setActiveFilter(status: string): void;
-  verifiedFilter: string;
-  setVerifiedFilter(verified: string): void;
+  domainFilter: string;
+  setDomainFilter(domain: string): void;
   sortField: string;
   setSortField(field: string): void;
   sortOrder: 'asc' | 'desc';
@@ -24,37 +24,36 @@ interface OrganizationFiltersProps {
   onClearFilters(): void;
 }
 
-export default function OrganizationFilters({
+export default function UserFilters({
   searchQuery,
   setSearchQuery,
   activeFilter,
   setActiveFilter,
-  verifiedFilter,
-  setVerifiedFilter,
+  domainFilter,
+  setDomainFilter,
   sortField,
   setSortField,
   sortOrder,
   setSortOrder,
   onClearFilters,
-}: OrganizationFiltersProps) {
+}: UserFiltersProps) {
   const hasActiveFilters =
-    searchQuery ||
-    activeFilter !== 'all' ||
-    verifiedFilter !== 'all' ||
-    sortField !== 'created_date';
+    searchQuery || activeFilter !== 'all' || domainFilter !== 'all' || sortField !== 'created_date';
 
   return (
     <div className='space-y-4 border-b p-4'>
+      {/* Search Input */}
       <div className='relative'>
         <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
         <Input
-          placeholder='Search by name, location, or description'
+          placeholder='Search by name, email, or username'
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           className='pl-10'
         />
       </div>
 
+      {/* Filters */}
       <div className='flex flex-wrap gap-2'>
         {/* Active Status Filter */}
         <Select value={activeFilter} onValueChange={setActiveFilter}>
@@ -69,15 +68,16 @@ export default function OrganizationFilters({
           </SelectContent>
         </Select>
 
-        {/* Verification Filter */}
-        <Select value={verifiedFilter} onValueChange={setVerifiedFilter}>
+        {/* Domain/Role Filter */}
+        <Select value={domainFilter} onValueChange={setDomainFilter}>
           <SelectTrigger className='min-w-[120px] flex-1'>
-            <SelectValue placeholder='Verification' />
+            <SelectValue placeholder='Domain' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='all'>All Verification</SelectItem>
-            <SelectItem value='true'>Verified</SelectItem>
-            <SelectItem value='false'>Pending</SelectItem>
+            <SelectItem value='all'>All Domains</SelectItem>
+            <SelectItem value='admin'>Admin</SelectItem>
+            <SelectItem value='instructor'>Instructor</SelectItem>
+            <SelectItem value='student'>Student</SelectItem>
           </SelectContent>
         </Select>
 
@@ -89,8 +89,9 @@ export default function OrganizationFilters({
           <SelectContent>
             <SelectItem value='created_date'>Date Created</SelectItem>
             <SelectItem value='updated_date'>Last Updated</SelectItem>
-            <SelectItem value='name'>Name</SelectItem>
-            <SelectItem value='location'>Location</SelectItem>
+            <SelectItem value='first_name'>First Name</SelectItem>
+            <SelectItem value='last_name'>Last Name</SelectItem>
+            <SelectItem value='email'>Email</SelectItem>
           </SelectContent>
         </Select>
 
