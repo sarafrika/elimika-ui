@@ -64,10 +64,12 @@ export function CourseCreatorOnboardingForm() {
     if (user?.uuid && !form.getValues('user_uuid')) {
       form.setValue('user_uuid', user.uuid);
     }
-    if (user?.name && !form.getValues('full_name')) {
-      form.setValue('full_name', user.name);
+    // Construct full name from first_name and last_name
+    if (user?.first_name && user?.last_name && !form.getValues('full_name')) {
+      const fullName = `${user.first_name}${user.middle_name ? ' ' + user.middle_name : ''} ${user.last_name}`.trim();
+      form.setValue('full_name', fullName);
     }
-  }, [user?.uuid, user?.name, form]);
+  }, [user?.uuid, user?.first_name, user?.middle_name, user?.last_name, form]);
 
   const handleSubmit = async (data: CourseCreatorOnboardingFormData) => {
     if (!user?.uuid) {
@@ -163,26 +165,62 @@ export function CourseCreatorOnboardingForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-          {/* Basic Information */}
+          {/* User Information (Read-only) */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>Your Information</CardTitle>
               <CardDescription>
-                This information will be displayed on your creator profile
+                This information is from your user profile and cannot be changed here
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <div>
+                  <FormLabel className='text-muted-foreground'>Full Name</FormLabel>
+                  <div className='bg-muted mt-2 rounded-md border px-3 py-2 text-sm'>
+                    {user?.first_name} {user?.middle_name} {user?.last_name}
+                  </div>
+                </div>
+                <div>
+                  <FormLabel className='text-muted-foreground'>Email</FormLabel>
+                  <div className='bg-muted mt-2 rounded-md border px-3 py-2 text-sm'>
+                    {user?.email}
+                  </div>
+                </div>
+                <div>
+                  <FormLabel className='text-muted-foreground'>Username</FormLabel>
+                  <div className='bg-muted mt-2 rounded-md border px-3 py-2 text-sm'>
+                    {user?.username}
+                  </div>
+                </div>
+                <div>
+                  <FormLabel className='text-muted-foreground'>Phone Number</FormLabel>
+                  <div className='bg-muted mt-2 rounded-md border px-3 py-2 text-sm'>
+                    {user?.phone_number}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Course Creator Profile */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Course Creator Profile</CardTitle>
+              <CardDescription>
+                Complete your course creator profile to start creating courses
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-4'>
+              {/* Hidden field for full_name */}
               <FormField
                 control={form.control}
                 name='full_name'
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name *</FormLabel>
+                  <FormItem className='hidden'>
                     <FormControl>
-                      <Input placeholder='Enter your full name' {...field} />
+                      <Input type='hidden' {...field} />
                     </FormControl>
-                    <FormDescription>Your complete name as course creator</FormDescription>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
