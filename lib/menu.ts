@@ -1,6 +1,5 @@
 import {
   Award,
-  BadgePlus,
   Bell,
   BoltIcon,
   Book,
@@ -32,8 +31,9 @@ import {
   UserIcon,
   UserPlus,
   Users,
+  UsersIcon,
   Wallet,
-  Wrench
+  Wrench,
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -58,8 +58,7 @@ export function markActiveMenuItem(items: MenuItem[], currentPath: string): Menu
   return items.map(item => {
     const newItem: MenuItem = { ...item };
 
-    // ==> Mark as active only if exact match
-    // newItem.isActive = item.url === currentPath;
+    // ==> Mark as active only if exact match // newItem.isActive = item.url === currentPath;
 
     // == Mark as active only if exact match or path starts with item.url
     newItem.isActive = currentPath.startsWith(item?.url as any);
@@ -246,7 +245,6 @@ export default {
       icon: Wallet,
     },
     {
-
       title: 'Opportunities',
       url: '/dashboard/opportunities',
       icon: Handshake,
@@ -378,11 +376,6 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Course Creators',
-      url: '/dashboard/course-creators',
-      icon: BadgePlus,
-    },
-    {
       title: 'Instructors',
       url: '/dashboard/instructors',
       icon: Users,
@@ -391,6 +384,11 @@ export default {
       title: 'Organizations',
       url: '/dashboard/organizations',
       icon: Building2,
+    },
+    {
+      title: 'Users',
+      url: '/dashboard/users',
+      icon: UsersIcon,
     },
   ],
   organisation_user: [

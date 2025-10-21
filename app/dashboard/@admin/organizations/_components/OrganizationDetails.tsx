@@ -1,203 +1,288 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { BadgeCheckIcon, Building2, Globe, Phone } from 'lucide-react';
+import {
+  BadgeCheckIcon,
+  Building2Icon,
+  FileText,
+  Globe,
+  GraduationCap,
+  Link as LinkIcon,
+  MapPin,
+  MapPinned,
+  ShieldCheck,
+  Users,
+} from 'lucide-react';
 import React from 'react';
+import { Organisation } from '@/services/client';
+import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
 
 interface OrganizationDetailsProps {
-  organization: any;
-  getStatusBadgeComponent?: (organizationId: string) => React.ReactElement;
+  organization: Organisation;
+  className?: string;
 }
 
 export default function OrganizationDetails({
   organization,
-  getStatusBadgeComponent,
+  className = '',
 }: OrganizationDetailsProps) {
-  // const formatDate = (dateString: string | undefined) => {
-  //     if (!dateString) return 'Not specified'
-  //     return new Date(dateString).toLocaleDateString('en-US', {
-  //         year: 'numeric',
-  //         month: 'long',
-  //         day: 'numeric'
-  //     })
-  // }
-
   return (
-    <div className='space-y-6'>
-      {/* Profile Header */}
+    <div className={`space-y-6 ${className}`}>
+      {/* Header Card with Key Info */}
       <Card>
-        <CardHeader className='pb-4'>
-          <div className='flex flex-col space-y-4'>
-            <div className='flex items-start justify-between'>
-              <div className='space-y-2'>
-                <CardTitle className='text-2xl font-bold'>{organization.name}</CardTitle>
-                <p className='text-muted-foreground text-lg'>
-                  {organization.description || 'No description provided'}
-                </p>
-                <p className='text-muted-foreground flex items-center gap-2 text-sm'>
-                  <Globe className='h-4 w-4' />
-                  {organization.domain}
-                </p>
+        <CardHeader className='pb-3'>
+          <div className='flex items-start justify-between'>
+            <div className='flex items-start gap-4'>
+              <div className='bg-primary/10 flex h-16 w-16 items-center justify-center rounded-lg'>
+                <Building2Icon className='text-primary h-8 w-8' />
               </div>
-              <div className='space-y-2 text-right'>
-                <div>
-                  <p className='text-muted-foreground text-sm font-medium'>Organization ID:</p>
-                  <p className='font-mono text-sm'>{organization.uuid?.slice(0, 8) || 'N/A'}</p>
+              <div className='space-y-1'>
+                <div className='flex items-center gap-2'>
+                  <h2 className='text-2xl font-bold'>{organization.name}</h2>
+                  {organization.admin_verified && <ShieldCheck className='text-primary h-5 w-5' />}
                 </div>
-                <div>
-                  <p className='text-muted-foreground text-sm font-medium'>Status:</p>
-                  {organization.uuid &&
-                    <Badge variant={organization?.admin_verified ? 'success' : 'secondary'}>
-                      {organization?.admin_verified ? (
-                        <>
-                          <BadgeCheckIcon />
-                          Verified
-                        </>
-                      ) : (
-                        'Pending'
-                      )}
-                    </Badge>}
-
-                </div>
+                {organization.description && (
+                  <p className='text-muted-foreground max-w-2xl text-sm'>
+                    {organization.description}
+                  </p>
+                )}
+                {organization.slug && (
+                  <div className='flex items-center gap-2 pt-1'>
+                    <LinkIcon className='text-muted-foreground h-3 w-3' />
+                    <code className='text-muted-foreground bg-muted rounded px-2 py-1 text-xs'>
+                      {organization.slug}
+                    </code>
+                  </div>
+                )}
               </div>
             </div>
-
-            <div className='grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-4'>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Domain:</p>
-                <p className='text-sm'>{organization.domain}</p>
-              </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Code:</p>
-                <p className='text-sm'>{organization.code || 'Not provided'}</p>
-              </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Active Status:</p>
-                <p className='text-sm'>{organization.active ? 'Active' : 'Inactive'}</p>
-              </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Slug:</p>
-                <p className='text-sm'>{organization.name || 'Not generated'}</p>
-              </div>
+            <div className='flex flex-col items-end gap-2'>
+              <Badge
+                variant={organization.admin_verified ? 'default' : 'secondary'}
+                className='gap-1'
+              >
+                {organization.admin_verified ? (
+                  <>
+                    <ShieldCheck className='h-3 w-3' />
+                    Verified
+                  </>
+                ) : (
+                  'Pending Verification'
+                )}
+              </Badge>
+              <Badge variant={organization.active ? 'success' : 'destructive'}>
+                {organization.active ? (
+                  <>
+                    <BadgeCheckIcon className='mr-1 h-3 w-3' />
+                    Active
+                  </>
+                ) : (
+                  'Inactive'
+                )}
+              </Badge>
             </div>
           </div>
         </CardHeader>
       </Card>
-
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
+      <div className='grid gap-6 lg:grid-cols-2'>
         {/* Organization Information */}
         <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-4'>
-            <CardTitle className='flex items-center gap-2 text-lg font-semibold'>
-              <Building2 className='h-5 w-5' />
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2 text-base font-semibold'>
+              <Building2Icon className='h-4 w-4' />
               Organization Information
             </CardTitle>
           </CardHeader>
           <CardContent className='space-y-4'>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Organization Name</p>
-                <p className='text-sm'>{organization.name}</p>
+            <div className='grid gap-4'>
+              <div className='flex justify-between'>
+                <span className='text-muted-foreground text-sm'>Organization ID</span>
+                <span className='font-mono text-sm font-medium'>
+                  {organization.uuid?.slice(0, 13) || 'N/A'}
+                </span>
               </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Organization Code</p>
-                <p className='text-sm'>{organization.code || 'Not specified'}</p>
+
+              <Separator />
+
+              {organization.licence_no && (
+                <>
+                  <div className='flex items-start justify-between'>
+                    <span className='text-muted-foreground flex items-center gap-2 text-sm'>
+                      <FileText className='h-3.5 w-3.5' />
+                      License Number
+                    </span>
+                    <span className='text-right text-sm font-medium'>
+                      {organization.licence_no}
+                    </span>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
+              <div className='flex justify-between'>
+                <span className='text-muted-foreground text-sm'>Status</span>
+                <span className='text-sm font-medium'>
+                  {organization.active ? 'Active' : 'Inactive'}
+                </span>
               </div>
-            </div>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Domain</p>
-                <p className='text-sm'>{organization.domain}</p>
+
+              <Separator />
+
+              <div className='flex justify-between'>
+                <span className='text-muted-foreground text-sm'>Verification Status</span>
+                <span className='text-sm font-medium'>
+                  {organization.admin_verified ? 'Verified' : 'Pending'}
+                </span>
               </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>URL Slug</p>
-                <p className='text-sm'>{organization.name || 'Not generated'}</p>
+
+              <Separator />
+
+              <div className='flex flex-col gap-1'>
+                <span className='text-muted-foreground text-sm'>Created</span>
+                <span className='text-sm font-medium'>
+                  {organization.created_date
+                    ? new Date(organization.created_date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })
+                    : 'N/A'}
+                </span>
               </div>
-            </div>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Active Status</p>
-                <div className='flex items-center gap-2'>
-                  <div
-                    className={`h-2 w-2 rounded-full ${organization.active ? 'bg-green-500' : 'bg-red-500'}`}
-                  />
-                  <p className='text-sm'>{organization.active ? 'Active' : 'Inactive'}</p>
-                </div>
-              </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Type</p>
-                <p className='text-sm'>Training Organization</p>
-              </div>
-            </div>
-            <Separator />
-            <div>
-              <p className='text-muted-foreground text-sm font-medium'>Description</p>
-              <p className='text-sm'>{organization.description || 'No description provided'}</p>
+
+              {organization.updated_date && (
+                <>
+                  <Separator />
+                  <div className='flex flex-col gap-1'>
+                    <span className='text-muted-foreground text-sm'>Last Updated</span>
+                    <span className='text-sm font-medium'>
+                      {new Date(organization.updated_date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Contact Information */}
+        {/* Location Information */}
         <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-4'>
-            <CardTitle className='flex items-center gap-2 text-lg font-semibold'>
-              <Phone className='h-5 w-5' />
-              Contact Information
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2 text-base font-semibold'>
+              <MapPin className='h-4 w-4' />
+              Location & Contact
             </CardTitle>
           </CardHeader>
           <CardContent className='space-y-4'>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Phone Number</p>
-                <p className='text-sm'>Not provided</p>
-              </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Email Address</p>
-                <p className='text-sm'>Not provided</p>
-              </div>
-            </div>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Website</p>
-                <p className='text-sm'>Not provided</p>
-              </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Fax Number</p>
-                <p className='text-sm'>Not provided</p>
-              </div>
-            </div>
-            <Separator />
-            <div>
-              <p className='text-muted-foreground text-sm font-medium'>Physical Address</p>
-              <p className='text-sm'>Address not provided</p>
-            </div>
-            <div>
-              <p className='text-muted-foreground text-sm font-medium'>Postal Address</p>
-              <p className='text-sm'>Postal address not provided</p>
+            <div className='grid gap-4'>
+              {organization.location ? (
+                <>
+                  <div className='flex flex-col gap-1'>
+                    <span className='text-muted-foreground flex items-center gap-2 text-sm'>
+                      <MapPinned className='h-3.5 w-3.5' />
+                      Physical Address
+                    </span>
+                    <span className='text-sm font-medium'>{organization.location}</span>
+                  </div>
+                  <Separator />
+                </>
+              ) : (
+                <>
+                  <div className='flex flex-col gap-1'>
+                    <span className='text-muted-foreground text-sm'>Physical Address</span>
+                    <span className='text-muted-foreground text-sm italic'>Not provided</span>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
+              {organization.country ? (
+                <>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-muted-foreground flex items-center gap-2 text-sm'>
+                      <Globe className='h-3.5 w-3.5' />
+                      Country
+                    </span>
+                    <span className='text-sm font-medium'>{organization.country}</span>
+                  </div>
+                  <Separator />
+                </>
+              ) : (
+                <>
+                  <div className='flex justify-between'>
+                    <span className='text-muted-foreground text-sm'>Country</span>
+                    <span className='text-muted-foreground text-sm italic'>Not provided</span>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
+              {(organization.latitude || organization.longitude) && (
+                <>
+                  <div className='flex flex-col gap-2'>
+                    <span className='text-muted-foreground text-sm'>GPS Coordinates</span>
+                    <div className='grid grid-cols-2 gap-2'>
+                      {organization.latitude && (
+                        <div className='bg-muted rounded-md p-2'>
+                          <p className='text-muted-foreground text-xs'>Latitude</p>
+                          <p className='font-mono text-sm font-medium'>
+                            {organization.latitude.toFixed(6)}
+                          </p>
+                        </div>
+                      )}
+                      {organization.longitude && (
+                        <div className='bg-muted rounded-md p-2'>
+                          <p className='text-muted-foreground text-xs'>Longitude</p>
+                          <p className='font-mono text-sm font-medium'>
+                            {organization.longitude.toFixed(6)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className='grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-4'>
-        <div>
-          <p className='text-muted-foreground text-sm font-medium'>Domain:</p>
-          <p className='text-sm'>{organization.domain}</p>
-        </div>
-        <div>
-          <p className='text-muted-foreground text-sm font-medium'>Code:</p>
-          <p className='text-sm'>{organization.code || 'Not provided'}</p>
-        </div>
-        <div>
-          <p className='text-muted-foreground text-sm font-medium'>Active Status:</p>
-          <p className='text-sm'>{organization.active ? 'Active' : 'Inactive'}</p>
-        </div>
-        <div>
-          <p className='text-muted-foreground text-sm font-medium'>Slug:</p>
-          {/* @ts-ignore */}
-          <p className='text-sm'>{organization.slug || 'Not generated'}</p>
-        </div>
-      </div>
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className='text-base font-semibold'>Management Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <Link href={`/dashboard/organizations/${organization.uuid}/users`}>
+              <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'>
+                <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100'>
+                  <Users className='h-5 w-5 text-blue-600' />
+                </div>
+                <div className='text-left'>
+                  <p className='text-sm font-medium text-gray-900'>View Members</p>
+                  <p className='text-xs text-gray-600'>Manage organization users</p>
+                </div>
+              </button>
+            </Link>
+            <Link href={`/dashboard/organizations/${organization.uuid}/branches`}>
+              <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'>
+                <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100'>
+                  <GraduationCap className='h-5 w-5 text-blue-600' />
+                </div>
+                <div className='text-left'>
+                  <p className='text-sm font-medium text-gray-900'>Training Branches</p>
+                  <p className='text-xs text-gray-600'>View training locations</p>
+                </div>
+              </button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

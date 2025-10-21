@@ -1,29 +1,29 @@
 'use client';
-import OrganizationCard from '@/app/dashboard/@admin/organizations/_components/OrganizationCard';
-import OrganizationFilters from '@/app/dashboard/@admin/organizations/_components/OrganizationFilters';
+import UserCard from '@/app/dashboard/@admin/users/_components/UserCard';
+import UserFilters from '@/app/dashboard/@admin/users/_components/UserFilters';
 import { useRouter, usePathname } from 'next/navigation';
-import { Organisation } from '@/services/client';
+import { User } from '@/services/client';
 import React from 'react';
 
-interface OrganizationsListProps {
-  organizations: Organisation[];
+interface UsersListProps {
+  users: User[];
   searchQuery: string;
   activeFilter: string;
-  verifiedFilter: string;
+  domainFilter: string;
   sortField: string;
   sortOrder: 'asc' | 'desc';
-  selectedOrganization: Organisation | null;
+  selectedUser: User | null;
 }
 
-export default function OrganizationsList({
-  organizations,
+export default function UsersList({
+  users,
   searchQuery,
   activeFilter,
-  verifiedFilter,
+  domainFilter,
   sortField,
   sortOrder,
-  selectedOrganization,
-}: OrganizationsListProps) {
+  selectedUser,
+}: UsersListProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -43,38 +43,36 @@ export default function OrganizationsList({
     router.push(pathname);
   };
 
-  const isSelected = (organization: Organisation) =>
-    !selectedOrganization ? true : selectedOrganization?.uuid === organization.uuid;
-
+  const isSelected = (user: User) => (!selectedUser ? true : selectedUser?.uuid === user.uuid);
 
   return (
     <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
-      <OrganizationFilters
+      <UserFilters
         searchQuery={searchQuery}
         activeFilter={activeFilter}
-        verifiedFilter={verifiedFilter}
+        domainFilter={domainFilter}
         sortField={sortField}
         sortOrder={sortOrder}
         setSearchQuery={query => updateParams({ search: query })}
         setActiveFilter={active => updateParams({ active })}
-        setVerifiedFilter={verified => updateParams({ verified })}
+        setDomainFilter={domain => updateParams({ domain })}
         setSortField={field => updateParams({ sortField: field })}
         setSortOrder={order => updateParams({ sortOrder: order })}
         onClearFilters={handleClearFilters}
       />
 
       <div className='flex-1 overflow-y-auto'>
-        {organizations.length === 0 ? (
+        {users.length === 0 ? (
           <div className='text-muted-foreground flex h-32 items-center justify-center'>
-            No organizations found
+            No users found
           </div>
         ) : (
-          organizations.map(organization => (
-            <OrganizationCard
-              key={organization.uuid!}
-              organization={organization}
-              isSelected={isSelected(organization)}
-              onSelect={selectedOrg => updateParams({ id: selectedOrg?.uuid ?? '' })}
+          users.map(user => (
+            <UserCard
+              key={user.uuid!}
+              user={user}
+              isSelected={isSelected(user)}
+              onSelect={selectedUser => updateParams({ id: selectedUser?.uuid ?? '' })}
             />
           ))
         )}
