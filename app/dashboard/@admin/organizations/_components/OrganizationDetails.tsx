@@ -6,7 +6,7 @@ import React from 'react';
 
 interface OrganizationDetailsProps {
   organization: any;
-  getStatusBadgeComponent: (organizationId: string) => React.ReactElement;
+  getStatusBadgeComponent?: (organizationId: string) => React.ReactElement;
 }
 
 export default function OrganizationDetails({
@@ -46,17 +46,18 @@ export default function OrganizationDetails({
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>Status:</p>
-                  {organization.uuid && getStatusBadgeComponent(organization.uuid)}
-                  <Badge variant={organization?.admin_verified ? 'success' : 'secondary'}>
-                    {organization?.admin_verified ? (
-                      <>
-                        <BadgeCheckIcon />
-                        Verified
-                      </>
-                    ) : (
-                      'Pending'
-                    )}
-                  </Badge>
+                  {organization.uuid &&
+                    <Badge variant={organization?.admin_verified ? 'success' : 'secondary'}>
+                      {organization?.admin_verified ? (
+                        <>
+                          <BadgeCheckIcon />
+                          Verified
+                        </>
+                      ) : (
+                        'Pending'
+                      )}
+                    </Badge>}
+
                 </div>
               </div>
             </div>

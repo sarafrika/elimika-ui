@@ -48,20 +48,41 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
     };
 
     const getCompletionStatus = () => {
-        const requiredFields = [
-            data?.full_name || data?.organizationName,
-            profile?.email || data?.organizationEmail,
-            selectedCourse,
-            data?.trainingMode,
-            finalConfirmations.includes('accuracy'),
-            finalConfirmations.includes('terms')
+        const fieldChecks = [
+            {
+                label: 'Full Name or Organization Name',
+                isComplete: Boolean(data?.full_name || data?.organizationName),
+            },
+            {
+                label: 'Email',
+                isComplete: Boolean(profile?.email || data?.organizationEmail),
+            },
+            {
+                label: 'Selected Course',
+                isComplete: Boolean(selectedCourse),
+            },
+            {
+                label: 'Training Mode',
+                isComplete: Boolean(data?.trainingMode),
+            },
+            {
+                label: 'Confirmed Accuracy',
+                isComplete: finalConfirmations.includes('accuracy'),
+            },
+            {
+                label: 'Agreed to Terms',
+                isComplete: finalConfirmations.includes('terms'),
+            },
         ];
 
-        const completed = requiredFields.filter(Boolean).length;
-        const total = requiredFields.length;
+        const completed = fieldChecks.filter(f => f.isComplete).length;
+        const total = fieldChecks.length;
+        const percentage = Math.round((completed / total) * 100);
+        const incompleteItems = fieldChecks.filter(f => !f.isComplete).map(f => f.label);
 
-        return { completed, total, percentage: Math.round((completed / total) * 100) };
+        return { completed, total, percentage, incompleteItems };
     };
+
 
     const status = getCompletionStatus();
     const isReadyToSubmit = status.percentage === 100;
@@ -76,19 +97,29 @@ export function ReviewAndSubmit({ data, profile, selectedCourse }: ReviewAndSubm
             {/* Application Status */}
             <Card className={isReadyToSubmit ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'}>
                 <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-start gap-4">
                         {isReadyToSubmit ? (
-                            <CheckCircle className="w-6 h-6 text-green-600" />
+                            <CheckCircle className="w-6 h-6 text-green-600 mt-1" />
                         ) : (
-                            <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                            <AlertTriangle className="w-6 h-6 text-yellow-600 mt-1" />
                         )}
-                        <div>
-                            <h4 className={isReadyToSubmit ? 'text-green-800' : 'text-yellow-800'}>
+
+                        <div className="flex flex-col">
+                            <h4 className={`font-semibold ${isReadyToSubmit ? 'text-green-800' : 'text-yellow-800'}`}>
                                 Application {isReadyToSubmit ? 'Ready for Submission' : 'Incomplete'}
                             </h4>
-                            <p className={`text-sm ${isReadyToSubmit ? 'text-green-600' : 'text-yellow-600'}`}>
+
+                            <p className={`text-sm mt-1 ${isReadyToSubmit ? 'text-green-600' : 'text-yellow-600'}`}>
                                 {status.completed} of {status.total} required sections completed ({status.percentage}%)
                             </p>
+
+                            {status.incompleteItems.length > 0 && (
+                                <ul className="mt-3 pl-4 text-sm text-yellow-700 list-disc space-y-1">
+                                    {status.incompleteItems.map((item, index) => (
+                                        <li key={index}>{item}</li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
                     </div>
                 </CardContent>

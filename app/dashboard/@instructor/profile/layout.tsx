@@ -4,14 +4,21 @@ import { ProfileSectionNav } from '@/components/profile/profile-section-nav';
 import { ReactNode } from 'react';
 
 const sections = [
-  { label: 'Overview', href: '/dashboard/profile', exact: true },
   { label: 'General', href: '/dashboard/profile/general' },
   { label: 'Education', href: '/dashboard/profile/education' },
   { label: 'Experience', href: '/dashboard/profile/experience' },
-  { label: 'Professional memberships', href: '/dashboard/profile/professional-membership' },
-  { label: 'Skills', href: '/dashboard/profile/skills' },
-  { label: 'Training areas', href: '/dashboard/profile/training-areas' },
-  { label: 'Availability & rates', href: '/dashboard/profile/availability' },
+  { label: 'Certificates', href: '/dashboard/profile/certificates' },
+
+  {
+    label: 'Professional Memberships',
+    href: '/dashboard/profile/professional-membership',
+  },
+  { label: 'Skill Card', href: '/dashboard/profile/skill-card' },
+  { label: 'Training Areas', href: '/dashboard/profile/training-areas' },
+  { label: 'Availability', href: '/dashboard/profile/availability' },
+  { label: 'Rate Card', href: '/dashboard/profile/rate-card' },
+  { label: 'Reviews', href: '/dashboard/profile/reviews' },
+
 ];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {

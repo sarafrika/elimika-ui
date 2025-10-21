@@ -60,7 +60,6 @@ export default function OrganizationDetailsPanel({
         <div>
           <OrganizationDetails
             organization={organization}
-            getStatusBadgeComponent={getStatusBadgeComponent}
           />
         </div>
       </div>
@@ -74,7 +73,7 @@ export default function OrganizationDetailsPanel({
             className='min-w-[120px]'
           >
             <Edit className='mr-2 h-4 w-4' />
-            {isVerifyPending ? <Spinner /> : 'Approve/Verify'}
+            {isVerifyPending ? <Spinner /> : 'Approve Verification'}
           </Button>
           <Button
             variant='destructive'
@@ -82,7 +81,7 @@ export default function OrganizationDetailsPanel({
             className='min-w-[120px]'
           >
             <Trash2 className='mr-2 h-4 w-4' />
-            {isUnverifyPending ? <Spinner /> : 'Reject/Unverify'}
+            {isUnverifyPending ? <Spinner /> : 'Unverify'}
           </Button>
         </div>
       </div>

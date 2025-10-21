@@ -1,8 +1,5 @@
+import CourseMangementPage from "./_components/course-management";
 
-function LearnigPage() {
-    return (
-        <div>This page is under construction</div>
-    )
+export default function Page() {
+    return <CourseMangementPage />;
 }
-
-export default LearnigPage
