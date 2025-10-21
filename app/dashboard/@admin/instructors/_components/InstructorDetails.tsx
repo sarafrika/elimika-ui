@@ -14,7 +14,7 @@ import React from 'react';
 
 interface InstructorDetailsProps {
   instructor: Instructor;
-  getStatusBadgeComponent: (instructorId: string) => React.ReactElement;
+  getStatusBadgeComponent?: (instructorId: string) => React.ReactElement;
   className?: string;
 }
 
@@ -88,7 +88,6 @@ export default function InstructorDetails({
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>Status:</p>
-                  {getStatusBadgeComponent(instructor.uuid!)}
                   <Badge variant={instructor?.admin_verified ? 'success' : 'secondary'}>
                     {instructor?.admin_verified ? (
                       <>
@@ -143,7 +142,7 @@ export default function InstructorDetails({
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Date of birth</p>
                 <p className='text-sm'>
-                  {instructorInfo?.data?.dob.toDateString() || 'Not specified'}
+                  {/* {instructorInfo?.data?.dob.toDateString() || 'Not specified'} */}
                 </p>
               </div>
             </div>
@@ -245,8 +244,8 @@ export default function InstructorDetails({
         </CardHeader>
         <CardContent>
           {!membershipIsPending &&
-          !membershipIsError &&
-          Number(membership?.data?.content?.length) > 0 ? (
+            !membershipIsError &&
+            Number(membership?.data?.content?.length) > 0 ? (
             <div className='grid grid-cols-2 justify-between gap-4'>
               {/* @ts-ignore */}
               {membership?.data?.content?.map((body: any, index) => (
@@ -256,9 +255,8 @@ export default function InstructorDetails({
                       {body?.organization_name || 'N/A'}
                     </Badge>
                     <span
-                      className={`text-xs font-medium ${
-                        body?.is_active ? 'text-green-600' : 'text-red-500'
-                      }`}
+                      className={`text-xs font-medium ${body?.is_active ? 'text-green-600' : 'text-red-500'
+                        }`}
                     >
                       {body?.is_active ? 'Active' : 'Inactive'}
                     </span>
@@ -289,8 +287,8 @@ export default function InstructorDetails({
         </CardHeader>
         <CardContent className='space-y-4'>
           {experienceIsSuccess &&
-          !experienceIsError &&
-          Number(experience?.data?.content?.length) > 0 ? (
+            !experienceIsError &&
+            Number(experience?.data?.content?.length) > 0 ? (
             experience?.data?.content?.map((exp, index) => (
               <div key={index} className='space-y-2'>
                 <div className='flex items-start justify-between'>

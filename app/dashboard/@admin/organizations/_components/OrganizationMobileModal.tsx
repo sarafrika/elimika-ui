@@ -1,9 +1,9 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Building2 } from 'lucide-react';
-import OrganizationDetails from './OrganizationDetails';
-import { Organisation as OrganisationDto } from '@/services/api/schema';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Organisation as OrganisationDto } from '@/services/api/schema';
+import { Building2, Edit, Trash2 } from 'lucide-react';
+import React from 'react';
+import OrganizationDetails from './OrganizationDetails';
 
 interface OrganizationMobileModalProps {
   organization: OrganisationDto | null;
@@ -37,7 +37,7 @@ export default function OrganizationMobileModal({
         <div className='py-4'>
           <OrganizationDetails
             organization={organization}
-            getStatusBadgeComponent={getStatusBadgeComponent}
+          // getStatusBadgeComponent={getStatusBadgeComponent}
           />
         </div>
 

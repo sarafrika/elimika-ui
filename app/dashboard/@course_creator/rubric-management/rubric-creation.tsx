@@ -37,7 +37,6 @@ import RubricTable from './rubric-table-render';
 export default function RubricsCreationPage() {
     const qc = useQueryClient();
     const creator = useCourseCreator()
-    console.log(creator, "crt")
     const { replaceBreadcrumbs } = useBreadcrumb();
 
     useEffect(() => {

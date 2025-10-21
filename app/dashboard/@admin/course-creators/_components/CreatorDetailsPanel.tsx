@@ -1,36 +1,33 @@
 import { Button } from '@/components/ui/button';
-import { Instructor } from '@/services/api/schema';
+import Spinner from '@/components/ui/spinner';
+import { CourseCreator } from '@/services/client';
 import { Edit, Trash2, User } from 'lucide-react';
-import React from 'react';
-import Spinner from '../../../../../components/ui/spinner';
-import InstructorDetails from './InstructorDetails';
+import CourseCreatorDetails from './CreatorDetails';
 
-interface InstructorDetailsPanelProps {
-  instructor: Instructor | null;
-  onApprove: (instructor: Instructor) => void;
-  onReject: (instructor: Instructor) => void;
-  getStatusBadgeComponent: (instructorId: string) => React.ReactElement;
+interface CourseCreatorDetailsPanelProps {
+  courseCreator: CourseCreator | null;
+  onApprove: (courseCreator: CourseCreator) => void;
+  onReject: (courseCreator: CourseCreator) => void;
   isApprovePending: boolean;
   isRejectPending: boolean;
 }
 
-export default function InstructorDetailsPanel({
-  instructor,
+export default function CourseCreatorDetailsPanel({
+  courseCreator,
   onApprove,
   onReject,
-  getStatusBadgeComponent,
   isApprovePending,
   isRejectPending,
-}: InstructorDetailsPanelProps) {
-  if (!instructor) {
+}: CourseCreatorDetailsPanelProps) {
+  if (!courseCreator) {
     return (
       <div className='hidden flex-1 flex-col lg:flex'>
         <div className='flex flex-1 items-center justify-center'>
           <div className='text-center'>
             <User className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-            <h2 className='mb-2 text-lg font-medium'>No Instructor Selected</h2>
+            <h2 className='mb-2 text-lg font-medium'>No Course Creator Selected</h2>
             <p className='text-muted-foreground'>
-              Select an instructor from the list to view details
+              Select a course creator from the list to view details
             </p>
           </div>
         </div>
@@ -43,7 +40,7 @@ export default function InstructorDetailsPanel({
       {/* Header */}
       <div className='bg-background border-b p-6'>
         <div className='flex items-center justify-between'>
-          <h1 className='text-2xl font-semibold'>Instructor Details</h1>
+          <h1 className='text-2xl font-semibold'>Course Creator Details</h1>
           <div className='flex items-center gap-2'>
             <Button variant='ghost' size='sm'>
               <Edit className='h-4 w-4' />
@@ -57,8 +54,8 @@ export default function InstructorDetailsPanel({
 
       {/* Content */}
       <div className='flex-1 overflow-y-auto p-6'>
-        <InstructorDetails
-          instructor={instructor}
+        <CourseCreatorDetails
+          courseCreator={courseCreator}
         />
       </div>
 
@@ -66,7 +63,7 @@ export default function InstructorDetailsPanel({
       <div className='bg-background border-t p-6'>
         <div className='flex gap-3'>
           <Button
-            onClick={() => onApprove(instructor)}
+            onClick={() => onApprove(courseCreator)}
             className='min-w-[110px] bg-blue-600 text-white hover:bg-blue-700'
           >
             <Edit className='mr-2 h-4 w-4' />
@@ -74,7 +71,7 @@ export default function InstructorDetailsPanel({
           </Button>
           <Button
             variant='destructive'
-            onClick={() => onReject(instructor)}
+            onClick={() => onReject(courseCreator)}
             className='min-w-[100px]'
           >
             <Trash2 className='mr-2 h-4 w-4' />

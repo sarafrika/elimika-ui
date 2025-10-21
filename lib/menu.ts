@@ -1,5 +1,6 @@
 import {
   Award,
+  BadgePlus,
   Bell,
   BoltIcon,
   Book,
@@ -375,6 +376,11 @@ export default {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
+    },
+    {
+      title: 'Course Creators',
+      url: '/dashboard/course-creators',
+      icon: BadgePlus,
     },
     {
       title: 'Instructors',

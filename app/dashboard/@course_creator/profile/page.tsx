@@ -1,10 +1,15 @@
 'use client';
 
+import {
+  ProfileSummaryMeta,
+  ProfileSummarySection,
+  ProfileSummaryView,
+} from '@/components/profile/profile-summary-view';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCourseCreator } from '@/context/course-creator-context';
-import { Globe, Mail, MapPin, Pencil } from 'lucide-react';
+import { domainBadgeClass, formatDomainLabel } from '@/lib/domain-utils';
+import { CheckCircle2, Globe, Mail, MapPin, Pencil, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CourseCreatorProfilePage() {
@@ -26,69 +31,75 @@ export default function CourseCreatorProfilePage() {
     );
   }
 
-  return (
-    <div className='mx-auto w-full max-w-4xl space-y-6 px-4 py-10'>
-      <header className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
-        <div>
-          <p className='text-sm uppercase tracking-widest text-purple-600 dark:text-purple-300'>
-            Creator profile
-          </p>
-          <h1 className='mt-1 text-3xl font-semibold tracking-tight'>{profile.full_name}</h1>
-          {profile.professional_headline && (
-            <p className='text-muted-foreground mt-2 text-sm'>{profile.professional_headline}</p>
-          )}
-        </div>
-        <Button variant='outline' asChild>
-          <Link prefetch href='/dashboard/profile'>
-            <Pencil className='mr-2 h-4 w-4' />
-            Edit profile
-          </Link>
-        </Button>
-      </header>
+  const meta: ProfileSummaryMeta[] = [];
+  if (profile.website) {
+    meta.push({
+      icon: <Globe className='h-4 w-4' />,
+      label: 'Website',
+      href: profile.website,
+    });
+  }
+  if (profile.user_uuid) {
+    meta.push({
+      icon: <Mail className='h-4 w-4' />,
+      label: (
+        <span className='inline-flex items-center gap-1'>
+          User UUID: {profile.user_uuid.slice(0, 8)}…
+        </span>
+      ),
+    });
+  }
 
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-base font-semibold'>About</CardTitle>
-          <CardDescription>
-            Ensure potential learners and partners understand your expertise.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4 text-sm'>
+  const sections: ProfileSummarySection[] = [
+    {
+      title: 'About',
+      description: 'Ensure potential learners and partners understand your expertise.',
+      content: (
+        <div className='space-y-4 text-sm'>
           <div className='space-y-1'>
             <p className='text-xs uppercase tracking-wide text-muted-foreground'>Bio</p>
             <p>{profile.bio || 'A professional summary has not been added yet.'}</p>
           </div>
-          <div className='flex flex-wrap gap-3 text-sm text-muted-foreground'>
-            <Badge variant='outline'>{profile.admin_verified ? 'Verified' : 'Unverified'}</Badge>
-            {profile.website && (
-              <Link
-                prefetch
-                href={profile.website}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='inline-flex items-center gap-1 hover:text-purple-600'
-              >
-                <Globe className='h-4 w-4' />
-                Website
-              </Link>
-            )}
-            {profile.user_uuid && (
-              <span className='inline-flex items-center gap-1'>
-                <Mail className='h-4 w-4' /> User UUID: {profile.user_uuid.slice(0, 8)}…
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-base font-semibold'>Assignments</CardTitle>
-          <CardDescription>
-            Track global publishing access and organisation-specific responsibilities.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-3 text-sm'>
+        </div>
+      ),
+    },
+    {
+      title: 'Account',
+      description: 'Your creator permissions and platform access.',
+      items: [
+        {
+          label: 'Verification status',
+          value: profile.admin_verified ? 'Admin verified' : 'Pending verification',
+        },
+        {
+          label: 'Assigned domains',
+          value:
+            data.assignments.hasGlobalAccess || data.assignments.organisations.length > 0 ? (
+              <div className='flex flex-wrap gap-2'>
+                <Badge variant='outline' className={`${domainBadgeClass('course_creator')} border`}>
+                  {formatDomainLabel('course_creator')}
+                </Badge>
+                {data.assignments.organisations.map((assignment, index) => (
+                  <Badge
+                    key={`${assignment.organisationUuid ?? index}-domain`}
+                    variant='outline'
+                    className={`${domainBadgeClass('organisation')} border`}
+                  >
+                    {assignment.organisationName ?? 'Organisation'}
+                  </Badge>
+                ))}
+              </div>
+            ) : undefined,
+          emptyText: 'No domain assignments yet',
+          valueClassName: 'space-y-2',
+        },
+      ],
+    },
+    {
+      title: 'Assignments',
+      description: 'Track global publishing access and organisation-specific responsibilities.',
+      content: (
+        <div className='space-y-3 text-sm'>
           <div className='rounded-lg border border-dashed border-blue-200/40 bg-blue-50/60 p-3'>
             <p className='text-xs uppercase tracking-wide text-muted-foreground'>Marketplace</p>
             <p className='font-semibold'>
@@ -125,8 +136,37 @@ export default function CourseCreatorProfilePage() {
               You are not currently mapped to any organisations as a content developer.
             </p>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <ProfileSummaryView
+      eyebrow='Creator profile'
+      title={profile.full_name}
+      headline={profile.professional_headline}
+      badges={[
+        {
+          label: profile.admin_verified ? 'Verified' : 'Unverified',
+          icon: profile.admin_verified ? (
+            <CheckCircle2 className='h-3.5 w-3.5' />
+          ) : (
+            <ShieldAlert className='h-3.5 w-3.5' />
+          ),
+          variant: profile.admin_verified ? 'outline' : 'secondary',
+        },
+      ]}
+      meta={meta}
+      actions={
+        <Button variant='outline' asChild>
+          <Link prefetch href='/dashboard/profile/edit'>
+            <Pencil className='mr-2 h-4 w-4' />
+            Edit profile
+          </Link>
+        </Button>
+      }
+      sections={sections}
+    />
   );
 }

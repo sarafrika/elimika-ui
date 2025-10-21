@@ -16,7 +16,7 @@ interface OrganizationCardProps {
   isSelected: boolean;
   onSelect: (organization: OrganisationDto) => void;
   onDelete: (organization: OrganisationDto) => void;
-  getStatusBadgeComponent: (organizationId: string) => React.ReactElement;
+  getStatusBadgeComponent?: (organizationId: string) => React.ReactElement;
 }
 
 export default function OrganizationCard({
@@ -37,9 +37,8 @@ export default function OrganizationCard({
 
   return (
     <Card
-      className={`hover:bg-accent/10 m-2 cursor-pointer p-4 transition-colors ${
-        isSelected ? 'ring-primary bg-accent/10 ring' : ''
-      }`}
+      className={`hover:bg-accent/10 m-2 cursor-pointer p-4 transition-colors ${isSelected ? 'ring-primary bg-accent/10 ring' : ''
+        }`}
       onClick={() => onSelect(organization)}
     >
       <div className='flex items-start justify-between'>
@@ -53,17 +52,18 @@ export default function OrganizationCard({
             <div className='mb-2'>
               <h3 className='mb-1 truncate text-sm font-medium'>{organization.name}</h3>
               <div className='flex items-center'>
-                {organization.uuid && getStatusBadgeComponent(organization.uuid)}
-                <Badge variant={organization?.admin_verified ? 'success' : 'secondary'}>
-                  {organization?.admin_verified ? (
-                    <>
-                      <BadgeCheckIcon />
-                      Verified
-                    </>
-                  ) : (
-                    'Pending'
-                  )}
-                </Badge>
+                {organization.uuid &&
+                  <Badge variant={organization?.admin_verified ? 'success' : 'secondary'}>
+                    {organization?.admin_verified ? (
+                      <>
+                        <BadgeCheckIcon />
+                        Verified
+                      </>
+                    ) : (
+                      'Pending'
+                    )}
+                  </Badge>}
+
               </div>
             </div>
             <p className='text-muted-foreground truncate text-xs'>{organization.domain}</p>

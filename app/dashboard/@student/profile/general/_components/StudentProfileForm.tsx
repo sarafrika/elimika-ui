@@ -1,9 +1,10 @@
 'use client';
 
+import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -32,8 +33,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { AlertCircleIcon, CalendarIcon } from 'lucide-react';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -90,7 +90,7 @@ export default function StudentProfileGeneralForm() {
     '/api/v1/users/{userUuid}/profile-image'
   );
 
-  const { errors, resetErrors } = useMultiMutations([userMutation]);
+  const { errors } = useMultiMutations([userMutation]);
 
   // ✅ Proper error setting on form fields
   if (errors && errors.length > 0) {
@@ -109,7 +109,8 @@ export default function StudentProfileGeneralForm() {
     });
   }
 
-  const [profileUrl, setProfileUrl] = useState<string | null>(user?.profile_image_url as string);
+  const [profileUrl, setProfileUrl] = useState<string | null>(user?.profile_image_url ?? null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function uploadProfileImage(
     file: File,
@@ -168,242 +169,289 @@ export default function StudentProfileGeneralForm() {
     }
   };
 
-  return (
-    <div className='w-full sm:max-w-3/4'>
-      <div className='mb-6'>
-        <h1 className='text-2xl font-semibold'>General Info</h1>
-        <p className='text-muted-foreground text-sm'>Update your basic profile information</p>
-      </div>
+  const initials =
+    `${(user?.first_name?.[0] ?? '').toUpperCase()}${(user?.last_name?.[0] ?? '').toUpperCase()}` ||
+    'ST';
 
+  const domainBadges =
+    user?.user_domain?.map(domain =>
+      domain
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    ) ?? [];
+
+  return (
+    <ProfileFormShell
+      eyebrow='Student'
+      title='General Information'
+      description='Keep your learner profile current so instructors and guardians have the right details.'
+      badges={domainBadges}
+    >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-          {errors && errors.length > 0 && (
-            <Alert variant='destructive' className='text-red-600'>
-              <AlertCircleIcon />
-              <AlertTitle>Error processing form</AlertTitle>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+          {errors && errors.length > 0 ? (
+            <Alert variant='destructive' className='border-destructive/40 bg-destructive/10 text-destructive'>
+              <AlertCircleIcon className='h-4 w-4' />
+              <AlertTitle>We couldn&apos;t save your changes</AlertTitle>
               <AlertDescription>
-                <ul>
+                <ul className='ml-4 list-disc space-y-1 text-sm'>
                   {errors.map((error: any, i: number) => (
                     <li key={i}>{error.message}</li>
                   ))}
                 </ul>
               </AlertDescription>
             </Alert>
-          )}
+          ) : null}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Details</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {/* Avatar  */}
+          <ProfileFormSection
+            title='Profile photo'
+            description='This image appears on your classes, bookings, and certificates.'
+          >
+            <FormField
+              control={form.control}
+              name='profile_image_url'
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className='flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8'>
+                      <Avatar className='h-24 w-24 ring-4 ring-background shadow-lg shadow-primary/5'>
+                        {profileUrl ? <AvatarImage src={profileUrl} alt='Profile photo' /> : null}
+                        <AvatarFallback className='bg-primary/10 text-base font-semibold text-primary'>
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='space-y-3'>
+                        <p className='text-sm text-muted-foreground'>
+                          Square images work best. Maximum size is 5MB.
+                        </p>
+                        <div className='flex flex-wrap gap-3'>
+                          <input
+                            ref={fileInputRef}
+                            type='file'
+                            accept='image/*'
+                            className='hidden'
+                            onChange={event => {
+                              const file = event.target.files?.[0];
+                              if (!file) return;
+
+                              uploadProfileImage(
+                                file,
+                                user?.uuid as string,
+                                pictureMutation.mutate,
+                                url => {
+                                  setProfileUrl(url);
+                                  toast.success('Profile photo updated');
+                                  field.onChange(url);
+                                },
+                                () => toast.error('Failed to upload profile photo')
+                              );
+                            }}
+                          />
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            Change photo
+                          </Button>
+                          {profileUrl ? (
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='sm'
+                              onClick={() => {
+                                setProfileUrl(null);
+                                field.onChange('');
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </ProfileFormSection>
+
+          <ProfileFormSection
+            title='Personal details'
+            description='Core identity information linked to your learner record.'
+          >
+            <div className='grid gap-6 sm:grid-cols-3'>
               <FormField
                 control={form.control}
-                name='profile_image_url'
+                name='first_name'
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel>First name</FormLabel>
                     <FormControl>
-                      <div className='mb-8 flex flex-col items-center gap-4'>
-                        <Input
-                          type='file'
-                          accept='image/*'
-                          className='hidden'
-                          id='profile-image-input'
-                          onChange={e => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-
-                            uploadProfileImage(
-                              file,
-                              user?.uuid as string,
-                              pictureMutation.mutate,
-                              url => {
-                                setProfileUrl(url);
-                                toast.success('Uploaded successfully');
-                                field.onChange(url);
-                              },
-                              error => {}
-                            );
-                          }}
-                        />
-
-                        <div className='flex flex-row items-center gap-4'>
-                          {/* Avatar preview or initials */}
-                          {profileUrl ? (
-                            <div className='h-32 w-32 overflow-hidden rounded-full border border-gray-300'>
-                              <Image
-                                src={profileUrl}
-                                alt='Profile Preview'
-                                height={128}
-                                width={128}
-                                className='h-full w-full rounded-full object-cover'
-                              />
-                            </div>
-                          ) : (
-                            <div className='flex h-32 w-32 items-center justify-center rounded-full border border-gray-300 bg-gray-200 text-4xl font-semibold text-gray-600'>
-                              {(user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')}
-                            </div>
-                          )}
-
-                          <p className='text-muted-foreground text-center text-sm'>
-                            Square images work best.
-                            <br />
-                            Max size: 5MB
-                          </p>
-                        </div>
-
-                        <label
-                          htmlFor='profile-image-input'
-                          className='cursor-pointer rounded-md border px-4 py-2 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                        >
-                          Change
-                        </label>
-                      </div>
+                      <Input placeholder='Jane' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name='middle_name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Middle name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Wanjiru' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='last_name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Kamau' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-              <div className='flex flex-col gap-5 md:flex-row'>
-                <FormField
-                  control={form.control}
-                  name='first_name'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>First Name</FormLabel>
+            <div className='grid gap-6 sm:grid-cols-2'>
+              <FormField
+                control={form.control}
+                name='gender'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gender</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <Input placeholder='John' {...field} />
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select gender' />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='middle_name'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>Middle Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Adams' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='last_name'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Adams' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className='flex flex-col gap-5 md:flex-row'>
-                <FormField
-                  control={form.control}
-                  name='email'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input type='email' placeholder='name@example.com' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='phone_number'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input type='tel' placeholder='+254712345678' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className='flex flex-col gap-5 md:flex-row'>
-                <FormField
-                  control={form.control}
-                  name='gender'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>Gender</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectContent>
+                        <SelectItem value='MALE'>Male</SelectItem>
+                        <SelectItem value='FEMALE'>Female</SelectItem>
+                        <SelectItem value='OTHER'>Other</SelectItem>
+                        <SelectItem value='PREFER_NOT_TO_SAY'>Prefer not to say</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='dob'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date of birth</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select your gender' />
-                          </SelectTrigger>
+                          <Button
+                            variant='outline'
+                            className={cn(
+                              'w-full justify-between text-left font-normal',
+                              !field.value && 'text-muted-foreground'
+                            )}
+                          >
+                            {field.value ? format(new Date(field.value), 'PPP') : 'Select date'}
+                            <CalendarIcon className='ml-2 h-4 w-4 opacity-50' />
+                          </Button>
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value='MALE'>Male</SelectItem>
-                          <SelectItem value='FEMALE'>Female</SelectItem>
-                          <SelectItem value='OTHER'>Other</SelectItem>
-                          <SelectItem value='PREFER_NOT_TO_SAY'>Prefer not to say</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='dob'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>Date of Birth</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
-                              <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className='w-auto p-0' align='start'>
-                          <Calendar
-                            mode='single'
-                            selected={new Date(field.value)}
-                            onSelect={field.onChange}
-                            disabled={date => date > new Date() || date < new Date('1900-01-01')}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                      </PopoverTrigger>
+                      <PopoverContent className='w-auto p-0' align='start'>
+                        <Calendar
+                          mode='single'
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={field.onChange}
+                          disabled={date => date > new Date() || date < new Date('1900-01-01')}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </ProfileFormSection>
 
-          <div className='flex justify-end pt-2'>
-            <Button type='submit' className='min-w-30 px-6'>
-              {userMutation.isPending ? <Spinner /> : 'Save Changes'}
-            </Button>
-          </div>
+          <ProfileFormSection
+            title='Contact & access'
+            description='Details we use to reach you and secure your account.'
+            footer={
+              <Button
+                type='submit'
+                className='min-w-36'
+                disabled={userMutation.isPending || pictureMutation.isPending}
+              >
+                {userMutation.isPending || pictureMutation.isPending ? (
+                  <span className='flex items-center gap-2'>
+                    <Spinner className='h-4 w-4' />
+                    Saving…
+                  </span>
+                ) : (
+                  'Save changes'
+                )}
+              </Button>
+            }
+          >
+            <div className='grid gap-6 sm:grid-cols-2'>
+              <FormField
+                control={form.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email address</FormLabel>
+                    <FormControl>
+                      <Input type='email' placeholder='name@example.com' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='phone_number'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone number</FormLabel>
+                    <FormControl>
+                      <Input type='tel' placeholder='+254712345678' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name='username'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input placeholder='yourusername' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </ProfileFormSection>
         </form>
       </Form>
-    </div>
+    </ProfileFormShell>
   );
 }

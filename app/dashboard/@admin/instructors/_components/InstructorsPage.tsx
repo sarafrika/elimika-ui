@@ -1,18 +1,20 @@
 'use client';
 
+import DeleteModal from '@/components/custom-modals/delete-modal';
 import ErrorPage from '@/components/ErrorPage';
 import { Badge } from '@/components/ui/badge';
 import { Instructor } from '@/services/api/schema';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import {
+  deleteInstructorMutation,
   getAllInstructorsOptions,
   getAllInstructorsQueryKey,
   unverifyInstructorMutation,
   verifyInstructorMutation,
-} from '../../../../../services/client/@tanstack/react-query.gen';
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import InstructorDetailsPanel from './InstructorDetailsPanel';
 import InstructorMobileModal from './InstructorMobileModal';
 import InstructorsList from './InstructorsList';
@@ -108,10 +110,28 @@ export default function InstructorsPage() {
     }
   };
 
+
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [openDeleteModal, setOpenDeleteModal] = useState(false)
+
+  const deleteInstructor = useMutation(deleteInstructorMutation())
   const handleInstructorDelete = (instructor: Instructor) => {
-    // Handle delete logic here
-    //console.log('Delete instructor:', instructor.uuid);
+    setDeletingId(instructor.uuid as string)
+    setOpenDeleteModal(true)
   };
+
+  const confirmDeleteInstructor = () => {
+    if (!deletingId) return
+
+    deleteInstructor.mutate({ path: { uuid: deletingId as string } }, {
+      onSuccess: (data) => {
+        toast.success("Instructor deleted successfully")
+        qc.invalidateQueries({
+          queryKey: getAllInstructorsQueryKey({ query: { pageable: {} } }),
+        });
+      }
+    })
+  }
 
   // Filter and sort instructors
   const filteredAndSortedInstructors = instructors
@@ -182,6 +202,17 @@ export default function InstructorsPage() {
         onApprove={handleApproveInstructor}
         onReject={handleRejectInstructor}
         getStatusBadgeComponent={getStatusBadgeComponent}
+      />
+
+
+      <DeleteModal
+        open={openDeleteModal}
+        setOpen={setOpenDeleteModal}
+        title='Delete Instructor'
+        description='This instructor will be deleted permanently. Are you sure you want to delete this instructor? This action cannot be undone.'
+        onConfirm={confirmDeleteInstructor}
+        isLoading={deleteInstructor.isPending}
+        confirmText='Delete Instructor'
       />
     </div>
   );

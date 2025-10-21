@@ -1,9 +1,11 @@
 'use client';
 
+import DeleteModal from '@/components/custom-modals/delete-modal';
 import ErrorPage from '@/components/ErrorPage';
 import { Badge } from '@/components/ui/badge';
 import { Organisation as OrganisationDto } from '@/services/api/schema';
 import {
+  deleteOrganisationMutation,
   getAllOrganisationsOptions,
   getAllOrganisationsQueryKey,
   unverifyOrganisationMutation,
@@ -142,10 +144,29 @@ export default function OrganizationsPage() {
     }
   };
 
+
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [openDeleteModal, setOpenDeleteModal] = useState(false)
+
+  const deleteOrganisation = useMutation(deleteOrganisationMutation())
   const handleOrganizationDelete = (organization: OrganisationDto) => {
-    // Handle delete logic here
-    //console.log('Delete organization:', organization.uuid);
+    setDeletingId(organization.uuid as string)
+    setOpenDeleteModal(true)
   };
+
+  const confirmDeleteOrganisation = () => {
+    if (!deletingId) return
+
+    deleteOrganisation.mutate({ path: { uuid: deletingId as string } }, {
+      onSuccess: (data) => {
+        toast.success(data?.message)
+        qc.invalidateQueries({
+          queryKey: getAllOrganisationsQueryKey({ query: { pageable: {} } }),
+        });
+      }
+    })
+  }
+
 
   // Filter and sort organizations
   const filteredAndSortedOrganizations: OrganisationDto[] = organizations
@@ -216,6 +237,16 @@ export default function OrganizationsPage() {
         onApprove={handleApproveOrganization}
         onReject={handleRejectOrganization}
         getStatusBadgeComponent={getStatusBadgeComponent}
+      />
+
+      <DeleteModal
+        open={openDeleteModal}
+        setOpen={setOpenDeleteModal}
+        title='Delete Organisation'
+        description='This organisation will be deleted permanently. Are you sure you want to delete this organisation? This action cannot be undone.'
+        onConfirm={confirmDeleteOrganisation}
+        isLoading={deleteOrganisation.isPending}
+        confirmText='Delete Organisation'
       />
     </div>
   );

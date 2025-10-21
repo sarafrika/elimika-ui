@@ -1,7 +1,7 @@
 'use client';
 
+import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
+import { useUserProfile } from '@/context/profile-context';
 import {
   getStudentByIdOptions,
   getStudentByIdQueryKey,
@@ -38,6 +39,7 @@ type GuardianInfoFormValues = z.infer<typeof guardianInfoSchema>;
 
 function CertificationsSettingsContent() {
   const qc = useQueryClient();
+  const userProfile = useUserProfile();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   const student = useStudent();
@@ -107,109 +109,115 @@ function CertificationsSettingsContent() {
     );
   };
 
-  return (
-    <div className='w-full space-y-6 sm:max-w-3/4'>
-      <div>
-        <h1 className='text-2xl font-semibold'>Guardian Information</h1>
-        <p className='text-muted-foreground text-sm'>
-          Add guardian contact details for students under 18.
-        </p>
-      </div>
+  const domainBadges =
+    userProfile?.user_domain?.map(domain =>
+      domain
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    ) ?? [];
 
+  return (
+    <ProfileFormShell
+      eyebrow='Student'
+      title='Guardian information'
+      description='Add or update guardian contact details for learners under 18.'
+      badges={domainBadges}
+    >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Guardian Information</CardTitle>
-              <CardDescription>Add guardian details for students under 18.</CardDescription>
-            </CardHeader>
+          <ProfileFormSection
+            title='Emergency contacts'
+            description='We reach out to these contacts for important updates and emergencies.'
+            footer={
+              <Button type='submit' className='min-w-32' disabled={updateGuardianInfo.isPending}>
+                {updateGuardianInfo.isPending ? (
+                  <span className='flex items-center gap-2'>
+                    <Spinner className='h-4 w-4' />
+                    Saving…
+                  </span>
+                ) : (
+                  'Save guardians'
+                )}
+              </Button>
+            }
+          >
+            <div className='grid gap-6 sm:grid-cols-2'>
+              <FormField
+                control={form.control}
+                name='first_guardian_name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Primary guardian full name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Jane Doe' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='first_guardian_mobile'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Primary guardian mobile number</FormLabel>
+                    <FormControl>
+                      <Input placeholder='+254700000000' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <CardContent className='space-y-4'>
-              <div className='flex w-full gap-10'>
-                <FormField
-                  control={form.control}
-                  name='first_guardian_name'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>First Guardian Fullname</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='first_guardian_mobile'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>First Guardian Mobile Number</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className='flex w-full gap-10'>
-                <FormField
-                  control={form.control}
-                  name='second_guardian_name'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>Second Guardian Fullname</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='second_guardian_mobile'
-                  render={({ field }) => (
-                    <FormItem className='flex-grow'>
-                      <FormLabel>Second Guardian Mobile Number</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className='flex justify-end pt-4'>
-                <Button type='submit' className='min-w-30'>
-                  {updateGuardianInfo.isPending ? <Spinner /> : 'Save'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <div className='grid gap-6 sm:grid-cols-2'>
+              <FormField
+                control={form.control}
+                name='second_guardian_name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Secondary guardian full name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='John Doe' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='second_guardian_mobile'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Secondary guardian mobile number</FormLabel>
+                    <FormControl>
+                      <Input placeholder='+254711111111' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </ProfileFormSection>
         </form>
       </Form>
-    </div>
+    </ProfileFormShell>
   );
 }
 
 function CertificationsSettingsSkeleton() {
   return (
-    <div className='space-y-6'>
-      <div>
-        <Skeleton className='mb-2 h-8 w-48' />
-        <Skeleton className='h-4 w-64' />
+    <div className='mx-auto w-full max-w-5xl space-y-6 px-4 py-10 sm:px-6 lg:px-8'>
+      <div className='space-y-2'>
+        <Skeleton className='h-4 w-24 rounded-full' />
+        <Skeleton className='h-8 w-64' />
+        <Skeleton className='h-4 w-72' />
       </div>
-      <div className='space-y-8'>
-        <Skeleton className='h-40 w-full rounded-lg' />
-        <Skeleton className='h-40 w-full rounded-lg' />
-        <div className='flex justify-end pt-2'>
-          <Skeleton className='h-10 w-32' />
+      <div className='space-y-4'>
+        <Skeleton className='h-52 w-full rounded-xl' />
+        <div className='flex justify-end'>
+          <Skeleton className='h-10 w-36 rounded-full' />
         </div>
       </div>
     </div>

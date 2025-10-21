@@ -9,10 +9,10 @@ import * as z from 'zod';
 
 import ImageSelector, { ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
+import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -23,7 +23,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
@@ -45,7 +44,7 @@ import {
   uploadProfileImage,
 } from '@/services/client';
 import { zInstructor, zUser } from '@/services/client/zod.gen';
-import { CalendarIcon, MapPin } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 const generalProfileSchema = z.object({
@@ -92,12 +91,22 @@ export default function InstructorProfile() {
   const { instructor, invalidateQuery } = user!;
   const { addressComponents } = useReverseGeocode(Number(instructor?.latitude), Number(instructor?.longitude));
 
-
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
   const [profilePic, setProfilePic] = useState<ImageType>({
     url: user!.profile_image_url ?? profilePicSvg,
   });
+
+  const domainBadges =
+    // @ts-ignore
+    user?.user_domain?.map(domain =>
+      domain
+        .split('_')
+        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    ) ?? [];
+
+
 
   const form = useForm<GeneralProfileFormValues>({
     resolver: zodResolver(generalProfileSchema),
@@ -187,336 +196,308 @@ export default function InstructorProfile() {
   }
 
   return (
-    <div className='space-y-6'>
-      <div>
-        <h1 className='text-2xl font-semibold'>General Info</h1>
-        <p className='text-muted-foreground text-sm'>Update your basic profile information</p>
-      </div>
-
+    <ProfileFormShell
+      eyebrow='Instructor'
+      title='General information'
+      description='Refresh your instructor profile so learners and organisations know who you are.'
+      badges={domainBadges as any}
+    >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>Your personal information displayed on your profile</CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              <div className='flex flex-col items-start gap-8 sm:flex-row'>
-                <div className='flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4'>
-                  <Avatar className='bg-primary-50 h-24 w-24'>
-                    <AvatarImage
-                      src={user!.profile_image_url ?? profilePic.url}
-                      alt='Avatar'
-                      className='object-fit'
-                    />
-                    <AvatarFallback className='bg-blue-50 text-xl text-blue-600'>
-                      {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}`}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className='space-y-2'>
-                    <div className='text-muted-foreground text-sm'>
-                      Square images work best.
-                      <br />
-                      Max size: 5MB
-                    </div>
-                    <div className='flex space-x-2'>
-                      <ImageSelector onSelect={setProfilePic} {...{ fileElmentRef }}>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          type='button'
-                          onClick={() => fileElmentRef.current?.click()}
-                        >
-                          Change
-                        </Button>
-                      </ImageSelector>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+          <ProfileFormSection
+            title='Personal profile'
+            description='Basic details that appear wherever your instructor profile is shown.'
+          >
+            <div className='space-y-6'>
+              <div className='flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-8'>
+                <Avatar className='h-24 w-24 ring-4 ring-background shadow-lg shadow-primary/5'>
+                  <AvatarImage
+                    src={user!.profile_image_url ?? profilePic.url}
+                    alt={`${user!.first_name} ${user!.last_name}`}
+                  />
+                  <AvatarFallback className='bg-primary/10 text-base font-semibold text-primary'>
+                    {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}` || 'IN'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className='space-y-3'>
+                  <p className='text-sm text-muted-foreground'>
+                    Square images work best. Maximum size is 5MB.
+                  </p>
+                  <div className='flex flex-wrap gap-3'>
+                    <ImageSelector onSelect={setProfilePic} {...{ fileElmentRef }}>
                       <Button
                         variant='outline'
                         size='sm'
                         type='button'
-                        className='text-destructive hover:text-destructive-foreground hover:bg-destructive hover:shadow-xs'
+                        onClick={() => fileElmentRef.current?.click()}
                       >
-                        Remove
+                        Change photo
                       </Button>
-                    </div>
+                    </ImageSelector>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      type='button'
+                      onClick={() => {
+                        setProfilePic({ url: profilePicSvg });
+                        form.setValue('user.profile_image_url', '');
+                      }}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </div>
               </div>
 
-              <div className='grid gap-6'>
-                <div className='grid w-full grid-cols-1 items-start gap-8 sm:grid-cols-2'>
-                  <FormField
-                    control={form.control}
-                    name='user.first_name'
-                    render={({ field }) => (
-                      <FormItem className='flex-1'>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder='e.g. Oliver' className='h-10' {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name='user.last_name'
-                    render={({ field }) => (
-                      <FormItem className='flex-1'>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder='e.g. Mwangi' className='h-10' {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <div className='grid gap-6 sm:grid-cols-2'>
                 <FormField
                   control={form.control}
-                  name='user.middle_name'
+                  name='user.first_name'
                   render={({ field }) => (
-                    <FormItem className='flex-1'>
-                      <FormLabel>Middle Name</FormLabel>
+                    <FormItem>
+                      <FormLabel>First name</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder='e.g. Kimani'
-                          className='h-10'
-                          {...field}
-                          value={field.value ?? ''}
-                        />
+                        <Input placeholder='Oliver' {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name='user.last_name'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last name</FormLabel>
+                      <FormControl>
+                        <Input placeholder='Mwangi' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                <div className='flex w-full flex-col items-start gap-8 sm:flex-row'>
-                  <FormField
-                    control={form.control}
-                    name='user.phone_number'
-                    render={({ field }) => (
-                      <FormItem className='flex-1'>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='tel'
-                            placeholder='e.g. +254712345678'
-                            className='h-10'
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <FormField
+                control={form.control}
+                name='user.middle_name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Middle name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Kimani' {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  <FormField
-                    control={form.control}
-                    name='user.dob'
-                    render={({ field }) => (
-                      <FormItem className='flex flex-1 flex-col'>
-                        <FormLabel>Date of Birth</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={'outline'}
-                                className={cn(
-                                  'w-full pl-3 text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, 'PPP')
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className='w-auto p-0' align='start'>
-                            <Calendar
-                              mode='single'
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={date => date > new Date() || date < new Date('1900-01-01')}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className='flex w-full flex-col items-start gap-8 sm:flex-row'>
-                  <FormField
-                    control={form.control}
-                    name='user.gender'
-                    render={({ field }) => (
-                      <FormItem className='flex-1'>
-                        <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value || ''}>
+              <div className='grid gap-6 sm:grid-cols-2'>
+                <FormField
+                  control={form.control}
+                  name='user.phone_number'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone number</FormLabel>
+                      <FormControl>
+                        <Input type='tel' placeholder='+254712345678' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='user.dob'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-col'>
+                      <FormLabel>Date of birth</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Select a gender' />
-                            </SelectTrigger>
+                            <Button
+                              variant='outline'
+                              className={cn(
+                                'w-full justify-between text-left font-normal',
+                                !field.value && 'text-muted-foreground'
+                              )}
+                            >
+                              {field.value ? format(field.value, 'PPP') : 'Select date'}
+                              <CalendarIcon className='ml-2 h-4 w-4 opacity-50' />
+                            </Button>
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value='MALE'>Male</SelectItem>
-                            <SelectItem value='FEMALE'>Female</SelectItem>
-                            <SelectItem value='OTHER'>Other</SelectItem>
-                            <SelectItem value='PREFER_NOT_TO_SAY'>Prefer not to say</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className='flex-1 space-y-2'>
-                    <Label>Email Address</Label>
-                    <Input placeholder='name@example.com' readOnly value={user!.email} disabled />
-                    <p className='text-muted-foreground text-[0.8rem]'>
-                      Contact support to change your email address
-                    </p>
-                  </div>
-                </div>
-
-
-
-                <FormField
-                  control={form.control}
-                  name='instructor.location'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-
-                      {instructor?.latitude && instructor?.longitude &&
-                        <div className='flex flex-row items-center gap-2'>
-                          <MapPin className='w-4 h-4' />
-                          <FormDescription> {addressComponents?.city}, {addressComponents?.state}, {addressComponents?.country}  </FormDescription>
-                        </div>}
-
-                      <FormControl>
-                        <LocationInput
-                          {...field}
-                          onSuggest={loc => {
-                            if (loc.features.length > 0) {
-                              form.setValue(
-                                'instructor.latitude',
-                                loc.features[0]!.properties.coordinates.latitude
-                              );
-
-                              form.setValue(
-                                'instructor.longitude',
-                                loc.features[0]!.properties.coordinates.longitude
-                              );
-                            }
-                            return loc;
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>Search and select your physical localaion</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='instructor.professional_headline'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Professional Headline</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder='e.g. Mathematics Professor with 10+ years experience'
-                          className='h-10'
-                          {...field}
-                          value={field.value ?? ''}
-                        />
-                      </FormControl>
-                      <FormDescription className='text-xs'>
-                        A short headline that appears under your name
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                  <FormField
-                    control={form.control}
-                    name='instructor.website'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Website</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='https://yourwebsite.com'
-                            className='h-10'
-                            {...field}
-                            value={field.value ?? ''}
+                        </PopoverTrigger>
+                        <PopoverContent className='w-auto p-0' align='start'>
+                          <Calendar
+                            mode='single'
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={date => date > new Date() || date < new Date('1900-01-01')}
+                            initialFocus
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* <FormField
-                                        control={form.control}
-                                        name="instructor.location"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Location</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        placeholder="e.g. Nairobi, Kenya"
-                                                        className="h-10"
-                                                        {...field} value={""}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    /> */}
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name='instructor.bio'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>About Me</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder='Tell us about yourself...'
-                          className='min-h-32 resize-y'
-                          {...field}
-                          value={field.value ?? ''}
-                        />
-                      </FormControl>
-                      <FormDescription className='text-xs'>
-                        Brief description that will appear on your public profile
-                      </FormDescription>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <div className='flex justify-end pt-2'>
-                <Button type='submit' className='cursor-pointer px-6' disabled={submitting}>
-                  {submitting ? <Spinner /> : 'Save Changes'}
-                </Button>
+              <div className='grid gap-6 sm:grid-cols-2'>
+                <FormField
+                  control={form.control}
+                  name='user.gender'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gender</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || ''}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select gender' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='MALE'>Male</SelectItem>
+                          <SelectItem value='FEMALE'>Female</SelectItem>
+                          <SelectItem value='OTHER'>Other</SelectItem>
+                          <SelectItem value='PREFER_NOT_TO_SAY'>Prefer not to say</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='user.email'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email address</FormLabel>
+                      <FormControl>
+                        <Input readOnly disabled {...field} />
+                      </FormControl>
+                      <p className='text-muted-foreground text-xs'>
+                        Contact support to change your email address.
+                      </p>
+                    </FormItem>
+                  )}
+                />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </ProfileFormSection>
+
+          <ProfileFormSection
+            title='Professional summary'
+            description='Introduce your expertise and help learners understand how you teach.'
+            footer={
+              <Button type='submit' className='min-w-40' disabled={submitting}>
+                {submitting ? (
+                  <span className='flex items-center gap-2'>
+                    <Spinner className='h-4 w-4' />
+                    Saving…
+                  </span>
+                ) : (
+                  'Save changes'
+                )}
+              </Button>
+            }
+          >
+            <FormField
+              control={form.control}
+              name='instructor.location'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Primary location</FormLabel>
+                  <FormControl>
+                    <LocationInput
+                      {...field}
+                      onSuggest={loc => {
+                        if (loc.features.length > 0) {
+                          // form.setValue(
+                          //   'instructor.latitude',
+                          //   loc.features[0]!.properties.coordinates.latitude
+                          // );
+
+                          // form.setValue(
+                          //   'instructor.longitude',
+                          //   loc.features[0]!.properties.coordinates.longitude
+                          // );
+                        }
+                        return loc;
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>Search by town, city, or neighbourhood.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className='grid gap-6 sm:grid-cols-2'>
+              <FormField
+                control={form.control}
+                name='instructor.professional_headline'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Professional headline</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder='Mathematics facilitator with 10+ years experience'
+                        {...field}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormDescription className='text-xs'>
+                      Appears underneath your name across Elimika.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='instructor.website'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website or portfolio</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder='https://yourwebsite.com'
+                        {...field}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name='instructor.bio'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>About you</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder='Share your teaching philosophy, specialties, and learner outcomes.'
+                      className='min-h-32 resize-y'
+                      {...field}
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormDescription className='text-xs'>
+                    This appears on your instructor profile and course listings.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </ProfileFormSection>
         </form>
       </Form>
-    </div>
+    </ProfileFormShell>
   );
 }

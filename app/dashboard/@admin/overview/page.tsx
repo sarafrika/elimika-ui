@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAllInstructorsOptions, getAllOrganisationsOptions, getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Bell, Building2, CheckCircle, User } from 'lucide-react';
 import Link from 'next/link';
@@ -25,12 +25,11 @@ import {
   YAxis,
 } from 'recharts';
 import {
-  approvalStats,
   recentActivity,
   revenueGraphData,
   stats,
   tasks,
-  topPerformers,
+  topPerformers
 } from './sample-admin-data';
 
 // Prepare data for Recharts
@@ -40,32 +39,23 @@ const chartData = revenueGraphData.labels.map((label, i) => ({
 }));
 
 export default function AdminOverviewPage() {
-  // const { data: session } = useSession()
   const { data } = useQuery(getDashboardStatisticsOptions());
+
+  const { data: organisations } = useQuery(
+    getAllOrganisationsOptions({ query: { pageable: { page: 0, size: 100 } } })
+  );
+  const pendingOrganisationApprovals = organisations?.data?.content?.filter((o) => !o.admin_verified)
+
+  const { data: instructors } = useQuery(
+    getAllInstructorsOptions({ query: { pageable: { page: 0, size: 100 } } })
+  );
+  const pendingInstructorApprovals = instructors?.data?.content?.filter((o) => !o.admin_verified)
+
 
   return (
     <div className='flex flex-col gap-6 px-2 py-4 md:px-6'>
       {/* Approval Cards - Main Admin Role */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2'>
-        {approvalStats.map((stat, i) => (
-          <Link key={i} href={'/dashboard/instructors'} className='hover:opacity-90'>
-            <Card className='border-warning/40 bg-warning/10 flex cursor-pointer flex-row items-center gap-4 border-2 p-4 transition-shadow hover:shadow-lg'>
-              <div className='bg-warning/20 rounded-full p-3'>
-                <stat.icon className='text-warning h-6 w-6' />
-              </div>
-              <div className='flex-1'>
-                <CardTitle className='text-lg font-semibold'>{stat.value}</CardTitle>
-                <CardDescription className='flex items-center gap-2'>
-                  {stat.label}
-                  <Badge variant={stat.badge as any} className='ml-2'>
-                    Pending
-                  </Badge>
-                </CardDescription>
-              </div>
-            </Card>
-          </Link>
-        ))}
-
         <Link href={'/dashboard/instructors'} className='hover:opacity-90'>
           <Card className='border-warning/40 bg-warning/10 flex cursor-pointer flex-row items-center gap-4 border-2 p-4 transition-shadow hover:shadow-lg'>
             <div className='bg-warning/20 rounded-full p-3'>
@@ -73,7 +63,26 @@ export default function AdminOverviewPage() {
             </div>
             <div className='flex-1'>
               <CardTitle className='text-lg font-semibold'>
-                {data?.data?.organization_metrics?.pending_approvals}
+                {pendingInstructorApprovals?.length}
+              </CardTitle>
+              <CardDescription className='flex items-center gap-2'>
+                {'Instructor Pending Approval'}
+                <Badge variant={'warning'} className='ml-2'>
+                  Pending
+                </Badge>
+              </CardDescription>
+            </div>
+          </Card>
+        </Link>
+
+        <Link href={'/dashboard/organizations'} className='hover:opacity-90'>
+          <Card className='border-warning/40 bg-warning/10 flex cursor-pointer flex-row items-center gap-4 border-2 p-4 transition-shadow hover:shadow-lg'>
+            <div className='bg-warning/20 rounded-full p-3'>
+              <CheckCircle className='text-warning h-6 w-6' />
+            </div>
+            <div className='flex-1'>
+              <CardTitle className='text-lg font-semibold'>
+                {pendingOrganisationApprovals?.length}
               </CardTitle>
               <CardDescription className='flex items-center gap-2'>
                 {'Organisation Pending Approval'}
