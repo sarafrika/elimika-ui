@@ -5,8 +5,8 @@ import {
   ProfileSummarySection,
   ProfileSummaryView,
 } from '@/components/profile/profile-summary-view';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { domainBadgeClass, formatDomainLabel } from '@/lib/domain-utils';
 import { CheckCircle2, Globe, Mail, MapPin, Pencil, ShieldAlert } from 'lucide-react';
@@ -160,7 +160,7 @@ export default function CourseCreatorProfilePage() {
       meta={meta}
       actions={
         <Button variant='outline' asChild>
-          <Link prefetch href='/dashboard/profile'>
+          <Link prefetch href='/dashboard/profile/edit'>
             <Pencil className='mr-2 h-4 w-4' />
             Edit profile
           </Link>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
 import { StepperContent, StepperList, StepperRoot, StepperTrigger } from '@/components/ui/stepper';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useCourseCreator } from '@/context/course-creator-context';
 import {
   deleteCourseLessonMutation,
   deleteLessonContentMutation,
@@ -23,7 +24,7 @@ import {
   searchAssessmentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, BookOpenCheck, Check, CheckCircle, List } from 'lucide-react';
+import { BadgeCheck, BookOpen, BookOpenCheck, CheckCircle, ClipboardList, Eye, FileQuestion, GraduationCap, Palette, SlidersHorizontal } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -45,7 +46,6 @@ import {
   LessonList,
 } from '../../../_components/lesson-management-form';
 import { CourseCreatorEmptyState, CourseCreatorLoadingState } from '../../../_components/loading-state';
-import { useCourseCreator } from '@/context/course-creator-context';
 
 export default function CourseCreationPage() {
   const router = useRouter();
@@ -131,8 +131,8 @@ export default function CourseCreationPage() {
       instructor: c.course_creator_uuid || '',
       is_free: c.is_free ?? false,
       price: c.price ?? 0,
-      sale_price: c.sale_price ?? c.price ?? 0,
-      currency: c.currency || 'KES',
+      // sale_price: c.sale_price ?? c.price ?? 0,
+      // currency: c.currency || 'KES',
       objectives: c.objectives || [],
       categories: c.category_uuids || [],
       difficulty: c.difficulty_uuid || '',
@@ -156,17 +156,18 @@ export default function CourseCreationPage() {
       creator_share_percentage: c.creator_share_percentage ?? 0,
       instructor_share_percentage: c.instructor_share_percentage ?? 0,
       revenue_share_notes: c.revenue_share_notes ?? '',
+      // @ts-ignore
       training_requirements: Array.isArray(c.training_requirements)
         ? c.training_requirements.map(req => ({
-            uuid: req.uuid,
-            requirement_type: req.requirement_type,
-            name: req.name,
-            description: req.description ?? '',
-            quantity: req.quantity ?? undefined,
-            unit: req.unit ?? '',
-            provided_by: req.provided_by ?? 'course_creator',
-            is_mandatory: !!req.is_mandatory,
-          }))
+          uuid: req.uuid,
+          requirement_type: req.requirement_type,
+          name: req.name,
+          description: req.description ?? '',
+          quantity: req.quantity ?? undefined,
+          unit: req.unit ?? '',
+          provided_by: req.provided_by ?? 'course_creator',
+          is_mandatory: !!req.is_mandatory,
+        }))
         : [],
     });
   }, [courseId, course]);
@@ -411,345 +412,460 @@ export default function CourseCreationPage() {
         </header>
 
         <StepperRoot>
-        <StepperList>
-          <StepperTrigger step={0} title='Course Details' icon={BookOpen} />
-          <StepperTrigger step={1} title='Content' icon={List} />
-          <StepperTrigger step={2} title='Assessment' icon={BookOpenCheck} />
-          <StepperTrigger step={3} title='Review' icon={Check} />
-        </StepperList>
+          <StepperList>
+            <StepperTrigger step={0} title="Course Details" icon={BookOpen} />
+            <StepperTrigger step={1} title="Skills & Resources" icon={GraduationCap} />
+            <StepperTrigger step={2} title="Quizzes" icon={FileQuestion} />
+            <StepperTrigger step={3} title="Assignment" icon={ClipboardList} />
+            <StepperTrigger step={4} title="Assessment" icon={SlidersHorizontal} />
+            <StepperTrigger step={5} title="Branding" icon={Palette} />
+            <StepperTrigger step={6} title="Course Licensing" icon={BadgeCheck} />
+            <StepperTrigger step={7} title="Review" icon={Eye} />
+          </StepperList>
 
-        <StepperContent
-          step={0}
-          title='Basic Course Information'
-          description='Enter the fundamental details of your course. You can edit the details later, upload a thumbnail, banner and intro video for the course.'
-          showNavigation
-          nextButtonText={'Continue to Lesson Creation'}
-          hideNextButton={true}
-          hidePreviousButton={true}
-        >
-          <CourseCreationForm
-            ref={formRef}
-            showSubmitButton={true}
-            courseId={createdCourseId as string}
-            editingCourseId={courseId as string}
-            initialValues={courseInitialValues as any}
-            successResponse={data => {
-              setCreatedCourseId(data?.uuid);
-            }}
-          />
-        </StepperContent>
-
-        <StepperContent
-          step={1}
-          title='Course Content'
-          description='Add lessons and content to your course'
-          showNavigation
-          nextButtonText='Continue to Assessment'
-          previousButtonText='Back to Details'
-        >
-          <div className='space-y-4'>
-            <LessonList
-              isLoading={lessonsIsLoading}
-              courseTitle={course?.data?.name as string}
-              courseId={resolveId}
-              lessonId={selectedLesson?.uuid as string}
-              courseCategory={course?.data?.category_names}
-              // lessons
-              lessons={courseLessons?.data}
-              lessonItems={lessonContentData?.data}
-              onAddLesson={openAddLessonModal}
-              onEditLesson={openEditLessonModal}
-              onDeleteLesson={handleDeleteLesson}
-              onReorderLessons={() => { }}
-              // lesson content
-              lessonContentsMap={lessonContentMap}
-              onAddLessonContent={openAddContentModal}
-              onEditLessonContent={openEditContentModal}
-              onDeleteLessonContent={handleDeleteContent}
-              // assignment
-              onAddAssignment={openAddAssignmentModal}
+          <StepperContent
+            step={0}
+            title='Basic Course Information'
+            description='Enter the fundamental details of your course. You can edit the details later, upload a thumbnail, banner and intro video for the course.'
+            showNavigation
+            nextButtonText={'Continue to Lesson Creation'}
+            hideNextButton={true}
+            hidePreviousButton={true}
+          >
+            <CourseCreationForm
+              ref={formRef}
+              showSubmitButton={true}
+              courseId={createdCourseId as string}
+              editingCourseId={courseId as string}
+              initialValues={courseInitialValues as any}
+              successResponse={data => {
+                setCreatedCourseId(data?.uuid);
+              }}
             />
+          </StepperContent>
 
-            <LessonDialog
-              isOpen={addLessonModalOpen}
-              onOpenChange={setAddLessonModalOpen}
-              courseId={createdCourseId ? createdCourseId : (courseId as string)}
-              lessonId={selectedLesson?.uuid as string}
-              onCancel={() => setAddLessonModalOpen(false)}
-            />
+          <StepperContent
+            step={1}
+            title='Course Content'
+            description='Add lessons and content to your course'
+            showNavigation
+            nextButtonText='Continue to Assessment'
+            previousButtonText='Back to Details'
+          >
+            <div className='space-y-4'>
+              <LessonList
+                isLoading={lessonsIsLoading}
+                courseTitle={course?.data?.name as string}
+                courseId={resolveId}
+                lessonId={selectedLesson?.uuid as string}
+                courseCategory={course?.data?.category_names}
+                // lessons
+                lessons={courseLessons?.data}
+                lessonItems={lessonContentData?.data}
+                onAddLesson={openAddLessonModal}
+                onEditLesson={openEditLessonModal}
+                onDeleteLesson={handleDeleteLesson}
+                onReorderLessons={() => { }}
+                // lesson content
+                lessonContentsMap={lessonContentMap}
+                onAddLessonContent={openAddContentModal}
+                onEditLessonContent={openEditContentModal}
+                onDeleteLessonContent={handleDeleteContent}
+                // assignment
+                onAddAssignment={openAddAssignmentModal}
+              />
 
-            {editLessonModalOpen && selectedLesson && lesson && lessonContentData?.data && (
-              <EditLessonDialog
-                isOpen={editLessonModalOpen}
-                onOpenChange={setEditLessonModalOpen}
-                courseId={courseId as string}
-                lessonId={selectedLesson?.uuid}
-                initialValues={lessonInitialValues}
-                onCancel={() => { }}
-                onSuccess={data => {
-                  setCreatedCourseId(data?.uuid);
+              <LessonDialog
+                isOpen={addLessonModalOpen}
+                onOpenChange={setAddLessonModalOpen}
+                courseId={createdCourseId ? createdCourseId : (courseId as string)}
+                lessonId={selectedLesson?.uuid as string}
+                onCancel={() => setAddLessonModalOpen(false)}
+              />
 
-                  queryClient.invalidateQueries({
-                    queryKey: getCourseLessonsQueryKey({
-                      path: { courseUuid: courseId as string },
-                      query: { pageable: { page: 0, size: 100 } },
-                    }),
-                  });
+              {editLessonModalOpen && selectedLesson && lesson && lessonContentData?.data && (
+                <EditLessonDialog
+                  isOpen={editLessonModalOpen}
+                  onOpenChange={setEditLessonModalOpen}
+                  courseId={courseId as string}
+                  lessonId={selectedLesson?.uuid}
+                  initialValues={lessonInitialValues}
+                  onCancel={() => { }}
+                  onSuccess={data => {
+                    setCreatedCourseId(data?.uuid);
 
-                  queryClient.invalidateQueries({
-                    queryKey: getCourseLessonQueryKey({
-                      path: {
-                        courseUuid: courseId as string,
-                        lessonUuid: selectedLesson?.uuid as string,
-                      },
-                    }),
-                  });
+                    queryClient.invalidateQueries({
+                      queryKey: getCourseLessonsQueryKey({
+                        path: { courseUuid: courseId as string },
+                        query: { pageable: { page: 0, size: 100 } },
+                      }),
+                    });
 
-                  queryClient.invalidateQueries({
-                    queryKey: getLessonContentQueryKey({
-                      path: {
-                        courseUuid: courseId as string,
-                        lessonUuid: selectedLesson?.uuid as string,
-                      },
-                    }),
-                  });
+                    queryClient.invalidateQueries({
+                      queryKey: getCourseLessonQueryKey({
+                        path: {
+                          courseUuid: courseId as string,
+                          lessonUuid: selectedLesson?.uuid as string,
+                        },
+                      }),
+                    });
+
+                    queryClient.invalidateQueries({
+                      queryKey: getLessonContentQueryKey({
+                        path: {
+                          courseUuid: courseId as string,
+                          lessonUuid: selectedLesson?.uuid as string,
+                        },
+                      }),
+                    });
+                  }}
+                />
+              )}
+
+              <LessonContentDialog
+                courseId={resolveId}
+                lessonId={selectedLesson?.uuid || (selectedContent?.lesson_uuid as string)}
+                contentId={(selectedContent?.uuid as string) || ''}
+                isOpen={addContentModalOpen}
+                onOpenChange={setAddContentModalOpen}
+                onCancel={() => {
+                  setSelectedContent(null);
+                  setAddContentModalOpen(false);
+                }}
+                initialValues={contentInitialValues}
+              />
+
+              <AssignmentDialog
+                isOpen={addAssignmentModal}
+                setOpen={setAddAssignmentModal}
+                lessonId={selectedLesson?.uuid as string}
+                onSuccess={() => {
+                  setSelectedLesson(null);
+                  setAddAssignmentModal(false);
+                }}
+                onCancel={() => {
+                  setSelectedLesson(null);
+                  setAddAssignmentModal(false);
                 }}
               />
-            )}
+            </div>
+          </StepperContent>
 
-            <LessonContentDialog
-              courseId={resolveId}
-              lessonId={selectedLesson?.uuid || (selectedContent?.lesson_uuid as string)}
-              contentId={(selectedContent?.uuid as string) || ''}
-              isOpen={addContentModalOpen}
-              onOpenChange={setAddContentModalOpen}
-              onCancel={() => {
-                setSelectedContent(null);
-                setAddContentModalOpen(false);
-              }}
-              initialValues={contentInitialValues}
-            />
 
-            <AssignmentDialog
-              isOpen={addAssignmentModal}
-              setOpen={setAddAssignmentModal}
-              lessonId={selectedLesson?.uuid as string}
-              onSuccess={() => {
-                setSelectedLesson(null);
-                setAddAssignmentModal(false);
-              }}
-              onCancel={() => {
-                setSelectedLesson(null);
-                setAddAssignmentModal(false);
-              }}
-            />
-          </div>
-        </StepperContent>
+          <StepperContent
+            step={2}
+            title='Quiz'
+            description='Manage the assessments created for your lessons'
+            showNavigation
+            nextButtonText='Continue to Review'
+            previousButtonText='Back to Content'
+          >
+            <div className='space-y-4'>
+              <AssessmentList
+                courseTitle={course?.data?.name as string}
+                isLoading={assessmentLoading}
+                assessments={assessmentData?.data}
+                lessonItems={lessonContentData?.data}
+                courseId={resolveId}
+                onAddAssessment={openAddAssessmentModal}
+              />
 
-        <StepperContent
-          step={2}
-          title='Assessment'
-          description='Manage the assessments created for your lessons'
-          showNavigation
-          nextButtonText='Continue to Review'
-          previousButtonText='Back to Content'
-        >
-          <div className='space-y-4'>
-            <AssessmentList
-              courseTitle={course?.data?.name as string}
-              isLoading={assessmentLoading}
-              assessments={assessmentData?.data}
-              lessonItems={lessonContentData?.data}
-              courseId={resolveId}
-              onAddAssessment={openAddAssessmentModal}
-            />
+              <AssessmentDialog
+                isOpen={addAssessmentModalOpen}
+                onOpenChange={setAddAssessmentModalOpen}
+                courseId={createdCourseId ? createdCourseId : (courseId as string)}
+                onCancel={() => setAddAssessmentModalOpen(false)}
+              />
+            </div>
+          </StepperContent>
 
-            <AssessmentDialog
-              isOpen={addAssessmentModalOpen}
-              onOpenChange={setAddAssessmentModalOpen}
-              courseId={createdCourseId ? createdCourseId : (courseId as string)}
-              onCancel={() => setAddAssessmentModalOpen(false)}
-            />
-          </div>
-        </StepperContent>
 
-        <StepperContent
-          step={3}
-          title='Review Course'
-          description='Review your course before publishing'
-          showNavigation
-          previousButtonText='Back to Content'
-          hideNextButton={true}
-          customButton={
-            <Button onClick={handlePublishCourse} disabled={!course} className='min-w-[150px]'>
-              {PublishCourse.isPending ? <Spinner /> : 'Publish Course'}
-            </Button>
-          }
-        >
-          {course ? (
-            <div className='space-y-8'>
-              {/* Pricing Section */}
-              <section>
-                <h3 className='mb-3 text-xl font-semibold text-gray-800'>💰 Pricing</h3>
-                <div className='space-y-2 text-gray-700'>
-                  <p>
-                    <span className='font-medium'>Free Course:</span>{' '}
-                    {course?.data?.is_free ? 'Yes' : 'No'}
-                  </p>
-                  {!course?.data?.is_free && (
-                    <div className='space-y-1'>
-                      <p>
-                        <span className='font-medium'>Original Price:</span> {course?.data?.price}{' '}
-                        KES
-                      </p>
-                      <p>
-                        <span className='font-medium'>Sale Price:</span>{' '}
-                        <span className='font-semibold text-green-600'>
-                          {course?.data?.price} KES
-                        </span>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </section>
+          <StepperContent
+            step={3}
+            title='Assignment'
+            description='Manage the assessments created for your lessons'
+            showNavigation
+            nextButtonText='Continue to Review'
+            previousButtonText='Back to Content'
+          >
+            <div className='space-y-4'>
+              <AssessmentList
+                courseTitle={course?.data?.name as string}
+                isLoading={assessmentLoading}
+                assessments={assessmentData?.data}
+                lessonItems={lessonContentData?.data}
+                courseId={resolveId}
+                onAddAssessment={openAddAssessmentModal}
+              />
 
-              {/* Course Information */}
-              <section>
-                <div>
-                  <Image
-                    src={(course?.data?.banner_url as string) || '/illustration.png'}
-                    alt='upload-banner'
-                    width={128}
-                    height={128}
-                    className='mb-8 max-h-[250px] w-full bg-stone-300 text-sm'
-                  />
-                </div>
+              <AssessmentDialog
+                isOpen={addAssessmentModalOpen}
+                onOpenChange={setAddAssessmentModalOpen}
+                courseId={createdCourseId ? createdCourseId : (courseId as string)}
+                onCancel={() => setAddAssessmentModalOpen(false)}
+              />
+            </div>
+          </StepperContent>
 
-                <h3 className='mb-3 text-xl font-semibold text-gray-800'>📘 Course Information</h3>
-                <div className='space-y-3 text-gray-700'>
-                  <p>
-                    <span className='font-medium'>
-                      <strong>Name</strong>:
-                    </span>
-                    {course?.data?.name}
-                  </p>
-                  <div className='html-text-preview'>
-                    <div className='mb-1 font-bold'>Description:</div>
-                    <RichTextRenderer htmlString={course?.data?.description as string} />
+          <StepperContent
+            step={4}
+            title='Assessment'
+            description='Manage the assessments created for your lessons'
+            showNavigation
+            nextButtonText='Continue to Review'
+            previousButtonText='Back to Content'
+          >
+            <div className='space-y-4'>
+              <AssessmentList
+                courseTitle={course?.data?.name as string}
+                isLoading={assessmentLoading}
+                assessments={assessmentData?.data}
+                lessonItems={lessonContentData?.data}
+                courseId={resolveId}
+                onAddAssessment={openAddAssessmentModal}
+              />
+
+              <AssessmentDialog
+                isOpen={addAssessmentModalOpen}
+                onOpenChange={setAddAssessmentModalOpen}
+                courseId={createdCourseId ? createdCourseId : (courseId as string)}
+                onCancel={() => setAddAssessmentModalOpen(false)}
+              />
+            </div>
+          </StepperContent>
+
+
+          <StepperContent
+            step={5}
+            title='Branding'
+            description='Manage the assessments created for your lessons'
+            showNavigation
+            nextButtonText='Continue to Review'
+            previousButtonText='Back to Content'
+          >
+            <div className='space-y-4'>
+              <AssessmentList
+                courseTitle={course?.data?.name as string}
+                isLoading={assessmentLoading}
+                assessments={assessmentData?.data}
+                lessonItems={lessonContentData?.data}
+                courseId={resolveId}
+                onAddAssessment={openAddAssessmentModal}
+              />
+
+              <AssessmentDialog
+                isOpen={addAssessmentModalOpen}
+                onOpenChange={setAddAssessmentModalOpen}
+                courseId={createdCourseId ? createdCourseId : (courseId as string)}
+                onCancel={() => setAddAssessmentModalOpen(false)}
+              />
+            </div>
+          </StepperContent>
+
+          <StepperContent
+            step={6}
+            title='Course Licensing'
+            description='Manage the assessments created for your lessons'
+            showNavigation
+            nextButtonText='Continue to Review'
+            previousButtonText='Back to Content'
+          >
+            <div className='space-y-4'>
+              <AssessmentList
+                courseTitle={course?.data?.name as string}
+                isLoading={assessmentLoading}
+                assessments={assessmentData?.data}
+                lessonItems={lessonContentData?.data}
+                courseId={resolveId}
+                onAddAssessment={openAddAssessmentModal}
+              />
+
+              <AssessmentDialog
+                isOpen={addAssessmentModalOpen}
+                onOpenChange={setAddAssessmentModalOpen}
+                courseId={createdCourseId ? createdCourseId : (courseId as string)}
+                onCancel={() => setAddAssessmentModalOpen(false)}
+              />
+            </div>
+          </StepperContent>
+
+          <StepperContent
+            step={7}
+            title='Review Course'
+            description='Review your course before publishing'
+            showNavigation
+            previousButtonText='Back to Content'
+            hideNextButton={true}
+            customButton={
+              <Button onClick={handlePublishCourse} disabled={!course} className='min-w-[150px]'>
+                {PublishCourse.isPending ? <Spinner /> : 'Publish Course'}
+              </Button>
+            }
+          >
+            {course ? (
+              <div className='space-y-8'>
+                {/* Pricing Section */}
+                <section>
+                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>💰 Pricing</h3>
+                  <div className='space-y-2 text-gray-700'>
+                    <p>
+                      <span className='font-medium'>Free Course:</span>{' '}
+                      {course?.data?.is_free ? 'Yes' : 'No'}
+                    </p>
+                    {!course?.data?.is_free && (
+                      <div className='space-y-1'>
+                        <p>
+                          <span className='font-medium'>Original Price:</span> {course?.data?.price}{' '}
+                          KES
+                        </p>
+                        <p>
+                          <span className='font-medium'>Sale Price:</span>{' '}
+                          <span className='font-semibold text-green-600'>
+                            {course?.data?.price} KES
+                          </span>
+                        </p>
+                      </div>
+                    )}
                   </div>
+                </section>
+
+                {/* Course Information */}
+                <section>
+                  <div>
+                    <Image
+                      src={(course?.data?.banner_url as string) || '/illustration.png'}
+                      alt='upload-banner'
+                      width={128}
+                      height={128}
+                      className='mb-8 max-h-[250px] w-full bg-stone-300 text-sm'
+                    />
+                  </div>
+
+                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>📘 Course Information</h3>
+                  <div className='space-y-3 text-gray-700'>
+                    <p>
+                      <span className='font-medium'>
+                        <strong>Name</strong>:
+                      </span>
+                      {course?.data?.name}
+                    </p>
+                    <div className='html-text-preview'>
+                      <div className='mb-1 font-bold'>Description:</div>
+                      <RichTextRenderer htmlString={course?.data?.description as string} />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Learning Objectives */}
+                <section>
+                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>🎯 Learning Objectives</h3>
+                  <div className='html-text-preview text-gray-700'>
+                    <HTMLTextPreview htmlContent={course?.data?.objectives as string} />
+                  </div>
+                </section>
+
+                <p>
+                  <span className='font-bold'>Difficulty:</span>{' '}
+                  <DifficultyLabel difficultyUuid={course?.data?.difficulty_uuid as string} />
+                </p>
+
+                {/* Categories */}
+                <section className='flex flex-col items-start gap-4 sm:flex-row sm:items-center'>
+                  <h3 className='text-xl font-semibold text-gray-800'>🏷️ Categories</h3>
+                  <div className='flex flex-wrap gap-2'>
+                    {course?.data?.category_names?.map((category: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className='rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800'
+                      >
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+
+                {/* course content */}
+                <div className='mt-4'>
+                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>Course Content</h3>
                 </div>
-              </section>
+                <section>
+                  <div className='-mt-2 flex flex-col gap-2 space-y-4'>
+                    {courseLessons?.data?.content
+                      ?.slice()
+                      ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
+                      ?.map((lesson: any, i: any) => (
+                        <div key={i} className='flex flex-row gap-2'>
+                          <div>
+                            <span className='min-h-4 min-w-4'>
+                              <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
+                            </span>
+                          </div>
+                          <div className='flex flex-col gap-2'>
+                            <h3 className='font-semibold'>{lesson.title}</h3>
+                            <RichTextRenderer
+                              htmlString={(lesson?.description as string) || 'No lesson provided'}
+                            />
 
-              {/* Learning Objectives */}
-              <section>
-                <h3 className='mb-3 text-xl font-semibold text-gray-800'>🎯 Learning Objectives</h3>
-                <div className='html-text-preview text-gray-700'>
-                  <HTMLTextPreview htmlContent={course?.data?.objectives as string} />
+                            <h3 className='font-semibold'>
+                              <span>📅 Duration:</span> {lesson.duration_display}
+                            </h3>
+                          </div>
+                        </div>
+                      ))}
+
+                    {courseLessons?.data?.content?.length === 0 && (
+                      <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
+                        <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
+                        <p className='font-medium'>No lessons available</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* assessments */}
+                <div className='mt-4'>
+                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>Assessments</h3>
                 </div>
-              </section>
-
-              <p>
-                <span className='font-bold'>Difficulty:</span>{' '}
-                <DifficultyLabel difficultyUuid={course?.data?.difficulty_uuid as string} />
-              </p>
-
-              {/* Categories */}
-              <section className='flex flex-col items-start gap-4 sm:flex-row sm:items-center'>
-                <h3 className='text-xl font-semibold text-gray-800'>🏷️ Categories</h3>
-                <div className='flex flex-wrap gap-2'>
-                  {course?.data?.category_names?.map((category: string, idx: number) => (
-                    <span
-                      key={idx}
-                      className='rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800'
-                    >
-                      {category}
-                    </span>
-                  ))}
-                </div>
-              </section>
-
-              {/* course content */}
-              <div className='mt-4'>
-                <h3 className='mb-3 text-xl font-semibold text-gray-800'>Course Content</h3>
-              </div>
-              <section>
-                <div className='-mt-2 flex flex-col gap-2 space-y-4'>
-                  {courseLessons?.data?.content
-                    ?.slice()
-                    ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-                    ?.map((lesson: any, i: any) => (
+                <section>
+                  <div className='-mt-2 flex flex-col gap-2 space-y-4'>
+                    {assessmentData?.data?.content?.slice()?.map((assessment: any, i: any) => (
                       <div key={i} className='flex flex-row gap-2'>
                         <div>
                           <span className='min-h-4 min-w-4'>
-                            <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
+                            <BookOpenCheck className='mt-1 h-4 w-4' />
                           </span>
                         </div>
                         <div className='flex flex-col gap-2'>
-                          <h3 className='font-semibold'>{lesson.title}</h3>
+                          <h3 className='font-semibold'>{assessment.title}</h3>
                           <RichTextRenderer
-                            htmlString={(lesson?.description as string) || 'No lesson provided'}
+                            htmlString={
+                              (assessment?.description as string) || 'No assessment provided'
+                            }
                           />
 
-                          <h3 className='font-semibold'>
-                            <span>📅 Duration:</span> {lesson.duration_display}
-                          </h3>
+                          {/* <h3 className='font-semibold'>
+                          <span>📅 Duration:</span> {assessment.duration_display}
+                        </h3> */}
                         </div>
                       </div>
                     ))}
 
-                  {courseLessons?.data?.content?.length === 0 && (
-                    <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
-                      <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
-                      <p className='font-medium'>No lessons available</p>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              {/* assessments */}
-              <div className='mt-4'>
-                <h3 className='mb-3 text-xl font-semibold text-gray-800'>Assessments</h3>
+                    {assessmentData?.data?.content?.length === 0 && (
+                      <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
+                        <BookOpenCheck className='text-muted-foreground mb-2 h-8 w-8' />
+                        <p className='font-medium'>No assessments available</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
               </div>
-              <section>
-                <div className='-mt-2 flex flex-col gap-2 space-y-4'>
-                  {assessmentData?.data?.content?.slice()?.map((assessment: any, i: any) => (
-                    <div key={i} className='flex flex-row gap-2'>
-                      <div>
-                        <span className='min-h-4 min-w-4'>
-                          <BookOpenCheck className='mt-1 h-4 w-4' />
-                        </span>
-                      </div>
-                      <div className='flex flex-col gap-2'>
-                        <h3 className='font-semibold'>{assessment.title}</h3>
-                        <RichTextRenderer
-                          htmlString={
-                            (assessment?.description as string) || 'No assessment provided'
-                          }
-                        />
-
-                        {/* <h3 className='font-semibold'>
-                          <span>📅 Duration:</span> {assessment.duration_display}
-                        </h3> */}
-                      </div>
-                    </div>
-                  ))}
-
-                  {assessmentData?.data?.content?.length === 0 && (
-                    <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
-                      <BookOpenCheck className='text-muted-foreground mb-2 h-8 w-8' />
-                      <p className='font-medium'>No assessments available</p>
-                    </div>
-                  )}
-                </div>
-              </section>
-            </div>
-          ) : (
-            <div className='flex h-48 flex-col items-center justify-center text-center'>
-              <p className='mb-4 text-gray-500'>Please complete the course details first</p>
-            </div>
-          )}
-        </StepperContent>
-      </StepperRoot>
+            ) : (
+              <div className='flex h-48 flex-col items-center justify-center text-center'>
+                <p className='mb-4 text-gray-500'>Please complete the course details first</p>
+              </div>
+            )}
+          </StepperContent>
+        </StepperRoot>
       </div>
     </div>
   );

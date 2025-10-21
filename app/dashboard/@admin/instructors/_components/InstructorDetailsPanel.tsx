@@ -59,7 +59,6 @@ export default function InstructorDetailsPanel({
       <div className='flex-1 overflow-y-auto p-6'>
         <InstructorDetails
           instructor={instructor}
-          getStatusBadgeComponent={getStatusBadgeComponent}
         />
       </div>
 
@@ -71,7 +70,7 @@ export default function InstructorDetailsPanel({
             className='min-w-[110px] bg-blue-600 text-white hover:bg-blue-700'
           >
             <Edit className='mr-2 h-4 w-4' />
-            {isApprovePending ? <Spinner /> : 'Approve/Verify'}
+            {isApprovePending ? <Spinner /> : 'Approve Verification'}
           </Button>
           <Button
             variant='destructive'
@@ -79,7 +78,7 @@ export default function InstructorDetailsPanel({
             className='min-w-[100px]'
           >
             <Trash2 className='mr-2 h-4 w-4' />
-            {isRejectPending ? <Spinner /> : 'Reject/Unverify'}
+            {isRejectPending ? <Spinner /> : 'Unverify'}
           </Button>
         </div>
       </div>

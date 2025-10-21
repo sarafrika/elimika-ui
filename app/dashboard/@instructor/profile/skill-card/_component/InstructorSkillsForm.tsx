@@ -27,12 +27,14 @@ import { tanstackClient } from '@/services/api/tanstack-client';
 import { schemas } from '@/services/api/zod-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { Eye, PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { Dialog, DialogContent, DialogDescription } from '../../../../../../components/ui/dialog';
 import { addInstructorSkillMutation, getInstructorSkillsQueryKey } from '../../../../../../services/client/@tanstack/react-query.gen';
+import { InstructorSkillCard } from './instructor-skill-card';
 
 const SkillSchema = schemas.InstructorSkill;
 const skillsSchema = z.object({
@@ -53,6 +55,7 @@ export default function SkillsSettings({
 }) {
   const qc = useQueryClient()
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const [viewSkillCard, setViewSkillCard] = useState(false)
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -106,14 +109,6 @@ export default function SkillsSettings({
   );
   const { submitting } = useMultiMutations([addSkillMutation, updateSkillMutation]);
 
-
-
-
-
-
-
-
-
   const onSubmit = (data: SkillsFormValues) => {
     //console.log(data);
     // TODO: Implement submission logic. The Instructor schema currently does not have a field for skills.
@@ -155,11 +150,28 @@ export default function SkillsSettings({
 
   return (
     <div className='space-y-6'>
-      <div>
-        <h1 className='text-2xl font-semibold'>Skills</h1>
-        <p className='text-muted-foreground text-sm'>
-          Showcase your professional skills and proficiency levels.
-        </p>
+
+      <div className='flex flex-row items-center justify-between' >
+        <div>
+          <h1 className='text-2xl font-semibold'>Skills</h1>
+          <p className='text-muted-foreground text-sm'>
+            Showcase your professional skills and proficiency levels.
+          </p>
+        </div>
+
+        <div className='flex gap-2 w-fit'>
+          <Button
+            variant='outline'
+            size='lg'
+            className='flex-1'
+            onClick={() => {
+              setViewSkillCard(true)
+            }}
+          >
+            <Eye className='mr-1 h-3 w-3' />
+            View Skill Card
+          </Button>
+        </div>
       </div>
 
       <Form {...form}>
@@ -281,6 +293,80 @@ export default function SkillsSettings({
           </div>
         </form>
       </Form>
+
+      {viewSkillCard && (
+        <Dialog open={viewSkillCard} onOpenChange={(open) => setViewSkillCard(open)}>
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogDescription className='font-bold text-xl'>{instructor?.full_name}</DialogDescription>
+            <div className="flex flex-col gap-2">
+              {sampleSkillCard.map((skill: any) => (
+                <InstructorSkillCard key={skill.uuid} skill={skill} />
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
+
+
+const sampleSkillCard = [
+  {
+    uuid: "skill-001",
+    instructor_uuid: "instructor-123",
+    skill_name: "Java Programming",
+    proficiency_level: "EXPERT",
+    proficiency_percentage: 95,
+    proficiency_description: "Expert in Java with 7+ years of backend development experience in Spring Boot and RESTful APIs.",
+    is_core_skill: true,
+    is_teaching_qualified: true,
+    skill_category: "PROGRAMMING_LANGUAGE",
+    market_demand: "HIGH",
+    created_date: "2023-10-01T10:00:00",
+    updated_date: "2024-09-15T09:30:00"
+  },
+  {
+    uuid: "skill-002",
+    instructor_uuid: "instructor-123",
+    skill_name: "React Development",
+    proficiency_level: "ADVANCED",
+    proficiency_percentage: 90,
+    proficiency_description: "Building responsive frontend applications using React, Next.js, and Tailwind CSS.",
+    is_core_skill: true,
+    is_teaching_qualified: true,
+    skill_category: "WEB_DEVELOPMENT",
+    market_demand: "HIGH",
+    created_date: "2022-03-15T11:00:00",
+    updated_date: "2024-07-01T08:45:00"
+  },
+  {
+    uuid: "skill-003",
+    instructor_uuid: "instructor-123",
+    skill_name: "React Development",
+    proficiency_level: "ADVANCED",
+    proficiency_percentage: 90,
+    proficiency_description: "Strong experience building modern frontend applications with React, TypeScript, and Next.js.",
+    is_core_skill: true,
+    is_teaching_qualified: true,
+    skill_category: "WEB_DEVELOPMENT",
+    market_demand: "HIGH",
+    created_date: "2022-05-20T09:45:00",
+    updated_date: "2024-10-10T13:20:00"
+  },
+  {
+    uuid: "skill-004",
+    instructor_uuid: "instructor-123",
+    skill_name: "Agile Project Management",
+    proficiency_level: "INTERMEDIATE",
+    proficiency_percentage: 75,
+    proficiency_description: "Managed cross-functional teams using Scrum and Kanban. Experienced in Jira and project pipelines.",
+    is_core_skill: false,
+    is_teaching_qualified: true,
+    skill_category: "PROJECT_MANAGEMENT",
+    market_demand: "MEDIUM",
+    created_date: "2021-03-12T11:00:00",
+    updated_date: "2024-06-22T16:00:00"
+  }
+]
+

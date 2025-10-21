@@ -82,7 +82,9 @@ export default function ClassCourseDisplay({ courseUuid, classInfo }: Props) {
 
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>
           <Calendar className='h-4 w-4' />
-          <span className='italic'>e.g: Sep 1, 2025 - Dec 15, 2025</span>
+          {/* <span className='italic'>e.g: Sep 1, 2025 - Dec 15, 2025</span> */}
+          <span className='italic'>Start Date - End Date</span>
+
         </div>
 
         <div className='text-muted-foreground flex items-center gap-2 text-sm'>

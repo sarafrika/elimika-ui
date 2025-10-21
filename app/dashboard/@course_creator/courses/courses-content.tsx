@@ -1,5 +1,6 @@
 'use client';
 
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,12 +37,12 @@ const STATUS_OPTIONS: { label: string; value: CourseStatusFilter }[] = [
 ];
 
 const STATUS_BADGE: Record<string, { label: string; variant: 'secondary' | 'default' | 'outline' }> =
-  {
-    draft: { label: 'Draft', variant: 'secondary' },
-    in_review: { label: 'In review', variant: 'outline' },
-    published: { label: 'Published', variant: 'default' },
-    archived: { label: 'Archived', variant: 'secondary' },
-  };
+{
+  draft: { label: 'Draft', variant: 'secondary' },
+  in_review: { label: 'In review', variant: 'outline' },
+  published: { label: 'Published', variant: 'default' },
+  archived: { label: 'Archived', variant: 'secondary' },
+};
 
 export default function CourseCreatorCoursesContent() {
   const { courses, data } = useCourseCreator();
@@ -147,9 +148,9 @@ function CourseRow({ course }: { course: Course }) {
       <TableCell>
         <div className='flex flex-col gap-1'>
           <span className='font-semibold leading-tight'>{course.name}</span>
-          <span className='text-muted-foreground text-xs'>
-            {course.description ? truncate(course.description, 110) : 'No description added yet.'}
-          </span>
+          <div className='text-muted-foreground text-xs'>
+            {course?.description ? <RichTextRenderer htmlString={course?.description as string} maxChars={110} /> : 'No description added yet.'}
+          </div>
         </div>
       </TableCell>
       <TableCell>

@@ -33,7 +33,7 @@ export default function InstructorCard({
           </p>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
-              {getStatusBadgeComponent(instructor.uuid!)}
+              {/* {getStatusBadgeComponent(instructor.uuid!)} */}
               <Badge variant={instructor?.admin_verified ? 'success' : 'secondary'}>
                 {instructor?.admin_verified ? (
                   <>

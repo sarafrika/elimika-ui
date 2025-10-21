@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import ImageSelector, { ImageType } from '@/components/image-selector';
+import LocationInput from '@/components/locationInput';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -32,19 +33,19 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { useUserProfile } from '@/context/profile-context';
+import { useReverseGeocode } from '@/hooks/use-reverse-geocode';
+import { queryClient } from '@/lib/query-client';
 import { cn, profilePicSvg } from '@/lib/utils';
-import { zInstructor, zUser } from '@/services/client/zod.gen';
-import { CalendarIcon } from 'lucide-react';
-import { toast } from 'sonner';
-import LocationInput from '../../../../../../components/locationInput';
-import { useUserProfile } from '../../../../../../context/profile-context';
-import { queryClient } from '../../../../../../lib/query-client';
 import {
   createInstructor,
   updateInstructor,
   updateUser,
   uploadProfileImage,
-} from '../../../../../../services/client';
+} from '@/services/client';
+import { zInstructor, zUser } from '@/services/client/zod.gen';
+import { CalendarIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 const generalProfileSchema = z.object({
   user: zUser
@@ -88,6 +89,7 @@ export default function InstructorProfile() {
 
   const user = useUserProfile();
   const { instructor, invalidateQuery } = user!;
+  const { addressComponents } = useReverseGeocode(Number(instructor?.latitude), Number(instructor?.longitude));
 
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
@@ -96,12 +98,15 @@ export default function InstructorProfile() {
   });
 
   const domainBadges =
+    // @ts-ignore
     user?.user_domain?.map(domain =>
       domain
         .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
+
+
 
   const form = useForm<GeneralProfileFormValues>({
     resolver: zodResolver(generalProfileSchema),
@@ -146,14 +151,14 @@ export default function InstructorProfile() {
     const manageInstructor = () =>
       instructor
         ? updateInstructor({
-            path: {
-              uuid: instructor.uuid!,
-            },
-            body: updatedProfileData.instructor,
-          })
+          path: {
+            uuid: instructor.uuid!,
+          },
+          body: updatedProfileData.instructor,
+        })
         : createInstructor({
-            body: updatedProfileData.instructor,
-          });
+          body: updatedProfileData.instructor,
+        });
 
     const response = await Promise.all([
       updateUser({
@@ -195,7 +200,7 @@ export default function InstructorProfile() {
       eyebrow='Instructor'
       title='General information'
       description='Refresh your instructor profile so learners and organisations know who you are.'
-      badges={domainBadges}
+      badges={domainBadges as any}
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
@@ -408,15 +413,15 @@ export default function InstructorProfile() {
                       {...field}
                       onSuggest={loc => {
                         if (loc.features.length > 0) {
-                          form.setValue(
-                            'instructor.latitude',
-                            loc.features[0]!.properties.coordinates.latitude
-                          );
+                          // form.setValue(
+                          //   'instructor.latitude',
+                          //   loc.features[0]!.properties.coordinates.latitude
+                          // );
 
-                          form.setValue(
-                            'instructor.longitude',
-                            loc.features[0]!.properties.coordinates.longitude
-                          );
+                          // form.setValue(
+                          //   'instructor.longitude',
+                          //   loc.features[0]!.properties.coordinates.longitude
+                          // );
                         }
                         return loc;
                       }}

@@ -1,8 +1,8 @@
-import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
-import { Instructor } from '@/services/api/schema';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Instructor } from '@/services/api/schema';
+import { Edit, Trash2 } from 'lucide-react';
+import React from 'react';
 import InstructorDetails from './InstructorDetails';
 
 interface InstructorMobileModalProps {
@@ -43,7 +43,7 @@ export default function InstructorMobileModal({
 
         <InstructorDetails
           instructor={instructor}
-          getStatusBadgeComponent={getStatusBadgeComponent}
+        // getStatusBadgeComponent={getStatusBadgeComponent}
         />
 
         {/* Action Buttons */}

@@ -50,6 +50,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { Textarea } from '../../../../components/ui/textarea';
 
 // RUBRICS
 export enum RubricType {
@@ -109,7 +110,7 @@ function RubricDetailsForm({
     const payload = {
       ...values,
       rubric_type: values.type,
-      instructor_uuid: user?.instructor?.uuid as string,
+      instructor_uuid: user?.uuid as string,
       is_public: values.visibility === 'Public',
       status: StatusEnum.DRAFT,
       rubric_category: `${values.type} Assessment`,
@@ -183,17 +184,22 @@ function RubricDetailsForm({
 
         <FormField
           control={form.control}
-          name='description'
+          name="description"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input placeholder='Optional rubric description' {...field} />
+                <Textarea
+                  placeholder="Optional rubric description"
+                  rows={4}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
 
         <div className='flex flex-col items-start gap-6 sm:flex-row'>
           <FormField

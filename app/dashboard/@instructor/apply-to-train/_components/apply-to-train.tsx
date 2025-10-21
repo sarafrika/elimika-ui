@@ -10,18 +10,17 @@ import { ArrowLeft, ArrowRight, Eye, Save, UserCheck } from 'lucide-react';
 import { useState } from 'react';
 import { ComplianceRequirements } from './compliance-requirement';
 import { CourseProposal } from './course-proposal';
-import { ProfileAndSkills } from './profile-and-skill';
 import { ResourcesAndRequirements } from './resources-and-requirements';
 import { ReviewAndSubmit } from './review-and-submit';
 import { ScheduleAndDelivery } from './schedule-and-delivery';
 
 const STEPS = [
-    { id: 1, title: 'Profile & Skills', component: ProfileAndSkills },
-    { id: 2, title: 'Course Proposal', component: CourseProposal },
-    { id: 3, title: 'Schedule & Delivery', component: ScheduleAndDelivery },
-    { id: 4, title: 'Resources & Requirements', component: ResourcesAndRequirements },
-    { id: 5, title: 'Compliance', component: ComplianceRequirements },
-    { id: 6, title: 'Review & Submit', component: ReviewAndSubmit },
+    // { id: 1, title: 'Profile & Skills', component: ProfileAndSkills },
+    { id: 1, title: 'Course Proposal', component: CourseProposal },
+    { id: 2, title: 'Schedule & Delivery', component: ScheduleAndDelivery },
+    { id: 3, title: 'Resources & Requirements', component: ResourcesAndRequirements },
+    { id: 4, title: 'Compliance', component: ComplianceRequirements },
+    { id: 5, title: 'Review & Submit', component: ReviewAndSubmit },
 ];
 
 export function getTotalExperienceYears(experiences: any[]): number {
@@ -35,7 +34,6 @@ export function getTotalExperienceYears(experiences: any[]): number {
 export function ApplyToTrain() {
     const [currentStep, setCurrentStep] = useState(1);
     const [selectedCourse, setSelectedCourse] = useState<any>(null);
-
 
     const instructor = useInstructor();
     const { data } = useQuery(getUserByUuidOptions({ path: { uuid: instructor?.user_uuid as string } }))
@@ -161,9 +159,6 @@ export function ApplyToTrain() {
                                 profile={instructorProfile}
                                 onDataChange={handleDataChange}
                                 selectedCourse={selectedCourse}
-                                onCourseSelect={(course) => {
-                                    setSelectedCourse(course);
-                                }}
                             />
                         )}
                     </CardContent>

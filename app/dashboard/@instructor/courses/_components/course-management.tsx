@@ -5,12 +5,95 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
-import { getCoursesByInstructorOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAllCoursesOptions, getCoursesByInstructorOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Filter, Plus, Search } from 'lucide-react';
+import { BookOpen, Filter, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { CourseCard } from '../../../_components/course-card';
+import { TrainCourseCard } from '../../../_components/train-course-card';
+
+const SAMPLE_COURSES = [
+    {
+        id: '1',
+        title: 'Complete React Development Bootcamp',
+        subtitle: 'Build modern web applications with React, TypeScript, and Next.js',
+        category: 'Technology',
+        subcategory: 'Web Development',
+        instructor: 'John Smith',
+        instructorAvatar: '',
+        rating: 4.8,
+        enrolledCount: 2341,
+        duration: '40 hours',
+        difficulty: 'Intermediate',
+        price: '$89',
+        originalPrice: '$149',
+        coverImage: null,
+        hasVideo: true,
+    },
+    {
+        id: '2',
+        title: 'UI/UX Design Fundamentals',
+        subtitle: 'Learn design principles and create beautiful user interfaces',
+        category: 'Design',
+        subcategory: 'UI/UX Design',
+        instructor: 'Sarah Johnson',
+        instructorAvatar: '',
+        rating: 4.9,
+        enrolledCount: 1856,
+        duration: '25 hours',
+        difficulty: 'Beginner',
+        price: 'Free',
+        originalPrice: null,
+        coverImage: null,
+        hasVideo: true,
+    },
+    {
+        id: '3',
+        title: 'Digital Marketing Strategy',
+        subtitle: 'Master SEO, social media, and content marketing',
+        category: 'Business',
+        subcategory: 'Marketing',
+        instructor: 'Mike Wilson',
+        instructorAvatar: '',
+        rating: 4.7,
+        enrolledCount: 3247,
+        duration: '30 hours',
+        difficulty: 'Intermediate',
+        price: '$129',
+        originalPrice: '$199',
+        coverImage: null,
+        hasVideo: false,
+    },
+    {
+        id: '4',
+        title: 'Data Science with Python',
+        subtitle: 'Learn Python, pandas, and machine learning from scratch',
+        category: 'Technology',
+        subcategory: 'Data Science',
+        instructor: 'Dr. Lisa Chen',
+        instructorAvatar: '',
+        rating: 4.6,
+        enrolledCount: 1923,
+        duration: '50 hours',
+        difficulty: 'Advanced',
+        price: '$199',
+        originalPrice: '$299',
+        coverImage: null,
+        hasVideo: true,
+    },
+];
+
+const sidebarNavItems = [
+    {
+        title: 'Drafts',
+        href: '/dashboard/courses/drafts',
+    },
+    {
+        title: 'Published',
+        href: '/dashboard/courses/published',
+    },
+];
+
 export default function CourseMangementPage() {
     const router = useRouter();
     const instructor = useInstructor();
@@ -28,7 +111,9 @@ export default function CourseMangementPage() {
         enabled: !!instructor?.uuid,
     });
 
-    const courses = data?.data?.content;
+    const { data: allCourses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }))
+
+    const courses = allCourses?.data?.content;
     const paginationMetadata = data?.data?.metadata;
 
     const filteredCourses = useMemo(() => {
@@ -45,15 +130,8 @@ export default function CourseMangementPage() {
     }, [courses, searchQuery]);
 
     return (
-        <div className='min-h-screen'>
+        <div className='h-auto'>
             <div className='container mx-auto'>
-                <div className='flex items-end justify-end max-w-6xl mb-8'>
-                    <Button onClick={() => router.push('/dashboard/apply-to-train')}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Apply to train a course
-                    </Button>
-                </div>
-
                 {/* Search and Filters */}
                 <div className='mb-8'>
                     <div className='mb-6 flex gap-4'>
@@ -88,10 +166,9 @@ export default function CourseMangementPage() {
                 {/* Course Grid */}
                 <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
                     {filteredCourses.map(course => (
-                        <CourseCard
+                        <TrainCourseCard
                             key={course.uuid}
                             course={course as any}
-                            isStudent={false}
                             handleClick={() => router.push(`/dashboard/courses/${course.uuid}`)}
                         />
                     ))}
