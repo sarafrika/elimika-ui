@@ -6,6 +6,7 @@ import { ArrowRight, BookOpen, Users, GraduationCap, ArrowLeft } from 'lucide-re
 import { useUserProfile } from '@/context/profile-context';
 import { useRouter } from 'next/navigation';
 import { UserDomain } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 type ProfileType = {
   id: UserDomain;
@@ -55,7 +56,7 @@ const profileTypes: ProfileType[] = [
   },
 ];
 
-export default function AddProfileSelector() {
+export default function AddProfileSelector({ className = '' }: { className?: string }) {
   const profile = useUserProfile();
   const router = useRouter();
 
@@ -68,7 +69,10 @@ export default function AddProfileSelector() {
   // If user already has all profile types, show a message
   if (availableProfiles.length === 0) {
     return (
-      <div className='space-y-4 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-6 text-sm leading-relaxed text-muted-foreground'>
+      <div className={cn(
+        'space-y-4 rounded-2xl border border-dashed border-primary/50 bg-primary/5 p-6 text-sm leading-relaxed text-muted-foreground',
+        className
+      )}>
         <div className='space-y-1'>
           <h2 className='text-lg font-semibold text-foreground'>All profiles added</h2>
           <p>
@@ -85,23 +89,8 @@ export default function AddProfileSelector() {
   }
 
   return (
-    <>
-      <div className='mb-6 flex flex-wrap items-center justify-between gap-3'>
-        <div>
-          <p className='text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground'>
-            Available roles
-          </p>
-          <p className='text-sm text-muted-foreground'>
-            Choose the profile you want to add. We will guide you through a quick setup.
-          </p>
-        </div>
-        <Button onClick={() => router.push('/dashboard/overview')} variant='outline' size='sm'>
-          <ArrowLeft className='mr-2 h-4 w-4' />
-          Back to dashboard
-        </Button>
-      </div>
-
-      <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+    <div className={cn('space-y-6', className)}>
+      <div className='grid gap-5 sm:grid-cols-2 xl:grid-cols-3'>
         {availableProfiles.map(type => {
           const Icon = type.icon;
 
@@ -109,15 +98,18 @@ export default function AddProfileSelector() {
             <Link
               key={type.id}
               href={type.href}
-              className={`group relative block rounded-2xl border border-border/50 bg-background/90 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/40 ${type.hoverBg}`}
+              className={cn(
+                'group relative flex h-full flex-col gap-6 rounded-2xl border border-border/50 bg-background/95 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/40',
+                type.hoverBg
+              )}
             >
               {/* Icon */}
-              <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted'>
-                <Icon className={`h-6 w-6 ${type.iconColor}`} />
+              <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary/15'>
+                <Icon className='h-6 w-6' />
               </div>
 
               {/* Content */}
-              <div className='mb-6 space-y-2'>
+              <div className='space-y-2'>
                 <h3 className='text-lg font-semibold text-foreground transition-colors group-hover:text-primary'>
                   {type.title}
                 </h3>
@@ -125,11 +117,9 @@ export default function AddProfileSelector() {
               </div>
 
               {/* Button */}
-              <div className='flex justify-between text-sm font-medium text-primary group-hover:text-primary/90'>
-                <span className='flex items-center gap-2'>
-                  Add {type.title}
-                </span>
-                <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
+              <div className='flex items-center justify-between text-sm font-medium text-primary opacity-90 transition-opacity group-hover:opacity-100'>
+                <span>Add {type.title}</span>
+                <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1.5' />
               </div>
 
               {/* Decorative overlay */}
@@ -138,6 +128,6 @@ export default function AddProfileSelector() {
           );
         })}
       </div>
-    </>
+    </div>
   );
 }
