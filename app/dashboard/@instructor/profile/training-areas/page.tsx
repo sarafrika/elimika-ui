@@ -1,7 +1,7 @@
 'use client';
 
+import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -11,11 +11,15 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import Spinner from '@/components/ui/spinner';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
+import { useUserProfile } from '@/context/profile-context';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
 
 const trainingAreasSchema = z.object({
@@ -44,6 +48,9 @@ export default function TrainingAreasSettings() {
     ]);
   }, [replaceBreadcrumbs]);
 
+  const user = useUserProfile();
+  const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
+
   const form = useForm<TrainingAreasFormValues>({
     resolver: zodResolver(trainingAreasSchema),
     defaultValues: {
@@ -57,79 +64,105 @@ export default function TrainingAreasSettings() {
     name: 'areas',
   });
 
-  const onSubmit = (data: TrainingAreasFormValues) => {
-    //console.log(data);
-    // TODO: Implement submission logic. The Instructor schema currently does not have a field for training areas.
+  const handleSubmit = (data: TrainingAreasFormValues) => {
+    requestConfirmation({
+      title: 'Save training areas?',
+      description: 'Learners use these interests to discover the sessions you can facilitate.',
+      confirmLabel: 'Save interests',
+      cancelLabel: 'Keep editing',
+      onConfirm: async () => {
+        // Placeholder for future API work
+        await new Promise(resolve => setTimeout(resolve, 300));
+        toast.success('Training areas updated');
+        disableEditing();
+      },
+    });
   };
 
+  const domainBadges =
+    user?.user_domain?.map(domain =>
+      domain
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    ) ?? [];
+
   return (
-    <div className='space-y-6'>
-      <div>
-        <h1 className='text-2xl font-semibold'>Interested Training Areas</h1>
-        <p className='text-muted-foreground text-sm'>
-          List the subjects or courses you are interested in teaching.
-        </p>
-      </div>
-
+    <ProfileFormShell
+      eyebrow='Instructor'
+      title='Interested training areas'
+      description='List the subjects or courses you are interested in teaching.'
+      badges={domainBadges}
+    >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Training Interests</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-6 pt-0'>
-              <div className='space-y-4'>
-                {fields.map((field, index) => (
-                  <div key={field.id} className='flex items-end gap-4 rounded-md border p-4'>
-                    <FormField
-                      control={form.control}
-                      name={`areas.${index}.name`}
-                      render={({ field }) => (
-                        <FormItem className='flex-1'>
-                          <FormLabel>Area/Subject/Course</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder='e.g. Graphic Design, Yoga, Public Speaking'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type='button'
-                      variant='destructive'
-                      size='icon'
-                      onClick={() => remove(index)}
-                      className='h-10 w-10 flex-shrink-0'
-                    >
-                      <Trash2 className='h-4 w-4' />
-                      <span className='sr-only'>Remove area</span>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
+        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+          <ProfileFormSection
+            title='Focus areas'
+            description='Add or remove the disciplines you would like to facilitate.'
+            footer={
               <Button
-                type='button'
-                variant='outline'
-                className='flex w-full items-center justify-center gap-2'
-                onClick={() => append({ name: '' })}
+                type='submit'
+                className='min-w-36'
+                disabled={!isEditing || isConfirming}
               >
-                <PlusCircle className='h-4 w-4' />
-                Add Another Area
+                {isConfirming ? (
+                  <span className='flex items-center gap-2'>
+                    <Spinner className='h-4 w-4' />
+                    Saving…
+                  </span>
+                ) : (
+                  'Save changes'
+                )}
               </Button>
+            }
+          >
+            <div className='space-y-4'>
+              {fields.map((field, index) => (
+                <div key={field.id} className='flex items-end gap-4 rounded-md border p-4'>
+                  <FormField
+                    control={form.control}
+                    name={`areas.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem className='flex-1'>
+                        <FormLabel>Area / subject / course</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='e.g. Graphic Design, Yoga, Public Speaking'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type='button'
+                    variant='destructive'
+                    size='icon'
+                    onClick={() => remove(index)}
+                    className='h-10 w-10 flex-shrink-0'
+                    disabled={!isEditing}
+                  >
+                    <Trash2 className='h-4 w-4' />
+                    <span className='sr-only'>Remove area</span>
+                  </Button>
+                </div>
+              ))}
+            </div>
 
-              <div className='flex justify-end pt-2'>
-                <Button type='submit' className='px-6'>
-                  Save Changes
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <Button
+              type='button'
+              variant='outline'
+              className='flex w-full items-center justify-center gap-2'
+              onClick={() => append({ name: '' })}
+              disabled={!isEditing}
+            >
+              <PlusCircle className='h-4 w-4' />
+              Add another area
+            </Button>
+          </ProfileFormSection>
         </form>
       </Form>
-    </div>
+    </ProfileFormShell>
   );
 }

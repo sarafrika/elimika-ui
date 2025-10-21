@@ -15,11 +15,12 @@ import { Separator } from '@/components/ui/separator';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import LocationInput from '../../../../../../components/locationInput';
+import { useProfileFormMode } from '../../../../../../context/profile-form-mode-context';
 import { useTrainingCenter } from '../../../../../../context/training-center-provide';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { queryClient } from '../../../../../../lib/query-client';
@@ -65,6 +66,7 @@ export default function ManageBranch() {
 
   const userProfile = useUserProfile();
   const trainingCenter = useTrainingCenter();
+  const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   const defaultBranch = (): BranchType => ({
     branch_name: 'Main Campus',
@@ -97,52 +99,71 @@ export default function ManageBranch() {
     name: 'branches',
   });
 
-  const onSubmit = async (data: BranchesFormValues) => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const onSubmit = (data: BranchesFormValues) => {
     if (!trainingCenter || !trainingCenter.uuid) {
       toast.warning('No training center selected');
       return;
     }
 
-    const responses = await Promise.all(
-      data.branches.map(branch => {
-        if (branch.uuid)
-          return updateTrainingBranch({
-            path: {
-              uuid: branch.uuid,
-            },
-            body: {
-              ...branch,
-              organisation_uuid: trainingCenter.uuid!,
-            },
+    requestConfirmation({
+      title: 'Save branch updates?',
+      description: 'Your training locations will be refreshed for learners and instructors.',
+      confirmLabel: 'Save branches',
+      cancelLabel: 'Keep editing',
+      onConfirm: async () => {
+        setIsSaving(true);
+        try {
+          const responses = await Promise.all(
+            data.branches.map(branch => {
+              if (branch.uuid)
+                return updateTrainingBranch({
+                  path: {
+                    uuid: branch.uuid,
+                  },
+                  body: {
+                    ...branch,
+                    organisation_uuid: trainingCenter.uuid!,
+                  },
+                });
+
+              return createTrainingBranch({
+                body: {
+                  ...branch,
+                  organisation_uuid: trainingCenter.uuid!,
+                },
+              });
+            })
+          );
+
+          let hasError = false;
+          responses.forEach((response: ApiResponse, i) => {
+            if (response.error) {
+              Object.keys(response.error).forEach((key: string) => {
+                const fieldName = `branches.${i}.${key}` as any;
+                const { error } = response.error as any;
+                form.setError(fieldName, error[key]);
+              });
+              hasError = true;
+            }
           });
 
-        return createTrainingBranch({
-          body: {
-            ...branch,
-            organisation_uuid: trainingCenter.uuid!,
-          },
-        });
-      })
-    );
+          if (hasError) {
+            toast.error('Error saving branch');
+            return;
+          }
 
-    let hasError = false;
-    responses.map((response: ApiResponse, i) => {
-      if (response.error) {
-        Object.keys(response.error).map((key: string) => {
-          const fieldName = `branches.${i}.${key}` as any;
-          const { error } = response.error as any;
-          form.setError(fieldName, error[key]);
-        });
-        hasError = true;
-      } else {
-      }
+          toast.success('Branch details updated successfully');
+          disableEditing();
+          queryClient.invalidateQueries({ queryKey: ['organization'] });
+        } catch (error) {
+          toast.error('Unable to save branch details right now. Please try again.');
+        } finally {
+          setIsSaving(false);
+        }
+      },
     });
-
-    if (hasError) toast.error('Error saving branch');
-    else {
-      toast.success('Branch added successfully');
-      queryClient.invalidateQueries({ queryKey: ['organization'] });
-    }
   };
 
   return (
@@ -164,12 +185,13 @@ export default function ManageBranch() {
                   variant='outline'
                   onClick={() => append(defaultBranch())}
                   className='sm:w-auto'
+                  disabled={!isEditing || isSaving || isConfirming}
                 >
                   <PlusCircle className='mr-2 h-4 w-4' />
                   Add branch
                 </Button>
-                <Button type='submit' disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Saving…' : 'Save branches'}
+                <Button type='submit' disabled={!isEditing || isSaving || isConfirming}>
+                  {isSaving || isConfirming ? 'Saving…' : 'Save branches'}
                 </Button>
               </div>
             }

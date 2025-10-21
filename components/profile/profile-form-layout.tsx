@@ -1,10 +1,28 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import Spinner from '@/components/ui/spinner';
+import {
+  ProfileFormConfirmationOptions,
+  ProfileFormModeContext,
+  useProfileFormMode,
+} from '@/context/profile-form-mode-context';
 import { cn } from '@/lib/utils';
+import { Pencil, X } from 'lucide-react';
 
 type ProfileFormShellProps = {
   title: string;
@@ -15,6 +33,9 @@ type ProfileFormShellProps = {
   children: ReactNode;
   className?: string;
   contentClassName?: string;
+  editable?: boolean;
+  defaultEditing?: boolean;
+  onEditingChange?: (isEditing: boolean) => void;
 };
 
 export function ProfileFormShell({
@@ -26,38 +47,161 @@ export function ProfileFormShell({
   children,
   className,
   contentClassName,
+  editable = true,
+  defaultEditing = false,
+  onEditingChange,
 }: ProfileFormShellProps) {
+  const [isEditing, setIsEditing] = useState(defaultEditing);
+  const [confirmation, setConfirmation] = useState<ProfileFormConfirmationOptions | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  const enableEditing = useCallback(() => {
+    setIsEditing(current => {
+      if (!current) {
+        onEditingChange?.(true);
+      }
+      return true;
+    });
+  }, [onEditingChange]);
+
+  const disableEditing = useCallback(() => {
+    setIsEditing(current => {
+      if (current) {
+        onEditingChange?.(false);
+      }
+      return false;
+    });
+  }, [onEditingChange]);
+
+  const toggleEditing = useCallback(() => {
+    setIsEditing(current => {
+      const next = !current;
+      onEditingChange?.(next);
+      return next;
+    });
+  }, [onEditingChange]);
+
+  const requestConfirmation = useCallback((options: ProfileFormConfirmationOptions) => {
+    setConfirmation({
+      title: options.title ?? 'Confirm changes?',
+      description: options.description ?? 'Your updates will be submitted. Do you want to continue?',
+      confirmLabel: options.confirmLabel ?? 'Yes, continue',
+      cancelLabel: options.cancelLabel ?? 'No, go back',
+      onConfirm: options.onConfirm,
+    });
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({
+      isEditing,
+      toggleEditing,
+      enableEditing,
+      disableEditing,
+      requestConfirmation,
+      isConfirming,
+    }),
+    [disableEditing, enableEditing, isConfirming, isEditing, requestConfirmation, toggleEditing]
+  );
+
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && !isConfirming) {
+        setConfirmation(null);
+      }
+    },
+    [isConfirming]
+  );
+
+  const handleConfirm = useCallback(async () => {
+    if (!confirmation?.onConfirm) {
+      setConfirmation(null);
+      return;
+    }
+
+    try {
+      setIsConfirming(true);
+      await confirmation.onConfirm();
+      setConfirmation(null);
+    } finally {
+      setIsConfirming(false);
+    }
+  }, [confirmation]);
+
+  const hasActions = editable || Boolean(actions);
+
   return (
-    <div className={cn('mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8', className)}>
-      <header className='flex flex-col gap-4 pb-6 md:flex-row md:items-end md:justify-between'>
-        <div className='max-w-2xl space-y-2'>
-          {eyebrow ? (
-            <p className='text-xs font-medium uppercase tracking-[0.2em] text-primary/80'>{eyebrow}</p>
-          ) : null}
-          <h1 className='text-3xl font-semibold tracking-tight text-foreground sm:text-4xl'>{title}</h1>
-          {description ? (
-            <p className='text-muted-foreground text-sm sm:text-base'>{description}</p>
-          ) : null}
-          {badges && badges.length > 0 ? (
-            <div className='flex flex-wrap gap-2 pt-1'>
-              {badges.map((badge, index) =>
-                typeof badge === 'string' ? (
-                  <Badge key={badge} variant='outline' className='bg-primary/5 text-xs font-medium capitalize'>
-                    {badge}
-                  </Badge>
-                ) : (
-                  <Badge key={index} variant='outline' className='bg-primary/5 text-xs font-medium capitalize'>
-                    {badge}
-                  </Badge>
-                )
-              )}
+    <ProfileFormModeContext.Provider value={contextValue}>
+      <div className={cn('mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8', className)}>
+        <header className='flex flex-col gap-4 pb-6 md:flex-row md:items-end md:justify-between'>
+          <div className='max-w-2xl space-y-2'>
+            {eyebrow ? (
+              <p className='text-xs font-medium uppercase tracking-[0.2em] text-primary/80'>{eyebrow}</p>
+            ) : null}
+            <h1 className='text-3xl font-semibold tracking-tight text-foreground sm:text-4xl'>{title}</h1>
+            {description ? (
+              <p className='text-muted-foreground text-sm sm:text-base'>{description}</p>
+            ) : null}
+            {badges && badges.length > 0 ? (
+              <div className='flex flex-wrap gap-2 pt-1'>
+                {badges.map((badge, index) =>
+                  typeof badge === 'string' ? (
+                    <Badge key={badge} variant='outline' className='bg-primary/5 text-xs font-medium capitalize'>
+                      {badge}
+                    </Badge>
+                  ) : (
+                    <Badge key={index} variant='outline' className='bg-primary/5 text-xs font-medium capitalize'>
+                      {badge}
+                    </Badge>
+                  )
+                )}
+              </div>
+            ) : null}
+          </div>
+          {hasActions ? (
+            <div className='flex flex-wrap items-center gap-3'>
+              {editable ? (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='icon'
+                  onClick={isEditing ? disableEditing : enableEditing}
+                  aria-pressed={isEditing}
+                  aria-label={isEditing ? 'Stop editing' : 'Enable editing'}
+                  className={cn('transition-colors', isEditing && 'border-primary text-primary')}
+                >
+                  {isEditing ? <X className='h-4 w-4' /> : <Pencil className='h-4 w-4' />}
+                </Button>
+              ) : null}
+              {actions}
             </div>
           ) : null}
-        </div>
-        {actions ? <div className='flex flex-wrap gap-3'>{actions}</div> : null}
-      </header>
-      <div className={cn('space-y-6', contentClassName)}>{children}</div>
-    </div>
+        </header>
+        <div className={cn('space-y-6', contentClassName)}>{children}</div>
+      </div>
+      <AlertDialog open={Boolean(confirmation)} onOpenChange={handleDialogOpenChange}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmation?.title}</AlertDialogTitle>
+            {confirmation?.description ? (
+              <AlertDialogDescription>{confirmation.description}</AlertDialogDescription>
+            ) : null}
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isConfirming}>{confirmation?.cancelLabel ?? 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm} disabled={isConfirming}>
+              {isConfirming ? (
+                <span className='flex items-center gap-2'>
+                  <Spinner className='h-4 w-4' />
+                  Processing…
+                </span>
+              ) : (
+                confirmation?.confirmLabel ?? 'Confirm'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </ProfileFormModeContext.Provider>
   );
 }
 
@@ -80,6 +224,8 @@ export function ProfileFormSection({
   className,
   contentClassName,
 }: ProfileFormSectionProps) {
+  const { isEditing } = useProfileFormMode();
+
   return (
     <Card className={cn('border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60', className)}>
       <CardHeader className='border-b border-border/60 bg-muted/40/60'>
@@ -91,8 +237,21 @@ export function ProfileFormSection({
           </div>
         </div>
       </CardHeader>
-      <CardContent className={cn('space-y-6 p-6 sm:p-8', contentClassName)}>{children}</CardContent>
-      {footer ? <CardFooter className='flex flex-col items-stretch gap-3 border-t border-border/60 bg-muted/10 p-6 sm:flex-row sm:justify-end'>{footer}</CardFooter> : null}
+      <CardContent className={cn('p-6 sm:p-8', contentClassName)}>
+        <fieldset disabled={!isEditing} className={cn('space-y-6', !isEditing && 'pointer-events-none opacity-70')}>
+          {children}
+        </fieldset>
+      </CardContent>
+      {footer ? (
+        <CardFooter
+          className={cn(
+            'flex flex-col items-stretch gap-3 border-t border-border/60 bg-muted/10 p-6 sm:flex-row sm:justify-end',
+            !isEditing && 'pointer-events-none opacity-70'
+          )}
+        >
+          {footer}
+        </CardFooter>
+      ) : null}
     </Card>
   );
 }

@@ -11,9 +11,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { useStudent } from '@/context/student-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
@@ -41,6 +42,7 @@ function CertificationsSettingsContent() {
   const qc = useQueryClient();
   const userProfile = useUserProfile();
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   const student = useStudent();
   const updateGuardianInfo = useMutation(updateStudentMutation());
@@ -81,32 +83,45 @@ function CertificationsSettingsContent() {
     }
   }, [studentInfo, form]);
 
-  const onSubmit = async (data: GuardianInfoFormValues) => {
-    updateGuardianInfo.mutate(
-      {
-        body: {
-          ...(data as any),
-          user_uuid: student?.user_uuid as string,
-          updated_by: student?.user_uuid,
-        },
-        path: { uuid: student?.uuid as string },
-      },
-      {
-        onSuccess: (data: any) => {
-          qc.invalidateQueries({
-            queryKey: getStudentByIdQueryKey({ path: { uuid: student?.uuid as string } }),
-          });
-          toast.success(data?.message || 'Information updated successfully');
-        },
-        onError: (error: any, data) => {
-          const errorMessage = error?.error
-            ? Object.values(error.error)[0]
-            : error?.message || 'An error occurred';
+  const onSubmit = (data: GuardianInfoFormValues) => {
+    requestConfirmation({
+      title: 'Save guardian information?',
+      description: 'These contacts will be used for urgent updates and must stay accurate.',
+      confirmLabel: 'Save guardians',
+      cancelLabel: 'Keep editing',
+      onConfirm: async () => {
+        try {
+          await updateGuardianInfo.mutateAsync(
+            {
+              body: {
+                ...(data as any),
+                user_uuid: student?.user_uuid as string,
+                updated_by: student?.user_uuid,
+              },
+              path: { uuid: student?.uuid as string },
+            },
+            {
+              onSuccess: (response: any) => {
+                qc.invalidateQueries({
+                  queryKey: getStudentByIdQueryKey({ path: { uuid: student?.uuid as string } }),
+                });
+                toast.success(response?.message || 'Information updated successfully');
+                disableEditing();
+              },
+              onError: (error: any) => {
+                const errorMessage = error?.error
+                  ? Object.values(error.error)[0]
+                  : error?.message || 'An error occurred';
 
-          toast.error(errorMessage);
-        },
-      }
-    );
+                toast.error(errorMessage);
+              },
+            }
+          );
+        } catch (error) {
+          // handled by toast inside mutation callbacks
+        }
+      },
+    });
   };
 
   const domainBadges =
@@ -130,8 +145,12 @@ function CertificationsSettingsContent() {
             title='Emergency contacts'
             description='We reach out to these contacts for important updates and emergencies.'
             footer={
-              <Button type='submit' className='min-w-32' disabled={updateGuardianInfo.isPending}>
-                {updateGuardianInfo.isPending ? (
+              <Button
+                type='submit'
+                className='min-w-32'
+                disabled={!isEditing || updateGuardianInfo.isPending || isConfirming}
+              >
+                {updateGuardianInfo.isPending || isConfirming ? (
                   <span className='flex items-center gap-2'>
                     <Spinner className='h-4 w-4' />
                     Saving…

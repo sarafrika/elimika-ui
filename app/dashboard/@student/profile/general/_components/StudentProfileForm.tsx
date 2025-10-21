@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { useUserProfile } from '@/context/profile-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,7 @@ export default function StudentProfileGeneralForm() {
   const qc = useQueryClient();
   const user = useUserProfile();
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -146,27 +148,36 @@ export default function StudentProfileGeneralForm() {
     );
   }
 
-  const onSubmit = async (data: StudentProfileType) => {
-    try {
-      await userMutation.mutateAsync(
-        {
-          body: {
-            ...data,
-            dob: data.dob ?? '',
-            active: user?.active as boolean,
-          },
-          path: { uuid: user!.uuid as string },
-        },
-        {
-          onSuccess: data => {
-            qc.invalidateQueries({ queryKey: ['profile'] });
-            toast.success(data?.message);
-          },
+  const handleSubmit = (data: StudentProfileType) => {
+    requestConfirmation({
+      title: 'Save profile changes?',
+      description: 'This will update your learner details for instructors and guardians.',
+      confirmLabel: 'Save changes',
+      cancelLabel: 'Keep editing',
+      onConfirm: async () => {
+        try {
+          await userMutation.mutateAsync(
+            {
+              body: {
+                ...data,
+                dob: data.dob ?? '',
+                active: user?.active as boolean,
+              },
+              path: { uuid: user!.uuid as string },
+            },
+            {
+              onSuccess: data => {
+                qc.invalidateQueries({ queryKey: ['profile'] });
+                toast.success(data?.message);
+                disableEditing();
+              },
+            }
+          );
+        } catch (error) {
+          // handled by toast inside mutation
         }
-      );
-    } catch (error) {
-      // console.error('Error updating user profile:', error);
-    }
+      },
+    });
   };
 
   const initials =
@@ -189,7 +200,7 @@ export default function StudentProfileGeneralForm() {
       badges={domainBadges}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
           {errors && errors.length > 0 ? (
             <Alert variant='destructive' className='border-destructive/40 bg-destructive/10 text-destructive'>
               <AlertCircleIcon className='h-4 w-4' />
@@ -394,9 +405,9 @@ export default function StudentProfileGeneralForm() {
               <Button
                 type='submit'
                 className='min-w-36'
-                disabled={userMutation.isPending || pictureMutation.isPending}
+                disabled={!isEditing || userMutation.isPending || pictureMutation.isPending || isConfirming}
               >
-                {userMutation.isPending || pictureMutation.isPending ? (
+                {userMutation.isPending || pictureMutation.isPending || isConfirming ? (
                   <span className='flex items-center gap-2'>
                     <Spinner className='h-4 w-4' />
                     Saving…

@@ -9,6 +9,7 @@ import * as z from 'zod';
 
 import ImageSelector, { ImageType } from '@/components/image-selector';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -31,12 +32,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import { Textarea } from '@/components/ui/textarea';
 import { cn, profilePicSvg } from '@/lib/utils';
 import { zInstructor, zUser } from '@/services/client/zod.gen';
 import { CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import LocationInput from '../../../../../../components/locationInput';
+import { useProfileFormMode } from '../../../../../../context/profile-form-mode-context';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { queryClient } from '../../../../../../lib/query-client';
 import {
@@ -73,6 +74,7 @@ type GeneralProfileFormValues = z.infer<typeof generalProfileSchema>;
 
 export default function InstructorProfile() {
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -123,72 +125,84 @@ export default function InstructorProfile() {
   });
 
   const [submitting, setSubmitting] = useState(false);
-  async function onSubmit(updatedProfileData: GeneralProfileFormValues) {
-    setSubmitting(true);
 
-    let uploadProfilePicResp;
-    if (profilePic.file) {
-      const fd = new FormData();
-      const fileName = `${crypto.randomUUID()}${profilePic.file.name}`;
-      fd.append('profileImage', profilePic.file as Blob, fileName);
-      fd.append('profileImage', fileName);
+  const onSubmit = (updatedProfileData: GeneralProfileFormValues) => {
+    requestConfirmation({
+      title: 'Save instructor profile changes?',
+      description: 'These updates will be visible to learners, organisations, and fellow instructors.',
+      confirmLabel: 'Save changes',
+      cancelLabel: 'Keep editing',
+      onConfirm: async () => {
+        setSubmitting(true);
+        try {
+          let uploadProfilePicResp;
+          if (profilePic.file) {
+            uploadProfilePicResp = await uploadProfileImage({
+              path: {
+                userUuid: user!.uuid!,
+              },
+              body: {
+                profileImage: profilePic.file,
+              },
+            });
+          }
 
-      uploadProfilePicResp = await uploadProfileImage({
-        path: {
-          userUuid: user!.uuid!,
-        },
-        body: {
-          profileImage: profilePic.file,
-        },
-      });
-    }
+          const manageInstructor = () =>
+            instructor
+              ? updateInstructor({
+                  path: {
+                    uuid: instructor.uuid!,
+                  },
+                  body: updatedProfileData.instructor,
+                })
+              : createInstructor({
+                  body: updatedProfileData.instructor,
+                });
 
-    const manageInstructor = () =>
-      instructor
-        ? updateInstructor({
-            path: {
-              uuid: instructor.uuid!,
-            },
-            body: updatedProfileData.instructor,
-          })
-        : createInstructor({
-            body: updatedProfileData.instructor,
+          const response = await Promise.all([
+            updateUser({
+              path: {
+                uuid: user!.uuid!,
+              },
+              body: {
+                ...updatedProfileData.user,
+                profile_image_url:
+                  uploadProfilePicResp && !uploadProfilePicResp.error
+                    ? uploadProfilePicResp.data!.profile_image_url
+                    : user!.profile_image_url,
+              },
+            }),
+            manageInstructor(),
+          ]);
+
+          let hasErrors = false;
+
+          response.forEach((resp, i) => {
+            if (resp.error) {
+              const { error } = resp.error as { error: Record<string, string> };
+              Object.keys(error).forEach(key => {
+                const fieldName = `${i === 0 ? 'user' : 'instructor'}.${key}` as any;
+                form.setError(fieldName, error[key]);
+              });
+              hasErrors = true;
+            }
           });
 
-    const response = await Promise.all([
-      updateUser({
-        path: {
-          uuid: user!.uuid!,
-        },
-        body: {
-          ...updatedProfileData.user,
-          profile_image_url:
-            uploadProfilePicResp && !uploadProfilePicResp.error
-              ? uploadProfilePicResp.data!.profile_image_url
-              : user!.profile_image_url,
-        },
-      }),
+          if (hasErrors) {
+            return;
+          }
 
-      manageInstructor(),
-    ]);
-    setSubmitting(false);
-    let hasErrors = false;
-
-    response.forEach((resp, i) => {
-      if (resp.error) {
-        const { error } = resp.error as { error: any };
-        Object.keys(error).forEach(key => {
-          const fieldName = `${i === 0 ? 'user' : 'instructor'}.${key}` as any;
-          form.setError(fieldName, error[key]);
-        });
-        hasErrors = true;
-      }
+          toast.success('Profile updated successfully');
+          disableEditing();
+          await queryClient.invalidateQueries({ queryKey: ['profile', user!.email] });
+        } catch (error) {
+          toast.error('Unable to update your profile right now. Please try again.');
+        } finally {
+          setSubmitting(false);
+        }
+      },
     });
-    if (hasErrors) return;
-
-    toast.success('Profile updated successfully');
-    await queryClient.invalidateQueries({ queryKey: ['profile', user!.email] });
-  }
+  };
 
   return (
     <ProfileFormShell
@@ -385,8 +399,12 @@ export default function InstructorProfile() {
             title='Professional summary'
             description='Introduce your expertise and help learners understand how you teach.'
             footer={
-              <Button type='submit' className='min-w-40' disabled={submitting}>
-                {submitting ? (
+              <Button
+                type='submit'
+                className='min-w-40'
+                disabled={!isEditing || submitting || isConfirming}
+              >
+                {submitting || isConfirming ? (
                   <span className='flex items-center gap-2'>
                     <Spinner className='h-4 w-4' />
                     Saving…
@@ -476,11 +494,11 @@ export default function InstructorProfile() {
                 <FormItem>
                   <FormLabel>About you</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder='Share your teaching philosophy, specialties, and learner outcomes.'
-                      className='min-h-32 resize-y'
-                      {...field}
+                    <SimpleEditor
                       value={field.value ?? ''}
+                      onChange={field.onChange}
+                      isEditable={isEditing}
+                      showToolbar={isEditing}
                     />
                   </FormControl>
                   <FormDescription className='text-xs'>
