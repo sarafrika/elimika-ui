@@ -27,6 +27,7 @@ import { useMutation } from '@tanstack/react-query';
 import { AlertTriangle, BookOpen, GraduationCap, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserDomain } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 type RemovableDomain = 'student' | 'instructor' | 'course_creator';
 
@@ -43,7 +44,7 @@ type DomainConfig = {
 
 const domainOrder: RemovableDomain[] = ['student', 'instructor', 'course_creator'];
 
-export default function ManageProfileActions() {
+export default function ManageProfileActions({ className = '' }: { className?: string }) {
   const profile = useUserProfile();
   const [selectedDomain, setSelectedDomain] = useState<RemovableDomain | null>(null);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
@@ -192,16 +193,16 @@ export default function ManageProfileActions() {
   };
 
   return (
-    <section className='mt-16'>
-      <div className='mx-auto max-w-5xl text-center'>
-        <h2 className='text-foreground mb-4 text-3xl font-semibold'>Manage your profiles</h2>
-        <p className='text-muted-foreground text-sm sm:text-base'>
+    <section className={cn('space-y-6', className)}>
+      <div className='space-y-2'>
+        <h2 className='text-lg font-semibold text-foreground'>Profile maintenance</h2>
+        <p className='text-muted-foreground text-sm leading-relaxed'>
           Remove roles you no longer need or delete your account entirely. These actions are
           permanent and cannot be undone.
         </p>
       </div>
 
-      <div className='mx-auto mt-10 grid max-w-5xl gap-6 md:grid-cols-2'>
+      <div className='grid gap-5 xl:grid-cols-2'>
         {removableProfiles.length > 0 ? (
           removableProfiles.map(profile => {
             const Icon = profile.icon;
@@ -255,7 +256,7 @@ export default function ManageProfileActions() {
           </Card>
         )}
 
-        <Card className='border-destructive/40 bg-destructive/5 md:col-span-2'>
+        <Card className='border-destructive/40 bg-destructive/5 xl:col-span-2'>
           <CardHeader>
             <div className='flex items-start gap-3'>
               <div className='rounded-xl bg-destructive/10 p-3 text-destructive'>

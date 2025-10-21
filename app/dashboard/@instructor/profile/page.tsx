@@ -1,5 +1,6 @@
 'use client';
 
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import {
   ProfileSummaryMeta,
   ProfileSummarySection,
@@ -104,7 +105,14 @@ export default function InstructorProfileOverviewPage() {
       <div className='space-y-4 text-sm'>
         <div className='space-y-1'>
           <p className='text-xs uppercase tracking-wide text-muted-foreground'>Bio</p>
-          <p>{instructor?.bio || 'Your professional story is not available yet.'}</p>
+          {instructor?.bio ? (
+            <HTMLTextPreview
+              htmlContent={instructor.bio}
+              className='text-muted-foreground text-sm leading-relaxed'
+            />
+          ) : (
+            <p>Your professional story is not available yet.</p>
+          )}
         </div>
       </div>
     ),

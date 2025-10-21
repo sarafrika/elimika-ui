@@ -68,36 +68,40 @@ export default function AddProfileSelector() {
   // If user already has all profile types, show a message
   if (availableProfiles.length === 0) {
     return (
-      <div className='mx-auto max-w-2xl text-center'>
-        <div className='rounded-3xl border-2 border-blue-200 bg-blue-50 p-12'>
-          <h2 className='mb-4 text-2xl font-bold text-gray-900'>All Profiles Added!</h2>
-          <p className='text-muted-foreground mb-6'>
-            You already have all available profile types. You can switch between them using the
-            dashboard switcher.
+      <div className='space-y-4 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-6 text-sm leading-relaxed text-muted-foreground'>
+        <div className='space-y-1'>
+          <h2 className='text-lg font-semibold text-foreground'>All profiles added</h2>
+          <p>
+            You already have every available role. Use the dashboard switcher in the top bar to move
+            between them whenever you need.
           </p>
-          <Button onClick={() => router.push('/dashboard/overview')} variant='default'>
-            <ArrowLeft className='mr-2 h-4 w-4' />
-            Back to Dashboard
-          </Button>
         </div>
+        <Button onClick={() => router.push('/dashboard/overview')} variant='secondary' size='sm'>
+          <ArrowLeft className='mr-2 h-4 w-4' />
+          Back to dashboard
+        </Button>
       </div>
     );
   }
 
   return (
     <>
-      <div className='mb-8 flex justify-center'>
-        <Button
-          onClick={() => router.push('/dashboard/overview')}
-          variant='outline'
-          className='gap-2'
-        >
-          <ArrowLeft className='h-4 w-4' />
-          Back to Dashboard
+      <div className='mb-6 flex flex-wrap items-center justify-between gap-3'>
+        <div>
+          <p className='text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground'>
+            Available roles
+          </p>
+          <p className='text-sm text-muted-foreground'>
+            Choose the profile you want to add. We will guide you through a quick setup.
+          </p>
+        </div>
+        <Button onClick={() => router.push('/dashboard/overview')} variant='outline' size='sm'>
+          <ArrowLeft className='mr-2 h-4 w-4' />
+          Back to dashboard
         </Button>
       </div>
 
-      <div className='mx-auto grid max-w-5xl gap-8 md:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
         {availableProfiles.map(type => {
           const Icon = type.icon;
 
@@ -105,37 +109,31 @@ export default function AddProfileSelector() {
             <Link
               key={type.id}
               href={type.href}
-              className={`group relative block rounded-3xl border-2 p-8 transition-all duration-300 ${type.borderColor} ${type.bgColor} ${type.hoverBg} hover:border-blue-600/30 focus:ring-blue-600/20 focus:border-blue-600 hover:scale-[1.01] hover:shadow-xl focus:ring-4 focus:outline-none`}
+              className={`group relative block rounded-2xl border border-border/50 bg-background/90 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/40 ${type.hoverBg}`}
             >
               {/* Icon */}
-              <div className='mb-6 flex justify-center'>
-                <div
-                  className={`rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 ${type.iconColor} group-hover:scale-110 group-hover:shadow-md`}
-                >
-                  <Icon className='h-8 w-8' />
-                </div>
+              <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted'>
+                <Icon className={`h-6 w-6 ${type.iconColor}`} />
               </div>
 
               {/* Content */}
-              <div className='mb-8 text-center'>
-                <h3 className='text-foreground group-hover:text-blue-600 mb-3 text-2xl font-bold transition-colors'>
+              <div className='mb-6 space-y-2'>
+                <h3 className='text-lg font-semibold text-foreground transition-colors group-hover:text-primary'>
                   {type.title}
                 </h3>
                 <p className='text-muted-foreground text-sm leading-relaxed'>{type.description}</p>
               </div>
 
               {/* Button */}
-              <div className='flex justify-center'>
-                <div
-                  className={`border-border text-foreground group-hover:border-blue-600 group-hover:bg-blue-600 flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 text-center font-medium transition-all duration-300 group-hover:text-white`}
-                >
+              <div className='flex justify-between text-sm font-medium text-primary group-hover:text-primary/90'>
+                <span className='flex items-center gap-2'>
                   Add {type.title}
-                  <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
-                </div>
+                </span>
+                <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
               </div>
 
-              {/* Decorative gradient overlay */}
-              <div className='from-blue-600 pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-5' />
+              {/* Decorative overlay */}
+              <div className='pointer-events-none absolute inset-0 rounded-2xl border border-transparent transition-colors duration-200 group-hover:border-primary/30' />
             </Link>
           );
         })}

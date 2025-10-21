@@ -1,15 +1,16 @@
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Separator } from "@/components/ui/separator"
-import { useQuery } from "@tanstack/react-query"
-import { BadgeCheckIcon } from "lucide-react"
-import { useState } from "react"
-import { toast } from "sonner"
-import { Button } from "../../../components/ui/button"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../../components/ui/dialog"
-import { getInstructorAvailabilityOptions } from "../../../services/client/@tanstack/react-query.gen"
+import HTMLTextPreview from '@/components/editors/html-text-preview';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
+import { getInstructorAvailabilityOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { BadgeCheckIcon } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export interface InstructorCardProps {
     instructor: any
@@ -61,7 +62,9 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
             </CardHeader>
             <Separator />
             <CardContent className="space-y-2 text-sm">
-                {bio && <p className="text-gray-700">{bio}</p>}
+                {bio && (
+                    <HTMLTextPreview htmlContent={bio} className="text-gray-700 text-sm" />
+                )}
 
                 {formatted_location && (
                     <p className="text-muted-foreground">📍 {formatted_location}</p>

@@ -74,15 +74,10 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
     dashboards['organisation_user'] = dashboardProps['organization'];
   }
 
-  const defaultSlot = dashboardProps.children;
+  const defaultSlot = dashboardProps.children ?? null;
   const domainSlot =
-    activeDomain && dashboards[activeDomain] !== undefined ? dashboards[activeDomain] : undefined;
-  const currentDashboard =
-    domainSlot !== undefined
-      ? domainSlot
-      : defaultSlot !== undefined
-        ? defaultSlot
-        : null;
+    activeDomain && dashboards[activeDomain] !== undefined ? dashboards[activeDomain] ?? null : null;
+  const currentDashboard = defaultSlot ?? domainSlot;
   return (
     <TrainingCenterProvider>
       <SidebarProvider>

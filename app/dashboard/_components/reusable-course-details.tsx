@@ -357,8 +357,19 @@ export default function ReusableCourseDetailsPage({
                                     </Avatar>
                                     <div>
                                         <h4>{courseCreator?.full_name}</h4>
-                                        <p className='text-muted-foreground mb-2 text-sm'>{courseCreator?.professional_headline}</p>
-                                        <p className='text-sm'>{courseCreator?.bio}</p>
+                                        <p className='text-muted-foreground mb-2 text-sm'>
+                                            {courseCreator?.professional_headline}
+                                        </p>
+                                        {courseCreator?.bio ? (
+                                            <HTMLTextPreview
+                                                htmlContent={courseCreator.bio}
+                                                className='text-sm'
+                                            />
+                                        ) : (
+                                            <p className='text-muted-foreground text-sm'>
+                                                No biography provided.
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>

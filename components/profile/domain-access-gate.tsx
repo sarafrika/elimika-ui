@@ -21,6 +21,7 @@ type DomainGateState = {
 
 const PROFILE_PREFIX = '/dashboard/profile';
 const ACCOUNT_PREFIX = '/dashboard/account';
+const ADD_PROFILE_PREFIX = '/dashboard/add-profile';
 
 export default function DomainAccessGate({ children }: { children: ReactNode }) {
   const profile = useUserProfile();
@@ -42,7 +43,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
     const shared = {
       instructor: {
         verified: Boolean(profile.instructor?.admin_verified),
-        allowedPrefixes: [PROFILE_PREFIX],
+        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX],
         fallback: `${PROFILE_PREFIX}/general`,
         title: 'Instructor verification pending',
         description:
@@ -52,7 +53,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
         verified: Boolean(
           courseCreator?.profile?.admin_verified ?? profile.courseCreator?.admin_verified
         ),
-        allowedPrefixes: [PROFILE_PREFIX],
+        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX],
         fallback: PROFILE_PREFIX,
         title: 'Course creator verification pending',
         description:
@@ -60,7 +61,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       },
       organisation: {
         verified: Boolean(trainingCenter?.admin_verified),
-        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX],
+        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
         description:
@@ -68,7 +69,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       },
       organisation_user: {
         verified: Boolean(trainingCenter?.admin_verified),
-        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX],
+        allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
         description:

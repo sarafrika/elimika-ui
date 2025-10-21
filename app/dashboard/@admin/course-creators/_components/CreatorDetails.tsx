@@ -1,3 +1,4 @@
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { CourseCreator } from '@/services/client';
@@ -152,13 +153,16 @@ export default function CourseCreatorDetails({
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-4'>
             <CardTitle className='text-lg font-semibold'>Biography</CardTitle>
           </CardHeader>
-          {/* <CardContent>
-          {instructor.bio ? (
-            <p className='text-muted-foreground text-sm leading-relaxed'>{instructor.bio}</p>
-          ) : (
-            <p className='text-muted-foreground text-sm'>No biography information provided</p>
-          )}
-        </CardContent> */}
+          <CardContent>
+            {courseCreatorInfo?.data?.bio ? (
+              <HTMLTextPreview
+                htmlContent={courseCreatorInfo.data.bio}
+                className='text-muted-foreground text-sm leading-relaxed'
+              />
+            ) : (
+              <p className='text-muted-foreground text-sm'>No biography information provided</p>
+            )}
+          </CardContent>
         </Card>
       </div>
     </div>

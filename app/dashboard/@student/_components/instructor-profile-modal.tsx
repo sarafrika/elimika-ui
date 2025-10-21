@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -193,7 +194,14 @@ export const InstructorProfileModal: React.FC<Props> = ({
                                 {/* Bio */}
                                 <Card className="p-6">
                                     <h3 className="mb-3">About</h3>
-                                    <p className="text-muted-foreground">{instructor.bio}</p>
+                                    {instructor.bio ? (
+                                        <HTMLTextPreview
+                                            htmlContent={instructor.bio}
+                                            className="text-muted-foreground text-sm leading-relaxed"
+                                        />
+                                    ) : (
+                                        <p className="text-muted-foreground">Biography unavailable.</p>
+                                    )}
                                 </Card>
 
                                 {/* Skills */}
@@ -384,4 +392,3 @@ const reviews = [
         course: 'Data Science',
     },
 ]
-
