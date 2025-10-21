@@ -85,7 +85,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { useUserProfile } from '../../../../context/profile-context';
-import { useRubricsWithCriteriaAndScoring } from '../../@instructor/rubric-management/rubric-chaining';
+import { useRubricsWithCriteriaAndScoring } from '../rubric-management/rubric-chaining';
+
 
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
