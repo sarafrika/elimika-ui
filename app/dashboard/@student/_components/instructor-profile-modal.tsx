@@ -197,7 +197,7 @@ export const InstructorProfileModal: React.FC<Props> = ({
                                     {instructor.bio ? (
                                         <HTMLTextPreview
                                             htmlContent={instructor.bio}
-                                            className="text-muted-foreground text-sm leading-relaxed"
+                                            className="prose prose-sm max-w-none text-muted-foreground"
                                         />
                                     ) : (
                                         <p className="text-muted-foreground">Biography unavailable.</p>

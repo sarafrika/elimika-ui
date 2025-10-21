@@ -363,7 +363,7 @@ export default function ReusableCourseDetailsPage({
                                         {courseCreator?.bio ? (
                                             <HTMLTextPreview
                                                 htmlContent={courseCreator.bio}
-                                                className='text-sm'
+                                                className='prose prose-sm max-w-none text-muted-foreground'
                                             />
                                         ) : (
                                             <p className='text-muted-foreground text-sm'>

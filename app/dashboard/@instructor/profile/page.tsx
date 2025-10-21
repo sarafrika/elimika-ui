@@ -108,10 +108,10 @@ export default function InstructorProfileOverviewPage() {
           {instructor?.bio ? (
             <HTMLTextPreview
               htmlContent={instructor.bio}
-              className='text-muted-foreground text-sm leading-relaxed'
+              className='prose prose-sm max-w-none text-muted-foreground'
             />
           ) : (
-            <p>Your professional story is not available yet.</p>
+            <p className='text-muted-foreground'>Your professional story is not available yet.</p>
           )}
         </div>
       </div>

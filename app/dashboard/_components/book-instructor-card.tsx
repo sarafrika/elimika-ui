@@ -63,7 +63,10 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
             <Separator />
             <CardContent className="space-y-2 text-sm">
                 {bio && (
-                    <HTMLTextPreview htmlContent={bio} className="text-gray-700 text-sm" />
+                    <HTMLTextPreview
+                        htmlContent={bio}
+                        className="prose prose-sm max-w-none text-gray-700"
+                    />
                 )}
 
                 {formatted_location && (

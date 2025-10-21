@@ -62,10 +62,10 @@ export default function CourseCreatorProfilePage() {
             {profile.bio ? (
               <HTMLTextPreview
                 htmlContent={profile.bio}
-                className='text-muted-foreground text-sm leading-relaxed'
+                className='prose prose-sm max-w-none text-muted-foreground'
               />
             ) : (
-              <p>A professional summary has not been added yet.</p>
+              <p className='text-muted-foreground'>A professional summary has not been added yet.</p>
             )}
           </div>
         </div>

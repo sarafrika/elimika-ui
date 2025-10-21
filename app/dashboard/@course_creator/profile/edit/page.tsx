@@ -9,6 +9,7 @@ import * as z from 'zod';
 
 import ImageSelector, { ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import { Textarea } from '@/components/ui/textarea';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { cn, profilePicSvg } from '@/lib/utils';
 import { getUserByUuidOptions, updateUserMutation, uploadProfileImageMutation } from '@/services/client/@tanstack/react-query.gen';
@@ -476,11 +476,11 @@ export default function CourseCreatorProfile() {
                                 <FormItem>
                                     <FormLabel>About you</FormLabel>
                                     <FormControl>
-                                        <Textarea
-                                            placeholder='Share your teaching philosophy, specialties, and learner outcomes.'
-                                            className='min-h-32 resize-y'
-                                            {...field}
+                                        <SimpleEditor
                                             value={field.value ?? ''}
+                                            onChange={field.onChange}
+                                            showToolbar
+                                            isEditable
                                         />
                                     </FormControl>
                                     <FormDescription className='text-xs'>

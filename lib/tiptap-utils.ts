@@ -241,17 +241,36 @@ export const handleImageUpload = async (
     throw new Error(`File size exceeds maximum allowed (${MAX_FILE_SIZE / (1024 * 1024)}MB)`);
   }
 
-  // For demo/testing: Simulate upload progress. In production, replace the following code
-  // with your own upload implementation.
-  for (let progress = 0; progress <= 100; progress += 10) {
-    if (abortSignal?.aborted) {
-      throw new Error('Upload cancelled');
-    }
-    await new Promise(resolve => setTimeout(resolve, 500));
-    onProgress?.({ progress });
+  if (typeof window === 'undefined' || typeof FileReader === 'undefined') {
+    onProgress?.({ progress: 100 });
+    return '/logos/tiptap-ui-placeholder-image.jpg';
   }
 
-  return '/logos/tiptap-ui-placeholder-image.jpg';
+  const readAsDataUrl = () =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.onabort = () => reject(new Error('Upload cancelled'));
+      reader.readAsDataURL(file);
+    });
+
+  if (abortSignal?.aborted) {
+    throw new Error('Upload cancelled');
+  }
+
+  const dataUrl = await readAsDataUrl();
+  onProgress?.({ progress: 100 });
+
+  return dataUrl;
 };
 
 type ProtocolOptions = {

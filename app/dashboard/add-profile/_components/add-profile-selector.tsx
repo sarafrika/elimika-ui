@@ -6,7 +6,6 @@ import { ArrowRight, BookOpen, Users, GraduationCap, ArrowLeft } from 'lucide-re
 import { useUserProfile } from '@/context/profile-context';
 import { useRouter } from 'next/navigation';
 import { UserDomain } from '@/lib/types';
-import { cn } from '@/lib/utils';
 
 type ProfileType = {
   id: UserDomain;
@@ -56,7 +55,7 @@ const profileTypes: ProfileType[] = [
   },
 ];
 
-export default function AddProfileSelector({ className = '' }: { className?: string }) {
+export default function AddProfileSelector() {
   const profile = useUserProfile();
   const router = useRouter();
 
@@ -69,65 +68,65 @@ export default function AddProfileSelector({ className = '' }: { className?: str
   // If user already has all profile types, show a message
   if (availableProfiles.length === 0) {
     return (
-      <div className={cn(
-        'space-y-4 rounded-2xl border border-dashed border-primary/50 bg-primary/5 p-6 text-sm leading-relaxed text-muted-foreground',
-        className
-      )}>
-        <div className='space-y-1'>
-          <h2 className='text-lg font-semibold text-foreground'>All profiles added</h2>
-          <p>
-            You already have every available role. Use the dashboard switcher in the top bar to move
-            between them whenever you need.
+      <div className='mx-auto max-w-2xl text-center'>
+        <div className='rounded-3xl border-2 border-blue-200 bg-blue-50 p-12'>
+          <h2 className='mb-4 text-2xl font-bold text-gray-900'>All Profiles Added!</h2>
+          <p className='text-muted-foreground mb-6'>
+            You already have all available profile types. You can switch between them using the
+            dashboard switcher.
           </p>
+          <Button onClick={() => router.push('/dashboard/overview')} variant='default'>
+            <ArrowLeft className='mr-2 h-4 w-4' />
+            Back to Dashboard
+          </Button>
         </div>
-        <Button onClick={() => router.push('/dashboard/overview')} variant='secondary' size='sm'>
-          <ArrowLeft className='mr-2 h-4 w-4' />
-          Back to dashboard
-        </Button>
       </div>
     );
   }
 
   return (
-    <div className={cn('space-y-6', className)}>
-      <div className='grid gap-5 sm:grid-cols-2 xl:grid-cols-3'>
-        {availableProfiles.map(type => {
-          const Icon = type.icon;
+    <div className='mx-auto grid max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-3'>
+      {availableProfiles.map(type => {
+        const Icon = type.icon;
 
-          return (
-            <Link
+        return (
+          <Link
               key={type.id}
               href={type.href}
-              className={cn(
-                'group relative flex h-full flex-col gap-6 rounded-2xl border border-border/50 bg-background/95 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/40',
-                type.hoverBg
-              )}
+              className={`group relative block rounded-3xl border-2 p-8 transition-all duration-300 ${type.borderColor} ${type.bgColor} ${type.hoverBg} hover:border-blue-600/30 focus:ring-blue-600/20 focus:border-blue-600 hover:scale-[1.01] hover:shadow-xl focus:ring-4 focus:outline-none`}
             >
               {/* Icon */}
-              <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary/15'>
-                <Icon className='h-6 w-6' />
+              <div className='mb-6 flex justify-center'>
+                <div
+                  className={`rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 ${type.iconColor} group-hover:scale-110 group-hover:shadow-md`}
+                >
+                  <Icon className='h-8 w-8' />
+                </div>
               </div>
 
               {/* Content */}
-              <div className='space-y-2'>
-                <h3 className='text-lg font-semibold text-foreground transition-colors group-hover:text-primary'>
+              <div className='mb-8 text-center'>
+                <h3 className='text-foreground group-hover:text-blue-600 mb-3 text-2xl font-bold transition-colors'>
                   {type.title}
                 </h3>
                 <p className='text-muted-foreground text-sm leading-relaxed'>{type.description}</p>
               </div>
 
               {/* Button */}
-              <div className='flex items-center justify-between text-sm font-medium text-primary opacity-90 transition-opacity group-hover:opacity-100'>
-                <span>Add {type.title}</span>
-                <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1.5' />
+              <div className='flex justify-center'>
+                <div
+                  className={`border-border text-foreground group-hover:border-blue-600 group-hover:bg-blue-600 flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 text-center font-medium transition-all duration-300 group-hover:text-white`}
+                >
+                  Add {type.title}
+                  <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
+                </div>
               </div>
 
-              {/* Decorative overlay */}
-              <div className='pointer-events-none absolute inset-0 rounded-2xl border border-transparent transition-colors duration-200 group-hover:border-primary/30' />
+              {/* Decorative gradient overlay */}
+              <div className='from-blue-600 pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-5' />
             </Link>
           );
         })}
-      </div>
     </div>
   );
 }
