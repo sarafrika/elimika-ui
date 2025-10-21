@@ -6,16 +6,38 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { DashboardChildrenTypes, UserDomain } from '@/lib/types';
-import { useRouter } from 'next/navigation';
-import { ReactNode, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useMemo } from 'react';
 import CustomLoader from '../../components/custom-loader';
 import { DomainSelection } from '../../components/domain-selection';
 import TrainingCenterProvider from '../../context/training-center-provide';
 
-type OrgDomainType = DashboardView | 'organisation_user';
+type KnownDomain = UserDomain | 'organization';
+
+const domainToSlotKeyMap: Record<KnownDomain, keyof DashboardChildrenTypes> = {
+  student: 'student',
+  admin: 'admin',
+  instructor: 'instructor',
+  course_creator: 'course_creator',
+  organisation: 'organization',
+  organisation_user: 'organization',
+  organization: 'organization',
+};
+
+const domainToDashboardViewMap: Record<KnownDomain, DashboardView> = {
+  student: 'student',
+  admin: 'admin',
+  instructor: 'instructor',
+  course_creator: 'course_creator',
+  organisation: 'organization',
+  organisation_user: 'organization',
+  organization: 'organization',
+};
+
 export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) {
   const profile = useUserProfile();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Only process redirects when profile is fully loaded
@@ -38,57 +60,133 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
     }
   }, [profile, router]);
 
+  const userDomains = useMemo(
+    () => ((profile?.user_domain ?? []) as KnownDomain[]),
+    [profile?.user_domain]
+  );
+  const activeDomain = (profile?.activeDomain ?? null) as KnownDomain | null;
+  const selectableDomains = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          userDomains.map(domain => (domain === 'organization' ? 'organisation' : domain))
+        )
+      ) as UserDomain[],
+    [userDomains]
+  );
+
+  const defaultSlot = dashboardProps.children ?? null;
+  const shouldUseDefaultSlot = useMemo(() => {
+    if (!defaultSlot) {
+      return false;
+    }
+
+    if (!pathname) {
+      return false;
+    }
+
+    if (pathname.startsWith('/dashboard/add-profile')) {
+      return true;
+    }
+
+    return false;
+  }, [defaultSlot, pathname]);
+  const domainSlot = useMemo<ReactNode | null>(() => {
+    if (!activeDomain) {
+      return null;
+    }
+
+    const slotKey = domainToSlotKeyMap[activeDomain];
+    if (!slotKey) {
+      return null;
+    }
+
+    const slot = dashboardProps[slotKey];
+    return slot !== undefined ? (slot ?? null) : null;
+  }, [activeDomain, dashboardProps]);
+
+  const normalizedAvailableViews = useMemo(() => {
+    const views = userDomains
+      .map(domain => domainToDashboardViewMap[domain])
+      .filter((view): view is DashboardView => Boolean(view));
+    return Array.from(new Set(views));
+  }, [userDomains]);
+
+  const normalizedActiveView =
+    (activeDomain ? domainToDashboardViewMap[activeDomain] : undefined) ??
+    normalizedAvailableViews[0] ??
+    'student';
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.debug('DashboardLayout render state', {
+        activeDomain,
+        selectableDomains,
+        normalizedAvailableViews,
+        hasDomainSlot: Boolean(domainSlot),
+        hasDefaultSlot: Boolean(defaultSlot),
+        userDomains,
+        pathname,
+        shouldUseDefaultSlot,
+      });
+    }
+  }, [
+    activeDomain,
+    selectableDomains,
+    normalizedAvailableViews,
+    domainSlot,
+    defaultSlot,
+    userDomains,
+    pathname,
+    shouldUseDefaultSlot,
+  ]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' && !domainSlot && !shouldUseDefaultSlot) {
+      // eslint-disable-next-line no-console
+      console.warn('DashboardLayout missing domain slot; falling back to default slot', {
+        activeDomain,
+        availableSlotKeys: Object.keys(dashboardProps),
+      });
+    }
+  }, [activeDomain, domainSlot, dashboardProps, shouldUseDefaultSlot]);
+
+  const currentDashboard = shouldUseDefaultSlot ? defaultSlot : domainSlot ?? defaultSlot;
+  const sidebarDomain =
+    activeDomain === 'organization' ? ('organisation' as UserDomain) : (activeDomain as UserDomain);
   // Show loading if profile exists but domains are not loaded yet
   // This handles the rehydration period when TanStack Query is loading persisted data
-  if (
+  const showLoader =
     profile?.isLoading ||
     !profile ||
-    (!profile.isLoading && (!profile.user_domain || profile.user_domain.length === 0))
-  ) {
+    (!profile?.isLoading && (!profile?.user_domain || profile.user_domain.length === 0));
+
+  if (showLoader) {
     return <CustomLoader />;
   }
-
-  const userDomains = (profile.user_domain as DashboardView[]) || [];
-  const organizationDomains = userDomains as OrgDomainType[];
-  const activeDomain = profile.activeDomain;
 
   if (!activeDomain) {
     return (
       <DomainSelection
-        domains={userDomains as UserDomain[]}
+        domains={selectableDomains}
         onDomainSelect={domain => profile.setActiveDomain(domain)}
         userName={profile.first_name}
       />
     );
   }
 
-  // Filter only dashboards that are accessible to the logged in user
-  const dashboards = Object.keys(dashboardProps).reduce(
-    (a: { [key: string]: ReactNode }, b: OrgDomainType) =>
-      organizationDomains.includes(b) ? { ...a, [b]: dashboardProps[b] } : a,
-    {}
-  );
-
-  // Include organisation_user dashboard since the @organization_user page is not available
-  if (userDomains.includes('organisation_user')) {
-    dashboards['organisation_user'] = dashboardProps['organization'];
-  }
-
-  const defaultSlot = dashboardProps.children ?? null;
-  const domainSlot =
-    activeDomain && dashboards[activeDomain] !== undefined ? dashboards[activeDomain] ?? null : null;
-  const currentDashboard = defaultSlot ?? domainSlot;
   return (
     <TrainingCenterProvider>
       <SidebarProvider>
         <DashboardViewProvider
-          initialView={activeDomain as DashboardView}
-          availableViews={userDomains}
+          initialView={normalizedActiveView as DashboardView}
+          availableViews={normalizedAvailableViews.length ? normalizedAvailableViews : undefined}
         >
           <BreadcrumbProvider>
             <div className='flex min-h-screen w-full'>
               {/* Sidebar */}
-              <AppSidebar activeDomain={activeDomain as UserDomain} />
+              <AppSidebar activeDomain={sidebarDomain} />
               {/* Main content area */}
               <div className='flex w-full flex-1 flex-col'>
                 <DashboardMainContent>{currentDashboard}</DashboardMainContent>
