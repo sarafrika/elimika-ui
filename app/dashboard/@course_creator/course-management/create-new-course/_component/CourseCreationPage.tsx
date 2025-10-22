@@ -41,19 +41,19 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { AssignmentDialog } from '../../../_components/assignment-management-form';
+import { Card, CardDescription } from '../../../../../../components/ui/card';
+import { AssignmentDialog, AssignmentList } from '../../../_components/assignment-management-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, CourseFormRef } from '../../../_components/course-creation-form';
 import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
 import {
   AssessmentDialog,
-  AssessmentList,
   ContentFormValues,
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
   LessonFormValues,
-  LessonList,
+  LessonList
 } from '../../../_components/lesson-management-form';
 import {
   CourseCreatorEmptyState,
@@ -61,6 +61,7 @@ import {
   CustomLoadingState,
 } from '../../../_components/loading-state';
 import { QuizDialog, QuizList } from '../../../_components/quiz-management-form';
+import RubricsCreationPage from '../../../rubric-management/rubric-creation';
 
 export default function CourseCreationPage() {
   const router = useRouter();
@@ -129,6 +130,7 @@ export default function CourseCreationPage() {
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
 
+
   // GET COURSE CONTENT TYPES
   const { data: contentTypeList } = useQuery(
     getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
@@ -181,15 +183,15 @@ export default function CourseCreationPage() {
       // @ts-ignore
       training_requirements: Array.isArray(c.training_requirements)
         ? c.training_requirements.map(req => ({
-            uuid: req.uuid,
-            requirement_type: req.requirement_type,
-            name: req.name,
-            description: req.description ?? '',
-            quantity: req.quantity ?? undefined,
-            unit: req.unit ?? '',
-            provided_by: req.provided_by ?? 'course_creator',
-            is_mandatory: !!req.is_mandatory,
-          }))
+          uuid: req.uuid,
+          requirement_type: req.requirement_type,
+          name: req.name,
+          description: req.description ?? '',
+          quantity: req.quantity ?? undefined,
+          unit: req.unit ?? '',
+          provided_by: req.provided_by ?? 'course_creator',
+          is_mandatory: !!req.is_mandatory,
+        }))
         : [],
     });
   }, [courseId, course]);
@@ -266,33 +268,33 @@ export default function CourseCreationPage() {
   const content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
-          const matchedType = Array.isArray(contentTypeList?.data)
-            ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-            : undefined;
+        const matchedType = Array.isArray(contentTypeList?.data)
+          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
+          : undefined;
 
-          const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
+        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
 
-          return {
-            contentType: typeName.toUpperCase() as
-              | 'AUDIO'
-              | 'VIDEO'
-              | 'TEXT'
-              | 'LINK'
-              | 'PDF'
-              | 'YOUTUBE',
-            title: item?.title || '',
-            uuid: item?.uuid || '',
-            value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-            duration:
-              typeof item?.estimated_duration === 'string'
-                ? parseInt(item.estimated_duration) || 0
-                : 0,
-            durationHours: item?.duration_hours || 0,
-            durationMinutes: item?.duration_minutes || 0,
-            contentTypeUuid: item?.content_type || '',
-            contentCategory: matchedType?.upload_category ?? '',
-          };
-        })
+        return {
+          contentType: typeName.toUpperCase() as
+            | 'AUDIO'
+            | 'VIDEO'
+            | 'TEXT'
+            | 'LINK'
+            | 'PDF'
+            | 'YOUTUBE',
+          title: item?.title || '',
+          uuid: item?.uuid || '',
+          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
+          duration:
+            typeof item?.estimated_duration === 'string'
+              ? parseInt(item.estimated_duration) || 0
+              : 0,
+          durationHours: item?.duration_hours || 0,
+          durationMinutes: item?.duration_minutes || 0,
+          contentTypeUuid: item?.content_type || '',
+          contentCategory: matchedType?.upload_category ?? '',
+        };
+      })
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
@@ -352,7 +354,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   // DELETE LESSON MUTATION
@@ -377,7 +379,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
@@ -404,7 +406,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   if (creatorLoading) {
@@ -443,9 +445,9 @@ export default function CourseCreationPage() {
           <StepperList>
             <StepperTrigger step={0} title='Course Details' icon={BookOpen} />
             <StepperTrigger step={1} title='Skills & Resources' icon={GraduationCap} />
-            <StepperTrigger step={2} title='Quizzes' icon={FileQuestion} />
-            <StepperTrigger step={3} title='Assignment' icon={ClipboardList} />
-            <StepperTrigger step={4} title='Assessment' icon={SlidersHorizontal} />
+            <StepperTrigger step={2} title='Assessment' icon={SlidersHorizontal} />
+            <StepperTrigger step={3} title='Quizzes' icon={FileQuestion} />
+            <StepperTrigger step={4} title='Assignment' icon={ClipboardList} />
             <StepperTrigger step={5} title='Branding' icon={Palette} />
             <StepperTrigger step={6} title='Course Licensing' icon={BadgeCheck} />
             <StepperTrigger step={7} title='Review' icon={Eye} />
@@ -474,10 +476,10 @@ export default function CourseCreationPage() {
 
           <StepperContent
             step={1}
-            title='Course Content'
-            description='Add lessons and content to your course'
+            title='Course Skills & Resources'
+            description='Add skills and learning materials for your course'
             showNavigation
-            nextButtonText='Continue to Quiz'
+            nextButtonText='Continue to Assessment'
             previousButtonText='Back to Details'
           >
             <div className='space-y-4'>
@@ -493,7 +495,7 @@ export default function CourseCreationPage() {
                 onAddLesson={openAddLessonModal}
                 onEditLesson={openEditLessonModal}
                 onDeleteLesson={handleDeleteLesson}
-                onReorderLessons={() => {}}
+                onReorderLessons={() => { }}
                 // lesson content
                 lessonContentsMap={lessonContentMap}
                 onAddLessonContent={openAddContentModal}
@@ -518,7 +520,7 @@ export default function CourseCreationPage() {
                   courseId={courseId as string}
                   lessonId={selectedLesson?.uuid}
                   initialValues={lessonInitialValues}
-                  onCancel={() => {}}
+                  onCancel={() => { }}
                   onSuccess={data => {
                     setCreatedCourseId(data?.uuid);
 
@@ -566,7 +568,7 @@ export default function CourseCreationPage() {
               <AssignmentDialog
                 isOpen={addAssignmentModal}
                 setOpen={setAddAssignmentModal}
-                lessonId={selectedLesson?.uuid as string}
+                courseId={resolveId as string}
                 onSuccess={() => {
                   setSelectedLesson(null);
                   setAddAssignmentModal(false);
@@ -579,13 +581,32 @@ export default function CourseCreationPage() {
             </div>
           </StepperContent>
 
+
           <StepperContent
             step={2}
-            title='Quiz'
-            description='Manage the quizzes created for your lessons'
+            title='Course Assessment'
+            description='Create assessment rubrics to evaluate student performance'
+            showNavigation
+            nextButtonText='Continue to Quizzes'
+            previousButtonText='Back to Skills & Resources'
+          >
+            <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+              <div className='flex flex-row items-center justify-between'>
+                <div className='space-y-1'>
+                  <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
+                </div>
+              </div>
+              < RubricsCreationPage />
+            </div>
+          </StepperContent>
+
+          <StepperContent
+            step={3}
+            title='Course Quizzes'
+            description='Create quizzes for each skill to test student understanding'
             showNavigation
             nextButtonText='Continue to Assignment'
-            previousButtonText='Back to Skills & Resources'
+            previousButtonText='Back to Assessment'
           >
             <div className='space-y-4'>
               {quizDataIsLoading ? (
@@ -610,48 +631,32 @@ export default function CourseCreationPage() {
           </StepperContent>
 
           <StepperContent
-            step={3}
-            title='Assignment'
-            description='Manage the assignments created for your lessons'
+            step={4}
+            title='Course Assignments'
+            description='Create assignments for each skill to reinforce learning through practice'
             showNavigation
-            nextButtonText='Continue to Assessment'
+            nextButtonText='Continue to Branding'
             previousButtonText='Back to Quizzes'
           >
             <div className='space-y-4'>
-              <AssessmentList
+              <AssignmentList
                 courseTitle={course?.data?.name as string}
-                isLoading={assessmentLoading}
-                assessments={assessmentData?.data}
-                lessonItems={lessonContentData?.data}
-                courseId={resolveId}
-                onAddAssessment={openAddAssessmentModal}
+                onAddAssignment={() => setAddAssignmentModal(true)}
+                courseId={resolveId as string}
               />
 
-              <AssessmentDialog
-                isOpen={addAssessmentModalOpen}
-                onOpenChange={setAddAssessmentModalOpen}
-                courseId={createdCourseId ? createdCourseId : (courseId as string)}
-                onCancel={() => setAddAssessmentModalOpen(false)}
-              />
-            </div>
-          </StepperContent>
-
-          <StepperContent
-            step={4}
-            title='Assessment'
-            description='Manage the assessments created for your lessons'
-            showNavigation
-            nextButtonText='Continue to Branding'
-            previousButtonText='Back to Assignment'
-          >
-            <div className='space-y-4'>
-              <AssessmentList
-                courseTitle={course?.data?.name as string}
-                isLoading={assessmentLoading}
-                assessments={assessmentData?.data}
-                lessonItems={lessonContentData?.data}
-                courseId={resolveId}
-                onAddAssessment={openAddAssessmentModal}
+              <AssignmentDialog
+                isOpen={addAssignmentModal}
+                setOpen={setAddAssignmentModal}
+                courseId={resolveId as string}
+                onSuccess={() => {
+                  setSelectedLesson(null);
+                  setAddAssignmentModal(false);
+                }}
+                onCancel={() => {
+                  setSelectedLesson(null);
+                  setAddAssignmentModal(false);
+                }}
               />
 
               <AssessmentDialog
@@ -671,42 +676,43 @@ export default function CourseCreationPage() {
             nextButtonText='Continue to Course Licensing'
             previousButtonText='Back to Asessment'
           >
-            <CourseBrandingForm
-              ref={formRef}
-              showSubmitButton={true}
-              courseId={createdCourseId as string}
-              editingCourseId={courseId as string}
-              initialValues={courseInitialValues as any}
-              successResponse={data => {
-                setCreatedCourseId(data?.uuid);
-              }}
-            />
+            <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+              <div className='flex flex-row items-center justify-between'>
+                <div className='space-y-1'>
+                  <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
+                </div>
+              </div>
+              <CourseBrandingForm
+                ref={formRef}
+                showSubmitButton={true}
+                courseId={createdCourseId as string}
+                editingCourseId={courseId as string}
+                initialValues={courseInitialValues as any}
+                successResponse={data => {
+                  setCreatedCourseId(data?.uuid);
+                }}
+              />
+            </div>
           </StepperContent>
 
           <StepperContent
             step={6}
-            title='Course Licensing'
-            description='Manage who can teach this course'
+            title='Course Licensing Structure'
+            description='Configure course access, pricing, and enrollment settings'
             showNavigation
             nextButtonText='Continue to Review'
             previousButtonText='Back to Branding'
           >
-            <div className='space-y-4'>
-              <AssessmentList
-                courseTitle={course?.data?.name as string}
-                isLoading={assessmentLoading}
-                assessments={assessmentData?.data}
-                lessonItems={lessonContentData?.data}
-                courseId={resolveId}
-                onAddAssessment={openAddAssessmentModal}
-              />
 
-              <AssessmentDialog
-                isOpen={addAssessmentModalOpen}
-                onOpenChange={setAddAssessmentModalOpen}
-                courseId={createdCourseId ? createdCourseId : (courseId as string)}
-                onCancel={() => setAddAssessmentModalOpen(false)}
-              />
+            <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+              <div className='flex flex-row items-center justify-between'>
+                <div className='space-y-1'>
+                  <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
+                </div>
+              </div>
+              <div className='space-y-4'>
+                This page is still under construction
+              </div>
             </div>
           </StepperContent>
 
@@ -724,10 +730,16 @@ export default function CourseCreationPage() {
             }
           >
             {course ? (
-              <div className='space-y-8'>
+              <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
                 {/* Pricing Section */}
-                <section>
-                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>💰 Pricing</h3>
+                <div className='flex flex-row items-center justify-between'>
+                  <div className='space-y-1'>
+                    <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
+                  </div>
+                </div>
+
+                <Card className='p-6' >
+                  <CardDescription className='mb-3 text-xl font-semibold text-gray-800'>💰 Pricing</CardDescription>
                   <div className='space-y-2 text-gray-700'>
                     <p>
                       <span className='font-medium'>Free Course:</span>{' '}
@@ -748,7 +760,7 @@ export default function CourseCreationPage() {
                       </div>
                     )}
                   </div>
-                </section>
+                </Card>
 
                 {/* Course Information */}
                 <section>

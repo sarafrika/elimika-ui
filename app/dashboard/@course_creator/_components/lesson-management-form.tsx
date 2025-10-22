@@ -310,7 +310,7 @@ function LessonList({
   }, [lessons, lessonContentsMap, contentTypeData]);
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
       <div className='flex flex-col items-center justify-between gap-4 md:flex-row'>
         <div className='space-y-1 self-start'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
@@ -334,7 +334,7 @@ function LessonList({
           <p className='text-muted-foreground mt-2'>You can create a new lesson to get started.</p>
         </div>
       ) : (
-        <div className='space-y-3'>
+        <div className='space-y-8'>
           {lessons?.content.map((lesson: any, index: any) => {
             const isExpanded = expandedLessonId === lesson.uuid;
 
@@ -343,7 +343,7 @@ function LessonList({
             return (
               <div
                 key={lesson?.uuid || index}
-                className='group relative flex flex-col gap-4 rounded-lg border p-4 transition-all'
+                className='group relative flex flex-col gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
               >
                 <div className='flex items-start gap-4'>
                   <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
@@ -1319,7 +1319,7 @@ function LessonContentForm({
                       {contentTypeData.map((value: any) => {
                         const Icon =
                           ContentTypeIcons[
-                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1618,7 +1618,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   return (
@@ -2232,5 +2232,6 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList,
+  LessonList
 };
+

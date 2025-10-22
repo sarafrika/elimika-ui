@@ -163,6 +163,7 @@ export default function AssignmentsPage() {
         setOpen={setOpenAssignmentModal}
         editingAssignmetId={editingAssignmetId}
         initialValues={editingAssignmentData}
+        courseId=''
         onCancel={() => {
           setOpenAssignmentModal(false);
         }}
