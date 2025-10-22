@@ -46,7 +46,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpenCheck, ClipboardCheck, Grip, MoreVertical, PlusCircle, Trash } from 'lucide-react';
+import { BookOpen, BookOpenCheck, ClipboardCheck, Clock, Grip, MoreVertical, PlusCircle, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -782,7 +782,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
       <div className='flex flex-row items-center justify-between'>
         <div className='space-y-1'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
@@ -806,18 +806,23 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
           <p className='text-muted-foreground mt-2'>You can create new quiz for this course.</p>
         </div>
       ) : (
-        <div className='space-y-3'>
+        <div className='space-y-8 w-full'>
           {quizzes?.content.map((q: any, index: any) => (
             <div
               key={q?.uuid || index}
-              className='group relative flex items-start gap-4 rounded-lg border p-4 transition-all'
+              className='w-full group relative flex items-start gap-4 transition-all rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
             >
               <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
 
-              <div className='flex-1 space-y-3'>
-                <div className='flex items-start justify-between'>
-                  <div className='flex flex-col items-start'>
-                    <h3 className='text-lg font-medium'>{q.title}</h3>
+              <div className='w-full flex-1 space-y-3'>
+                <div className='w-full flex items-start justify-between'>
+                  <div className='w-full flex flex-col items-start'>
+                    <div className='w-full flex flex-row items-center justify-between'>
+                      <h3 className='text-lg font-medium'>{q.title}</h3>
+                      <span className='mr-2 inline-flex items-center gap-2 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1 text-xs font-semibold text-blue-600 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'>
+                        {q.status.charAt(0).toUpperCase() + q.status.slice(1)}
+                      </span>
+                    </div>
                     <div className='text-muted-foreground text-sm'>
                       <RichTextRenderer htmlString={q?.description} maxChars={400} />
                     </div>
@@ -854,19 +859,22 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
                   </DropdownMenu>
                 </div>
 
-                {/* <div className='text-muted-foreground flex items-center gap-4 text-sm'>
+                <div className='text-muted-foreground flex items-center gap-4 text-sm'>
                   <div className='flex items-center gap-1.5'>
                     <Clock className='h-4 w-4' />
-                    <span>{getTotalDuration(assessment)} minutes</span>
+                    <span className='font-semibold'>Time limit: {"  "}</span>
+                    <span>{q?.time_limit_display}</span>
                   </div>
 
                   <div className='flex items-center gap-1.5'>
                     <BookOpen className='h-4 w-4' />
+                    <span className='font-semibold'>Attempts allowed: {"  "}</span>
+
                     <span>
-                      {lessonItems?.length || '0'} {lessonItems?.length === 1 ? 'item' : 'items'}
+                      {q?.attempts_allowed || 'N/A'}
                     </span>
                   </div>
-                </div> */}
+                </div>
               </div>
             </div>
           ))}

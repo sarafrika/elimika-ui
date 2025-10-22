@@ -1,9 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import Spinner from '@/components/ui/spinner';
 import { useStepper } from '@/components/ui/stepper';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
@@ -195,7 +193,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'
+          className='space-y-6'
         >
           {/* Banner Upload */}
           {editingCourseId && (
@@ -448,13 +446,13 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
           )}
 
           {/* Submit Button */}
-          {showSubmitButton && (
+          {/* {showSubmitButton && (
             <div className='flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>
               <Button type='submit' className='min-w-32'>
                 {updateCourseMutation.isPending ? <Spinner /> : 'Save Course'}
               </Button>
             </div>
-          )}
+          )} */}
         </form>
       </Form>
     );
