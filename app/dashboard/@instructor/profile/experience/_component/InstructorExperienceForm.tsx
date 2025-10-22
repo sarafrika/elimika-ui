@@ -6,6 +6,8 @@ import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
+import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -19,11 +21,12 @@ import {
 import { Input } from '@/components/ui/input';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
+import { useUserProfile } from '@/context/profile-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { useMutation } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUserProfile } from '../../../../../../context/profile-context';
 import {
   deleteInstructorExperience,
   InstructorExperience,
@@ -56,7 +59,6 @@ type ExperienceType = z.infer<typeof ExperienceSchema>;
 type ProfileExperienceFormValues = z.infer<typeof profileExperienceSchema>;
 
 export default function ProfessionalExperienceSettings() {
-  //console.log(instructorExperience);
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -73,6 +75,8 @@ export default function ProfessionalExperienceSettings() {
 
   const user = useUserProfile();
   const { instructor, invalidateQuery } = user!;
+  const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
+
   const instructorExperience = instructor?.experience as InstructorExperience[];
 
   const defaultExperience: ExperienceType = {
@@ -88,14 +92,10 @@ export default function ProfessionalExperienceSettings() {
   const passExperiences = (exp: InstructorExperience) => ({
     ...defaultExperience,
     ...exp,
-    start_date: new Date(exp.start_date ?? Date.now())
-      .toISOString()
-      .split('-')
-      .slice(0, 2)
-      .join('-'),
+    start_date: new Date(exp.start_date ?? Date.now()).toISOString().split('-').slice(0, 2).join('-'),
     end_date: new Date(exp.end_date ?? Date.now()).toISOString().split('-').slice(0, 2).join('-'),
     updated_by: exp.updated_by ?? 'self',
-    updated_date: new Date(exp.updated_date!).toISOString(),
+    updated_date: new Date(exp.updated_date ?? Date.now()).toISOString(),
     years_of_experience: exp.years_of_experience ? exp.years_of_experience.toString() : '',
   });
 
@@ -104,7 +104,7 @@ export default function ProfessionalExperienceSettings() {
     defaultValues: {
       //@ts-ignore
       experiences:
-        instructorExperience.length > 0
+        instructorExperience && instructorExperience.length > 0
           ? instructorExperience.map(passExperiences)
           : [defaultExperience],
     },
@@ -120,13 +120,14 @@ export default function ProfessionalExperienceSettings() {
   const addExpMutation = useMutation(addInstructorExperienceMutation());
   const { errors, submitting } = useMultiMutations([updateExpMutation, addExpMutation]);
 
-  async function onSubmit(data: ProfileExperienceFormValues) {
-    data.experiences.forEach(async (exp, index) => {
+  const saveExperiences = async (data: ProfileExperienceFormValues) => {
+    for (const [index, exp] of data.experiences.entries()) {
       const expData = {
         ...exp,
-        start_date: new Date(`${exp.start_date}-1`).toISOString(),
-        end_date: new Date(`${exp.end_date}-30`).toISOString(),
+        start_date: new Date(`${exp.start_date}-01`).toISOString(),
+        end_date: new Date(`${exp.end_date}-01`).toISOString(),
       };
+
       if (exp.uuid) {
         await updateExpMutation.mutateAsync({
           path: {
@@ -150,65 +151,105 @@ export default function ProfessionalExperienceSettings() {
             end_date: new Date(expData.end_date),
           },
         });
-        const exps = form.getValues('experiences');
-        exps[index] = passExperiences({
-          ...resp.data,
-          //@ts-ignore
-          start_date: new Date(resp.data!.start_date ?? Date.now())
-            .toISOString()
-            .split('-')
-            .slice(0, 2)
-            .join('-'),
-          //@ts-ignore
-          end_date: new Date(resp.data!.end_date ?? Date.now())
-            .toISOString()
-            .split('-')
-            .slice(0, 2)
-            .join('-'),
-        });
-        form.setValue('experiences', exps);
-      }
 
-      if (index === data.experiences.length - 1) {
-        invalidateQuery!();
-      }
-    });
-  }
-
-  async function onDelete(index: number) {
-    const shouldRemove = confirm('Are you sure you want to remove this experience?');
-    if (shouldRemove) {
-      const expUUID = form.getValues('experiences')[index]?.uuid;
-      remove(index);
-      if (expUUID) {
-        const resp = await deleteInstructorExperience({
-          path: {
-            instructorUuid: instructor!.uuid!,
-            experienceUuid: expUUID,
-          },
-        });
-        if (resp.error) {
-          //console.log(resp.error);
-          return;
+        if (resp.data) {
+          const exps = form.getValues('experiences');
+          exps[index] = passExperiences(resp.data as InstructorExperience);
+          form.setValue('experiences', exps);
         }
       }
-      invalidateQuery!();
-      toast('Experience removed successfully');
     }
+
+    await invalidateQuery?.();
+    toast.success('Experience updated successfully');
+    disableEditing();
+  };
+
+  const handleSubmit = (data: ProfileExperienceFormValues) => {
+    requestConfirmation({
+      title: 'Save experience updates?',
+      description: 'Learners rely on your work history to understand your expertise.',
+      confirmLabel: 'Save experience',
+      cancelLabel: 'Keep editing',
+      onConfirm: () => saveExperiences(data),
+    });
+  };
+
+  async function onDelete(index: number) {
+    if (!isEditing) return;
+    const shouldRemove = confirm('Are you sure you want to remove this experience?');
+    if (!shouldRemove) return;
+
+    const expUUID = form.getValues('experiences')[index]?.uuid;
+    remove(index);
+
+    if (expUUID) {
+      const resp = await deleteInstructorExperience({
+        path: {
+          instructorUuid: instructor!.uuid!,
+          experienceUuid: expUUID,
+        },
+      });
+      if (resp.error) {
+        toast.error('Unable to remove this experience right now.');
+        return;
+      }
+    }
+
+    await invalidateQuery?.();
+    toast('Experience removed successfully');
   }
 
-  return (
-    <div className='space-y-6'>
-      <div>
-        <h1 className='text-2xl font-semibold'>Professional Experience</h1>
-        <p className='text-muted-foreground text-sm'>
-          Add your work history and teaching experience
-        </p>
-      </div>
+  const domainBadges =
+    user?.user_domain?.map(domain =>
+      domain
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    ) ?? [];
 
-      <div className='rounded-lg border bg-white p-6 shadow-sm'>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+  return (
+    <ProfileFormShell
+      eyebrow='Instructor'
+      title='Professional experience'
+      description='Document your work history so learners and organisations can see how you have applied your skills.'
+      badges={domainBadges}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+          {errors && errors.length > 0 ? (
+            <Alert variant='destructive'>
+              <AlertTitle>Changes could not be saved</AlertTitle>
+              <AlertDescription>
+                <ul className='ml-4 list-disc space-y-1 text-sm'>
+                  {errors.map((error, index) => (
+                    <li key={index}>{error.message}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          <ProfileFormSection
+            title='Experience history'
+            description='Share the roles and teaching engagements that show your track record.'
+            footer={
+              <Button
+                type='submit'
+                className='min-w-36'
+                disabled={!isEditing || submitting || isConfirming}
+              >
+                {submitting || isConfirming ? (
+                  <span className='flex items-center gap-2'>
+                    <Spinner className='h-4 w-4' />
+                    Saving…
+                  </span>
+                ) : (
+                  'Save changes'
+                )}
+              </Button>
+            }
+          >
             <div className='space-y-4'>
               {fields.map((field, index) => (
                 <div
@@ -218,14 +259,13 @@ export default function ProfessionalExperienceSettings() {
                   <div className='space-y-5 p-5'>
                     <div className='flex items-start justify-between gap-4'>
                       <div className='flex items-start gap-3'>
-                        <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-grabbing opacity-0 transition-opacity group-hover:opacity-100' />
+                        <Grip className='text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <h3 className='text-base font-medium'>
-                            {form.watch(`experiences.${index}.organization_name`) ||
-                              'New Experience'}
+                            {form.watch(`experiences.${index}.organization_name`) || 'New experience'}
                           </h3>
                           <p className='text-muted-foreground text-sm'>
-                            {form.watch(`experiences.${index}.position`)}
+                            {form.watch(`experiences.${index}.position`) || 'Role not set'}
                           </p>
                         </div>
                       </div>
@@ -246,9 +286,9 @@ export default function ProfessionalExperienceSettings() {
                         name={`experiences.${index}.organization_name`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Organization</FormLabel>
+                            <FormLabel>Organisation</FormLabel>
                             <FormControl>
-                              <Input placeholder='e.g. WHO' {...field} className='h-10' />
+                              <Input placeholder='e.g. WHO' {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -259,9 +299,9 @@ export default function ProfessionalExperienceSettings() {
                         name={`experiences.${index}.position`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Job Title</FormLabel>
+                            <FormLabel>Job title</FormLabel>
                             <FormControl>
-                              <Input placeholder='e.g. Analyst' {...field} className='h-10' />
+                              <Input placeholder='e.g. Analyst' {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -275,9 +315,9 @@ export default function ProfessionalExperienceSettings() {
                         name={`experiences.${index}.start_date`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Start Date</FormLabel>
+                            <FormLabel>Start date</FormLabel>
                             <FormControl>
-                              <Input type='month' {...field} className='h-10' />
+                              <Input type='month' {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -288,13 +328,12 @@ export default function ProfessionalExperienceSettings() {
                         name={`experiences.${index}.end_date`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>End Date</FormLabel>
+                            <FormLabel>End date</FormLabel>
                             <FormControl>
                               <Input
                                 type='month'
                                 disabled={form.watch(`experiences.${index}.is_current_position`)}
                                 {...field}
-                                className='h-10'
                               />
                             </FormControl>
                             <div className='mt-2 flex items-center space-x-2'>
@@ -302,14 +341,11 @@ export default function ProfessionalExperienceSettings() {
                                 control={form.control}
                                 name={`experiences.${index}.is_current_position`}
                                 render={({ field }) => (
-                                  <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
+                                  <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
                                     <FormControl>
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
+                                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                     </FormControl>
-                                    <div className='space-y-1 leading-none'>
+                                    <div className='leading-none'>
                                       <FormLabel>I currently work here</FormLabel>
                                     </div>
                                   </FormItem>
@@ -327,10 +363,10 @@ export default function ProfessionalExperienceSettings() {
                       name={`experiences.${index}.responsibilities`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Work Description</FormLabel>
+                          <FormLabel>Work description</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder='Responsibilities, accomplishments...'
+                              placeholder='Responsibilities, accomplishments…'
                               className='min-h-24 resize-y'
                               {...field}
                             />
@@ -349,25 +385,14 @@ export default function ProfessionalExperienceSettings() {
               variant='outline'
               className='flex w-full items-center justify-center gap-2'
               onClick={() => append(defaultExperience as ExperienceType)}
+              disabled={!isEditing || submitting || isConfirming}
             >
               <PlusCircle className='h-4 w-4' />
-              Add Another Experience
+              Add another experience
             </Button>
-
-            <div className='flex justify-end pt-2'>
-              <Button type='submit' className='px-6' disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <Spinner /> Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </div>
-    </div>
+          </ProfileFormSection>
+        </form>
+      </Form>
+    </ProfileFormShell>
   );
 }

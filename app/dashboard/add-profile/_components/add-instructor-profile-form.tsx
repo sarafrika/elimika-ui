@@ -1,5 +1,6 @@
 'use client';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,7 +13,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { createInstructor } from '@/services/client';
 import { zInstructor } from '@/services/client/zod.gen';
@@ -227,14 +227,15 @@ export default function AddInstructorProfileForm() {
                   <FormItem>
                     <FormLabel>Bio</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder='Tell students about your teaching experience, expertise, and approach...'
-                        rows={6}
-                        {...field}
+                      <SimpleEditor
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        showToolbar
+                        isEditable
                       />
                     </FormControl>
                     <FormDescription>
-                      Describe your background and teaching philosophy (max 2000 characters)
+                      Share your experience and teaching philosophy. Formatting and media supported.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -1,10 +1,11 @@
-import { Badge } from '@/components/ui/badge';
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { CourseCreator } from '@/services/client';
 import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BadgeCheckIcon, Globe, MapPin, User } from 'lucide-react';
+import { Badge } from '../../../../../components/ui/badge';
 
 interface CourseCreatorDetailsProps {
   courseCreator: CourseCreator;
@@ -154,8 +155,11 @@ export default function CourseCreatorDetails({
             <CardTitle className='text-lg font-semibold'>Biography</CardTitle>
           </CardHeader>
           <CardContent>
-            {courseCreator.bio ? (
-              <p className='text-muted-foreground text-sm leading-relaxed'>{courseCreator.bio}</p>
+            {courseCreator?.bio ? (
+              <HTMLTextPreview
+                htmlContent={courseCreator.bio}
+                className='prose prose-sm max-w-none text-muted-foreground'
+              />
             ) : (
               <p className='text-muted-foreground text-sm'>No biography information provided</p>
             )}

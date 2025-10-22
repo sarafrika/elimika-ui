@@ -165,15 +165,21 @@ const MobileToolbarContent = ({
   </>
 );
 
+type SimpleEditorProps = {
+  initialContent?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  isEditable?: boolean;
+  showToolbar?: boolean;
+};
+
 export function SimpleEditor({
   initialContent,
   value,
   onChange,
-}: {
-  initialContent?: string;
-  value?: string;
-  onChange?: (value: string) => void;
-}) {
+  isEditable = true,
+  showToolbar = true,
+}: SimpleEditorProps) {
   const isMobile = useIsMobile();
   const windowSize = useWindowSize();
   const [mobileView, setMobileView] = React.useState<'main' | 'highlighter' | 'link'>('main');
@@ -182,6 +188,7 @@ export function SimpleEditor({
   const editor = useEditor({
     content: value ?? initialContent ?? '',
     immediatelyRender: false,
+    editable: isEditable,
     extensions: [
       StarterKit.configure({
         horizontalRule: false,
@@ -229,20 +236,28 @@ export function SimpleEditor({
     }
   }, [value, editor]);
 
+  React.useEffect(() => {
+    if (editor) {
+      editor.setEditable(isEditable);
+    }
+  }, [editor, isEditable]);
+
   return (
-    <div className='simple-editor-wrapper'>
+    <div className='simple-editor-wrapper' data-readonly={isEditable ? undefined : true}>
       <EditorContext.Provider value={{ editor }}>
-        <Toolbar ref={toolbarRef}>
-          {mobileView === 'main' ? (
-            <MainToolbarContent
-              onHighlighterClick={() => setMobileView('highlighter')}
-              onLinkClick={() => setMobileView('link')}
-              isMobile={isMobile}
-            />
-          ) : (
-            <MobileToolbarContent type={mobileView} onBack={() => setMobileView('main')} />
-          )}
-        </Toolbar>
+        {showToolbar ? (
+          <Toolbar ref={toolbarRef}>
+            {mobileView === 'main' ? (
+              <MainToolbarContent
+                onHighlighterClick={() => setMobileView('highlighter')}
+                onLinkClick={() => setMobileView('link')}
+                isMobile={isMobile}
+              />
+            ) : (
+              <MobileToolbarContent type={mobileView} onBack={() => setMobileView('main')} />
+            )}
+          </Toolbar>
+        ) : null}
         <EditorContent editor={editor} className='simple-editor-content' />
       </EditorContext.Provider>
     </div>

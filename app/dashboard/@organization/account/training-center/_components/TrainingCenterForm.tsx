@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -64,6 +65,7 @@ export default function TrainingCenterForm() {
 
   const userProfile = useUserProfile();
   const organisation = useTrainingCenter();
+  const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
@@ -81,35 +83,53 @@ export default function TrainingCenterForm() {
     },
   });
 
-  const onSubmit = async (orgData: TrainingCenterFormValues) => {
-    const updateResponse = await updateOrganisation({
-      path: {
-        uuid: organisation!.uuid!,
+  const [isSaving, setIsSaving] = useState(false);
+
+  const onSubmit = (orgData: TrainingCenterFormValues) => {
+    requestConfirmation({
+      title: 'Update training centre profile?',
+      description: 'These details will be shared with learners and partners across Elimika.',
+      confirmLabel: 'Update profile',
+      cancelLabel: 'Keep editing',
+      onConfirm: async () => {
+        setIsSaving(true);
+        try {
+          const updateResponse = await updateOrganisation({
+            path: {
+              uuid: organisation!.uuid!,
+            },
+            body: orgData,
+          });
+
+          if (updateResponse.error) {
+            toast.error('Error while updating institution');
+            const error = updateResponse.error as Record<string, any>;
+            Object.keys(error).forEach((key: any) => form.setError(key, error[key]));
+            return;
+          }
+
+          if (!userProfile!.phone_number) {
+            await updateUser({
+              path: {
+                uuid: userProfile!.uuid!,
+              },
+              body: {
+                ...(userProfile as User),
+                phone_number: orgData.contactPersonPhone,
+              },
+            });
+          }
+
+          disableEditing();
+          queryClient.invalidateQueries({ queryKey: ['organization'] });
+          toast.success('Saved successfully');
+        } catch (error) {
+          toast.error('Unable to save your organisation details right now. Please try again.');
+        } finally {
+          setIsSaving(false);
+        }
       },
-      body: orgData,
     });
-
-    // console.log(updateResponse);
-    if (updateResponse.error) {
-      toast.error('Error while updateing institution');
-      const error = updateResponse.error as any;
-      Object.keys(error).forEach((key: any) => form.setError(key, error[key]));
-      return;
-    }
-
-    if (!userProfile!.phone_number)
-      await updateUser({
-        path: {
-          uuid: userProfile!.uuid!,
-        },
-        body: {
-          ...(userProfile as User),
-          phone_number: orgData.contactPersonPhone,
-        },
-      });
-
-    queryClient.invalidateQueries({ queryKey: ['organization'] });
-    toast.success('Saved successfully');
   };
 
   if (userProfile?.isLoading) {
@@ -253,8 +273,8 @@ export default function TrainingCenterForm() {
             title='Location & presence'
             description='Let learners know where to find you and how to stay connected.'
             footer={
-              <Button type='submit' disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? (
+              <Button type='submit' disabled={!isEditing || isSaving || isConfirming}>
+                {isSaving || isConfirming ? (
                   <span className='flex items-center gap-2'>
                     <Loader2 className='h-4 w-4 animate-spin' />
                     Updating…

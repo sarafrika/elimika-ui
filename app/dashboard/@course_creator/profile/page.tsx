@@ -1,5 +1,6 @@
 'use client';
 
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import {
   ProfileSummaryMeta,
   ProfileSummarySection,
@@ -57,8 +58,15 @@ export default function CourseCreatorProfilePage() {
       content: (
         <div className='space-y-4 text-sm'>
           <div className='space-y-1'>
-            <p className='text-muted-foreground text-xs tracking-wide uppercase'>Bio</p>
-            <p>{profile.bio || 'A professional summary has not been added yet.'}</p>
+            <p className='text-xs uppercase tracking-wide text-muted-foreground'>Bio</p>
+            {profile.bio ? (
+              <HTMLTextPreview
+                htmlContent={profile.bio}
+                className='prose prose-sm max-w-none text-muted-foreground'
+              />
+            ) : (
+              <p className='text-muted-foreground'>A professional summary has not been added yet.</p>
+            )}
           </div>
         </div>
       ),

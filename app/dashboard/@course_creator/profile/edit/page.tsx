@@ -10,6 +10,7 @@ import * as z from 'zod';
 import ImageSelector, { ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -32,7 +33,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import { Textarea } from '@/components/ui/textarea';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { cn, profilePicSvg } from '@/lib/utils';
 import {
@@ -42,7 +42,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { CalendarIcon } from 'lucide-react';
-import { toast } from 'sonner';
 
 const generalProfileSchema = z.object({
   username: z.string().min(1, 'Username is required'),
@@ -123,37 +122,6 @@ export default function CourseCreatorProfile() {
     },
   });
 
-  const updateCourseCreator = useMutation(updateUserMutation());
-  const uploadProfileImage = useMutation(uploadProfileImageMutation());
-
-  const [submitting, setSubmitting] = useState(false);
-
-  function onSubmit(updatedProfileData: GeneralProfileFormValues) {
-    if (profilePic.file) {
-      const fd = new FormData();
-      const fileName = `${crypto.randomUUID()}${profilePic.file.name}`;
-      fd.append('profileImage', profilePic.file as Blob, fileName);
-      fd.append('profileImage', fileName);
-
-      uploadProfileImage.mutateAsync(
-        { path: { userUuid: profile?.uuid as string }, body: { profileImage: profilePic.file } },
-        {
-          onSuccess: data => {
-            // upload profile response
-          },
-        }
-      );
-    }
-
-    updateCourseCreator.mutate(
-      { body: { ...(updatedProfileData as any) }, path: { uuid: profile?.user_uuid as string } },
-      {
-        onSuccess: data => {
-          toast.success(data?.message);
-        },
-      }
-    );
-  }
 
   useEffect(() => {
     if (!user?.data || !profile) return;
@@ -178,7 +146,15 @@ export default function CourseCreatorProfile() {
     setProfilePic({
       url: user.data.profile_image_url || profilePicSvg,
     });
-  }, [user?.data, profile, form]);
+  }, [form, profile, user?.data]);
+
+  const updateCourseCreator = useMutation(updateUserMutation());
+  const uploadProfileImage = useMutation(uploadProfileImageMutation());
+
+  const [submitting, setSubmitting] = useState(false);
+
+  function onSubmit(updatedProfileData: GeneralProfileFormValues) {
+  }
 
   return (
     <ProfileFormShell
@@ -195,18 +171,17 @@ export default function CourseCreatorProfile() {
           >
             <div className='space-y-6'>
               <div className='flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-8'>
-                <Avatar className='ring-background shadow-primary/5 h-24 w-24 shadow-lg ring-4'>
+                <Avatar className='h-24 w-24 ring-4 ring-background shadow-lg shadow-primary/5'>
                   <AvatarImage
                     src={user?.data?.profile_image_url ?? profilePic.url}
                     alt={`${user?.data?.full_name}`}
                   />
-                  <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
-                    {`${user?.data?.first_name?.[0]?.toUpperCase() ?? ''}${user?.data?.last_name?.[0]?.toUpperCase() ?? ''}` ||
-                      'IN'}
+                  <AvatarFallback className='bg-primary/10 text-base font-semibold text-primary'>
+                    {`${user?.data?.first_name?.[0]?.toUpperCase() ?? ''}${user?.data?.last_name?.[0]?.toUpperCase() ?? ''}` || 'IN'}
                   </AvatarFallback>
                 </Avatar>
                 <div className='space-y-3'>
-                  <p className='text-muted-foreground text-sm'>
+                  <p className='text-sm text-muted-foreground'>
                     Square images work best. Maximum size is 5MB.
                   </p>
                   <div className='flex flex-wrap gap-3'>
@@ -332,6 +307,9 @@ export default function CourseCreatorProfile() {
                             mode='single'
                             selected={field.value}
                             onSelect={field.onChange}
+                            captionLayout='dropdown'
+                            fromYear={1900}
+                            toYear={new Date().getFullYear()}
                             disabled={date => date > new Date() || date < new Date('1900-01-01')}
                             initialFocus
                           />
@@ -417,6 +395,7 @@ export default function CourseCreatorProfile() {
                           //   'instructor.latitude',
                           //   loc.features[0]!.properties.coordinates.latitude
                           // );
+
                           // form.setValue(
                           //   'instructor.longitude',
                           //   loc.features[0]!.properties.coordinates.longitude
@@ -480,11 +459,11 @@ export default function CourseCreatorProfile() {
                 <FormItem>
                   <FormLabel>About you</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder='Share your teaching philosophy, specialties, and learner outcomes.'
-                      className='min-h-32 resize-y'
-                      {...field}
+                    <SimpleEditor
                       value={field.value ?? ''}
+                      onChange={field.onChange}
+                      showToolbar
+                      isEditable
                     />
                   </FormControl>
                   <FormDescription className='text-xs'>

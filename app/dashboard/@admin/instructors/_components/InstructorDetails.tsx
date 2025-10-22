@@ -1,3 +1,4 @@
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -328,8 +329,16 @@ export default function InstructorDetails({
           <CardTitle className='text-lg font-semibold'>Biography</CardTitle>
         </CardHeader>
         <CardContent>
-          {instructor.bio ? (
-            <p className='text-muted-foreground text-sm leading-relaxed'>{instructor.bio}</p>
+          {instructorInfo?.data?.bio ? (
+            <HTMLTextPreview
+              htmlContent={instructorInfo.data.bio}
+              className='prose prose-sm max-w-none text-muted-foreground'
+            />
+          ) : instructor.bio ? (
+            <HTMLTextPreview
+              htmlContent={instructor.bio}
+              className='prose prose-sm max-w-none text-muted-foreground'
+            />
           ) : (
             <p className='text-muted-foreground text-sm'>No biography information provided</p>
           )}

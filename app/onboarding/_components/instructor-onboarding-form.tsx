@@ -1,5 +1,6 @@
 'use client';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -215,15 +216,15 @@ export function InstructorOnboardingForm() {
                   <FormItem>
                     <FormLabel>Bio</FormLabel>
                     <FormControl>
-                      <textarea
-                        className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-                        placeholder='Tell students about your background, expertise, and teaching philosophy...'
-                        {...field}
+                      <SimpleEditor
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        showToolbar
+                        isEditable
                       />
                     </FormControl>
                     <FormDescription>
-                      Professional biography describing your expertise and teaching approach (max
-                      2000 characters)
+                      Share your background, expertise, and teaching philosophy. Rich text is supported.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

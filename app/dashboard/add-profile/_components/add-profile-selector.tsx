@@ -86,24 +86,12 @@ export default function AddProfileSelector() {
   }
 
   return (
-    <>
-      <div className='mb-8 flex justify-center'>
-        <Button
-          onClick={() => router.push('/dashboard/overview')}
-          variant='outline'
-          className='gap-2'
-        >
-          <ArrowLeft className='h-4 w-4' />
-          Back to Dashboard
-        </Button>
-      </div>
+    <div className='mx-auto grid max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-3'>
+      {availableProfiles.map(type => {
+        const Icon = type.icon;
 
-      <div className='mx-auto grid max-w-5xl gap-8 md:grid-cols-2 lg:grid-cols-3'>
-        {availableProfiles.map(type => {
-          const Icon = type.icon;
-
-          return (
-            <Link
+        return (
+          <Link
               key={type.id}
               href={type.href}
               className={`group relative block rounded-3xl border-2 p-8 transition-all duration-300 ${type.borderColor} ${type.bgColor} ${type.hoverBg} hover:scale-[1.01] hover:border-blue-600/30 hover:shadow-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 focus:outline-none`}
@@ -140,7 +128,6 @@ export default function AddProfileSelector() {
             </Link>
           );
         })}
-      </div>
-    </>
+    </div>
   );
 }

@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -232,56 +232,36 @@ export const InstructorProfileModal: React.FC<Props> = ({
                 </Card>
               </TabsContent>
 
-              {/* Reviews Tab */}
-              <TabsContent value='reviews' className='space-y-4'>
-                {reviews.map(review => (
-                  <Card key={review.id} className='p-6'>
-                    <div className='flex items-start gap-4'>
-                      <Avatar className='h-10 w-10'>
-                        <AvatarImage src={review.studentImage} alt={review.studentName} />
-                        <AvatarFallback>{review.studentName.charAt(0)}</AvatarFallback>
-                      </Avatar>
-
-                      <div className='flex-1'>
-                        <div className='mb-2 flex items-center justify-between'>
-                          <div>
-                            <p>{review.studentName}</p>
-                            <p className='text-muted-foreground text-sm'>{review.course}</p>
+              {/* Certifications Tab */}
+              <TabsContent value="certifications" className="space-y-4">
+                {Array.isArray(certifications) && certifications.length > 0 ? (
+                  certifications.map((cert) => (
+                    <Card key={cert.id}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div className="rounded-lg bg-blue-100 p-3">
+                            <Award className="h-6 w-6 text-blue-600" aria-hidden="true" />
                           </div>
-                          <div className='flex items-center gap-1'>
-                            <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-                            <span>{review.rating.toFixed(1)}</span>
+                          <div>
+                            <h4 className="text-base font-semibold">{cert.name}</h4>
+                            <p className="text-muted-foreground text-sm">{cert.issuer}</p>
+                            <p className="text-muted-foreground mt-1 text-sm">
+                              Issued {cert.year ? cert.year : 'N/A'}
+                            </p>
                           </div>
                         </div>
-                        <p className='text-muted-foreground'>{review.comment}</p>
-                        <p className='text-muted-foreground mt-2 text-sm'>
-                          {review.date.toLocaleDateString('en-US', {
-                            month: 'long',
-                            year: 'numeric',
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </TabsContent>
-
-              {/* Certifications Tab */}
-              <TabsContent value='certifications' className='space-y-4'>
-                {certifications?.map(cert => (
-                  <Card key={cert.id} className='p-6'>
-                    <div className='flex items-start gap-4'>
-                      <div className='rounded-lg bg-blue-100 p-3'>
-                        <Award className='h-6 w-6 text-blue-600' />
-                      </div>
-                      <div>
-                        <h4>{cert.name}</h4>
-                        <p className='text-muted-foreground'>{cert.issuer}</p>
-                        <p className='text-muted-foreground mt-1 text-sm'>Issued {cert.year}</p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-muted-foreground flex flex-col items-center justify-center py-12 text-center">
+                    <Award className="mb-4 h-10 w-10 text-gray-400" />
+                    <h3 className="text-lg font-semibold">No Certifications Found</h3>
+                    <p className="mt-1 text-sm">
+                      You haven&apos;t earned any certifications for this course yet.
+                    </p>
+                  </div>
+                )}
               </TabsContent>
 
               {/* Rates Tab */}
@@ -356,11 +336,10 @@ const reviews = [
   {
     id: 'review-3',
     studentName: 'Emily Wang',
-    studentImage:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+    studentImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
     rating: 5,
     comment: 'Incredibly knowledgeable and explains complex concepts clearly.',
     date: new Date(2024, 8, 10),
     course: 'Data Science',
   },
-];
+]

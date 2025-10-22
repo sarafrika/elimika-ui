@@ -1,21 +1,16 @@
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { getInstructorAvailabilityOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BadgeCheckIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '../../../components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../../components/ui/dialog';
-import { getInstructorAvailabilityOptions } from '../../../services/client/@tanstack/react-query.gen';
 
 export interface InstructorCardProps {
   instructor: any;
@@ -46,26 +41,31 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
   if (!instructor?.is_profile_complete) return null;
 
   return (
-    <Card className='w-full max-w-md shadow-sm'>
+    <Card className="w-full max-w-md shadow-sm">
       <CardHeader>
-        <div className='flex items-center justify-between'>
-          <CardTitle className='text-lg'>{full_name}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">{full_name}</CardTitle>
           {admin_verified && (
-            <Badge variant='success' className='text-xs'>
+            <Badge variant="success" className="text-xs">
               <BadgeCheckIcon />
               Verified
             </Badge>
           )}
         </div>
         {professional_headline && (
-          <CardDescription className='text-muted-foreground text-sm italic'>
+          <CardDescription className="text-sm italic text-muted-foreground">
             {professional_headline}
           </CardDescription>
         )}
       </CardHeader>
       <Separator />
-      <CardContent className='space-y-2 text-sm'>
-        {bio && <p className='text-gray-700'>{bio}</p>}
+      <CardContent className="space-y-2 text-sm">
+        {bio && (
+          <HTMLTextPreview
+            htmlContent={bio}
+            className="prose prose-sm max-w-none text-gray-700"
+          />
+        )}
 
         {formatted_location && <p className='text-muted-foreground'>📍 {formatted_location}</p>}
 

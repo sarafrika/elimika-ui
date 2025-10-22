@@ -1,106 +1,67 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Organisation as OrganisationDto } from '@/services/api/schema';
-import { BadgeCheckIcon, Building2, MoreVertical } from 'lucide-react';
-import React from 'react';
+import { Organisation } from '@/services/client';
+import { BadgeCheckIcon, MapPin, ShieldCheck } from 'lucide-react';
 
 interface OrganizationCardProps {
-  organization: any;
+  organization: Organisation;
   isSelected: boolean;
-  onSelect: (organization: OrganisationDto) => void;
-  onDelete: (organization: OrganisationDto) => void;
-  getStatusBadgeComponent?: (organizationId: string) => React.ReactElement;
+  onSelect(organization: Organisation): void;
 }
 
 export default function OrganizationCard({
   organization,
   isSelected,
   onSelect,
-  onDelete,
-  getStatusBadgeComponent,
 }: OrganizationCardProps) {
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return 'Unknown';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
   return (
-    <Card
-      className={`hover:bg-accent/10 m-2 cursor-pointer p-4 transition-colors ${
-        isSelected ? 'ring-primary bg-accent/10 ring' : ''
-      }`}
+    <div
+      className={`hover:bg-muted/50 cursor-pointer border-b p-4 transition-colors ${isSelected ? 'bg-muted' : ''
+        }`}
       onClick={() => onSelect(organization)}
     >
       <div className='flex items-start justify-between'>
-        <div className='flex min-w-0 flex-1 items-start space-x-3'>
-          <div className='flex-shrink-0'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-100'>
-              <Building2 className='text-primary h-5 w-5' />
-            </div>
-          </div>
-          <div className='min-w-0 flex-1'>
-            <div className='mb-2'>
-              <h3 className='mb-1 truncate text-sm font-medium'>{organization.name}</h3>
-              <div className='flex items-center'>
-                {organization.uuid && (
-                  <Badge variant={organization?.admin_verified ? 'success' : 'secondary'}>
-                    {organization?.admin_verified ? (
-                      <>
-                        <BadgeCheckIcon />
-                        Verified
-                      </>
-                    ) : (
-                      'Pending'
-                    )}
-                  </Badge>
-                )}
-              </div>
-            </div>
-            <p className='text-muted-foreground truncate text-xs'>{organization.domain}</p>
-            <p className='text-muted-foreground mt-1 text-xs'>Code: {organization.code || 'N/A'}</p>
-            {organization.created_date && (
-              <p className='text-muted-foreground text-xs'>
-                Created: {formatDate(organization.created_date)}
-              </p>
+        <div className='min-w-0 flex-1'>
+          <div className='mb-1 flex items-center gap-2'>
+            <h3 className='truncate text-sm font-medium'>{organization.name || 'N/A'}</h3>
+            {organization.admin_verified && (
+              <ShieldCheck className='text-primary h-4 w-4 flex-shrink-0' />
             )}
           </div>
-        </div>
-        <div className='ml-2 flex-shrink-0'>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant='ghost'
-                size='sm'
-                className='h-8 w-8 p-0'
-                onClick={e => e.stopPropagation()}
-              >
-                <MoreVertical className='h-4 w-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              <DropdownMenuItem
-                onClick={e => {
-                  e.stopPropagation();
-                  onDelete(organization);
-                }}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+          {organization.location && (
+            <p className='text-muted-foreground mb-1 flex items-center gap-1 truncate text-xs'>
+              <MapPin className='h-3 w-3 flex-shrink-0' />
+              {organization.location}
+              {organization.country && `, ${organization.country}`}
+            </p>
+          )}
+
+          <div className='flex flex-wrap items-center gap-2'>
+            <Badge variant={organization.active ? 'success' : 'secondary'} className='text-xs'>
+              {organization.active ? (
+                <>
+                  <BadgeCheckIcon className='mr-1 h-3 w-3' />
+                  Active
+                </>
+              ) : (
+                'Inactive'
+              )}
+            </Badge>
+
+            {!organization.admin_verified && (
+              <Badge variant='outline' className='text-xs'>
+                Pending Verification
+              </Badge>
+            )}
+
+            <span className='text-muted-foreground text-xs'>
+              {organization.created_date
+                ? new Date(organization.created_date).toLocaleDateString()
+                : 'N/A'}
+            </span>
+          </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }

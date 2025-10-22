@@ -25,6 +25,7 @@ import {
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
 import { tanstackClient } from '@/services/api/tanstack-client';
@@ -56,6 +57,7 @@ export default function StudentProfileGeneralForm() {
   const qc = useQueryClient();
   const user = useUserProfile();
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -146,27 +148,36 @@ export default function StudentProfileGeneralForm() {
     );
   }
 
-  const onSubmit = async (data: StudentProfileType) => {
-    try {
-      await userMutation.mutateAsync(
-        {
-          body: {
-            ...data,
-            dob: data.dob ?? '',
-            active: user?.active as boolean,
-          },
-          path: { uuid: user!.uuid as string },
-        },
-        {
-          onSuccess: data => {
-            qc.invalidateQueries({ queryKey: ['profile'] });
-            toast.success(data?.message);
-          },
+  const handleSubmit = (data: StudentProfileType) => {
+    requestConfirmation({
+      title: 'Save profile changes?',
+      description: 'This will update your learner details for instructors and guardians.',
+      confirmLabel: 'Save changes',
+      cancelLabel: 'Keep editing',
+      onConfirm: async () => {
+        try {
+          await userMutation.mutateAsync(
+            {
+              body: {
+                ...data,
+                dob: data.dob ?? '',
+                active: user?.active as boolean,
+              },
+              path: { uuid: user!.uuid as string },
+            },
+            {
+              onSuccess: data => {
+                qc.invalidateQueries({ queryKey: ['profile'] });
+                toast.success(data?.message);
+                disableEditing();
+              },
+            }
+          );
+        } catch (error) {
+          // handled by toast inside mutation
         }
-      );
-    } catch (error) {
-      // console.error('Error updating user profile:', error);
-    }
+      },
+    });
   };
 
   const initials =
@@ -174,10 +185,11 @@ export default function StudentProfileGeneralForm() {
     'ST';
 
   const domainBadges =
+    // @ts-ignore
     user?.user_domain?.map(domain =>
       domain
         .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
 
@@ -189,7 +201,7 @@ export default function StudentProfileGeneralForm() {
       badges={domainBadges}
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
           {errors && errors.length > 0 ? (
             <Alert
               variant='destructive'
@@ -378,6 +390,9 @@ export default function StudentProfileGeneralForm() {
                           mode='single'
                           selected={field.value ? new Date(field.value) : undefined}
                           onSelect={field.onChange}
+                          captionLayout='dropdown'
+                          fromYear={1900}
+                          toYear={new Date().getFullYear()}
                           disabled={date => date > new Date() || date < new Date('1900-01-01')}
                           initialFocus
                         />
@@ -397,9 +412,9 @@ export default function StudentProfileGeneralForm() {
               <Button
                 type='submit'
                 className='min-w-36'
-                disabled={userMutation.isPending || pictureMutation.isPending}
+                disabled={!isEditing || userMutation.isPending || pictureMutation.isPending || isConfirming}
               >
-                {userMutation.isPending || pictureMutation.isPending ? (
+                {userMutation.isPending || pictureMutation.isPending || isConfirming ? (
                   <span className='flex items-center gap-2'>
                     <Spinner className='h-4 w-4' />
                     Saving…

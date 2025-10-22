@@ -79,24 +79,17 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
 
   const replaceBreadcrumbs = useCallback((newBreadcrumbs: BreadcrumbItem[]) => {
-    const dashboardBreadcrumb: BreadcrumbItem = {
-      id: 'dashboard',
-      title: 'Dashboard',
-      url: '/dashboard/overview',
-      isLast: false,
-    };
-
     if (newBreadcrumbs.length === 1 && newBreadcrumbs[0]?.url === '/dashboard/overview') {
-      setBreadcrumbs(newBreadcrumbs);
+      setBreadcrumbs([]);
       return;
     }
 
-    if (newBreadcrumbs[0]?.id === 'dashboard') {
-      setBreadcrumbs(newBreadcrumbs);
+    if (newBreadcrumbs[0]?.title === 'Dashboard' || newBreadcrumbs[0]?.id === 'dashboard') {
+      setBreadcrumbs(newBreadcrumbs.slice(1));
       return;
     }
 
-    setBreadcrumbs([dashboardBreadcrumb, ...newBreadcrumbs]);
+    setBreadcrumbs(newBreadcrumbs);
   }, []);
 
   useEffect(() => {

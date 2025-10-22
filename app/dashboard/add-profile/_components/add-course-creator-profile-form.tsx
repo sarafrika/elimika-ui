@@ -1,5 +1,6 @@
 'use client';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,7 +13,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { createCourseCreator } from '@/services/client';
 import { zCourseCreator } from '@/services/client/zod.gen';
@@ -265,14 +265,15 @@ export default function AddCourseCreatorProfileForm() {
                   <FormItem>
                     <FormLabel>Bio</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder='Tell students about your course creation experience, expertise, and approach...'
-                        rows={6}
-                        {...field}
+                      <SimpleEditor
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        showToolbar
+                        isEditable
                       />
                     </FormControl>
                     <FormDescription>
-                      Describe your background and course creation philosophy (max 2000 characters)
+                      Describe your background and course creation philosophy. Rich text is supported.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
