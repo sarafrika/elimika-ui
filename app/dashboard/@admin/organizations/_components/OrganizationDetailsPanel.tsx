@@ -1,18 +1,4 @@
 'use client';
-import { Button } from '@/components/ui/button';
-import {
-  Building2,
-  CheckCircle,
-  Edit,
-  MoreVertical,
-  Shield,
-  ShieldOff,
-  Trash2,
-  XCircle,
-} from 'lucide-react';
-import React, { useState } from 'react';
-import { Organisation } from '@/services/client';
-import OrganizationDetails from './OrganizationDetails';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +18,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Organisation } from '@/services/client';
+import {
+  Building2,
+  CheckCircle,
+  Edit,
+  MoreVertical,
+  Shield,
+  ShieldOff,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
+import { useState } from 'react';
+import OrganizationDetails from './OrganizationDetails';
 
 interface OrganizationDetailsPanelProps {
   organization: Organisation | null;

@@ -200,7 +200,7 @@ export default function ManageBranch() {
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className='rounded-xl border border-border/60 bg-background/60 p-6 shadow-sm'
+                  className='border-border/60 bg-background/60 rounded-xl border p-6 shadow-sm'
                 >
                   <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
                     <div>

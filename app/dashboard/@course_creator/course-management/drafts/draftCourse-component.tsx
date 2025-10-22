@@ -91,12 +91,12 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
           onSuccess: () => {
             toast.success('Course deleted succcessfully');
             queryClient.invalidateQueries({
-            queryKey: searchCoursesQueryKey({
-              query: {
-                searchParams: { status: 'draft', course_creator_uuid_eq: courseCreatorId },
-                pageable: { page, size },
-              },
-            }),
+              queryKey: searchCoursesQueryKey({
+                query: {
+                  searchParams: { status: 'draft', course_creator_uuid_eq: courseCreatorId },
+                  pageable: { page, size },
+                },
+              }),
             });
           },
         }

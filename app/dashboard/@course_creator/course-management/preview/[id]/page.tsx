@@ -1,7 +1,10 @@
 'use client';
 
 import { useCourseCreator } from '@/context/course-creator-context';
-import { CourseCreatorEmptyState, CourseCreatorLoadingState } from '../../../_components/loading-state';
+import {
+  CourseCreatorEmptyState,
+  CourseCreatorLoadingState,
+} from '../../../_components/loading-state';
 import CoursePreviewComponent from './coursePreview-component';
 
 function Page() {

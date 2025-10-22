@@ -124,7 +124,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
           )}
         >
           <ShieldAlert className='col-start-1 self-start text-yellow-600' />
-          <AlertTitle className='text-xs font-semibold uppercase tracking-[0.15em] text-yellow-700'>
+          <AlertTitle className='text-xs font-semibold tracking-[0.15em] text-yellow-700 uppercase'>
             {state.notice.title}
           </AlertTitle>
           <AlertDescription className='text-sm text-yellow-800/80'>

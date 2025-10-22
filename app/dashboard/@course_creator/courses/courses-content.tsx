@@ -36,8 +36,10 @@ const STATUS_OPTIONS: { label: string; value: CourseStatusFilter }[] = [
   { label: 'Archived', value: 'archived' },
 ];
 
-const STATUS_BADGE: Record<string, { label: string; variant: 'secondary' | 'default' | 'outline' }> =
-{
+const STATUS_BADGE: Record<
+  string,
+  { label: string; variant: 'secondary' | 'default' | 'outline' }
+> = {
   draft: { label: 'Draft', variant: 'secondary' },
   in_review: { label: 'In review', variant: 'outline' },
   published: { label: 'Published', variant: 'default' },
@@ -72,7 +74,7 @@ export default function CourseCreatorCoursesContent() {
       </header>
 
       <Card>
-        <CardHeader className='flex flex-col gap-4 border-b border-border/50 pb-4 sm:flex-row sm:items-center sm:justify-between'>
+        <CardHeader className='border-border/50 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between'>
           <div>
             <CardTitle className='text-base font-semibold'>Course catalogue</CardTitle>
             <CardDescription>
@@ -147,9 +149,13 @@ function CourseRow({ course }: { course: Course }) {
     <TableRow>
       <TableCell>
         <div className='flex flex-col gap-1'>
-          <span className='font-semibold leading-tight'>{course.name}</span>
+          <span className='leading-tight font-semibold'>{course.name}</span>
           <div className='text-muted-foreground text-xs'>
-            {course?.description ? <RichTextRenderer htmlString={course?.description as string} maxChars={110} /> : 'No description added yet.'}
+            {course?.description ? (
+              <RichTextRenderer htmlString={course?.description as string} maxChars={110} />
+            ) : (
+              'No description added yet.'
+            )}
           </div>
         </div>
       </TableCell>

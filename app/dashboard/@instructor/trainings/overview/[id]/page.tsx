@@ -129,7 +129,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const shareToSocial = (platform: string) => {
@@ -151,13 +151,13 @@ export default function ClassPreviewPage() {
 
   const { data: timetable } = useQuery({
     ...getInstructorScheduleOptions({
-      path: { instructorUuid: classData?.default_instructor_uuid as string }, query: {
-        start: "2026-11-02" as any,
-        end: "2026-12-19" as any
-      }
-    })
-  })
-
+      path: { instructorUuid: classData?.default_instructor_uuid as string },
+      query: {
+        start: '2026-11-02' as any,
+        end: '2026-12-19' as any,
+      },
+    }),
+  });
 
   if (isLoading || isAllLessonsDataLoading || classIsLoading) {
     return (
@@ -402,39 +402,43 @@ export default function ClassPreviewPage() {
                             </div> */}
 
               <div>
-                {timetable?.data?.map((s) => {
-                  const isCancelled = s?.status === "CANCELLED";
+                {timetable?.data?.map(s => {
+                  const isCancelled = s?.status === 'CANCELLED';
                   const isActive = s?.is_currently_active;
 
                   return (
                     <div
                       key={s.uuid}
-                      className={`flex items-center justify-between p-4 mb-4 rounded shadow-sm ${isCancelled ? "bg-red-100" : "bg-white"
-                        }`}
+                      className={`mb-4 flex items-center justify-between rounded p-4 shadow-sm ${
+                        isCancelled ? 'bg-red-100' : 'bg-white'
+                      }`}
                     >
                       <div>
-                        <p className="font-semibold">{s?.title} - {s?.location_type}</p>
+                        <p className='font-semibold'>
+                          {s?.title} - {s?.location_type}
+                        </p>
                         {/* <p>{s?.start_time as any} - {s.end_time as any}</p> */}
                         <p>{s?.time_range}</p>
                         <p>{s?.max_participants} Participants</p>
-                        <p>{s?.status} - {s?.cancellation_reason}</p>
+                        <p>
+                          {s?.status} - {s?.cancellation_reason}
+                        </p>
                       </div>
 
                       {/* Active / Not Active Badge */}
                       <div>
                         <span
-                          className={`text-sm font-medium px-3 py-1 rounded-full ${isActive ? "bg-green-500 text-white" : "bg-red-500 text-white"
-                            }`}
+                          className={`rounded-full px-3 py-1 text-sm font-medium ${
+                            isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                          }`}
                         >
-                          {isActive ? "Active" : "Not active"}
+                          {isActive ? 'Active' : 'Not active'}
                         </span>
                       </div>
                     </div>
                   );
                 })}
               </div>
-
-
             </CardContent>
           </Card>
         </TabsContent>

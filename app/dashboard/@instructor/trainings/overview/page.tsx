@@ -33,9 +33,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { ClassDialog, ScheduleDialog, TimetableScheduleDialog } from '../../_components/class-management-form';
+import {
+  ClassDialog,
+  ScheduleDialog,
+  TimetableScheduleDialog,
+} from '../../_components/class-management-form';
 import ClassCourseDisplay from '../component/class-course-dislay';
-
 
 export default function TrainingsPage() {
   const router = useRouter();

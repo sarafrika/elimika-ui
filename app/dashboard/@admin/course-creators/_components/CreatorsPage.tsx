@@ -9,7 +9,7 @@ import {
   getAllCourseCreatorsOptions,
   getAllCourseCreatorsQueryKey,
   unverifyCourseCreatorMutation,
-  verifyCourseCreatorMutation
+  verifyCourseCreatorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
@@ -39,40 +39,44 @@ export default function CourseCreatorsPage() {
   }, [courseCreators, selectedCreator]);
 
   const approveCourseCreator = useMutation(verifyCourseCreatorMutation());
-  const rejectCourseCreator = useMutation(unverifyCourseCreatorMutation());
+  const unVerifyCourseCreator = useMutation(unverifyCourseCreatorMutation());
 
   const handleApproveCourseCreator = async (courseCreator: CourseCreator) => {
     try {
       approveCourseCreator.mutate(
         { path: { uuid: courseCreator.uuid! }, query: { reason: '' } },
         {
-          onSuccess: (data) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
             });
             // @ts-ignore
-            toast.success(data?.message || "Course creator verified successfully");
+            toast.success(data?.message || 'Course creator verified successfully');
           },
         }
       );
-    } catch (error) { }
+    } catch (error) {}
   };
 
-  const handleRejectCourseCreator = async (courseCreator: CourseCreator) => {
+  const handleUnverifyCourseCreator = async (courseCreator: CourseCreator) => {
     try {
-      rejectCourseCreator.mutate(
+      unVerifyCourseCreator.mutate(
         { path: { uuid: courseCreator.uuid! }, query: { reason: '' } },
         {
-          onSuccess: (data) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
             });
             // @ts-ignore
-            toast.success(data?.message || "Course creator verification removed successfully");
+            toast.success(data?.message || 'Course creator verification removed successfully');
           },
         }
       );
-    } catch (error) { }
+    } catch (error) {}
+  };
+
+  const handleDeclineCourseCreator = async (courseCreator: CourseCreator) => {
+    toast.message('Implement reject/decline here');
   };
 
   const handeCourseCreatorSelect = (courseCreator: CourseCreator) => {
@@ -83,28 +87,30 @@ export default function CourseCreatorsPage() {
     }
   };
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [openDeleteModal, setOpenDeleteModal] = useState(false)
-
-  const deleteCourseCreator = useMutation(deleteCourseCreatorMutation())
+  const deleteCourseCreator = useMutation(deleteCourseCreatorMutation());
   const handleCourseCreatorDelete = (creator: CourseCreator) => {
-    setDeletingId(creator.uuid as string)
-    setOpenDeleteModal(true)
+    setDeletingId(creator.uuid as string);
+    setOpenDeleteModal(true);
   };
 
   const confirmDeleteCourseCreator = () => {
-    if (!deletingId) return
+    if (!deletingId) return;
 
-    deleteCourseCreator.mutate({ path: { uuid: deletingId as string } }, {
-      onSuccess: () => {
-        toast.success("Course creator deleted successfully")
-        qc.invalidateQueries({
-          queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
-        });
+    deleteCourseCreator.mutate(
+      { path: { uuid: deletingId as string } },
+      {
+        onSuccess: () => {
+          toast.success('Course creator deleted successfully');
+          qc.invalidateQueries({
+            queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
+          });
+        },
       }
-    })
-  }
+    );
+  };
 
   // Filter and sort course creators
   const filteredAndSortedCourseCreators = courseCreators
@@ -112,7 +118,7 @@ export default function CourseCreatorsPage() {
       // Search filter
       const matchesSearch =
         creator.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        creator.professional_headline?.toLowerCase().includes(searchQuery.toLowerCase())
+        creator.professional_headline?.toLowerCase().includes(searchQuery.toLowerCase());
       // creator.formatted_location?.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Status filter
@@ -152,7 +158,6 @@ export default function CourseCreatorsPage() {
         setSortOrder={setSortOrder}
         onCourseCreatorSelect={handeCourseCreatorSelect}
         onCourseCreatorDelete={handleCourseCreatorDelete}
-        // getStatusBadgeComponent={getStatusBadgeComponent}
         isLoading={isLoading}
       />
 
@@ -160,9 +165,11 @@ export default function CourseCreatorsPage() {
       <CourseCreatorDetailsPanel
         courseCreator={selectedCreator as any}
         onApprove={handleApproveCourseCreator}
-        onReject={handleRejectCourseCreator}
+        onUnverify={handleUnverifyCourseCreator}
+        onDecline={handleDeclineCourseCreator}
         isApprovePending={approveCourseCreator.isPending}
-        isRejectPending={rejectCourseCreator.isPending}
+        isUnverifyPending={unVerifyCourseCreator.isPending}
+        isDeclinePending={false}
       />
 
       {/* Mobile Modal */}
@@ -171,9 +178,9 @@ export default function CourseCreatorsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onApprove={handleApproveCourseCreator}
-        onReject={handleRejectCourseCreator}
+        onUnverify={handleUnverifyCourseCreator}
+        onDecline={handleDeclineCourseCreator}
       />
-
 
       <DeleteModal
         open={openDeleteModal}

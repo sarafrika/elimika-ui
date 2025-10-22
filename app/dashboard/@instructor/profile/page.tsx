@@ -38,7 +38,7 @@ export default function InstructorProfileOverviewPage() {
   if (!user || user.isLoading) {
     return (
       <div className='flex h-full items-center justify-center py-20'>
-        <Spinner className='h-6 w-6 text-muted-foreground' />
+        <Spinner className='text-muted-foreground h-6 w-6' />
       </div>
     );
   }
@@ -61,8 +61,8 @@ export default function InstructorProfileOverviewPage() {
   const fullName =
     instructor?.full_name ||
     [first_name, middle_name, last_name].filter(Boolean).join(' ') ||
-    user.displayName ||
-    user.fullName ||
+    user?.displayName ||
+    user?.fullName ||
     'Instructor';
 
   const meta: ProfileSummaryMeta[] = [];
@@ -160,6 +160,7 @@ export default function InstructorProfileOverviewPage() {
         value:
           user_domain && user_domain.length > 0 ? (
             <div className='flex flex-wrap gap-2'>
+              {/* @ts-ignore */}
               {user_domain.map(domain => (
                 <Badge
                   key={domain}
@@ -178,7 +179,10 @@ export default function InstructorProfileOverviewPage() {
         label: 'Roles',
         value:
           roles && roles.length > 0
-            ? roles.map(role => role.name).filter(Boolean).join(', ')
+            ? roles
+              .map((role: any) => role.name)
+              .filter(Boolean)
+              .join(', ')
             : undefined,
         emptyText: 'No roles granted',
       },
@@ -204,138 +208,136 @@ export default function InstructorProfileOverviewPage() {
   const educationSection: ProfileSummarySection =
     instructor?.educations && instructor.educations.length > 0
       ? {
-          title: 'Education',
-          description: 'Highest qualifications you have added.',
-          content: (
-            <div className='space-y-3'>
-              {instructor.educations.map((education, index) => (
-                <div
-                  key={education.uuid ?? `${education.school_name}-${index}`}
-                  className='rounded-lg border border-border/50 p-3'
-                >
-                  <p className='font-medium'>{education.qualification}</p>
-                  <p className='text-muted-foreground text-sm'>{education.school_name}</p>
-                  {education.year_completed ? (
-                    <p className='text-muted-foreground text-xs'>
-                      Completed in {education.year_completed}
-                    </p>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ),
-        }
+        title: 'Education',
+        description: 'Highest qualifications you have added.',
+        content: (
+          <div className='space-y-3'>
+            {instructor.educations.map((education, index) => (
+              <div
+                key={education.uuid ?? `${education.school_name}-${index}`}
+                className='border-border/50 rounded-lg border p-3'
+              >
+                <p className='font-medium'>{education.qualification}</p>
+                <p className='text-muted-foreground text-sm'>{education.school_name}</p>
+                {education.year_completed ? (
+                  <p className='text-muted-foreground text-xs'>
+                    Completed in {education.year_completed}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ),
+      }
       : {
-          title: 'Education',
-          description: 'Highest qualifications you have added.',
-          emptyText: 'Add your education background to strengthen your profile.',
-        };
+        title: 'Education',
+        description: 'Highest qualifications you have added.',
+        emptyText: 'Add your education background to strengthen your profile.',
+      };
 
   const experienceSection: ProfileSummarySection =
     instructor?.experience && instructor.experience.length > 0
       ? {
-          title: 'Experience',
-          description: 'Roles that demonstrate your expertise.',
-          content: (
-            <div className='space-y-3'>
-              {instructor.experience.map((exp, index) => {
-                const start = toDate(exp.start_date);
-                const end = toDate(exp.end_date);
-                const range =
-                  start || end
-                    ? `${start ? format(start, 'MMM yyyy') : 'Start?' } – ${
-                        exp.is_current_position ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
-                      }`
-                    : null;
-                return (
-                  <div
-                    key={exp.uuid ?? `${exp.organization_name}-${index}`}
-                    className='rounded-lg border border-border/50 p-3'
-                  >
-                    <p className='font-medium'>{exp.position}</p>
-                    <p className='text-muted-foreground text-sm'>{exp.organization_name}</p>
-                    {range ? <p className='text-muted-foreground text-xs'>{range}</p> : null}
-                    {exp.responsibilities ? (
-                      <p className='text-muted-foreground mt-2 text-sm'>{exp.responsibilities}</p>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ),
-        }
+        title: 'Experience',
+        description: 'Roles that demonstrate your expertise.',
+        content: (
+          <div className='space-y-3'>
+            {instructor.experience.map((exp, index) => {
+              const start = toDate(exp.start_date);
+              const end = toDate(exp.end_date);
+              const range =
+                start || end
+                  ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${exp.is_current_position ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
+                  }`
+                  : null;
+              return (
+                <div
+                  key={exp.uuid ?? `${exp.organization_name}-${index}`}
+                  className='border-border/50 rounded-lg border p-3'
+                >
+                  <p className='font-medium'>{exp.position}</p>
+                  <p className='text-muted-foreground text-sm'>{exp.organization_name}</p>
+                  {range ? <p className='text-muted-foreground text-xs'>{range}</p> : null}
+                  {exp.responsibilities ? (
+                    <p className='text-muted-foreground mt-2 text-sm'>{exp.responsibilities}</p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ),
+      }
       : {
-          title: 'Experience',
-          description: 'Roles that demonstrate your expertise.',
-          emptyText: 'Add relevant experience from the experience tab.',
-        };
+        title: 'Experience',
+        description: 'Roles that demonstrate your expertise.',
+        emptyText: 'Add relevant experience from the experience tab.',
+      };
 
   const membershipSection: ProfileSummarySection =
     instructor?.membership && instructor.membership.length > 0
       ? {
-          title: 'Professional Memberships',
-          description: 'Industry organisations that recognise your work.',
-          content: (
-            <div className='space-y-3'>
-              {instructor.membership.map((membership, index) => {
-                const start = toDate(membership.start_date);
-                const end = toDate(membership.end_date);
-                const range =
-                  start || end
-                    ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
-                        membership.is_active || !end ? 'Present' : format(end, 'MMM yyyy')
-                      }`
-                    : null;
-                return (
-                  <div
-                    key={membership.uuid ?? `${membership.organization_name}-${index}`}
-                    className='rounded-lg border border-border/50 p-3'
-                  >
-                    <p className='font-medium'>{membership.organization_name}</p>
-                    {membership.membership_number ? (
-                      <p className='text-muted-foreground text-xs'>
-                        Membership #{membership.membership_number}
-                      </p>
-                    ) : null}
-                    {range ? (
-                      <p className='text-muted-foreground text-xs'>Duration: {range}</p>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ),
-        }
+        title: 'Professional Memberships',
+        description: 'Industry organisations that recognise your work.',
+        content: (
+          <div className='space-y-3'>
+            {instructor.membership.map((membership, index) => {
+              const start = toDate(membership.start_date);
+              const end = toDate(membership.end_date);
+              const range =
+                start || end
+                  ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${membership.is_active || !end ? 'Present' : format(end, 'MMM yyyy')
+                  }`
+                  : null;
+              return (
+                <div
+                  key={membership.uuid ?? `${membership.organization_name}-${index}`}
+                  className='border-border/50 rounded-lg border p-3'
+                >
+                  <p className='font-medium'>{membership.organization_name}</p>
+                  {membership.membership_number ? (
+                    <p className='text-muted-foreground text-xs'>
+                      Membership #{membership.membership_number}
+                    </p>
+                  ) : null}
+                  {range ? (
+                    <p className='text-muted-foreground text-xs'>Duration: {range}</p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ),
+      }
       : {
-          title: 'Professional Memberships',
-          description: 'Industry organisations that recognise your work.',
-          emptyText: 'List your professional memberships for credibility.',
-        };
+        title: 'Professional Memberships',
+        description: 'Industry organisations that recognise your work.',
+        emptyText: 'List your professional memberships for credibility.',
+      };
 
   const skillSection: ProfileSummarySection =
     instructor?.skills && instructor.skills.length > 0
       ? {
-          title: 'Skills',
-          description: 'Technical and facilitation strengths.',
-          content: (
-            <div className='flex flex-wrap gap-2'>
-              {instructor.skills.map((skill, index) => (
-                <Badge key={skill.uuid ?? `${skill.skill_name}-${index}`} variant='outline'>
-                  <span className='inline-flex items-center gap-2'>
-                    <Sparkles className='h-3.5 w-3.5' />
-                    {skill.skill_name}
-                    <span className='text-muted-foreground text-xs'>{skill.proficiency_level}</span>
-                  </span>
-                </Badge>
-              ))}
-            </div>
-          ),
-        }
+        title: 'Skills',
+        description: 'Technical and facilitation strengths.',
+        content: (
+          <div className='flex flex-wrap gap-2'>
+            {instructor.skills.map((skill, index) => (
+              <Badge key={skill.uuid ?? `${skill.skill_name}-${index}`} variant='outline'>
+                <span className='inline-flex items-center gap-2'>
+                  <Sparkles className='h-3.5 w-3.5' />
+                  {skill.skill_name}
+                  <span className='text-muted-foreground text-xs'>{skill.proficiency_level}</span>
+                </span>
+              </Badge>
+            ))}
+          </div>
+        ),
+      }
       : {
-          title: 'Skills',
-          description: 'Technical and facilitation strengths.',
-          emptyText: 'Add skills to help learners find you.',
-        };
+        title: 'Skills',
+        description: 'Technical and facilitation strengths.',
+        emptyText: 'Add skills to help learners find you.',
+      };
 
   return (
     <ProfileSummaryView

@@ -1,8 +1,5 @@
-
 function ApprenticeshipsPage() {
-    return (
-        <div>This page is under construction</div>
-    )
+  return <div>This page is under construction</div>;
 }
 
-export default ApprenticeshipsPage
+export default ApprenticeshipsPage;

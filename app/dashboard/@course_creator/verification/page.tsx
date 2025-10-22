@@ -50,7 +50,7 @@ export default function CourseCreatorVerificationPage() {
               <HelpCircle className='h-3.5 w-3.5' /> Action required
             </Badge>
           )}
-          <span className='text-xs text-muted-foreground'>
+          <span className='text-muted-foreground text-xs'>
             Updated{' '}
             {verification.lastUpdated
               ? format(verification.lastUpdated, 'dd MMM yyyy')
@@ -82,7 +82,7 @@ export default function CourseCreatorVerificationPage() {
                     <Icon className='h-5 w-5' />
                   </div>
                   {index < STEPS.length - 1 && (
-                    <Separator orientation='vertical' className='my-1 flex-1 bg-border' />
+                    <Separator orientation='vertical' className='bg-border my-1 flex-1' />
                   )}
                 </div>
                 <div>
@@ -154,7 +154,7 @@ export default function CourseCreatorVerificationPage() {
 function StatusPill({ heading, value }: { heading: string; value: string }) {
   return (
     <div className='rounded-lg border border-dashed border-blue-200/40 bg-blue-50/60 p-4'>
-      <p className='text-xs uppercase tracking-wide text-muted-foreground'>{heading}</p>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{heading}</p>
       <p className='text-sm font-semibold'>{value}</p>
     </div>
   );

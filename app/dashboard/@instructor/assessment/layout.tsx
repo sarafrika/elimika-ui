@@ -12,7 +12,7 @@ export default function AssessmentLayout({ children }: AssessmentLayoutProps) {
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Manage Assessments</h2>
-          <p className="text-muted-foreground">
+          <p className='text-muted-foreground'>
             Oversee all student assessments including assignments, quizzes, and exams.
           </p>
         </div>

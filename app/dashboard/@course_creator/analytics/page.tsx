@@ -87,16 +87,14 @@ export default function CourseCreatorAnalyticsPage() {
             </div>
             <div className='grid grid-cols-2 gap-3'>
               <div className='rounded-lg border border-blue-200/40 bg-blue-50/60 p-3 text-center'>
-                <p className='text-xs uppercase tracking-wide text-muted-foreground'>Mandatory</p>
+                <p className='text-muted-foreground text-xs tracking-wide uppercase'>Mandatory</p>
                 <p className='text-lg font-semibold'>
                   {trainingRequirements.mandatoryRequirements}
                 </p>
               </div>
               <div className='rounded-lg border border-blue-200/40 bg-blue-50/60 p-3 text-center'>
-                <p className='text-xs uppercase tracking-wide text-muted-foreground'>Optional</p>
-                <p className='text-lg font-semibold'>
-                  {trainingRequirements.optionalRequirements}
-                </p>
+                <p className='text-muted-foreground text-xs tracking-wide uppercase'>Optional</p>
+                <p className='text-lg font-semibold'>{trainingRequirements.optionalRequirements}</p>
               </div>
             </div>
             <p className='text-muted-foreground text-xs'>
@@ -114,7 +112,7 @@ export default function CourseCreatorAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-3 text-sm'>
-             <div className='flex items-center justify-between rounded-lg border border-blue-200/40 bg-blue-50/60 px-4 py-3'>
+            <div className='flex items-center justify-between rounded-lg border border-blue-200/40 bg-blue-50/60 px-4 py-3'>
               <span>Status</span>
               <span className='font-semibold'>
                 {verification.adminVerified ? 'Verified' : 'Pending review'}
@@ -151,10 +149,10 @@ function FeeStat({
   isCurrency?: boolean;
 }) {
   const displayValue =
-    typeof value === 'number' && isCurrency ? formatCurrency(value) : value ?? 'Not set';
+    typeof value === 'number' && isCurrency ? formatCurrency(value) : (value ?? 'Not set');
   return (
     <div className='rounded-lg border border-blue-200/40 bg-blue-50/60 p-3'>
-      <p className='text-xs uppercase tracking-wide text-muted-foreground'>{heading}</p>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{heading}</p>
       <p className='text-lg font-semibold'>{displayValue}</p>
     </div>
   );

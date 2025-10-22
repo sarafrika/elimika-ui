@@ -71,7 +71,7 @@ export default function ClassDetailsForm({
   const searchParams = new URLSearchParams(location.search);
   const classId = searchParams.get('id');
 
-  const [createdClassId, setCreatedClassId] = useState<string | null>(null)
+  const [createdClassId, setCreatedClassId] = useState<string | null>(null);
   const resolveId = classId ? (classId as string) : (createdClassId as string);
 
   const qc = useQueryClient();
@@ -156,12 +156,12 @@ export default function ClassDetailsForm({
       course_uuid: values?.course_uuid || classData?.course_uuid,
       max_participants: values?.max_participants || classData?.max_participants,
       // location_type: values?.location_type || classData?.location_type,
-      recurrence_pattern_uuid: "08e567cc-bec5-4893-9217-03ff19f44895",
+      recurrence_pattern_uuid: '08e567cc-bec5-4893-9217-03ff19f44895',
       default_instructor_uuid: instructor?.uuid as string,
       default_start_time: '2025-10-05T10:00:00',
       default_end_time: '2026-10-05T12:00:00',
       location_type: 'HYBRID',
-      class_time_validy: "2 months"
+      class_time_validy: '2 months',
     };
 
     if (resolveId) {
@@ -185,7 +185,7 @@ export default function ClassDetailsForm({
           },
           onError: (error: any) => {
             toast.error(JSON.stringify(error?.error));
-          }
+          },
         }
       );
     } else {
@@ -199,14 +199,13 @@ export default function ClassDetailsForm({
               }),
             });
             toast.success(data?.message);
-            setCreatedClassId(data?.data?.uuid as string)
+            setCreatedClassId(data?.data?.uuid as string);
             // router.push('/dashboard/trainings');
             handleNextStep();
-
           },
           onError: (error: any) => {
             toast.error(JSON.stringify(error?.error));
-          }
+          },
         }
       );
     }
@@ -627,7 +626,9 @@ export default function ClassDetailsForm({
                 className='flex min-w-[120px] items-center justify-center gap-2'
                 disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
               >
-                {(createClassDefinition.isPending || updateClassDefinition.isPending) && <Spinner />}
+                {(createClassDefinition.isPending || updateClassDefinition.isPending) && (
+                  <Spinner />
+                )}
                 {resolveId ? 'Update Class Traninig' : 'Create Class Traninig'}
               </Button>
             </div>

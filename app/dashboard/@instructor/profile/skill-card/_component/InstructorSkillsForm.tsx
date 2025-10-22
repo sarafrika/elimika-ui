@@ -21,17 +21,17 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
-import { useUserProfile } from '@/context/profile-context';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { Instructor, InstructorSkill } from '@/services/api/schema';
+import { schemas } from '@/services/api/zod-client';
 import {
   addInstructorSkillMutation,
   getInstructorSkillsQueryKey,
   updateInstructorSkillMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { schemas } from '@/services/api/zod-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusCircle, Trash2 } from 'lucide-react';
@@ -116,6 +116,7 @@ export default function SkillsSettings({
             proficiency_level: skill.proficiency_level,
             proficiency_description: skill.proficiency_description,
             summary: skill.summary,
+            instructor_uuid: instructor.uuid!,
           },
         });
       } else {
@@ -165,10 +166,11 @@ export default function SkillsSettings({
   };
 
   const domainBadges =
+    // @ts-ignore
     user?.user_domain?.map(domain =>
       domain
         .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
 

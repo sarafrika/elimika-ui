@@ -34,7 +34,9 @@ import {
   addQuestionOptionMutation,
   addQuizQuestionMutation,
   createQuizMutation,
+  deleteQuizMutation,
   getAllAssessmentRubricsOptions,
+  getCourseLessonsOptions,
   getQuestionOptionsQueryKey,
   getQuizQuestionsQueryKey,
   searchQuizzesQueryKey,
@@ -44,12 +46,24 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { BookOpenCheck, ClipboardCheck, Grip, MoreVertical, PlusCircle, Trash } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
+import DeleteModal from '../../../../components/custom-modals/delete-modal';
+import RichTextRenderer from '../../../../components/editors/richTextRenders';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../../../components/ui/dropdown-menu';
+import { CustomLoadingState } from './loading-state';
 
 export const quizSchema = z.object({
+  lesson_uuid: z.string().min(1, 'Please select a lesson to add a quiz'),
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   instructions: z.string().optional(),
@@ -68,11 +82,13 @@ function QuizForm({
   initialValues,
   quizId,
   lessonId,
+  courseId,
   onCancel,
   className,
 }: {
   quizId?: string;
   lessonId: string;
+  courseId: string;
   initialValues?: QuizFormValues;
   onSuccess: any;
   onCancel: () => void;
@@ -88,7 +104,17 @@ function QuizForm({
   const qc = useQueryClient();
   const user = useUserProfile();
 
-  const { data: rubrics } = useQuery(getAllAssessmentRubricsOptions({ query: { pageable: {} } }));
+  const { data: lessons, isLoading: lessonIsLoading } = useQuery({
+    ...getCourseLessonsOptions({
+      path: { courseUuid: courseId as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!courseId,
+  });
+
+  const { data: rubrics, isLoading: rubricsIsLoading } = useQuery(
+    getAllAssessmentRubricsOptions({ query: { pageable: {} } })
+  );
 
   const createQuiz = useMutation(createQuizMutation());
   const updateQuiz = useMutation(updateQuizMutation());
@@ -96,7 +122,6 @@ function QuizForm({
   const handleSubmit = async (values: QuizFormValues) => {
     const payload = {
       ...values,
-      lesson_uuid: lessonId as string,
       status: values.status || 'DRAFT',
       updated_by: user?.email,
       // additional rubric info
@@ -137,150 +162,181 @@ function QuizForm({
     }
   };
 
+  const isLoading = lessonIsLoading || rubricsIsLoading;
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
-        <FormField
-          control={form.control}
-          name='title'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Quiz Title</FormLabel>
-              <FormControl>
-                <Input placeholder='Enter quiz title' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <>
+      {isLoading ? (
+        <CustomLoadingState subHeading='Fetching course information and existing rubrics.' />
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
+            <FormField
+              control={form.control}
+              name='lesson_uuid'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Associated Lesson</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='Select a lesson' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lessons?.data?.content?.map(lesson => (
+                        <SelectItem key={lesson.uuid} value={lesson?.uuid as string}>
+                          {lesson.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name='description'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Input placeholder='Optional quiz description' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name='title'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Quiz Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder='Enter quiz title' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name='instructions'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Instructions</FormLabel>
-              <FormControl>
-                <Input placeholder='Optional quiz instructions' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name='description'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input placeholder='Optional quiz description' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <div className='flex flex-col items-start gap-6 sm:flex-row'>
-          <FormField
-            control={form.control}
-            name='time_limit_minutes'
-            render={({ field }) => (
-              <FormItem className='w-full'>
-                <FormLabel>Time Limit (mins)</FormLabel>
-                <FormControl>
-                  <Input
-                    type='number'
-                    placeholder='e.g. 60'
-                    {...field}
-                    onChange={e => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name='instructions'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Instructions</FormLabel>
+                  <FormControl>
+                    <Input placeholder='Optional quiz instructions' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name='passing_score'
-            render={({ field }) => (
-              <FormItem className='w-full'>
-                <FormLabel>Passing Score</FormLabel>
-                <FormControl>
-                  <Input
-                    type='number'
-                    placeholder='e.g. 80'
-                    {...field}
-                    onChange={e => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+            <div className='flex flex-col items-start gap-6 sm:flex-row'>
+              <FormField
+                control={form.control}
+                name='time_limit_minutes'
+                render={({ field }) => (
+                  <FormItem className='w-full'>
+                    <FormLabel>Time Limit (mins)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='number'
+                        placeholder='e.g. 60'
+                        {...field}
+                        onChange={e => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className='flex flex-col items-start gap-6 sm:flex-row'>
-          <FormField
-            control={form.control}
-            name='attempts_allowed'
-            render={({ field }) => (
-              <FormItem className='w-full'>
-                <FormLabel>Attempts Allowed</FormLabel>
-                <FormControl>
-                  <Input
-                    type='number'
-                    placeholder='e.g. 3'
-                    {...field}
-                    onChange={e => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+              <FormField
+                control={form.control}
+                name='passing_score'
+                render={({ field }) => (
+                  <FormItem className='w-full'>
+                    <FormLabel>Passing Score</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='number'
+                        placeholder='e.g. 80'
+                        {...field}
+                        onChange={e => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <FormField
-          control={form.control}
-          name='rubric_uuid'
-          render={({ field }) => (
-            <FormItem className='w-full flex-1'>
-              <FormLabel>Assign Rubric</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Select rubric' />
-                </SelectTrigger>
-                <SelectContent>
-                  {rubrics?.data?.content?.map(rubric => (
-                    <SelectItem key={rubric.uuid} value={rubric.uuid as string}>
-                      {rubric.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <div className='flex flex-col items-start gap-6 sm:flex-row'>
+              <FormField
+                control={form.control}
+                name='attempts_allowed'
+                render={({ field }) => (
+                  <FormItem className='w-full'>
+                    <FormLabel>Attempts Allowed</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='number'
+                        placeholder='e.g. 3'
+                        {...field}
+                        onChange={e => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <div className='flex justify-end gap-2 pt-6'>
-          <Button type='button' variant='outline' onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            type='submit'
-            className='flex min-w-[120px] items-center justify-center gap-2'
-            disabled={createQuiz.isPending || updateQuiz.isPending}
-          >
-            {(createQuiz.isPending || updateQuiz.isPending) && <Spinner />}
-            {initialValues ? 'Update Quiz' : 'Create Quiz'}
-          </Button>
-        </div>
-      </form>
-    </Form>
+            <FormField
+              control={form.control}
+              name='rubric_uuid'
+              render={({ field }) => (
+                <FormItem className='w-full flex-1'>
+                  <FormLabel>Assign Rubric</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='Select rubric' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rubrics?.data?.content?.map(rubric => (
+                        <SelectItem key={rubric.uuid} value={rubric.uuid as string}>
+                          {rubric.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className='flex justify-end gap-2 pt-6'>
+              <Button type='button' variant='outline' onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button
+                type='submit'
+                className='flex min-w-[120px] items-center justify-center gap-2'
+                disabled={createQuiz.isPending || updateQuiz.isPending}
+              >
+                {(createQuiz.isPending || updateQuiz.isPending) && <Spinner />}
+                {initialValues ? 'Update Quiz' : 'Create Quiz'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      )}
+    </>
   );
 }
 
@@ -670,10 +726,203 @@ function OptionForm({
   );
 }
 
+type QuizListProps = {
+  courseTitle: string;
+  quizzes: any;
+  isLoading: boolean;
+  courseId?: string;
+  onAddQuiz: () => void;
+};
+
+function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: QuizListProps) {
+  const [selectedQuiz, setSelectedQuiz] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleEditQuiz = (q: any) => {
+    setSelectedQuiz(q);
+    setIsModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setSelectedQuiz(null);
+  };
+
+  // DELETE QUIZ MUTATION
+  const queryClient = useQueryClient();
+  const deleteQuiz = useMutation(deleteQuizMutation());
+
+  const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+
+  const handleDelete = (qUuid: string) => {
+    setDeletingQuizId(qUuid);
+    setOpenDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (!deletingQuizId) return;
+
+    deleteQuiz.mutate(
+      { path: { uuid: deletingQuizId as string } },
+      {
+        onSuccess: () => {
+          toast.success('Quiz deleted successfully');
+          queryClient.invalidateQueries({
+            queryKey: searchQuizzesQueryKey({
+              query: { searchParams: { courseUuid: courseId }, pageable: { page: 0, size: 100 } },
+            }),
+          });
+          setOpenDeleteModal(false);
+          setDeletingQuizId(null);
+        },
+        onError: (error: any) => toast.error(error?.message || 'Failed to delete quiz'),
+      }
+    );
+  };
+
+  return (
+    <div className='space-y-6'>
+      <div className='flex flex-row items-center justify-between'>
+        <div className='space-y-1'>
+          <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
+          <p className='text-muted-foreground text-sm'>
+            You have {quizzes?.content?.length}{' '}
+            {quizzes?.content?.length === 1 ? 'quiz' : 'quizzes'} created under this course.
+          </p>
+        </div>
+        <Button onClick={onAddQuiz} className='self-start sm:self-end lg:self-center'>
+          <PlusCircle className='h-4 w-4' />
+          Add Quiz
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <Spinner />
+      ) : quizzes?.content?.length === 0 ? (
+        <div className='text-muted-foreground rounded-lg border border-dashed p-12 text-center'>
+          <BookOpenCheck className='text-muted-foreground mx-auto h-12 w-12' />
+          <h3 className='mt-4 text-lg font-medium'>No quizzes found for this course.</h3>
+          <p className='text-muted-foreground mt-2'>You can create new quiz for this course.</p>
+        </div>
+      ) : (
+        <div className='space-y-3'>
+          {quizzes?.content.map((q: any, index: any) => (
+            <div
+              key={q?.uuid || index}
+              className='group relative flex items-start gap-4 rounded-lg border p-4 transition-all'
+            >
+              <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
+
+              <div className='flex-1 space-y-3'>
+                <div className='flex items-start justify-between'>
+                  <div className='flex flex-col items-start'>
+                    <h3 className='text-lg font-medium'>{q.title}</h3>
+                    <div className='text-muted-foreground text-sm'>
+                      <RichTextRenderer htmlString={q?.description} maxChars={400} />
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='opacity-0 transition-opacity group-hover:opacity-100'
+                      >
+                        <MoreVertical className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      <DropdownMenuItem onClick={() => handleEditQuiz(q)}>
+                        <ClipboardCheck className='mr-2 h-4 w-4' />
+                        Edit Quiz
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className='text-red-600'
+                        onClick={() => {
+                          if (q.uuid) {
+                            handleDelete(q?.uuid as string);
+                          }
+                        }}
+                      >
+                        <Trash className='mr-2 h-4 w-4' />
+                        Delete Quiz
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* <div className='text-muted-foreground flex items-center gap-4 text-sm'>
+                  <div className='flex items-center gap-1.5'>
+                    <Clock className='h-4 w-4' />
+                    <span>{getTotalDuration(assessment)} minutes</span>
+                  </div>
+
+                  <div className='flex items-center gap-1.5'>
+                    <BookOpen className='h-4 w-4' />
+                    <span>
+                      {lessonItems?.length || '0'} {lessonItems?.length === 1 ? 'item' : 'items'}
+                    </span>
+                  </div>
+                </div> */}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog
+        open={isModalOpen}
+        onOpenChange={open => {
+          if (!open) {
+            handleCancel();
+          }
+        }}
+      >
+        <DialogContent className='flex max-w-6xl flex-col p-0'>
+          <DialogHeader className='border-b px-6 py-4'>
+            <DialogTitle className='text-xl'>Edit Quiz</DialogTitle>
+            <DialogDescription className='text-muted-foreground text-sm'>
+              Edit quiz
+            </DialogDescription>
+          </DialogHeader>
+
+          <ScrollArea className='h-[calc(90vh-16rem)]'>
+            {selectedQuiz && (
+              <QuizForm
+                onCancel={handleCancel}
+                initialValues={selectedQuiz as any}
+                className='px-6 pb-6'
+                quizId={selectedQuiz?.uuid}
+                lessonId={''}
+                courseId={courseId as string}
+                onSuccess={() => { }}
+              />
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      <DeleteModal
+        open={openDeleteModal}
+        setOpen={setOpenDeleteModal}
+        title='Delete Quiz'
+        description='Are you sure you want to delete this quiz? This action cannot be undone'
+        onConfirm={confirmDelete}
+        isLoading={deleteQuiz.isPending}
+        confirmText='Delete Quiz'
+      />
+    </div>
+  );
+}
+
 interface AddQuizDialogProps {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
   lessonId?: string;
+  courseId?: string;
   editingQuiz?: string;
   initialValues?: Partial<QuizFormValues>;
   onSuccess?: any;
@@ -686,6 +935,7 @@ function QuizDialog({
   editingQuiz,
   initialValues,
   lessonId,
+  courseId,
   onSuccess,
   onCancel,
 }: AddQuizDialogProps) {
@@ -706,6 +956,7 @@ function QuizDialog({
             className='px-6 pb-6'
             quizId={editingQuiz}
             lessonId={lessonId as string}
+            courseId={courseId as string}
             onSuccess={onSuccess}
           />
         </ScrollArea>
@@ -808,4 +1059,4 @@ function OptionDialog({
   );
 }
 
-export { OptionDialog, QuestionDialog, QuizDialog };
+export { OptionDialog, QuestionDialog, QuizDialog, QuizList };

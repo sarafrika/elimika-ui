@@ -76,7 +76,7 @@ export function ProfileSummaryView({
           )}
           <div>
             {eyebrow ? (
-              <p className='text-xs uppercase tracking-widest text-primary/80'>{eyebrow}</p>
+              <p className='text-primary/80 text-xs tracking-widest uppercase'>{eyebrow}</p>
             ) : null}
             <h1 className='mt-1 text-3xl font-semibold tracking-tight'>{title}</h1>
             {headline ? <p className='text-muted-foreground mt-1 text-sm'>{headline}</p> : null}
@@ -94,7 +94,7 @@ export function ProfileSummaryView({
               </div>
             ) : null}
             {meta && meta.length > 0 ? (
-              <dl className='text-muted-foreground mt-3 flex flex-wrap gap-4 text-xs uppercase tracking-wide'>
+              <dl className='text-muted-foreground mt-3 flex flex-wrap gap-4 text-xs tracking-wide uppercase'>
                 {meta.map((item, index) => (
                   <div key={index} className='flex items-center gap-1'>
                     {item.icon}
@@ -123,9 +123,7 @@ export function ProfileSummaryView({
         <Card key={section.title}>
           <CardHeader>
             <CardTitle className='text-base font-semibold'>{section.title}</CardTitle>
-            {section.description ? (
-              <CardDescription>{section.description}</CardDescription>
-            ) : null}
+            {section.description ? <CardDescription>{section.description}</CardDescription> : null}
           </CardHeader>
           <CardContent className='space-y-4 text-sm'>
             {section.content}
@@ -133,20 +131,24 @@ export function ProfileSummaryView({
               <dl className='grid gap-4 sm:grid-cols-2'>
                 {section.items.map((item, index) => (
                   <div key={`${item.label}-${index}`} className='space-y-1'>
-                    <dt className='text-xs uppercase tracking-wide text-muted-foreground'>
+                    <dt className='text-muted-foreground text-xs tracking-wide uppercase'>
                       <span className='inline-flex items-center gap-1'>
                         {item.icon}
                         {item.label}
                       </span>
                     </dt>
                     <dd className={item.valueClassName}>
-                      {item.value ?? <span className='text-muted-foreground'>{item.emptyText}</span>}
+                      {item.value ?? (
+                        <span className='text-muted-foreground'>{item.emptyText}</span>
+                      )}
                     </dd>
                   </div>
                 ))}
               </dl>
             ) : null}
-            {!section.content && (!section.items || section.items.length === 0) && section.emptyText ? (
+            {!section.content &&
+            (!section.items || section.items.length === 0) &&
+            section.emptyText ? (
               <p className='text-muted-foreground'>{section.emptyText}</p>
             ) : null}
           </CardContent>

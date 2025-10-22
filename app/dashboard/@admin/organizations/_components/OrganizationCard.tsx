@@ -1,7 +1,6 @@
 import { Badge } from '@/components/ui/badge';
-import { BadgeCheckIcon, MapPin, ShieldCheck } from 'lucide-react';
-import React from 'react';
 import { Organisation } from '@/services/client';
+import { BadgeCheckIcon, MapPin, ShieldCheck } from 'lucide-react';
 
 interface OrganizationCardProps {
   organization: Organisation;
@@ -16,9 +15,8 @@ export default function OrganizationCard({
 }: OrganizationCardProps) {
   return (
     <div
-      className={`hover:bg-muted/50 cursor-pointer border-b p-4 transition-colors ${
-        isSelected ? 'bg-muted' : ''
-      }`}
+      className={`hover:bg-muted/50 cursor-pointer border-b p-4 transition-colors ${isSelected ? 'bg-muted' : ''
+        }`}
       onClick={() => onSelect(organization)}
     >
       <div className='flex items-start justify-between'>

@@ -1,4 +1,3 @@
-import React from 'react';
 import AddProfileSelector from './_components/add-profile-selector';
 import ManageProfileActions from './_components/manage-profile-actions';
 

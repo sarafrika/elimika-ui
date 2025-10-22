@@ -6,7 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { Course } from '@/services/client';
-import { getAllDifficultyLevelsOptions, getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getAllDifficultyLevelsOptions,
+  getCourseCreatorByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
 import Image from 'next/image';
@@ -29,9 +32,11 @@ export function CourseCard({ course, handleClick, isStudent }: CourseCardProps) 
       .toUpperCase();
   };
 
-  const { data: creator } = useQuery(getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } }))
+  const { data: creator } = useQuery(
+    getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } })
+  );
   // @ts-ignore
-  const courseCreator = creator?.data
+  const courseCreator = creator?.data;
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -173,42 +178,42 @@ export function CourseCard({ course, handleClick, isStudent }: CourseCardProps) 
             </div>
           </div>
 
-        <div className='flex items-end self-end justify-between gap-2 pt-4'>
-          {isStudent ? (
-            <>
+          <div className='flex items-end justify-between gap-2 self-end pt-4'>
+            {isStudent ? (
+              <>
+                <Button
+                  onClick={e => {
+                    e.stopPropagation();
+                    router.push(`/dashboard/browse-courses/instructor/123`);
+                  }}
+                  size='sm'
+                  variant='outline'
+                >
+                  Search Instructor
+                </Button>
+                <Button
+                  size='sm'
+                  onClick={e => {
+                    e.stopPropagation();
+                    router.push(`/dashboard/browse-courses/enroll/${course.uuid}`);
+                  }}
+                >
+                  Enroll
+                </Button>
+              </>
+            ) : (
               <Button
-                onClick={e => {
-                  e.stopPropagation();
-                  router.push(`/dashboard/browse-courses/instructor/123`);
-                }}
                 size='sm'
                 variant='outline'
-              >
-                Search Instructor
-              </Button>
-              <Button
-                size='sm'
                 onClick={e => {
                   e.stopPropagation();
-                  router.push(`/dashboard/browse-courses/enroll/${course.uuid}`);
+                  handleClick();
                 }}
               >
-                Enroll
+                View details
               </Button>
-            </>
-          ) : (
-            <Button
-              size='sm'
-              variant='outline'
-              onClick={e => {
-                e.stopPropagation();
-                handleClick();
-              }}
-            >
-              View details
-            </Button>
-          )}
-        </div>
+            )}
+          </div>
         </CardContent>
       </div>
     </div>

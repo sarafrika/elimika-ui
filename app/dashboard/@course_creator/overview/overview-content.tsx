@@ -44,10 +44,10 @@ export default function CourseCreatorOverviewContent() {
       <header className='rounded-xl bg-gradient-to-r from-purple-500/10 to-purple-500/5 p-6'>
         <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
           <div>
-            <p className='text-sm uppercase tracking-widest text-purple-600 dark:text-purple-300'>
+            <p className='text-sm tracking-widest text-purple-600 uppercase dark:text-purple-300'>
               Course Creator
             </p>
-            <h1 className='mt-1 text-3xl font-bold tracking-tight text-foreground'>
+            <h1 className='text-foreground mt-1 text-3xl font-bold tracking-tight'>
               {profile?.full_name ?? 'Welcome back'}
             </h1>
             <p className='text-muted-foreground mt-2 max-w-3xl text-base'>{headline}</p>
@@ -65,7 +65,7 @@ export default function CourseCreatorOverviewContent() {
         {metrics.map(metric => (
           <Card key={metric.title} className='border-blue-200/40'>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-3'>
-              <CardTitle className='text-sm font-medium text-muted-foreground'>
+              <CardTitle className='text-muted-foreground text-sm font-medium'>
                 {metric.title}
               </CardTitle>
               {metric.icon}
@@ -81,7 +81,10 @@ export default function CourseCreatorOverviewContent() {
       <section className='grid gap-4 lg:grid-cols-2'>
         <MonetizationCard monetization={monetization} />
         <TrainingRequirementsCard trainingRequirements={trainingRequirements} />
-        <AssignmentsCard assignmentsCount={assignments.organisations.length} hasGlobal={assignments.hasGlobalAccess} />
+        <AssignmentsCard
+          assignmentsCount={assignments.organisations.length}
+          hasGlobal={assignments.hasGlobalAccess}
+        />
         <VerificationCard verification={verification} />
       </section>
 
@@ -96,39 +99,35 @@ function buildMetricCards(analytics: CourseCreatorAnalyticsSummary) {
       title: 'Total Courses',
       value: analytics.totalCourses,
       description: 'Across every status',
-      icon: <Layers className='text-purple-500 h-5 w-5' />,
+      icon: <Layers className='h-5 w-5 text-purple-500' />,
     },
     {
       title: 'Published',
       value: analytics.publishedCourses,
       description: 'Live in marketplace',
-      icon: <CheckCircle2 className='text-emerald-500 h-5 w-5' />,
+      icon: <CheckCircle2 className='h-5 w-5 text-emerald-500' />,
     },
     {
       title: 'In Review',
       value: analytics.inReviewCourses,
       description: 'Awaiting quality checks',
-      icon: <Clock className='text-amber-500 h-5 w-5' />,
+      icon: <Clock className='h-5 w-5 text-amber-500' />,
     },
     {
       title: 'Drafts',
       value: analytics.draftCourses,
       description: 'Ready for your next edit',
-      icon: <Sparkles className='text-sky-500 h-5 w-5' />,
+      icon: <Sparkles className='h-5 w-5 text-sky-500' />,
     },
   ];
 }
 
-function MonetizationCard({
-  monetization,
-}: {
-  monetization: CourseCreatorMonetizationSummary;
-}) {
+function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetizationSummary }) {
   return (
     <Card className='border-blue-200/40'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
-          <DollarSign className='text-purple-500 h-5 w-5' />
+          <DollarSign className='h-5 w-5 text-purple-500' />
           Monetization Snapshot
         </CardTitle>
         <CardDescription>
@@ -185,7 +184,7 @@ function TrainingRequirementsCard({
     <Card className='border-blue-200/40'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
-          <ListCheck className='text-purple-500 h-5 w-5' />
+          <ListCheck className='h-5 w-5 text-purple-500' />
           Training Requirements
         </CardTitle>
         <CardDescription>
@@ -212,18 +211,24 @@ function TrainingRequirementsCard({
 function RequirementStat({ label, value }: { label: string; value: number }) {
   return (
     <div className='rounded-lg border border-dashed border-blue-200/40 bg-blue-50/60 p-4'>
-      <p className='text-muted-foreground text-xs uppercase tracking-wide'>{label}</p>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
       <p className='text-xl font-semibold'>{value}</p>
     </div>
   );
 }
 
-function AssignmentsCard({ assignmentsCount, hasGlobal }: { assignmentsCount: number; hasGlobal: boolean }) {
+function AssignmentsCard({
+  assignmentsCount,
+  hasGlobal,
+}: {
+  assignmentsCount: number;
+  hasGlobal: boolean;
+}) {
   return (
     <Card className='border-blue-200/40'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
-          <ShieldCheck className='text-purple-500 h-5 w-5' />
+          <ShieldCheck className='h-5 w-5 text-purple-500' />
           Domain Assignments
         </CardTitle>
         <CardDescription>
@@ -242,7 +247,7 @@ function AssignmentsCard({ assignmentsCount, hasGlobal }: { assignmentsCount: nu
                 : 'Invite an admin to grant marketplace access.'}
             </span>
           </p>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             {assignmentsCount > 0
               ? `Affiliated with ${assignmentsCount} organisation${assignmentsCount > 1 ? 's' : ''} for institutional development.`
               : 'No organisational assignments linked yet.'}
@@ -261,9 +266,9 @@ function AssignmentsCard({ assignmentsCount, hasGlobal }: { assignmentsCount: nu
 
 function VerificationCard({ verification }: { verification: CourseCreatorVerificationStatus }) {
   const statusIcon = verification.adminVerified ? (
-    <CheckCircle2 className='text-emerald-500 h-5 w-5' />
+    <CheckCircle2 className='h-5 w-5 text-emerald-500' />
   ) : (
-    <ShieldAlert className='text-amber-500 h-5 w-5' />
+    <ShieldAlert className='h-5 w-5 text-amber-500' />
   );
 
   const statusCopy = verification.adminVerified
@@ -292,7 +297,7 @@ function VerificationCard({ verification }: { verification: CourseCreatorVerific
         </Badge>
       </CardHeader>
       <CardContent className='space-y-4'>
-        <p className='text-xs text-muted-foreground'>Last updated {lastUpdated}</p>
+        <p className='text-muted-foreground text-xs'>Last updated {lastUpdated}</p>
         <Button size='sm' asChild>
           <Link prefetch href='/dashboard/verification'>
             Manage verification
@@ -327,7 +332,9 @@ function QuickActionsCard() {
     <Card className='border-blue-200/40'>
       <CardHeader>
         <CardTitle className='text-base font-semibold'>Quick actions</CardTitle>
-        <CardDescription>Keep momentum by maintaining course quality and visibility.</CardDescription>
+        <CardDescription>
+          Keep momentum by maintaining course quality and visibility.
+        </CardDescription>
       </CardHeader>
       <CardContent className='grid gap-3 md:grid-cols-3'>
         {actions.map(action => (
@@ -361,10 +368,7 @@ function formatCurrency(value: number | null) {
   }).format(value);
 }
 
-function formatFeeRange(
-  floor: number | null,
-  ceiling: number | null
-) {
+function formatFeeRange(floor: number | null, ceiling: number | null) {
   if (floor === null && ceiling === null) return 'Not set';
   if (floor !== null && ceiling !== null) {
     if (floor === ceiling) {

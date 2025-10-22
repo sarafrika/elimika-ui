@@ -13,9 +13,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Spinner from '@/components/ui/spinner';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
-import { useUserProfile } from '@/context/profile-context';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarDays } from 'lucide-react';
 import { useEffect } from 'react';
@@ -95,12 +95,13 @@ export default function AvailabilitySettings() {
   };
 
   const domainBadges =
-    user?.user_domain?.map(domain =>
+    (user?.user_domain as string[] | undefined)?.map(domain =>
       domain
         .split('_')
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
+
 
   return (
     <ProfileFormShell

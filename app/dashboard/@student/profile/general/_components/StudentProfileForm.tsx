@@ -24,8 +24,8 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
 import { tanstackClient } from '@/services/api/tanstack-client';
@@ -185,10 +185,11 @@ export default function StudentProfileGeneralForm() {
     'ST';
 
   const domainBadges =
+    // @ts-ignore
     user?.user_domain?.map(domain =>
       domain
         .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
 
@@ -202,7 +203,10 @@ export default function StudentProfileGeneralForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
           {errors && errors.length > 0 ? (
-            <Alert variant='destructive' className='border-destructive/40 bg-destructive/10 text-destructive'>
+            <Alert
+              variant='destructive'
+              className='border-destructive/40 bg-destructive/10 text-destructive'
+            >
               <AlertCircleIcon className='h-4 w-4' />
               <AlertTitle>We couldn&apos;t save your changes</AlertTitle>
               <AlertDescription>
@@ -226,14 +230,14 @@ export default function StudentProfileGeneralForm() {
                 <FormItem>
                   <FormControl>
                     <div className='flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8'>
-                      <Avatar className='h-24 w-24 ring-4 ring-background shadow-lg shadow-primary/5'>
+                      <Avatar className='ring-background shadow-primary/5 h-24 w-24 shadow-lg ring-4'>
                         {profileUrl ? <AvatarImage src={profileUrl} alt='Profile photo' /> : null}
-                        <AvatarFallback className='bg-primary/10 text-base font-semibold text-primary'>
+                        <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
                           {initials}
                         </AvatarFallback>
                       </Avatar>
                       <div className='space-y-3'>
-                        <p className='text-sm text-muted-foreground'>
+                        <p className='text-muted-foreground text-sm'>
                           Square images work best. Maximum size is 5MB.
                         </p>
                         <div className='flex flex-wrap gap-3'>

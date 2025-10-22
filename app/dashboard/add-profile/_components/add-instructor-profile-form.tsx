@@ -115,7 +115,8 @@ export default function AddInstructorProfileForm() {
       await new Promise(resolve => setTimeout(resolve, 300));
       router.replace('/dashboard/overview');
     } catch (error: any) {
-      const errorMessage = error?.message || 'Failed to create instructor profile. Please try again.';
+      const errorMessage =
+        error?.message || 'Failed to create instructor profile. Please try again.';
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -248,11 +249,7 @@ export default function AddInstructorProfileForm() {
                   <FormItem>
                     <FormLabel>Website (Optional)</FormLabel>
                     <FormControl>
-                      <Input
-                        type='url'
-                        placeholder='https://yourwebsite.com'
-                        {...field}
-                      />
+                      <Input type='url' placeholder='https://yourwebsite.com' {...field} />
                     </FormControl>
                     <FormDescription>Your personal or professional website</FormDescription>
                     <FormMessage />

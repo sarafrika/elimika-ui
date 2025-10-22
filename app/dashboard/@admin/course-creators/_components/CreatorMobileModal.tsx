@@ -9,7 +9,8 @@ interface CourseCreatorMobileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApprove: (courseCreator: CourseCreator) => void;
-  onReject: (courseCreator: CourseCreator) => void;
+  onUnverify: (courseCreator: CourseCreator) => void;
+  onDecline: (courseCreator: CourseCreator) => void;
 }
 
 export default function CourseCreatorMobileModal({
@@ -17,7 +18,8 @@ export default function CourseCreatorMobileModal({
   isOpen,
   onClose,
   onApprove,
-  onReject,
+  onDecline,
+  onUnverify,
 }: CourseCreatorMobileModalProps) {
   if (!courseCreator) return null;
 
@@ -38,9 +40,7 @@ export default function CourseCreatorMobileModal({
           </div>
         </DialogHeader>
 
-        <CourseCreatorDetails
-          courseCreator={courseCreator}
-        />
+        <CourseCreatorDetails courseCreator={courseCreator} />
 
         {/* Action Buttons */}
         <div className='flex gap-3 border-t pt-4'>
@@ -55,14 +55,24 @@ export default function CourseCreatorMobileModal({
             Verify
           </Button>
           <Button
-            variant='destructive'
+            variant='secondary'
             onClick={() => {
-              onReject(courseCreator);
+              onUnverify(courseCreator);
               onClose();
             }}
           >
             <Trash2 className='mr-2 h-4 w-4' />
             Unverify
+          </Button>
+          <Button
+            variant='destructive'
+            onClick={() => {
+              onDecline(courseCreator);
+              onClose();
+            }}
+          >
+            <Trash2 className='mr-2 h-4 w-4' />
+            Decline
           </Button>
         </div>
       </DialogContent>

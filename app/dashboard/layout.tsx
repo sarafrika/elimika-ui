@@ -91,6 +91,7 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
 
     return false;
   }, [defaultSlot, pathname]);
+
   const domainSlot = useMemo<ReactNode | null>(() => {
     if (!activeDomain) {
       return null;

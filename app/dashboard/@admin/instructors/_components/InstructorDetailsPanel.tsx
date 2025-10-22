@@ -57,9 +57,7 @@ export default function InstructorDetailsPanel({
 
       {/* Content */}
       <div className='flex-1 overflow-y-auto p-6'>
-        <InstructorDetails
-          instructor={instructor}
-        />
+        <InstructorDetails instructor={instructor} />
       </div>
 
       {/* Action Buttons */}

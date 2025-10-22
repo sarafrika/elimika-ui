@@ -227,13 +227,22 @@ export function ProfileFormSection({
   const { isEditing } = useProfileFormMode();
 
   return (
-    <Card className={cn('border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60', className)}>
-      <CardHeader className='border-b border-border/60 bg-muted/40/60'>
+    <Card
+      className={cn(
+        'border-border/60 supports-[backdrop-filter]:bg-background/60 shadow-sm backdrop-blur',
+        className
+      )}
+    >
+      <CardHeader className='border-border/60 bg-muted/40/60 border-b'>
         <div className='flex items-center gap-3'>
           {icon}
           <div>
-            <CardTitle className='text-base font-semibold text-foreground sm:text-lg'>{title}</CardTitle>
-            {description ? <CardDescription className='text-sm'>{description}</CardDescription> : null}
+            <CardTitle className='text-foreground text-base font-semibold sm:text-lg'>
+              {title}
+            </CardTitle>
+            {description ? (
+              <CardDescription className='text-sm'>{description}</CardDescription>
+            ) : null}
           </div>
         </div>
       </CardHeader>

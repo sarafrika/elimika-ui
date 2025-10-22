@@ -128,7 +128,7 @@ export function ScheduleForm({ data, onNext, onPrev }: ScheduleFormProps) {
               <CardContent className='space-y-4'>
                 <div className='space-y-2'>
                   <Label>Skill Title</Label>
-                  <Input value={skill.lesson?.title} onChange={e => { }} />
+                  <Input value={skill.lesson?.title} onChange={e => {}} />
                   <div className='text-muted-foreground mb-1 line-clamp-2 text-sm'>
                     <HTMLTextPreview htmlContent={skill?.lesson?.description as string} />
                   </div>

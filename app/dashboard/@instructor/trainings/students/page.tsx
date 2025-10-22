@@ -13,7 +13,11 @@ import {
 } from '@/components/ui/table';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import Spinner from '../../../../../components/ui/spinner';
-import { getAllStudentsOptions, getStudentScheduleOptions, getUserByUuidOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import {
+  getAllStudentsOptions,
+  getStudentScheduleOptions,
+  getUserByUuidOptions,
+} from '../../../../../services/client/@tanstack/react-query.gen';
 
 const studentsData = [
   {
@@ -124,32 +128,33 @@ const sampleEnrollmentData = {
 };
 
 export default function StudentsPage() {
-  const { data: sData } = useQuery(getAllStudentsOptions({
-    query: { pageable: { page: 0, size: 50 } }
-  }));
-  const students = sData?.data?.content ?? []
+  const { data: sData } = useQuery(
+    getAllStudentsOptions({
+      query: { pageable: { page: 0, size: 50 } },
+    })
+  );
+  const students = sData?.data?.content ?? [];
 
   const studentDetailQueries = useQueries({
-    queries: students.map((student) => ({
+    queries: students.map(student => ({
       ...getUserByUuidOptions({ path: { uuid: student.user_uuid as string } }),
       enabled: !!student.uuid,
-    }))
-  })
-  const detailedStudents = studentDetailQueries.map(q => q.data?.data)
+    })),
+  });
+  const detailedStudents = studentDetailQueries.map(q => q.data?.data);
   const isLoading = studentDetailQueries.some(q => q.isLoading);
   const isFetching = studentDetailQueries.some(q => q.isFetching);
 
   const studentEnrollmentQueries = useQueries({
-    queries: students.map((student) => ({
+    queries: students.map(student => ({
       ...getStudentScheduleOptions({
         path: { studentUuid: student.uuid as string },
-        query: { start: "2025-10-10" as any, end: "2026-12-19" as any }
+        query: { start: '2025-10-10' as any, end: '2026-12-19' as any },
       }),
-      enabled: !!student.uuid
-    }))
-  })
-  const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data)
-
+      enabled: !!student.uuid,
+    })),
+  });
+  const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
 
   return (
     <div className='space-y-6'>
@@ -160,10 +165,11 @@ export default function StudentsPage() {
           <CardDescription>A list of students currently enrolled in your courses.</CardDescription>
         </CardHeader>
 
-        {isLoading || isFetching ?
-          <div className='flex mx-auto items-center justify-center' >
+        {isLoading || isFetching ? (
+          <div className='mx-auto flex items-center justify-center'>
             <Spinner />
-          </div> :
+          </div>
+        ) : (
           <CardContent>
             <Table>
               <TableHeader>
@@ -178,7 +184,7 @@ export default function StudentsPage() {
                     <TableCell>
                       <div className='flex items-center gap-4'>
                         <Avatar>
-                          <AvatarImage src={student?.avatarUrl ?? ""} />
+                          <AvatarImage src={student?.avatarUrl ?? ''} />
                           <AvatarFallback>{student?.display_name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -236,7 +242,8 @@ export default function StudentsPage() {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>}
+          </CardContent>
+        )}
       </Card>
     </div>
   );

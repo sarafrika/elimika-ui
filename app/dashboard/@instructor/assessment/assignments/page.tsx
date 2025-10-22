@@ -23,7 +23,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { AssignmentDialog } from '../../../@course_creator/_components/assignment-management-form';
 
-
 export default function AssignmentsPage() {
   const qc = useQueryClient();
 

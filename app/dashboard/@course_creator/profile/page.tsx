@@ -109,7 +109,7 @@ export default function CourseCreatorProfilePage() {
       content: (
         <div className='space-y-3 text-sm'>
           <div className='rounded-lg border border-dashed border-blue-200/40 bg-blue-50/60 p-3'>
-            <p className='text-xs uppercase tracking-wide text-muted-foreground'>Marketplace</p>
+            <p className='text-muted-foreground text-xs tracking-wide uppercase'>Marketplace</p>
             <p className='font-semibold'>
               {data.assignments.hasGlobalAccess
                 ? 'Global publishing rights granted'
@@ -121,7 +121,7 @@ export default function CourseCreatorProfilePage() {
               {data.assignments.organisations.map((assignment, index) => (
                 <div
                   key={`${assignment.organisationUuid ?? index}-${assignment.branchUuid ?? 'branch'}`}
-                  className='rounded-lg border border-border/50 p-3'
+                  className='border-border/50 rounded-lg border p-3'
                 >
                   <p className='font-semibold'>
                     {assignment.organisationName ?? 'Unnamed organisation'}

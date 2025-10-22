@@ -184,22 +184,17 @@ function RubricDetailsForm({
 
         <FormField
           control={form.control}
-          name="description"
+          name='description'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Optional rubric description"
-                  rows={4}
-                  {...field}
-                />
+                <Textarea placeholder='Optional rubric description' rows={4} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
 
         <div className='flex flex-col items-start gap-6 sm:flex-row'>
           <FormField

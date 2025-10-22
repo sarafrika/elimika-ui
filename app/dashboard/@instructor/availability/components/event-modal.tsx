@@ -29,20 +29,21 @@ import {
   Copy,
   MapPin,
   Trash2,
-  Users
+  Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { AvailabilityTypeEnum, LocalTime } from '../../../../../services/client';
-import { createAvailabilitySlotMutation, getInstructorAvailabilityQueryKey, getScheduledInstanceQueryKey, scheduleClassMutation } from '../../../../../services/client/@tanstack/react-query.gen';
+import {
+  createAvailabilitySlotMutation,
+  getInstructorAvailabilityQueryKey,
+  getScheduledInstanceQueryKey,
+  scheduleClassMutation,
+} from '../../../../../services/client/@tanstack/react-query.gen';
 import { CalendarEvent } from '../page';
 
-export type EventType =
-  | 'booked'
-  | 'unavailable'
-  | 'available'
-  | 'reserved'
+export type EventType = 'booked' | 'unavailable' | 'available' | 'reserved';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -61,7 +62,7 @@ const eventTypes = [
   { value: 'booked', label: 'Class', icon: BookOpen, color: 'bg-blue-500' },
   { value: 'unavailable', label: 'Unavailable', icon: Coffee, color: 'bg-orange-500' },
   { value: 'available', label: 'Available', icon: Calendar, color: 'bg-green-500' },
-  { value: 'reserved', label: 'Reserved', icon: Users, color: 'bg-yellow-500' }
+  { value: 'reserved', label: 'Reserved', icon: Users, color: 'bg-yellow-500' },
 ];
 
 function extractDateTimeParts(date: Date) {
@@ -82,7 +83,7 @@ function extractDateTimeParts(date: Date) {
   return {
     localDate,
     localTime,
-    localDateTime
+    localDateTime,
   };
 }
 
@@ -90,7 +91,6 @@ function getDayOfWeek1To7(date: Date): number {
   const jsDay = date.getDay(); // 0 (Sun) - 6 (Sat)
   return jsDay === 0 ? 7 : jsDay; // Convert Sunday (0) to 7
 }
-
 
 export function EventModal({
   isOpen,
@@ -177,10 +177,10 @@ export function EventModal({
     return Object.keys(newErrors).length === 0;
   };
 
-  const instrucor = useInstructor()
-  const qc = useQueryClient()
-  const scheduleClass = useMutation(scheduleClassMutation())
-  const createAvailability = useMutation(createAvailabilitySlotMutation())
+  const instrucor = useInstructor();
+  const qc = useQueryClient();
+  const scheduleClass = useMutation(scheduleClassMutation());
+  const createAvailability = useMutation(createAvailabilitySlotMutation());
 
   const handleSave = () => {
     if (!validateForm()) return;
@@ -206,56 +206,66 @@ export function EventModal({
 
     const { localDate, localTime, localDateTime } = extractDateTimeParts(eventData?.date);
 
-    if (eventData?.type === "available" || eventData?.type === "unavailable") {
-      createAvailability.mutate({
-        body: {
-          instructor_uuid: instrucor?.uuid as string,
-          availability_type: AvailabilityTypeEnum.DAILY,
-          day_of_week: getDayOfWeek1To7(eventData?.date),
-          start_time: eventData?.startTime as LocalTime,
-          end_time: eventData?.endTime as LocalTime,
-          is_available: eventData?.type === "available",
-          recurrence_interval: 1,
-          effective_start_date: eventData?.date,
-          effective_end_date: new Date("2026-03-15"),
-          color_code: eventData?.color
+    if (eventData?.type === 'available' || eventData?.type === 'unavailable') {
+      createAvailability.mutate(
+        {
+          body: {
+            instructor_uuid: instrucor?.uuid as string,
+            availability_type: AvailabilityTypeEnum.DAILY,
+            day_of_week: getDayOfWeek1To7(eventData?.date),
+            start_time: eventData?.startTime as LocalTime,
+            end_time: eventData?.endTime as LocalTime,
+            is_available: eventData?.type === 'available',
+            recurrence_interval: 1,
+            effective_start_date: eventData?.date,
+            effective_end_date: new Date('2026-03-15'),
+            color_code: eventData?.color,
+          },
+          path: { instructorUuid: instrucor?.uuid as string },
         },
-        path: { instructorUuid: instrucor?.uuid as string }
-      }, {
-        onSuccess: (data) => {
-          qc.invalidateQueries({
-            queryKey: getInstructorAvailabilityQueryKey({ path: { instructorUuid: instrucor?.uuid as string } }),
-          });
-          toast.success(data?.message)
-          onClose();
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getInstructorAvailabilityQueryKey({
+                path: { instructorUuid: instrucor?.uuid as string },
+              }),
+            });
+            toast.success(data?.message);
+            onClose();
+          },
+          onError: error => {
+            toast.error(error?.message);
+            onClose();
+          },
+        }
+      );
+    } else if (eventData?.type === 'booked') {
+      scheduleClass.mutate(
+        {
+          body: {
+            instructor_uuid: instrucor?.uuid as string,
+            class_definition_uuid: 'ee1c94df-ddea-410d-a1a3-c44f9068ab48',
+            start_time: localDateTime as any,
+            end_time: '2026-09-15T10:30:00' as any,
+            timezone: 'UTC',
+          },
         },
-        onError: (error) => {
-          toast.error(error?.message)
-          onClose()
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getScheduledInstanceQueryKey({
+                path: { instanceUuid: data?.data?.uuid as string },
+              }),
+            });
+            toast.success(data?.message);
+            onClose();
+          },
+          onError: error => {
+            toast.error(error?.message);
+            onClose();
+          },
         }
-      });
-    } else if (eventData?.type === "booked") {
-      scheduleClass.mutate({
-        body: {
-          instructor_uuid: instrucor?.uuid as string,
-          class_definition_uuid: "ee1c94df-ddea-410d-a1a3-c44f9068ab48",
-          start_time: localDateTime as any,
-          end_time: "2026-09-15T10:30:00" as any,
-          timezone: "UTC"
-        }
-      }, {
-        onSuccess: (data) => {
-          qc.invalidateQueries({
-            queryKey: getScheduledInstanceQueryKey({ path: { instanceUuid: data?.data?.uuid as string } }),
-          });
-          toast.success(data?.message)
-          onClose();
-        },
-        onError: (error) => {
-          toast.error(error?.message)
-          onClose()
-        }
-      });
+      );
     }
   };
 
@@ -289,13 +299,11 @@ export function EventModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className='space-y-2 w-full my-4'>
+        <div className='my-4 w-full space-y-2'>
           <Label htmlFor='type'>Event Type</Label>
           <Select
             value={formData.type}
-            onValueChange={value =>
-              setFormData(prev => ({ ...prev, type: value as EventType }))
-            }
+            onValueChange={value => setFormData(prev => ({ ...prev, type: value as EventType }))}
           >
             <SelectTrigger className='w-full'>
               <SelectValue placeholder='Select event type' />
@@ -316,7 +324,7 @@ export function EventModal({
 
         <div className='space-y-6'>
           {/* Basic Information */}
-          {selectedEventType?.value === "booked" &&
+          {selectedEventType?.value === 'booked' && (
             <div className='space-y-4'>
               <div className='space-y-2'>
                 <Label htmlFor='title'>Event Title *</Label>
@@ -348,8 +356,7 @@ export function EventModal({
 
               <Separator />
             </div>
-          }
-
+          )}
 
           {/* Date & Time */}
           <div className='space-y-4'>
@@ -437,9 +444,8 @@ export function EventModal({
             )}
           </div>
 
-
           {/* Additional Details */}
-          {selectedEventType?.value === "booked" &&
+          {selectedEventType?.value === 'booked' && (
             <div className='space-y-4'>
               <Separator />
 
@@ -502,7 +508,7 @@ export function EventModal({
                 </Select>
               </div>
             </div>
-          }
+          )}
         </div>
 
         <DialogFooter className='flex items-center justify-between border-t pt-6'>

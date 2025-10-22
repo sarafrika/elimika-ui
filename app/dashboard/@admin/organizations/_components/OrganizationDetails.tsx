@@ -1,5 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Organisation } from '@/services/client';
 import {
   BadgeCheckIcon,
   Building2Icon,
@@ -12,9 +14,6 @@ import {
   ShieldCheck,
   Users,
 } from 'lucide-react';
-import React from 'react';
-import { Organisation } from '@/services/client';
-import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 
 interface OrganizationDetailsProps {
@@ -142,10 +141,10 @@ export default function OrganizationDetails({
                 <span className='text-sm font-medium'>
                   {organization.created_date
                     ? new Date(organization.created_date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
                     : 'N/A'}
                 </span>
               </div>

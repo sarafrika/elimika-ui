@@ -378,7 +378,7 @@ export default function ProgramPreviewPage() {
           isOpen={isAddClassCourseDialog}
           onOpenChange={setIsAddClassCourseDialog}
           programId={programId}
-          onSuccess={() => { }}
+          onSuccess={() => {}}
         />
 
         {/* Confirm Remove Program Course Modal */}

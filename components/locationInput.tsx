@@ -226,13 +226,11 @@ export default function LocationInput({
         autoComplete='off'
       />
 
-      {helperMessage ? (
-        <p className='text-muted-foreground mt-2 text-xs'>{helperMessage}</p>
-      ) : null}
+      {helperMessage ? <p className='text-muted-foreground mt-2 text-xs'>{helperMessage}</p> : null}
 
       {isOpen && suggestions.length > 0 ? (
         <div
-          className='absolute z-30 mt-1 w-full rounded-md border border-border bg-popover shadow-lg'
+          className='border-border bg-popover absolute z-30 mt-1 w-full rounded-md border shadow-lg'
           onMouseDown={cancelCloseTimer}
           onMouseUp={startCloseTimer}
         >
@@ -242,10 +240,10 @@ export default function LocationInput({
                 <li key={suggestion.mapbox_id}>
                   <button
                     type='button'
-                    className='w-full px-3 py-2 text-left hover:bg-muted focus:bg-muted focus:outline-none'
+                    className='hover:bg-muted focus:bg-muted w-full px-3 py-2 text-left focus:outline-none'
                     onClick={() => handleSelect(suggestion)}
                   >
-                    <span className='block font-medium text-foreground'>{suggestion.name}</span>
+                    <span className='text-foreground block font-medium'>{suggestion.name}</span>
                     {suggestion.place_formatted ? (
                       <span className='text-muted-foreground text-xs'>
                         {suggestion.place_formatted}
@@ -260,7 +258,7 @@ export default function LocationInput({
       ) : null}
 
       {isOpen && !isLoading && suggestions.length === 0 && query.length >= 3 ? (
-        <div className='absolute z-30 mt-1 w-full rounded-md border border-border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-lg'>
+        <div className='border-border bg-popover text-muted-foreground absolute z-30 mt-1 w-full rounded-md border px-3 py-2 text-sm shadow-lg'>
           No matches found.
         </div>
       ) : null}

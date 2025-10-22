@@ -261,7 +261,7 @@ const AvailabilityCalendar = () => {
           setSelectedEvent(null);
         }}
         initialValues={selectedEvent}
-        onSuccess={() => { }}
+        onSuccess={() => {}}
         slotId={selectedEvent?.uuid}
       />
 
@@ -270,7 +270,7 @@ const AvailabilityCalendar = () => {
         onClose={() => setShowModal(false)}
         onSave={handleSave}
         pending={false}
-      // pending={blockAvailability.isPending}
+        // pending={blockAvailability.isPending}
       />
     </div>
   );

@@ -37,8 +37,8 @@ import { zInstructor, zUser } from '@/services/client/zod.gen';
 import { CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import LocationInput from '../../../../../../components/locationInput';
-import { useProfileFormMode } from '../../../../../../context/profile-form-mode-context';
 import { useUserProfile } from '../../../../../../context/profile-context';
+import { useProfileFormMode } from '../../../../../../context/profile-form-mode-context';
 import { queryClient } from '../../../../../../lib/query-client';
 import {
   createInstructor,
@@ -98,12 +98,13 @@ export default function InstructorProfile() {
   });
 
   const domainBadges =
-    user?.user_domain?.map(domain =>
+    (user?.user_domain as string[] | undefined)?.map(domain =>
       domain
         .split('_')
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
+
 
   const form = useForm<GeneralProfileFormValues>({
     resolver: zodResolver(generalProfileSchema),
@@ -150,14 +151,14 @@ export default function InstructorProfile() {
           const manageInstructor = () =>
             instructor
               ? updateInstructor({
-                  path: {
-                    uuid: instructor.uuid!,
-                  },
-                  body: updatedProfileData.instructor,
-                })
+                path: {
+                  uuid: instructor.uuid!,
+                },
+                body: updatedProfileData.instructor,
+              })
               : createInstructor({
-                  body: updatedProfileData.instructor,
-                });
+                body: updatedProfileData.instructor,
+              });
 
           const response = await Promise.all([
             updateUser({
@@ -182,7 +183,7 @@ export default function InstructorProfile() {
               const { error } = resp.error as { error: Record<string, string> };
               Object.keys(error).forEach(key => {
                 const fieldName = `${i === 0 ? 'user' : 'instructor'}.${key}` as any;
-                form.setError(fieldName, error[key]);
+                form.setError(fieldName, error[key] as any);
               });
               hasErrors = true;
             }
@@ -219,17 +220,18 @@ export default function InstructorProfile() {
           >
             <div className='space-y-6'>
               <div className='flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-8'>
-                <Avatar className='h-24 w-24 ring-4 ring-background shadow-lg shadow-primary/5'>
+                <Avatar className='ring-background shadow-primary/5 h-24 w-24 shadow-lg ring-4'>
                   <AvatarImage
                     src={user!.profile_image_url ?? profilePic.url}
                     alt={`${user!.first_name} ${user!.last_name}`}
                   />
-                  <AvatarFallback className='bg-primary/10 text-base font-semibold text-primary'>
-                    {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}` || 'IN'}
+                  <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
+                    {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}` ||
+                      'IN'}
                   </AvatarFallback>
                 </Avatar>
                 <div className='space-y-3'>
-                  <p className='text-sm text-muted-foreground'>
+                  <p className='text-muted-foreground text-sm'>
                     Square images work best. Maximum size is 5MB.
                   </p>
                   <div className='flex flex-wrap gap-3'>
@@ -431,12 +433,12 @@ export default function InstructorProfile() {
                         if (loc.features.length > 0) {
                           form.setValue(
                             'instructor.latitude',
-                            loc.features[0]!.properties.coordinates.latitude
+                            loc?.features[0]!.properties?.coordinates.latitude as any
                           );
 
                           form.setValue(
                             'instructor.longitude',
-                            loc.features[0]!.properties.coordinates.longitude
+                            loc?.features[0]!.properties?.coordinates.longitude as any
                           );
                         }
                         return loc;

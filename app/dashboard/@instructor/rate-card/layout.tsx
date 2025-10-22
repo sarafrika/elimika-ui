@@ -11,11 +11,8 @@ export default function RateCardLayout({ children }: RateCardLayoutProps) {
     <div className='space-y-6 p-4 pb-16 md:p-10'>
       <div className='flex items-center justify-between'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight'>Rate Card Management
-          </h2>
-          <p className='text-muted-foreground'>
-            Manage your training rates and packages.
-          </p>
+          <h2 className='text-2xl font-bold tracking-tight'>Rate Card Management</h2>
+          <p className='text-muted-foreground'>Manage your training rates and packages.</p>
         </div>
       </div>
       <Separator />

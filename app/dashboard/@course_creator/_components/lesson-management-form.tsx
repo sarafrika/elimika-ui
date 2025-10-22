@@ -87,7 +87,6 @@ import Link from 'next/link';
 import { useUserProfile } from '../../../../context/profile-context';
 import { useRubricsWithCriteriaAndScoring } from '../rubric-management/rubric-chaining';
 
-
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
   VIDEO: 'Video',
@@ -1320,7 +1319,7 @@ function LessonContentForm({
                       {contentTypeData.map((value: any) => {
                         const Icon =
                           ContentTypeIcons[
-                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1619,7 +1618,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   return (
@@ -2233,6 +2232,5 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList
+  LessonList,
 };
-
