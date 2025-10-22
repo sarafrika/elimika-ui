@@ -1,8 +1,5 @@
-import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 export default function AdminPage() {
-  // redirect('/dashboard/overview');
-  <Link href={'/dashboard/overview'}>
-    Go to page
-  </Link>
+  redirect('/dashboard/overview');
 }
