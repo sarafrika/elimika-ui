@@ -332,7 +332,7 @@ function AvailabilitySlotForm({
           <Button
             type='submit'
             className='flex min-w-[180px] items-center justify-center gap-2'
-          // disabled={createSlot.isPending || updateSlot.isPending}
+            // disabled={createSlot.isPending || updateSlot.isPending}
           >
             {/* {(createSlot.isPending || updateSlot.isPending) && <Spinner />} */}
             {initialValues ? 'Update Availability Slot' : 'Create Availability Slot'}

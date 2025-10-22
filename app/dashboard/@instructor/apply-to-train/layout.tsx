@@ -11,8 +11,7 @@ export default function ApplyToTrainLayout({ children }: ApplyToTrainLayoutProps
     <div className='space-y-6 p-4 pb-16 md:p-10'>
       <div className='flex items-center justify-between'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight'>Apply to Train a Course
-          </h2>
+          <h2 className='text-2xl font-bold tracking-tight'>Apply to Train a Course</h2>
           <p className='text-muted-foreground'>
             Submit your application to become a course trainer.
           </p>

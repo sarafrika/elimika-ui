@@ -8,7 +8,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CustomPagination } from '../../../../components/pagination';
 import { Skeleton } from '../../../../components/ui/skeleton';
-import { getAllCoursesOptions, listCatalogItemsOptions } from '../../../../services/client/@tanstack/react-query.gen';
+import {
+  getAllCoursesOptions,
+  listCatalogItemsOptions,
+} from '../../../../services/client/@tanstack/react-query.gen';
 import { CourseCard } from '../../_components/course-card';
 
 export default function MyCoursesPage() {
@@ -26,7 +29,7 @@ export default function MyCoursesPage() {
 
   const { data: c, isLoading: cIsLoading } = useQuery(
     listCatalogItemsOptions({ query: { active_only: false } })
-  )
+  );
 
   const courses = data?.data?.content || [];
   const paginationMetadata = data?.data?.metadata;

@@ -28,9 +28,7 @@ export default function ReviewsPage() {
     ]);
 
     const fetchReviews = async () => {
-      const mockReviews: Review[] = [
-
-      ];
+      const mockReviews: Review[] = [];
 
       setTimeout(() => {
         setReviews(mockReviews);
@@ -50,30 +48,30 @@ export default function ReviewsPage() {
       </div>
 
       {reviews === null ? (
-        <p className="text-muted-foreground text-sm">Loading reviews...</p>
+        <p className='text-muted-foreground text-sm'>Loading reviews...</p>
       ) : reviews.length === 0 ? (
-        <div className="text-center text-muted-foreground mt-10">
-          <p className="text-lg">No reviews yet</p>
-          <p className="text-sm">Once students start leaving feedback, you&apos;ll see it here.</p>
+        <div className='text-muted-foreground mt-10 text-center'>
+          <p className='text-lg'>No reviews yet</p>
+          <p className='text-sm'>Once students start leaving feedback, you&apos;ll see it here.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {reviews.map((review) => (
+        <div className='space-y-4'>
+          {reviews.map(review => (
             <div
               key={review.id}
-              className="border rounded-md p-4 shadow-sm bg-white dark:bg-gray-900"
+              className='rounded-md border bg-white p-4 shadow-sm dark:bg-gray-900'
             >
-              <div className="flex justify-between items-center mb-2">
-                <p className="font-medium">{review.reviewer}</p>
-                <p className="text-sm text-gray-500">{review.date}</p>
+              <div className='mb-2 flex items-center justify-between'>
+                <p className='font-medium'>{review.reviewer}</p>
+                <p className='text-sm text-gray-500'>{review.date}</p>
               </div>
-              <div className="flex items-center mb-1">
-                <p className="text-yellow-500 text-sm">
+              <div className='mb-1 flex items-center'>
+                <p className='text-sm text-yellow-500'>
                   {'★'.repeat(review.rating)}
                   {'☆'.repeat(5 - review.rating)}
                 </p>
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{review.comment}</p>
+              <p className='text-sm text-gray-700 dark:text-gray-300'>{review.comment}</p>
             </div>
           ))}
         </div>

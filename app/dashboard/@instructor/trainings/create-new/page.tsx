@@ -106,11 +106,7 @@ export default function ClassCreationPage() {
     switch (steps[currentStep]?.id) {
       case 'details':
         return (
-          <ClassDetailsForm
-            isLoading={isLoading}
-            handleNextStep={nextStep}
-            classData={clData}
-          />
+          <ClassDetailsForm isLoading={isLoading} handleNextStep={nextStep} classData={clData} />
         );
       case 'period':
         return (
@@ -131,13 +127,7 @@ export default function ClassCreationPage() {
           />
         );
       case 'schedule':
-        return (
-          <ScheduleForm
-            data={clData}
-            onNext={nextStep}
-            onPrev={prevStep}
-          />
-        );
+        return <ScheduleForm data={clData} onNext={nextStep} onPrev={prevStep} />;
       case 'visibility':
         return (
           <VisibilityForm

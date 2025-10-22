@@ -6,15 +6,15 @@ interface CourseManagementLayoutProps {
   children: React.ReactNode;
 }
 
-
-
 export default function CourseManagementLayout({ children }: CourseManagementLayoutProps) {
   return (
     <div className='space-y-6 p-4 pb-16 md:py-10'>
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Assigned Courses</h2>
-          <p className='text-muted-foreground'>Review the courses you have been authorised to deliver.</p>
+          <p className='text-muted-foreground'>
+            Review the courses you have been authorised to deliver.
+          </p>
         </div>
       </div>
       <Separator />

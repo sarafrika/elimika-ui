@@ -1,7 +1,4 @@
-import {
-  Course,
-  CourseTrainingRequirement,
-} from '@/services/client';
+import { Course, CourseTrainingRequirement } from '@/services/client';
 import {
   CourseCreatorAnalyticsSummary,
   CourseCreatorMonetizationSummary,
@@ -40,9 +37,7 @@ export function calculateCourseAnalytics(courses: Course[]): CourseCreatorAnalyt
   );
 }
 
-export function calculateMonetizationSummary(
-  courses: Course[]
-): CourseCreatorMonetizationSummary {
+export function calculateMonetizationSummary(courses: Course[]): CourseCreatorMonetizationSummary {
   const minimumFees = courses
     .map(course => course.minimum_training_fee)
     .filter((fee): fee is number => typeof fee === 'number');
@@ -65,12 +60,12 @@ export function calculateMonetizationSummary(
 
   const creatorShareRange =
     creatorShares.length > 0
-      ? [Math.min(...creatorShares), Math.max(...creatorShares)] as [number, number]
+      ? ([Math.min(...creatorShares), Math.max(...creatorShares)] as [number, number])
       : null;
 
   const instructorShareRange =
     instructorShares.length > 0
-      ? [Math.min(...instructorShares), Math.max(...instructorShares)] as [number, number]
+      ? ([Math.min(...instructorShares), Math.max(...instructorShares)] as [number, number])
       : null;
 
   const consistentRevenueSplit =

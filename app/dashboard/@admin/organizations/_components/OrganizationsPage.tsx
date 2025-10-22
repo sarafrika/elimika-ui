@@ -144,29 +144,30 @@ export default function OrganizationsPage() {
     }
   };
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [openDeleteModal, setOpenDeleteModal] = useState(false)
-
-  const deleteOrganisation = useMutation(deleteOrganisationMutation())
+  const deleteOrganisation = useMutation(deleteOrganisationMutation());
   const handleOrganizationDelete = (organization: OrganisationDto) => {
-    setDeletingId(organization.uuid as string)
-    setOpenDeleteModal(true)
+    setDeletingId(organization.uuid as string);
+    setOpenDeleteModal(true);
   };
 
   const confirmDeleteOrganisation = () => {
-    if (!deletingId) return
+    if (!deletingId) return;
 
-    deleteOrganisation.mutate({ path: { uuid: deletingId as string } }, {
-      onSuccess: (data) => {
-        toast.success(data?.message)
-        qc.invalidateQueries({
-          queryKey: getAllOrganisationsQueryKey({ query: { pageable: {} } }),
-        });
+    deleteOrganisation.mutate(
+      { path: { uuid: deletingId as string } },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          qc.invalidateQueries({
+            queryKey: getAllOrganisationsQueryKey({ query: { pageable: {} } }),
+          });
+        },
       }
-    })
-  }
-
+    );
+  };
 
   // Filter and sort organizations
   const filteredAndSortedOrganizations: OrganisationDto[] = organizations

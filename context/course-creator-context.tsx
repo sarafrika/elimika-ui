@@ -37,7 +37,8 @@ export function CourseCreatorProvider({ children, initialData }: CourseCreatorPr
 
   const mergedData = useMemo(() => {
     const base = initialData ?? emptyCourseCreatorDashboardData;
-    const courseCreatorProfile = (profile?.courseCreator as CourseCreatorDashboardData['profile']) ?? base.profile;
+    const courseCreatorProfile =
+      (profile?.courseCreator as CourseCreatorDashboardData['profile']) ?? base.profile;
 
     const organisationAssignments =
       profile?.organisation_affiliations
@@ -66,7 +67,8 @@ export function CourseCreatorProvider({ children, initialData }: CourseCreatorPr
     const trainingRequirements = calculateTrainingRequirementSummary(courses);
     const verification = {
       adminVerified: courseCreatorProfile?.admin_verified ?? base.verification.adminVerified,
-      profileComplete: courseCreatorProfile?.is_profile_complete ?? base.verification.profileComplete,
+      profileComplete:
+        courseCreatorProfile?.is_profile_complete ?? base.verification.profileComplete,
       lastUpdated: courseCreatorProfile?.updated_date
         ? new Date(courseCreatorProfile.updated_date)
         : base.verification.lastUpdated,

@@ -11,15 +11,7 @@ import Spinner from '@/components/ui/spinner';
 import { useUserProfile } from '@/context/profile-context';
 import { domainBadgeClass, formatDomainLabel } from '@/lib/domain-utils';
 import { format } from 'date-fns';
-import {
-  Ban,
-  CheckCircle2,
-  Mail,
-  Phone,
-  ShieldAlert,
-  UserCircle2,
-  UsersRound,
-} from 'lucide-react';
+import { Ban, CheckCircle2, Mail, Phone, ShieldAlert, UserCircle2, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 
 export default function StudentProfileOverviewPage() {
@@ -28,7 +20,7 @@ export default function StudentProfileOverviewPage() {
   if (!user || user.isLoading) {
     return (
       <div className='flex h-full items-center justify-center py-20'>
-        <Spinner className='h-6 w-6 text-muted-foreground' />
+        <Spinner className='text-muted-foreground h-6 w-6' />
       </div>
     );
   }
@@ -121,7 +113,10 @@ export default function StudentProfileOverviewPage() {
         label: 'Roles',
         value:
           roles && roles.length > 0
-            ? roles.map(role => role.name).filter(Boolean).join(', ')
+            ? roles
+                .map(role => role.name)
+                .filter(Boolean)
+                .join(', ')
             : undefined,
         emptyText: 'No roles granted',
       },
@@ -179,7 +174,11 @@ export default function StudentProfileOverviewPage() {
         },
         {
           label: student ? 'Learner' : 'No learner record',
-          icon: student ? <UsersRound className='h-3.5 w-3.5' /> : <ShieldAlert className='h-3.5 w-3.5' />,
+          icon: student ? (
+            <UsersRound className='h-3.5 w-3.5' />
+          ) : (
+            <ShieldAlert className='h-3.5 w-3.5' />
+          ),
           variant: student ? 'outline' : 'secondary',
         },
       ]}

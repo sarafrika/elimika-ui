@@ -2,9 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Calendar
-} from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { useState } from 'react';
 import { MonthlyAvailabilityGrid } from '../../availability/components/monthly-availability-grid';
 import { AvailabilityData } from '../../availability/components/types';

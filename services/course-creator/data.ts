@@ -63,9 +63,7 @@ export async function getCourseCreatorDashboardData(): Promise<CourseCreatorDash
       };
     }
 
-    const {
-      data: courseCreatorData,
-    } = await searchCourseCreators({
+    const { data: courseCreatorData } = await searchCourseCreators({
       query: {
         searchParams: {
           user_uuid_eq: userRecord.uuid,

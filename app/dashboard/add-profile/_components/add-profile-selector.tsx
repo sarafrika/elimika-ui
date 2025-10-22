@@ -45,7 +45,8 @@ const profileTypes: ProfileType[] = [
   {
     id: 'course_creator',
     title: 'Course Creator',
-    description: 'Design and publish courses, build your content library, and share your expertise.',
+    description:
+      'Design and publish courses, build your content library, and share your expertise.',
     href: '/dashboard/add-profile/course-creator',
     icon: GraduationCap,
     iconColor: 'text-blue-600',
@@ -105,7 +106,7 @@ export default function AddProfileSelector() {
             <Link
               key={type.id}
               href={type.href}
-              className={`group relative block rounded-3xl border-2 p-8 transition-all duration-300 ${type.borderColor} ${type.bgColor} ${type.hoverBg} hover:border-blue-600/30 focus:ring-blue-600/20 focus:border-blue-600 hover:scale-[1.01] hover:shadow-xl focus:ring-4 focus:outline-none`}
+              className={`group relative block rounded-3xl border-2 p-8 transition-all duration-300 ${type.borderColor} ${type.bgColor} ${type.hoverBg} hover:scale-[1.01] hover:border-blue-600/30 hover:shadow-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 focus:outline-none`}
             >
               {/* Icon */}
               <div className='mb-6 flex justify-center'>
@@ -118,7 +119,7 @@ export default function AddProfileSelector() {
 
               {/* Content */}
               <div className='mb-8 text-center'>
-                <h3 className='text-foreground group-hover:text-blue-600 mb-3 text-2xl font-bold transition-colors'>
+                <h3 className='text-foreground mb-3 text-2xl font-bold transition-colors group-hover:text-blue-600'>
                   {type.title}
                 </h3>
                 <p className='text-muted-foreground text-sm leading-relaxed'>{type.description}</p>
@@ -127,7 +128,7 @@ export default function AddProfileSelector() {
               {/* Button */}
               <div className='flex justify-center'>
                 <div
-                  className={`border-border text-foreground group-hover:border-blue-600 group-hover:bg-blue-600 flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 text-center font-medium transition-all duration-300 group-hover:text-white`}
+                  className={`border-border text-foreground flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 text-center font-medium transition-all duration-300 group-hover:border-blue-600 group-hover:bg-blue-600 group-hover:text-white`}
                 >
                   Add {type.title}
                   <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
@@ -135,7 +136,7 @@ export default function AddProfileSelector() {
               </div>
 
               {/* Decorative gradient overlay */}
-              <div className='from-blue-600 pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-5' />
+              <div className='pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-600 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-5' />
             </Link>
           );
         })}

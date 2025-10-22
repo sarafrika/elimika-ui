@@ -58,9 +58,7 @@ export default function OrganizationDetailsPanel({
       {/* Content */}
       <div className='flex-1 overflow-y-auto p-6'>
         <div>
-          <OrganizationDetails
-            organization={organization}
-          />
+          <OrganizationDetails organization={organization} />
         </div>
       </div>
 

@@ -32,108 +32,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import Spinner from '@/components/ui/spinner';
 import { useStepper } from '@/components/ui/stepper';
-import { useInstructor } from '@/context/instructor-context';
+import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
-import { tanstackClient } from '@/services/api/tanstack-client';
+import { useInstructor } from '@/context/instructor-context';
 import { createCategory, updateCourse } from '@/services/client';
 import {
   createCourseMutation,
-  getAllCategoriesOptions
+  getAllCategoriesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, XIcon } from 'lucide-react';
-import Image from 'next/image';
-import React, {
-  ReactNode,
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState
-} from 'react';
+import { forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import * as z from 'zod';
 import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
+import {
+  CourseCreationFormValues,
+  courseCreationSchema,
+  CURRENCIES,
+  providedByOptions,
+  requirementTypes,
+} from './course-creation-types';
 
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // 4MB
-const MAX_VIDEO_SIZE_MB = 150; // Adjust according to your backend limit
-const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
-
-const requirementTypes = ['material', 'equipment', 'facility', 'other'] as const;
-const providedByOptions = ['course_creator', 'instructor', 'organisation', 'student'] as const;
-
-const courseCreationSchema = z.object({
-  name: z.string().min(1, 'Course name is required'),
-  description: z.string().min(10, 'Course description is required'),
-  objectives: z
-    .string()
-    .min(10, 'Course objectives is required')
-    .max(999, 'Objectives must not exceed 1000 characters'),
-  thumbnail_url: z.any().optional(),
-  banner_url: z.any().optional(),
-  intro_video_url: z.any().optional(),
-  is_free: z.boolean().default(false),
-  price: z.coerce.number().optional(),
-  sale_price: z.coerce.number().optional(),
-  currency: z.string().optional(),
-  prerequisites: z.string().max(999, 'Objectives must not exceed 1000 characters'),
-  categories: z.string().array(),
-  difficulty: z.string().min(1, 'Please select a difficulty level'),
-  class_limit: z.coerce.number().min(1, 'Class limit must be at least 1'),
-  age_lower_limit: z.coerce.number().optional(),
-  age_upper_limit: z.coerce.number().optional(),
-  duration_hours: z.coerce.number().optional(),
-  duration_minutes: z.coerce.number().min(0, 'minutes must be between 0 and 59'),
-  minimum_training_fee: z.coerce
-    .number()
-    .min(0, 'Minimum training fee must be zero or greater'),
-  creator_share_percentage: z.coerce
-    .number()
-    .min(0, 'Creator share must be at least 0%')
-    .max(100, 'Creator share cannot exceed 100%'),
-  instructor_share_percentage: z.coerce
-    .number()
-    .min(0, 'Instructor share must be at least 0%')
-    .max(100, 'Instructor share cannot exceed 100%'),
-  revenue_share_notes: z.string().max(500).optional(),
-  training_requirements: z
-    .array(
-      z.object({
-        uuid: z.string().optional(),
-        requirement_type: z.enum(requirementTypes),
-        name: z.string().min(1, 'Requirement name is required'),
-        description: z.string().optional(),
-        quantity: z.coerce.number().optional(),
-        unit: z.string().optional(),
-        provided_by: z.enum(providedByOptions),
-        is_mandatory: z.boolean().default(false),
-      })
-    )
-    .optional(),
-});
-
-type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any };
-
-const CURRENCIES = {
-  KES: 'KES',
-} as const;
-
-type FormSectionProps = {
+export type FormSectionProps = {
   title: string;
   description: string;
   children: ReactNode;
 };
 
-const FormSection = ({ title, description, children }: FormSectionProps) => (
-  <section className='rounded-3xl border border-blue-200/40 bg-white/90 p-6 shadow-lg shadow-blue-200/40 transition dark:border-blue-500/25 dark:bg-blue-950/30 lg:p-8'>
+export const FormSection = ({ title, description, children }: FormSectionProps) => (
+  <section className='rounded-3xl border border-blue-200/40 bg-white/90 p-6 shadow-lg shadow-blue-200/40 transition lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/30'>
     <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10'>
       <div className='lg:w-1/3'>
-        <p className='text-xs font-semibold uppercase tracking-[0.4em] text-blue-500/80 dark:text-blue-200'>
+        <p className='text-xs font-semibold tracking-[0.4em] text-blue-500/80 uppercase dark:text-blue-200'>
           Section
         </p>
         <h3 className='mt-2 text-lg font-semibold text-slate-900 dark:text-blue-50'>{title}</h3>
@@ -154,15 +88,6 @@ export type CourseFormProps = {
 
 export type CourseFormRef = {
   submit: () => void;
-};
-
-type UploadKey = 'thumbnail' | 'banner' | 'intro_video';
-
-export type UploadOptions = {
-  key: UploadKey;
-  setPreview: (val: string) => void;
-  mutation: any;
-  onChange: (val: string) => void;
 };
 
 export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
@@ -221,21 +146,14 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const instructor = useInstructor();
     const courseCreatorContext = useOptionalCourseCreator();
     const courseCreatorProfile = courseCreatorContext?.profile;
+
     const authorName = courseCreatorProfile?.full_name ?? instructor?.full_name ?? '';
     const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
     const { setActiveStep } = useStepper();
-    const { difficultyLevels, isLoading: difficultyIsLoading } = useDifficultyLevels()
+    const { difficultyLevels, isLoading: difficultyIsLoading } = useDifficultyLevels();
 
     // states
     const [categoryInput, setCategoryInput] = useState('');
-    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-    const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-    const [videoPreview, setVideoPreview] = useState<string | null>(null);
-    const [uploadedUrls, setUploadedUrls] = useState<{
-      thumbnail?: string;
-      banner?: string;
-      intro_video?: string;
-    }>({});
 
     // MUTATION
     const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
@@ -267,19 +185,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         updateCourse({ body, path: { uuid: uuid } }),
     });
 
-    const courseBannerMutation = tanstackClient.useMutation(
-      'post',
-      '/api/v1/courses/{uuid}/banner'
-    );
-    const courseThumbnailMutation = tanstackClient.useMutation(
-      'post',
-      '/api/v1/courses/{uuid}/thumbnail'
-    );
-    const courseIntroVideoMutation = tanstackClient.useMutation(
-      'post',
-      '/api/v1/courses/{uuid}/intro-video'
-    );
-
     // GET COURSE CATEGORIES
     const { data: categories } = useQuery(
       getAllCategoriesOptions({
@@ -292,61 +197,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       })
     );
 
-    // actions
-    const handleFileUpload = async (
-      e: React.ChangeEvent<HTMLInputElement>,
-      { key, setPreview, mutation, onChange }: UploadOptions
-    ) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (key === 'intro_video' && file.size > MAX_VIDEO_SIZE_BYTES) {
-        toast.error(`Video file is too large. Maximum size is ${MAX_VIDEO_SIZE_MB}MB.`);
-        return;
-      }
-
-      try {
-        const schema = z.object({ [key]: z.instanceof(File) });
-        schema.parse({ [key]: file });
-      } catch (err) {
-        toast.error('Invalid file type.');
-        return;
-      }
-
-      const previewUrl = URL.createObjectURL(file);
-      setPreview(previewUrl);
-
-      const formData = new FormData();
-      formData.append(key, file);
-
-      mutation(
-        { body: formData, params: { path: { uuid: editingCourseId as string } } },
-        {
-          onSuccess: (data: any) => {
-            onChange(previewUrl);
-            toast.success(data?.message);
-
-            const urls = data?.data;
-
-            setUploadedUrls(prev => ({
-              ...prev,
-              [key]: urls?.[`${key}_url`],
-            }));
-          },
-          onError: (error: any) => {
-            if (error?.response?.status === 413) {
-              toast.error('Video file is too large. Please upload a smaller file.');
-            } else {
-              toast.error('Failed to upload file.');
-            }
-          },
-        }
-      );
-    };
-
     const onSubmit = (data: CourseCreationFormValues) => {
-      const resolvedCourseCreatorUuid =
-        authorUuid || (course?.data as any)?.course_creator_uuid;
+      const resolvedCourseCreatorUuid = authorUuid;
 
       if (!resolvedCourseCreatorUuid) {
         toast.error('Course creator profile is missing.');
@@ -375,6 +227,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           unit: req.unit || undefined,
           provided_by: req.provided_by,
           is_mandatory: !!req.is_mandatory,
+          course_uuid: editingCourseId ?? '',
         })) ?? [];
 
       if (editingCourseId) {
@@ -386,9 +239,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           name: data?.name,
           description: data?.description,
           objectives: data?.objectives,
-          thumbnail_url: uploadedUrls?.thumbnail || data?.thumbnail_url,
-          banner_url: uploadedUrls?.banner || data?.banner_url,
-          intro_video_url: uploadedUrls.intro_video || data?.intro_video_url,
+          thumbnail_url: data?.thumbnail_url,
+          banner_url: data?.banner_url,
+          intro_video_url: data?.intro_video_url,
           category_uuids: data?.categories,
           difficulty_uuid: data?.difficulty,
           prerequisites: data?.prerequisites,
@@ -473,8 +326,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               instructor_share_percentage: data?.instructor_share_percentage,
               revenue_share_notes: data?.revenue_share_notes,
               training_requirements: trainingRequirementsPayload,
-              thumbnail_url: thumbnailPreview as any,
-              banner_url: bannerPreview as any,
+              thumbnail_url: '',
+              banner_url: '',
               intro_video_url: '',
               status: 'draft',
               active: false,
@@ -511,24 +364,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const isFree = form.watch('is_free');
 
     useEffect(() => {
-      const thumbnail = initialValues?.thumbnail_url || form.getValues('thumbnail');
-      const banner = initialValues?.banner_url || form.getValues('banner');
-      const video = initialValues?.intro_video_url || form.getValues('intro_video');
-
-      if (thumbnail && !thumbnailPreview) {
-        setThumbnailPreview(thumbnail);
-      }
-
-      if (banner && !bannerPreview) {
-        setBannerPreview(banner);
-      }
-
-      if (video && !videoPreview) {
-        setVideoPreview(video);
-      }
-    }, [form, thumbnailPreview, bannerPreview, videoPreview, initialValues]);
-
-    useEffect(() => {
       if (isFree) {
         form.setValue('price', 0);
         form.setValue('sale_price', 0);
@@ -540,7 +375,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20 lg:p-10'
+          className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'
         >
           {/* Course Name */}
           <FormSection
@@ -579,136 +414,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               )}
             />
           </FormSection>
-
-          {/* Intro Video */}
-          {editingCourseId && (
-            <FormSection
-              title='Intro Video'
-              description='Upload an introductory video for your course'
-            >
-              <FormField
-                control={form.control}
-                name='intro_video_url'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className='flex flex-col gap-4'>
-                        <Input
-                          type='file'
-                          accept='video/*'
-                          onChange={e =>
-                            handleFileUpload(e, {
-                              key: 'intro_video',
-                              setPreview: setVideoPreview,
-                              mutation: courseIntroVideoMutation.mutate,
-                              onChange: field.onChange,
-                            })
-                          }
-                        />
-                        {videoPreview && (
-                          <video controls className='w-full max-w-md rounded shadow'>
-                            <source src={videoPreview} type='video/mp4' />
-                            Your browser does not support the video tag.
-                          </video>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormSection>
-          )}
-
-          {/* Banner */}
-          {editingCourseId && (
-            <FormSection
-              title='Course Banner'
-              description='Upload a banner cover image for your course'
-            >
-              <FormField
-                control={form.control}
-                name='banner_url'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className='flex flex-col gap-4'>
-                        <Input
-                          type='file'
-                          accept='image/*'
-                          onChange={e =>
-                            handleFileUpload(e, {
-                              key: 'banner',
-                              setPreview: setBannerPreview,
-                              mutation: courseBannerMutation.mutate,
-                              onChange: field.onChange,
-                            })
-                          }
-                        />
-                        {bannerPreview && (
-                          <div className='h-32 w-48 overflow-hidden rounded border'>
-                            <Image
-                              src={bannerPreview}
-                              alt='Banner Preview'
-                              height={32}
-                              width={48}
-                              className='h-full w-full object-cover'
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormSection>
-          )}
-
-          {/* Thumbnail */}
-          {editingCourseId && (
-            <FormSection
-              title='Course Thumbnail'
-              description='Upload a cover image for your course'
-            >
-              <FormField
-                control={form.control}
-                name='thumbnail_url'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className='flex flex-col gap-4'>
-                        <Input
-                          type='file'
-                          accept='image/*'
-                          onChange={e =>
-                            handleFileUpload(e, {
-                              key: 'thumbnail',
-                              setPreview: setThumbnailPreview,
-                              mutation: courseThumbnailMutation.mutate,
-                              onChange: field.onChange,
-                            })
-                          }
-                        />
-                        {thumbnailPreview && (
-                          <div className='h-32 w-48 overflow-hidden rounded border'>
-                            <Image
-                              src={thumbnailPreview}
-                              width={48}
-                              height={32}
-                              alt='Thumbnail Preview'
-                              className='h-full w-full object-cover'
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormSection>
-          )}
 
           {/* Learning Objectives */}
           <FormSection
@@ -1012,7 +717,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       control={form.control}
                       name={`training_requirements.${index}.is_mandatory` as const}
                       render={({ field }) => (
-                        <FormItem className='flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3'>
+                        <FormItem className='flex flex-row items-start space-y-0 space-x-3 rounded-md border p-3'>
                           <FormControl>
                             <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
@@ -1032,7 +737,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea rows={2} placeholder='Provide any supporting detail' {...field} />
+                          <Textarea
+                            rows={2}
+                            placeholder='Provide any supporting detail'
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

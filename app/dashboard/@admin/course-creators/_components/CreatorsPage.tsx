@@ -9,7 +9,7 @@ import {
   getAllCourseCreatorsOptions,
   getAllCourseCreatorsQueryKey,
   unverifyCourseCreatorMutation,
-  verifyCourseCreatorMutation
+  verifyCourseCreatorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
@@ -46,16 +46,16 @@ export default function CourseCreatorsPage() {
       approveCourseCreator.mutate(
         { path: { uuid: courseCreator.uuid! }, query: { reason: '' } },
         {
-          onSuccess: (data) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
             });
             // @ts-ignore
-            toast.success(data?.message || "Course creator verified successfully");
+            toast.success(data?.message || 'Course creator verified successfully');
           },
         }
       );
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const handleUnverifyCourseCreator = async (courseCreator: CourseCreator) => {
@@ -63,21 +63,21 @@ export default function CourseCreatorsPage() {
       unVerifyCourseCreator.mutate(
         { path: { uuid: courseCreator.uuid! }, query: { reason: '' } },
         {
-          onSuccess: (data) => {
+          onSuccess: data => {
             qc.invalidateQueries({
               queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
             });
             // @ts-ignore
-            toast.success(data?.message || "Course creator verification removed successfully");
+            toast.success(data?.message || 'Course creator verification removed successfully');
           },
         }
       );
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const handleDeclineCourseCreator = async (courseCreator: CourseCreator) => {
-    toast.message("Implement reject/decline here")
-  }
+    toast.message('Implement reject/decline here');
+  };
 
   const handeCourseCreatorSelect = (courseCreator: CourseCreator) => {
     setSelectedCreator(courseCreator as any);
@@ -87,27 +87,30 @@ export default function CourseCreatorsPage() {
     }
   };
 
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [openDeleteModal, setOpenDeleteModal] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const deleteCourseCreator = useMutation(deleteCourseCreatorMutation())
+  const deleteCourseCreator = useMutation(deleteCourseCreatorMutation());
   const handleCourseCreatorDelete = (creator: CourseCreator) => {
-    setDeletingId(creator.uuid as string)
-    setOpenDeleteModal(true)
+    setDeletingId(creator.uuid as string);
+    setOpenDeleteModal(true);
   };
 
   const confirmDeleteCourseCreator = () => {
-    if (!deletingId) return
+    if (!deletingId) return;
 
-    deleteCourseCreator.mutate({ path: { uuid: deletingId as string } }, {
-      onSuccess: () => {
-        toast.success("Course creator deleted successfully")
-        qc.invalidateQueries({
-          queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
-        });
+    deleteCourseCreator.mutate(
+      { path: { uuid: deletingId as string } },
+      {
+        onSuccess: () => {
+          toast.success('Course creator deleted successfully');
+          qc.invalidateQueries({
+            queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
+          });
+        },
       }
-    })
-  }
+    );
+  };
 
   // Filter and sort course creators
   const filteredAndSortedCourseCreators = courseCreators
@@ -115,7 +118,7 @@ export default function CourseCreatorsPage() {
       // Search filter
       const matchesSearch =
         creator.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        creator.professional_headline?.toLowerCase().includes(searchQuery.toLowerCase())
+        creator.professional_headline?.toLowerCase().includes(searchQuery.toLowerCase());
       // creator.formatted_location?.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Status filter
@@ -178,7 +181,6 @@ export default function CourseCreatorsPage() {
         onUnverify={handleUnverifyCourseCreator}
         onDecline={handleDeclineCourseCreator}
       />
-
 
       <DeleteModal
         open={openDeleteModal}

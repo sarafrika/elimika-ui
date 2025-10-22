@@ -11,7 +11,6 @@ interface CourseCreatorMobileModalProps {
   onApprove: (courseCreator: CourseCreator) => void;
   onUnverify: (courseCreator: CourseCreator) => void;
   onDecline: (courseCreator: CourseCreator) => void;
-
 }
 
 export default function CourseCreatorMobileModal({
@@ -20,7 +19,7 @@ export default function CourseCreatorMobileModal({
   onClose,
   onApprove,
   onDecline,
-  onUnverify
+  onUnverify,
 }: CourseCreatorMobileModalProps) {
   if (!courseCreator) return null;
 
@@ -41,9 +40,7 @@ export default function CourseCreatorMobileModal({
           </div>
         </DialogHeader>
 
-        <CourseCreatorDetails
-          courseCreator={courseCreator}
-        />
+        <CourseCreatorDetails courseCreator={courseCreator} />
 
         {/* Action Buttons */}
         <div className='flex gap-3 border-t pt-4'>

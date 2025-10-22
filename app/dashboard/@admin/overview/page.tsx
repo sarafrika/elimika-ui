@@ -11,7 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getAllInstructorsOptions, getAllOrganisationsOptions, getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getAllInstructorsOptions,
+  getAllOrganisationsOptions,
+  getDashboardStatisticsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Bell, Building2, CheckCircle, User } from 'lucide-react';
 import Link from 'next/link';
@@ -24,13 +28,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import {
-  recentActivity,
-  revenueGraphData,
-  stats,
-  tasks,
-  topPerformers
-} from './sample-admin-data';
+import { recentActivity, revenueGraphData, stats, tasks, topPerformers } from './sample-admin-data';
 
 // Prepare data for Recharts
 const chartData = revenueGraphData.labels.map((label, i) => ({
@@ -44,13 +42,12 @@ export default function AdminOverviewPage() {
   const { data: organisations } = useQuery(
     getAllOrganisationsOptions({ query: { pageable: { page: 0, size: 100 } } })
   );
-  const pendingOrganisationApprovals = organisations?.data?.content?.filter((o) => !o.admin_verified)
+  const pendingOrganisationApprovals = organisations?.data?.content?.filter(o => !o.admin_verified);
 
   const { data: instructors } = useQuery(
     getAllInstructorsOptions({ query: { pageable: { page: 0, size: 100 } } })
   );
-  const pendingInstructorApprovals = instructors?.data?.content?.filter((o) => !o.admin_verified)
-
+  const pendingInstructorApprovals = instructors?.data?.content?.filter(o => !o.admin_verified);
 
   return (
     <div className='flex flex-col gap-6 px-2 py-4 md:px-6'>

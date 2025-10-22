@@ -127,7 +127,7 @@ export function NavUser({ items }: NavUserProps) {
                 {/* Add Profile Option */}
                 <div
                   onClick={() => router.push('/dashboard/add-profile')}
-                  className='hover:bg-blue-50 text-blue-600 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors'
+                  className='flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-blue-600 transition-colors hover:bg-blue-50'
                 >
                   <UserPlus className='size-4' />
                   <span>Add New Profile</span>

@@ -43,7 +43,7 @@ export default function InstructorMobileModal({
 
         <InstructorDetails
           instructor={instructor}
-        // getStatusBadgeComponent={getStatusBadgeComponent}
+          // getStatusBadgeComponent={getStatusBadgeComponent}
         />
 
         {/* Action Buttons */}

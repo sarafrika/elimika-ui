@@ -64,7 +64,7 @@ export default function InstructorsPage() {
           },
         }
       );
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const handleRejectInstructor = async (instructor: Instructor) => {
@@ -80,7 +80,7 @@ export default function InstructorsPage() {
           },
         }
       );
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const getStatusBadge = (instructorId: string) => {
@@ -110,28 +110,30 @@ export default function InstructorsPage() {
     }
   };
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [openDeleteModal, setOpenDeleteModal] = useState(false)
-
-  const deleteInstructor = useMutation(deleteInstructorMutation())
+  const deleteInstructor = useMutation(deleteInstructorMutation());
   const handleInstructorDelete = (instructor: Instructor) => {
-    setDeletingId(instructor.uuid as string)
-    setOpenDeleteModal(true)
+    setDeletingId(instructor.uuid as string);
+    setOpenDeleteModal(true);
   };
 
   const confirmDeleteInstructor = () => {
-    if (!deletingId) return
+    if (!deletingId) return;
 
-    deleteInstructor.mutate({ path: { uuid: deletingId as string } }, {
-      onSuccess: (data) => {
-        toast.success("Instructor deleted successfully")
-        qc.invalidateQueries({
-          queryKey: getAllInstructorsQueryKey({ query: { pageable: {} } }),
-        });
+    deleteInstructor.mutate(
+      { path: { uuid: deletingId as string } },
+      {
+        onSuccess: data => {
+          toast.success('Instructor deleted successfully');
+          qc.invalidateQueries({
+            queryKey: getAllInstructorsQueryKey({ query: { pageable: {} } }),
+          });
+        },
       }
-    })
-  }
+    );
+  };
 
   // Filter and sort instructors
   const filteredAndSortedInstructors = instructors
@@ -203,7 +205,6 @@ export default function InstructorsPage() {
         onReject={handleRejectInstructor}
         getStatusBadgeComponent={getStatusBadgeComponent}
       />
-
 
       <DeleteModal
         open={openDeleteModal}

@@ -33,7 +33,7 @@ import {
   UserPlus,
   Users,
   Wallet,
-  Wrench
+  Wrench,
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -246,7 +246,6 @@ export default {
       icon: Wallet,
     },
     {
-
       title: 'Opportunities',
       url: '/dashboard/opportunities',
       icon: Handshake,

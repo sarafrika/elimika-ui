@@ -150,24 +150,27 @@ export function TimetableForm({ classId, data, onNext, onPrev }: TimetableFormPr
     });
   };
 
-  const updateClassMutation = useMutation(updateClassDefinitionMutation())
+  const updateClassMutation = useMutation(updateClassDefinitionMutation());
   const onSubmit = (values: TimetableFormData) => {
-    if (!classId) return
+    if (!classId) return;
 
     // onNext();
 
-    updateClassMutation.mutate({
-      body: {
-        ...data,
-        location_type: values?.location_type || data?.location_type,
-        duration_minutes: values?.duration || data?.duration_minutes,
+    updateClassMutation.mutate(
+      {
+        body: {
+          ...data,
+          location_type: values?.location_type || data?.location_type,
+          duration_minutes: values?.duration || data?.duration_minutes,
+        },
+        path: { uuid: classId },
       },
-      path: { uuid: classId }
-    }, {
-      onSuccess: () => {
-        onNext();
+      {
+        onSuccess: () => {
+          onNext();
+        },
       }
-    })
+    );
   };
 
   return (
@@ -217,8 +220,9 @@ export function TimetableForm({ classId, data, onNext, onPrev }: TimetableFormPr
         {availabilityFields.map((day, dayIndex) => (
           <div
             key={day.id}
-            className={`flex flex-col items-start justify-between gap-12 rounded-md border p-4 sm:flex-row ${day.enabled ? 'bg-white' : 'bg-gray-100 opacity-60'
-              }`}
+            className={`flex flex-col items-start justify-between gap-12 rounded-md border p-4 sm:flex-row ${
+              day.enabled ? 'bg-white' : 'bg-gray-100 opacity-60'
+            }`}
           >
             {/* Day Toggle */}
             <div className='mb-2 flex min-w-[150px] items-center justify-between'>

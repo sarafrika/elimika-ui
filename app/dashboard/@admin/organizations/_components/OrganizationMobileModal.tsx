@@ -37,7 +37,7 @@ export default function OrganizationMobileModal({
         <div className='py-4'>
           <OrganizationDetails
             organization={organization}
-          // getStatusBadgeComponent={getStatusBadgeComponent}
+            // getStatusBadgeComponent={getStatusBadgeComponent}
           />
         </div>
 

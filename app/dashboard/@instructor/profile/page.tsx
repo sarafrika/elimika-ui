@@ -37,7 +37,7 @@ export default function InstructorProfileOverviewPage() {
   if (!user || user.isLoading) {
     return (
       <div className='flex h-full items-center justify-center py-20'>
-        <Spinner className='h-6 w-6 text-muted-foreground' />
+        <Spinner className='text-muted-foreground h-6 w-6' />
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default function InstructorProfileOverviewPage() {
     content: (
       <div className='space-y-4 text-sm'>
         <div className='space-y-1'>
-          <p className='text-xs uppercase tracking-wide text-muted-foreground'>Bio</p>
+          <p className='text-muted-foreground text-xs tracking-wide uppercase'>Bio</p>
           <p>{instructor?.bio || 'Your professional story is not available yet.'}</p>
         </div>
       </div>
@@ -170,7 +170,10 @@ export default function InstructorProfileOverviewPage() {
         label: 'Roles',
         value:
           roles && roles.length > 0
-            ? roles.map(role => role.name).filter(Boolean).join(', ')
+            ? roles
+                .map(role => role.name)
+                .filter(Boolean)
+                .join(', ')
             : undefined,
         emptyText: 'No roles granted',
       },
@@ -203,7 +206,7 @@ export default function InstructorProfileOverviewPage() {
               {instructor.educations.map((education, index) => (
                 <div
                   key={education.uuid ?? `${education.school_name}-${index}`}
-                  className='rounded-lg border border-border/50 p-3'
+                  className='border-border/50 rounded-lg border p-3'
                 >
                   <p className='font-medium'>{education.qualification}</p>
                   <p className='text-muted-foreground text-sm'>{education.school_name}</p>
@@ -235,14 +238,14 @@ export default function InstructorProfileOverviewPage() {
                 const end = toDate(exp.end_date);
                 const range =
                   start || end
-                    ? `${start ? format(start, 'MMM yyyy') : 'Start?' } – ${
+                    ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
                         exp.is_current_position ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
                       }`
                     : null;
                 return (
                   <div
                     key={exp.uuid ?? `${exp.organization_name}-${index}`}
-                    className='rounded-lg border border-border/50 p-3'
+                    className='border-border/50 rounded-lg border p-3'
                   >
                     <p className='font-medium'>{exp.position}</p>
                     <p className='text-muted-foreground text-sm'>{exp.organization_name}</p>
@@ -281,7 +284,7 @@ export default function InstructorProfileOverviewPage() {
                 return (
                   <div
                     key={membership.uuid ?? `${membership.organization_name}-${index}`}
-                    className='rounded-lg border border-border/50 p-3'
+                    className='border-border/50 rounded-lg border p-3'
                   >
                     <p className='font-medium'>{membership.organization_name}</p>
                     {membership.membership_number ? (

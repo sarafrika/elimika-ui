@@ -2,9 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { CourseCreator } from '@/services/client';
-import {
-  getUserByUuidOptions
-} from '@/services/client/@tanstack/react-query.gen';
+import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BadgeCheckIcon, Globe, MapPin, User } from 'lucide-react';
 
@@ -65,7 +63,9 @@ export default function CourseCreatorDetails({
             <div className='grid grid-cols-2 gap-4 border-t pt-4'>
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Phone:</p>
-                <p className='text-sm'>{courseCreatorInfo?.data?.phone_number || 'Not specified'}</p>
+                <p className='text-sm'>
+                  {courseCreatorInfo?.data?.phone_number || 'Not specified'}
+                </p>
               </div>
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Email:</p>

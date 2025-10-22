@@ -6,7 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { Course } from '@/services/client';
-import { getAllDifficultyLevelsOptions, getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getAllDifficultyLevelsOptions,
+  getCourseCreatorByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
 import Image from 'next/image';
@@ -28,9 +31,11 @@ export function TrainCourseCard({ course, handleClick }: TrainCourseCardProps) {
       .toUpperCase();
   };
 
-  const { data: creator } = useQuery(getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } }))
+  const { data: creator } = useQuery(
+    getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } })
+  );
   // @ts-ignore
-  const courseCreator = creator?.data
+  const courseCreator = creator?.data;
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -55,9 +60,7 @@ export function TrainCourseCard({ course, handleClick }: TrainCourseCardProps) {
   };
 
   return (
-    <div
-      className='group cursor-pointer rounded-lg border-[1px] border-gray-400 bg-white transition-all hover:-translate-y-1 hover:shadow-lg'
-    >
+    <div className='group cursor-pointer rounded-lg border-[1px] border-gray-400 bg-white transition-all hover:-translate-y-1 hover:shadow-lg'>
       <div className='relative'>
         {/* Course Image */}
         <div className='from-primary/20 to-primary/5 relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg bg-gradient-to-br'>
@@ -113,9 +116,7 @@ export function TrainCourseCard({ course, handleClick }: TrainCourseCardProps) {
           </div>
         </div>
 
-        <CardContent className='p-4'
-          onClick={handleClick}
-        >
+        <CardContent className='p-4' onClick={handleClick}>
           {/* Category */}
           <div className='mb-2 flex items-center gap-2'>
             {course?.category_names?.map((category, index) => (
@@ -129,7 +130,7 @@ export function TrainCourseCard({ course, handleClick }: TrainCourseCardProps) {
           <h3 className='group-hover:text-primary mb-1 line-clamp-2 font-bold transition-colors'>
             {course?.name}
           </h3>
-          <div className='text-muted-foreground mb-3 line-clamp-2 text-sm min-h-10'>
+          <div className='text-muted-foreground mb-3 line-clamp-2 min-h-10 text-sm'>
             <RichTextRenderer htmlString={course?.description as string} />
           </div>
 
@@ -166,18 +167,22 @@ export function TrainCourseCard({ course, handleClick }: TrainCourseCardProps) {
           {/* Price and Actions */}
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
-              <span className='text-primary font-bold'>{"KES"} {course?.price}</span>
+              <span className='text-primary font-bold'>
+                {'KES'} {course?.price}
+              </span>
               {course?.price && (
-                <span className='text-muted-foreground text-sm line-through'>KES {course?.price}</span>
+                <span className='text-muted-foreground text-sm line-through'>
+                  KES {course?.price}
+                </span>
               )}
             </div>
           </div>
         </CardContent>
 
-        <div className="flex justify-end p-4">
+        <div className='flex justify-end p-4'>
           <Button
             onClick={() => router.push(`/dashboard/apply-to-train/${course?.uuid}`)}
-            size="sm"
+            size='sm'
           >
             Apply to train
           </Button>

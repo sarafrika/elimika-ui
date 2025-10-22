@@ -13,13 +13,16 @@ export default function InstructorSkillsPage() {
   const [skills, setSkills] = useState<InstructorSkill[] | null>(null);
 
   const { data } = useQuery({
-    ...getInstructorSkillsOptions({ path: { instructorUuid: instructor?.uuid as string }, query: { pageable: { page: 0, size: 20 } } }),
+    ...getInstructorSkillsOptions({
+      path: { instructorUuid: instructor?.uuid as string },
+      query: { pageable: { page: 0, size: 20 } },
+    }),
     enabled: !!instructor?.uuid,
-  })
+  });
 
   useEffect(() => {
     if (instructor) {
-      setSkills(data?.data?.content as InstructorSkill[] || []);
+      setSkills((data?.data?.content as InstructorSkill[]) || []);
     }
   }, [instructor, data?.data?.content]);
 

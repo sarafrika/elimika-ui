@@ -46,7 +46,7 @@ export default function OrganizationDetails({
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>Status:</p>
-                  {organization.uuid &&
+                  {organization.uuid && (
                     <Badge variant={organization?.admin_verified ? 'success' : 'secondary'}>
                       {organization?.admin_verified ? (
                         <>
@@ -56,8 +56,8 @@ export default function OrganizationDetails({
                       ) : (
                         'Pending'
                       )}
-                    </Badge>}
-
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>

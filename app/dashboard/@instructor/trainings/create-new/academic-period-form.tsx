@@ -73,7 +73,11 @@ import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
 
-import { scheduleClassMutation, scheduleRecurringClassFromDefinitionMutation, updateClassDefinitionMutation } from '@/services/client/@tanstack/react-query.gen';
+import {
+  scheduleClassMutation,
+  scheduleRecurringClassFromDefinitionMutation,
+  updateClassDefinitionMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -104,13 +108,11 @@ function convertToCustomDateTimeString(
   return `${yyyy}-${mm}-${dd}T${time}`;
 }
 
-
-
 interface AcademicFormProps {
   onNext: () => void;
   onPrev: () => void;
   classId: string;
-  classData: any
+  classData: any;
 }
 
 const academicPeriodSchema = z.object({
@@ -142,13 +144,13 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
   });
 
   const [continuousRegistration, setContinuousRegistration] = useState(false);
-  const updateClassMutation = useMutation(updateClassDefinitionMutation())
+  const updateClassMutation = useMutation(updateClassDefinitionMutation());
 
-  const createClassSchdeule = useMutation(scheduleRecurringClassFromDefinitionMutation())
-  const scheduleClass = useMutation(scheduleClassMutation())
+  const createClassSchdeule = useMutation(scheduleRecurringClassFromDefinitionMutation());
+  const scheduleClass = useMutation(scheduleClassMutation());
 
   const onSubmit = (values: AcademicPeriodFormValues) => {
-    if (!classId) return
+    if (!classId) return;
     // updateClassMutation.mutate({
     //   body: {
     //     ...classData,
@@ -166,23 +168,25 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
     //   }
     // })
 
-    scheduleClass.mutate({
-      body: {
-        class_definition_uuid: classData?.uuid,
-        instructor_uuid: classData?.default_instructor_uuid as string,
-        // @ts-ignore
-        start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
-        // @ts-ignore
-        end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
-        timezone: "UTC"
+    scheduleClass.mutate(
+      {
+        body: {
+          class_definition_uuid: classData?.uuid,
+          instructor_uuid: classData?.default_instructor_uuid as string,
+          // @ts-ignore
+          start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
+          // @ts-ignore
+          end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
+          timezone: 'UTC',
+        },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          onNext();
+        },
       }
-    }, {
-      onSuccess: (data) => {
-        toast.success(data?.message);
-        onNext();
-      }
-    });
-
+    );
   };
 
   return (

@@ -89,7 +89,10 @@ export default function InstructorProfile() {
 
   const user = useUserProfile();
   const { instructor, invalidateQuery } = user!;
-  const { addressComponents } = useReverseGeocode(Number(instructor?.latitude), Number(instructor?.longitude));
+  const { addressComponents } = useReverseGeocode(
+    Number(instructor?.latitude),
+    Number(instructor?.longitude)
+  );
 
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
@@ -105,8 +108,6 @@ export default function InstructorProfile() {
         .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
-
-
 
   const form = useForm<GeneralProfileFormValues>({
     resolver: zodResolver(generalProfileSchema),
@@ -151,14 +152,14 @@ export default function InstructorProfile() {
     const manageInstructor = () =>
       instructor
         ? updateInstructor({
-          path: {
-            uuid: instructor.uuid!,
-          },
-          body: updatedProfileData.instructor,
-        })
+            path: {
+              uuid: instructor.uuid!,
+            },
+            body: updatedProfileData.instructor,
+          })
         : createInstructor({
-          body: updatedProfileData.instructor,
-        });
+            body: updatedProfileData.instructor,
+          });
 
     const response = await Promise.all([
       updateUser({
@@ -210,17 +211,18 @@ export default function InstructorProfile() {
           >
             <div className='space-y-6'>
               <div className='flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-8'>
-                <Avatar className='h-24 w-24 ring-4 ring-background shadow-lg shadow-primary/5'>
+                <Avatar className='ring-background shadow-primary/5 h-24 w-24 shadow-lg ring-4'>
                   <AvatarImage
                     src={user!.profile_image_url ?? profilePic.url}
                     alt={`${user!.first_name} ${user!.last_name}`}
                   />
-                  <AvatarFallback className='bg-primary/10 text-base font-semibold text-primary'>
-                    {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}` || 'IN'}
+                  <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
+                    {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}` ||
+                      'IN'}
                   </AvatarFallback>
                 </Avatar>
                 <div className='space-y-3'>
-                  <p className='text-sm text-muted-foreground'>
+                  <p className='text-muted-foreground text-sm'>
                     Square images work best. Maximum size is 5MB.
                   </p>
                   <div className='flex flex-wrap gap-3'>
@@ -417,7 +419,6 @@ export default function InstructorProfile() {
                           //   'instructor.latitude',
                           //   loc.features[0]!.properties.coordinates.latitude
                           // );
-
                           // form.setValue(
                           //   'instructor.longitude',
                           //   loc.features[0]!.properties.coordinates.longitude

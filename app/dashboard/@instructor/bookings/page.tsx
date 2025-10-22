@@ -1,14 +1,12 @@
-'use client'
+'use client';
 
-import { useInstructor } from "@/context/instructor-context"
+import { useInstructor } from '@/context/instructor-context';
 
 function BookingsPage() {
-    const instructor = useInstructor()
-    // const {data} = useQuery({})
+  const instructor = useInstructor();
+  // const {data} = useQuery({})
 
-    return (
-        <div>This page is under construction</div>
-    )
+  return <div>This page is under construction</div>;
 }
 
-export default BookingsPage
+export default BookingsPage;

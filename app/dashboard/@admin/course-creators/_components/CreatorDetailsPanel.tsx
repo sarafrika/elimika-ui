@@ -11,7 +11,7 @@ interface CourseCreatorDetailsPanelProps {
   onDecline: (courseCreator: CourseCreator) => void;
   isApprovePending: boolean;
   isUnverifyPending: boolean;
-  isDeclinePending: boolean
+  isDeclinePending: boolean;
 }
 
 export default function CourseCreatorDetailsPanel({
@@ -21,7 +21,7 @@ export default function CourseCreatorDetailsPanel({
   onDecline,
   isApprovePending,
   isUnverifyPending,
-  isDeclinePending
+  isDeclinePending,
 }: CourseCreatorDetailsPanelProps) {
   if (!courseCreator) {
     return (
@@ -58,9 +58,7 @@ export default function CourseCreatorDetailsPanel({
 
       {/* Content */}
       <div className='flex-1 overflow-y-auto p-6'>
-        <CourseCreatorDetails
-          courseCreator={courseCreator}
-        />
+        <CourseCreatorDetails courseCreator={courseCreator} />
       </div>
 
       {/* Action Buttons */}

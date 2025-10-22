@@ -2,15 +2,23 @@
 
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
-import { getInstructorAvailabilityOptions, getInstructorScheduleOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getInstructorAvailabilityOptions,
+  getInstructorScheduleOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { AvailabilityData, ClassScheduleItem, convertToCalendarEvents, transformAvailabilityArray } from '../../availability/components/types';
+import {
+  AvailabilityData,
+  ClassScheduleItem,
+  convertToCalendarEvents,
+  transformAvailabilityArray,
+} from '../../availability/components/types';
 import AvailabilityManager from './components/availability-manager';
 
 const Page = () => {
   const user = useUserProfile();
-  const instructor = useInstructor()
+  const instructor = useInstructor();
   const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
 
   const { data: availabilitySlotss, refetch } = useQuery(
@@ -20,10 +28,10 @@ const Page = () => {
   const { data: timetable } = useQuery({
     ...getInstructorScheduleOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: { start: "2025-09-10" as any, end: "2025-11-11" as any }
+      query: { start: '2025-09-10' as any, end: '2025-11-11' as any },
     }),
-    enabled: !!instructor?.uuid
-  })
+    enabled: !!instructor?.uuid,
+  });
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
     slots: transformedSlots as any,

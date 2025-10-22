@@ -99,10 +99,11 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
             return (
               <Card
                 key={domain}
-                className={`cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg ${isSelected
+                className={`cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg ${
+                  isSelected
                     ? `ring-offset-background ring-2 ring-offset-2 ${config.borderColor} ${config.bgColor}`
                     : 'hover:border-slate-300 dark:hover:border-slate-600'
-                  }`}
+                }`}
                 onClick={() => handleDomainSelect(domain)}
               >
                 <CardHeader className='pb-4 text-center'>

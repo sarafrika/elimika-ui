@@ -28,7 +28,8 @@ const accountTypes = [
   {
     id: 'course_creator',
     title: 'Course Creator',
-    description: 'Design and publish courses, build your content library, and share your expertise.',
+    description:
+      'Design and publish courses, build your content library, and share your expertise.',
     href: '/onboarding/course-creator',
     icon: GraduationCap,
     iconColor: 'text-blue-600',

@@ -144,7 +144,7 @@ export default function TrainingCenterForm() {
                 <FormItem>
                   <FormLabel>Organisation logo</FormLabel>
                   <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6'>
-                    <Avatar className='h-20 w-20 rounded-lg ring-4 ring-background shadow-lg shadow-primary/5'>
+                    <Avatar className='ring-background shadow-primary/5 h-20 w-20 rounded-lg shadow-lg ring-4'>
                       <AvatarImage src={profilePic.url!} />
                       <AvatarFallback className='rounded-lg text-sm font-medium'>
                         Logo

@@ -3,7 +3,7 @@ import AddProfileSelector from './_components/add-profile-selector';
 
 export default function AddProfilePage() {
   return (
-    <div className='from-background via-blue-50 to-blue-100 dark:from-background dark:via-blue-950 dark:to-blue-900 flex min-h-screen items-center justify-center bg-gradient-to-br p-4'>
+    <div className='from-background dark:from-background flex min-h-screen items-center justify-center bg-gradient-to-br via-blue-50 to-blue-100 p-4 dark:via-blue-950 dark:to-blue-900'>
       <div className='w-full max-w-6xl'>
         <div className='mb-12 text-center'>
           <h1 className='text-foreground mb-4 text-4xl font-bold'>Add a New Profile</h1>
