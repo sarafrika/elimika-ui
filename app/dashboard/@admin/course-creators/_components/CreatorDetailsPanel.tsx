@@ -7,17 +7,21 @@ import CourseCreatorDetails from './CreatorDetails';
 interface CourseCreatorDetailsPanelProps {
   courseCreator: CourseCreator | null;
   onApprove: (courseCreator: CourseCreator) => void;
-  onReject: (courseCreator: CourseCreator) => void;
+  onUnverify: (courseCreator: CourseCreator) => void;
+  onDecline: (courseCreator: CourseCreator) => void;
   isApprovePending: boolean;
-  isRejectPending: boolean;
+  isUnverifyPending: boolean;
+  isDeclinePending: boolean
 }
 
 export default function CourseCreatorDetailsPanel({
   courseCreator,
   onApprove,
-  onReject,
+  onUnverify,
+  onDecline,
   isApprovePending,
-  isRejectPending,
+  isUnverifyPending,
+  isDeclinePending
 }: CourseCreatorDetailsPanelProps) {
   if (!courseCreator) {
     return (
@@ -70,12 +74,20 @@ export default function CourseCreatorDetailsPanel({
             {isApprovePending ? <Spinner /> : 'Approve Verification'}
           </Button>
           <Button
-            variant='destructive'
-            onClick={() => onReject(courseCreator)}
+            variant='secondary'
+            onClick={() => onUnverify(courseCreator)}
             className='min-w-[100px]'
           >
             <Trash2 className='mr-2 h-4 w-4' />
-            {isRejectPending ? <Spinner /> : 'Unverify'}
+            {isUnverifyPending ? <Spinner /> : 'Unverify'}
+          </Button>
+          <Button
+            variant='destructive'
+            onClick={() => onDecline(courseCreator)}
+            className='min-w-[100px]'
+          >
+            <Trash2 className='mr-2 h-4 w-4' />
+            {isDeclinePending ? <Spinner /> : 'Decline'}
           </Button>
         </div>
       </div>

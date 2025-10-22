@@ -39,7 +39,7 @@ export default function CourseCreatorsPage() {
   }, [courseCreators, selectedCreator]);
 
   const approveCourseCreator = useMutation(verifyCourseCreatorMutation());
-  const rejectCourseCreator = useMutation(unverifyCourseCreatorMutation());
+  const unVerifyCourseCreator = useMutation(unverifyCourseCreatorMutation());
 
   const handleApproveCourseCreator = async (courseCreator: CourseCreator) => {
     try {
@@ -58,9 +58,9 @@ export default function CourseCreatorsPage() {
     } catch (error) { }
   };
 
-  const handleRejectCourseCreator = async (courseCreator: CourseCreator) => {
+  const handleUnverifyCourseCreator = async (courseCreator: CourseCreator) => {
     try {
-      rejectCourseCreator.mutate(
+      unVerifyCourseCreator.mutate(
         { path: { uuid: courseCreator.uuid! }, query: { reason: '' } },
         {
           onSuccess: (data) => {
@@ -75,6 +75,10 @@ export default function CourseCreatorsPage() {
     } catch (error) { }
   };
 
+  const handleDeclineCourseCreator = async (courseCreator: CourseCreator) => {
+    toast.message("Implement reject/decline here")
+  }
+
   const handeCourseCreatorSelect = (courseCreator: CourseCreator) => {
     setSelectedCreator(courseCreator as any);
     // Open modal on small screens
@@ -82,7 +86,6 @@ export default function CourseCreatorsPage() {
       setIsModalOpen(true);
     }
   };
-
 
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [openDeleteModal, setOpenDeleteModal] = useState(false)
@@ -152,7 +155,6 @@ export default function CourseCreatorsPage() {
         setSortOrder={setSortOrder}
         onCourseCreatorSelect={handeCourseCreatorSelect}
         onCourseCreatorDelete={handleCourseCreatorDelete}
-        // getStatusBadgeComponent={getStatusBadgeComponent}
         isLoading={isLoading}
       />
 
@@ -160,9 +162,11 @@ export default function CourseCreatorsPage() {
       <CourseCreatorDetailsPanel
         courseCreator={selectedCreator as any}
         onApprove={handleApproveCourseCreator}
-        onReject={handleRejectCourseCreator}
+        onUnverify={handleUnverifyCourseCreator}
+        onDecline={handleDeclineCourseCreator}
         isApprovePending={approveCourseCreator.isPending}
-        isRejectPending={rejectCourseCreator.isPending}
+        isUnverifyPending={unVerifyCourseCreator.isPending}
+        isDeclinePending={false}
       />
 
       {/* Mobile Modal */}
@@ -171,7 +175,8 @@ export default function CourseCreatorsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onApprove={handleApproveCourseCreator}
-        onReject={handleRejectCourseCreator}
+        onUnverify={handleUnverifyCourseCreator}
+        onDecline={handleDeclineCourseCreator}
       />
 
 

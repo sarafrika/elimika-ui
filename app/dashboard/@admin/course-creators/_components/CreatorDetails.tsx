@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { CourseCreator } from '@/services/client';
@@ -5,7 +6,7 @@ import {
   getUserByUuidOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, User } from 'lucide-react';
+import { BadgeCheckIcon, Globe, MapPin, User } from 'lucide-react';
 
 interface CourseCreatorDetailsProps {
   courseCreator: CourseCreator;
@@ -37,7 +38,7 @@ export default function CourseCreatorDetails({
                 </p>
                 <p className='text-muted-foreground flex items-center gap-2 text-sm'>
                   <MapPin className='h-4 w-4' />
-                  {/* {courseCreator.formatted_location || 'Location not specified'} */}
+                  {'Location not specified'}
                 </p>
               </div>
               <div className='space-y-2 text-right'>
@@ -47,8 +48,8 @@ export default function CourseCreatorDetails({
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>Status:</p>
-                  {/* <Badge variant={instructor?.admin_verified ? 'success' : 'secondary'}>
-                    {instructor?.admin_verified ? (
+                  <Badge variant={courseCreator?.admin_verified ? 'success' : 'secondary'}>
+                    {courseCreator?.admin_verified ? (
                       <>
                         <BadgeCheckIcon />
                         Verified
@@ -56,7 +57,7 @@ export default function CourseCreatorDetails({
                     ) : (
                       'Pending'
                     )}
-                  </Badge> */}
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -96,12 +97,12 @@ export default function CourseCreatorDetails({
             <div className='grid grid-cols-2 gap-4'>
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Gender</p>
-                {/* <p className='text-sm'>{instructorInfo?.data?.gender || 'Not specified'}</p> */}
+                <p className='text-sm'>{courseCreatorInfo?.data?.gender || 'Not specified'}</p>
               </div>
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Date of birth</p>
                 <p className='text-sm'>
-                  {/* {instructorInfo?.data?.dob.toDateString() || 'Not specified'} */}
+                  {courseCreatorInfo?.data?.dob.toDateString() || 'Not specified'}
                 </p>
               </div>
             </div>
@@ -128,22 +129,22 @@ export default function CourseCreatorDetails({
             <Separator />
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Permanent address</p>
-              {/* <p className='text-sm'>{instructor.formatted_location || 'Address not specified'}</p> */}
+              <p className='text-sm'>{'Address not specified'}</p>
             </div>
-            {/* {instructor.website && (
+            {courseCreator.website && (
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Website</p>
                 <a
-                  href={instructor.website}
+                  href={courseCreator.website}
                   target='_blank'
                   rel='noopener noreferrer'
                   className='flex items-center gap-1 text-sm text-blue-600 hover:underline'
                 >
                   <Globe className='h-3 w-3' />
-                  {instructor.website}
+                  {courseCreator.website}
                 </a>
               </div>
-            )} */}
+            )}
           </CardContent>
         </Card>
 
@@ -152,13 +153,13 @@ export default function CourseCreatorDetails({
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-4'>
             <CardTitle className='text-lg font-semibold'>Biography</CardTitle>
           </CardHeader>
-          {/* <CardContent>
-          {instructor.bio ? (
-            <p className='text-muted-foreground text-sm leading-relaxed'>{instructor.bio}</p>
-          ) : (
-            <p className='text-muted-foreground text-sm'>No biography information provided</p>
-          )}
-        </CardContent> */}
+          <CardContent>
+            {courseCreator.bio ? (
+              <p className='text-muted-foreground text-sm leading-relaxed'>{courseCreator.bio}</p>
+            ) : (
+              <p className='text-muted-foreground text-sm'>No biography information provided</p>
+            )}
+          </CardContent>
         </Card>
       </div>
     </div>
