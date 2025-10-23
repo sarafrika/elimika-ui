@@ -40,7 +40,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   BookOpen,
   BookOpenCheck,
-  CheckSquare,
   ChevronDown,
   ChevronRight,
   CircleCheckBig,
@@ -59,7 +58,7 @@ import {
   Trash,
   VideoIcon,
   X,
-  Youtube,
+  Youtube
 } from 'lucide-react';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { Control, FieldErrors, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
@@ -240,7 +239,6 @@ type LessonListProps = {
   onEditLesson: (lesson: any) => void;
   onDeleteLesson: (lessonId: string) => void;
   onReorderLessons: (newLessons: any[]) => void;
-  onAddAssignment: (lesson: any) => void;
   // lesson contents
   lessonContentsMap: Map<string, any[]>;
   onAddLessonContent: (lesson: any) => void;
@@ -261,7 +259,6 @@ function LessonList({
   onEditLesson,
   onDeleteLesson,
   onReorderLessons,
-  onAddAssignment,
   // lesson contents
   lessonContentsMap,
   onAddLessonContent,
@@ -316,12 +313,12 @@ function LessonList({
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
           <p className='text-muted-foreground text-sm'>
             You have {lessons?.content?.length}{' '}
-            {lessons?.content?.length === 1 ? 'lesson' : 'lessons'} created under this course.
+            {lessons?.content?.length === 1 ? 'skill' : 'skills'} created under this course.
           </p>
         </div>
         <Button onClick={onAddLesson} className='self-start sm:self-end lg:self-center'>
           <PlusCircle className='mr-0.5 h-4 w-4' />
-          Add Lesson
+          Add Skill
         </Button>
       </div>
 
@@ -335,110 +332,99 @@ function LessonList({
         </div>
       ) : (
         <div className='space-y-8'>
-          {lessons?.content.map((lesson: any, index: any) => {
-            const isExpanded = expandedLessonId === lesson.uuid;
+          {lessons?.content
+            ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
+            ?.map((lesson: any, index: number) => {
+              const isExpanded = expandedLessonId === lesson.uuid;
 
-            const enrichedContents = enrichedLessonContentsMap.get(lesson.uuid) || [];
+              const enrichedContents = enrichedLessonContentsMap.get(lesson.uuid) || [];
 
-            return (
-              <div
-                key={lesson?.uuid || index}
-                className='group relative flex flex-col gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
-              >
-                <div className='flex items-start gap-4'>
-                  <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
+              return (
+                <div
+                  key={lesson?.uuid || index}
+                  className='group relative flex flex-col gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+                >
+                  <div className='flex items-start gap-4'>
+                    <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
 
-                  <div className='flex-1 space-y-3'>
-                    <div className='flex items-start justify-between'>
-                      <div className='flex flex-col items-start'>
-                        <h3 className='text-lg font-medium'>{lesson.title}</h3>
-                        <div className='text-muted-foreground text-sm'>
-                          <RichTextRenderer htmlString={lesson?.description} maxChars={150} />
+                    <div className='flex-1 space-y-3'>
+                      <div className='flex items-start justify-between'>
+                        <div className='flex flex-col items-start'>
+                          <h3 className='text-lg font-medium'>{lesson.title}</h3>
+                          <div className='text-muted-foreground text-sm'>
+                            <RichTextRenderer htmlString={lesson?.description} maxChars={150} />
+                          </div>
                         </div>
-                      </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='opacity-0 transition-opacity group-hover:opacity-100'
-                          >
-                            <MoreVertical className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem>
-                            <Link
-                              href={`/dashboard/course-management/lesson?courseId=${lesson.course_uuid}&id=${lesson.uuid}`}
-                              className='flex flex-row items-center'
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='opacity-0 transition-opacity group-hover:opacity-100'
                             >
-                              <Eye className='mr-3 h-4 w-4' />
-                              Manage Lesson
-                            </Link>
-                          </DropdownMenuItem>
+                              <MoreVertical className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
 
-                          <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
-                            <PenLine className='mr-1 h-4 w-4' />
-                            Edit Lesson
-                          </DropdownMenuItem>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem>
+                              <Link
+                                href={`/dashboard/course-management/lesson?courseId=${lesson.course_uuid}&id=${lesson.uuid}`}
+                                className='flex flex-row items-center'
+                              >
+                                <Eye className='mr-3 h-4 w-4' />
+                                <p className='mr-3' >
+                                  Manage Resources
+                                </p>
+                              </Link>
+                            </DropdownMenuItem>
 
-                          <DropdownMenuItem onClick={() => onAddAssignment(lesson)}>
-                            <CheckSquare className='mr-1 h-4 w-4' />
-                            Add Assignment
-                          </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
+                              <PenLine className='mr-1 h-4 w-4' />
+                              Edit Skill
+                            </DropdownMenuItem>
 
-                          {/* <DropdownMenuItem onClick={() => onAddLessonContent(lesson)}>
-                            <PlusCircle className='mr-1 h-4 w-4' />
-                            Add Lesson Content
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem onClick={() => onAddQuiz(lesson)}>
-                            <CheckSquare className='mr-1 h-4 w-4' />
-                            Add Quiz
-                          </DropdownMenuItem> */}
-
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className='text-red-600'
-                            onClick={() => {
-                              if (lesson.uuid) onDeleteLesson(lesson?.uuid);
-                            }}
-                          >
-                            <Trash className='mr-1 h-4 w-4' />
-                            Delete Lesson
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    <div className='text-muted-foreground flex items-center gap-4 text-sm'>
-                      <div className='flex items-center gap-1.5'>
-                        <Clock className='h-4 w-4' />
-                        <span>{getTotalDuration(lesson)} minutes</span>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className='text-red-600'
+                              onClick={() => {
+                                if (lesson.uuid) onDeleteLesson(lesson?.uuid);
+                              }}
+                            >
+                              <Trash className='mr-1 h-4 w-4' />
+                              Delete Skill
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
 
-                      <div className='flex items-center gap-1.5'>
-                        <BookOpen className='h-4 w-4' />
-                        <span>
-                          {enrichedContents.length || '0'}{' '}
-                          {enrichedContents.length === 1 ? 'item' : 'items'}
-                        </span>
-                      </div>
-
-                      {(lesson.resources?.length ?? 0) > 0 && (
+                      <div className='text-muted-foreground flex items-center gap-4 text-sm'>
                         <div className='flex items-center gap-1.5'>
-                          <LinkIcon className='h-4 w-4' />
+                          <Clock className='h-4 w-4' />
+                          <span>{getTotalDuration(lesson)} minutes</span>
+                        </div>
+
+                        <div className='flex items-center gap-1.5'>
+                          <BookOpen className='h-4 w-4' />
                           <span>
-                            {lesson.resources?.length ?? 0}{' '}
-                            {(lesson.resources?.length ?? 0) === 1 ? 'resource' : 'resources'}
+                            {enrichedContents.length || '0'}{' '}
+                            {enrichedContents.length === 1 ? 'item' : 'items'}
                           </span>
                         </div>
-                      )}
-                    </div>
 
-                    {/* <Button
+                        {(lesson.resources?.length ?? 0) > 0 && (
+                          <div className='flex items-center gap-1.5'>
+                            <LinkIcon className='h-4 w-4' />
+                            <span>
+                              {lesson.resources?.length ?? 0}{' '}
+                              {(lesson.resources?.length ?? 0) === 1 ? 'resource' : 'resources'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* <Button
                       variant='link'
                       size='sm'
                       onClick={() => toggleLesson(lesson.uuid)}
@@ -446,101 +432,101 @@ function LessonList({
                     >
                       {isExpanded ? 'Hide Contents' : 'View Contents'}
                     </Button> */}
+                    </div>
                   </div>
-                </div>
 
-                {isExpanded && (
-                  <div className='mt-2 space-y-2 pl-8'>
-                    {enrichedContents.length > 0 ? (
-                      enrichedContents
-                        .sort((a: any, b: any) => a.display_order - b.display_order)
-                        .map((item: any) => (
-                          <div
-                            key={item.uuid}
-                            className='group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-md p-4 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700'
-                          >
-                            <div className='flex flex-col gap-1'>
-                              <div className='flex items-center gap-2'>
-                                {getContentTypeIcon(item.content_type_key)}
-                                <span className='font-medium text-gray-900 dark:text-gray-100'>
-                                  {item.title}
-                                </span>
-                              </div>
-                              <div className='line-clamp-2 text-xs text-gray-600 dark:text-gray-400'>
-                                <RichTextRenderer htmlString={item?.description} maxChars={150} />
-                              </div>
-                              {item.content_text && (
-                                <div className='text-xs text-gray-700 dark:text-gray-300'>
-                                  <RichTextRenderer
-                                    htmlString={item?.content_text}
-                                    maxChars={150}
-                                  />
+                  {isExpanded && (
+                    <div className='mt-2 space-y-2 pl-8'>
+                      {enrichedContents.length > 0 ? (
+                        enrichedContents
+                          .sort((a: any, b: any) => a.display_order - b.display_order)
+                          .map((item: any) => (
+                            <div
+                              key={item.uuid}
+                              className='group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-md p-4 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700'
+                            >
+                              <div className='flex flex-col gap-1'>
+                                <div className='flex items-center gap-2'>
+                                  {getContentTypeIcon(item.content_type_key)}
+                                  <span className='font-medium text-gray-900 dark:text-gray-100'>
+                                    {item.title}
+                                  </span>
                                 </div>
-                              )}
-                              {item.file_url && (
-                                <a
-                                  href={item.file_url}
-                                  target='_blank'
-                                  rel='noopener noreferrer'
-                                  className='text-xs text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-500'
-                                >
-                                  View File
-                                </a>
-                              )}
+                                <div className='line-clamp-2 text-xs text-gray-600 dark:text-gray-400'>
+                                  <RichTextRenderer htmlString={item?.description} maxChars={150} />
+                                </div>
+                                {item.content_text && (
+                                  <div className='text-xs text-gray-700 dark:text-gray-300'>
+                                    <RichTextRenderer
+                                      htmlString={item?.content_text}
+                                      maxChars={150}
+                                    />
+                                  </div>
+                                )}
+                                {item.file_url && (
+                                  <a
+                                    href={item.file_url}
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    className='text-xs text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-500'
+                                  >
+                                    View File
+                                  </a>
+                                )}
+                              </div>
+
+                              {/* Dropdown for content actions */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant='ghost'
+                                    size='icon'
+                                    className='cursor-pointer opacity-0 transition-opacity group-hover:opacity-100'
+                                    aria-label='More actions'
+                                  >
+                                    <MoreVertical className='h-4 w-4' />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align='end'>
+                                  <DropdownMenuItem onClick={() => onEditLessonContent(item)}>
+                                    <PenLine className='mr-1 h-4 w-4' />
+                                    Edit Content
+                                  </DropdownMenuItem>
+
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className='text-red-600'
+                                    onClick={() =>
+                                      onDeleteLessonContent(courseId, item.lesson_uuid, item.uuid)
+                                    }
+                                  >
+                                    <Trash className='mr-1 h-4 w-4' />
+                                    Delete Content
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
+                          ))
+                      ) : (
+                        <div className='flex items-center gap-4 px-2 py-2'>
+                          <p className='text-muted-foreground text-sm'>No content items yet.</p>
 
-                            {/* Dropdown for content actions */}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant='ghost'
-                                  size='icon'
-                                  className='cursor-pointer opacity-0 transition-opacity group-hover:opacity-100'
-                                  aria-label='More actions'
-                                >
-                                  <MoreVertical className='h-4 w-4' />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align='end'>
-                                <DropdownMenuItem onClick={() => onEditLessonContent(item)}>
-                                  <PenLine className='mr-1 h-4 w-4' />
-                                  Edit Content
-                                </DropdownMenuItem>
-
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className='text-red-600'
-                                  onClick={() =>
-                                    onDeleteLessonContent(courseId, item.lesson_uuid, item.uuid)
-                                  }
-                                >
-                                  <Trash className='mr-1 h-4 w-4' />
-                                  Delete Content
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        ))
-                    ) : (
-                      <div className='flex items-center gap-4 px-2 py-2'>
-                        <p className='text-muted-foreground text-sm'>No content items yet.</p>
-
-                        <Button
-                          onClick={() => onAddLessonContent(lesson)}
-                          variant='secondary'
-                          size='sm'
-                          className='flex items-center gap-1'
-                        >
-                          <PlusCircle className='h-4 w-4' />
-                          Add Content
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                          <Button
+                            onClick={() => onAddLessonContent(lesson)}
+                            variant='secondary'
+                            size='sm'
+                            className='flex items-center gap-1'
+                          >
+                            <PlusCircle className='h-4 w-4' />
+                            Add Content
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
       )}
 
@@ -650,6 +636,19 @@ function LessonCreationForm({
           toast.success(data?.message);
           onCancel();
         },
+        onError: data => {
+          // @ts-ignore
+          if (data?.error) {
+            // @ts-ignore
+            const errorMessage = data.error as string || data?.message;
+
+            if (typeof errorMessage === "string" && errorMessage.includes("lessons_course_uuid_lesson_number_key")) {
+              toast.error("Duplicate lesson number found.");
+            } else {
+              toast.error("An unexpected error occurred.");
+            }
+          }
+        }
       }
     );
   };
@@ -667,9 +666,9 @@ function LessonCreationForm({
             render={({ field }) => (
               <FormItem>
                 <div className='mb-2 flex flex-col gap-2'>
-                  <FormLabel>Lesson Number #</FormLabel>
+                  <FormLabel>Skill Number #</FormLabel>
                   <FormControl>
-                    <Input placeholder='Enter an order number for your lesson' {...field} />
+                    <Input placeholder='Enter an order number for your skill' {...field} />
                   </FormControl>
                   <FormMessage />
                 </div>
@@ -682,9 +681,9 @@ function LessonCreationForm({
             name='title'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Lesson Title</FormLabel>
+                <FormLabel>Skill Title</FormLabel>
                 <FormControl>
-                  <Input placeholder='Enter lesson title' {...field} />
+                  <Input placeholder='Enter skill title' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -696,7 +695,7 @@ function LessonCreationForm({
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Lesson Description</FormLabel>
+                <FormLabel>Skill Description</FormLabel>
                 <FormControl>
                   <SimpleEditor value={field.value} onChange={field.onChange} />
                 </FormControl>
@@ -710,7 +709,7 @@ function LessonCreationForm({
             name='objectives'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Lesson Objectives</FormLabel>
+                <FormLabel>Skill Objectives</FormLabel>
                 <FormControl>
                   <SimpleEditor value={field.value} onChange={field.onChange} />
                 </FormControl>
@@ -810,7 +809,7 @@ function LessonCreationForm({
             Cancel
           </Button>
           <Button type='submit' className='w-[120px]'>
-            {createLessonMutation.isPending ? <Spinner /> : 'Create Lesson'}
+            {createLessonMutation.isPending ? <Spinner /> : 'Create Skill'}
           </Button>
         </div>
       </form>
@@ -937,9 +936,9 @@ function LessonEditingForm({
             render={({ field }) => (
               <FormItem>
                 <div className='mb-2 flex flex-col gap-2'>
-                  <FormLabel>Lesson Number #</FormLabel>
+                  <FormLabel>Skill Number #</FormLabel>
                   <FormControl>
-                    <Input placeholder='Enter an order number for your lesson' {...field} />
+                    <Input placeholder='Enter an order number for your skill' {...field} />
                   </FormControl>
                   <FormMessage />
                 </div>
@@ -952,9 +951,9 @@ function LessonEditingForm({
             name='title'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Lesson Title</FormLabel>
+                <FormLabel>Skill Title</FormLabel>
                 <FormControl>
-                  <Input placeholder='Enter lesson title' {...field} />
+                  <Input placeholder='Enter skill title' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -1066,7 +1065,7 @@ function LessonEditingForm({
             Cancel
           </Button>
           <Button type='submit' className='w-[120px]'>
-            {updateLessonMutation.isPending ? <Spinner /> : 'Edit Lesson'}
+            {updateLessonMutation.isPending ? <Spinner /> : 'Edit Skill'}
           </Button>
         </div>
       </form>
@@ -1076,6 +1075,7 @@ function LessonEditingForm({
 
 interface LessonContentFormProps {
   onCancel: () => void;
+  onSuccess?: () => void;
   className?: string;
   courseId?: string | number;
   lessonId?: string | number;
@@ -1199,13 +1199,13 @@ function LessonContentForm({
           },
           {
             onSuccess: data => {
+              onCancel();    // ✅ always close modal afterward
               qc.invalidateQueries({
                 queryKey: getLessonContentQueryKey({
                   path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
                 }),
               });
               toast.success(data?.message);
-              onCancel();
             },
           }
         );
@@ -1236,7 +1236,7 @@ function LessonContentForm({
   const isPending = createLessonContent.isPending || updateLessonContent.isPending;
 
   return (
-    <Form {...form}>
+    <Form {...form}  >
       <form
         onSubmit={form.handleSubmit(onSubmit, handleSubmitError)}
         className={`space-y-8 ${className ?? ''}`}
@@ -1440,9 +1440,9 @@ function LessonContentForm({
                 {isEditMode ? 'Updating...' : 'Creating...'}
               </>
             ) : isEditMode ? (
-              'Update Lesson Content'
+              'Update Skill Content'
             ) : (
-              'Create Lesson Content'
+              'Create Skill Content'
             )}
           </Button>
         </div>
@@ -2107,10 +2107,10 @@ function LessonDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
         <DialogHeader className='border-b px-6 py-4'>
-          <DialogTitle className='text-xl'>Create New Lesson</DialogTitle>
+          <DialogTitle className='text-xl'>Create New Skill</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Fill in the lesson details below. You&apos;ll be able to add a quiz after you&apos;ve
-            created the lesson.
+            Fill in the skill details below. You&apos;ll be able to add assessment rubric, quizzes and assignments after you&apos;ve
+            created the skill.
           </DialogDescription>
         </DialogHeader>
 
@@ -2140,16 +2140,18 @@ function LessonContentDialog({
   const isEditMode = !!contentId;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(isOpen) => {
+      if (!isOpen) onCancel();
+    }}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>
-            {isEditMode ? 'Edit Lesson Content' : 'Create New Lesson Content'}
+            {isEditMode ? 'Edit Skill Content' : 'Create New Skill Content'}
           </DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
             {isEditMode
-              ? 'Update the details of your lesson content below.'
-              : 'Fill in the contents of your lesson below.'}
+              ? 'Update the details of your skill content below.'
+              : 'Fill in the contents of your skill below.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -2181,10 +2183,11 @@ function EditLessonDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='flex max-w-6xl flex-col p-0'>
         <DialogHeader className='border-b px-6 py-4'>
-          <DialogTitle className='text-xl'>Edit Lesson</DialogTitle>
+          <DialogTitle className='text-xl'>Edit Skill</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Fill in the lesson details below.
+            Edit the skill attributes such as title, description, and duration. Your changes will be reflected immediately.
           </DialogDescription>
+
         </DialogHeader>
 
         <ScrollArea className='h-[calc(90vh-8rem)]'>

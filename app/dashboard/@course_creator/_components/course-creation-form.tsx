@@ -248,7 +248,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           duration_hours: data?.duration_hours,
           duration_minutes: data?.duration_minutes,
           class_limit: data?.class_limit,
-          price: data?.price,
           minimum_training_fee: data?.minimum_training_fee,
           creator_share_percentage: data?.creator_share_percentage,
           instructor_share_percentage: data?.instructor_share_percentage,
@@ -320,7 +319,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               duration_hours: 0,
               duration_minutes: 0,
               class_limit: data?.class_limit,
-              price: data?.price,
               minimum_training_fee: data?.minimum_training_fee,
               creator_share_percentage: data?.creator_share_percentage,
               instructor_share_percentage: data?.instructor_share_percentage,
@@ -455,7 +453,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
           {/* Pricing */}
           <FormSection title='Course Pricing' description='Set the pricing details for your course'>
-            <div className='space-y-4'>
+            <div className='w-full space-y-4'>
               <FormField
                 control={form.control}
                 name='is_free'
@@ -472,40 +470,13 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 )}
               />
 
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <FormField
-                  control={form.control}
-                  name='price'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Original Price</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='0.01' {...field} disabled={isFree} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='sale_price'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sale Price</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='0.01' {...field} disabled={isFree} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+              {/* Full width form fields */}
+              <div className='w-full space-y-4'>
                 <FormField
                   control={form.control}
                   name='currency'
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className='w-full'>
                       <FormLabel>Currency</FormLabel>
                       <Select
                         onValueChange={field.onChange}
@@ -513,7 +484,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                         disabled={isFree}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className='w-full'>
                             <SelectValue placeholder='Select currency' />
                           </SelectTrigger>
                         </FormControl>
@@ -533,11 +504,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             </div>
           </FormSection>
 
+
           <FormSection
             title='Monetization Controls'
             description='Configure minimum training fee expectations and the revenue split inherited by every instructor.'
           >
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+            <div className='flex flex-col gap-4'>
               <FormField
                 control={form.control}
                 name='minimum_training_fee'
@@ -555,33 +527,35 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name='creator_share_percentage'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Creator Share (%)</FormLabel>
-                    <FormControl>
-                      <Input type='number' min='0' max='100' step='1' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <FormField
+                  control={form.control}
+                  name='creator_share_percentage'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Creator Share (%)</FormLabel>
+                      <FormControl>
+                        <Input type='number' min='0' max='100' step='1' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name='instructor_share_percentage'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Instructor Share (%)</FormLabel>
-                    <FormControl>
-                      <Input type='number' min='0' max='100' step='1' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name='instructor_share_percentage'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Instructor Share (%)</FormLabel>
+                      <FormControl>
+                        <Input type='number' min='0' max='100' step='1' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <FormField

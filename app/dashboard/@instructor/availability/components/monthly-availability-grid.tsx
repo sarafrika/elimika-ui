@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ChevronLeft, ChevronRight, Clock, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ClassData } from '../../trainings/create-new/academic-period-form';
-import { AvailabilityData, CalendarEvent } from '../page';
+import { AvailabilityData, CalendarEvent } from './types';
 
 interface MonthlyAvailabilityGridProps {
   availabilityData: AvailabilityData;

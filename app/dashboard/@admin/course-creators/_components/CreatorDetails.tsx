@@ -103,7 +103,7 @@ export default function CourseCreatorDetails({
               <div>
                 <p className='text-muted-foreground text-sm font-medium'>Date of birth</p>
                 <p className='text-sm'>
-                  {courseCreatorInfo?.data?.dob.toDateString() || 'Not specified'}
+                  {/* {courseCreatorInfo?.data?.dob.toDateString() || 'Not specified'} */}
                 </p>
               </div>
             </div>

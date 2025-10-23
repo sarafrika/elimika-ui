@@ -1,3 +1,3 @@
 export default function DashboardOverviewSlot() {
-  return <div></div>;
+  return null;
 }

@@ -19,6 +19,14 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { useInstructor } from '@/context/instructor-context';
+import { AvailabilityTypeEnum, LocalTime } from '@/services/client';
+import {
+  createAvailabilitySlotMutation,
+  getInstructorAvailabilityQueryKey,
+  getScheduledInstanceQueryKey,
+  scheduleClassMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
@@ -33,15 +41,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useInstructor } from '../../../../../context/instructor-context';
-import { AvailabilityTypeEnum, LocalTime } from '../../../../../services/client';
-import {
-  createAvailabilitySlotMutation,
-  getInstructorAvailabilityQueryKey,
-  getScheduledInstanceQueryKey,
-  scheduleClassMutation,
-} from '../../../../../services/client/@tanstack/react-query.gen';
-import { CalendarEvent } from '../page';
+import { CalendarEvent } from './types';
 
 export type EventType = 'booked' | 'unavailable' | 'available' | 'reserved';
 

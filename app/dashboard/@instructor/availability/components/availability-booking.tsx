@@ -23,7 +23,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Clock, Filter, MapPin, Phone, Search, Video } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { AvailabilityData } from '../page';
+import { AvailabilityData } from './types';
 
 interface AvailabilityBookingProps {
   availabilityData: AvailabilityData;

@@ -1,4 +1,3 @@
-// hooks/useDifficultyLevels.ts
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { getAllDifficultyLevelsOptions } from '../services/client/@tanstack/react-query.gen';
