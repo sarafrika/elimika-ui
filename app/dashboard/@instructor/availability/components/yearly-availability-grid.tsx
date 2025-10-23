@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Calendar, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { AvailabilityData, AvailabilitySlot } from '../page';
+import { AvailabilityData, AvailabilitySlot } from './types';
 
 interface YearlyAvailabilityGridProps {
   availabilityData: AvailabilityData;

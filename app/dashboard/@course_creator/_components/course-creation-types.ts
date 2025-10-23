@@ -23,8 +23,6 @@ export const courseCreationSchema = z.object({
   banner_url: z.any().optional(),
   intro_video_url: z.any().optional(),
   is_free: z.boolean().default(false),
-  price: z.coerce.number().optional(),
-  sale_price: z.coerce.number().optional(),
   currency: z.string().optional(),
   prerequisites: z.string().max(999, 'Objectives must not exceed 1000 characters'),
   categories: z.string().array(),

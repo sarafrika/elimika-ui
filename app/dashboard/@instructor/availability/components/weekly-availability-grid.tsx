@@ -41,7 +41,7 @@ export function WeeklyAvailabilityGrid({
     const slots = [];
     for (let hour = 5; hour < 24; hour++) {
       slots.push(`${hour.toString().padStart(2, '0')}:00`);
-      slots.push(`${hour.toString().padStart(2, '0')}:30`);
+      // slots.push(`${hour.toString().padStart(2, '0')}:30`);
     }
     return slots;
   }
@@ -406,35 +406,35 @@ export function WeeklyAvailabilityGrid({
                                 // ✅ Available block
                                 availabilitySlot && isAvailabilityStart
                                   ? {
-                                      height: `${getAvailabilitySpanHeight(availabilitySlot) * 36 + (getAvailabilitySpanHeight(availabilitySlot) - 1) * 8}px`,
+                                    height: `${getAvailabilitySpanHeight(availabilitySlot) * 36 + (getAvailabilitySpanHeight(availabilitySlot) - 1) * 8}px`,
+                                    zIndex: 1,
+                                    position: 'absolute',
+                                    top: '4px',
+                                    left: '4px',
+                                    right: '4px',
+                                    backgroundColor: 'rgba(34,197,94,0.3)', // green tint
+                                  }
+                                  : // ✅ Unavailable block
+                                  unavailableSlot && isUnavailableStart
+                                    ? {
+                                      height: `${getUnavailableSpanHeight(unavailableSlot) * 36 + (getUnavailableSpanHeight(unavailableSlot) - 1) * 8}px`,
                                       zIndex: 1,
                                       position: 'absolute',
                                       top: '4px',
                                       left: '4px',
                                       right: '4px',
-                                      backgroundColor: 'rgba(34,197,94,0.3)', // green tint
+                                      backgroundColor: 'rgba(239,68,68,0.3)', // red tint
                                     }
-                                  : // ✅ Unavailable block
-                                    unavailableSlot && isUnavailableStart
-                                    ? {
-                                        height: `${getUnavailableSpanHeight(unavailableSlot) * 36 + (getUnavailableSpanHeight(unavailableSlot) - 1) * 8}px`,
-                                        zIndex: 1,
+                                    : // ✅ Event block
+                                    eventInSlot && isEventStart
+                                      ? {
+                                        height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) - 1) * 8}px`,
+                                        zIndex: 10,
                                         position: 'absolute',
                                         top: '4px',
                                         left: '4px',
                                         right: '4px',
-                                        backgroundColor: 'rgba(239,68,68,0.3)', // red tint
                                       }
-                                    : // ✅ Event block
-                                      eventInSlot && isEventStart
-                                      ? {
-                                          height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) - 1) * 8}px`,
-                                          zIndex: 10,
-                                          position: 'absolute',
-                                          top: '4px',
-                                          left: '4px',
-                                          right: '4px',
-                                        }
                                       : {}
                               }
                             >

@@ -31,11 +31,11 @@ export const SkillsFundWalletCard = ({ wallet, user, role }: SkillsFundWalletCar
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-4'>
             <Avatar className='h-16 w-16'>
-              <AvatarImage src={user?.profile_image_url ?? ''} alt={user.full_name} />
+              <AvatarImage src={user?.profile_image_url ?? ''} alt={user?.full_name || "full name"} />
               <AvatarFallback>{user?.full_name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <h3>{user.full_name}</h3>
+              <h3>{user?.full_name ?? ""}</h3>
               <p className='text-muted-foreground'>{user?.email ?? ''}</p>
               <Badge variant='secondary' className='mt-2'>
                 {role}

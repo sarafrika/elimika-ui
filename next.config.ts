@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    domains: ['api.elimika.sarafrika.com', 'cdn.sarafrika.com'],
+    domains: ['api.elimika.sarafrika.com', 'cdn.sarafrika.com', "images.unsplash.com"],
   },
   typescript: {
     ignoreBuildErrors: true,

@@ -1,6 +1,8 @@
 import {
   Award,
+  BadgeDollarSign,
   Bell,
+  BellIcon,
   BoltIcon,
   Book,
   BookOpen,
@@ -22,7 +24,9 @@ import {
   ListChecks,
   LucideBookUser,
   Mails,
+  MessageCircle,
   PlusCircle,
+  School,
   Settings,
   ShieldCheck,
   Star,
@@ -376,6 +380,11 @@ export default {
       icon: LayoutDashboard,
     },
     {
+      title: 'Course Creators',
+      url: '/dashboard/course-creators',
+      icon: PlusCircle,
+    },
+    {
       title: 'Instructors',
       url: '/dashboard/instructors',
       icon: Users,
@@ -389,6 +398,31 @@ export default {
       title: 'Users',
       url: '/dashboard/users',
       icon: UsersIcon,
+    },
+    {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: BookOpen,
+    },
+    {
+      title: 'Clases and Schedules',
+      url: '/dashboard/classes',
+      icon: School,
+    },
+    {
+      title: 'Transactions',
+      url: '/dashboard/transactions',
+      icon: BadgeDollarSign,
+    },
+    {
+      title: 'Notifications',
+      url: '/dashboard/notifications',
+      icon: BellIcon,
+    },
+    {
+      title: 'Help & Support',
+      url: '/dashboard/support',
+      icon: MessageCircle,
     },
   ],
   organisation_user: [

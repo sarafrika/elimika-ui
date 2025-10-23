@@ -13,6 +13,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUserProfile } from '@/context/profile-context';
+import { useStudent } from '@/context/student-context';
+import { CertificateData, certificatePDF } from '@/lib/certificate';
+import { useQuery } from '@tanstack/react-query';
 import {
   Award,
   Clock,
@@ -27,10 +31,15 @@ import {
   Trophy,
   Verified,
 } from 'lucide-react';
-import { useState } from 'react';
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useUserProfile } from '../../../../../context/profile-context';
-import { useStudent } from '../../../../../context/student-context';
+import { verifyCertificateOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import { CertificateErrorModal } from './certificate-error-modal';
+import { CertificateSuccessModal } from './certificate-success-modal';
+pdfMake.vfs = pdfFonts.vfs;
+
 
 // Mock certificates data
 export const CERTIFICATES_DATA = {
@@ -45,6 +54,7 @@ export const CERTIFICATES_DATA = {
   certificates: [
     {
       id: 'CERT-2024-001',
+      certificateNumber: "CERT-2024-JAV-001234",
       title: 'Data Science Fundamentals',
       issuer: 'Springfield University',
       instructor: 'Dr. Lisa Chen',
@@ -69,6 +79,7 @@ export const CERTIFICATES_DATA = {
     },
     {
       id: 'CERT-2024-002',
+      certificateNumber: "CERT-2024-JAV-001234",
       title: 'Advanced React Development',
       issuer: 'Springfield University',
       instructor: 'John Smith',
@@ -93,6 +104,7 @@ export const CERTIFICATES_DATA = {
     },
     {
       id: 'BADGE-2024-003',
+      certificateNumber: "CERT-2024-JAV-001234",
       title: 'Digital Marketing Strategy',
       issuer: 'Springfield University',
       instructor: 'Mike Wilson',
@@ -117,6 +129,7 @@ export const CERTIFICATES_DATA = {
     },
     {
       id: 'SKILL-2024-004',
+      certificateNumber: "CERT-2024-JAV-001234",
       title: 'Python Programming Specialist',
       issuer: 'Tech Skills Consortium',
       instructor: 'Various Instructors',
@@ -178,6 +191,26 @@ export default function CertificatesPage() {
   const studentData = useStudent();
   const profile = useUserProfile();
 
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
+  const [openErrorModal, setOpenErrorModal] = useState(false);
+  const [verifyCertificateNumber, setVerifyCertificateNumber] = useState<string | null>(null)
+
+  const { data, isError, isSuccess } = useQuery({
+    ...verifyCertificateOptions({
+      path: { certificateNumber: verifyCertificateNumber as string },
+    }),
+    enabled: !!verifyCertificateNumber,
+  });
+
+  useEffect(() => {
+    if (isSuccess) {
+      if (data?.success) setOpenSuccessModal(true);
+      else setOpenErrorModal(true);
+    }
+    if (isError) setOpenErrorModal(true);
+  }, [isSuccess, isError, data]);
+
+
   const { student, certificates, inProgress } = CERTIFICATES_DATA;
 
   const filteredCertificates = certificates.filter(cert => {
@@ -220,9 +253,12 @@ export default function CertificatesPage() {
     }
   };
 
-  const handleDownload = (certificateId: string) => {
-    toast.message(`Downloading certificate: ${certificateId}`);
-    // Implement download functionality
+  const handleDownloadCertificate = (cert: CertificateData) => {
+    const doc = certificatePDF(cert);
+    const pdf = pdfMake.createPdf(doc);
+    pdf.download(
+      `Elimika-${cert.id ? cert.id + "-" : ""}${new Date().getTime()}.pdf`
+    );
   };
 
   const handleShare = (certificateId: string) => {
@@ -230,8 +266,8 @@ export default function CertificatesPage() {
     // Implement share functionality
   };
 
-  const handleVerify = (verificationUrl: string) => {
-    window.open(verificationUrl, '_blank');
+  const handleVerify = (certificateNumber: string) => {
+    setVerifyCertificateNumber(certificateNumber)
   };
 
   return (
@@ -303,10 +339,10 @@ export default function CertificatesPage() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className='mb-3 grid w-full grid-cols-3'>
+          <TabsList className='mb-3 grid w-full grid-cols-2'>
             <TabsTrigger value='earned'>Earned Certificates</TabsTrigger>
             <TabsTrigger value='in-progress'>In Progress</TabsTrigger>
-            <TabsTrigger value='gallery'>Certificate Gallery</TabsTrigger>
+            {/* <TabsTrigger value='gallery'>Certificate Gallery</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value='earned' className='space-y-6'>
@@ -343,10 +379,6 @@ export default function CertificatesPage() {
                   <SelectItem value='Skill Certification'>Skill Certification</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant='outline'>
-                <Download className='mr-2 h-4 w-4' />
-                Download All
-              </Button>
             </div>
 
             {/* Certificates Grid */}
@@ -450,7 +482,7 @@ export default function CertificatesPage() {
                           variant='outline'
                           size='sm'
                           className='flex-1'
-                          onClick={() => handleDownload(certificate.id)}
+                          onClick={() => handleDownloadCertificate(certificate as any)}
                         >
                           <Download className='mr-1 h-3 w-3' />
                           Download
@@ -466,7 +498,7 @@ export default function CertificatesPage() {
                         <Button
                           variant='outline'
                           size='sm'
-                          onClick={() => handleVerify(certificate.verificationUrl)}
+                          onClick={() => handleVerify(certificate.certificateNumber)}
                         >
                           <ExternalLink className='mr-1 h-3 w-3' />
                           Verify
@@ -615,7 +647,7 @@ export default function CertificatesPage() {
                           <Eye className='mr-1 h-3 w-3' />
                           View
                         </Button>
-                        <Button variant='outline' size='sm'>
+                        <Button onClick={() => handleDownloadCertificate(certificate as any)} variant='outline' size='sm'>
                           <Download className='h-3 w-3' />
                         </Button>
                         <Button variant='outline' size='sm'>
@@ -629,6 +661,17 @@ export default function CertificatesPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+        <CertificateSuccessModal
+          open={openSuccessModal}
+          onOpenChange={setOpenSuccessModal}
+          data={data}
+        />
+        <CertificateErrorModal
+          open={openErrorModal}
+          onOpenChange={setOpenErrorModal}
+          message={data?.message}
+        />
       </div>
     </div>
   );

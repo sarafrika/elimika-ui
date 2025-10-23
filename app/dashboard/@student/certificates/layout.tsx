@@ -10,9 +10,9 @@ export default function CertificateLayout({ children }: CertificateLayoutProps) 
       <div className='flex w-full items-center justify-between lg:max-w-[75%]'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>My Certificates</h2>
-          <p className='text-muted-foreground'>
+          <div className='text-muted-foreground'>
             <p className='mt-1 text-gray-600'>Academic Achievements & Certifications </p>
-          </p>
+          </div>
         </div>
       </div>
       <Separator />

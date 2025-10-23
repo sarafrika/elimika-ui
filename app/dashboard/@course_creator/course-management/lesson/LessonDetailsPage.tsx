@@ -41,6 +41,7 @@ import {
   getContentTypeIcon,
   LessonContentDialog,
 } from '../../_components/lesson-management-form';
+import { CustomLoadingState } from '../../_components/loading-state';
 import { QuestionDialog, QuizDialog, QuizFormValues } from '../../_components/quiz-management-form';
 import QuizQuestions from './quizQuestions';
 
@@ -52,7 +53,7 @@ const LessonDetailsPage = () => {
   const qc = useQueryClient();
 
   // get lesson details
-  const { data } = useQuery(
+  const { data, isLoading } = useQuery(
     getCourseLessonOptions({
       path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
     })
@@ -87,7 +88,7 @@ const LessonDetailsPage = () => {
     return Array.isArray(content) ? content : [];
   }, [contentTypeList]);
 
-  const { data: lessonContent } = useQuery(
+  const { data: lessonContent, isLoading: contentIsLoading } = useQuery(
     getLessonContentOptions({
       path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
     })
@@ -139,7 +140,7 @@ const LessonDetailsPage = () => {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   // Quiz management
@@ -202,10 +203,16 @@ const LessonDetailsPage = () => {
     );
   };
 
+  const loading = isLoading || contentIsLoading
+
+  if (loading) {
+    return <CustomLoadingState subHeading='Loading skills and resources' />;
+  }
+
   return (
-    <div className='space-y-6'>
+    <div className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
       <div className='mb-6 flex items-end justify-between'>
-        <div className='flex flex-col gap-1.5'>
+        <div className='flex flex-col gap-2'>
           <h1 className='text-2xl font-semibold'>{lesson?.title}</h1>
           <div className='text-muted-foreground mt-1 text-[15px]'>
             <RichTextRenderer htmlString={lesson?.description} />
@@ -225,7 +232,7 @@ const LessonDetailsPage = () => {
       <Card>
         <CardHeader>
           <div className='flex flex-row items-center justify-between gap-4'>
-            <p className='text-lg font-semibold'>Lesson Content</p>
+            <p className='text-lg font-semibold'>Skill Content</p>
             <Button
               onClick={handleAddLessonContent}
               variant='secondary'
@@ -238,11 +245,11 @@ const LessonDetailsPage = () => {
           </div>
           <p className='text-muted-foreground text-sm'>
             Browse and manage the instructional materials, text, files, and other resources included
-            in this lesson.
+            in this skill.
           </p>
         </CardHeader>
 
-        <div className='mx-3'>
+        <div className='space-y-6 mx-3'>
           {contentItems.length > 0 ? (
             contentItems.map((item: any) => {
               const type = contentTypeData.find((ct: any) => ct.uuid === item.content_type_uuid);
@@ -251,7 +258,7 @@ const LessonDetailsPage = () => {
               return (
                 <div
                   key={item.uuid}
-                  className='group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-md p-4 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700'
+                  className='group flex text-muted-foreground cursor-default items-center justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
                 >
                   <div className='flex flex-col gap-1'>
                     <div className='flex items-center gap-2'>
@@ -339,7 +346,7 @@ const LessonDetailsPage = () => {
       <Card>
         <CardHeader className='mt-4'>
           <div className='flex flex-row items-center justify-between gap-4'>
-            <p className='text-lg font-semibold'>Lesson Quizzes</p>
+            <p className='text-lg font-semibold'>Skill Quizzes</p>
             <Button
               onClick={handleAddQuiz}
               variant='secondary'
@@ -351,32 +358,32 @@ const LessonDetailsPage = () => {
             </Button>
           </div>
           <p className='text-muted-foreground text-sm'>
-            Manage and review quizzes assigned to this lesson. Use quizzes to assess learners&apos;
+            Manage and review quizzes assigned to this skill. Use quizzes to assess learners&apos;
             understanding and reinforce key concepts.
           </p>
         </CardHeader>
 
         <CardContent>
-          <div className='mt-1 flex w-full flex-col gap-2 space-y-2'>
+          <div className='w-full mt-1 flex flex-col gap-2 space-y-2'>
             {quizzesData?.data?.content?.map((quiz: any, i: any) => (
               <div
                 key={i}
-                className='group relative flex flex-col gap-2 border-b pb-4 last:border-none last:pb-4'
+                className='w-full group flex text-muted-foreground cursor-default items-start justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
               >
-                <div className='flex flex-row gap-2'>
+                <div className='w-full flex flex-row gap-2'>
                   <div>
                     <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
                   </div>
                   <div className='flex w-full flex-col gap-2'>
                     <h3 className='font-semibold'>{quiz.title}</h3>
                     <RichTextRenderer
-                      htmlString={(quiz?.description as string) || 'No lesson provided'}
+                      htmlString={(quiz?.description as string) || 'No skill provided'}
                     />
-                    <div className='flex w-full flex-row items-center'>
-                      <h3 className='w-1/2 font-semibold'>
+                    <div className='w-full grid grid-cols-1 md:grid-cols-2'>
+                      <h3 className='font-semibold'>
                         <span>📅 Time Limit:</span> {quiz.time_limit_display}
                       </h3>
-                      <p className='w-1/2'>Passing score: {quiz.passing_score}</p>
+                      <p className=''>Passing score: {quiz.passing_score}</p>
                     </div>
 
                     {/* Toggle Button */}
@@ -436,7 +443,7 @@ const LessonDetailsPage = () => {
                 <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
                 <p className='font-medium'>No Quiz created yet</p>
                 <p className='mt-1 text-sm'>
-                  Start by creating quizes for your lessons under this course.
+                  Start by creating quizes for your skill under this course.
                 </p>
               </div>
             )}
@@ -462,8 +469,8 @@ const LessonDetailsPage = () => {
       <DeleteModal
         open={openDeleteContentModal}
         setOpen={setOpenDeleteContentModal}
-        title='Delete Leson Content'
-        description='Are you sure you want to delete this lesson content? This action cannot be undone.'
+        title='Delete Skill Content'
+        description='Are you sure you want to delete this skill content? This action cannot be undone.'
         onConfirm={confirmDeleteLessonContent}
         isLoading={deleteLessonContent.isPending}
         confirmText='Delete Content'
@@ -473,7 +480,7 @@ const LessonDetailsPage = () => {
       <QuizDialog
         isOpen={openEditQuizModal}
         setOpen={setOpenEditQuizModal}
-        lessonId={editingLessonId as string}
+        courseId={courseId as string}
         editingQuiz={editingQuizId as string}
         initialValues={editingQuizData as any}
         onCancel={() => {

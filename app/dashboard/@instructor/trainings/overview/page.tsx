@@ -1,17 +1,8 @@
 'use client';
 
 import DeleteModal from '@/components/custom-modals/delete-modal';
-import PageLoader from '@/components/page-loader';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import {
@@ -21,24 +12,18 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Calendar,
-  EyeIcon,
   FilePenIcon,
-  LucideFileWarning,
-  MoreVertical,
-  PenIcon,
-  PlusIcon,
+  PlusIcon
 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { TrainingClassComponent } from '../../../_components/training-class-card';
 import {
   ClassDialog,
   ScheduleDialog,
   TimetableScheduleDialog,
 } from '../../_components/class-management-form';
-import ClassCourseDisplay from '../component/class-course-dislay';
 
 export default function TrainingsPage() {
   const router = useRouter();
@@ -160,79 +145,7 @@ export default function TrainingsPage() {
         </div>
       )}
 
-      {isLoading || isFetching ? (
-        <PageLoader />
-      ) : (
-        <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
-          {classes?.map((cl: any) => (
-            <div
-              key={cl.uuid}
-              className='relative min-h-[250px] rounded-lg border bg-white px-6 py-8 shadow-sm transition hover:shadow-md'
-            >
-              {/* Actions dropdown */}
-              <div className='absolute top-6 right-2 flex flex-row items-center gap-4'>
-                <Badge variant={cl.is_active === true ? 'default' : 'secondary'}>
-                  {cl.is_active ? 'Active Class' : 'Inactive Class'}
-                </Badge>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='ghost' size='icon' aria-label='Open menu'>
-                      <MoreVertical className='h-4 w-4' />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/dashboard/trainings/overview/${cl.uuid}`}
-                        className='flex w-full items-center'
-                      >
-                        <EyeIcon className='mr-2 h-4 w-4' />
-                        Preview
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <div
-                        onClick={() => router.push(`/dashboard/trainings/create-new?id=${cl.uuid}`)}
-                        className='flex w-full items-center'
-                      >
-                        <PenIcon className='mr-2 h-4 w-4' />
-                        Edit Class
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant='default'
-                      onClick={() => openTimetableSchedule(cl.uuid)}
-                    >
-                      <Calendar className='mr-2 h-4 w-4' />
-                      Timetable Schedule
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant='default'
-                      onClick={() => openRecurrentSchedule(cl.uuid)}
-                    >
-                      <Calendar className='mr-2 h-4 w-4' />
-                      Schedule Recurring
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant='destructive'
-                      onClick={() => openDeleteModal(cl.uuid)}
-                    >
-                      <LucideFileWarning className='mr-2 h-4 w-4' />
-                      Deactivate
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className='mt-12'>
-                <ClassCourseDisplay courseUuid={cl.course_uuid} classInfo={cl} />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <TrainingClassComponent />
 
       <ClassDialog
         isOpen={openAddClass}

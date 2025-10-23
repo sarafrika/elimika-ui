@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUserProfile } from '@/context/profile-context';
+import { getInstructorAvailabilityOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
@@ -19,12 +21,10 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useUserProfile } from '../../../../../context/profile-context';
-import { getInstructorAvailabilityOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { ClassData } from '../../trainings/create-new/academic-period-form';
-import { AvailabilityData } from '../page';
 import { AvailabilityBooking } from './availability-booking';
 import { MonthlyAvailabilityGrid } from './monthly-availability-grid';
+import { AvailabilityData } from './types';
 import { WeeklyAvailabilityGrid } from './weekly-availability-grid';
 import { YearlyAvailabilityGrid } from './yearly-availability-grid';
 

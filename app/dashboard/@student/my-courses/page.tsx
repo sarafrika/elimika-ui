@@ -1,17 +1,17 @@
 'use client';
 
+import { CustomPagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  getAllCoursesOptions,
+  listCatalogItemsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { CustomPagination } from '../../../../components/pagination';
-import { Skeleton } from '../../../../components/ui/skeleton';
-import {
-  getAllCoursesOptions,
-  listCatalogItemsOptions,
-} from '../../../../services/client/@tanstack/react-query.gen';
 import { CourseCard } from '../../_components/course-card';
 
 export default function MyCoursesPage() {

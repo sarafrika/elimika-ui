@@ -501,8 +501,6 @@ export default function CourseCreationPage() {
                 onAddLessonContent={openAddContentModal}
                 onEditLessonContent={openEditContentModal}
                 onDeleteLessonContent={handleDeleteContent}
-                // assignment
-                onAddAssignment={openAddAssignmentModal}
               />
 
               <LessonDialog
@@ -521,7 +519,7 @@ export default function CourseCreationPage() {
                   lessonId={selectedLesson?.uuid}
                   initialValues={lessonInitialValues}
                   onCancel={() => { }}
-                  onSuccess={data => {
+                  onSuccess={(data) => {
                     setCreatedCourseId(data?.uuid);
 
                     queryClient.invalidateQueries({
@@ -745,20 +743,6 @@ export default function CourseCreationPage() {
                       <span className='font-medium'>Free Course:</span>{' '}
                       {course?.data?.is_free ? 'Yes' : 'No'}
                     </p>
-                    {!course?.data?.is_free && (
-                      <div className='space-y-1'>
-                        <p>
-                          <span className='font-medium'>Original Price:</span> {course?.data?.price}{' '}
-                          KES
-                        </p>
-                        <p>
-                          <span className='font-medium'>Sale Price:</span>{' '}
-                          <span className='font-semibold text-green-600'>
-                            {course?.data?.price} KES
-                          </span>
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </Card>
 
