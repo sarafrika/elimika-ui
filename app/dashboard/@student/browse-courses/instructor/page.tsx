@@ -5,8 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { getAllInstructorsOptions } from '../../../../../../services/client/@tanstack/react-query.gen';
-import { ClassData } from '../../../../@instructor/trainings/create-new/academic-period-form';
+import { getAllInstructorsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import { ClassData } from '../../../@instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../_components/instructor-directory';
 import { ManageBookings } from '../../../_components/manage-bookings';
 

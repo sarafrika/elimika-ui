@@ -444,14 +444,14 @@ export const StudentSchema = {
       minLength: 0,
       pattern: '^(\\+254|0)?[17]\\d{8}$',
     },
+    primaryGuardianContact: {
+      type: 'string',
+    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
-    },
-    primaryGuardianContact: {
-      type: 'string',
     },
     secondaryGuardianContact: {
       type: 'string',
@@ -498,7 +498,7 @@ export const AssessmentRubricSchema = {
     title: 'Music Performance Assessment Rubric',
     description: 'Comprehensive rubric for evaluating music performance across multiple criteria',
     rubric_type: 'Performance',
-    instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r8u-9i10-abcdefghijkl',
     is_public: true,
     status: 'PUBLISHED',
     active: true,
@@ -508,9 +508,9 @@ export const AssessmentRubricSchema = {
     max_score: 400,
     min_passing_score: 240,
     created_date: '2024-04-01T12:00:00',
-    created_by: 'instructor@sarafrika.com',
+    created_by: 'creator@sarafrika.com',
     updated_date: '2024-04-15T15:30:00',
-    updated_by: 'instructor@sarafrika.com',
+    updated_by: 'creator@sarafrika.com',
     rubric_category: 'Performance Assessment',
     is_published: true,
     assessment_scope: 'General Use',
@@ -549,16 +549,16 @@ export const AssessmentRubricSchema = {
       maxLength: 50,
       minLength: 0,
     },
-    instructor_uuid: {
+    course_creator_uuid: {
       type: 'string',
       format: 'uuid',
-      description: '**[REQUIRED]** Reference to the instructor UUID who created this rubric.',
-      example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+      description: '**[REQUIRED]** Reference to the course creator UUID who defined this rubric.',
+      example: 'c1r2e3a4-5t6o-7r8u-9i10-abcdefghijkl',
     },
     is_public: {
       type: 'boolean',
       description:
-        '**[OPTIONAL]** Indicates if this rubric is publicly available for other instructors to use.',
+        '**[OPTIONAL]** Indicates if this rubric is publicly available for other course creators to use.',
       example: true,
     },
     status: {
@@ -611,7 +611,7 @@ export const AssessmentRubricSchema = {
       type: 'string',
       description:
         '**[READ-ONLY]** Email or username of the user who created this rubric. Used for audit trails.',
-      example: 'instructor@sarafrika.com',
+      example: 'creator@sarafrika.com',
       readOnly: true,
     },
     updated_date: {
@@ -626,7 +626,7 @@ export const AssessmentRubricSchema = {
       type: 'string',
       description:
         '**[READ-ONLY]** Email or username of the user who last modified this rubric. Used for audit trails.',
-      example: 'instructor@sarafrika.com',
+      example: 'creator@sarafrika.com',
       readOnly: true,
     },
     is_published: {
@@ -655,7 +655,7 @@ export const AssessmentRubricSchema = {
       readOnly: true,
     },
   },
-  required: ['instructor_uuid', 'rubric_type', 'status', 'title'],
+  required: ['course_creator_uuid', 'rubric_type', 'status', 'title'],
 } as const;
 
 export const ApiResponseAssessmentRubricSchema = {
@@ -790,17 +790,17 @@ export const RubricScoringLevelSchema = {
       example: 'Excellent (4.0 pts)',
       readOnly: true,
     },
-    css_color_class: {
-      type: 'string',
-      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
-      example: 'level-green',
-      readOnly: true,
-    },
     performance_indicator: {
       type: 'string',
       description:
         '**[READ-ONLY]** Performance classification based on level order and passing status.',
       example: 'Exceeds Expectations',
+      readOnly: true,
+    },
+    css_color_class: {
+      type: 'string',
+      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
+      example: 'level-green',
       readOnly: true,
     },
     is_highest_level: {
@@ -1563,16 +1563,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: 2,
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -7667,12 +7667,6 @@ export const AssignmentSubmissionSchema = {
       example: true,
       readOnly: true,
     },
-    file_count_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Summary of files attached to this submission.',
-      example: 2,
-      readOnly: true,
-    },
     submission_category: {
       type: 'string',
       description:
@@ -7691,6 +7685,12 @@ export const AssignmentSubmissionSchema = {
       description:
         '**[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.',
       example: 'Graded - Instructor Feedback Available',
+      readOnly: true,
+    },
+    file_count_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Summary of files attached to this submission.',
+      example: 2,
       readOnly: true,
     },
   },
@@ -8575,6 +8575,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -8591,12 +8597,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
   },

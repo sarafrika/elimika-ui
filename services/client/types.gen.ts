@@ -196,8 +196,8 @@ export type Student = {
    * **[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.
    */
   second_guardian_mobile?: string;
-  allGuardianContacts?: Array<string>;
   primaryGuardianContact?: string;
+  allGuardianContacts?: Array<string>;
   secondaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
@@ -238,11 +238,11 @@ export type AssessmentRubric = {
    */
   rubric_type: string;
   /**
-   * **[REQUIRED]** Reference to the instructor UUID who created this rubric.
+   * **[REQUIRED]** Reference to the course creator UUID who defined this rubric.
    */
-  instructor_uuid: string;
+  course_creator_uuid: string;
   /**
-   * **[OPTIONAL]** Indicates if this rubric is publicly available for other instructors to use.
+   * **[OPTIONAL]** Indicates if this rubric is publicly available for other course creators to use.
    */
   is_public?: boolean;
   status: StatusEnum;
@@ -367,13 +367,13 @@ export type RubricScoringLevel = {
    */
   readonly display_name?: string;
   /**
-   * **[READ-ONLY]** CSS-safe color class name derived from the color code.
-   */
-  readonly css_color_class?: string;
-  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
+  /**
+   * **[READ-ONLY]** CSS-safe color class name derived from the color code.
+   */
+  readonly css_color_class?: string;
   /**
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
@@ -758,13 +758,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -3830,10 +3830,6 @@ export type AssignmentSubmission = {
    */
   readonly is_graded?: boolean;
   /**
-   * **[READ-ONLY]** Summary of files attached to this submission.
-   */
-  readonly file_count_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the submission based on its content type.
    */
   readonly submission_category?: string;
@@ -3845,6 +3841,10 @@ export type AssignmentSubmission = {
    * **[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.
    */
   readonly submission_status_display?: string;
+  /**
+   * **[READ-ONLY]** Summary of files attached to this submission.
+   */
+  readonly file_count_display?: string;
 };
 
 /**
@@ -4239,6 +4239,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -4250,10 +4254,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -14722,19 +14722,19 @@ export type GetRubricStatisticsResponses = {
 export type GetRubricStatisticsResponse =
   GetRubricStatisticsResponses[keyof GetRubricStatisticsResponses];
 
-export type GetInstructorRubricStatisticsData = {
+export type GetCourseCreatorRubricStatisticsData = {
   body?: never;
   path: {
     /**
-     * UUID of the instructor
+     * UUID of the course creator
      */
-    instructorUuid: string;
+    courseCreatorUuid: string;
   };
   query?: never;
-  url: '/api/v1/rubrics/discovery/statistics/instructor/{instructorUuid}';
+  url: '/api/v1/rubrics/discovery/statistics/course-creator/{courseCreatorUuid}';
 };
 
-export type GetInstructorRubricStatisticsErrors = {
+export type GetCourseCreatorRubricStatisticsErrors = {
   /**
    * Not Found
    */
@@ -14745,18 +14745,18 @@ export type GetInstructorRubricStatisticsErrors = {
   500: ResponseDtoVoid;
 };
 
-export type GetInstructorRubricStatisticsError =
-  GetInstructorRubricStatisticsErrors[keyof GetInstructorRubricStatisticsErrors];
+export type GetCourseCreatorRubricStatisticsError =
+  GetCourseCreatorRubricStatisticsErrors[keyof GetCourseCreatorRubricStatisticsErrors];
 
-export type GetInstructorRubricStatisticsResponses = {
+export type GetCourseCreatorRubricStatisticsResponses = {
   /**
    * OK
    */
   200: ApiResponseMapStringLong;
 };
 
-export type GetInstructorRubricStatisticsResponse =
-  GetInstructorRubricStatisticsResponses[keyof GetInstructorRubricStatisticsResponses];
+export type GetCourseCreatorRubricStatisticsResponse =
+  GetCourseCreatorRubricStatisticsResponses[keyof GetCourseCreatorRubricStatisticsResponses];
 
 export type SearchPublicRubricsData = {
   body?: never;
@@ -14861,48 +14861,6 @@ export type GetPopularRubricsResponses = {
 export type GetPopularRubricsResponse =
   GetPopularRubricsResponses[keyof GetPopularRubricsResponses];
 
-export type GetInstructorRubricsData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the instructor
-     */
-    instructorUuid: string;
-  };
-  query: {
-    /**
-     * Include private rubrics (default: false)
-     */
-    includePrivate?: boolean;
-    pageable: Pageable;
-  };
-  url: '/api/v1/rubrics/discovery/instructor/{instructorUuid}';
-};
-
-export type GetInstructorRubricsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetInstructorRubricsError =
-  GetInstructorRubricsErrors[keyof GetInstructorRubricsErrors];
-
-export type GetInstructorRubricsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoAssessmentRubric;
-};
-
-export type GetInstructorRubricsResponse =
-  GetInstructorRubricsResponses[keyof GetInstructorRubricsResponses];
-
 export type GetGeneralRubricsData = {
   body?: never;
   path?: never;
@@ -14934,6 +14892,48 @@ export type GetGeneralRubricsResponses = {
 
 export type GetGeneralRubricsResponse =
   GetGeneralRubricsResponses[keyof GetGeneralRubricsResponses];
+
+export type GetCourseCreatorRubricsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the course creator
+     */
+    courseCreatorUuid: string;
+  };
+  query: {
+    /**
+     * Include private rubrics (default: false)
+     */
+    includePrivate?: boolean;
+    pageable: Pageable;
+  };
+  url: '/api/v1/rubrics/discovery/course-creator/{courseCreatorUuid}';
+};
+
+export type GetCourseCreatorRubricsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorRubricsError =
+  GetCourseCreatorRubricsErrors[keyof GetCourseCreatorRubricsErrors];
+
+export type GetCourseCreatorRubricsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoAssessmentRubric;
+};
+
+export type GetCourseCreatorRubricsResponse =
+  GetCourseCreatorRubricsResponses[keyof GetCourseCreatorRubricsResponses];
 
 export type GetQuizTotalPointsData = {
   body?: never;

@@ -11,77 +11,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CourseCard } from '../../../_components/course-card';
 
-const SAMPLE_COURSES = [
-  {
-    id: '1',
-    title: 'Complete React Development Bootcamp',
-    subtitle: 'Build modern web applications with React, TypeScript, and Next.js',
-    category: 'Technology',
-    subcategory: 'Web Development',
-    instructor: 'John Smith',
-    instructorAvatar: '',
-    rating: 4.8,
-    enrolledCount: 2341,
-    duration: '40 hours',
-    difficulty: 'Intermediate',
-    price: '$89',
-    originalPrice: '$149',
-    coverImage: null,
-    hasVideo: true,
-  },
-  {
-    id: '2',
-    title: 'UI/UX Design Fundamentals',
-    subtitle: 'Learn design principles and create beautiful user interfaces',
-    category: 'Design',
-    subcategory: 'UI/UX Design',
-    instructor: 'Sarah Johnson',
-    instructorAvatar: '',
-    rating: 4.9,
-    enrolledCount: 1856,
-    duration: '25 hours',
-    difficulty: 'Beginner',
-    price: 'Free',
-    originalPrice: null,
-    coverImage: null,
-    hasVideo: true,
-  },
-  {
-    id: '3',
-    title: 'Digital Marketing Strategy',
-    subtitle: 'Master SEO, social media, and content marketing',
-    category: 'Business',
-    subcategory: 'Marketing',
-    instructor: 'Mike Wilson',
-    instructorAvatar: '',
-    rating: 4.7,
-    enrolledCount: 3247,
-    duration: '30 hours',
-    difficulty: 'Intermediate',
-    price: '$129',
-    originalPrice: '$199',
-    coverImage: null,
-    hasVideo: false,
-  },
-  {
-    id: '4',
-    title: 'Data Science with Python',
-    subtitle: 'Learn Python, pandas, and machine learning from scratch',
-    category: 'Technology',
-    subcategory: 'Data Science',
-    instructor: 'Dr. Lisa Chen',
-    instructorAvatar: '',
-    rating: 4.6,
-    enrolledCount: 1923,
-    duration: '50 hours',
-    difficulty: 'Advanced',
-    price: '$199',
-    originalPrice: '$299',
-    coverImage: null,
-    hasVideo: true,
-  },
-];
-
 const sidebarNavItems = [
   {
     title: 'Drafts',
@@ -148,7 +77,7 @@ export default function CourseMangementPage() {
         {/* Results */}
         <div className='mb-6'>
           <div className='flex items-center justify-between'>
-            <p className='text-muted-foreground text-sm'>List of courses you can train</p>
+            <p className='text-muted-foreground text-sm'>Undertake more courses to boost your instructor profile</p>
             <p className='text-muted-foreground text-sm'>
               {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
             </p>
@@ -156,12 +85,14 @@ export default function CourseMangementPage() {
         </div>
 
         {/* Course Grid */}
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3'>
           {filteredCourses.map(course => (
             <CourseCard
               key={course.uuid}
               course={course as any}
-              isStudent={false}
+              isStudentView={true}
+              handleEnroll={() => router.push(`/dashboard/learning/enroll/${course.uuid}`)}
+              handleSearchInstructor={() => router.push(`/dashboard/learning/instructor/${course.uuid}`)}
               handleClick={() => router.push(`/dashboard/learning/${course.uuid}`)}
             />
           ))}

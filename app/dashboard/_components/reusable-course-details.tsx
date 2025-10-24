@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
@@ -38,7 +37,8 @@ import {
   Volume2,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { JSX, useEffect, useState } from 'react';
+import { JSX, useState } from 'react';
+import { CustomLoadingState } from '../@course_creator/_components/loading-state';
 
 type CourseDetailsProps = {
   courseId?: string;
@@ -58,7 +58,7 @@ export default function ReusableCourseDetailsPage({
   const [activeTab, setActiveTab] = useState('overview');
   const { replaceBreadcrumbs } = useBreadcrumb();
 
-  const { data, isFetching } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
     enabled: !!courseId,
   });
@@ -71,7 +71,7 @@ export default function ReusableCourseDetailsPage({
   // @ts-ignore
   const courseCreator = creator?.data;
 
-  const { data: cAssesssment } = useQuery({
+  const { data: cAssesssment, isLoading: assessmentLoading, isFetching: assessmentFetching } = useQuery({
     ...getCourseAssessmentsOptions({
       path: { courseUuid: courseId as string },
       query: { pageable: {} },
@@ -79,11 +79,11 @@ export default function ReusableCourseDetailsPage({
     enabled: !!courseId,
   });
 
-  const { data: cAssignments } = useQuery({
+  const { data: cAssignments, isLoading: assignmentLoading, isFetching: assignmentFetching } = useQuery({
     ...getAllAssignmentsOptions({ query: { pageable: {} } }),
   });
 
-  const { data: cQuizzes } = useQuery({
+  const { data: cQuizzes, isLoading: quizzesLoading, isFetching: quizzesFetching } = useQuery({
     ...getAllQuizzesOptions({ query: { pageable: {} } }),
   });
 
@@ -96,35 +96,36 @@ export default function ReusableCourseDetailsPage({
 
   const {
     isLoading: isAllLessonsDataLoading,
+    isFetching: isAllLessonDataFetching,
     lessons: lessonsWithContent,
     contentTypeMap,
   } = useCourseLessonsWithContent({ courseUuid: courseId as string });
 
-  useEffect(() => {
-    if (courseData) {
-      const isStudent = userRole === 'student';
+  // useEffect(() => {
+  //   if (courseData) {
+  //     const isStudent = userRole === 'student';
 
-      replaceBreadcrumbs([
-        {
-          id: 'dashboard',
-          title: 'Dashboard',
-          url: '/dashboard/overview',
-        },
-        {
-          id: 'courses',
-          title: isStudent ? 'Browse Courses' : 'Courses',
-          url: isStudent ? '/dashboard/browse-courses' : '/dashboard/courses',
-        },
-        {
-          id: 'course-details',
-          title: courseData?.name,
-          url: isStudent
-            ? `/dashboard/browse-courses/${courseData?.uuid}`
-            : `/dashboard/courses/${courseData?.uuid}`,
-        },
-      ]);
-    }
-  }, [replaceBreadcrumbs, courseId, courseData, userRole]);
+  //     replaceBreadcrumbs([
+  //       {
+  //         id: 'dashboard',
+  //         title: 'Dashboard',
+  //         url: '/dashboard/overview',
+  //       },
+  //       {
+  //         id: 'courses',
+  //         title: isStudent ? 'Browse Courses' : 'Courses',
+  //         url: isStudent ? '/dashboard/browse-courses' : '/dashboard/courses',
+  //       },
+  //       {
+  //         id: 'course-details',
+  //         title: courseData?.name,
+  //         url: isStudent
+  //           ? `/dashboard/browse-courses/${courseData?.uuid}`
+  //           : `/dashboard/courses/${courseData?.uuid}`,
+  //       },
+  //     ]);
+  //   }
+  // }, [replaceBreadcrumbs, courseId, courseData, userRole]);
 
   const getResourceIcon = (type: string): JSX.Element => {
     switch (type) {
@@ -145,28 +146,23 @@ export default function ReusableCourseDetailsPage({
     }
   };
 
-  if (isFetching) {
+  const isEverythingReady = !(
+    isLoading ||
+    isFetching ||
+    isAllLessonsDataLoading ||
+    isAllLessonDataFetching ||
+    assessmentLoading ||
+    assessmentFetching ||
+    assignmentLoading ||
+    assignmentFetching ||
+    quizzesLoading ||
+    quizzesFetching
+  );
+
+
+  if (!isEverythingReady) {
     return (
-      <div className='bg-background flex min-h-screen items-center justify-center'>
-        <div className='text-center'>
-          <h2>Loading...</h2>
-        </div>
-      </div>
-    );
-  }
-
-  if (isFetching) {
-    return (
-      <div className='flex flex-col gap-6 space-y-2'>
-        <Skeleton className='h-[150px] w-full' />
-
-        <div className='flex flex-row items-center justify-between gap-4'>
-          <Skeleton className='h-[250px] w-2/3' />
-          <Skeleton className='h-[250px] w-1/3' />
-        </div>
-
-        <Skeleton className='h-[100px] w-full' />
-      </div>
+      <CustomLoadingState subHeading='Loading your course details..' />
     );
   }
 
@@ -320,276 +316,243 @@ export default function ReusableCourseDetailsPage({
                   <RichTextRenderer htmlString={courseData?.description as string} />
                 </div>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Course Creator</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className='flex items-start gap-4'>
-                      <Avatar className='min-h-16 min-w-16'>
-                        <AvatarImage src={courseCreator?.uuid} />
-                        <AvatarFallback>
-                          {courseCreator?.full_name
-                            .split(' ')
-                            .map((n: any) => n[0])
-                            .join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h4>{courseCreator?.full_name}</h4>
-                        <p className='text-muted-foreground mb-2 text-sm'>
-                          {courseCreator?.professional_headline}
-                        </p>
-                        {courseCreator?.bio ? (
-                          <HTMLTextPreview
-                            htmlContent={courseCreator.bio}
-                            className='prose prose-sm max-w-none text-muted-foreground'
-                          />
-                        ) : (
-                          <p className='text-muted-foreground text-sm'>
-                            No biography provided.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <CardContent>
+                  <h4 className='mb-3'>Requirements</h4>
+                  <ul className='space-y-2'>
+                    <RichTextRenderer htmlString={courseData?.prerequisites as string} />
+                  </ul>
+                </CardContent>
+
+                <Separator className='my-6' />
+
+                <CardContent>
+                  <h4 className='mb-3'>Equipment</h4>
+                  {/* <p className="text-sm">{course.equipment}</p> */}
+                </CardContent>
               </CardContent>
+            </Card>
 
-              <div>
-                <h4 className='mb-3'>Requirements</h4>
-                <ul className='space-y-2'>
-                  <RichTextRenderer htmlString={courseData?.prerequisites as string} />
-                </ul>
-              </div>
-
-              <Separator className='my-6' />
-
-              <div>
-                <h4 className='mb-3'>Equipment</h4>
-                {/* <p className="text-sm">{course.equipment}</p> */}
-              </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Course Creator</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='flex items-start gap-4'>
+                  <Avatar className='min-h-16 min-w-16'>
+                    <AvatarImage src={courseCreator?.uuid} />
+                    <AvatarFallback>
+                      {courseCreator?.full_name
+                        .split(' ')
+                        .map((n: any) => n[0])
+                        .join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4>{courseCreator?.full_name}</h4>
+                    <div className='text-muted-foreground mb-2 text-sm'>
+                      {courseCreator?.professional_headline}
+                    </div>
+                    <div className='text-sm'>
+                      <RichTextRenderer htmlString={courseCreator?.bio} />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Creator</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='flex items-start gap-4'>
-                <Avatar className='min-h-16 min-w-16'>
-                  <AvatarImage src={courseCreator?.uuid} />
-                  <AvatarFallback>
-                    {courseCreator?.full_name
-                      .split(' ')
-                      .map((n: any) => n[0])
-                      .join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h4>{courseCreator?.full_name}</h4>
-                  <p className='text-muted-foreground mb-2 text-sm'>
-                    {courseCreator?.professional_headline}
-                  </p>
-                  <p className='text-sm'>{courseCreator?.bio}</p>
-                </div>
+          <TabsContent value='skills' className='space-y-4'>
+            {lessonsWithContent?.length === 0 && (
+              <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
+                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <h3 className='text-lg font-semibold'>No Lessons/Resources Found</h3>
+                <p className='mt-1 text-sm'>There are no lessons under this course.</p>
               </div>
-            </CardContent>
-          </Card>
-        </Tabs>
+            )}
 
-        <TabsContent value='skills' className='space-y-4'>
-          {lessonsWithContent?.length === 0 && (
-            <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-              <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
-              <h3 className='text-lg font-semibold'>No Lessons/Resources Found</h3>
-              <p className='mt-1 text-sm'>There are no lessons under this course.</p>
-            </div>
-          )}
-
-          {lessonsWithContent?.map((skill, skillIndex) => (
-            <Card key={skill?.lesson?.uuid}>
-              <CardHeader className='flex flex-row items-center space-y-0'>
-                <div className='flex flex-1 items-center gap-3'>
-                  <div
-                    className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${skill?.lesson?.active
-                      ? 'bg-green-100 text-green-600'
-                      : 'bg-muted text-muted-foreground'
-                      }`}
-                  >
-                    {skill?.lesson?.active ? (
-                      <CheckCircle className='h-4 w-4' />
-                    ) : (
-                      <span>{skillIndex + 1}</span>
-                    )}
-                  </div>
-                  <div>
-                    <CardTitle className='text-base'>{skill?.lesson?.title}</CardTitle>
-                    <div className='text-muted-foreground text-sm'>
-                      <HTMLTextPreview htmlContent={skill?.lesson?.description as string} />
+            {lessonsWithContent?.map((skill, skillIndex) => (
+              <Card key={skill?.lesson?.uuid}>
+                <CardHeader className='flex flex-row items-center space-y-0'>
+                  <div className='flex flex-1 items-center gap-3'>
+                    <div
+                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${skill?.lesson?.active
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-muted text-muted-foreground'
+                        }`}
+                    >
+                      {skill?.lesson?.active ? (
+                        <CheckCircle className='h-4 w-4' />
+                      ) : (
+                        <span>{skillIndex + 1}</span>
+                      )}
                     </div>
-                    <p className='text-muted-foreground text-sm'>
-                      {skill?.lesson?.duration_display}
-                    </p>
+                    <div>
+                      <CardTitle className='text-base'>{skill?.lesson?.title}</CardTitle>
+                      <div className='text-muted-foreground text-sm'>
+                        <HTMLTextPreview htmlContent={skill?.lesson?.description as string} />
+                      </div>
+                      <p className='text-muted-foreground text-sm'>
+                        {skill?.lesson?.duration_display}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
+                </CardHeader>
 
-              <CardContent>
-                <div className='space-y-3'>
-                  <h5>Resources</h5>
-                  {skill?.content?.data?.map((resource, resourceIndex) => {
-                    const contentTypeName = contentTypeMap[resource.content_type_uuid] || 'file';
+                <CardContent>
+                  <div className='space-y-3'>
+                    <h5>Resources</h5>
+                    {skill?.content?.data?.map((resource, resourceIndex) => {
+                      const contentTypeName = contentTypeMap[resource.content_type_uuid] || 'file';
 
-                    return (
-                      <div
-                        key={resourceIndex}
-                        className='bg-muted/40 flex items-center gap-3 rounded px-3 py-4'
-                      >
-                        {getResourceIcon(contentTypeName)}
+                      return (
+                        <div
+                          key={resourceIndex}
+                          className='bg-muted/40 flex items-center gap-3 rounded px-3 py-4'
+                        >
+                          {getResourceIcon(contentTypeName)}
 
-                        <div className='flex-1'>
-                          <p className='text-sm font-medium'>{resource?.title}</p>
-                          {/* {resource.duration && (
+                          <div className='flex-1'>
+                            <p className='text-sm font-medium'>{resource?.title}</p>
+                            {/* {resource.duration && (
                                                             <p className="text-xs text-muted-foreground">{resource.duration}</p>
                                                         )} */}
-                          <p className='text-muted-foreground text-xs'>Duration: </p>
+                            <p className='text-muted-foreground text-xs'>Duration: </p>
+                          </div>
+                          <Button size='sm' variant='outline'>
+                            {contentTypeName === 'video' ? (
+                              <Play className='h-4 w-4' />
+                            ) : (
+                              <Download className='h-4 w-4' />
+                            )}
+                          </Button>
                         </div>
-                        <Button size='sm' variant='outline'>
-                          {contentTypeName === 'video' ? (
-                            <Play className='h-4 w-4' />
-                          ) : (
-                            <Download className='h-4 w-4' />
-                          )}
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value='quizzes' className='space-y-4'>
-          <p className='bg-red-200 text-xs italic'>
-            Currently fetching all quizzes, shuold only fetch quizzes for this course
-          </p>
-
-          {cQuizzes?.data?.content?.length === 0 && (
-            <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-              <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
-              <h3 className='text-lg font-semibold'>No Quiz Found</h3>
-              <p className='mt-1 text-sm'>There are no quizzes under this course.</p>
-            </div>
-          )}
-
-          {cQuizzes?.data?.content?.map(quiz => (
-            <Card key={quiz.uuid}>
-              <CardContent className='p-6'>
-                <div className='flex items-center justify-between'>
-                  <div>
-                    <h4>{quiz.title}</h4>
-                    <div className='mt-2 gap-1 text-sm'>
-                      <p>Instructions:</p>
-                      <p>{quiz.instructions}</p>
-                    </div>
-                    <div className='text-muted-foreground mt-1 flex items-center gap-4 text-sm'>
-                      {/* <span>{quiz.questions} questions</span> */}
-                      <span>{quiz.time_limit_display}</span>
-                      <span>Attempts allowed: {quiz.attempts_allowed}</span>
-                    </div>
+                      );
+                    })}
                   </div>
-                  <Button>Start Quiz</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
 
-        <TabsContent value='assignments' className='space-y-4'>
-          <p className='bg-red-200 text-xs italic'>
-            Currently fetching all assignments, shuold only fetch assignments for this course
-          </p>
+          <TabsContent value='quizzes' className='space-y-4'>
+            <p className='bg-red-200 text-xs italic'>
+              Currently fetching all quizzes, shuold only fetch quizzes for this course
+            </p>
 
-          {cAssignments?.data?.content?.length === 0 && (
-            <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-              <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
-              <h3 className='text-lg font-semibold'>No Assignment Found</h3>
-              <p className='mt-1 text-sm'>There are no assignments under this course.</p>
-            </div>
-          )}
+            {cQuizzes?.data?.content?.length === 0 && (
+              <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
+                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <h3 className='text-lg font-semibold'>No Quiz Found</h3>
+                <p className='mt-1 text-sm'>There are no quizzes under this course.</p>
+              </div>
+            )}
 
-          {cAssignments?.data?.content?.map(assignment => (
-            <Card key={assignment.uuid}>
-              <CardContent className='p-6'>
-                <div className='flex items-start justify-between'>
-                  <div className='flex-1'>
-                    <h4>{assignment.title}</h4>
-                    <div className='text-muted-foreground mt-1 mb-2 text-sm'>
-                      <RichTextRenderer
-                        htmlString={assignment.description as string}
-                        maxChars={100}
-                      />
-                    </div>
-                    <div className='text-muted-foreground mt-1 mb-2 flex flex-col text-sm'>
-                      <p>Instruction:</p>
-                      <RichTextRenderer
-                        htmlString={assignment.instructions as string}
-                        maxChars={100}
-                      />
-                    </div>
-                    <p className='text-sm'>
-                      Due:{' '}
-                      {new Date(assignment?.due_date as any).toLocaleString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true,
-                        timeZoneName: 'short',
-                      })}
-                    </p>
-                  </div>
-                  <Button>View Assignment</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value='assessments' className='space-y-4'>
-          {cAssesssment?.data?.content?.length === 0 && (
-            <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-              <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
-              <h3 className='text-lg font-semibold'>No Assessment Found</h3>
-              <p className='mt-1 text-sm'>There are no assessments under this course.</p>
-            </div>
-          )}
-
-          {cAssesssment?.data?.content?.map(assessment => (
-            <Card key={assessment.uuid}>
-              <CardContent className='p-6'>
-                <div className='flex items-start justify-between'>
-                  <div className='flex items-start gap-3'>
-                    <Award className='text-primary mt-1 h-6 w-6' />
+            {cQuizzes?.data?.content?.map(quiz => (
+              <Card key={quiz.uuid}>
+                <CardContent className='p-6'>
+                  <div className='flex items-center justify-between'>
                     <div>
-                      <h4>{assessment?.title}</h4>
-                      <Badge variant='outline' className='mb-2'>
-                        {assessment?.assessment_type}
-                      </Badge>
-                      <p className='text-muted-foreground text-sm'>{assessment?.description}</p>
+                      <h4>{quiz.title}</h4>
+                      <div className='mt-2 gap-1 text-sm'>
+                        <p>Instructions:</p>
+                        <p>{quiz.instructions}</p>
+                      </div>
+                      <div className='text-muted-foreground mt-1 flex items-center gap-4 text-sm'>
+                        {/* <span>{quiz.questions} questions</span> */}
+                        <span>{quiz.time_limit_display}</span>
+                        <span>Attempts allowed: {quiz.attempts_allowed}</span>
+                      </div>
                     </div>
+                    <Button>Start Quiz</Button>
                   </div>
-                  <Button>View Details</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value='assignments' className='space-y-4'>
+            <p className='bg-red-200 text-xs italic'>
+              Currently fetching all assignments, shuold only fetch assignments for this course
+            </p>
+
+            {cAssignments?.data?.content?.length === 0 && (
+              <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
+                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <h3 className='text-lg font-semibold'>No Assignment Found</h3>
+                <p className='mt-1 text-sm'>There are no assignments under this course.</p>
+              </div>
+            )}
+
+            {cAssignments?.data?.content?.map(assignment => (
+              <Card key={assignment.uuid}>
+                <CardContent className='p-6'>
+                  <div className='flex items-start justify-between'>
+                    <div className='flex-1'>
+                      <h4>{assignment.title}</h4>
+                      <div className='text-muted-foreground mt-1 mb-2 text-sm'>
+                        <RichTextRenderer
+                          htmlString={assignment.description as string}
+                          maxChars={100}
+                        />
+                      </div>
+                      <div className='text-muted-foreground mt-1 mb-2 flex flex-col text-sm'>
+                        <p>Instruction:</p>
+                        <RichTextRenderer
+                          htmlString={assignment.instructions as string}
+                          maxChars={100}
+                        />
+                      </div>
+                      <p className='text-sm'>
+                        Due:{' '}
+                        {new Date(assignment?.due_date as any).toLocaleString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                          timeZoneName: 'short',
+                        })}
+                      </p>
+                    </div>
+                    <Button>View Assignment</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value='assessments' className='space-y-4'>
+            {cAssesssment?.data?.content?.length === 0 && (
+              <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
+                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <h3 className='text-lg font-semibold'>No Assessment Found</h3>
+                <p className='mt-1 text-sm'>There are no assessments under this course.</p>
+              </div>
+            )}
+
+            {cAssesssment?.data?.content?.map(assessment => (
+              <Card key={assessment.uuid}>
+                <CardContent className='p-6'>
+                  <div className='flex items-start justify-between'>
+                    <div className='flex items-start gap-3'>
+                      <Award className='text-primary mt-1 h-6 w-6' />
+                      <div>
+                        <h4>{assessment?.title}</h4>
+                        <Badge variant='outline' className='mb-2'>
+                          {assessment?.assessment_type}
+                        </Badge>
+                        <p className='text-muted-foreground text-sm'>{assessment?.description}</p>
+                      </div>
+                    </div>
+                    <Button>View Details</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

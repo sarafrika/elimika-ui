@@ -18,7 +18,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { TrainingClassComponent } from '../../../_components/training-class-card';
+import { TrainingClassComponent } from '../../../_components/training-class-component';
 import {
   ClassDialog,
   ScheduleDialog,

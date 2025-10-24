@@ -110,7 +110,7 @@ function RubricDetailsForm({
     const payload = {
       ...values,
       rubric_type: values.type,
-      instructor_uuid: user?.uuid as string,
+      course_creator_uuid: user?.courseCreator?.uuid as string,
       is_public: values.visibility === 'Public',
       status: StatusEnum.DRAFT,
       rubric_category: `${values.type} Assessment`,
@@ -123,14 +123,14 @@ function RubricDetailsForm({
 
     if (rubricId) {
       updateRubric.mutate(
-        { path: { uuid: rubricId }, body: payload },
+        { path: { uuid: rubricId }, body: payload as any },
         {
           onSuccess: data => {
             qc.invalidateQueries({
               queryKey: searchAssessmentRubricsQueryKey({
                 query: {
                   pageable: {},
-                  searchParams: { instructor_uuid_eq: user?.instructor?.uuid as string },
+                  searchParams: { course_creator_uuid_eq: user?.courseCreator?.uuid as string },
                 },
               }),
             });
@@ -145,14 +145,14 @@ function RubricDetailsForm({
       );
     } else {
       createRubric.mutate(
-        { body: payload },
+        { body: payload as any },
         {
           onSuccess: data => {
             qc.invalidateQueries({
               queryKey: searchAssessmentRubricsQueryKey({
                 query: {
                   pageable: {},
-                  searchParams: { instructor_uuid_eq: user?.instructor?.uuid as string },
+                  searchParams: { course_creator_uuid_eq: user?.courseCreator?.uuid as string },
                 },
               }),
             });

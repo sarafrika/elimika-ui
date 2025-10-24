@@ -18,10 +18,12 @@ import { useRouter } from 'next/navigation';
 interface CourseCardProps {
   course: Course;
   handleClick: () => void;
-  isStudent: boolean;
+  handleEnroll: () => void;
+  handleSearchInstructor: () => void;
+  isStudentView: boolean;
 }
 
-export function CourseCard({ course, handleClick, isStudent }: CourseCardProps) {
+export function CourseCard({ course, handleClick, isStudentView, handleEnroll, handleSearchInstructor }: CourseCardProps) {
   const router = useRouter();
 
   const getInitials = (name: string) => {
@@ -62,7 +64,7 @@ export function CourseCard({ course, handleClick, isStudent }: CourseCardProps) 
 
   return (
     <div
-      className='group cursor-pointer rounded-lg border-[1px] border-gray-400 bg-white transition-all hover:-translate-y-1 hover:shadow-lg'
+      className='max-w-[360px] group cursor-pointer rounded-lg border-[1px] border-gray-400 bg-white transition-all hover:-translate-y-1 hover:shadow-lg'
       onClick={handleClick}
     >
       <div className='relative'>
@@ -168,23 +170,14 @@ export function CourseCard({ course, handleClick, isStudent }: CourseCardProps) 
             </div>
           </div>
 
-          {/* Price and Actions */}
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <span className='text-primary font-bold'>{course?.price}</span>
-              {course?.price && (
-                <span className='text-muted-foreground text-sm line-through'>{course?.price}</span>
-              )}
-            </div>
-          </div>
-
           <div className='flex items-end justify-between gap-2 self-end pt-4'>
-            {isStudent ? (
+            {isStudentView ? (
               <>
                 <Button
                   onClick={e => {
                     e.stopPropagation();
-                    router.push(`/dashboard/browse-courses/instructor/123`);
+                    handleSearchInstructor()
+                    // router.push(`/dashboard/browse-courses/instructor/123`);
                   }}
                   size='sm'
                   variant='outline'
@@ -195,7 +188,8 @@ export function CourseCard({ course, handleClick, isStudent }: CourseCardProps) 
                   size='sm'
                   onClick={e => {
                     e.stopPropagation();
-                    router.push(`/dashboard/browse-courses/enroll/${course.uuid}`);
+                    handleEnroll()
+                    // router.push(`/dashboard/browse-courses/enroll/${course.uuid}`);
                   }}
                 >
                   Enroll

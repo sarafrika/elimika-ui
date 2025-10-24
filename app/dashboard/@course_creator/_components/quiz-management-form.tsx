@@ -68,8 +68,12 @@ export const quizSchema = z.object({
   description: z.string().optional(),
   instructions: z.string().optional(),
   time_limit_minutes: z.coerce.number().optional(),
-  attempts_allowed: z.coerce.number().optional(),
-  passing_score: z.coerce.number().optional(),
+  attempts_allowed: z
+    .coerce
+    .number()
+    .min(1, "Attempts allowed must be at least 1")
+    .optional()
+    .or(z.literal(undefined)), passing_score: z.coerce.number().optional(),
   status: z.string().optional(),
   active: z.boolean().default(false),
   rubric_uuid: z.string().optional(),
@@ -131,13 +135,14 @@ function QuizForm({
       updateQuiz.mutate(
         { path: { uuid: quizId }, body: payload as any },
         {
-          onSuccess: data => {
+          onSuccess: (data) => {
+            toast.success(data?.message);
             qc.invalidateQueries({
               queryKey: searchQuizzesQueryKey({
-                query: { pageable: {}, searchParams: { lessonUuid: lessonId } },
+                query: { pageable: {}, searchParams: { lesson_uuid_eq: data?.data?.lesson_uuid } }
               }),
             });
-            toast.success(data?.message);
+
             onCancel();
             onSuccess();
           },
@@ -150,7 +155,7 @@ function QuizForm({
           onSuccess: (data: any) => {
             qc.invalidateQueries({
               queryKey: searchQuizzesQueryKey({
-                query: { pageable: {}, searchParams: { lessonUuid: lessonId } },
+                query: { pageable: {}, searchParams: { lesson_uuid_eq: data?.data?.lesson_uuid } }
               }),
             });
             toast.success(data?.message);
@@ -288,7 +293,11 @@ function QuizForm({
                         type='number'
                         placeholder='e.g. 3'
                         {...field}
-                        onChange={e => field.onChange(Number(e.target.value))}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                          const value = e.target.value;
+                          field.onChange(value === '' ? undefined : Number(value));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -752,11 +761,13 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
   const queryClient = useQueryClient();
   const deleteQuiz = useMutation(deleteQuizMutation());
 
+  const [deletingQuizData, setDeletingQuizData] = useState<any | null>(null)
   const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const handleDelete = (qUuid: string) => {
-    setDeletingQuizId(qUuid);
+  const handleDelete = (q: any) => {
+    setDeletingQuizData(q)
+    setDeletingQuizId(q.uuid as string);
     setOpenDeleteModal(true);
   };
 
@@ -770,7 +781,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
           toast.success('Quiz deleted successfully');
           queryClient.invalidateQueries({
             queryKey: searchQuizzesQueryKey({
-              query: { searchParams: { courseUuid: courseId }, pageable: { page: 0, size: 100 } },
+              query: { pageable: {}, searchParams: { lesson_uuid_eq: deletingQuizData?.lesson_uuid } }
             }),
           });
           setOpenDeleteModal(false);
@@ -848,7 +859,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
                         className='text-red-600'
                         onClick={() => {
                           if (q.uuid) {
-                            handleDelete(q?.uuid as string);
+                            handleDelete(q as any);
                           }
                         }}
                       >

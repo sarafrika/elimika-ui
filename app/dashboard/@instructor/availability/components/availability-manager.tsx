@@ -204,7 +204,7 @@ export default function AvailabilityManager({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+          <div className='grid grid-cols-1 gap-4 gap-y-8 md:grid-cols-2'>
             <div className='space-y-2'>
               <Label>Quick Toggle</Label>
               <div className='flex items-center gap-4'>

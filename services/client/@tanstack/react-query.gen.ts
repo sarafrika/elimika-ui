@@ -258,12 +258,12 @@ import {
   getRubricsByType,
   getRubricsByStatus,
   getRubricStatistics,
-  getInstructorRubricStatistics,
+  getCourseCreatorRubricStatistics,
   searchPublicRubrics,
   getPublicRubrics,
   getPopularRubrics,
-  getInstructorRubrics,
   getGeneralRubrics,
+  getCourseCreatorRubrics,
   getQuizTotalPoints,
   getQuestionDistribution,
   getQuizAttempts,
@@ -1060,7 +1060,7 @@ import type {
   GetRubricsByStatusError,
   GetRubricsByStatusResponse,
   GetRubricStatisticsData,
-  GetInstructorRubricStatisticsData,
+  GetCourseCreatorRubricStatisticsData,
   SearchPublicRubricsData,
   SearchPublicRubricsError,
   SearchPublicRubricsResponse,
@@ -1070,12 +1070,12 @@ import type {
   GetPopularRubricsData,
   GetPopularRubricsError,
   GetPopularRubricsResponse,
-  GetInstructorRubricsData,
-  GetInstructorRubricsError,
-  GetInstructorRubricsResponse,
   GetGeneralRubricsData,
   GetGeneralRubricsError,
   GetGeneralRubricsResponse,
+  GetCourseCreatorRubricsData,
+  GetCourseCreatorRubricsError,
+  GetCourseCreatorRubricsResponse,
   GetQuizTotalPointsData,
   GetQuestionDistributionData,
   GetQuizAttemptsData,
@@ -12172,20 +12172,20 @@ export const getRubricStatisticsOptions = (options?: Options<GetRubricStatistics
   });
 };
 
-export const getInstructorRubricStatisticsQueryKey = (
-  options: Options<GetInstructorRubricStatisticsData>
-) => createQueryKey('getInstructorRubricStatistics', options);
+export const getCourseCreatorRubricStatisticsQueryKey = (
+  options: Options<GetCourseCreatorRubricStatisticsData>
+) => createQueryKey('getCourseCreatorRubricStatistics', options);
 
 /**
- * Get instructor's rubric statistics
- * Retrieves statistics about a specific instructor's rubrics, including counts by visibility and status.
+ * Get course creator rubric statistics
+ * Retrieves statistics about a specific course creator's rubrics, including counts by visibility and status.
  */
-export const getInstructorRubricStatisticsOptions = (
-  options: Options<GetInstructorRubricStatisticsData>
+export const getCourseCreatorRubricStatisticsOptions = (
+  options: Options<GetCourseCreatorRubricStatisticsData>
 ) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getInstructorRubricStatistics({
+      const { data } = await getCourseCreatorRubricStatistics({
         ...options,
         ...queryKey[0],
         signal,
@@ -12193,7 +12193,7 @@ export const getInstructorRubricStatisticsOptions = (
       });
       return data;
     },
-    queryKey: getInstructorRubricStatisticsQueryKey(options),
+    queryKey: getCourseCreatorRubricStatisticsQueryKey(options),
   });
 };
 
@@ -12401,75 +12401,6 @@ export const getPopularRubricsInfiniteOptions = (options: Options<GetPopularRubr
   );
 };
 
-export const getInstructorRubricsQueryKey = (options: Options<GetInstructorRubricsData>) =>
-  createQueryKey('getInstructorRubrics', options);
-
-/**
- * Get instructor's rubrics
- * Retrieves rubrics created by a specific instructor, with option to include private rubrics.
- */
-export const getInstructorRubricsOptions = (options: Options<GetInstructorRubricsData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getInstructorRubrics({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorRubricsQueryKey(options),
-  });
-};
-
-export const getInstructorRubricsInfiniteQueryKey = (
-  options: Options<GetInstructorRubricsData>
-): QueryKey<Options<GetInstructorRubricsData>> =>
-  createQueryKey('getInstructorRubrics', options, true);
-
-/**
- * Get instructor's rubrics
- * Retrieves rubrics created by a specific instructor, with option to include private rubrics.
- */
-export const getInstructorRubricsInfiniteOptions = (options: Options<GetInstructorRubricsData>) => {
-  return infiniteQueryOptions<
-    GetInstructorRubricsResponse,
-    GetInstructorRubricsError,
-    InfiniteData<GetInstructorRubricsResponse>,
-    QueryKey<Options<GetInstructorRubricsData>>,
-    | number
-    | Pick<QueryKey<Options<GetInstructorRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<GetInstructorRubricsData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await getInstructorRubrics({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: getInstructorRubricsInfiniteQueryKey(options),
-    }
-  );
-};
-
 export const getGeneralRubricsQueryKey = (options: Options<GetGeneralRubricsData>) =>
   createQueryKey('getGeneralRubrics', options);
 
@@ -12534,6 +12465,77 @@ export const getGeneralRubricsInfiniteOptions = (options: Options<GetGeneralRubr
         return data;
       },
       queryKey: getGeneralRubricsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getCourseCreatorRubricsQueryKey = (options: Options<GetCourseCreatorRubricsData>) =>
+  createQueryKey('getCourseCreatorRubrics', options);
+
+/**
+ * Get course creator's rubrics
+ * Retrieves rubrics defined by a specific course creator, with option to include private rubrics.
+ */
+export const getCourseCreatorRubricsOptions = (options: Options<GetCourseCreatorRubricsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorRubrics({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorRubricsQueryKey(options),
+  });
+};
+
+export const getCourseCreatorRubricsInfiniteQueryKey = (
+  options: Options<GetCourseCreatorRubricsData>
+): QueryKey<Options<GetCourseCreatorRubricsData>> =>
+  createQueryKey('getCourseCreatorRubrics', options, true);
+
+/**
+ * Get course creator's rubrics
+ * Retrieves rubrics defined by a specific course creator, with option to include private rubrics.
+ */
+export const getCourseCreatorRubricsInfiniteOptions = (
+  options: Options<GetCourseCreatorRubricsData>
+) => {
+  return infiniteQueryOptions<
+    GetCourseCreatorRubricsResponse,
+    GetCourseCreatorRubricsError,
+    InfiniteData<GetCourseCreatorRubricsResponse>,
+    QueryKey<Options<GetCourseCreatorRubricsData>>,
+    | number
+    | Pick<QueryKey<Options<GetCourseCreatorRubricsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorRubricsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorRubrics({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorRubricsInfiniteQueryKey(options),
     }
   );
 };

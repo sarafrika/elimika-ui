@@ -1,20 +1,24 @@
 'use client';
 
+import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
 
 const availabilitySchema = z.object({
@@ -56,12 +60,15 @@ export default function AvailabilitySettings() {
       { id: 'profile', title: 'Profile', url: '/dashboard/profile' },
       {
         id: 'availability',
-        title: 'Rate Card',
-        url: '/dashboard/profile/rate-card',
+        title: 'Availability',
+        url: '/dashboard/profile/availability',
         isLast: true,
       },
     ]);
   }, [replaceBreadcrumbs]);
+
+  const user = useUserProfile();
+  const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   const form = useForm<AvailabilityFormValues>({
     resolver: zodResolver(availabilitySchema),
@@ -71,68 +78,62 @@ export default function AvailabilitySettings() {
     },
   });
 
-  const onSubmit = (data: AvailabilityFormValues) => {
-    //console.log(data);
-    // TODO: Implement submission logic. The Instructor schema does not have fields for this data.
+  const handleSubmit = (data: AvailabilityFormValues) => {
+    requestConfirmation({
+      title: 'Save availability?',
+      description: 'These preferences tell learners how to book you and what to expect.',
+      confirmLabel: 'Save availability',
+      cancelLabel: 'Keep editing',
+      onConfirm: async () => {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        toast.success('Availability saved');
+        disableEditing();
+      },
+    });
   };
 
+  const domainBadges =
+    (user?.user_domain as string[] | undefined)?.map(domain =>
+      domain
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    ) ?? [];
+
+
   return (
-    <div className='space-y-6'>
-      <div>
-        <h1 className='text-2xl font-semibold'>Availability & Rates</h1>
-        <p className='text-muted-foreground text-sm'>
-          Manage your schedule and set your hourly rates.
-        </p>
-      </div>
-
+    <ProfileFormShell
+      eyebrow='Instructor'
+      title='Instructo Rates'
+      description='Define the hourly rates you offer.'
+      badges={domainBadges}
+    >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-          {/* <Card>
-            <CardHeader>
-              <CardTitle>Scheduling</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className='text-muted-foreground mb-4 text-sm'>
-                Connect your Cal.com calendar to allow students to book sessions with you directly.
-              </p>
-              <a
-                href='https://cal.com/signup'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='inline-flex items-center gap-2'
+        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+
+          <ProfileFormSection
+            title='Class types & hourly rates'
+            description='Set clear pricing for the formats you support so learners can book with confidence.'
+            footer={
+              <Button
+                type='submit'
+                className='min-w-36'
+                disabled={!isEditing || isConfirming}
               >
-                <Button variant='outline' type='button'>
-                  <CalendarDays className='mr-2 h-4 w-4' />
-                  Set Up Availability on Cal.com
-                </Button>
-              </a>
-
-              <FormField
-                control={form.control}
-                name='calComLink'
-                render={({ field }) => (
-                  <FormItem className='mt-6'>
-                    <FormLabel>Your Cal.com Link</FormLabel>
-                    <FormControl>
-                      <Input type='url' placeholder='https://cal.com/your-username' {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Paste your public Cal.com scheduling page URL here.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
+                {isConfirming ? (
+                  <span className='flex items-center gap-2'>
+                    <Spinner className='h-4 w-4' />
+                    Saving…
+                  </span>
+                ) : (
+                  'Save changes'
                 )}
-              />
-            </CardContent>
-          </Card> */}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Class Types & Hourly Rates</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-6'>
+              </Button>
+            }
+          >
+            <div className='space-y-6'>
               {classTypes.map(ct => (
-                <div key={ct.type} className='rounded-lg border bg-gray-50/50 p-4'>
+                <div key={ct.type} className='rounded-lg border bg-muted/30 p-4'>
                   <h3 className='mb-1 text-lg font-semibold'>{ct.type}</h3>
                   <p className='text-muted-foreground mb-4 text-sm'>{ct.description}</p>
                   <div className='space-y-4'>
@@ -142,12 +143,11 @@ export default function AvailabilitySettings() {
                         control={form.control}
                         name={`rates.${method.key as keyof AvailabilityFormValues['rates']}`}
                         render={({ field }) => (
-                          <FormItem className='flex flex-col gap-2 rounded-md border bg-white p-3 sm:flex-row sm:items-center sm:justify-between'>
+                          <FormItem className='flex flex-col gap-2 rounded-md border bg-background p-3 sm:flex-row sm:items-center sm:justify-between'>
                             <FormLabel className='font-medium'>
-                              {method.name === 'In-Person' ? '🏢' : '💻'} {method.name} Rate (per
-                              hour)
+                              {method.name === 'In-Person' ? '🏢' : '💻'} {method.name} rate (per hour)
                             </FormLabel>
-                            <div className='flex items-center gap-x-2'>
+                            <div className='flex items-center gap-2'>
                               <FormControl>
                                 <Input
                                   type='number'
@@ -156,7 +156,9 @@ export default function AvailabilitySettings() {
                                   placeholder='e.g., 50.00'
                                   className='w-32 text-right'
                                   {...field}
-                                  onChange={e => field.onChange(parseFloat(e.target.value))}
+                                  onChange={e =>
+                                    field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+                                  }
                                 />
                               </FormControl>
                               <span className='text-muted-foreground text-sm'>USD</span>
@@ -169,16 +171,10 @@ export default function AvailabilitySettings() {
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
-
-          <div className='flex justify-end pt-2'>
-            <Button type='submit' className='px-6'>
-              Save Changes
-            </Button>
-          </div>
+            </div>
+          </ProfileFormSection>
         </form>
       </Form>
-    </div>
+    </ProfileFormShell>
   );
 }

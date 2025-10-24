@@ -18,7 +18,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useQueries, useQuery } from '@tanstack/react-query';
 import {
     BookOpen,
     Calendar,
@@ -33,8 +32,36 @@ import { useState } from 'react';
 import RichTextRenderer from '../../../components/editors/richTextRenders';
 import { useInstructor } from '../../../context/instructor-context';
 import { useDifficultyLevels } from '../../../hooks/use-difficultyLevels';
-import { getClassDefinitionsForInstructorOptions, getCourseByUuidOptions, getInstructorByUuidOptions } from '../../../services/client/@tanstack/react-query.gen';
+import useInstructorClassesWithDetails from '../../../hooks/use-instructor-classes';
 import { CustomLoadingState } from '../@course_creator/_components/loading-state';
+
+
+export const getLocationBadgeColor = (location: string) => {
+    switch (location) {
+        case 'ONLINE':
+            return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+        case 'IN_PERSON':
+            return 'bg-violet-500/10 text-violet-600 border-violet-500/20';
+        case 'HYBRID':
+            return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
+        default:
+            return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
+    }
+};
+
+export const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty?.toLowerCase()) {
+        case 'beginner':
+            return 'bg-green-500/70';
+        case 'intermediate':
+            return 'bg-blue-500/70';
+        case 'advanced':
+            return 'bg-purple-500/70';
+        default:
+            return 'bg-gray-500/70';
+    }
+};
+
 
 export function TrainingClassComponent() {
     const instructor = useInstructor();
@@ -44,51 +71,7 @@ export function TrainingClassComponent() {
     const [statusFilter, setStatusFilter] = useState('all');
 
     const { difficultyMap } = useDifficultyLevels();
-
-    const { data, isLoading, isPending, isFetching } = useQuery(
-        getClassDefinitionsForInstructorOptions({
-            path: { instructorUuid: instructor?.uuid as string },
-            query: { activeOnly: false },
-        })
-    );
-    const classes = data?.data ?? [];
-
-    const courseQueries = useQueries({
-        queries:
-            classes.map((cls: any) => ({
-                ...getCourseByUuidOptions({
-                    path: { uuid: cls.course_uuid },
-                }),
-                enabled: !!cls.course_uuid,
-            })) || [],
-    });
-
-    const instructorQueries = useQueries({
-        queries:
-            classes.map((cls: any) => ({
-                ...getInstructorByUuidOptions({
-                    path: { uuid: cls.default_instructor_uuid },
-                }),
-                enabled: !!cls.default_instructor_uuid,
-            })) || [],
-    });
-
-    const courses = courseQueries.map((q) => q.data?.data ?? null);
-    // @ts-ignore
-    const instructors = instructorQueries.map((q) => q.data?.data ?? null);
-
-    const classesWithCourseAndInstructor = classes.map((cls: any, i: number) => ({
-        ...cls,
-        course: courses[i],
-        instructor: instructors[i],
-    }));
-
-    const isCoursesLoading = courseQueries.some((q) => q.isLoading || q.isFetching);
-    const isInstructorsLoading = instructorQueries.some((q) => q.isLoading || q.isFetching);
-
-    const loading =
-        isLoading || isFetching || isCoursesLoading || isInstructorsLoading;
-
+    const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(instructor?.uuid as string)
 
     const filteredClasses = classesWithCourseAndInstructor?.filter(cls => {
         const matchesSearch =
@@ -115,32 +98,6 @@ export function TrainingClassComponent() {
     function openDeleteModal(uuid: string) {
         // delete class
     }
-
-    const getLocationBadgeColor = (location: string) => {
-        switch (location) {
-            case 'ONLINE':
-                return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
-            case 'IN_PERSON':
-                return 'bg-violet-500/10 text-violet-600 border-violet-500/20';
-            case 'HYBRID':
-                return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
-            default:
-                return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
-        }
-    };
-
-    const getDifficultyColor = (difficulty: string) => {
-        switch (difficulty?.toLowerCase()) {
-            case 'beginner':
-                return 'bg-green-500/70';
-            case 'intermediate':
-                return 'bg-blue-500/70';
-            case 'advanced':
-                return 'bg-purple-500/70';
-            default:
-                return 'bg-gray-500/70';
-        }
-    };
 
     if (loading) {
         return <CustomLoadingState subHeading='Loading training classes information' />

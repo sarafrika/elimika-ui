@@ -20,6 +20,7 @@ import { PlusCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useCourseCreator } from '../../../../context/course-creator-context';
+import { CustomLoadingState } from '../_components/loading-state';
 import {
   CriteriaDialog,
   RubricCriteriaFormValues,
@@ -249,7 +250,7 @@ export default function RubricsCreationPage() {
           qc.invalidateQueries({
             queryKey: searchAssessmentRubricsQueryKey({
               query: {
-                searchParams: { instructor_uuid_eq: creator?.data?.profile?.uuid as string },
+                searchParams: { course_creator_uuid_eq: creator?.data?.profile?.uuid as string },
                 pageable: {},
               },
             }),
@@ -433,6 +434,11 @@ export default function RubricsCreationPage() {
     );
   };
 
+  if (rubricDataIsLoading) {
+    return <CustomLoadingState subHeading='Fetching your assessment rubrics...' />
+  }
+
+
   return (
     <div className='space-y-6'>
       <div className='mb-6 flex w-full justify-end'>
@@ -442,15 +448,8 @@ export default function RubricsCreationPage() {
         </Button>
       </div>
 
-      {rubricDataIsLoading && (
-        <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
-          <div className='h-20 w-full animate-pulse rounded bg-gray-200'></div>
-          <div className='h-16 w-full animate-pulse rounded bg-gray-200'></div>
-          <div className='h-12 w-full animate-pulse rounded bg-gray-200'></div>
-        </div>
-      )}
 
-      {rubrics.length === 0 && (
+      {!rubricDataIsLoading && rubrics.length === 0 && (
         <div className='flex h-[40vh] w-full items-center justify-center'>
           <div className='bg-muted/20 w-full rounded-md border px-6 py-12 text-center'>
             <p className='text-muted-foreground mt-2'>No rubrics created yet.</p>
@@ -462,7 +461,7 @@ export default function RubricsCreationPage() {
       )}
 
       <>
-        {rubricsDataIsFetched && !rubricDataIsLoading && rubrics.length >= 1 && (
+        {rubricsDataIsFetched && rubrics.length >= 1 && (
           <div className='space-y-6'>
             {rubrics.map(item => {
               const rubric = item.rubric;

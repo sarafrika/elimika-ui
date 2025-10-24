@@ -150,13 +150,16 @@ function CourseRow({ course }: { course: Course }) {
       <TableCell>
         <div className='flex flex-col gap-1'>
           <span className='leading-tight font-semibold'>{course.name}</span>
-          <div className='text-muted-foreground text-xs'>
+          <div
+            className="text-muted-foreground text-xs"
+          >
             {course?.description ? (
-              <RichTextRenderer htmlString={course?.description as string} maxChars={110} />
+              <RichTextRenderer htmlString={course?.description as string} maxChars={65} />
             ) : (
               'No description added yet.'
             )}
           </div>
+
         </div>
       </TableCell>
       <TableCell>

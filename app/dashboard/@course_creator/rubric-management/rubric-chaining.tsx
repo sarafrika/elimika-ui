@@ -7,7 +7,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 
-export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
+export const useRubricsWithCriteriaAndScoring = (courseCreatorUuid?: string) => {
   const {
     data: allRubrics,
     isLoading: isRubricsLoading,
@@ -19,7 +19,7 @@ export const useRubricsWithCriteriaAndScoring = (instructorUuid?: string) => {
       query: {
         pageable: {},
         searchParams: {
-          instructor_uuid_eq: instructorUuid as string,
+          course_creator_uuid_eq: courseCreatorUuid as string,
         },
       },
     }),
