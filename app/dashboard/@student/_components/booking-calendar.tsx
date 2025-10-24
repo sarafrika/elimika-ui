@@ -22,7 +22,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { CalendarIcon, Clock, MapPin, Video, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { BookingSlot } from '../browse-courses/instructor/[id]/page';
+import { BookingSlot } from '../browse-courses/instructor/page';
 
 type Props = {
   instructor: any;
@@ -171,7 +171,7 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
                         variant={selected ? 'default' : 'outline'}
                         className='w-full justify-start gap-2'
                         onClick={() => handleSlotSelect(slot)}
-                        // onClick={() => console.log(slot, "clicked slot")}
+                      // onClick={() => console.log(slot, "clicked slot")}
                       >
                         <Clock className='h-4 w-4' />
                         {getDayLabel(slot.day_of_week)} {' - '}

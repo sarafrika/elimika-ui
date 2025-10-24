@@ -41,6 +41,8 @@ import { createCategory, updateCourse } from '@/services/client';
 import {
   createCourseMutation,
   getAllCategoriesOptions,
+  getAllCategoriesQueryKey,
+  getCourseByUuidQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -105,16 +107,16 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         is_free: false,
         objectives: '',
         categories: [],
-        class_limit: 30,
+        class_limit: 1,
         prerequisites: '',
-        age_lower_limit: 5,
-        age_upper_limit: 70,
+        age_lower_limit: 1,
+        age_upper_limit: 1,
         thumbnail_url: '',
         banner_url: '',
         intro_video_url: '',
         duration_hours: 0,
         duration_minutes: 1,
-        minimum_training_fee: 0,
+        minimum_training_fee: initialValues?.minimum_training_fee ?? 0,
         creator_share_percentage: 50,
         instructor_share_percentage: 50,
         revenue_share_notes: '',
@@ -172,7 +174,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
         toast.success(data?.message);
         dialogCloseRef.current?.click();
-        queryClient.invalidateQueries({ queryKey: ['getAllCategories'] });
+        queryClient.invalidateQueries({ queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }) });
         setCategoryInput('');
       },
     });
@@ -188,12 +190,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     // GET COURSE CATEGORIES
     const { data: categories } = useQuery(
       getAllCategoriesOptions({
-        query: {
-          pageable: {
-            page: 0,
-            size: 100,
-          },
-        },
+        query: { pageable: { page: 0, size: 100, }, },
       })
     );
 
@@ -277,7 +274,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 // }
 
                 setActiveStep(1);
-                queryClient.invalidateQueries({ queryKey: ['getAllCourses', 'getCourseByUuid'] });
+                queryClient.invalidateQueries({ queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }) });
                 return;
               }
 
@@ -343,7 +340,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             onSuccess: data => {
               toast.success('Course created successfully');
               setActiveStep(1);
-              queryClient.invalidateQueries({ queryKey: ['getAllCourses', 'getCourseByUuid'] });
+              queryClient.invalidateQueries({ queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }) });
 
               if (typeof successResponse === 'function') {
                 // @ts-ignore
@@ -900,100 +897,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 </FormItem>
               )}
             />
-          </FormSection>
-
-          {/* Class Limit */}
-          <FormSection
-            title='Class Limit'
-            description='Set the maximum number of students allowed to enroll'
-          >
-            <FormField
-              control={form.control}
-              name='class_limit'
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      type='number'
-                      min='1'
-                      placeholder='Maximum number of students'
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </FormSection>
-
-          {/* Age Limit */}
-          <FormSection title='Age Limit' description='Set the age limit for your course'>
-            <div className='space-y-0'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <FormField
-                  control={form.control}
-                  name='age_lower_limit'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Age Lower Limit</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='age_upper_limit'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Age Upper Limit</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-          </FormSection>
-
-          {/* Course Duration */}
-          <FormSection title='Course Duration' description='Set the time duration for your course'>
-            <div className='space-y-0'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <FormField
-                  control={form.control}
-                  name='duration_hours'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration Hours</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='duration_minutes'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration Minutes</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
           </FormSection>
 
           {showSubmitButton && (

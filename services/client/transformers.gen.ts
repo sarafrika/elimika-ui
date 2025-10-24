@@ -195,8 +195,8 @@ import type {
   SearchPublicRubricsResponse,
   GetPublicRubricsResponse,
   GetPopularRubricsResponse,
-  GetInstructorRubricsResponse,
   GetGeneralRubricsResponse,
+  GetCourseCreatorRubricsResponse,
   GetQuizAttemptsResponse,
   SearchQuizzesResponse,
   SearchQuestionsResponse,
@@ -3132,16 +3132,16 @@ export const getPopularRubricsResponseTransformer = async (
   return data;
 };
 
-export const getInstructorRubricsResponseTransformer = async (
+export const getGeneralRubricsResponseTransformer = async (
   data: any
-): Promise<GetInstructorRubricsResponse> => {
+): Promise<GetGeneralRubricsResponse> => {
   data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
   return data;
 };
 
-export const getGeneralRubricsResponseTransformer = async (
+export const getCourseCreatorRubricsResponseTransformer = async (
   data: any
-): Promise<GetGeneralRubricsResponse> => {
+): Promise<GetCourseCreatorRubricsResponse> => {
   data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
   return data;
 };

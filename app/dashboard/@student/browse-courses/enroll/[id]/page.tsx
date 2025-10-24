@@ -1,19 +1,19 @@
 'use client';
 
+import { Card } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import {
-  getClassDefinitionsForCourseOptions,
-  getCourseByUuidOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { useStudent } from '@/context/student-context';
+import useCourseClassesWithDetails from '@/hooks/use-course-classes';
 import { useParams } from 'next/navigation';
-import { useEffect } from 'react';
-import { EnrollmentCards } from '../../../../_components/enroll-card';
+import { useEffect, useState } from 'react';
+import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
+import EnrollCourseCard from '../../../../_components/enroll-course-card';
 
 const EnrollmentPage = () => {
   const params = useParams();
   const courseId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const student = useStudent()
 
   useEffect(() => {
     if (courseId) {
@@ -33,53 +33,37 @@ const EnrollmentPage = () => {
     }
   }, [replaceBreadcrumbs, courseId]);
 
-  const { data: courseData } = useQuery({
-    ...getCourseByUuidOptions({ path: { uuid: courseId } }),
-    enabled: !!courseId,
-  });
 
-  const {
-    data: classesForCourse,
-    isLoading,
-    isError,
-  } = useQuery({
-    ...getClassDefinitionsForCourseOptions({ path: { courseUuid: courseId } }),
-    enabled: !!courseId,
-  });
-  const classes = classesForCourse?.data || [];
+  const [enrollingCourse, setEnrollingCourse] = useState<any | null>(null)
+  const { classes, loading, isError } = useCourseClassesWithDetails(courseId, "2025-10-23", '2026-12-12');
 
-  if (isLoading) {
-    return <div className='p-4'>Loading available classes...</div>;
+  if (loading) {
+    return <CustomLoadingState subHeading='Loading available classes...' />;
   }
-
-  if (isError) {
-    return <div className='p-4 text-red-600'>Failed to load classes. Please try again later.</div>;
-  }
-
-  // TODO: Implement real enrollment logic
-  const handleEnroll = (classUuid: string) => {
-    alert(`You clicked enroll on class ${classUuid}`);
-  };
 
   return (
-    <div className='space-y-4'>
-      <h1 className='text-2xl font-semibold'>Available Classes to Enroll In</h1>
+    <Card className='space-y-4 py-10 px-6'>
+      <div>
+        <h1 className="text-2xl font-semibold">Explore Classes Open for Enrollment</h1>
+        <p className="text-gray-600">Discover courses designed to help you grow and succeed.</p>
+      </div>
 
-      {!isLoading && classes.length === 0 ? (
-        <div className='text-gray-500'>No classes available for this course.</div>
+      {classes.length === 0 ? (
+        <Card className='text-gray-500'>No classes available for this course.</Card>
       ) : (
-        <ul className='flex flex-row flex-wrap gap-4'>
+        <div className='flex flex-row flex-wrap gap-4'>
           {classes.map((cls: any) => (
-            <EnrollmentCards
+            <EnrollCourseCard
               key={cls?.uuid}
-              course={courseData?.data}
-              classData={cls}
-              onViewClass={() => {}}
+              cls={cls as any}
+              enrollmentPercentage={5}
+              isFull={false}
+              handleEnroll={() => setEnrollingCourse(cls)}
             />
           ))}
-        </ul>
+        </div>
       )}
-    </div>
+    </Card>
   );
 };
 

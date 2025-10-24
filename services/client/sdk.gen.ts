@@ -775,9 +775,9 @@ import type {
   GetRubricStatisticsData,
   GetRubricStatisticsResponses,
   GetRubricStatisticsErrors,
-  GetInstructorRubricStatisticsData,
-  GetInstructorRubricStatisticsResponses,
-  GetInstructorRubricStatisticsErrors,
+  GetCourseCreatorRubricStatisticsData,
+  GetCourseCreatorRubricStatisticsResponses,
+  GetCourseCreatorRubricStatisticsErrors,
   SearchPublicRubricsData,
   SearchPublicRubricsResponses,
   SearchPublicRubricsErrors,
@@ -787,12 +787,12 @@ import type {
   GetPopularRubricsData,
   GetPopularRubricsResponses,
   GetPopularRubricsErrors,
-  GetInstructorRubricsData,
-  GetInstructorRubricsResponses,
-  GetInstructorRubricsErrors,
   GetGeneralRubricsData,
   GetGeneralRubricsResponses,
   GetGeneralRubricsErrors,
+  GetCourseCreatorRubricsData,
+  GetCourseCreatorRubricsResponses,
+  GetCourseCreatorRubricsErrors,
   GetQuizTotalPointsData,
   GetQuizTotalPointsResponses,
   GetQuizTotalPointsErrors,
@@ -1347,8 +1347,8 @@ import {
   searchPublicRubricsResponseTransformer,
   getPublicRubricsResponseTransformer,
   getPopularRubricsResponseTransformer,
-  getInstructorRubricsResponseTransformer,
   getGeneralRubricsResponseTransformer,
+  getCourseCreatorRubricsResponseTransformer,
   getQuizAttemptsResponseTransformer,
   searchQuizzesResponseTransformer,
   searchQuestionsResponseTransformer,
@@ -9106,15 +9106,15 @@ export const getRubricStatistics = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get instructor's rubric statistics
- * Retrieves statistics about a specific instructor's rubrics, including counts by visibility and status.
+ * Get course creator rubric statistics
+ * Retrieves statistics about a specific course creator's rubrics, including counts by visibility and status.
  */
-export const getInstructorRubricStatistics = <ThrowOnError extends boolean = false>(
-  options: Options<GetInstructorRubricStatisticsData, ThrowOnError>
+export const getCourseCreatorRubricStatistics = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorRubricStatisticsData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).get<
-    GetInstructorRubricStatisticsResponses,
-    GetInstructorRubricStatisticsErrors,
+    GetCourseCreatorRubricStatisticsResponses,
+    GetCourseCreatorRubricStatisticsErrors,
     ThrowOnError
   >({
     security: [
@@ -9127,7 +9127,7 @@ export const getInstructorRubricStatistics = <ThrowOnError extends boolean = fal
         type: 'http',
       },
     ],
-    url: '/api/v1/rubrics/discovery/statistics/instructor/{instructorUuid}',
+    url: '/api/v1/rubrics/discovery/statistics/course-creator/{courseCreatorUuid}',
     ...options,
   });
 };
@@ -9217,34 +9217,6 @@ export const getPopularRubrics = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get instructor's rubrics
- * Retrieves rubrics created by a specific instructor, with option to include private rubrics.
- */
-export const getInstructorRubrics = <ThrowOnError extends boolean = false>(
-  options: Options<GetInstructorRubricsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetInstructorRubricsResponses,
-    GetInstructorRubricsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getInstructorRubricsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/rubrics/discovery/instructor/{instructorUuid}',
-    ...options,
-  });
-};
-
-/**
  * Get general rubrics
  * Retrieves general-purpose rubrics that are not tied to any specific course.
  */
@@ -9268,6 +9240,34 @@ export const getGeneralRubrics = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/rubrics/discovery/general',
+    ...options,
+  });
+};
+
+/**
+ * Get course creator's rubrics
+ * Retrieves rubrics defined by a specific course creator, with option to include private rubrics.
+ */
+export const getCourseCreatorRubrics = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorRubricsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorRubricsResponses,
+    GetCourseCreatorRubricsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorRubricsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/rubrics/discovery/course-creator/{courseCreatorUuid}',
     ...options,
   });
 };

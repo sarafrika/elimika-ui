@@ -19,7 +19,7 @@ import {
   Video,
 } from 'lucide-react';
 import React, { useState } from 'react';
-import { Booking, BookingSlot } from '../browse-courses/instructor/[id]/page';
+import { Booking, BookingSlot } from '../browse-courses/instructor/page';
 import { BookingCalendar } from './booking-calendar';
 import { BookingSummary } from './booking-summary';
 

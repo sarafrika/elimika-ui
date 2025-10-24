@@ -15,6 +15,7 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
     data: cLessons,
     isLoading: lessonsLoading,
     isError: lessonsError,
+    isFetching: lessonsFetching,
   } = useQuery({
     ...getCourseLessonsOptions({
       path: { courseUuid: courseUuid as string },
@@ -36,15 +37,22 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
       })) || [],
   });
 
+  // Aggregate loading/fetching states
   const isLessonContentLoading = lessonContentQueries.some(q => q.isLoading);
+  const isLessonContentFetching = lessonContentQueries.some(q => q.isFetching);
+
   const isAllLessonsDataLoading = lessonsLoading || isLessonContentLoading;
+  const isAllLessonsDataFetching = lessonsFetching || isLessonContentFetching;
 
   const lessonsWithContent = cLessons?.data?.content?.map((lesson, index) => ({
     lesson,
     content: lessonContentQueries[index]?.data,
   }));
 
-  const { data: contentTypeList } = useQuery(
+  const {
+    data: contentTypeList,
+    isFetching: contentTypeFetching,
+  } = useQuery(
     getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
   );
 
@@ -59,6 +67,7 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
 
   return {
     isLoading: isAllLessonsDataLoading,
+    isFetching: isAllLessonsDataFetching || contentTypeFetching,
     isError: lessonsError,
     lessons: lessonsWithContent,
     contentTypes: contentTypeData,

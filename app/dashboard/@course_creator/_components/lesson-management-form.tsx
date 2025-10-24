@@ -73,6 +73,7 @@ import {
   deleteCourseAssessmentMutation,
   getAllContentTypesOptions,
   getCourseByUuidOptions,
+  getCourseLessonQueryKey,
   getCourseLessonsQueryKey,
   getLessonContentQueryKey,
   searchAssessmentsQueryKey,
@@ -144,8 +145,8 @@ const lessonFormSchema = z.object({
   description: z
     .string()
     .min(1, 'Lesson description is required')
-    .max(1000, 'Description cannot exceed 1000 characters'),
-  objectives: z.string().max(500, 'Objectives cannot exceed 500 characters').optional(),
+    .max(350, 'Description cannot exceed 500 characters'),
+  objectives: z.string().max(350, 'Objectives cannot exceed 500 characters').optional(),
   uuid: z.any(),
   duration_hours: z.any(),
   duration_minutes: z.any(),
@@ -900,24 +901,14 @@ function LessonEditingForm({
             }),
           });
 
+          qc.invalidateQueries({
+            queryKey: getCourseLessonQueryKey({
+              path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
+            }),
+          });
+
           toast.success(data?.message);
           onCancel();
-
-          // const updateLessonContentBody = {
-          //   lesson_uuid: lessonId as string,
-          //   content_type_uuid: values.content[0]?.contentTypeUuid as string,
-          //   title: values?.title,
-          //   description: values?.description ?? '',
-          //   content_text: values.content[0]?.value || '',
-          //   file_url: '',
-          //   file_size_bytes: 157200,
-          //   mime_type: values.content[0]?.value || '',
-          //   display_order: values?.number,
-          //   is_required: true,
-          //   created_by: 'instructor@sarafrika.com',
-          //   updated_by: 'instructor@sarafrika.com',
-          //   file_size_display: '',
-          // }
         },
       }
     );

@@ -312,8 +312,8 @@ export const zStudent = z
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.'
       )
       .optional(),
-    allGuardianContacts: z.array(z.string()).optional(),
     primaryGuardianContact: z.string().optional(),
+    allGuardianContacts: z.array(z.string()).optional(),
     secondaryGuardianContact: z.string().optional(),
     created_date: z
       .string()
@@ -395,14 +395,14 @@ export const zAssessmentRubric = z
       .min(0)
       .max(50)
       .describe('**[REQUIRED]** Type of assessment this rubric is designed for.'),
-    instructor_uuid: z
+    course_creator_uuid: z
       .string()
       .uuid()
-      .describe('**[REQUIRED]** Reference to the instructor UUID who created this rubric.'),
+      .describe('**[REQUIRED]** Reference to the course creator UUID who defined this rubric.'),
     is_public: z
       .boolean()
       .describe(
-        '**[OPTIONAL]** Indicates if this rubric is publicly available for other instructors to use.'
+        '**[OPTIONAL]** Indicates if this rubric is publicly available for other course creators to use.'
       )
       .optional(),
     status: zStatusEnum,
@@ -582,16 +582,16 @@ export const zRubricScoringLevel = z
       .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
       .readonly()
       .optional(),
-    css_color_class: z
-      .string()
-      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
-      .readonly()
-      .optional(),
     performance_indicator: z
       .string()
       .describe(
         '**[READ-ONLY]** Performance classification based on level order and passing status.'
       )
+      .readonly()
+      .optional(),
+    css_color_class: z
+      .string()
+      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
       .readonly()
       .optional(),
     is_highest_level: z
@@ -1103,14 +1103,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -5523,11 +5523,6 @@ export const zAssignmentSubmission = z
       .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
       .readonly()
       .optional(),
-    file_count_display: z
-      .string()
-      .describe('**[READ-ONLY]** Summary of files attached to this submission.')
-      .readonly()
-      .optional(),
     submission_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
@@ -5543,6 +5538,11 @@ export const zAssignmentSubmission = z
       .describe(
         '**[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.'
       )
+      .readonly()
+      .optional(),
+    file_count_display: z
+      .string()
+      .describe('**[READ-ONLY]** Summary of files attached to this submission.')
       .readonly()
       .optional(),
   })
@@ -5934,6 +5934,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -5947,11 +5952,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -10696,10 +10696,10 @@ export const zGetRubricStatisticsData = z.object({
  */
 export const zGetRubricStatisticsResponse = zApiResponseMapStringLong;
 
-export const zGetInstructorRubricStatisticsData = z.object({
+export const zGetCourseCreatorRubricStatisticsData = z.object({
   body: z.never().optional(),
   path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+    courseCreatorUuid: z.string().uuid().describe('UUID of the course creator'),
   }),
   query: z.never().optional(),
 });
@@ -10707,7 +10707,7 @@ export const zGetInstructorRubricStatisticsData = z.object({
 /**
  * OK
  */
-export const zGetInstructorRubricStatisticsResponse = zApiResponseMapStringLong;
+export const zGetCourseCreatorRubricStatisticsResponse = zApiResponseMapStringLong;
 
 export const zSearchPublicRubricsData = z.object({
   body: z.never().optional(),
@@ -10750,10 +10750,23 @@ export const zGetPopularRubricsData = z.object({
  */
 export const zGetPopularRubricsResponse = zApiResponsePagedDtoAssessmentRubric;
 
-export const zGetInstructorRubricsData = z.object({
+export const zGetGeneralRubricsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetGeneralRubricsResponse = zApiResponsePagedDtoAssessmentRubric;
+
+export const zGetCourseCreatorRubricsData = z.object({
   body: z.never().optional(),
   path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+    courseCreatorUuid: z.string().uuid().describe('UUID of the course creator'),
   }),
   query: z.object({
     includePrivate: z
@@ -10768,20 +10781,7 @@ export const zGetInstructorRubricsData = z.object({
 /**
  * OK
  */
-export const zGetInstructorRubricsResponse = zApiResponsePagedDtoAssessmentRubric;
-
-export const zGetGeneralRubricsData = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z.object({
-    pageable: zPageable,
-  }),
-});
-
-/**
- * OK
- */
-export const zGetGeneralRubricsResponse = zApiResponsePagedDtoAssessmentRubric;
+export const zGetCourseCreatorRubricsResponse = zApiResponsePagedDtoAssessmentRubric;
 
 export const zGetQuizTotalPointsData = z.object({
   body: z.never().optional(),

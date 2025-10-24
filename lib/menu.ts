@@ -12,7 +12,6 @@ import {
   Calendar,
   CalendarClock,
   ChartNoAxesCombined,
-  CheckSquare,
   ClipboardList,
   DollarSign,
   FileCheck,
@@ -37,7 +36,7 @@ import {
   Users,
   UsersIcon,
   Wallet,
-  Wrench,
+  Wrench
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -295,29 +294,6 @@ export default {
       url: '/dashboard/profile',
       icon: UserCircle,
     },
-    ///
-    ///
-    ///
-    // {
-    //   title: 'Course Management',
-    //   url: '/dashboard/course-management',
-    //   icon: BookOpen,
-    // },
-    // {
-    //   title: 'Programs',
-    //   url: '/dashboard/programs',
-    //   icon: Layers,
-    // },
-    // {
-    //   title: 'Rubrics Management',
-    //   url: '/dashboard/rubric-management',
-    //   icon: CheckSquare,
-    // },
-    // {
-    //   title: 'Apply to train',
-    //   url: '/dashboard/apply-to-train',
-    //   icon: UserCheck,
-    // }
   ],
   course_creator: [
     {
@@ -351,11 +327,6 @@ export default {
           icon: FileCheck,
         },
       ],
-    },
-    {
-      title: 'Rubrics Management',
-      url: '/dashboard/rubric-management',
-      icon: CheckSquare,
     },
     {
       title: 'Analytics',

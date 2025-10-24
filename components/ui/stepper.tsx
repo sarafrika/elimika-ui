@@ -41,7 +41,7 @@ export const useStepper = () => {
 };
 
 export function StepperRoot({ children }: { children: ReactNode }) {
-  const [activeStep, setActiveStep] = useState(3);
+  const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   const steps = Children.toArray(children).filter(

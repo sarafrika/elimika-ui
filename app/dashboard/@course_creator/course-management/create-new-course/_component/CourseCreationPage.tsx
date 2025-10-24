@@ -22,20 +22,19 @@ import {
   getLessonContentQueryKey,
   publishCourseMutation,
   publishCourseQueryKey,
-  searchAssessmentsOptions,
+  searchAssessmentsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BadgeCheck,
   BookOpen,
-  BookOpenCheck,
   CheckCircle,
   ClipboardList,
   Eye,
   FileQuestion,
   GraduationCap,
   Palette,
-  SlidersHorizontal,
+  SlidersHorizontal
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -45,6 +44,7 @@ import { Card, CardDescription } from '../../../../../../components/ui/card';
 import { AssignmentDialog, AssignmentList } from '../../../_components/assignment-management-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, CourseFormRef } from '../../../_components/course-creation-form';
+import CourseLicensingForm from '../../../_components/course-licensing-form';
 import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
 import {
   AssessmentDialog,
@@ -323,6 +323,10 @@ export default function CourseCreationPage() {
   };
 
   // GET COURSE QUIZZES
+  // const { data: quizData, isLoading: quizDataIsLoading } = useQuery(
+  //   searchQuizzesOptions({ query: { pageable: {}, searchParams: { lesson_uuid_eq: "ae193cc7-cad4-40c4-b864-cae8f2fae174" } }, })
+  // );
+
   const { data: quizData, isLoading: quizDataIsLoading } = useQuery(
     getAllQuizzesOptions({ query: { pageable: {} } })
   );
@@ -612,7 +616,7 @@ export default function CourseCreationPage() {
               ) : (
                 <QuizList
                   courseTitle={course?.data?.name as string}
-                  isLoading={assessmentLoading}
+                  isLoading={quizDataIsLoading}
                   quizzes={quizData?.data}
                   courseId={resolveId}
                   onAddQuiz={() => setAddQuizModal(true)}
@@ -684,7 +688,7 @@ export default function CourseCreationPage() {
                 ref={formRef}
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
-                editingCourseId={courseId as string}
+                editingCourseId={resolveId as string}
                 initialValues={courseInitialValues as any}
                 successResponse={data => {
                   setCreatedCourseId(data?.uuid);
@@ -708,9 +712,16 @@ export default function CourseCreationPage() {
                   <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
                 </div>
               </div>
-              <div className='space-y-4'>
-                This page is still under construction
-              </div>
+              <CourseLicensingForm
+                ref={formRef}
+                showSubmitButton={true}
+                courseId={createdCourseId as string}
+                editingCourseId={resolveId as string}
+                initialValues={courseInitialValues as any}
+                successResponse={(data: any) => {
+                  setCreatedCourseId(data?.uuid);
+                }}
+              />
             </div>
           </StepperContent>
 
@@ -837,44 +848,7 @@ export default function CourseCreationPage() {
                     {courseLessons?.data?.content?.length === 0 && (
                       <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
                         <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
-                        <p className='font-medium'>No lessons available</p>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                {/* assessments */}
-                <div className='mt-4'>
-                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>Assessments</h3>
-                </div>
-                <section>
-                  <div className='-mt-2 flex flex-col gap-2 space-y-4'>
-                    {assessmentData?.data?.content?.slice()?.map((assessment: any, i: any) => (
-                      <div key={i} className='flex flex-row gap-2'>
-                        <div>
-                          <span className='min-h-4 min-w-4'>
-                            <BookOpenCheck className='mt-1 h-4 w-4' />
-                          </span>
-                        </div>
-                        <div className='flex flex-col gap-2'>
-                          <h3 className='font-semibold'>{assessment.title}</h3>
-                          <RichTextRenderer
-                            htmlString={
-                              (assessment?.description as string) || 'No assessment provided'
-                            }
-                          />
-
-                          {/* <h3 className='font-semibold'>
-                          <span>📅 Duration:</span> {assessment.duration_display}
-                        </h3> */}
-                        </div>
-                      </div>
-                    ))}
-
-                    {assessmentData?.data?.content?.length === 0 && (
-                      <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
-                        <BookOpenCheck className='text-muted-foreground mb-2 h-8 w-8' />
-                        <p className='font-medium'>No assessments available</p>
+                        <p className='font-medium'>No skills available</p>
                       </div>
                     )}
                   </div>

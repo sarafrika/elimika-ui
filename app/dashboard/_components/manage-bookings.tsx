@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Clock, Eye, MapPin, Star, Video, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Booking } from '../browse-courses/instructor/[id]/page';
+import { Booking } from '../@student/browse-courses/instructor/page';
 
 type Props = {
   bookings: any[];

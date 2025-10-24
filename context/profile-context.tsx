@@ -1,10 +1,10 @@
 import { UserDomain, UserProfileType } from '@/lib/types';
 import {
+  CourseCreator,
   getInstructorEducation,
   getInstructorExperience,
   getInstructorMemberships,
   getInstructorSkills,
-  CourseCreator,
   Instructor,
   InstructorEducation,
   InstructorExperience,
@@ -34,13 +34,13 @@ type ExtendedInstructor = Instructor & {
 
 const UserProfileContext = createContext<
   | (Partial<UserProfileType> & {
-      isLoading: boolean;
-      invalidateQuery: () => void;
-      clearProfile: () => void;
-      setActiveDomain: (domain: UserDomain) => void;
-      activeDomain: UserDomain | null;
-      hasMultipleDomains: boolean;
-    })
+    isLoading: boolean;
+    invalidateQuery: () => void;
+    clearProfile: () => void;
+    setActiveDomain: (domain: UserDomain) => void;
+    activeDomain: UserDomain | null;
+    hasMultipleDomains: boolean;
+  })
   | null
 >(null);
 

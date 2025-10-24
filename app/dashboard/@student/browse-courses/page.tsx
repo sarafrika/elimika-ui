@@ -224,7 +224,9 @@ export default function MyCoursesPage() {
             <CourseCard
               key={course.uuid}
               course={course as any}
-              isStudent={true}
+              isStudentView={true}
+              handleEnroll={() => router.push(`/dashboard/browse-courses/enroll/${course.uuid}`)}
+              handleSearchInstructor={() => router.push(`/dashboard/browse-courses/instructor`)}
               handleClick={() => router.push(`/dashboard/browse-courses/${course.uuid}`)}
             />
           ))}

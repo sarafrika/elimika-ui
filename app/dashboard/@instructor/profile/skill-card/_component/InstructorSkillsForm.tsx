@@ -4,6 +4,12 @@ import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profi
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import {
   Form,
   FormControl,
   FormField,
@@ -35,10 +41,11 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { InstructorSkillCard } from './instructor-skill-card';
 
 const SkillSchema = schemas.InstructorSkill;
 const skillsSchema = z.object({
@@ -174,6 +181,9 @@ export default function SkillsSettings({
         .join(' ')
     ) ?? [];
 
+
+  const [showSkillCard, setShowSkillCard] = useState(false)
+
   return (
     <ProfileFormShell
       eyebrow='Instructor'
@@ -181,146 +191,216 @@ export default function SkillsSettings({
       description='Showcase the expertise and proficiencies that define your instructional style.'
       badges={domainBadges}
     >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-          {errors && errors.length > 0 ? (
-            <Alert variant='destructive'>
-              <AlertTitle>Unable to save your skills</AlertTitle>
-              <AlertDescription>
-                <ul className='ml-4 list-disc space-y-1 text-sm'>
-                  {errors.map((error, index) => (
-                    <li key={index}>{error.message}</li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
-          <ProfileFormSection
-            title='Professional skills'
-            description='Help learners understand what you teach best and your depth of experience.'
-            footer={
-              <Button
-                type='submit'
-                className='min-w-36'
-                disabled={!isEditing || submitting || isConfirming}
-              >
-                {submitting || isConfirming ? (
-                  <span className='flex items-center gap-2'>
-                    <Spinner className='h-4 w-4' />
-                    Saving…
-                  </span>
-                ) : (
-                  'Save changes'
-                )}
+      <div className='space-y-6' >
+        <div className="w-full flex justify-end">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="text-sm">
+                View Skill Card
               </Button>
-            }
-          >
-            <div className='space-y-4'>
-              {fields.map((field, index) => (
-                <div key={field.id} className='rounded-md border'>
-                  <div className='flex items-center justify-between border-b p-4'>
-                    <h3 className='text-sm font-medium'>
-                      {form.watch(`skills.${index}.skill_name`) || 'New skill'}
-                    </h3>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      onClick={() => handleRemove(index)}
-                      className='hover:bg-destructive-foreground h-8 w-8'
-                    >
-                      <Trash2 className='text-destructive h-4 w-4' />
-                    </Button>
-                  </div>
+            </DialogTrigger>
 
-                  <div className='space-y-6 p-6'>
-                    <FormField
-                      control={form.control}
-                      name={`skills.${index}.skill_name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Skill</FormLabel>
-                          <FormControl>
-                            <Input placeholder='e.g. Graphic Design' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+            <DialogContent className="max-w-2xl overflow-y-auto max-h-[85vh]">
+              <DialogHeader />
+              <InstructorSkillCard
+                instructor={instructor}
+                skills={sampleSkills}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
 
-                    <FormField
-                      control={form.control}
-                      name={`skills.${index}.summary`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Overview</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder='Summarise where this skill shines.' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+            {errors && errors.length > 0 ? (
+              <Alert variant='destructive'>
+                <AlertTitle>Unable to save your skills</AlertTitle>
+                <AlertDescription>
+                  <ul className='ml-4 list-disc space-y-1 text-sm'>
+                    {errors.map((error, index) => (
+                      <li key={index}>{error.message}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            ) : null}
 
-                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
+            <ProfileFormSection
+              title='Professional skills'
+              description='Help learners understand what you teach best and your depth of experience.'
+              footer={
+                <Button
+                  type='submit'
+                  className='min-w-36'
+                  disabled={!isEditing || submitting || isConfirming}
+                >
+                  {submitting || isConfirming ? (
+                    <span className='flex items-center gap-2'>
+                      <Spinner className='h-4 w-4' />
+                      Saving…
+                    </span>
+                  ) : (
+                    'Save changes'
+                  )}
+                </Button>
+              }
+            >
+              <div className='space-y-4'>
+                {fields.map((field, index) => (
+                  <div key={field.id} className='rounded-md border'>
+                    <div className='flex items-center justify-between border-b p-4'>
+                      <h3 className='text-sm font-medium'>
+                        {form.watch(`skills.${index}.skill_name`) || 'New skill'}
+                      </h3>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        onClick={() => handleRemove(index)}
+                        className='hover:bg-destructive-foreground h-8 w-8'
+                      >
+                        <Trash2 className='text-destructive h-4 w-4' />
+                      </Button>
+                    </div>
+
+                    <div className='space-y-6 p-6'>
                       <FormField
                         control={form.control}
-                        name={`skills.${index}.proficiency_level`}
+                        name={`skills.${index}.skill_name`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Proficiency</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Select level' />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {proficiencyLevels.map(level => (
-                                  <SelectItem key={level} value={level.toUpperCase()}>
-                                    {level}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name={`skills.${index}.proficiency_description`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Support detail</FormLabel>
+                            <FormLabel>Skill</FormLabel>
                             <FormControl>
-                              <Textarea placeholder='Describe your experience level.' {...field} />
+                              <Input placeholder='e.g. Graphic Design' {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
+                      <FormField
+                        control={form.control}
+                        name={`skills.${index}.summary`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Overview</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder='Summarise where this skill shines.' {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
+                        <FormField
+                          control={form.control}
+                          name={`skills.${index}.proficiency_level`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Proficiency</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder='Select level' />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {proficiencyLevels.map(level => (
+                                    <SelectItem key={level} value={level.toUpperCase()}>
+                                      {level}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`skills.${index}.proficiency_description`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Support detail</FormLabel>
+                              <FormControl>
+                                <Textarea placeholder='Describe your experience level.' {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            <Button
-              type='button'
-              variant='outline'
-              className='flex w-full items-center justify-center gap-2'
-              onClick={() => append(defaultSkill)}
-              disabled={!isEditing || submitting || isConfirming}
-            >
-              <PlusCircle className='h-4 w-4' />
-              Add another skill
-            </Button>
-          </ProfileFormSection>
-        </form>
-      </Form>
+              <Button
+                type='button'
+                variant='outline'
+                className='flex w-full items-center justify-center gap-2'
+                onClick={() => append(defaultSkill)}
+                disabled={!isEditing || submitting || isConfirming}
+              >
+                <PlusCircle className='h-4 w-4' />
+                Add another skill
+              </Button>
+            </ProfileFormSection>
+          </form>
+        </Form>
+      </div>
     </ProfileFormShell>
   );
 }
+
+
+const sampleSkills: any[] = [
+  {
+    uuid: '8f2c3bde-9a5f-4b1e-9b22-7c41a2c81f6a',
+    instructor_uuid: '3d91b7a9-5e73-4f4b-b1a0-21f2a6a2cd35',
+    skill_name: 'React.js Development',
+    proficiency_level: 'ADVANCED',
+    proficiency_percentage: 85,
+    proficiency_description:
+      'Experienced in building scalable, component-based UIs using React, TypeScript, and modern state management tools.',
+    is_core_skill: true,
+    is_teaching_qualified: true,
+    skill_category: 'WEB_DEVELOPMENT',
+    market_demand: 'HIGH',
+    created_date: '2024-08-12T10:23:45Z',
+    updated_date: '2025-09-30T14:15:12Z',
+  },
+  {
+    uuid: '91ab3e4d-1e7a-4cb3-8ac5-238bb7deab92',
+    instructor_uuid: '3d91b7a9-5e73-4f4b-b1a0-21f2a6a2cd35',
+    skill_name: 'Node.js & Express',
+    proficiency_level: 'INTERMEDIATE',
+    proficiency_percentage: 70,
+    proficiency_description:
+      'Proficient in developing RESTful APIs and microservices using Node.js, Express, and MongoDB.',
+    is_core_skill: true,
+    is_teaching_qualified: true,
+    skill_category: 'BACKEND_DEVELOPMENT',
+    market_demand: 'HIGH',
+    created_date: '2023-12-15T08:40:10Z',
+    updated_date: '2025-06-01T09:12:00Z',
+  },
+  {
+    uuid: '77cf1349-230d-46fb-b4e2-f502c2b81c47',
+    instructor_uuid: '3d91b7a9-5e73-4f4b-b1a0-21f2a6a2cd35',
+    skill_name: 'UI/UX Design Principles',
+    proficiency_level: 'BEGINNER',
+    proficiency_percentage: 45,
+    proficiency_description:
+      'Basic understanding of visual hierarchy, color theory, and user-centered design processes.',
+    is_core_skill: false,
+    is_teaching_qualified: false,
+    skill_category: 'DESIGN',
+    market_demand: 'MEDIUM',
+    created_date: '2024-03-02T11:25:00Z',
+    updated_date: '2025-08-18T10:05:30Z',
+  },
+];
+

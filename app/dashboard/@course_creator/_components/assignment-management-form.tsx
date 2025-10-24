@@ -61,7 +61,7 @@ export const assignmentSchema = z.object({
   rubric_uuid: z.string().optional(),
   status: z.string().optional(),
   active: z.boolean().default(false),
-  due_date: z.string().datetime().optional(),
+  due_date: z.date().optional(),
   assignment_category: z.string().optional(),
   submission_types: z.any().optional(),
 });
@@ -234,8 +234,9 @@ function AssignmentForm({
                     type='datetime-local'
                     className='w-full rounded-md border border-gray-300 px-3 py-[7px] text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
                     value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
-                    onChange={e => field.onChange(new Date(e.target.value).toISOString())}
+                    onChange={e => field.onChange(new Date(e.target.value))}
                   />
+
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -458,6 +459,10 @@ function AssignmentList({ courseTitle, courseId, onAddAssignment }: AssignmentLi
       }
     );
   };
+
+  if (isLoading) {
+    return <CustomLoadingState subHeading='Fetching course assignments...' />
+  }
 
   return (
     <div className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
