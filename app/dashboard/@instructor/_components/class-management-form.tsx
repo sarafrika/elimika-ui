@@ -63,6 +63,7 @@ export const classSchema = z.object({
   class_banner: z.any().optional(),
   default_instructor_uuid: z.string().optional(),
   organisation_uuid: z.string().optional(),
+  training_fee: z.any().optional(),
   course_uuid: z.string().optional(),
   // duration_minutes: z.any().optional(),
   default_start_time: z.any().optional(),

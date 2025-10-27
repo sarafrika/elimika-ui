@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
@@ -83,6 +83,7 @@ export default function ClassDetailsForm({
       query: { pageable: {}, searchParams: { instructorUuid: instructor?.uuid } },
     })
   );
+  const [selectedCourseProgram, setSelectedCourseProgram] = useState<any | null>(null)
 
   useEffect(() => {
     if (!resolveId) return;
@@ -114,6 +115,7 @@ export default function ClassDetailsForm({
       organisation_uuid: '',
       default_start_time: '',
       default_end_time: '',
+      training_fee: 0,
       max_participants: 0,
       recurrence_pattern_uuid: '',
       location_type: '',
@@ -146,8 +148,7 @@ export default function ClassDetailsForm({
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
 
   const handleError = (errors: FieldErrors) => {
-    // console.error("Form validation errors:", errors);
-    // You can add toast notifications, loggers, or UI feedback here
+    toast.error("Form validation errors");
   };
 
   const handleSubmit = async (values: ClassFormValues) => {
@@ -158,8 +159,8 @@ export default function ClassDetailsForm({
       // location_type: values?.location_type || classData?.location_type,
       recurrence_pattern_uuid: '08e567cc-bec5-4893-9217-03ff19f44895',
       default_instructor_uuid: instructor?.uuid as string,
-      default_start_time: '2025-10-05T10:00:00',
-      default_end_time: '2026-10-05T12:00:00',
+      // default_start_time: '2025-10-05T10:00:00',
+      // default_end_time: '2026-10-05T12:00:00',
       location_type: 'HYBRID',
       class_time_validy: '2 months',
     };
@@ -268,6 +269,7 @@ export default function ClassDetailsForm({
         title: classData.title ?? '',
         description: classData.description ?? '',
         course_uuid: classData.course_uuid ?? '',
+        training_fee: classData?.training_fee ?? 0,
         organisation_uuid: classData.organisation_uuid ?? '',
         default_start_time: classData.default_start_time ?? '',
         default_end_time: classData.default_end_time ?? '',
@@ -313,16 +315,21 @@ export default function ClassDetailsForm({
                       const selectedCourse = courses?.data?.content?.find(
                         course => course.uuid === value
                       );
-                      const selectedProgram = programs?.data?.content?.find(
-                        program => program.uuid === value
-                      );
+                      // const selectedProgram = programs?.data?.content?.find(
+                      //   program => program.uuid === value
+                      // );
 
                       const maxParticipants =
-                        selectedCourse?.class_limit ?? selectedProgram?.class_limit;
+                        selectedCourse?.class_limit;
+                      // const maxParticipants =
+                      //   selectedCourse?.class_limit ?? selectedProgram?.class_limit;
 
                       if (maxParticipants !== undefined) {
                         form.setValue('max_participants', maxParticipants);
                       }
+
+                      setSelectedCourseProgram(selectedCourse)
+
                     }}
                     value={field.value}
                   >
@@ -330,7 +337,6 @@ export default function ClassDetailsForm({
                       <SelectValue placeholder='Select a course' />
                     </SelectTrigger>
                     <SelectContent className='pb-4'>
-                      <p className='py-2 pl-3'>List of courses you are auhtorized to train</p>
                       {courses?.data?.content?.map(course => (
                         <SelectItem
                           className='pb-1'
@@ -340,9 +346,9 @@ export default function ClassDetailsForm({
                           {course.name}
                         </SelectItem>
                       ))}
-                      <Separator className='my-2' />
-                      <p className='py-2 pl-3'>List of programs you are auhtorized to train</p>
-                      {programs?.data?.content?.map(program => (
+                      {/* <Separator className='my-2' /> */}
+                      {/* <p className='py-2 pl-3'>List of programs you are auhtorized to train</p> */}
+                      {/* {programs?.data?.content?.map(program => (
                         <SelectItem
                           className='pb-1'
                           key={program.uuid}
@@ -350,7 +356,7 @@ export default function ClassDetailsForm({
                         >
                           {program.title}
                         </SelectItem>
-                      ))}
+                      ))} */}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -533,6 +539,23 @@ export default function ClassDetailsForm({
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <SimpleEditor value={field.value} onChange={field.onChange} />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='training_fee'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Training Fee</FormLabel>
+                  <FormControl>
+                    <Input type='number' min='0' step='0.01' {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Instructor-led classes must charge at least this KES {selectedCourseProgram?.minimum_training_fee}.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

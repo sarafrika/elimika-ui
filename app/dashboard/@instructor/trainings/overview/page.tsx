@@ -95,56 +95,6 @@ export default function TrainingsPage() {
         </Button>
       </div>
 
-      {isLoading || isFetching ? (
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-          <Skeleton className='h-4 w-32' />
-          <Skeleton className='h-4 w-32' />
-          <Skeleton className='h-4 w-32' />
-        </div>
-      ) : (
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-          <Card>
-            <CardHeader className=''>
-              <CardTitle className='text-muted-foreground text-sm'>Total Classes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='text-3xl font-semibold'>{classes?.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className=''>
-              <CardTitle className='text-muted-foreground text-sm'>Published Classes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='text-3xl font-semibold'>{0}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className=''>
-              <CardTitle className='text-muted-foreground text-sm'>Draft Classes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='text-3xl font-semibold'>{0}</div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {classes?.length === 0 && !isFetching && (
-        <div className='bg-muted/20 space-y-4 rounded-md border py-12 text-center'>
-          <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
-
-          <div>
-            <h3 className='text-lg font-semibold'>No classes yet</h3>
-            <p className='text-muted-foreground'>Get started by creating your first class</p>
-          </div>
-
-          <Button onClick={() => router.push('/dashboard/trainings/create-new')} asChild>
-            <div>Create Your First Class</div>
-          </Button>
-        </div>
-      )}
-
       <TrainingClassComponent />
 
       <ClassDialog
