@@ -144,7 +144,7 @@ const LessonDetailsPage = () => {
   };
 
   // Quiz management
-  const { data: quizzesData, refetch: refetchQuizzes } = useQuery(
+  const { data: quizzesData, refetch: refetchQuizzes, isFetching: quizIsFetching } = useQuery(
     searchQuizzesOptions({ query: { searchParams: { lesson_uuid: '' }, pageable: {} } })
   );
 
@@ -210,7 +210,7 @@ const LessonDetailsPage = () => {
   }
 
   return (
-    <div className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+    <div className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20  max-w-6xl'>
       <div className='mb-6 flex items-end justify-between'>
         <div className='flex flex-col gap-2'>
           <h1 className='text-2xl font-semibold'>{lesson?.title}</h1>
@@ -363,43 +363,74 @@ const LessonDetailsPage = () => {
           </p>
         </CardHeader>
 
-        <CardContent>
+        {quizIsFetching ? <>Loading...</> : <CardContent>
           <div className='w-full mt-1 flex flex-col gap-2 space-y-2'>
             {quizzesData?.data?.content?.map((quiz: any, i: any) => (
               <div
                 key={i}
                 className='w-full group flex text-muted-foreground cursor-default items-start justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
               >
-                <div className='w-full flex flex-row gap-2'>
-                  <div>
-                    <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
-                  </div>
-                  <div className='flex w-full flex-col gap-2'>
-                    <h3 className='font-semibold'>{quiz.title}</h3>
-                    <RichTextRenderer
-                      htmlString={(quiz?.description as string) || 'No skill provided'}
-                    />
-                    <div className='w-full grid grid-cols-1 md:grid-cols-2'>
-                      <h3 className='font-semibold'>
-                        <span>📅 Time Limit:</span> {quiz.time_limit_display}
-                      </h3>
-                      <p className=''>Passing score: {quiz.passing_score}</p>
+                <div className='w-full flex flex-col gap-3 p-4 bg-white/80 dark:bg-blue-950/40 border border-blue-200/40 dark:border-blue-500/25 rounded-2xl shadow-lg shadow-blue-200/30 dark:shadow-blue-900/20'>
+                  {/* Header */}
+                  <div className='flex items-start gap-3'>
+                    <div className='flex-shrink-0'>
+                      <div className='rounded-full bg-green-100 text-green-600 p-1'>
+                        <CheckCircle className='h-5 w-5' />
+                      </div>
                     </div>
+                    <div className='flex flex-col w-full gap-2'>
+                      {/* Quiz Title */}
+                      <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-100'>{quiz.title}</h3>
 
-                    {/* Toggle Button */}
+                      {/* Quiz Description */}
+                      <div className='text-sm text-gray-600 dark:text-gray-300'>
+                        <RichTextRenderer htmlString={(quiz?.description as string) || 'No skill provided'} />
+                      </div>
+
+                      {/* Info Bar: Time Limit + Passing Score */}
+                      <div className='flex flex-col md:flex-row md:gap-4 text-sm text-gray-700 dark:text-gray-300 mt-1'>
+                        <span className='flex items-center gap-1'>
+                          <span>📅</span> {quiz.time_limit_display}
+                        </span>
+                        <span className='flex items-center gap-1'>
+                          <span>🏆</span> Passing Score: {quiz.passing_score}
+                        </span>
+                      </div>
+
+                      {/* Toggle Button */}
+                      <div className='mt-2'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => toggleQuizQuestions(i)}
+                        >
+                          {expandedQuizIndexes.includes(i) ? 'Hide Questions' : 'Show Questions'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Conditionally Render Questions */}
+                  {expandedQuizIndexes.includes(i) && (
+                    <div className='mt-3'>
+                      <QuizQuestions quizUuid={quiz.uuid} />
+                    </div>
+                  )}
+
+                  {/* Add New Question Button at the bottom */}
+                  <div className='mt-4 flex justify-start'>
                     <Button
-                      variant='link'
+                      variant='default'
                       size='sm'
-                      onClick={() => toggleQuizQuestions(i)}
-                      className='self-start pl-0'
+                      onClick={() => handleAddQuestions(quiz)}
+                      className='flex items-center gap-1'
                     >
-                      {expandedQuizIndexes.includes(i) ? 'Hide Questions' : 'Show Questions'}
+                      <PlusCircle className='h-4 w-4' />
+                      Add New Question
                     </Button>
-
-                    {/* Conditionally Render Questions */}
-                    {expandedQuizIndexes.includes(i) && <QuizQuestions quizUuid={quiz.uuid} />}
                   </div>
                 </div>
+
 
                 {/* Edit and Delete buttons (hidden by default) */}
                 <div className='absolute right-2 items-start opacity-0 transition-opacity group-hover:opacity-100'>
@@ -448,7 +479,8 @@ const LessonDetailsPage = () => {
               </div>
             )}
           </div>
-        </CardContent>
+        </CardContent>}
+
       </Card>
 
       {/* Content dialogs */}

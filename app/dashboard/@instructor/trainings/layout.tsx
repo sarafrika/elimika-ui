@@ -13,9 +13,7 @@ export default function TrainingLayout({ children }: TrainingLayoutProps) {
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Manage Classes</h2>
           <p className='text-muted-foreground'>
-            Create and organize classes quickly with customizable details. Track student enrollment,
-            attendance, and schedules all in one place. Easily update class information and manage
-            materials to keep everything running smoothly and efficiently.
+            Manage class schedules, student enrollments, and timetables seamlessly in one place.
           </p>
         </div>
       </div>

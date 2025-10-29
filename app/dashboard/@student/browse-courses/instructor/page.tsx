@@ -2,10 +2,9 @@
 
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Users } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { getAllInstructorsOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import React, { useState } from 'react';
+import useSearchTrainingInstructors from '../../../../../hooks/use-search-training-instructors';
 import { ClassData } from '../../../@instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../_components/instructor-directory';
 import { ManageBookings } from '../../../_components/manage-bookings';
@@ -100,336 +99,8 @@ type Props = {
 
 const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const bookings = exampleBookings || [];
-  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [activeTab, setActiveTab] = useState('browse');
-  const { data } = useQuery(
-    getAllInstructorsOptions({ query: { pageable: { page: 0, size: 20 } } })
-  );
-
-  // Initialize sample instructors if empty
-  useEffect(() => {
-    if (instructors?.length === 0) {
-      const sampleInstructors: Instructor[] = [
-        {
-          id: 'instructor-1',
-          name: 'Dr. Sarah Johnson',
-          title: 'Senior Frontend Developer & Educator',
-          bio: 'Passionate educator with 8+ years of experience in web development. Specialized in React, TypeScript, and modern web technologies. I believe in hands-on learning and building real-world projects.',
-          profileImage:
-            'https://images.unsplash.com/photo-1594256347468-5cd43df8fbaf?w=400&h=400&fit=crop&crop=face',
-          type: 'individual',
-          gender: 'female',
-          rating: 4.9,
-          totalReviews: 127,
-          totalStudents: 450,
-          experience: 8,
-          specializations: ['Web Development', 'React', 'TypeScript', 'UI/UX'],
-          courses: ['Introduction to Web Development', 'Advanced React Patterns'],
-          skills: ['HTML', 'CSS', 'JavaScript', 'React', 'TypeScript', 'Node.js'],
-          certifications: [
-            { id: 'cert-1', name: 'Certified React Developer', issuer: 'Meta', year: 2022 },
-            { id: 'cert-2', name: 'AWS Solutions Architect', issuer: 'Amazon', year: 2021 },
-          ],
-          availability: [
-            {
-              id: 'slot-1',
-              date: new Date(2024, 9, 16),
-              startTime: '09:00',
-              endTime: '11:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-2',
-              date: new Date(2024, 9, 16),
-              startTime: '14:00',
-              endTime: '16:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-3',
-              date: new Date(2024, 9, 17),
-              startTime: '10:00',
-              endTime: '12:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-4',
-              date: new Date(2024, 9, 18),
-              startTime: '09:00',
-              endTime: '11:00',
-              status: 'available',
-            },
-          ],
-          rateCard: {
-            hourly: 50,
-            halfDay: 180,
-            fullDay: 320,
-            currency: 'USD',
-          },
-          mode: ['online', 'onsite'],
-          location: {
-            city: 'Lagos',
-            country: 'Nigeria',
-            coordinates: { lat: 6.5244, lng: 3.3792 },
-          },
-          reviews: [
-            {
-              id: 'review-1',
-              studentName: 'Alice Johnson',
-              studentImage:
-                'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-              rating: 5,
-              comment:
-                'Excellent instructor! Very patient and knowledgeable. Helped me land my first job.',
-              date: new Date(2024, 8, 15),
-              course: 'Frontend Bootcamp',
-            },
-            {
-              id: 'review-2',
-              studentName: 'Bob Smith',
-              studentImage:
-                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-              rating: 5,
-              comment: "Best React course I've taken. Real-world projects and great mentorship.",
-              date: new Date(2024, 7, 22),
-              course: 'Advanced React',
-            },
-          ],
-        },
-        {
-          id: 'instructor-2',
-          name: 'Prof. Michael Chen',
-          title: 'Data Science Expert & AI Researcher',
-          bio: 'PhD in Computer Science with focus on Machine Learning and AI. 12+ years of teaching experience. Published researcher and industry consultant.',
-          profileImage:
-            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
-          type: 'individual',
-          gender: 'male',
-          rating: 4.8,
-          totalReviews: 89,
-          totalStudents: 320,
-          experience: 12,
-          specializations: ['Data Science', 'Machine Learning', 'Python', 'AI'],
-          courses: ['Introduction to Data Science', 'Machine Learning Fundamentals'],
-          skills: ['Python', 'TensorFlow', 'Pandas', 'Scikit-learn', 'SQL', 'Statistics'],
-          certifications: [
-            {
-              id: 'cert-3',
-              name: 'Deep Learning Specialization',
-              issuer: 'DeepLearning.AI',
-              year: 2020,
-            },
-            {
-              id: 'cert-4',
-              name: 'Google Cloud Professional Data Engineer',
-              issuer: 'Google',
-              year: 2021,
-            },
-          ],
-          availability: [
-            {
-              id: 'slot-5',
-              date: new Date(2024, 9, 16),
-              startTime: '13:00',
-              endTime: '15:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-6',
-              date: new Date(2024, 9, 17),
-              startTime: '09:00',
-              endTime: '11:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-7',
-              date: new Date(2024, 9, 19),
-              startTime: '10:00',
-              endTime: '12:00',
-              status: 'available',
-            },
-          ],
-          rateCard: {
-            hourly: 75,
-            halfDay: 270,
-            fullDay: 500,
-            currency: 'USD',
-          },
-          mode: ['online'],
-          location: {
-            city: 'San Francisco',
-            country: 'USA',
-            coordinates: { lat: 37.7749, lng: -122.4194 },
-          },
-          reviews: [
-            {
-              id: 'review-3',
-              studentName: 'Emily Wang',
-              studentImage:
-                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
-              rating: 5,
-              comment: 'Incredibly knowledgeable and explains complex concepts clearly.',
-              date: new Date(2024, 8, 10),
-              course: 'Data Science',
-            },
-          ],
-        },
-        {
-          id: 'instructor-3',
-          name: 'Jessica Martinez',
-          title: 'UX/UI Design Lead & Mentor',
-          bio: '10 years of experience in product design. Worked with Fortune 500 companies. Passionate about teaching design thinking and user-centered design.',
-          profileImage:
-            'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=400&fit=crop&crop=face',
-          type: 'individual',
-          gender: 'female',
-          rating: 4.9,
-          totalReviews: 156,
-          totalStudents: 580,
-          experience: 10,
-          specializations: ['UI/UX Design', 'Product Design', 'Figma', 'Design Systems'],
-          courses: ['UI/UX Design Fundamentals', 'Advanced Figma'],
-          skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping', 'User Research', 'Wireframing'],
-          certifications: [
-            {
-              id: 'cert-5',
-              name: 'Google UX Design Professional Certificate',
-              issuer: 'Google',
-              year: 2021,
-            },
-            { id: 'cert-6', name: 'Interaction Design Foundation', issuer: 'IDF', year: 2019 },
-          ],
-          availability: [
-            {
-              id: 'slot-8',
-              date: new Date(2024, 9, 16),
-              startTime: '10:00',
-              endTime: '12:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-9',
-              date: new Date(2024, 9, 16),
-              startTime: '15:00',
-              endTime: '17:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-10',
-              date: new Date(2024, 9, 18),
-              startTime: '09:00',
-              endTime: '11:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-11',
-              date: new Date(2024, 9, 19),
-              startTime: '14:00',
-              endTime: '16:00',
-              status: 'available',
-            },
-          ],
-          rateCard: {
-            hourly: 60,
-            halfDay: 220,
-            fullDay: 400,
-            currency: 'USD',
-          },
-          mode: ['online', 'onsite'],
-          location: {
-            city: 'London',
-            country: 'UK',
-            coordinates: { lat: 51.5074, lng: -0.1278 },
-          },
-          reviews: [
-            {
-              id: 'review-4',
-              studentName: 'David Brown',
-              studentImage:
-                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-              rating: 5,
-              comment:
-                'Amazing mentor! Helped me build a portfolio that landed me multiple interviews.',
-              date: new Date(2024, 7, 5),
-              course: 'UI/UX Design',
-            },
-          ],
-        },
-        {
-          id: 'instructor-4',
-          name: 'Tech Academy Pro',
-          title: 'Corporate Training & Development',
-          bio: 'Leading corporate training organization specializing in technology education. Team of 20+ expert instructors covering various technical domains.',
-          profileImage:
-            'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=400&h=400&fit=crop&crop=faces',
-          type: 'organization',
-          rating: 4.7,
-          totalReviews: 245,
-          totalStudents: 2500,
-          experience: 15,
-          specializations: [
-            'Corporate Training',
-            'Full Stack Development',
-            'Cloud Computing',
-            'DevOps',
-          ],
-          courses: ['Full Stack Bootcamp', 'AWS Certification Prep', 'DevOps Fundamentals'],
-          skills: ['JavaScript', 'Python', 'Java', 'AWS', 'Docker', 'Kubernetes', 'CI/CD'],
-          certifications: [
-            { id: 'cert-7', name: 'AWS Training Partner', issuer: 'Amazon', year: 2020 },
-            { id: 'cert-8', name: 'Microsoft Learning Partner', issuer: 'Microsoft', year: 2021 },
-          ],
-          availability: [
-            {
-              id: 'slot-12',
-              date: new Date(2024, 9, 16),
-              startTime: '09:00',
-              endTime: '17:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-13',
-              date: new Date(2024, 9, 17),
-              startTime: '09:00',
-              endTime: '17:00',
-              status: 'available',
-            },
-            {
-              id: 'slot-14',
-              date: new Date(2024, 9, 18),
-              startTime: '09:00',
-              endTime: '17:00',
-              status: 'available',
-            },
-          ],
-          rateCard: {
-            hourly: 100,
-            halfDay: 350,
-            fullDay: 650,
-            currency: 'USD',
-          },
-          mode: ['online', 'onsite'],
-          location: {
-            city: 'New York',
-            country: 'USA',
-            coordinates: { lat: 40.7128, lng: -74.006 },
-          },
-          reviews: [
-            {
-              id: 'review-5',
-              studentName: 'Corporate Client',
-              rating: 5,
-              comment:
-                'Excellent training program for our development team. Very professional and thorough.',
-              date: new Date(2024, 8, 1),
-              course: 'Full Stack Development',
-            },
-          ],
-        },
-      ];
-      setInstructors(sampleInstructors);
-    }
-  }, [instructors?.length, setInstructors]);
+  const { data: trainingInstructors, loading } = useSearchTrainingInstructors();
 
   const handleBookingComplete = (newBooking: Booking) => {
     // setBookings((prev: any) => [...prev, newBooking]);
@@ -461,7 +132,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Available Instructors</p>
-              <p className='text-2xl'>{data?.data?.content?.length}</p>
+              <p className='text-2xl'>{trainingInstructors?.length}</p>
             </div>
           </div>
         </Card>
@@ -518,7 +189,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
         <TabsContent value='browse' className='mt-6'>
           <InstructorDirectory
-            instructors={data?.data?.content as any}
+            instructors={trainingInstructors as any}
             classes={classes}
             onBookingComplete={handleBookingComplete}
           />
@@ -527,7 +198,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
         <TabsContent value='bookings' className='mt-6'>
           <ManageBookings
             bookings={bookings}
-            instructors={data?.data?.content as any}
+            instructors={trainingInstructors as any}
             onBookingUpdate={handleBookingUpdate}
           />
         </TabsContent>

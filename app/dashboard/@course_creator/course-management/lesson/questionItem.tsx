@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   deleteQuestionOptionMutation,
   deleteQuizQuestionMutation,
@@ -28,9 +29,10 @@ type QuestionItemProps = {
   quizUuid: string;
   question: any;
   qIndex: number;
+  userDomain: any;
 };
 
-const QuestionItem = ({ quizUuid, question, qIndex }: QuestionItemProps) => {
+const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemProps) => {
   const qc = useQueryClient();
 
   const { data, isLoading, isError } = useQuery(
@@ -128,72 +130,131 @@ const QuestionItem = ({ quizUuid, question, qIndex }: QuestionItemProps) => {
 
   return (
     <div className='p-2'>
-      {/* Wrap only the question row in a group */}
-      <div className='group relative flex flex-row items-center gap-4'>
-        <p className='font-medium'>
-          {question.display_order}. {question.question_text}
-        </p>
-        <p className='text-sm font-bold'>({question.points_display})</p>
-
-        {/* Only show on hover of the question row */}
-        <div className='absolute right-2 opacity-0 transition-opacity group-hover:opacity-100'>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant='ghost'
-                size='icon'
-                className='opacity-0 transition-opacity group-hover:opacity-100'
-              >
-                <MoreVertical className='h-4 w-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              <DropdownMenuItem onClick={() => handleEditQuestion(question)}>
-                <PenLine className='mr-1 h-4 w-4' />
-                Edit Question
-              </DropdownMenuItem>
-
-              <DropdownMenuItem onClick={() => handleAddOptions(question)}>
-                <PlusCircle className='mr-1 h-4 w-4' />
-                Add Options
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className='text-red-600'
-                onClick={() => handleDeleteQuestion(question)}
-              >
-                <Trash className='mr-1 h-4 w-4' />
-                Delete Question
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      <div className="group relative flex flex-row items-start gap-3">
+        {/* Index on the left */}
+        <div className="flex-shrink-0 w-8 text-center font-semibold text-gray-700 dark:text-gray-300 mt-1">
+          {qIndex + 1}.
         </div>
+
+        {/* Question text & points */}
+        {!isLoading && <div className="flex flex-col w-full gap-1">
+          <p className="font-medium text-gray-800 dark:text-gray-100">{question.question_text}</p>
+          <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Points: {question.points_display}</p>
+
+          {/* Only show options & actions if creator */}
+          {userDomain === "course_creator" && (
+            <div className="absolute right-2 top-0 opacity-0 transition-opacity group-hover:opacity-100">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEditQuestion(question)}>
+                    <PenLine className="mr-1 h-4 w-4" />
+                    Edit Question
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => handleAddOptions(question)}>
+                    <PlusCircle className="mr-1 h-4 w-4" />
+                    Add Options
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onClick={() => handleDeleteQuestion(question)}
+                  >
+                    <Trash className="mr-1 h-4 w-4" />
+                    Delete Question
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+        </div>}
+
       </div>
 
-      {/* Options, loading, or error display below — not inside the group */}
-      {isLoading ? (
-        <p className='text-muted-foreground text-sm'>Loading options...</p>
-      ) : isError ? (
-        <p className='text-sm text-red-500'>Failed to load options.</p>
-      ) : (
-        <ul className='text-muted-foreground mr-6 list-inside space-y-1 px-4 text-sm'>
-          {options?.map((option: any, i: number) => (
-            <li
-              key={i}
-              className='group hover:bg-muted flex items-center justify-between rounded-sm pr-2 transition-colors'
-            >
-              <span className='mr-2'>{option.option_text}</span>
+      {/* Options Table */}
+      {options.length > 0 && (
+        <div className="mt-3 ml-10 max-w-5xl overflow-x-auto rounded-md border border-muted bg-card p-3 shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10 text-center">#</TableHead>
+                <TableHead>Option Text</TableHead>
+                <TableHead className="w-32 text-center">Is Correct</TableHead>
+                <TableHead className="w-24 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {options.map((option: any, index: number) => (
+                <TableRow
+                  key={option.uuid}
+                  className={`group transition-colors ${option.is_correct ? "bg-green-50 hover:bg-green-100" : "hover:bg-muted"
+                    }`}
+                >
+                  <TableCell className="text-center">{index + 1}</TableCell>
+                  <TableCell>{option.option_text}</TableCell>
+                  <TableCell className="text-center">
+                    {option.is_correct ? (
+                      <span className="rounded-md bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
+                        ✓ Correct
+                      </span>
+                    ) : (
+                      <span className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {userDomain === "course_creator" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-700"
+                        onClick={() => handleDeleteOption(option, question?.quiz_uuid)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
-              <button
-                onClick={() => handleDeleteOption(option, question?.quiz_uuid)}
-                className='text-red-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-700'
+          {/* Add Option Button */}
+          {userDomain === "course_creator" && (
+            <div className="mt-3 flex justify-start">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAddOptions(question)}
+                className="flex items-center gap-1"
               >
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
+                <PlusCircle className="h-4 w-4" />
+                Add New Option
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* No options fallback */}
+      {userDomain === "course_creator" && options.length === 0 && question.requires_options && (
+        <div className="flex flex-row gap-2 items-center mt-3 ml-10 text-sm italic text-muted-foreground">
+          No options added yet.
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAddOptions(question)}
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Add New Option
+          </Button>
+        </div>
       )}
 
       {/* ... dialogs */}

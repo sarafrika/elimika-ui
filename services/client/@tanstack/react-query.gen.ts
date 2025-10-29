@@ -181,6 +181,10 @@ import {
   archiveCourse,
   getCourseTrainingRequirements,
   addCourseTrainingRequirement,
+  listTrainingApplications,
+  submitTrainingApplication,
+  getTrainingApplication,
+  decideOnTrainingApplication,
   getCourseRubrics,
   associateRubric,
   getCourseRequirements,
@@ -319,17 +323,12 @@ import {
   getCourseCompletionRate,
   removeAllCategoriesFromCourse,
   getCourseCategories,
+  searchTrainingApplications,
   searchCourses,
-  searchRequirements,
   getPublishedCourses,
   getCourseMedia,
-  searchLessons,
   getCoursesByInstructor,
-  searchEnrollments,
-  searchLessonContent,
   getCoursesByCategory,
-  searchCategoryMappings,
-  searchAssessments,
   getActiveCourses,
   isCourseCreatorVerified,
   getVerifiedCourseCreators,
@@ -859,6 +858,16 @@ import type {
   AddCourseTrainingRequirementData,
   AddCourseTrainingRequirementError,
   AddCourseTrainingRequirementResponse,
+  ListTrainingApplicationsData,
+  ListTrainingApplicationsError,
+  ListTrainingApplicationsResponse,
+  SubmitTrainingApplicationData,
+  SubmitTrainingApplicationError,
+  SubmitTrainingApplicationResponse,
+  GetTrainingApplicationData,
+  DecideOnTrainingApplicationData,
+  DecideOnTrainingApplicationError,
+  DecideOnTrainingApplicationResponse,
   GetCourseRubricsData,
   GetCourseRubricsError,
   GetCourseRubricsResponse,
@@ -1193,37 +1202,22 @@ import type {
   RemoveAllCategoriesFromCourseError,
   RemoveAllCategoriesFromCourseResponse,
   GetCourseCategoriesData,
+  SearchTrainingApplicationsData,
+  SearchTrainingApplicationsError,
+  SearchTrainingApplicationsResponse,
   SearchCoursesData,
   SearchCoursesError,
   SearchCoursesResponse,
-  SearchRequirementsData,
-  SearchRequirementsError,
-  SearchRequirementsResponse,
   GetPublishedCoursesData,
   GetPublishedCoursesError,
   GetPublishedCoursesResponse,
   GetCourseMediaData,
-  SearchLessonsData,
-  SearchLessonsError,
-  SearchLessonsResponse,
   GetCoursesByInstructorData,
   GetCoursesByInstructorError,
   GetCoursesByInstructorResponse,
-  SearchEnrollmentsData,
-  SearchEnrollmentsError,
-  SearchEnrollmentsResponse,
-  SearchLessonContentData,
-  SearchLessonContentError,
-  SearchLessonContentResponse,
   GetCoursesByCategoryData,
   GetCoursesByCategoryError,
   GetCoursesByCategoryResponse,
-  SearchCategoryMappingsData,
-  SearchCategoryMappingsError,
-  SearchCategoryMappingsResponse,
-  SearchAssessmentsData,
-  SearchAssessmentsError,
-  SearchAssessmentsResponse,
   GetActiveCoursesData,
   GetActiveCoursesError,
   GetActiveCoursesResponse,
@@ -8488,6 +8482,226 @@ export const addCourseTrainingRequirementMutation = (
   return mutationOptions;
 };
 
+export const listTrainingApplicationsQueryKey = (options: Options<ListTrainingApplicationsData>) =>
+  createQueryKey('listTrainingApplications', options);
+
+/**
+ * List training applications
+ * Retrieves applications for a course. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ */
+export const listTrainingApplicationsOptions = (options: Options<ListTrainingApplicationsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTrainingApplications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTrainingApplicationsQueryKey(options),
+  });
+};
+
+export const listTrainingApplicationsInfiniteQueryKey = (
+  options: Options<ListTrainingApplicationsData>
+): QueryKey<Options<ListTrainingApplicationsData>> =>
+  createQueryKey('listTrainingApplications', options, true);
+
+/**
+ * List training applications
+ * Retrieves applications for a course. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ */
+export const listTrainingApplicationsInfiniteOptions = (
+  options: Options<ListTrainingApplicationsData>
+) => {
+  return infiniteQueryOptions<
+    ListTrainingApplicationsResponse,
+    ListTrainingApplicationsError,
+    InfiniteData<ListTrainingApplicationsResponse>,
+    QueryKey<Options<ListTrainingApplicationsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListTrainingApplicationsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListTrainingApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listTrainingApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listTrainingApplicationsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const submitTrainingApplicationQueryKey = (
+  options: Options<SubmitTrainingApplicationData>
+) => createQueryKey('submitTrainingApplication', options);
+
+/**
+ * Submit training application
+ * Allows an instructor or organisation to apply for permission to deliver the specified course.
+ *
+ * **Application Workflow:**
+ * - Applicants submit once per course. Rejected applications can be resubmitted, which reopens the request.
+ * - Duplicate pending or approved submissions are rejected with clear error messages. Revoked applicants must resubmit to regain access.
+ * - Course creators review applications using the approval endpoints below.
+ *
+ */
+export const submitTrainingApplicationOptions = (
+  options: Options<SubmitTrainingApplicationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitTrainingApplicationQueryKey(options),
+  });
+};
+
+/**
+ * Submit training application
+ * Allows an instructor or organisation to apply for permission to deliver the specified course.
+ *
+ * **Application Workflow:**
+ * - Applicants submit once per course. Rejected applications can be resubmitted, which reopens the request.
+ * - Duplicate pending or approved submissions are rejected with clear error messages. Revoked applicants must resubmit to regain access.
+ * - Course creators review applications using the approval endpoints below.
+ *
+ */
+export const submitTrainingApplicationMutation = (
+  options?: Partial<Options<SubmitTrainingApplicationData>>
+): UseMutationOptions<
+  SubmitTrainingApplicationResponse,
+  SubmitTrainingApplicationError,
+  Options<SubmitTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitTrainingApplicationResponse,
+    SubmitTrainingApplicationError,
+    Options<SubmitTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getTrainingApplicationQueryKey = (options: Options<GetTrainingApplicationData>) =>
+  createQueryKey('getTrainingApplication', options);
+
+/**
+ * Get training application
+ * Retrieves a specific training application for a course.
+ */
+export const getTrainingApplicationOptions = (options: Options<GetTrainingApplicationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTrainingApplicationQueryKey(options),
+  });
+};
+
+export const decideOnTrainingApplicationQueryKey = (
+  options: Options<DecideOnTrainingApplicationData>
+) => createQueryKey('decideOnTrainingApplication', options);
+
+/**
+ * Decide on training application
+ * Applies a decision to an instructor or organisation application to deliver the course.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnTrainingApplicationOptions = (
+  options: Options<DecideOnTrainingApplicationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await decideOnTrainingApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: decideOnTrainingApplicationQueryKey(options),
+  });
+};
+
+/**
+ * Decide on training application
+ * Applies a decision to an instructor or organisation application to deliver the course.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnTrainingApplicationMutation = (
+  options?: Partial<Options<DecideOnTrainingApplicationData>>
+): UseMutationOptions<
+  DecideOnTrainingApplicationResponse,
+  DecideOnTrainingApplicationError,
+  Options<DecideOnTrainingApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DecideOnTrainingApplicationResponse,
+    DecideOnTrainingApplicationError,
+    Options<DecideOnTrainingApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await decideOnTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getCourseRubricsQueryKey = (options: Options<GetCourseRubricsData>) =>
   createQueryKey('getCourseRubrics', options);
 
@@ -15594,6 +15808,87 @@ export const getCourseCategoriesOptions = (options: Options<GetCourseCategoriesD
   });
 };
 
+export const searchTrainingApplicationsQueryKey = (
+  options: Options<SearchTrainingApplicationsData>
+) => createQueryKey('searchTrainingApplications', options);
+
+/**
+ * Search training applications
+ * Advanced search for training applications using flexible operators on any DTO field.
+ * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `createdDate_between`, and more.
+ *
+ */
+export const searchTrainingApplicationsOptions = (
+  options: Options<SearchTrainingApplicationsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchTrainingApplications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchTrainingApplicationsQueryKey(options),
+  });
+};
+
+export const searchTrainingApplicationsInfiniteQueryKey = (
+  options: Options<SearchTrainingApplicationsData>
+): QueryKey<Options<SearchTrainingApplicationsData>> =>
+  createQueryKey('searchTrainingApplications', options, true);
+
+/**
+ * Search training applications
+ * Advanced search for training applications using flexible operators on any DTO field.
+ * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `createdDate_between`, and more.
+ *
+ */
+export const searchTrainingApplicationsInfiniteOptions = (
+  options: Options<SearchTrainingApplicationsData>
+) => {
+  return infiniteQueryOptions<
+    SearchTrainingApplicationsResponse,
+    SearchTrainingApplicationsError,
+    InfiniteData<SearchTrainingApplicationsResponse>,
+    QueryKey<Options<SearchTrainingApplicationsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SearchTrainingApplicationsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchTrainingApplicationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchTrainingApplications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchTrainingApplicationsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const searchCoursesQueryKey = (options: Options<SearchCoursesData>) =>
   createQueryKey('searchCourses', options);
 
@@ -15685,88 +15980,6 @@ export const searchCoursesInfiniteOptions = (options: Options<SearchCoursesData>
         return data;
       },
       queryKey: searchCoursesInfiniteQueryKey(options),
-    }
-  );
-};
-
-export const searchRequirementsQueryKey = (options: Options<SearchRequirementsData>) =>
-  createQueryKey('searchRequirements', options);
-
-/**
- * Search course requirements
- * Search course requirements and prerequisites.
- *
- * **Common Requirement Search Examples:**
- * - `courseUuid=uuid` - All requirements for specific course
- * - `requirementType=PREREQUISITE` - Only prerequisites
- * - `isMandatory=true` - Only mandatory requirements
- * - `requirementText_like=experience` - Requirements mentioning "experience"
- *
- */
-export const searchRequirementsOptions = (options: Options<SearchRequirementsData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchRequirements({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchRequirementsQueryKey(options),
-  });
-};
-
-export const searchRequirementsInfiniteQueryKey = (
-  options: Options<SearchRequirementsData>
-): QueryKey<Options<SearchRequirementsData>> => createQueryKey('searchRequirements', options, true);
-
-/**
- * Search course requirements
- * Search course requirements and prerequisites.
- *
- * **Common Requirement Search Examples:**
- * - `courseUuid=uuid` - All requirements for specific course
- * - `requirementType=PREREQUISITE` - Only prerequisites
- * - `isMandatory=true` - Only mandatory requirements
- * - `requirementText_like=experience` - Requirements mentioning "experience"
- *
- */
-export const searchRequirementsInfiniteOptions = (options: Options<SearchRequirementsData>) => {
-  return infiniteQueryOptions<
-    SearchRequirementsResponse,
-    SearchRequirementsError,
-    InfiniteData<SearchRequirementsResponse>,
-    QueryKey<Options<SearchRequirementsData>>,
-    | number
-    | Pick<QueryKey<Options<SearchRequirementsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<SearchRequirementsData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await searchRequirements({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: searchRequirementsInfiniteQueryKey(options),
     }
   );
 };
@@ -15880,91 +16093,6 @@ export const getCourseMediaOptions = (options: Options<GetCourseMediaData>) => {
   });
 };
 
-export const searchLessonsQueryKey = (options: Options<SearchLessonsData>) =>
-  createQueryKey('searchLessons', options);
-
-/**
- * Search lessons
- * Search course lessons with advanced filtering.
- *
- * **Common Lesson Search Examples:**
- * - `courseUuid=uuid` - All lessons for specific course
- * - `status=PUBLISHED` - Only published lessons
- * - `active=true` - Only active lessons
- * - `lessonNumber_gte=5` - Lessons from lesson 5 onwards
- * - `title_like=introduction` - Lessons with "introduction" in title
- * - `durationHours_between=1,3` - Lessons between 1-3 hours
- *
- */
-export const searchLessonsOptions = (options: Options<SearchLessonsData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchLessons({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchLessonsQueryKey(options),
-  });
-};
-
-export const searchLessonsInfiniteQueryKey = (
-  options: Options<SearchLessonsData>
-): QueryKey<Options<SearchLessonsData>> => createQueryKey('searchLessons', options, true);
-
-/**
- * Search lessons
- * Search course lessons with advanced filtering.
- *
- * **Common Lesson Search Examples:**
- * - `courseUuid=uuid` - All lessons for specific course
- * - `status=PUBLISHED` - Only published lessons
- * - `active=true` - Only active lessons
- * - `lessonNumber_gte=5` - Lessons from lesson 5 onwards
- * - `title_like=introduction` - Lessons with "introduction" in title
- * - `durationHours_between=1,3` - Lessons between 1-3 hours
- *
- */
-export const searchLessonsInfiniteOptions = (options: Options<SearchLessonsData>) => {
-  return infiniteQueryOptions<
-    SearchLessonsResponse,
-    SearchLessonsError,
-    InfiniteData<SearchLessonsResponse>,
-    QueryKey<Options<SearchLessonsData>>,
-    number | Pick<QueryKey<Options<SearchLessonsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<SearchLessonsData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await searchLessons({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: searchLessonsInfiniteQueryKey(options),
-    }
-  );
-};
-
 export const getCoursesByInstructorQueryKey = (options: Options<GetCoursesByInstructorData>) =>
   createQueryKey('getCoursesByInstructor', options);
 
@@ -16032,175 +16160,6 @@ export const getCoursesByInstructorInfiniteOptions = (
         return data;
       },
       queryKey: getCoursesByInstructorInfiniteQueryKey(options),
-    }
-  );
-};
-
-export const searchEnrollmentsQueryKey = (options: Options<SearchEnrollmentsData>) =>
-  createQueryKey('searchEnrollments', options);
-
-/**
- * Search course enrollments
- * Search enrollment records across all courses.
- *
- * **Common Enrollment Search Examples:**
- * - `courseUuid=uuid` - All enrollments for specific course
- * - `studentUuid=uuid` - All enrollments for specific student
- * - `status=COMPLETED` - Only completed enrollments
- * - `progressPercentage_gte=80` - Students with 80%+ progress
- * - `enrollmentDate_gte=2024-01-01T00:00:00` - Enrollments from 2024
- *
- */
-export const searchEnrollmentsOptions = (options: Options<SearchEnrollmentsData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchEnrollments({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchEnrollmentsQueryKey(options),
-  });
-};
-
-export const searchEnrollmentsInfiniteQueryKey = (
-  options: Options<SearchEnrollmentsData>
-): QueryKey<Options<SearchEnrollmentsData>> => createQueryKey('searchEnrollments', options, true);
-
-/**
- * Search course enrollments
- * Search enrollment records across all courses.
- *
- * **Common Enrollment Search Examples:**
- * - `courseUuid=uuid` - All enrollments for specific course
- * - `studentUuid=uuid` - All enrollments for specific student
- * - `status=COMPLETED` - Only completed enrollments
- * - `progressPercentage_gte=80` - Students with 80%+ progress
- * - `enrollmentDate_gte=2024-01-01T00:00:00` - Enrollments from 2024
- *
- */
-export const searchEnrollmentsInfiniteOptions = (options: Options<SearchEnrollmentsData>) => {
-  return infiniteQueryOptions<
-    SearchEnrollmentsResponse,
-    SearchEnrollmentsError,
-    InfiniteData<SearchEnrollmentsResponse>,
-    QueryKey<Options<SearchEnrollmentsData>>,
-    | number
-    | Pick<QueryKey<Options<SearchEnrollmentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<SearchEnrollmentsData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await searchEnrollments({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: searchEnrollmentsInfiniteQueryKey(options),
-    }
-  );
-};
-
-export const searchLessonContentQueryKey = (options: Options<SearchLessonContentData>) =>
-  createQueryKey('searchLessonContent', options);
-
-/**
- * Search lesson content
- * Search lesson content across all courses.
- *
- * **Common Content Search Examples:**
- * - `lessonUuid=uuid` - All content for specific lesson
- * - `contentTypeUuid=uuid` - Content of specific type
- * - `isRequired=true` - Only required content
- * - `title_like=video` - Content with "video" in title
- * - `fileSizeBytes_gt=1048576` - Files larger than 1MB
- *
- */
-export const searchLessonContentOptions = (options: Options<SearchLessonContentData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchLessonContent({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchLessonContentQueryKey(options),
-  });
-};
-
-export const searchLessonContentInfiniteQueryKey = (
-  options: Options<SearchLessonContentData>
-): QueryKey<Options<SearchLessonContentData>> =>
-  createQueryKey('searchLessonContent', options, true);
-
-/**
- * Search lesson content
- * Search lesson content across all courses.
- *
- * **Common Content Search Examples:**
- * - `lessonUuid=uuid` - All content for specific lesson
- * - `contentTypeUuid=uuid` - Content of specific type
- * - `isRequired=true` - Only required content
- * - `title_like=video` - Content with "video" in title
- * - `fileSizeBytes_gt=1048576` - Files larger than 1MB
- *
- */
-export const searchLessonContentInfiniteOptions = (options: Options<SearchLessonContentData>) => {
-  return infiniteQueryOptions<
-    SearchLessonContentResponse,
-    SearchLessonContentError,
-    InfiniteData<SearchLessonContentResponse>,
-    QueryKey<Options<SearchLessonContentData>>,
-    | number
-    | Pick<QueryKey<Options<SearchLessonContentData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<SearchLessonContentData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await searchLessonContent({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: searchLessonContentInfiniteQueryKey(options),
     }
   );
 };
@@ -16280,173 +16239,6 @@ export const getCoursesByCategoryInfiniteOptions = (options: Options<GetCoursesB
         return data;
       },
       queryKey: getCoursesByCategoryInfiniteQueryKey(options),
-    }
-  );
-};
-
-export const searchCategoryMappingsQueryKey = (options: Options<SearchCategoryMappingsData>) =>
-  createQueryKey('searchCategoryMappings', options);
-
-/**
- * Search course category mappings
- * Search course-category relationships.
- *
- * **Common Mapping Search Examples:**
- * - `courseUuid=uuid` - All category mappings for specific course
- * - `categoryUuid=uuid` - All course mappings for specific category
- * - `courseName_like=java` - Mappings for courses with "java" in name
- * - `categoryName_like=programming` - Mappings for categories with "programming" in name
- *
- */
-export const searchCategoryMappingsOptions = (options: Options<SearchCategoryMappingsData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchCategoryMappings({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchCategoryMappingsQueryKey(options),
-  });
-};
-
-export const searchCategoryMappingsInfiniteQueryKey = (
-  options: Options<SearchCategoryMappingsData>
-): QueryKey<Options<SearchCategoryMappingsData>> =>
-  createQueryKey('searchCategoryMappings', options, true);
-
-/**
- * Search course category mappings
- * Search course-category relationships.
- *
- * **Common Mapping Search Examples:**
- * - `courseUuid=uuid` - All category mappings for specific course
- * - `categoryUuid=uuid` - All course mappings for specific category
- * - `courseName_like=java` - Mappings for courses with "java" in name
- * - `categoryName_like=programming` - Mappings for categories with "programming" in name
- *
- */
-export const searchCategoryMappingsInfiniteOptions = (
-  options: Options<SearchCategoryMappingsData>
-) => {
-  return infiniteQueryOptions<
-    SearchCategoryMappingsResponse,
-    SearchCategoryMappingsError,
-    InfiniteData<SearchCategoryMappingsResponse>,
-    QueryKey<Options<SearchCategoryMappingsData>>,
-    | number
-    | Pick<QueryKey<Options<SearchCategoryMappingsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<SearchCategoryMappingsData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await searchCategoryMappings({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: searchCategoryMappingsInfiniteQueryKey(options),
-    }
-  );
-};
-
-export const searchAssessmentsQueryKey = (options: Options<SearchAssessmentsData>) =>
-  createQueryKey('searchAssessments', options);
-
-/**
- * Search course assessments
- * Search assessments across all courses.
- *
- * **Common Assessment Search Examples:**
- * - `courseUuid=uuid` - All assessments for specific course
- * - `assessmentType=QUIZ` - Only quiz assessments
- * - `isRequired=true` - Only required assessments
- * - `weightPercentage_gte=20` - Assessments worth 20% or more
- *
- */
-export const searchAssessmentsOptions = (options: Options<SearchAssessmentsData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchAssessments({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchAssessmentsQueryKey(options),
-  });
-};
-
-export const searchAssessmentsInfiniteQueryKey = (
-  options: Options<SearchAssessmentsData>
-): QueryKey<Options<SearchAssessmentsData>> => createQueryKey('searchAssessments', options, true);
-
-/**
- * Search course assessments
- * Search assessments across all courses.
- *
- * **Common Assessment Search Examples:**
- * - `courseUuid=uuid` - All assessments for specific course
- * - `assessmentType=QUIZ` - Only quiz assessments
- * - `isRequired=true` - Only required assessments
- * - `weightPercentage_gte=20` - Assessments worth 20% or more
- *
- */
-export const searchAssessmentsInfiniteOptions = (options: Options<SearchAssessmentsData>) => {
-  return infiniteQueryOptions<
-    SearchAssessmentsResponse,
-    SearchAssessmentsError,
-    InfiniteData<SearchAssessmentsResponse>,
-    QueryKey<Options<SearchAssessmentsData>>,
-    | number
-    | Pick<QueryKey<Options<SearchAssessmentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<SearchAssessmentsData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await searchAssessments({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: searchAssessmentsInfiniteQueryKey(options),
     }
   );
 };

@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
-import { getInstructorAvailabilityOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { clearInstructorAvailabilityMutation, getInstructorAvailabilityOptions, getInstructorAvailabilityQueryKey } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
   Calendar,
@@ -21,6 +21,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
+import Spinner from '../../../../../components/ui/spinner';
 import { ClassData } from '../../trainings/create-new/academic-period-form';
 import { AvailabilityBooking } from './availability-booking';
 import { MonthlyAvailabilityGrid } from './monthly-availability-grid';
@@ -104,6 +106,22 @@ export default function AvailabilityManager({
       },
     });
   };
+
+  const clearAvailability = useMutation(clearInstructorAvailabilityMutation())
+  const handleClearAvailability = () => {
+    if (!user?.instructor?.uuid) return
+
+    try {
+      clearAvailability.mutate({ path: { instructorUuid: user?.instructor?.uuid } }, {
+        onSuccess: (data) => {
+          toast.success(data?.message || "Instructor availability deleted successfully")
+          qc.invalidateQueries({ queryKey: getInstructorAvailabilityQueryKey({ path: { instructorUuid: user?.instructor?.uuid as string } }) })
+        }
+      })
+    } catch (error) {
+      toast.error("An error occured")
+    }
+  }
 
   // mutations
   // const weeklyAvailabilityMutation = useMutation(setInstructorWeeklyAvailabilityMutation())
@@ -204,27 +222,41 @@ export default function AvailabilityManager({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='grid grid-cols-1 gap-4 gap-y-8 md:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-8 gap-y-8 md:grid-cols-2'>
             <div className='space-y-2'>
               <Label>Quick Toggle</Label>
-              <div className='flex items-center gap-4'>
+              <div className="flex flex-wrap gap-4">
                 <Button
                   variant={quickAvailable ? 'default' : 'outline'}
-                  size='sm'
+                  size="sm"
+                  className="flex-1 w-[150px] whitespace-nowrap"
                   onClick={() => handleQuickToggle(true)}
                 >
-                  <CheckCircle className='mr-2 h-4 w-4' />
+                  <CheckCircle className="mr-2 h-4 w-4" />
                   Available All Day
                 </Button>
+
                 <Button
                   variant={!quickAvailable ? 'default' : 'outline'}
-                  size='sm'
+                  size="sm"
+                  className="flex-1 w-[150px] whitespace-nowrap"
                   onClick={() => handleQuickToggle(false)}
                 >
-                  <XCircle className='mr-2 h-4 w-4' />
+                  <XCircle className="mr-2 h-4 w-4" />
                   Unavailable
                 </Button>
+
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1 min-w-[150px] max-w-[calc(50%-0.5rem)] whitespace-nowrap"
+                  onClick={() => handleClearAvailability()}
+                >
+                  {clearAvailability.isPending ? <Spinner /> : <XCircle className="mr-2 h-4 w-4" />}
+                  Clear Availability
+                </Button>
               </div>
+
             </div>
 
             <div className='space-y-2'>

@@ -1016,7 +1016,7 @@ function QuestionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className='h-[calc(90vh-12rem)]'>
+        <ScrollArea className='h-auto'>
           <QuestionForm
             onSuccess={onSuccess}
             onCancel={() => setOpen(false)}
@@ -1063,7 +1063,7 @@ function OptionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className='h-[calc(90vh-12rem)]'>
+        <ScrollArea className='h-auto'>
           <OptionForm
             onSuccess={onSuccess}
             onCancel={() => setOpen(false)}

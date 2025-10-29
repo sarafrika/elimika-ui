@@ -18,9 +18,9 @@ import {
   FileText,
   GraduationCap,
   Handshake,
+  Layers,
   LayoutDashboard,
   LibraryIcon,
-  ListChecks,
   LucideBookUser,
   Mails,
   MessageCircle,
@@ -32,11 +32,9 @@ import {
   UserCircle,
   UserCog,
   UserIcon,
-  UserPlus,
   Users,
   UsersIcon,
-  Wallet,
-  Wrench
+  Wallet
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -187,45 +185,45 @@ export default {
       title: 'Trainings',
       url: '/dashboard/trainings',
       icon: ClipboardList,
-      items: [
-        {
-          title: 'Overview',
-          url: '/dashboard/trainings/overview',
-          icon: LayoutDashboard,
-        },
-        {
-          title: 'Timetable',
-          url: '/dashboard/trainings/timetable',
-          icon: Calendar,
-        },
-        {
-          title: 'Students',
-          url: '/dashboard/trainings/students',
-          icon: Users,
-        },
-      ],
+      // items: [
+      //   {
+      //     title: 'Overview',
+      //     url: '/dashboard/trainings/overview',
+      //     icon: LayoutDashboard,
+      //   },
+      //   {
+      //     title: 'Timetable',
+      //     url: '/dashboard/trainings/timetable',
+      //     icon: Calendar,
+      //   },
+      //   {
+      //     title: 'Students',
+      //     url: '/dashboard/trainings/students',
+      //     icon: Users,
+      //   },
+      // ],
     },
     {
       title: 'Assessment',
       url: '/dashboard/assessment',
-      icon: ClipboardList,
-      items: [
-        {
-          title: 'Assignments',
-          url: '/dashboard/assessment/assignments',
-          icon: FileText,
-        },
-        {
-          title: 'Quiz',
-          url: '/dashboard/assessment/quiz',
-          icon: ListChecks,
-        },
-        {
-          title: 'Exams',
-          url: '/dashboard/assessment/exams',
-          icon: FileCheck,
-        },
-      ],
+      icon: Layers,
+      // items: [
+      //   {
+      //     title: 'Assignments',
+      //     url: '/dashboard/assessment/assignments',
+      //     icon: FileText,
+      //   },
+      //   {
+      //     title: 'Quiz',
+      //     url: '/dashboard/assessment/quiz',
+      //     icon: ListChecks,
+      //   },
+      //   {
+      //     title: 'Exams',
+      //     url: '/dashboard/assessment/exams',
+      //     icon: FileCheck,
+      //   },
+      // ],
     },
     {
       title: 'Waiting List',
@@ -251,23 +249,23 @@ export default {
       title: 'Opportunities',
       url: '/dashboard/opportunities',
       icon: Handshake,
-      items: [
-        {
-          title: 'Jobs',
-          url: '/dashboard/opportunities/jobs',
-          icon: Briefcase,
-        },
-        {
-          title: 'Apprenticeships',
-          url: '/dashboard/opportunities/apprenticeships',
-          icon: Wrench,
-        },
-        {
-          title: 'Attachment',
-          url: '/dashboard/opportunities/attachment',
-          icon: UserPlus,
-        },
-      ],
+      // items: [
+      //   {
+      //     title: 'Jobs',
+      //     url: '/dashboard/opportunities/jobs',
+      //     icon: Briefcase,
+      //   },
+      //   {
+      //     title: 'Apprenticeships',
+      //     url: '/dashboard/opportunities/apprenticeships',
+      //     icon: Wrench,
+      //   },
+      //   {
+      //     title: 'Attachment',
+      //     url: '/dashboard/opportunities/attachment',
+      //     icon: UserPlus,
+      //   },
+      // ],
     },
     {
       title: 'Libraries',

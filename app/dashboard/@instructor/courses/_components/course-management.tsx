@@ -7,35 +7,41 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import {
   getAllCoursesOptions,
-  getCoursesByInstructorOptions,
+  submitTrainingApplicationMutation
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import NotesModal from '../../../../../components/custom-modals/notes-modal';
+import { useUserProfile } from '../../../../../context/profile-context';
 import { TrainCourseCard } from '../../../_components/train-course-card';
 
 export default function CourseMangementPage() {
   const router = useRouter();
   const instructor = useInstructor();
+  const profile = useUserProfile()
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [applyModal, setApplyModal] = useState(false)
+  const [applyingCourseId, setApplyingCourseId] = useState<string | null>(null)
 
   const size = 20;
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery({
-    ...getCoursesByInstructorOptions({
-      path: { instructorUuid: instructor?.uuid as string },
-      query: { pageable: { page, size, sort: [] } },
-    }),
-    enabled: !!instructor?.uuid,
-  });
+  // const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery({
+  //   ...getCoursesByInstructorOptions({
+  //     path: { instructorUuid: instructor?.uuid as string },
+  //     query: { pageable: { page, size, sort: [] } },
+  //   }),
+  //   enabled: !!instructor?.uuid,
+  // });
 
-  const { data: allCourses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
+  const { data: allCourses, isLoading, isSuccess, isFetched, isFetching } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
 
   const courses = allCourses?.data?.content;
-  const paginationMetadata = data?.data?.metadata;
+  const paginationMetadata = allCourses?.data?.metadata;
 
   const filteredCourses = useMemo(() => {
     if (!Array.isArray(courses)) return [];
@@ -49,6 +55,31 @@ export default function CourseMangementPage() {
       );
     });
   }, [courses, searchQuery]);
+
+  const applyToTrain = useMutation(submitTrainingApplicationMutation())
+  const handleApplyToTrain = (notes: string) => {
+    if (!applyingCourseId) return
+
+    applyToTrain.mutate({
+      body: {
+        // applicant_type: profile?.activeDomain as ApplicantTypeEnum,
+        applicant_type: "instructor",
+        applicant_uuid: instructor?.uuid as string,
+        application_notes: notes
+      },
+      path: { courseUuid: applyingCourseId }
+    },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.message)
+          setApplyModal(false)
+        },
+        onError: (data) => {
+          toast.error(data?.message)
+          setApplyModal(false)
+        }
+      })
+  }
 
   return (
     <div className='h-auto'>
@@ -89,6 +120,10 @@ export default function CourseMangementPage() {
               key={course.uuid}
               course={course as any}
               handleClick={() => router.push(`/dashboard/courses/${course.uuid}`)}
+              handleQuickApply={() => {
+                setApplyModal(true);
+                setApplyingCourseId(course?.uuid as string)
+              }}
             />
           ))}
         </div>
@@ -140,6 +175,18 @@ export default function CourseMangementPage() {
             }}
           />
         )}
+
+        <NotesModal
+          open={applyModal}
+          setOpen={setApplyModal}
+          title="Apply to Train a Course"
+          description="Submit your application to become a course trainer."
+          onSave={handleApplyToTrain}
+          saveText="Submit application"
+          cancelText="Cancel"
+          placeholder='Enter your application notes here...'
+          isLoading={applyToTrain.isPending}
+        />
       </div>
     </div>
   );

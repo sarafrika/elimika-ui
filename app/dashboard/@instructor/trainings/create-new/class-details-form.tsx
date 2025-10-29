@@ -159,8 +159,8 @@ export default function ClassDetailsForm({
       // location_type: values?.location_type || classData?.location_type,
       recurrence_pattern_uuid: '08e567cc-bec5-4893-9217-03ff19f44895',
       default_instructor_uuid: instructor?.uuid as string,
-      // default_start_time: '2025-10-05T10:00:00',
-      // default_end_time: '2026-10-05T12:00:00',
+      default_start_time: '2025-11-05T10:00:00',
+      default_end_time: '2026-10-05T12:00:00',
       location_type: 'HYBRID',
       class_time_validy: '2 months',
     };

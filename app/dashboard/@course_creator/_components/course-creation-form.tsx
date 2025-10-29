@@ -126,6 +126,16 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       mode: 'onChange',
     });
 
+    useEffect(() => {
+      if (initialValues && Object.keys(initialValues).length > 0) {
+        form.reset({
+          ...form.getValues(), // preserve any unsaved edits (optional)
+          ...initialValues,    // overwrite with fetched data
+        });
+      }
+    }, [initialValues, form]);
+
+
     const {
       // fields: categoryFields,
       append: appendCategory,
@@ -172,7 +182,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           return;
         }
 
-        toast.success(data?.message);
+        toast.success(data?.message || "Category added successfully");
         dialogCloseRef.current?.click();
         queryClient.invalidateQueries({ queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }) });
         setCategoryInput('');

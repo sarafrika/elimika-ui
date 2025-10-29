@@ -164,7 +164,7 @@ export default function MyCoursesPage() {
           </div>
 
           {/* Category Tabs */}
-          <div className='scrollbar-hidden w-full overflow-hidden overflow-x-auto'>
+          <div className='scrollbar-hidden w-auto lg:max-w-5xl 2xl:max-w-7xl overflow-hidden overflow-x-auto'>
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
               <TabsList className='scrollbar-hidden mb-4 flex overflow-x-auto'>
                 {CATEGORIES.map(category => (

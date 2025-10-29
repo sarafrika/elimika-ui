@@ -707,7 +707,7 @@ function ScoringLevelForm({
             </FormItem>
           )}
         />
-        \{' '}
+
         <FormField
           control={form.control}
           name='name'

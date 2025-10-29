@@ -19,8 +19,8 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
   const user = data?.data as any;
 
   return (
-    <Card className='overflow-hidden transition-shadow hover:shadow-lg'>
-      <div className='space-y-4 p-6'>
+    <Card className='overflow-hidden transition-shadow hover:shadow-lg min-w-[300px] sm:min-w-[320px]'>
+      <div className='space-y-4 p-4 sm:p-6'>
         <div className='flex items-start gap-4'>
           <Avatar className='h-16 w-16'>
             <AvatarImage src={user?.profile_image_url} alt={instructor.full_name} />

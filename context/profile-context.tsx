@@ -20,6 +20,7 @@ import {
 } from '@/services/client';
 import { queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { ELIMIKA_DASHBOARD_STORAGE_KEY } from '../lib/utils';
 
@@ -49,6 +50,7 @@ export const useUserProfile = () => useContext(UserProfileContext);
 export default function UserProfileProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const qc = useQueryClient();
+  const router = useRouter()
 
   const { data, isLoading, isError, refetch } = useQuery(
     createQueryOptions(session?.user?.email, {
@@ -76,6 +78,7 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
       if (typeof window !== 'undefined') {
         localStorage.removeItem(ELIMIKA_DASHBOARD_STORAGE_KEY);
       }
+      router.replace('/')
     }
   }, [status]);
 

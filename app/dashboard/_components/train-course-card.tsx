@@ -18,9 +18,10 @@ import { useRouter } from 'next/navigation';
 interface TrainCourseCardProps {
   course: Course;
   handleClick: () => void;
+  handleQuickApply: () => void
 }
 
-export function TrainCourseCard({ course, handleClick }: TrainCourseCardProps) {
+export function TrainCourseCard({ course, handleClick, handleQuickApply }: TrainCourseCardProps) {
   const router = useRouter();
 
   const getInitials = (name: string) => {
@@ -127,9 +128,10 @@ export function TrainCourseCard({ course, handleClick }: TrainCourseCardProps) {
           </div>
 
           {/* Title and Subtitle */}
-          <h3 className='group-hover:text-primary mb-1 line-clamp-2 font-bold transition-colors'>
+          <h3 className="group-hover:text-primary mb-1 font-bold line-clamp-2 min-h-12 transition-colors">
             {course?.name}
           </h3>
+
           <div className='text-muted-foreground mb-3 line-clamp-2 min-h-10 text-sm'>
             <RichTextRenderer htmlString={course?.description as string} />
           </div>
@@ -180,7 +182,13 @@ export function TrainCourseCard({ course, handleClick }: TrainCourseCardProps) {
           </div>}
         </CardContent>
 
-        <div className='flex justify-end p-4'>
+        <div className='flex justify-between p-4'>
+          <Button
+            onClick={handleQuickApply}
+            size='sm'
+          >
+            Quick apply
+          </Button>
           <Button
             onClick={() => router.push(`/dashboard/apply-to-train/${course?.uuid}`)}
             size='sm'

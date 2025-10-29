@@ -9,9 +9,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
+  getCourseAssessmentsOptions,
   getCourseByUuidOptions,
   getCourseLessonsOptions,
-  searchAssessmentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -68,8 +68,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
 
   // GET COURSE ASSESSMENTS
   const { data: assessmentData } = useQuery(
-    searchAssessmentsOptions({
-      query: { searchParams: { courseUuid: courseId as string }, pageable: { page: 0, size: 100 } },
+    getCourseAssessmentsOptions({
+      path: { courseUuid: courseId as string },
+      query: { pageable: {} }
     })
   );
 
