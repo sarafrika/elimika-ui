@@ -121,7 +121,7 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 // @ts-ignore
               } else if (data?.message) {
                 // @ts-ignore
-                toast.error(data.message);
+                toast.error("Course updated successfully" || data.message);
                 return;
               } else {
                 toast.error('An unknown error occurred.');
@@ -133,10 +133,14 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     };
 
+    const onError = (errors: any) => {
+      // console.log(errors, "er")
+    }
+
     return (
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit, onError)}
           className='space-y-6'
         >
           {/* Class Limit */}

@@ -544,6 +544,18 @@ import type {
   AddCourseTrainingRequirementData,
   AddCourseTrainingRequirementResponses,
   AddCourseTrainingRequirementErrors,
+  ListTrainingApplicationsData,
+  ListTrainingApplicationsResponses,
+  ListTrainingApplicationsErrors,
+  SubmitTrainingApplicationData,
+  SubmitTrainingApplicationResponses,
+  SubmitTrainingApplicationErrors,
+  GetTrainingApplicationData,
+  GetTrainingApplicationResponses,
+  GetTrainingApplicationErrors,
+  DecideOnTrainingApplicationData,
+  DecideOnTrainingApplicationResponses,
+  DecideOnTrainingApplicationErrors,
   GetCourseRubricsData,
   GetCourseRubricsResponses,
   GetCourseRubricsErrors,
@@ -958,39 +970,24 @@ import type {
   GetCourseCategoriesData,
   GetCourseCategoriesResponses,
   GetCourseCategoriesErrors,
+  SearchTrainingApplicationsData,
+  SearchTrainingApplicationsResponses,
+  SearchTrainingApplicationsErrors,
   SearchCoursesData,
   SearchCoursesResponses,
   SearchCoursesErrors,
-  SearchRequirementsData,
-  SearchRequirementsResponses,
-  SearchRequirementsErrors,
   GetPublishedCoursesData,
   GetPublishedCoursesResponses,
   GetPublishedCoursesErrors,
   GetCourseMediaData,
   GetCourseMediaResponses,
   GetCourseMediaErrors,
-  SearchLessonsData,
-  SearchLessonsResponses,
-  SearchLessonsErrors,
   GetCoursesByInstructorData,
   GetCoursesByInstructorResponses,
   GetCoursesByInstructorErrors,
-  SearchEnrollmentsData,
-  SearchEnrollmentsResponses,
-  SearchEnrollmentsErrors,
-  SearchLessonContentData,
-  SearchLessonContentResponses,
-  SearchLessonContentErrors,
   GetCoursesByCategoryData,
   GetCoursesByCategoryResponses,
   GetCoursesByCategoryErrors,
-  SearchCategoryMappingsData,
-  SearchCategoryMappingsResponses,
-  SearchCategoryMappingsErrors,
-  SearchAssessmentsData,
-  SearchAssessmentsResponses,
-  SearchAssessmentsErrors,
   GetActiveCoursesData,
   GetActiveCoursesResponses,
   GetActiveCoursesErrors,
@@ -1280,6 +1277,10 @@ import {
   archiveCourseResponseTransformer,
   getCourseTrainingRequirementsResponseTransformer,
   addCourseTrainingRequirementResponseTransformer,
+  listTrainingApplicationsResponseTransformer,
+  submitTrainingApplicationResponseTransformer,
+  getTrainingApplicationResponseTransformer,
+  decideOnTrainingApplicationResponseTransformer,
   getCourseRubricsResponseTransformer,
   associateRubricResponseTransformer,
   getCourseRequirementsResponseTransformer,
@@ -1392,16 +1393,11 @@ import {
   getRubricsByContextResponseTransformer,
   getCourseEnrollmentsResponseTransformer,
   getCourseCategoriesResponseTransformer,
+  searchTrainingApplicationsResponseTransformer,
   searchCoursesResponseTransformer,
-  searchRequirementsResponseTransformer,
   getPublishedCoursesResponseTransformer,
-  searchLessonsResponseTransformer,
   getCoursesByInstructorResponseTransformer,
-  searchEnrollmentsResponseTransformer,
-  searchLessonContentResponseTransformer,
   getCoursesByCategoryResponseTransformer,
-  searchCategoryMappingsResponseTransformer,
-  searchAssessmentsResponseTransformer,
   getActiveCoursesResponseTransformer,
   getVerifiedCourseCreatorsResponseTransformer,
   getUnverifiedCourseCreatorsResponseTransformer,
@@ -6892,6 +6888,135 @@ export const addCourseTrainingRequirement = <ThrowOnError extends boolean = fals
 };
 
 /**
+ * List training applications
+ * Retrieves applications for a course. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ */
+export const listTrainingApplications = <ThrowOnError extends boolean = false>(
+  options: Options<ListTrainingApplicationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListTrainingApplicationsResponses,
+    ListTrainingApplicationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listTrainingApplicationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications',
+    ...options,
+  });
+};
+
+/**
+ * Submit training application
+ * Allows an instructor or organisation to apply for permission to deliver the specified course.
+ *
+ * **Application Workflow:**
+ * - Applicants submit once per course. Rejected applications can be resubmitted, which reopens the request.
+ * - Duplicate pending or approved submissions are rejected with clear error messages. Revoked applicants must resubmit to regain access.
+ * - Course creators review applications using the approval endpoints below.
+ *
+ */
+export const submitTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitTrainingApplicationResponses,
+    SubmitTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get training application
+ * Retrieves a specific training application for a course.
+ */
+export const getTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<GetTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetTrainingApplicationResponses,
+    GetTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Decide on training application
+ * Applies a decision to an instructor or organisation application to deliver the course.
+ * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ *
+ */
+export const decideOnTrainingApplication = <ThrowOnError extends boolean = false>(
+  options: Options<DecideOnTrainingApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DecideOnTrainingApplicationResponses,
+    DecideOnTrainingApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: decideOnTrainingApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get all rubrics associated with a course
  * Retrieves all rubrics that are associated with the specified course, including usage context.
  */
@@ -11060,6 +11185,36 @@ export const getCourseCategories = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Search training applications
+ * Advanced search for training applications using flexible operators on any DTO field.
+ * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `createdDate_between`, and more.
+ *
+ */
+export const searchTrainingApplications = <ThrowOnError extends boolean = false>(
+  options: Options<SearchTrainingApplicationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchTrainingApplicationsResponses,
+    SearchTrainingApplicationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchTrainingApplicationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/training-applications/search',
+    ...options,
+  });
+};
+
+/**
  * Search courses with enhanced category filtering
  * Advanced course search with flexible criteria and operators, including category-based filtering.
  *
@@ -11097,41 +11252,6 @@ export const searchCourses = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/search',
-    ...options,
-  });
-};
-
-/**
- * Search course requirements
- * Search course requirements and prerequisites.
- *
- * **Common Requirement Search Examples:**
- * - `courseUuid=uuid` - All requirements for specific course
- * - `requirementType=PREREQUISITE` - Only prerequisites
- * - `isMandatory=true` - Only mandatory requirements
- * - `requirementText_like=experience` - Requirements mentioning "experience"
- *
- */
-export const searchRequirements = <ThrowOnError extends boolean = false>(
-  options: Options<SearchRequirementsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    SearchRequirementsResponses,
-    SearchRequirementsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: searchRequirementsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/courses/requirements/search',
     ...options,
   });
 };
@@ -11210,43 +11330,6 @@ export const getCourseMedia = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Search lessons
- * Search course lessons with advanced filtering.
- *
- * **Common Lesson Search Examples:**
- * - `courseUuid=uuid` - All lessons for specific course
- * - `status=PUBLISHED` - Only published lessons
- * - `active=true` - Only active lessons
- * - `lessonNumber_gte=5` - Lessons from lesson 5 onwards
- * - `title_like=introduction` - Lessons with "introduction" in title
- * - `durationHours_between=1,3` - Lessons between 1-3 hours
- *
- */
-export const searchLessons = <ThrowOnError extends boolean = false>(
-  options: Options<SearchLessonsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    SearchLessonsResponses,
-    SearchLessonsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: searchLessonsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/courses/lessons/search',
-    ...options,
-  });
-};
-
-/**
  * Get courses by instructor
  * Retrieves all courses created by a specific instructor.
  */
@@ -11270,78 +11353,6 @@ export const getCoursesByInstructor = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/instructor/{instructorUuid}',
-    ...options,
-  });
-};
-
-/**
- * Search course enrollments
- * Search enrollment records across all courses.
- *
- * **Common Enrollment Search Examples:**
- * - `courseUuid=uuid` - All enrollments for specific course
- * - `studentUuid=uuid` - All enrollments for specific student
- * - `status=COMPLETED` - Only completed enrollments
- * - `progressPercentage_gte=80` - Students with 80%+ progress
- * - `enrollmentDate_gte=2024-01-01T00:00:00` - Enrollments from 2024
- *
- */
-export const searchEnrollments = <ThrowOnError extends boolean = false>(
-  options: Options<SearchEnrollmentsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    SearchEnrollmentsResponses,
-    SearchEnrollmentsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: searchEnrollmentsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/courses/enrollments/search',
-    ...options,
-  });
-};
-
-/**
- * Search lesson content
- * Search lesson content across all courses.
- *
- * **Common Content Search Examples:**
- * - `lessonUuid=uuid` - All content for specific lesson
- * - `contentTypeUuid=uuid` - Content of specific type
- * - `isRequired=true` - Only required content
- * - `title_like=video` - Content with "video" in title
- * - `fileSizeBytes_gt=1048576` - Files larger than 1MB
- *
- */
-export const searchLessonContent = <ThrowOnError extends boolean = false>(
-  options: Options<SearchLessonContentData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    SearchLessonContentResponses,
-    SearchLessonContentErrors,
-    ThrowOnError
-  >({
-    responseTransformer: searchLessonContentResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/courses/content/search',
     ...options,
   });
 };
@@ -11375,76 +11386,6 @@ export const getCoursesByCategory = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/category/{categoryUuid}',
-    ...options,
-  });
-};
-
-/**
- * Search course category mappings
- * Search course-category relationships.
- *
- * **Common Mapping Search Examples:**
- * - `courseUuid=uuid` - All category mappings for specific course
- * - `categoryUuid=uuid` - All course mappings for specific category
- * - `courseName_like=java` - Mappings for courses with "java" in name
- * - `categoryName_like=programming` - Mappings for categories with "programming" in name
- *
- */
-export const searchCategoryMappings = <ThrowOnError extends boolean = false>(
-  options: Options<SearchCategoryMappingsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    SearchCategoryMappingsResponses,
-    SearchCategoryMappingsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: searchCategoryMappingsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/courses/category-mappings/search',
-    ...options,
-  });
-};
-
-/**
- * Search course assessments
- * Search assessments across all courses.
- *
- * **Common Assessment Search Examples:**
- * - `courseUuid=uuid` - All assessments for specific course
- * - `assessmentType=QUIZ` - Only quiz assessments
- * - `isRequired=true` - Only required assessments
- * - `weightPercentage_gte=20` - Assessments worth 20% or more
- *
- */
-export const searchAssessments = <ThrowOnError extends boolean = false>(
-  options: Options<SearchAssessmentsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    SearchAssessmentsResponses,
-    SearchAssessmentsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: searchAssessmentsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/courses/assessments/search',
     ...options,
   });
 };

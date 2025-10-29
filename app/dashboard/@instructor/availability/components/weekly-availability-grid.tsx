@@ -104,8 +104,8 @@ export function WeeklyAvailabilityGrid({
 
   // availability slots
   const getAvailabilityForSlot = (day: string, time: string) => {
-    return availabilityData.slots.find(slot => {
-      if (slot.day.toLowerCase() !== day.toLowerCase()) return false;
+    return availabilityData?.slots?.find((slot: any) => {
+      if (slot?.day?.toLowerCase() !== day.toLowerCase()) return false;
 
       const slotTime = new Date(`2000-01-01T${time}:00`);
       const start = new Date(`2000-01-01T${slot.startTime}:00`);
@@ -117,10 +117,10 @@ export function WeeklyAvailabilityGrid({
 
   const isAvailabilityStartSlot = (day: string, time: string) => {
     return availabilityData.slots.some(
-      slot =>
-        slot.day.toLowerCase() === day.toLowerCase() &&
-        slot.startTime === time &&
-        slot.status === 'available'
+      (slot: any) =>
+        slot?.day?.toLowerCase() === day.toLowerCase() &&
+        slot?.startTime === time &&
+        slot?.status === 'available'
     );
   };
 
@@ -128,13 +128,14 @@ export function WeeklyAvailabilityGrid({
     const start = new Date(`2000-01-01T${slot.startTime}:00`);
     const end = new Date(`2000-01-01T${slot.endTime}:00`);
     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-    return Math.ceil(durationMinutes / 30); // how many half-hour slots
+    return Math.ceil(durationMinutes / 60); // ✅ 60-minute slots
   };
+
 
   // unavailable slots
   const getUnavailableForSlot = (day: string, time: string) => {
-    return availabilityData.slots.find(slot => {
-      if (slot.day.toLowerCase() !== day.toLowerCase()) return false;
+    return availabilityData?.slots?.find((slot: any) => {
+      if (slot?.day?.toLowerCase() !== day.toLowerCase()) return false;
 
       const slotTime = new Date(`2000-01-01T${time}:00`);
       const start = new Date(`2000-01-01T${slot.startTime}:00`);
@@ -146,10 +147,10 @@ export function WeeklyAvailabilityGrid({
 
   const isUnavailableStartSlot = (day: string, time: string) => {
     return availabilityData.slots.some(
-      slot =>
-        slot.day.toLowerCase() === day.toLowerCase() &&
-        slot.startTime === time &&
-        slot.status === 'unavailable'
+      (slot: any) =>
+        slot?.day?.toLowerCase() === day.toLowerCase() &&
+        slot?.startTime === time &&
+        slot?.status === 'unavailable'
     );
   };
 
@@ -157,12 +158,12 @@ export function WeeklyAvailabilityGrid({
     const start = new Date(`2000-01-01T${slot.startTime}:00`);
     const end = new Date(`2000-01-01T${slot.endTime}:00`);
     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-    return Math.ceil(durationMinutes / 30);
+    return Math.ceil(durationMinutes / 60); // ✅ 60-minute slots
   };
 
   // event slots
   const getEventForSlot = (day: string, time: string, date: Date) => {
-    return availabilityData.events.find(event => {
+    return availabilityData?.events?.find(event => {
       const eventDate = new Date(event.date);
       const isSameDate = eventDate.toDateString() === date.toDateString();
       const isSameDay = event.day.toLowerCase() === day.toLowerCase();
@@ -189,7 +190,7 @@ export function WeeklyAvailabilityGrid({
     const startTime = new Date(`2000-01-01T${event.startTime}:00`);
     const endTime = new Date(`2000-01-01T${event.endTime}:00`);
     const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
-    const slots = Math.ceil(durationMinutes / 30); // 30-minute slots
+    const slots = Math.ceil(durationMinutes / 60); // 60-minute slots
     return slots;
   };
 
@@ -454,7 +455,7 @@ export function WeeklyAvailabilityGrid({
                               {/* Show availability only once (at the start) */}
                               {availabilitySlot && isAvailabilityStart && !eventInSlot && (
                                 <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-green-700'>
-                                  Available
+                                  Available ✓
                                   <span className='mt-1 text-gray-600'>
                                     {availabilitySlot.startTime} - {availabilitySlot.endTime}
                                   </span>
@@ -463,7 +464,7 @@ export function WeeklyAvailabilityGrid({
 
                               {unavailableSlot && isUnavailableStart && !eventInSlot && (
                                 <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-red-700'>
-                                  Unavailable
+                                  Unavailable ✕
                                   <span className='mt-1 text-gray-600'>
                                     {unavailableSlot.startTime} - {unavailableSlot.endTime}
                                   </span>
@@ -478,16 +479,7 @@ export function WeeklyAvailabilityGrid({
                                   </span>
                                 </div>
                               )}
-                              {status === 'available' && !eventInSlot && (
-                                <div className='flex items-center justify-center'>
-                                  <span className='text-green-600'>✓</span>
-                                </div>
-                              )}
-                              {status === 'unavailable' && !eventInSlot && (
-                                <div className='flex items-center justify-center'>
-                                  <span className='text-red-600'>✕</span>
-                                </div>
-                              )}
+
                               {!status && !eventInSlot && (
                                 <div className='flex items-center justify-center'>
                                   <Plus className='h-3 w-3 text-gray-400' />

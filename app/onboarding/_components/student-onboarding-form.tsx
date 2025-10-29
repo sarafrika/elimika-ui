@@ -12,17 +12,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useUserProfile } from '@/context/profile-context';
+import { createStudent } from '@/services/client';
+import { zStudent } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { GraduationCap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { useUserProfile } from '@/context/profile-context';
-import { createStudent } from '@/services/client';
-import { zStudent } from '@/services/client/zod.gen';
 
 const StudentOnboardingSchema = zStudent
   .omit({
@@ -81,10 +81,11 @@ export function StudentOnboardingForm() {
       await user.invalidateQuery?.();
 
       toast.success('Student account created successfully!');
-      router.replace('/dashboard/overview');
     } catch (error) {
       toast.error('Failed to create student account. Please try again.');
       setIsSubmitting(false);
+    } finally {
+      router.replace('/dashboard/overview');
     }
   };
 

@@ -1,5 +1,6 @@
 'use client';
 
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -57,7 +58,6 @@ export const InstructorProfileModal: React.FC<Props> = ({
         <DialogContent className='max-h-[90vh] max-w-5xl'>
           <DialogTitle />
           <ScrollArea className='mb-8 max-h-[calc(90vh-80px)] py-2'>
-            {' '}
             <DialogHeader>
               <DialogTitle>Book Session with {instructor.full_name}</DialogTitle>
             </DialogHeader>
@@ -191,7 +191,9 @@ export const InstructorProfileModal: React.FC<Props> = ({
                 {/* Bio */}
                 <Card className='p-6'>
                   <h3 className='mb-3'>About</h3>
-                  <p className='text-muted-foreground'>{instructor.bio}</p>
+                  <div className='text-muted-foreground'>
+                    <RichTextRenderer htmlString={instructor.bio} />
+                  </div>
                 </Card>
 
                 {/* Skills */}

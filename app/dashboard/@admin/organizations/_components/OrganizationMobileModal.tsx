@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Organisation as OrganisationDto } from '@/services/api/schema';
 import { Building2, Edit, Trash2 } from 'lucide-react';
-import React from 'react';
 import OrganizationDetails from './OrganizationDetails';
 
 interface OrganizationMobileModalProps {
@@ -11,7 +10,6 @@ interface OrganizationMobileModalProps {
   onClose: () => void;
   onApprove: (organization: OrganisationDto) => void;
   onReject: (organization: OrganisationDto) => void;
-  getStatusBadgeComponent: (organizationId: string) => React.ReactElement;
 }
 
 export default function OrganizationMobileModal({
@@ -20,7 +18,6 @@ export default function OrganizationMobileModal({
   onClose,
   onApprove,
   onReject,
-  getStatusBadgeComponent,
 }: OrganizationMobileModalProps) {
   if (!organization) return null;
 
@@ -36,8 +33,7 @@ export default function OrganizationMobileModal({
 
         <div className='py-4'>
           <OrganizationDetails
-            organization={organization}
-            // getStatusBadgeComponent={getStatusBadgeComponent}
+            organization={organization as any}
           />
         </div>
 

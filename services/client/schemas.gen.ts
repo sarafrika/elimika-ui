@@ -7202,6 +7202,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -7218,12 +7224,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -7244,6 +7244,152 @@ export const ApiResponseSchema = {
     },
     error: {
       type: 'object',
+    },
+  },
+} as const;
+
+export const CourseTrainingApplicationRequestSchema = {
+  type: 'object',
+  description: 'Payload for instructors or organisations applying to deliver a course',
+  example: {
+    applicant_type: 'instructor',
+    applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    application_notes: 'I hold the vendor certification required for this course.',
+  },
+  properties: {
+    applicant_type: {
+      $ref: '#/components/schemas/ApplicantTypeEnum',
+    },
+    applicant_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the instructor or organisation applying.',
+    },
+    application_notes: {
+      type: 'string',
+      description: 'Optional notes to help the course creator evaluate the request.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+  },
+  required: ['applicant_type', 'applicant_uuid'],
+} as const;
+
+export const ApiResponseCourseTrainingApplicationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseTrainingApplication',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CourseTrainingApplicationSchema = {
+  type: 'object',
+  description: 'Represents an instructor or organisation request to deliver a course',
+  example: {
+    uuid: 'b9c6e44f-37d4-4cf9-aa1c-3cfc1ffdd520',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    applicant_type: 'instructor',
+    applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    status: 'pending',
+    application_notes: 'I have delivered similar courses for 5 years.',
+    review_notes: null,
+    reviewed_by: null,
+    reviewed_at: null,
+    created_date: '2025-10-24T13:16:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: null,
+    updated_by: null,
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for this application.',
+      readOnly: true,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum6',
+    },
+    application_notes: {
+      type: 'string',
+      description: 'Submission notes provided by the applicant.',
+    },
+    review_notes: {
+      type: 'string',
+      description: 'Decision notes provided by the course creator.',
+    },
+    reviewed_by: {
+      type: 'string',
+      description: 'Reviewer identifier captured when the request is approved or rejected.',
+    },
+    reviewed_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Timestamp of the review decision.',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The course this application targets.',
+      readOnly: true,
+    },
+    applicant_type: {
+      $ref: '#/components/schemas/ApplicantTypeEnum',
+    },
+    applicant_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** UUID of the applicant (Instructor or Organisation).',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When the application was submitted.',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Audit user who submitted the application.',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When the application was last updated.',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Audit user who last modified the application.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const CourseTrainingApplicationDecisionRequestSchema = {
+  type: 'object',
+  description: 'Payload for approving or rejecting a course training application',
+  example: {
+    review_notes: 'Approved for the 2025 Q1 offerings.',
+  },
+  properties: {
+    review_notes: {
+      type: 'string',
+      description: 'Optional notes captured alongside the decision.',
+      maxLength: 2000,
+      minLength: 0,
     },
   },
 } as const;
@@ -7590,7 +7736,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum6',
+      $ref: '#/components/schemas/StatusEnum7',
     },
     score: {
       type: 'number',
@@ -7667,17 +7813,17 @@ export const AssignmentSubmissionSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     submission_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the submission based on its content type.',
       example: 'Mixed Media Submission',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
     submission_status_display: {
@@ -8536,7 +8682,7 @@ export const QuizAttemptSchema = {
       example: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum8',
     },
     created_date: {
       type: 'string',
@@ -8805,7 +8951,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     progress_percentage: {
       type: 'number',
@@ -8857,16 +9003,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Program Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     enrollment_duration: {
@@ -9548,16 +9694,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -9685,6 +9831,42 @@ export const PagedDTOCourseTrainingRequirementSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/CourseTrainingRequirement',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseTrainingApplicationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseTrainingApplication',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOCourseTrainingApplicationSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseTrainingApplication',
       },
     },
     metadata: {
@@ -9900,7 +10082,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     progress_percentage: {
       type: 'number',
@@ -9952,16 +10134,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     enrollment_duration: {
@@ -10140,78 +10322,6 @@ export const PagedDTOCourseAssessmentSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/CourseAssessment',
-      },
-    },
-    metadata: {
-      $ref: '#/components/schemas/PageMetadata',
-    },
-    links: {
-      $ref: '#/components/schemas/PageLinks',
-    },
-  },
-} as const;
-
-export const ApiResponsePagedDTOLessonContentSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/PagedDTOLessonContent',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
-    },
-  },
-} as const;
-
-export const PagedDTOLessonContentSchema = {
-  type: 'object',
-  properties: {
-    content: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/LessonContent',
-      },
-    },
-    metadata: {
-      $ref: '#/components/schemas/PageMetadata',
-    },
-    links: {
-      $ref: '#/components/schemas/PageLinks',
-    },
-  },
-} as const;
-
-export const ApiResponsePagedDTOCourseCategoryMappingSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/PagedDTOCourseCategoryMapping',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
-    },
-  },
-} as const;
-
-export const PagedDTOCourseCategoryMappingSchema = {
-  type: 'object',
-  properties: {
-    content: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/CourseCategoryMapping',
       },
     },
     metadata: {
@@ -10655,6 +10765,26 @@ export const AdminDashboardStatsSchema = {
       $ref: '#/components/schemas/AdminMetrics',
       description: 'Admin-specific metrics',
     },
+    learning_metrics: {
+      $ref: '#/components/schemas/LearningMetrics',
+      description: 'Learning performance metrics',
+    },
+    timetabling_metrics: {
+      $ref: '#/components/schemas/TimetablingMetrics',
+      description: 'Timetabling utilisation metrics',
+    },
+    commerce_metrics: {
+      $ref: '#/components/schemas/CommerceMetrics',
+      description: 'Commerce performance metrics',
+    },
+    communication_metrics: {
+      $ref: '#/components/schemas/CommunicationMetrics',
+      description: 'Notification delivery metrics',
+    },
+    compliance_metrics: {
+      $ref: '#/components/schemas/ComplianceMetrics',
+      description: 'Compliance and verification metrics',
+    },
   },
 } as const;
 
@@ -10703,6 +10833,99 @@ export const ApiResponseAdminDashboardStatsSchema = {
   },
 } as const;
 
+export const CommerceMetricsSchema = {
+  type: 'object',
+  description: 'Commerce analytics',
+  properties: {
+    total_orders: {
+      type: 'integer',
+      format: 'int64',
+    },
+    orders_last_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    captured_orders: {
+      type: 'integer',
+      format: 'int64',
+    },
+    unique_customers: {
+      type: 'integer',
+      format: 'int64',
+    },
+    new_customers_last_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    course_purchases_last_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    class_purchases_last_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const CommunicationMetricsSchema = {
+  type: 'object',
+  description: 'Notification delivery analytics',
+  properties: {
+    notifications_created_7d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    notifications_delivered_7d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    notifications_failed_7d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    pending_notifications: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const ComplianceMetricsSchema = {
+  type: 'object',
+  description: 'Compliance and verification analytics',
+  properties: {
+    verified_instructors: {
+      type: 'integer',
+      format: 'int64',
+    },
+    pending_instructor_verifications: {
+      type: 'integer',
+      format: 'int64',
+    },
+    pending_instructor_documents: {
+      type: 'integer',
+      format: 'int64',
+    },
+    expiring_instructor_documents_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    total_course_creators: {
+      type: 'integer',
+      format: 'int64',
+    },
+    verified_course_creators: {
+      type: 'integer',
+      format: 'int64',
+    },
+    pending_course_creator_verifications: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
 export const ContentMetricsSchema = {
   type: 'object',
   description: 'Content metrics for dashboard',
@@ -10722,6 +10945,73 @@ export const ContentMetricsSchema = {
     average_quality_score: {
       type: 'number',
       format: 'double',
+    },
+  },
+} as const;
+
+export const LearningMetricsSchema = {
+  type: 'object',
+  description: 'Detailed learning analytics',
+  properties: {
+    total_courses: {
+      type: 'integer',
+      format: 'int64',
+    },
+    published_courses: {
+      type: 'integer',
+      format: 'int64',
+    },
+    in_review_courses: {
+      type: 'integer',
+      format: 'int64',
+    },
+    draft_courses: {
+      type: 'integer',
+      format: 'int64',
+    },
+    archived_courses: {
+      type: 'integer',
+      format: 'int64',
+    },
+    total_course_enrollments: {
+      type: 'integer',
+      format: 'int64',
+    },
+    active_course_enrollments: {
+      type: 'integer',
+      format: 'int64',
+    },
+    new_course_enrollments_7d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    completed_course_enrollments_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    average_course_progress: {
+      type: 'number',
+      format: 'double',
+    },
+    total_training_programs: {
+      type: 'integer',
+      format: 'int64',
+    },
+    published_training_programs: {
+      type: 'integer',
+      format: 'int64',
+    },
+    active_training_programs: {
+      type: 'integer',
+      format: 'int64',
+    },
+    program_enrollments: {
+      type: 'integer',
+      format: 'int64',
+    },
+    completed_program_enrollments_30d: {
+      type: 'integer',
+      format: 'int64',
     },
   },
 } as const;
@@ -10764,6 +11054,37 @@ export const SystemPerformanceSchema = {
     },
     storage_usage: {
       type: 'string',
+    },
+  },
+} as const;
+
+export const TimetablingMetricsSchema = {
+  type: 'object',
+  description: 'Timetabling and attendance analytics',
+  properties: {
+    sessions_next_7d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    sessions_last_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    sessions_completed_last_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    sessions_cancelled_last_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    attended_enrollments_last_30d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    absent_enrollments_last_30d: {
+      type: 'integer',
+      format: 'int64',
     },
   },
 } as const;
@@ -11085,7 +11406,20 @@ export const StatusEnum5Schema = {
   example: 'ENROLLED',
 } as const;
 
+export const ApplicantTypeEnumSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Applicant type initiating the request.',
+  enum: ['instructor', 'organisation'],
+} as const;
+
 export const StatusEnum6Schema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the application.',
+  enum: ['pending', 'approved', 'rejected'],
+  readOnly: true,
+} as const;
+
+export const StatusEnum7Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -11099,14 +11433,14 @@ export const AssignmentTypeEnumSchema = {
   example: 'global',
 } as const;
 
-export const StatusEnum7Schema = {
+export const StatusEnum8Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the quiz attempt.',
   enum: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'],
   example: 'GRADED',
 } as const;
 
-export const StatusEnum8Schema = {
+export const StatusEnum9Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],

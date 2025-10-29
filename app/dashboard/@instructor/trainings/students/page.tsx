@@ -19,49 +19,6 @@ import {
   getUserByUuidOptions,
 } from '../../../../../services/client/@tanstack/react-query.gen';
 
-const studentsData = [
-  {
-    id: 'user_1',
-    name: 'Alice Johnson',
-    email: 'alice@example.com',
-    avatarUrl: '/avatars/01.png',
-    enrolledCourses: [
-      {
-        name: 'Mastering Next.js',
-        progress: 85,
-      },
-    ],
-  },
-  {
-    id: 'user_2',
-    name: 'Bob Williams',
-    email: 'bob@example.com',
-    avatarUrl: '/avatars/02.png',
-    enrolledCourses: [
-      {
-        name: 'GraphQL for Beginners',
-        progress: 100,
-      },
-      {
-        name: 'Introduction to Web Development',
-        progress: 45,
-      },
-    ],
-  },
-  {
-    id: 'user_3',
-    name: 'Charlie Brown',
-    email: 'charlie@example.com',
-    avatarUrl: '/avatars/03.png',
-    enrolledCourses: [
-      {
-        name: 'Mastering Next.js',
-        progress: 20,
-      },
-    ],
-  },
-];
-
 const sampleEnrollmentData = {
   success: true,
   data: {

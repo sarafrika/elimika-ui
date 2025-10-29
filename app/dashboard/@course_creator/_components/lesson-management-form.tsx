@@ -72,11 +72,11 @@ import {
   addLessonContentMutation,
   deleteCourseAssessmentMutation,
   getAllContentTypesOptions,
+  getCourseAssessmentsQueryKey,
   getCourseByUuidOptions,
   getCourseLessonQueryKey,
   getCourseLessonsQueryKey,
   getLessonContentQueryKey,
-  searchAssessmentsQueryKey,
   updateCourseAssessmentMutation,
   updateCourseLessonMutation,
   updateLessonContentMutation,
@@ -1551,11 +1551,9 @@ function AssessmentCreationForm({
         onSuccess: data => {
           toast.success(data?.data?.message || 'Assessment created successfully!');
           queryClient.invalidateQueries({
-            queryKey: searchAssessmentsQueryKey({
-              query: {
-                searchParams: { courseUuid: courseId },
-                pageable: { page: 0, size: 100 },
-              },
+            queryKey: getCourseAssessmentsQueryKey({
+              path: { courseUuid: courseId as string },
+              query: { pageable: {} }
             }),
           });
           onCancel();
@@ -1595,11 +1593,9 @@ function AssessmentCreationForm({
           onSuccess: data => {
             toast.success(data?.message || 'Assessment updated successfully!');
             queryClient.invalidateQueries({
-              queryKey: searchAssessmentsQueryKey({
-                query: {
-                  searchParams: { courseUuid: courseId },
-                  pageable: { page: 0, size: 100 },
-                },
+              queryKey: getCourseAssessmentsQueryKey({
+                path: { courseUuid: courseId as string },
+                query: { pageable: {} }
               }),
             });
             onCancel();
@@ -1930,11 +1926,9 @@ function AssessmentList({
         onSuccess: () => {
           toast.success('Assessment deleted successfully');
           queryClient.invalidateQueries({
-            queryKey: searchAssessmentsQueryKey({
-              query: {
-                searchParams: { courseUuid: courseId },
-                pageable: { page: 0, size: 100 },
-              },
+            queryKey: getCourseAssessmentsQueryKey({
+              path: { courseUuid: courseId as string },
+              query: { pageable: {} }
             }),
           });
         },

@@ -3545,6 +3545,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -3556,10 +3560,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -3571,6 +3571,92 @@ export type ApiResponse = {
   error?: {
     [key: string]: unknown;
   };
+};
+
+/**
+ * Payload for instructors or organisations applying to deliver a course
+ */
+export type CourseTrainingApplicationRequest = {
+  applicant_type: ApplicantTypeEnum;
+  /**
+   * **[REQUIRED]** UUID of the instructor or organisation applying.
+   */
+  applicant_uuid: string;
+  /**
+   * Optional notes to help the course creator evaluate the request.
+   */
+  application_notes?: string;
+};
+
+export type ApiResponseCourseTrainingApplication = {
+  success?: boolean;
+  data?: CourseTrainingApplication;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Represents an instructor or organisation request to deliver a course
+ */
+export type CourseTrainingApplication = {
+  /**
+   * **[READ-ONLY]** Unique identifier for this application.
+   */
+  readonly uuid?: string;
+  status?: StatusEnum6;
+  /**
+   * Submission notes provided by the applicant.
+   */
+  application_notes?: string;
+  /**
+   * Decision notes provided by the course creator.
+   */
+  review_notes?: string;
+  /**
+   * Reviewer identifier captured when the request is approved or rejected.
+   */
+  reviewed_by?: string;
+  /**
+   * Timestamp of the review decision.
+   */
+  reviewed_at?: Date;
+  /**
+   * **[READ-ONLY]** The course this application targets.
+   */
+  readonly course_uuid?: string;
+  applicant_type?: ApplicantTypeEnum;
+  /**
+   * **[READ-ONLY]** UUID of the applicant (Instructor or Organisation).
+   */
+  readonly applicant_uuid?: string;
+  /**
+   * **[READ-ONLY]** When the application was submitted.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Audit user who submitted the application.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** When the application was last updated.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** Audit user who last modified the application.
+   */
+  readonly updated_by?: string;
+};
+
+/**
+ * Payload for approving or rejecting a course training application
+ */
+export type CourseTrainingApplicationDecisionRequest = {
+  /**
+   * Optional notes captured alongside the decision.
+   */
+  review_notes?: string;
 };
 
 export type ApiResponseCourseCreator = {
@@ -3784,7 +3870,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum6;
+  status: StatusEnum7;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -3830,13 +3916,13 @@ export type AssignmentSubmission = {
    */
   readonly is_graded?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the submission based on its content type.
-   */
-  readonly submission_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
   readonly grade_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the submission based on its content type.
+   */
+  readonly submission_category?: string;
   /**
    * **[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.
    */
@@ -4217,7 +4303,7 @@ export type QuizAttempt = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum7;
+  status: StatusEnum8;
   /**
    * **[READ-ONLY]** Timestamp when the attempt was created. Automatically set by the system.
    */
@@ -4340,7 +4426,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum8;
+  status: StatusEnum9;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -4370,13 +4456,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -4685,13 +4771,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponseListEnrollment = {
@@ -4747,6 +4833,21 @@ export type ApiResponsePagedDtoCourseTrainingRequirement = {
 
 export type PagedDtoCourseTrainingRequirement = {
   content?: Array<CourseTrainingRequirement>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoCourseTrainingApplication = {
+  success?: boolean;
+  data?: PagedDtoCourseTrainingApplication;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoCourseTrainingApplication = {
+  content?: Array<CourseTrainingApplication>;
   metadata?: PageMetadata;
   links?: PageLinks;
 };
@@ -4838,7 +4939,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum8;
+  status: StatusEnum9;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -4868,13 +4969,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -4961,36 +5062,6 @@ export type ApiResponsePagedDtoCourseAssessment = {
 
 export type PagedDtoCourseAssessment = {
   content?: Array<CourseAssessment>;
-  metadata?: PageMetadata;
-  links?: PageLinks;
-};
-
-export type ApiResponsePagedDtoLessonContent = {
-  success?: boolean;
-  data?: PagedDtoLessonContent;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
-};
-
-export type PagedDtoLessonContent = {
-  content?: Array<LessonContent>;
-  metadata?: PageMetadata;
-  links?: PageLinks;
-};
-
-export type ApiResponsePagedDtoCourseCategoryMapping = {
-  success?: boolean;
-  data?: PagedDtoCourseCategoryMapping;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
-};
-
-export type PagedDtoCourseCategoryMapping = {
-  content?: Array<CourseCategoryMapping>;
   metadata?: PageMetadata;
   links?: PageLinks;
 };
@@ -5195,6 +5266,26 @@ export type AdminDashboardStats = {
    * Admin-specific metrics
    */
   admin_metrics?: AdminMetrics;
+  /**
+   * Learning performance metrics
+   */
+  learning_metrics?: LearningMetrics;
+  /**
+   * Timetabling utilisation metrics
+   */
+  timetabling_metrics?: TimetablingMetrics;
+  /**
+   * Commerce performance metrics
+   */
+  commerce_metrics?: CommerceMetrics;
+  /**
+   * Notification delivery metrics
+   */
+  communication_metrics?: CommunicationMetrics;
+  /**
+   * Compliance and verification metrics
+   */
+  compliance_metrics?: ComplianceMetrics;
 };
 
 /**
@@ -5218,6 +5309,42 @@ export type ApiResponseAdminDashboardStats = {
 };
 
 /**
+ * Commerce analytics
+ */
+export type CommerceMetrics = {
+  total_orders?: bigint;
+  orders_last_30d?: bigint;
+  captured_orders?: bigint;
+  unique_customers?: bigint;
+  new_customers_last_30d?: bigint;
+  course_purchases_last_30d?: bigint;
+  class_purchases_last_30d?: bigint;
+};
+
+/**
+ * Notification delivery analytics
+ */
+export type CommunicationMetrics = {
+  notifications_created_7d?: bigint;
+  notifications_delivered_7d?: bigint;
+  notifications_failed_7d?: bigint;
+  pending_notifications?: bigint;
+};
+
+/**
+ * Compliance and verification analytics
+ */
+export type ComplianceMetrics = {
+  verified_instructors?: bigint;
+  pending_instructor_verifications?: bigint;
+  pending_instructor_documents?: bigint;
+  expiring_instructor_documents_30d?: bigint;
+  total_course_creators?: bigint;
+  verified_course_creators?: bigint;
+  pending_course_creator_verifications?: bigint;
+};
+
+/**
  * Content metrics for dashboard
  */
 export type ContentMetrics = {
@@ -5225,6 +5352,27 @@ export type ContentMetrics = {
   pending_moderation?: bigint;
   reported_content?: bigint;
   average_quality_score?: number;
+};
+
+/**
+ * Detailed learning analytics
+ */
+export type LearningMetrics = {
+  total_courses?: bigint;
+  published_courses?: bigint;
+  in_review_courses?: bigint;
+  draft_courses?: bigint;
+  archived_courses?: bigint;
+  total_course_enrollments?: bigint;
+  active_course_enrollments?: bigint;
+  new_course_enrollments_7d?: bigint;
+  completed_course_enrollments_30d?: bigint;
+  average_course_progress?: number;
+  total_training_programs?: bigint;
+  published_training_programs?: bigint;
+  active_training_programs?: bigint;
+  program_enrollments?: bigint;
+  completed_program_enrollments_30d?: bigint;
 };
 
 /**
@@ -5245,6 +5393,18 @@ export type SystemPerformance = {
   average_response_time?: string;
   error_rate?: string;
   storage_usage?: string;
+};
+
+/**
+ * Timetabling and attendance analytics
+ */
+export type TimetablingMetrics = {
+  sessions_next_7d?: bigint;
+  sessions_last_30d?: bigint;
+  sessions_completed_last_30d?: bigint;
+  sessions_cancelled_last_30d?: bigint;
+  attended_enrollments_last_30d?: bigint;
+  absent_enrollments_last_30d?: bigint;
 };
 
 /**
@@ -5690,9 +5850,36 @@ export const StatusEnum5 = {
 export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
 
 /**
- * **[REQUIRED]** Current status of the submission in the grading workflow.
+ * **[REQUIRED]** Applicant type initiating the request.
+ */
+export const ApplicantTypeEnum = {
+  INSTRUCTOR: 'instructor',
+  ORGANISATION: 'organisation',
+} as const;
+
+/**
+ * **[REQUIRED]** Applicant type initiating the request.
+ */
+export type ApplicantTypeEnum = (typeof ApplicantTypeEnum)[keyof typeof ApplicantTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current status of the application.
  */
 export const StatusEnum6 = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the application.
+ */
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+
+/**
+ * **[REQUIRED]** Current status of the submission in the grading workflow.
+ */
+export const StatusEnum7 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -5703,7 +5890,7 @@ export const StatusEnum6 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
 
 /**
  * Type of assignment - global or organization-specific
@@ -5721,7 +5908,7 @@ export type AssignmentTypeEnum = (typeof AssignmentTypeEnum)[keyof typeof Assign
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const StatusEnum7 = {
+export const StatusEnum8 = {
   IN_PROGRESS: 'IN_PROGRESS',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
@@ -5730,12 +5917,12 @@ export const StatusEnum7 = {
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum8 = {
+export const StatusEnum9 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -5745,7 +5932,7 @@ export const StatusEnum8 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 /**
  * Display name of the role/domain being offered
@@ -12015,6 +12202,145 @@ export type AddCourseTrainingRequirementResponses = {
 export type AddCourseTrainingRequirementResponse =
   AddCourseTrainingRequirementResponses[keyof AddCourseTrainingRequirementResponses];
 
+export type ListTrainingApplicationsData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+  };
+  query: {
+    status?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/courses/{courseUuid}/training-applications';
+};
+
+export type ListTrainingApplicationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListTrainingApplicationsError =
+  ListTrainingApplicationsErrors[keyof ListTrainingApplicationsErrors];
+
+export type ListTrainingApplicationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseTrainingApplication;
+};
+
+export type ListTrainingApplicationsResponse =
+  ListTrainingApplicationsResponses[keyof ListTrainingApplicationsResponses];
+
+export type SubmitTrainingApplicationData = {
+  body: CourseTrainingApplicationRequest;
+  path: {
+    courseUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/training-applications';
+};
+
+export type SubmitTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SubmitTrainingApplicationError =
+  SubmitTrainingApplicationErrors[keyof SubmitTrainingApplicationErrors];
+
+export type SubmitTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseTrainingApplication;
+};
+
+export type SubmitTrainingApplicationResponse =
+  SubmitTrainingApplicationResponses[keyof SubmitTrainingApplicationResponses];
+
+export type GetTrainingApplicationData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}';
+};
+
+export type GetTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetTrainingApplicationError =
+  GetTrainingApplicationErrors[keyof GetTrainingApplicationErrors];
+
+export type GetTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseTrainingApplication;
+};
+
+export type GetTrainingApplicationResponse =
+  GetTrainingApplicationResponses[keyof GetTrainingApplicationResponses];
+
+export type DecideOnTrainingApplicationData = {
+  body?: CourseTrainingApplicationDecisionRequest;
+  path: {
+    courseUuid: string;
+    applicationUuid: string;
+  };
+  query: {
+    action: string;
+  };
+  url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}';
+};
+
+export type DecideOnTrainingApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DecideOnTrainingApplicationError =
+  DecideOnTrainingApplicationErrors[keyof DecideOnTrainingApplicationErrors];
+
+export type DecideOnTrainingApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseTrainingApplication;
+};
+
+export type DecideOnTrainingApplicationResponse =
+  DecideOnTrainingApplicationResponses[keyof DecideOnTrainingApplicationResponses];
+
 export type GetCourseRubricsData = {
   body?: never;
   path: {
@@ -16960,6 +17286,42 @@ export type GetCourseCategoriesResponses = {
 export type GetCourseCategoriesResponse =
   GetCourseCategoriesResponses[keyof GetCourseCategoriesResponses];
 
+export type SearchTrainingApplicationsData = {
+  body?: never;
+  path?: never;
+  query: {
+    searchParams: {
+      [key: string]: string;
+    };
+    pageable: Pageable;
+  };
+  url: '/api/v1/courses/training-applications/search';
+};
+
+export type SearchTrainingApplicationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SearchTrainingApplicationsError =
+  SearchTrainingApplicationsErrors[keyof SearchTrainingApplicationsErrors];
+
+export type SearchTrainingApplicationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseTrainingApplication;
+};
+
+export type SearchTrainingApplicationsResponse =
+  SearchTrainingApplicationsResponses[keyof SearchTrainingApplicationsResponses];
+
 export type SearchCoursesData = {
   body?: never;
   path?: never;
@@ -16996,44 +17358,6 @@ export type SearchCoursesResponses = {
 };
 
 export type SearchCoursesResponse = SearchCoursesResponses[keyof SearchCoursesResponses];
-
-export type SearchRequirementsData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Optional search parameters for filtering
-     */
-    searchParams: {
-      [key: string]: unknown;
-    };
-    pageable: Pageable;
-  };
-  url: '/api/v1/courses/requirements/search';
-};
-
-export type SearchRequirementsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SearchRequirementsError = SearchRequirementsErrors[keyof SearchRequirementsErrors];
-
-export type SearchRequirementsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoCourseRequirement;
-};
-
-export type SearchRequirementsResponse =
-  SearchRequirementsResponses[keyof SearchRequirementsResponses];
 
 export type GetPublishedCoursesData = {
   body?: never;
@@ -17101,43 +17425,6 @@ export type GetCourseMediaResponses = {
 
 export type GetCourseMediaResponse = GetCourseMediaResponses[keyof GetCourseMediaResponses];
 
-export type SearchLessonsData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Optional search parameters for filtering
-     */
-    searchParams: {
-      [key: string]: unknown;
-    };
-    pageable: Pageable;
-  };
-  url: '/api/v1/courses/lessons/search';
-};
-
-export type SearchLessonsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SearchLessonsError = SearchLessonsErrors[keyof SearchLessonsErrors];
-
-export type SearchLessonsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoLesson;
-};
-
-export type SearchLessonsResponse = SearchLessonsResponses[keyof SearchLessonsResponses];
-
 export type GetCoursesByInstructorData = {
   body?: never;
   path: {
@@ -17173,82 +17460,6 @@ export type GetCoursesByInstructorResponses = {
 export type GetCoursesByInstructorResponse =
   GetCoursesByInstructorResponses[keyof GetCoursesByInstructorResponses];
 
-export type SearchEnrollmentsData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Optional search parameters for filtering
-     */
-    searchParams: {
-      [key: string]: unknown;
-    };
-    pageable: Pageable;
-  };
-  url: '/api/v1/courses/enrollments/search';
-};
-
-export type SearchEnrollmentsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SearchEnrollmentsError = SearchEnrollmentsErrors[keyof SearchEnrollmentsErrors];
-
-export type SearchEnrollmentsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoCourseEnrollment;
-};
-
-export type SearchEnrollmentsResponse =
-  SearchEnrollmentsResponses[keyof SearchEnrollmentsResponses];
-
-export type SearchLessonContentData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Optional search parameters for filtering
-     */
-    searchParams: {
-      [key: string]: unknown;
-    };
-    pageable: Pageable;
-  };
-  url: '/api/v1/courses/content/search';
-};
-
-export type SearchLessonContentErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SearchLessonContentError = SearchLessonContentErrors[keyof SearchLessonContentErrors];
-
-export type SearchLessonContentResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoLessonContent;
-};
-
-export type SearchLessonContentResponse =
-  SearchLessonContentResponses[keyof SearchLessonContentResponses];
-
 export type GetCoursesByCategoryData = {
   body?: never;
   path: {
@@ -17283,83 +17494,6 @@ export type GetCoursesByCategoryResponses = {
 
 export type GetCoursesByCategoryResponse =
   GetCoursesByCategoryResponses[keyof GetCoursesByCategoryResponses];
-
-export type SearchCategoryMappingsData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Optional search parameters for filtering
-     */
-    searchParams: {
-      [key: string]: unknown;
-    };
-    pageable: Pageable;
-  };
-  url: '/api/v1/courses/category-mappings/search';
-};
-
-export type SearchCategoryMappingsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SearchCategoryMappingsError =
-  SearchCategoryMappingsErrors[keyof SearchCategoryMappingsErrors];
-
-export type SearchCategoryMappingsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoCourseCategoryMapping;
-};
-
-export type SearchCategoryMappingsResponse =
-  SearchCategoryMappingsResponses[keyof SearchCategoryMappingsResponses];
-
-export type SearchAssessmentsData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Optional search parameters for filtering
-     */
-    searchParams: {
-      [key: string]: unknown;
-    };
-    pageable: Pageable;
-  };
-  url: '/api/v1/courses/assessments/search';
-};
-
-export type SearchAssessmentsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SearchAssessmentsError = SearchAssessmentsErrors[keyof SearchAssessmentsErrors];
-
-export type SearchAssessmentsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoCourseAssessment;
-};
-
-export type SearchAssessmentsResponse =
-  SearchAssessmentsResponses[keyof SearchAssessmentsResponses];
 
 export type GetActiveCoursesData = {
   body?: never;

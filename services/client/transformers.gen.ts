@@ -128,6 +128,10 @@ import type {
   ArchiveCourseResponse,
   GetCourseTrainingRequirementsResponse,
   AddCourseTrainingRequirementResponse,
+  ListTrainingApplicationsResponse,
+  SubmitTrainingApplicationResponse,
+  GetTrainingApplicationResponse,
+  DecideOnTrainingApplicationResponse,
   GetCourseRubricsResponse,
   AssociateRubricResponse,
   GetCourseRequirementsResponse,
@@ -240,16 +244,11 @@ import type {
   GetRubricsByContextResponse,
   GetCourseEnrollmentsResponse,
   GetCourseCategoriesResponse,
+  SearchTrainingApplicationsResponse,
   SearchCoursesResponse,
-  SearchRequirementsResponse,
   GetPublishedCoursesResponse,
-  SearchLessonsResponse,
   GetCoursesByInstructorResponse,
-  SearchEnrollmentsResponse,
-  SearchLessonContentResponse,
   GetCoursesByCategoryResponse,
-  SearchCategoryMappingsResponse,
-  SearchAssessmentsResponse,
   GetActiveCoursesResponse,
   GetVerifiedCourseCreatorsResponse,
   GetUnverifiedCourseCreatorsResponse,
@@ -2369,6 +2368,73 @@ export const addCourseTrainingRequirementResponseTransformer = async (
   return data;
 };
 
+const courseTrainingApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.reviewed_at) {
+    data.reviewed_at = new Date(data.reviewed_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const pagedDtoCourseTrainingApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseTrainingApplicationSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseTrainingApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseTrainingApplicationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listTrainingApplicationsResponseTransformer = async (
+  data: any
+): Promise<ListTrainingApplicationsResponse> => {
+  data = apiResponsePagedDtoCourseTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseCourseTrainingApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseTrainingApplicationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const submitTrainingApplicationResponseTransformer = async (
+  data: any
+): Promise<SubmitTrainingApplicationResponse> => {
+  data = apiResponseCourseTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getTrainingApplicationResponseTransformer = async (
+  data: any
+): Promise<GetTrainingApplicationResponse> => {
+  data = apiResponseCourseTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const decideOnTrainingApplicationResponseTransformer = async (
+  data: any
+): Promise<DecideOnTrainingApplicationResponse> => {
+  data = apiResponseCourseTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoCourseRubricAssociationSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -3714,17 +3780,17 @@ export const getCourseCategoriesResponseTransformer = async (
   return data;
 };
 
+export const searchTrainingApplicationsResponseTransformer = async (
+  data: any
+): Promise<SearchTrainingApplicationsResponse> => {
+  data = apiResponsePagedDtoCourseTrainingApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
 export const searchCoursesResponseTransformer = async (
   data: any
 ): Promise<SearchCoursesResponse> => {
   data = apiResponsePagedDtoCourseSchemaResponseTransformer(data);
-  return data;
-};
-
-export const searchRequirementsResponseTransformer = async (
-  data: any
-): Promise<SearchRequirementsResponse> => {
-  data = apiResponsePagedDtoCourseRequirementSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3735,13 +3801,6 @@ export const getPublishedCoursesResponseTransformer = async (
   return data;
 };
 
-export const searchLessonsResponseTransformer = async (
-  data: any
-): Promise<SearchLessonsResponse> => {
-  data = apiResponsePagedDtoLessonSchemaResponseTransformer(data);
-  return data;
-};
-
 export const getCoursesByInstructorResponseTransformer = async (
   data: any
 ): Promise<GetCoursesByInstructorResponse> => {
@@ -3749,76 +3808,10 @@ export const getCoursesByInstructorResponseTransformer = async (
   return data;
 };
 
-export const searchEnrollmentsResponseTransformer = async (
-  data: any
-): Promise<SearchEnrollmentsResponse> => {
-  data = apiResponsePagedDtoCourseEnrollmentSchemaResponseTransformer(data);
-  return data;
-};
-
-const pagedDtoLessonContentSchemaResponseTransformer = (data: any) => {
-  if (data.content) {
-    data.content = data.content.map((item: any) => {
-      return lessonContentSchemaResponseTransformer(item);
-    });
-  }
-  if (data.metadata) {
-    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
-  }
-  return data;
-};
-
-const apiResponsePagedDtoLessonContentSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = pagedDtoLessonContentSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const searchLessonContentResponseTransformer = async (
-  data: any
-): Promise<SearchLessonContentResponse> => {
-  data = apiResponsePagedDtoLessonContentSchemaResponseTransformer(data);
-  return data;
-};
-
 export const getCoursesByCategoryResponseTransformer = async (
   data: any
 ): Promise<GetCoursesByCategoryResponse> => {
   data = apiResponsePagedDtoCourseSchemaResponseTransformer(data);
-  return data;
-};
-
-const pagedDtoCourseCategoryMappingSchemaResponseTransformer = (data: any) => {
-  if (data.content) {
-    data.content = data.content.map((item: any) => {
-      return courseCategoryMappingSchemaResponseTransformer(item);
-    });
-  }
-  if (data.metadata) {
-    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
-  }
-  return data;
-};
-
-const apiResponsePagedDtoCourseCategoryMappingSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = pagedDtoCourseCategoryMappingSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const searchCategoryMappingsResponseTransformer = async (
-  data: any
-): Promise<SearchCategoryMappingsResponse> => {
-  data = apiResponsePagedDtoCourseCategoryMappingSchemaResponseTransformer(data);
-  return data;
-};
-
-export const searchAssessmentsResponseTransformer = async (
-  data: any
-): Promise<SearchAssessmentsResponse> => {
-  data = apiResponsePagedDtoCourseAssessmentSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4212,6 +4205,150 @@ const adminMetricsSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
+const learningMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.total_courses) {
+    data.total_courses = BigInt(data.total_courses.toString());
+  }
+  if (data.published_courses) {
+    data.published_courses = BigInt(data.published_courses.toString());
+  }
+  if (data.in_review_courses) {
+    data.in_review_courses = BigInt(data.in_review_courses.toString());
+  }
+  if (data.draft_courses) {
+    data.draft_courses = BigInt(data.draft_courses.toString());
+  }
+  if (data.archived_courses) {
+    data.archived_courses = BigInt(data.archived_courses.toString());
+  }
+  if (data.total_course_enrollments) {
+    data.total_course_enrollments = BigInt(data.total_course_enrollments.toString());
+  }
+  if (data.active_course_enrollments) {
+    data.active_course_enrollments = BigInt(data.active_course_enrollments.toString());
+  }
+  if (data.new_course_enrollments_7d) {
+    data.new_course_enrollments_7d = BigInt(data.new_course_enrollments_7d.toString());
+  }
+  if (data.completed_course_enrollments_30d) {
+    data.completed_course_enrollments_30d = BigInt(
+      data.completed_course_enrollments_30d.toString()
+    );
+  }
+  if (data.total_training_programs) {
+    data.total_training_programs = BigInt(data.total_training_programs.toString());
+  }
+  if (data.published_training_programs) {
+    data.published_training_programs = BigInt(data.published_training_programs.toString());
+  }
+  if (data.active_training_programs) {
+    data.active_training_programs = BigInt(data.active_training_programs.toString());
+  }
+  if (data.program_enrollments) {
+    data.program_enrollments = BigInt(data.program_enrollments.toString());
+  }
+  if (data.completed_program_enrollments_30d) {
+    data.completed_program_enrollments_30d = BigInt(
+      data.completed_program_enrollments_30d.toString()
+    );
+  }
+  return data;
+};
+
+const timetablingMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.sessions_next_7d) {
+    data.sessions_next_7d = BigInt(data.sessions_next_7d.toString());
+  }
+  if (data.sessions_last_30d) {
+    data.sessions_last_30d = BigInt(data.sessions_last_30d.toString());
+  }
+  if (data.sessions_completed_last_30d) {
+    data.sessions_completed_last_30d = BigInt(data.sessions_completed_last_30d.toString());
+  }
+  if (data.sessions_cancelled_last_30d) {
+    data.sessions_cancelled_last_30d = BigInt(data.sessions_cancelled_last_30d.toString());
+  }
+  if (data.attended_enrollments_last_30d) {
+    data.attended_enrollments_last_30d = BigInt(data.attended_enrollments_last_30d.toString());
+  }
+  if (data.absent_enrollments_last_30d) {
+    data.absent_enrollments_last_30d = BigInt(data.absent_enrollments_last_30d.toString());
+  }
+  return data;
+};
+
+const commerceMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.total_orders) {
+    data.total_orders = BigInt(data.total_orders.toString());
+  }
+  if (data.orders_last_30d) {
+    data.orders_last_30d = BigInt(data.orders_last_30d.toString());
+  }
+  if (data.captured_orders) {
+    data.captured_orders = BigInt(data.captured_orders.toString());
+  }
+  if (data.unique_customers) {
+    data.unique_customers = BigInt(data.unique_customers.toString());
+  }
+  if (data.new_customers_last_30d) {
+    data.new_customers_last_30d = BigInt(data.new_customers_last_30d.toString());
+  }
+  if (data.course_purchases_last_30d) {
+    data.course_purchases_last_30d = BigInt(data.course_purchases_last_30d.toString());
+  }
+  if (data.class_purchases_last_30d) {
+    data.class_purchases_last_30d = BigInt(data.class_purchases_last_30d.toString());
+  }
+  return data;
+};
+
+const communicationMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.notifications_created_7d) {
+    data.notifications_created_7d = BigInt(data.notifications_created_7d.toString());
+  }
+  if (data.notifications_delivered_7d) {
+    data.notifications_delivered_7d = BigInt(data.notifications_delivered_7d.toString());
+  }
+  if (data.notifications_failed_7d) {
+    data.notifications_failed_7d = BigInt(data.notifications_failed_7d.toString());
+  }
+  if (data.pending_notifications) {
+    data.pending_notifications = BigInt(data.pending_notifications.toString());
+  }
+  return data;
+};
+
+const complianceMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.verified_instructors) {
+    data.verified_instructors = BigInt(data.verified_instructors.toString());
+  }
+  if (data.pending_instructor_verifications) {
+    data.pending_instructor_verifications = BigInt(
+      data.pending_instructor_verifications.toString()
+    );
+  }
+  if (data.pending_instructor_documents) {
+    data.pending_instructor_documents = BigInt(data.pending_instructor_documents.toString());
+  }
+  if (data.expiring_instructor_documents_30d) {
+    data.expiring_instructor_documents_30d = BigInt(
+      data.expiring_instructor_documents_30d.toString()
+    );
+  }
+  if (data.total_course_creators) {
+    data.total_course_creators = BigInt(data.total_course_creators.toString());
+  }
+  if (data.verified_course_creators) {
+    data.verified_course_creators = BigInt(data.verified_course_creators.toString());
+  }
+  if (data.pending_course_creator_verifications) {
+    data.pending_course_creator_verifications = BigInt(
+      data.pending_course_creator_verifications.toString()
+    );
+  }
+  return data;
+};
+
 const adminDashboardStatsSchemaResponseTransformer = (data: any) => {
   if (data.timestamp) {
     data.timestamp = new Date(data.timestamp);
@@ -4229,6 +4366,25 @@ const adminDashboardStatsSchemaResponseTransformer = (data: any) => {
   }
   if (data.admin_metrics) {
     data.admin_metrics = adminMetricsSchemaResponseTransformer(data.admin_metrics);
+  }
+  if (data.learning_metrics) {
+    data.learning_metrics = learningMetricsSchemaResponseTransformer(data.learning_metrics);
+  }
+  if (data.timetabling_metrics) {
+    data.timetabling_metrics = timetablingMetricsSchemaResponseTransformer(
+      data.timetabling_metrics
+    );
+  }
+  if (data.commerce_metrics) {
+    data.commerce_metrics = commerceMetricsSchemaResponseTransformer(data.commerce_metrics);
+  }
+  if (data.communication_metrics) {
+    data.communication_metrics = communicationMetricsSchemaResponseTransformer(
+      data.communication_metrics
+    );
+  }
+  if (data.compliance_metrics) {
+    data.compliance_metrics = complianceMetricsSchemaResponseTransformer(data.compliance_metrics);
   }
   return data;
 };

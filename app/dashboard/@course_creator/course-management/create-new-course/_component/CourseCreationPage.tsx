@@ -21,8 +21,7 @@ import {
   getLessonContentOptions,
   getLessonContentQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey,
-  searchAssessmentsOptions
+  publishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -332,11 +331,11 @@ export default function CourseCreationPage() {
   );
 
   // GET COURSE ASSESSMENTS
-  const { data: assessmentData, isLoading: assessmentLoading } = useQuery(
-    searchAssessmentsOptions({
-      query: { searchParams: { courseUuid: resolveId }, pageable: { page: 0, size: 100 } },
-    })
-  );
+  // const { data: assessmentData, isLoading: assessmentLoading } = useQuery(
+  //   getCourseAssessmentsOptions({
+  //     path: { courseUuid: resolveId }, query: { pageable: {} }
+  //   })
+  // );
 
   // PUBLISH COURSE MUTATION
   const PublishCourse = useMutation(publishCourseMutation());
@@ -354,7 +353,7 @@ export default function CourseCreationPage() {
             queryClient.invalidateQueries({
               queryKey: publishCourseQueryKey({ path: { uuid: course?.data?.uuid as string } }),
             });
-            router.push('/dashboard/course-management/published');
+            router.push('/dashboard/courses');
           },
         }
       );

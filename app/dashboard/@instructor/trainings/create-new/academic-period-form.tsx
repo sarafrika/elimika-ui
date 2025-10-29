@@ -189,9 +189,13 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
     );
   };
 
+  const onError = (errors: any) => {
+    toast.error(errors || "Form validation failed")
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+      <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
         <div className='space-y-4'>
           <h3 className='text-lg font-medium'>Academic Period</h3>
 

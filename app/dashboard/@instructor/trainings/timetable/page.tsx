@@ -15,7 +15,7 @@ import {
 } from '../../availability/components/types';
 import TimetableManager from './timetable-manager';
 
-const Page = () => {
+const TimeTablePage = () => {
   const user = useUserProfile();
   const instructor = useInstructor();
   const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
@@ -77,4 +77,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default TimeTablePage;

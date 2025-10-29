@@ -62,14 +62,11 @@ export const InstructorDirectory: React.FC<Props> = ({
   });
 
   // Get unique values for filter options
-  const allSpecializations = [
-    // ...new Set(instructors.flatMap((i) => i.specializations)),
-  ] as any;
+  const allSpecializations = ["specialization1", "specialization2", "specialization3", "specialization4", "specialization5"] as any;
   const allCourses = [...new Set(instructors?.flatMap(i => i.courses))] as any;
 
   // Filter instructors based on criteria
   const filteredInstructors = instructors?.filter(instructor => {
-    // Search query
     if (
       filters.searchQuery &&
       !instructor.full_name.toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
@@ -80,12 +77,16 @@ export const InstructorDirectory: React.FC<Props> = ({
     }
 
     // Instructor type
-    if (filters.instructorType !== 'all' && instructor.type !== filters.instructorType) {
-      return false;
+    if (filters.instructorType !== 'all') {
+      const isOrganization = instructor.user_domain?.includes('organization');
+      const instructorType = isOrganization ? 'organization' : 'individual';
+      if (instructorType !== filters.instructorType) {
+        return false;
+      }
     }
 
     // Gender
-    if (filters.gender !== 'all' && instructor.gender !== filters.gender) {
+    if (filters.gender !== 'all' && instructor.gender.toLowerCase() !== filters.gender) {
       return false;
     }
 
@@ -95,12 +96,14 @@ export const InstructorDirectory: React.FC<Props> = ({
     }
 
     // Experience
-    // if (
-    //     instructor.experience < filters?.experience[0] ||
-    //     instructor.experience > filters?.experience[1]
-    // ) {
-    //     return false;
-    // }
+    if (
+      // @ts-ignore
+      instructor.total_experience_years < filters.experience[0] ||
+      // @ts-ignore
+      instructor.total_experience_years > filters.experience[1]
+    ) {
+      return false;
+    }
 
     // Specializations
     if (

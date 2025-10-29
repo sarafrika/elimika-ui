@@ -30,6 +30,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import RichTextRenderer from '../../../components/editors/richTextRenders';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { useInstructor } from '../../../context/instructor-context';
 import { useDifficultyLevels } from '../../../hooks/use-difficultyLevels';
 import useInstructorClassesWithDetails from '../../../hooks/use-instructor-classes';
@@ -88,6 +89,9 @@ export function TrainingClassComponent() {
         return matchesSearch && matchesLocation && matchesStatus;
     });
 
+    const publishedClasses = filteredClasses?.filter((item) => item.status === "published")
+    const draftClasses = filteredClasses?.filter((item) => item.status === "draft")
+
 
     function openTimetableSchedule(uuid: string) {
         // timetable
@@ -103,8 +107,36 @@ export function TrainingClassComponent() {
         return <CustomLoadingState subHeading='Loading training classes information' />
     }
 
+
     return (
         <div className="container mx-auto space-y-6">
+
+            <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+                <Card>
+                    <CardHeader className=''>
+                        <CardTitle className='text-muted-foreground text-sm'>Total Classes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className='text-3xl font-semibold'>{filteredClasses?.length}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className=''>
+                        <CardTitle className='text-muted-foreground text-sm'>Published Classes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className='text-3xl font-semibold'>{publishedClasses?.length}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className=''>
+                        <CardTitle className='text-muted-foreground text-sm'>Draft Classes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className='text-3xl font-semibold'>{draftClasses?.length}</div>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Filters and Search */}
             <div className="flex flex-wrap gap-4 items-center bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-blue-100/50 shadow-sm">
@@ -155,15 +187,14 @@ export function TrainingClassComponent() {
                 {filteredClasses.map((cls) => {
                     const enrollmentPercentage = (cls.current_enrollments / cls.max_participants) * 100;
                     const isFull = cls.current_enrollments >= cls.max_participants;
-                    const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || "Unknown";
-
+                    const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || "N/A";
 
                     return (
                         <div
                             key={cls.uuid}
                             className="group cursor-pointer"
                         >
-                            <div className="relative h-full bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-2xl p-[2px] shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+                            <div className="max-w-[380px] relative h-full bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-2xl p-[2px] shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
                                 <div className="h-full bg-white rounded-2xl overflow-hidden">
                                     {/* Image Header */}
                                     <div className="relative h-48 overflow-hidden">

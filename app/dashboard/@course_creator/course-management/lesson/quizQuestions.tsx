@@ -1,19 +1,24 @@
+import { useUserProfile } from '@/context/profile-context';
 import { getQuizQuestionsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import QuestionItem from './questionItem';
 
 const QuizQuestions = ({ quizUuid }: { quizUuid: string }) => {
-  const { data } = useQuery(getQuizQuestionsOptions({ path: { quizUuid } }));
+  const { data, isLoading, isFetching } = useQuery(getQuizQuestionsOptions({ path: { quizUuid } }));
+  const user = useUserProfile()
 
   return (
     <div className='mt-2 ml-4 space-y-2'>
-      {Array.isArray(data?.data) && data.data.length > 0 ? (
+      {isLoading && isFetching && <div>Loading...</div>}
+
+      {!isLoading && !isFetching && Array.isArray(data?.data) && data.data.length > 0 ? (
         data.data.map((question: any, qIndex: number) => (
           <QuestionItem
             key={question.uuid}
             quizUuid={quizUuid}
             question={question}
             qIndex={qIndex}
+            userDomain={user?.activeDomain}
           />
         ))
       ) : (

@@ -133,9 +133,10 @@ export function CourseCard({ course, handleClick, isStudentView, handleEnroll, h
           </div>
 
           {/* Title and Subtitle */}
-          <h3 className='group-hover:text-primary mb-1 line-clamp-2 font-bold transition-colors'>
+          <h3 className="group-hover:text-primary mb-1 font-bold line-clamp-2 min-h-12 transition-colors">
             {course?.name}
           </h3>
+
           <div className='text-muted-foreground mb-3 line-clamp-2 text-sm'>
             <RichTextRenderer htmlString={course?.description as string} />
           </div>
