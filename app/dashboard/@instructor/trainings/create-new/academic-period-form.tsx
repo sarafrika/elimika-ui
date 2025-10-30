@@ -168,30 +168,32 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
     //   }
     // })
 
-    scheduleClass.mutate(
-      {
-        body: {
-          class_definition_uuid: classData?.uuid,
-          instructor_uuid: classData?.default_instructor_uuid as string,
-          // @ts-ignore
-          start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
-          // @ts-ignore
-          end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
-          timezone: 'UTC',
-        },
-      },
-      {
-        onSuccess: data => {
-          toast.success(data?.message);
-          onNext();
-        },
-      }
-    );
+    // scheduleClass.mutate(
+    //   {
+    //     body: {
+    //       class_definition_uuid: classData?.uuid,
+    //       instructor_uuid: classData?.default_instructor_uuid as string,
+    //       // @ts-ignore
+    //       start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
+    //       // @ts-ignore
+    //       end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
+    //       timezone: 'UTC',
+    //     },
+    //   },
+    //   {
+    //     onSuccess: data => {
+    //       toast.success(data?.message);
+    //       onNext();
+    //     },
+    //   }
+    // );
+
+    onNext();
   };
 
   const onError = (errors: any) => {
-    toast.error(errors || "Form validation failed")
-  }
+    toast.error(errors || 'Form validation failed');
+  };
 
   return (
     <Form {...form}>

@@ -92,42 +92,42 @@ export default function AddProfileSelector() {
 
         return (
           <Link
-              key={type.id}
-              href={type.href}
-              className={`group relative block rounded-3xl border-2 p-8 transition-all duration-300 ${type.borderColor} ${type.bgColor} ${type.hoverBg} hover:scale-[1.01] hover:border-blue-600/30 hover:shadow-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 focus:outline-none`}
-            >
-              {/* Icon */}
-              <div className='mb-6 flex justify-center'>
-                <div
-                  className={`rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 ${type.iconColor} group-hover:scale-110 group-hover:shadow-md`}
-                >
-                  <Icon className='h-8 w-8' />
-                </div>
+            key={type.id}
+            href={type.href}
+            className={`group relative block rounded-3xl border-2 p-8 transition-all duration-300 ${type.borderColor} ${type.bgColor} ${type.hoverBg} hover:scale-[1.01] hover:border-blue-600/30 hover:shadow-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 focus:outline-none`}
+          >
+            {/* Icon */}
+            <div className='mb-6 flex justify-center'>
+              <div
+                className={`rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 ${type.iconColor} group-hover:scale-110 group-hover:shadow-md`}
+              >
+                <Icon className='h-8 w-8' />
               </div>
+            </div>
 
-              {/* Content */}
-              <div className='mb-8 text-center'>
-                <h3 className='text-foreground mb-3 text-2xl font-bold transition-colors group-hover:text-blue-600'>
-                  {type.title}
-                </h3>
-                <p className='text-muted-foreground text-sm leading-relaxed'>{type.description}</p>
+            {/* Content */}
+            <div className='mb-8 text-center'>
+              <h3 className='text-foreground mb-3 text-2xl font-bold transition-colors group-hover:text-blue-600'>
+                {type.title}
+              </h3>
+              <p className='text-muted-foreground text-sm leading-relaxed'>{type.description}</p>
+            </div>
+
+            {/* Button */}
+            <div className='flex justify-center'>
+              <div
+                className={`border-border text-foreground flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 text-center font-medium transition-all duration-300 group-hover:border-blue-600 group-hover:bg-blue-600 group-hover:text-white`}
+              >
+                Add {type.title}
+                <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
               </div>
+            </div>
 
-              {/* Button */}
-              <div className='flex justify-center'>
-                <div
-                  className={`border-border text-foreground flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 text-center font-medium transition-all duration-300 group-hover:border-blue-600 group-hover:bg-blue-600 group-hover:text-white`}
-                >
-                  Add {type.title}
-                  <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
-                </div>
-              </div>
-
-              {/* Decorative gradient overlay */}
-              <div className='pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-600 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-5' />
-            </Link>
-          );
-        })}
+            {/* Decorative gradient overlay */}
+            <div className='pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-600 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-5' />
+          </Link>
+        );
+      })}
     </div>
   );
 }

@@ -5,6 +5,14 @@ import { Card } from '@/components/ui/card';
 import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Briefcase, Building, MapPin, Star, Users, Video } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger,
+} from '../../../../components/ui/dialog';
+import { InstructorSkillCard } from '../../@instructor/profile/skill-card/_component/instructor-skill-card';
+import { sampleSkills } from '../../@instructor/profile/skill-card/_component/InstructorSkillsForm';
 
 type Props = {
   instructor: any;
@@ -19,7 +27,7 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
   const user = data?.data as any;
 
   return (
-    <Card className='overflow-hidden transition-shadow hover:shadow-lg min-w-[300px] sm:min-w-[320px]'>
+    <Card className='min-w-[300px] overflow-hidden transition-shadow hover:shadow-lg sm:min-w-[320px]'>
       <div className='space-y-4 p-4 sm:p-6'>
         <div className='flex items-start gap-4'>
           <Avatar className='h-16 w-16'>
@@ -89,7 +97,7 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
         </div>
 
         {/* Specializations */}
-        <div className='flex flex-wrap gap-2'>
+        <div className='flex w-full flex-wrap gap-2'>
           {specializations?.slice(0, 3)?.map((spec: any, index: any) => (
             <Badge key={index} variant='outline' className='text-xs'>
               {spec}
@@ -101,6 +109,21 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
               +{specializations?.length - 3} more
             </Badge>
           )}
+
+          <div className='flex w-full justify-end'>
+            <Dialog>
+              <DialogTrigger asChild>
+                <div className='flex cursor-pointer items-center gap-2 self-end text-end text-sm text-blue-600'>
+                  View Instructor Skill Card
+                </div>
+              </DialogTrigger>
+
+              <DialogContent className='max-h-[85vh] max-w-2xl overflow-y-auto'>
+                <DialogHeader />
+                <InstructorSkillCard instructor={instructor} skills={sampleSkills} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Rate */}

@@ -23,7 +23,13 @@ interface CourseCardProps {
   isStudentView: boolean;
 }
 
-export function CourseCard({ course, handleClick, isStudentView, handleEnroll, handleSearchInstructor }: CourseCardProps) {
+export function CourseCard({
+  course,
+  handleClick,
+  isStudentView,
+  handleEnroll,
+  handleSearchInstructor,
+}: CourseCardProps) {
   const router = useRouter();
 
   const getInitials = (name: string) => {
@@ -64,7 +70,7 @@ export function CourseCard({ course, handleClick, isStudentView, handleEnroll, h
 
   return (
     <div
-      className='max-w-[360px] group cursor-pointer rounded-lg border-[1px] border-gray-400 bg-white transition-all hover:-translate-y-1 hover:shadow-lg'
+      className='group max-w-[360px] cursor-pointer rounded-lg border-[1px] border-gray-400 bg-white transition-all hover:-translate-y-1 hover:shadow-lg'
       onClick={handleClick}
     >
       <div className='relative'>
@@ -133,7 +139,7 @@ export function CourseCard({ course, handleClick, isStudentView, handleEnroll, h
           </div>
 
           {/* Title and Subtitle */}
-          <h3 className="group-hover:text-primary mb-1 font-bold line-clamp-2 min-h-12 transition-colors">
+          <h3 className='group-hover:text-primary mb-1 line-clamp-2 min-h-12 font-bold transition-colors'>
             {course?.name}
           </h3>
 
@@ -177,7 +183,7 @@ export function CourseCard({ course, handleClick, isStudentView, handleEnroll, h
                 <Button
                   onClick={e => {
                     e.stopPropagation();
-                    handleSearchInstructor()
+                    handleSearchInstructor();
                     // router.push(`/dashboard/browse-courses/instructor/123`);
                   }}
                   size='sm'
@@ -189,7 +195,7 @@ export function CourseCard({ course, handleClick, isStudentView, handleEnroll, h
                   size='sm'
                   onClick={e => {
                     e.stopPropagation();
-                    handleEnroll()
+                    handleEnroll();
                     // router.push(`/dashboard/browse-courses/enroll/${course.uuid}`);
                   }}
                 >

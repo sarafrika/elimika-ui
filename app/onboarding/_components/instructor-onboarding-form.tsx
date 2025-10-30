@@ -224,7 +224,8 @@ export function InstructorOnboardingForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Share your background, expertise, and teaching philosophy. Rich text is supported.
+                      Share your background, expertise, and teaching philosophy. Rich text is
+                      supported.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -3,12 +3,7 @@
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTrigger
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -181,8 +176,7 @@ export default function SkillsSettings({
         .join(' ')
     ) ?? [];
 
-
-  const [showSkillCard, setShowSkillCard] = useState(false)
+  const [showSkillCard, setShowSkillCard] = useState(false);
 
   return (
     <ProfileFormShell
@@ -191,39 +185,38 @@ export default function SkillsSettings({
       description='Showcase the expertise and proficiencies that define your instructional style.'
       badges={domainBadges}
     >
-      <div className='space-y-6' >
-        <div className="w-full flex justify-end">
+      <div className='space-y-6'>
+        <div className='flex w-full justify-end'>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" className="text-sm">
+              <Button variant='outline' className='text-sm'>
                 View Skill Card
               </Button>
             </DialogTrigger>
 
-            <DialogContent className="max-w-2xl overflow-y-auto max-h-[85vh]">
+            <DialogContent className='max-h-[85vh] max-w-2xl overflow-y-auto'>
               <DialogHeader />
-              <InstructorSkillCard
-                instructor={instructor}
-                skills={sampleSkills}
-              />
+              <InstructorSkillCard instructor={instructor} skills={sampleSkills} />
             </DialogContent>
           </Dialog>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-            {errors && errors.length > 0 ? (
-              <Alert variant='destructive'>
-                <AlertTitle>Unable to save your skills</AlertTitle>
+            {errors && errors.length > 0 && (
+              <Alert variant='destructive' className='border-red-600 bg-red-50 text-red-700'>
+                <AlertTitle className='font-semibold'>Unable to save your skills</AlertTitle>
                 <AlertDescription>
                   <ul className='ml-4 list-disc space-y-1 text-sm'>
                     {errors.map((error, index) => (
-                      <li key={index}>{error.message}</li>
+                      <li key={index} className='text-red-600'>
+                        {error.message}
+                      </li>
                     ))}
                   </ul>
                 </AlertDescription>
               </Alert>
-            ) : null}
+            )}
 
             <ProfileFormSection
               title='Professional skills'
@@ -285,7 +278,10 @@ export default function SkillsSettings({
                           <FormItem>
                             <FormLabel>Overview</FormLabel>
                             <FormControl>
-                              <Textarea placeholder='Summarise where this skill shines.' {...field} />
+                              <Textarea
+                                placeholder='Summarise where this skill shines.'
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -325,7 +321,10 @@ export default function SkillsSettings({
                             <FormItem>
                               <FormLabel>Support detail</FormLabel>
                               <FormControl>
-                                <Textarea placeholder='Describe your experience level.' {...field} />
+                                <Textarea
+                                  placeholder='Describe your experience level.'
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -355,8 +354,7 @@ export default function SkillsSettings({
   );
 }
 
-
-const sampleSkills: any[] = [
+export const sampleSkills: any[] = [
   {
     uuid: '8f2c3bde-9a5f-4b1e-9b22-7c41a2c81f6a',
     instructor_uuid: '3d91b7a9-5e73-4f4b-b1a0-21f2a6a2cd35',
@@ -403,4 +401,3 @@ const sampleSkills: any[] = [
     updated_date: '2025-08-18T10:05:30Z',
   },
 ];
-

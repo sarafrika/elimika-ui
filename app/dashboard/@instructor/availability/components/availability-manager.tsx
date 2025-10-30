@@ -8,7 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
-import { clearInstructorAvailabilityMutation, getInstructorAvailabilityOptions, getInstructorAvailabilityQueryKey } from '@/services/client/@tanstack/react-query.gen';
+import {
+  clearInstructorAvailabilityMutation,
+  getInstructorAvailabilityOptions,
+  getInstructorAvailabilityQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
@@ -107,21 +111,28 @@ export default function AvailabilityManager({
     });
   };
 
-  const clearAvailability = useMutation(clearInstructorAvailabilityMutation())
+  const clearAvailability = useMutation(clearInstructorAvailabilityMutation());
   const handleClearAvailability = () => {
-    if (!user?.instructor?.uuid) return
+    if (!user?.instructor?.uuid) return;
 
     try {
-      clearAvailability.mutate({ path: { instructorUuid: user?.instructor?.uuid } }, {
-        onSuccess: (data) => {
-          toast.success(data?.message || "Instructor availability deleted successfully")
-          qc.invalidateQueries({ queryKey: getInstructorAvailabilityQueryKey({ path: { instructorUuid: user?.instructor?.uuid as string } }) })
+      clearAvailability.mutate(
+        { path: { instructorUuid: user?.instructor?.uuid } },
+        {
+          onSuccess: data => {
+            toast.success(data?.message || 'Instructor availability deleted successfully');
+            qc.invalidateQueries({
+              queryKey: getInstructorAvailabilityQueryKey({
+                path: { instructorUuid: user?.instructor?.uuid as string },
+              }),
+            });
+          },
         }
-      })
+      );
     } catch (error) {
-      toast.error("An error occured")
+      toast.error('An error occured');
     }
-  }
+  };
 
   // mutations
   // const weeklyAvailabilityMutation = useMutation(setInstructorWeeklyAvailabilityMutation())
@@ -225,38 +236,37 @@ export default function AvailabilityManager({
           <div className='grid grid-cols-1 gap-8 gap-y-8 md:grid-cols-2'>
             <div className='space-y-2'>
               <Label>Quick Toggle</Label>
-              <div className="flex flex-wrap gap-4">
+              <div className='flex flex-wrap gap-4'>
                 <Button
                   variant={quickAvailable ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 w-[150px] whitespace-nowrap"
+                  size='sm'
+                  className='w-[150px] flex-1 whitespace-nowrap'
                   onClick={() => handleQuickToggle(true)}
                 >
-                  <CheckCircle className="mr-2 h-4 w-4" />
+                  <CheckCircle className='mr-2 h-4 w-4' />
                   Available All Day
                 </Button>
 
                 <Button
                   variant={!quickAvailable ? 'default' : 'outline'}
-                  size="sm"
-                  className="flex-1 w-[150px] whitespace-nowrap"
+                  size='sm'
+                  className='w-[150px] flex-1 whitespace-nowrap'
                   onClick={() => handleQuickToggle(false)}
                 >
-                  <XCircle className="mr-2 h-4 w-4" />
+                  <XCircle className='mr-2 h-4 w-4' />
                   Unavailable
                 </Button>
 
                 <Button
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1 min-w-[150px] max-w-[calc(50%-0.5rem)] whitespace-nowrap"
+                  variant='destructive'
+                  size='sm'
+                  className='max-w-[calc(50%-0.5rem)] min-w-[150px] flex-1 whitespace-nowrap'
                   onClick={() => handleClearAvailability()}
                 >
-                  {clearAvailability.isPending ? <Spinner /> : <XCircle className="mr-2 h-4 w-4" />}
+                  {clearAvailability.isPending ? <Spinner /> : <XCircle className='mr-2 h-4 w-4' />}
                   Clear Availability
                 </Button>
               </div>
-
             </div>
 
             <div className='space-y-2'>

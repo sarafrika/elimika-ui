@@ -8,7 +8,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Spinner from '@/components/ui/spinner';
@@ -100,7 +100,6 @@ export default function AvailabilitySettings() {
         .join(' ')
     ) ?? [];
 
-
   return (
     <ProfileFormShell
       eyebrow='Instructor'
@@ -110,16 +109,11 @@ export default function AvailabilitySettings() {
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-
           <ProfileFormSection
             title='Class types & hourly rates'
             description='Set clear pricing for the formats you support so learners can book with confidence.'
             footer={
-              <Button
-                type='submit'
-                className='min-w-36'
-                disabled={!isEditing || isConfirming}
-              >
+              <Button type='submit' className='min-w-36' disabled={!isEditing || isConfirming}>
                 {isConfirming ? (
                   <span className='flex items-center gap-2'>
                     <Spinner className='h-4 w-4' />
@@ -133,7 +127,7 @@ export default function AvailabilitySettings() {
           >
             <div className='space-y-6'>
               {classTypes.map(ct => (
-                <div key={ct.type} className='rounded-lg border bg-muted/30 p-4'>
+                <div key={ct.type} className='bg-muted/30 rounded-lg border p-4'>
                   <h3 className='mb-1 text-lg font-semibold'>{ct.type}</h3>
                   <p className='text-muted-foreground mb-4 text-sm'>{ct.description}</p>
                   <div className='space-y-4'>
@@ -143,9 +137,10 @@ export default function AvailabilitySettings() {
                         control={form.control}
                         name={`rates.${method.key as keyof AvailabilityFormValues['rates']}`}
                         render={({ field }) => (
-                          <FormItem className='flex flex-col gap-2 rounded-md border bg-background p-3 sm:flex-row sm:items-center sm:justify-between'>
+                          <FormItem className='bg-background flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between'>
                             <FormLabel className='font-medium'>
-                              {method.name === 'In-Person' ? '🏢' : '💻'} {method.name} rate (per hour)
+                              {method.name === 'In-Person' ? '🏢' : '💻'} {method.name} rate (per
+                              hour)
                             </FormLabel>
                             <div className='flex items-center gap-2'>
                               <FormControl>
@@ -157,7 +152,9 @@ export default function AvailabilitySettings() {
                                   className='w-32 text-right'
                                   {...field}
                                   onChange={e =>
-                                    field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+                                    field.onChange(
+                                      e.target.value ? parseFloat(e.target.value) : undefined
+                                    )
                                   }
                                 />
                               </FormControl>

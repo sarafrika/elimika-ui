@@ -105,7 +105,6 @@ export default function InstructorProfile() {
         .join(' ')
     ) ?? [];
 
-
   const form = useForm<GeneralProfileFormValues>({
     resolver: zodResolver(generalProfileSchema),
     defaultValues: {
@@ -130,7 +129,8 @@ export default function InstructorProfile() {
   const onSubmit = (updatedProfileData: GeneralProfileFormValues) => {
     requestConfirmation({
       title: 'Save instructor profile changes?',
-      description: 'These updates will be visible to learners, organisations, and fellow instructors.',
+      description:
+        'These updates will be visible to learners, organisations, and fellow instructors.',
       confirmLabel: 'Save changes',
       cancelLabel: 'Keep editing',
       onConfirm: async () => {
@@ -151,14 +151,14 @@ export default function InstructorProfile() {
           const manageInstructor = () =>
             instructor
               ? updateInstructor({
-                path: {
-                  uuid: instructor.uuid!,
-                },
-                body: updatedProfileData.instructor,
-              })
+                  path: {
+                    uuid: instructor.uuid!,
+                  },
+                  body: updatedProfileData.instructor,
+                })
               : createInstructor({
-                body: updatedProfileData.instructor,
-              });
+                  body: updatedProfileData.instructor,
+                });
 
           const response = await Promise.all([
             updateUser({

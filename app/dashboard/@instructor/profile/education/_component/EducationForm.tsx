@@ -343,7 +343,11 @@ export default function EducationSettings() {
                           <FormItem>
                             <FormLabel>Certificate number</FormLabel>
                             <FormControl>
-                              <Input placeholder='e.g. CERT12345' {...field} value={field.value ?? ''} />
+                              <Input
+                                placeholder='e.g. CERT12345'
+                                {...field}
+                                value={field.value ?? ''}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -386,9 +390,14 @@ export default function EducationSettings() {
                                 render={({ field }) => (
                                   <FormItem className='flex flex-row items-center space-x-2'>
                                     <FormControl>
-                                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                      <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
                                     </FormControl>
-                                    <FormLabel className='font-normal'>Currently studying here</FormLabel>
+                                    <FormLabel className='font-normal'>
+                                      Currently studying here
+                                    </FormLabel>
                                   </FormItem>
                                 )}
                               />
@@ -412,7 +421,9 @@ export default function EducationSettings() {
                               value={field.value ?? ''}
                             />
                           </FormControl>
-                          <FormDescription>Add any notable achievements or specialisations.</FormDescription>
+                          <FormDescription>
+                            Add any notable achievements or specialisations.
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}

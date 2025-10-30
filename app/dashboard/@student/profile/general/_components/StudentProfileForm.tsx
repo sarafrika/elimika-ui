@@ -412,7 +412,9 @@ export default function StudentProfileGeneralForm() {
               <Button
                 type='submit'
                 className='min-w-36'
-                disabled={!isEditing || userMutation.isPending || pictureMutation.isPending || isConfirming}
+                disabled={
+                  !isEditing || userMutation.isPending || pictureMutation.isPending || isConfirming
+                }
               >
                 {userMutation.isPending || pictureMutation.isPending || isConfirming ? (
                   <span className='flex items-center gap-2'>

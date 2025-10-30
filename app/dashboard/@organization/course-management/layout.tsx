@@ -33,9 +33,9 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
         </div>
       </div>
       <Separator />
-      <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6 '>
+      <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
         <aside className=''>
-          <nav className='flex space-x-2 lg:mb-6 lg:flex-row lg:space-y-1 lg:space-x-6 border-border/60 bg-background/80 supports-[backdrop-filter]:bg-background/60 relative overflow-hidden rounded-full border shadow-sm ring-1 ring-black/5 backdrop-blur'>
+          <nav className='border-border/60 bg-background/80 supports-[backdrop-filter]:bg-background/60 relative flex space-x-2 overflow-hidden rounded-full border shadow-sm ring-1 ring-black/5 backdrop-blur lg:mb-6 lg:flex-row lg:space-y-1 lg:space-x-6'>
             {sidebarNavItems.map(item => (
               <Link
                 key={item.href}

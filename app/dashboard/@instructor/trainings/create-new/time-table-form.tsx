@@ -154,23 +154,23 @@ export function TimetableForm({ classId, data, onNext, onPrev }: TimetableFormPr
   const onSubmit = (values: TimetableFormData) => {
     if (!classId) return;
 
-    // onNext();
+    onNext();
 
-    updateClassMutation.mutate(
-      {
-        body: {
-          ...data,
-          location_type: values?.location_type || data?.location_type,
-          duration_minutes: values?.duration || data?.duration_minutes,
-        },
-        path: { uuid: classId },
-      },
-      {
-        onSuccess: () => {
-          onNext();
-        },
-      }
-    );
+    // updateClassMutation.mutate(
+    //   {
+    //     body: {
+    //       ...data,
+    //       location_type: values?.location_type || data?.location_type,
+    //       duration_minutes: values?.duration || data?.duration_minutes,
+    //     },
+    //     path: { uuid: classId },
+    //   },
+    //   {
+    //     onSuccess: () => {
+    //       onNext();
+    //     },
+    //   }
+    // );
   };
 
   return (

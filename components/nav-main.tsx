@@ -47,7 +47,7 @@ function MenuItemWithAccordion({ item }: { item: MenuItem }) {
 
           {/* Nested Items */}
           {isOpen && (
-            <SidebarMenu className='ml-4 border-l border-border/60 pl-4'>
+            <SidebarMenu className='border-border/60 ml-4 border-l pl-4'>
               {item.items!.map((child, index) => (
                 <MenuItemWithAccordion key={index} item={child} />
               ))}

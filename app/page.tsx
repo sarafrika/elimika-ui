@@ -77,7 +77,7 @@ export default function Home() {
               A product suite born from the Elimika mark—layered gradients, confident geometry, and
               purposeful flows—designed to elevate every learning journey.
             </p>
-            <div className='flex flex-col gap-4 sm:flex-row'>
+            <div className='flex flex-col items-center gap-4 sm:flex-row'>
               <LoginButton />
               <Link
                 href='#product'

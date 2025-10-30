@@ -5,7 +5,7 @@ import QuestionItem from './questionItem';
 
 const QuizQuestions = ({ quizUuid }: { quizUuid: string }) => {
   const { data, isLoading, isFetching } = useQuery(getQuizQuestionsOptions({ path: { quizUuid } }));
-  const user = useUserProfile()
+  const user = useUserProfile();
 
   return (
     <div className='mt-2 ml-4 space-y-2'>

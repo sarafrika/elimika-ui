@@ -46,7 +46,6 @@ export default function OrganizationsList({
   const isSelected = (organization: Organisation) =>
     !selectedOrganization ? true : selectedOrganization?.uuid === organization.uuid;
 
-
   return (
     <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
       <OrganizationFilters

@@ -58,7 +58,7 @@ import {
   Trash,
   VideoIcon,
   X,
-  Youtube
+  Youtube,
 } from 'lucide-react';
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { Control, FieldErrors, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
@@ -146,7 +146,7 @@ const lessonFormSchema = z.object({
     .string()
     .min(1, 'Lesson description is required')
     .max(350, 'Description cannot exceed 500 characters'),
-  objectives: z.string().max(350, 'Objectives cannot exceed 500 characters').optional(),
+  objectives: z.string().max(400, 'Objectives cannot exceed 500 characters').optional(),
   uuid: z.any(),
   duration_hours: z.any(),
   duration_minutes: z.any(),
@@ -343,7 +343,7 @@ function LessonList({
               return (
                 <div
                   key={lesson?.uuid || index}
-                  className='group relative flex flex-col gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+                  className='group relative flex flex-col gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
                 >
                   <div className='flex items-start gap-4'>
                     <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
@@ -375,9 +375,7 @@ function LessonList({
                                 className='flex flex-row items-center'
                               >
                                 <Eye className='mr-3 h-4 w-4' />
-                                <p className='mr-3' >
-                                  Manage Resources
-                                </p>
+                                <p className='mr-3'>Manage Resources</p>
                               </Link>
                             </DropdownMenuItem>
 
@@ -403,7 +401,7 @@ function LessonList({
                       <div className='text-muted-foreground flex items-center gap-4 text-sm'>
                         <div className='flex items-center gap-1.5'>
                           <Clock className='h-4 w-4' />
-                          <span>{getTotalDuration(lesson)} minutes</span>
+                          <span>{getTotalDuration(lesson) / 60} hours</span>
                         </div>
 
                         <div className='flex items-center gap-1.5'>
@@ -641,15 +639,18 @@ function LessonCreationForm({
           // @ts-ignore
           if (data?.error) {
             // @ts-ignore
-            const errorMessage = data.error as string || data?.message;
+            const errorMessage = (data.error as string) || data?.message;
 
-            if (typeof errorMessage === "string" && errorMessage.includes("lessons_course_uuid_lesson_number_key")) {
-              toast.error("Duplicate lesson number found.");
+            if (
+              typeof errorMessage === 'string' &&
+              errorMessage.includes('lessons_course_uuid_lesson_number_key')
+            ) {
+              toast.error('Duplicate lesson number found.');
             } else {
-              toast.error("An unexpected error occurred.");
+              toast.error('An unexpected error occurred.');
             }
           }
-        }
+        },
       }
     );
   };
@@ -1079,6 +1080,7 @@ const lessonContentSchema = z.object({
     required_error: 'Content type is required',
   }),
   content_type_uuid: z.string().min(1, 'Content type UUID is required'),
+  content_text: z.string().optional(),
   content_category: z.string().min(1, 'Content category is required'),
   title: z.string().min(1, 'Title is required'),
   description: z.any().optional(),
@@ -1103,6 +1105,14 @@ function LessonContentForm({
   lessonId,
   initialValues,
 }: LessonContentFormProps) {
+  const mappedInitialValues = React.useMemo(() => {
+    if (!initialValues) return undefined;
+    return {
+      ...initialValues,
+      value: initialValues?.content_text || '',
+    };
+  }, [initialValues]);
+
   const form = useForm<ContentFormValues>({
     resolver: zodResolver(lessonContentSchema),
     defaultValues: {
@@ -1112,15 +1122,26 @@ function LessonContentForm({
       title: '',
       description: '',
       value: '',
-      // duration_minutes: 0,
-      // duration_hours: 0,
-      // estimated_duration: 0,
       display_order: 0,
-      ...initialValues, // ✅ prefill if editing
+      ...mappedInitialValues,
     },
   });
 
-  const isEditMode = !!contentId;
+  React.useEffect(() => {
+    if (mappedInitialValues) {
+      form.reset({
+        content_type: 'TEXT',
+        content_type_uuid: '',
+        content_category: '',
+        title: '',
+        description: '',
+        display_order: 0,
+        ...mappedInitialValues,
+      });
+    }
+  }, [mappedInitialValues, form]);
+
+  const isEditMode = !!initialValues?.uuid;
 
   const { setValue, watch } = form;
   const contentTypeUuid = watch('content_type_uuid');
@@ -1185,12 +1206,12 @@ function LessonContentForm({
             path: {
               courseUuid: courseId as string,
               lessonUuid: lessonId as string,
-              contentUuid: contentId as string,
+              contentUuid: initialValues?.uuid as string,
             },
           },
           {
             onSuccess: data => {
-              onCancel();    // ✅ always close modal afterward
+              onCancel(); // ✅ always close modal afterward
               qc.invalidateQueries({
                 queryKey: getLessonContentQueryKey({
                   path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
@@ -1227,7 +1248,7 @@ function LessonContentForm({
   const isPending = createLessonContent.isPending || updateLessonContent.isPending;
 
   return (
-    <Form {...form}  >
+    <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit, handleSubmitError)}
         className={`space-y-8 ${className ?? ''}`}
@@ -1553,7 +1574,7 @@ function AssessmentCreationForm({
           queryClient.invalidateQueries({
             queryKey: getCourseAssessmentsQueryKey({
               path: { courseUuid: courseId as string },
-              query: { pageable: {} }
+              query: { pageable: {} },
             }),
           });
           onCancel();
@@ -1595,7 +1616,7 @@ function AssessmentCreationForm({
             queryClient.invalidateQueries({
               queryKey: getCourseAssessmentsQueryKey({
                 path: { courseUuid: courseId as string },
-                query: { pageable: {} }
+                query: { pageable: {} },
               }),
             });
             onCancel();
@@ -1928,7 +1949,7 @@ function AssessmentList({
           queryClient.invalidateQueries({
             queryKey: getCourseAssessmentsQueryKey({
               path: { courseUuid: courseId as string },
-              query: { pageable: {} }
+              query: { pageable: {} },
             }),
           });
         },
@@ -2094,8 +2115,8 @@ function LessonDialog({
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>Create New Skill</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Fill in the skill details below. You&apos;ll be able to add assessment rubric, quizzes and assignments after you&apos;ve
-            created the skill.
+            Fill in the skill details below. You&apos;ll be able to add assessment rubric, quizzes
+            and assignments after you&apos;ve created the skill.
           </DialogDescription>
         </DialogHeader>
 
@@ -2122,12 +2143,16 @@ function LessonContentDialog({
   onCancel,
   initialValues,
 }: AddLessonDialogProps) {
-  const isEditMode = !!contentId;
+
+  const isEditMode = initialValues?.uuid ?? '';
 
   return (
-    <Dialog open={isOpen} onOpenChange={(isOpen) => {
-      if (!isOpen) onCancel();
-    }}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={isOpen => {
+        if (!isOpen) onCancel();
+      }}
+    >
       <DialogContent className='flex max-w-6xl flex-col p-0'>
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>
@@ -2170,9 +2195,9 @@ function EditLessonDialog({
         <DialogHeader className='border-b px-6 py-4'>
           <DialogTitle className='text-xl'>Edit Skill</DialogTitle>
           <DialogDescription className='text-muted-foreground text-sm'>
-            Edit the skill attributes such as title, description, and duration. Your changes will be reflected immediately.
+            Edit the skill attributes such as title, description, and duration. Your changes will be
+            reflected immediately.
           </DialogDescription>
-
         </DialogHeader>
 
         <ScrollArea className='h-[calc(90vh-8rem)]'>

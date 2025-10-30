@@ -13,9 +13,7 @@ export default function AssignmentsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value='list'>Browse Assignments</TabsTrigger>
-          <TabsTrigger value='submissions'>
-            Assignment Submissions
-          </TabsTrigger>
+          <TabsTrigger value='submissions'>Assignment Submissions</TabsTrigger>
         </TabsList>
 
         <TabsContent value='list' className='mt-6'>

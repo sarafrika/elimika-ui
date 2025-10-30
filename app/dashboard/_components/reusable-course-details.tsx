@@ -71,7 +71,11 @@ export default function ReusableCourseDetailsPage({
   // @ts-ignore
   const courseCreator = creator?.data;
 
-  const { data: cAssesssment, isLoading: assessmentLoading, isFetching: assessmentFetching } = useQuery({
+  const {
+    data: cAssesssment,
+    isLoading: assessmentLoading,
+    isFetching: assessmentFetching,
+  } = useQuery({
     ...getCourseAssessmentsOptions({
       path: { courseUuid: courseId as string },
       query: { pageable: {} },
@@ -79,11 +83,19 @@ export default function ReusableCourseDetailsPage({
     enabled: !!courseId,
   });
 
-  const { data: cAssignments, isLoading: assignmentLoading, isFetching: assignmentFetching } = useQuery({
+  const {
+    data: cAssignments,
+    isLoading: assignmentLoading,
+    isFetching: assignmentFetching,
+  } = useQuery({
     ...getAllAssignmentsOptions({ query: { pageable: {} } }),
   });
 
-  const { data: cQuizzes, isLoading: quizzesLoading, isFetching: quizzesFetching } = useQuery({
+  const {
+    data: cQuizzes,
+    isLoading: quizzesLoading,
+    isFetching: quizzesFetching,
+  } = useQuery({
     ...getAllQuizzesOptions({ query: { pageable: {} } }),
   });
 
@@ -159,11 +171,8 @@ export default function ReusableCourseDetailsPage({
     quizzesFetching
   );
 
-
   if (!isEverythingReady) {
-    return (
-      <CustomLoadingState subHeading='Loading your course details..' />
-    );
+    return <CustomLoadingState subHeading='Loading your course details..' />;
   }
 
   return (
@@ -375,10 +384,11 @@ export default function ReusableCourseDetailsPage({
                 <CardHeader className='flex flex-row items-center space-y-0'>
                   <div className='flex flex-1 items-center gap-3'>
                     <div
-                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${skill?.lesson?.active
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-muted text-muted-foreground'
-                        }`}
+                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${
+                        skill?.lesson?.active
+                          ? 'bg-green-100 text-green-600'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
                     >
                       {skill?.lesson?.active ? (
                         <CheckCircle className='h-4 w-4' />

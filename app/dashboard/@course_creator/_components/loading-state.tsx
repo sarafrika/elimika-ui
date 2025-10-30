@@ -56,12 +56,8 @@ export function CustomEmptyState({
 }) {
   return (
     <div className='flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 px-6 py-12 text-center shadow-lg shadow-blue-200/40 backdrop-blur dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:text-slate-200 dark:shadow-blue-900/20'>
-      <p className='text-sm font-semibold text-slate-800 dark:text-white'>
-        {headline}
-      </p>
-      <p className='max-w-sm text-xs text-slate-500 dark:text-slate-300'>
-        {subHeading}
-      </p>
+      <p className='text-sm font-semibold text-slate-800 dark:text-white'>{headline}</p>
+      <p className='max-w-sm text-xs text-slate-500 dark:text-slate-300'>{subHeading}</p>
     </div>
   );
 }

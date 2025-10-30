@@ -1,11 +1,12 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { getClassDefinitionOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
-import { Progress } from '../../../../../components/ui/progress';
-import { getClassDefinitionOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import { useEffect, useState } from 'react';
+import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
 import { AcademicPeriodForm, ClassData } from './academic-period-form';
 import ClassDetailsForm from './class-details-form';
 import { ResourcesForm } from './resources-form';
@@ -33,6 +34,25 @@ export default function ClassCreationPage() {
   const classId = searchParams.get('id');
   const [createdClassId, setCreatedClassId] = useState<string | null>(null);
   const resolveId = classId ? (classId as string) : (createdClassId as string);
+
+  const { replaceBreadcrumbs } = useBreadcrumb();
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+      {
+        id: 'trainings',
+        title: 'Trainings',
+        url: `/dashboard/trainings`,
+      },
+      {
+        id: 'create-class',
+        title: `Create new class`,
+        url: `/dashboard/trainings/create-new`,
+        isLast: true,
+      },
+    ]);
+  }, [replaceBreadcrumbs]);
 
   const { data, isLoading } = useQuery({
     ...getClassDefinitionOptions({ path: { uuid: classId as string } }),

@@ -435,9 +435,8 @@ export default function RubricsCreationPage() {
   };
 
   if (rubricDataIsLoading) {
-    return <CustomLoadingState subHeading='Fetching your assessment rubrics...' />
+    return <CustomLoadingState subHeading='Fetching your assessment rubrics...' />;
   }
-
 
   return (
     <div className='space-y-6'>
@@ -447,7 +446,6 @@ export default function RubricsCreationPage() {
           New Rubric
         </Button>
       </div>
-
 
       {!rubricDataIsLoading && rubrics.length === 0 && (
         <div className='flex h-[40vh] w-full items-center justify-center'>

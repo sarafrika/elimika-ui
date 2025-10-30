@@ -13,7 +13,7 @@ const EnrollmentPage = () => {
   const params = useParams();
   const courseId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
-  const student = useStudent()
+  const student = useStudent();
 
   useEffect(() => {
     if (courseId) {
@@ -33,19 +33,22 @@ const EnrollmentPage = () => {
     }
   }, [replaceBreadcrumbs, courseId]);
 
-
-  const [enrollingCourse, setEnrollingCourse] = useState<any | null>(null)
-  const { classes, loading, isError } = useCourseClassesWithDetails(courseId, "2025-10-23", '2026-12-12');
+  const [enrollingCourse, setEnrollingCourse] = useState<any | null>(null);
+  const { classes, loading, isError } = useCourseClassesWithDetails(
+    courseId,
+    '2025-10-23',
+    '2026-12-12'
+  );
 
   if (loading) {
     return <CustomLoadingState subHeading='Loading available classes...' />;
   }
 
   return (
-    <Card className='space-y-4 py-10 px-6'>
+    <Card className='space-y-4 px-6 py-10'>
       <div>
-        <h1 className="text-2xl font-semibold">Explore Classes Open for Enrollment</h1>
-        <p className="text-gray-600">Discover courses designed to help you grow and succeed.</p>
+        <h1 className='text-2xl font-semibold'>Explore Classes Open for Enrollment</h1>
+        <p className='text-gray-600'>Discover courses designed to help you grow and succeed.</p>
       </div>
 
       {classes.length === 0 ? (

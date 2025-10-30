@@ -62,7 +62,13 @@ export const InstructorDirectory: React.FC<Props> = ({
   });
 
   // Get unique values for filter options
-  const allSpecializations = ["specialization1", "specialization2", "specialization3", "specialization4", "specialization5"] as any;
+  const allSpecializations = [
+    'specialization1',
+    'specialization2',
+    'specialization3',
+    'specialization4',
+    'specialization5',
+  ] as any;
   const allCourses = [...new Set(instructors?.flatMap(i => i.courses))] as any;
 
   // Filter instructors based on criteria
@@ -175,13 +181,10 @@ export const InstructorDirectory: React.FC<Props> = ({
   return (
     <div className='flex gap-6'>
       {/* Filter Sidebar */}
-      <div className='w-60 xl:w-80 flex-shrink-0 space-y-4 '>
+      <div className='w-60 flex-shrink-0 space-y-4 xl:w-80'>
         <Card className='space-y-6 p-4'>
           <div className='flex items-center justify-between'>
-            <h3
-              onClick={() => { }}
-              className='flex items-center gap-2'
-            >
+            <h3 onClick={() => {}} className='flex items-center gap-2'>
               <Filter className='h-4 w-4' />
               Filters
             </h3>
@@ -205,23 +208,22 @@ export const InstructorDirectory: React.FC<Props> = ({
           </div>
 
           {/* Instructor Type */}
-          <div className="w-full">
+          <div className='w-full'>
             <Label>Instructor Type</Label>
             <Select
               value={filters.instructorType}
               onValueChange={(value: any) => setFilters({ ...filters, instructorType: value })}
             >
-              <SelectTrigger className="mt-2 w-full">
-                <SelectValue placeholder="Select instructor type" />
+              <SelectTrigger className='mt-2 w-full'>
+                <SelectValue placeholder='Select instructor type' />
               </SelectTrigger>
-              <SelectContent className="w-full">
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="individual">Individual</SelectItem>
-                <SelectItem value="organization">Organization</SelectItem>
+              <SelectContent className='w-full'>
+                <SelectItem value='all'>All</SelectItem>
+                <SelectItem value='individual'>Individual</SelectItem>
+                <SelectItem value='organization'>Organization</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
 
           {/* Gender */}
           <div>
@@ -230,7 +232,7 @@ export const InstructorDirectory: React.FC<Props> = ({
               value={filters.gender}
               onValueChange={(value: any) => setFilters({ ...filters, gender: value })}
             >
-              <SelectTrigger className="mt-2 w-full">
+              <SelectTrigger className='mt-2 w-full'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -270,7 +272,7 @@ export const InstructorDirectory: React.FC<Props> = ({
                 onValueChange={value => setFilters({ ...filters, experience: value })}
                 max={20}
                 step={1}
-                className='flex-1 my-2'
+                className='my-2 flex-1'
               />
             </div>
             <p className='text-muted-foreground mt-1 text-sm'>
@@ -378,39 +380,39 @@ export const InstructorDirectory: React.FC<Props> = ({
           filters.mode.length > 0 ||
           filters.instructorType !== 'all' ||
           filters.minRating > 0) && (
-            <div className='mb-6 flex flex-wrap gap-2'>
-              {filters.specializations.map(spec => (
-                <Badge key={spec} variant='secondary' className='gap-1'>
-                  {spec}
-                  <X className='h-3 w-3 cursor-pointer' onClick={() => toggleSpecialization(spec)} />
-                </Badge>
-              ))}
-              {filters.mode.map(mode => (
-                <Badge key={mode} variant='secondary' className='gap-1'>
-                  {mode}
-                  <X className='h-3 w-3 cursor-pointer' onClick={() => toggleMode(mode)} />
-                </Badge>
-              ))}
-              {filters.instructorType !== 'all' && (
-                <Badge variant='secondary' className='gap-1'>
-                  {filters.instructorType}
-                  <X
-                    className='h-3 w-3 cursor-pointer'
-                    onClick={() => setFilters({ ...filters, instructorType: 'all' })}
-                  />
-                </Badge>
-              )}
-              {filters.minRating > 0 && (
-                <Badge variant='secondary' className='gap-1'>
-                  {filters.minRating}+ rating
-                  <X
-                    className='h-3 w-3 cursor-pointer'
-                    onClick={() => setFilters({ ...filters, minRating: 0 })}
-                  />
-                </Badge>
-              )}
-            </div>
-          )}
+          <div className='mb-6 flex flex-wrap gap-2'>
+            {filters.specializations.map(spec => (
+              <Badge key={spec} variant='secondary' className='gap-1'>
+                {spec}
+                <X className='h-3 w-3 cursor-pointer' onClick={() => toggleSpecialization(spec)} />
+              </Badge>
+            ))}
+            {filters.mode.map(mode => (
+              <Badge key={mode} variant='secondary' className='gap-1'>
+                {mode}
+                <X className='h-3 w-3 cursor-pointer' onClick={() => toggleMode(mode)} />
+              </Badge>
+            ))}
+            {filters.instructorType !== 'all' && (
+              <Badge variant='secondary' className='gap-1'>
+                {filters.instructorType}
+                <X
+                  className='h-3 w-3 cursor-pointer'
+                  onClick={() => setFilters({ ...filters, instructorType: 'all' })}
+                />
+              </Badge>
+            )}
+            {filters.minRating > 0 && (
+              <Badge variant='secondary' className='gap-1'>
+                {filters.minRating}+ rating
+                <X
+                  className='h-3 w-3 cursor-pointer'
+                  onClick={() => setFilters({ ...filters, minRating: 0 })}
+                />
+              </Badge>
+            )}
+          </div>
+        )}
 
         {/* Instructor Grid */}
         {filteredInstructors?.length === 0 ? (

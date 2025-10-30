@@ -92,7 +92,11 @@ export default function ProfessionalExperienceSettings() {
   const passExperiences = (exp: InstructorExperience) => ({
     ...defaultExperience,
     ...exp,
-    start_date: new Date(exp.start_date ?? Date.now()).toISOString().split('-').slice(0, 2).join('-'),
+    start_date: new Date(exp.start_date ?? Date.now())
+      .toISOString()
+      .split('-')
+      .slice(0, 2)
+      .join('-'),
     end_date: new Date(exp.end_date ?? Date.now()).toISOString().split('-').slice(0, 2).join('-'),
     updated_by: exp.updated_by ?? 'self',
     updated_date: new Date(exp.updated_date ?? Date.now()).toISOString(),
@@ -262,7 +266,8 @@ export default function ProfessionalExperienceSettings() {
                         <Grip className='text-muted-foreground mt-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100' />
                         <div>
                           <h3 className='text-base font-medium'>
-                            {form.watch(`experiences.${index}.organization_name`) || 'New experience'}
+                            {form.watch(`experiences.${index}.organization_name`) ||
+                              'New experience'}
                           </h3>
                           <p className='text-muted-foreground text-sm'>
                             {form.watch(`experiences.${index}.position`) || 'Role not set'}
@@ -341,9 +346,12 @@ export default function ProfessionalExperienceSettings() {
                                 control={form.control}
                                 name={`experiences.${index}.is_current_position`}
                                 render={({ field }) => (
-                                  <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
+                                  <FormItem className='flex flex-row items-start space-y-0 space-x-3'>
                                     <FormControl>
-                                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                      <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
                                     </FormControl>
                                     <div className='leading-none'>
                                       <FormLabel>I currently work here</FormLabel>
