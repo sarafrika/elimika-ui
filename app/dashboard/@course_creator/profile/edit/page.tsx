@@ -122,7 +122,6 @@ export default function CourseCreatorProfile() {
     },
   });
 
-
   useEffect(() => {
     if (!user?.data || !profile) return;
 
@@ -153,8 +152,7 @@ export default function CourseCreatorProfile() {
 
   const [submitting, setSubmitting] = useState(false);
 
-  function onSubmit(updatedProfileData: GeneralProfileFormValues) {
-  }
+  function onSubmit(updatedProfileData: GeneralProfileFormValues) {}
 
   return (
     <ProfileFormShell
@@ -171,17 +169,18 @@ export default function CourseCreatorProfile() {
           >
             <div className='space-y-6'>
               <div className='flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-8'>
-                <Avatar className='h-24 w-24 ring-4 ring-background shadow-lg shadow-primary/5'>
+                <Avatar className='ring-background shadow-primary/5 h-24 w-24 shadow-lg ring-4'>
                   <AvatarImage
                     src={user?.data?.profile_image_url ?? profilePic.url}
                     alt={`${user?.data?.full_name}`}
                   />
-                  <AvatarFallback className='bg-primary/10 text-base font-semibold text-primary'>
-                    {`${user?.data?.first_name?.[0]?.toUpperCase() ?? ''}${user?.data?.last_name?.[0]?.toUpperCase() ?? ''}` || 'IN'}
+                  <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
+                    {`${user?.data?.first_name?.[0]?.toUpperCase() ?? ''}${user?.data?.last_name?.[0]?.toUpperCase() ?? ''}` ||
+                      'IN'}
                   </AvatarFallback>
                 </Avatar>
                 <div className='space-y-3'>
-                  <p className='text-sm text-muted-foreground'>
+                  <p className='text-muted-foreground text-sm'>
                     Square images work best. Maximum size is 5MB.
                   </p>
                   <div className='flex flex-wrap gap-3'>
@@ -395,7 +394,6 @@ export default function CourseCreatorProfile() {
                           //   'instructor.latitude',
                           //   loc.features[0]!.properties.coordinates.latitude
                           // );
-
                           // form.setValue(
                           //   'instructor.longitude',
                           //   loc.features[0]!.properties.coordinates.longitude

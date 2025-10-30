@@ -1,85 +1,128 @@
 'use client';
 
+import NotesModal from '@/components/custom-modals/notes-modal';
 import { CustomPagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
+import { useUserProfile } from '@/context/profile-context';
+import { ApplicantTypeEnum } from '@/services/client';
 import {
   getAllCoursesOptions,
-  submitTrainingApplicationMutation
+  searchTrainingApplicationsOptions,
+  submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { BookOpen, Filter, Search } from 'lucide-react';
+import { BookOpen, Filter, Search, SortAsc, SortDesc } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import NotesModal from '../../../../../components/custom-modals/notes-modal';
-import { useUserProfile } from '../../../../../context/profile-context';
 import { TrainCourseCard } from '../../../_components/train-course-card';
 
 export default function CourseMangementPage() {
   const router = useRouter();
   const instructor = useInstructor();
-  const profile = useUserProfile()
+  const profile = useUserProfile();
 
+  const [statusFilter, setStatusFilter] = useState<string | null>('all');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [searchQuery, setSearchQuery] = useState('');
-  const [applyModal, setApplyModal] = useState(false)
-  const [applyingCourseId, setApplyingCourseId] = useState<string | null>(null)
+  const [applyModal, setApplyModal] = useState(false);
+  const [applyingCourseId, setApplyingCourseId] = useState<string | null>(null);
 
   const size = 20;
   const [page, setPage] = useState(0);
 
-  // const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery({
-  //   ...getCoursesByInstructorOptions({
-  //     path: { instructorUuid: instructor?.uuid as string },
-  //     query: { pageable: { page, size, sort: [] } },
-  //   }),
-  //   enabled: !!instructor?.uuid,
-  // });
+  const {
+    data: allCourses,
+    isLoading,
+    isSuccess,
+    isFetched,
+    isFetching,
+  } = useQuery(getAllCoursesOptions({ query: { pageable: { page, size, sort: [] } } }));
 
-  const { data: allCourses, isLoading, isSuccess, isFetched, isFetching } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
+  const { data: appliedCourses } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+    }),
+    enabled: !!instructor?.uuid,
+  });
 
-  const courses = allCourses?.data?.content;
-  const paginationMetadata = allCourses?.data?.metadata;
+  const combinedCourses = React.useMemo(() => {
+    if (!allCourses?.data?.content || !appliedCourses?.data?.content) return [];
+    const appliedMap = new Map(
+      appliedCourses.data.content.map((app: any) => [app.course_uuid, app])
+    );
+
+    return allCourses.data.content.map((course: any) => ({
+      ...course,
+      application: appliedMap.get(course.uuid) || null,
+    }));
+  }, [allCourses, appliedCourses]);
 
   const filteredCourses = useMemo(() => {
-    if (!Array.isArray(courses)) return [];
+    if (!Array.isArray(combinedCourses)) return [];
 
-    return courses.filter(course => {
-      if (!searchQuery) return true;
-      const normalizedQuery = searchQuery.toLowerCase();
-      return (
-        course?.name?.toLowerCase().includes(normalizedQuery) ||
-        course?.description?.toLowerCase().includes(normalizedQuery)
-      );
+    const filtered = combinedCourses.filter(course => {
+      const isActiveAndPublished = course.active === true && course.is_published === true;
+
+      const matchesSearch =
+        !searchQuery ||
+        course?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        course?.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus =
+        !statusFilter || statusFilter === 'all' || course.application?.status === statusFilter;
+
+      return isActiveAndPublished && matchesSearch && matchesStatus;
     });
-  }, [courses, searchQuery]);
 
-  const applyToTrain = useMutation(submitTrainingApplicationMutation())
+    if (sortOrder) {
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.application?.reviewed_at || 0).getTime();
+        const dateB = new Date(b.application?.reviewed_at || 0).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      });
+    }
+
+    return filtered;
+  }, [combinedCourses, searchQuery, statusFilter, sortOrder]);
+
+  const applyToTrain = useMutation(submitTrainingApplicationMutation());
   const handleApplyToTrain = (notes: string) => {
-    if (!applyingCourseId) return
+    if (!applyingCourseId) return;
 
-    applyToTrain.mutate({
-      body: {
-        // applicant_type: profile?.activeDomain as ApplicantTypeEnum,
-        applicant_type: "instructor",
-        applicant_uuid: instructor?.uuid as string,
-        application_notes: notes
-      },
-      path: { courseUuid: applyingCourseId }
-    },
+    applyToTrain.mutate(
       {
-        onSuccess: (data) => {
-          toast.success(data?.message)
-          setApplyModal(false)
+        body: {
+          applicant_type: profile?.activeDomain as ApplicantTypeEnum,
+          applicant_uuid: instructor?.uuid as string,
+          application_notes: notes,
         },
-        onError: (data) => {
-          toast.error(data?.message)
-          setApplyModal(false)
-        }
-      })
-  }
+        path: { courseUuid: applyingCourseId },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          setApplyModal(false);
+        },
+        onError: data => {
+          toast.error(data?.message);
+          setApplyModal(false);
+        },
+      }
+    );
+  };
+
+  const paginationMetadata = allCourses?.data?.metadata;
 
   return (
     <div className='h-auto'>
@@ -96,10 +139,35 @@ export default function CourseMangementPage() {
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button variant='outline' disabled>
-              <Filter className='mr-2 h-4 w-4' />
-              Filters
-            </Button>
+
+            <div className='flex flex-wrap gap-2'>
+              <Select value={statusFilter || ''} onValueChange={setStatusFilter}>
+                <SelectTrigger className='flex-1 bg-white'>
+                  <Filter className='mr-2 h-4 w-4' />
+                  <SelectValue placeholder='Filter by status' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Statuses</SelectItem>
+                  <SelectItem value='approved'>Approved</SelectItem>
+                  <SelectItem value='pending'>Pending</SelectItem>
+                  <SelectItem value='rejected'>Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className='flex-shrink-0'
+              >
+                {sortOrder === 'asc' ? (
+                  <SortAsc className='h-4 w-4' />
+                ) : (
+                  <SortDesc className='h-4 w-4' />
+                )}
+                <span className='ml-1 hidden sm:inline'>Date</span>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -119,10 +187,12 @@ export default function CourseMangementPage() {
             <TrainCourseCard
               key={course.uuid}
               course={course as any}
+              applicationStatus={course.application?.status || null}
+              applicationReviewNote={course.application?.review_notes || null}
               handleClick={() => router.push(`/dashboard/courses/${course.uuid}`)}
               handleQuickApply={() => {
                 setApplyModal(true);
-                setApplyingCourseId(course?.uuid as string)
+                setApplyingCourseId(course?.uuid as string);
               }}
             />
           ))}
@@ -179,11 +249,11 @@ export default function CourseMangementPage() {
         <NotesModal
           open={applyModal}
           setOpen={setApplyModal}
-          title="Apply to Train a Course"
-          description="Submit your application to become a course trainer."
+          title='Apply to Train a Course'
+          description='Submit your application to become a course trainer.'
           onSave={handleApplyToTrain}
-          saveText="Submit application"
-          cancelText="Cancel"
+          saveText='Submit application'
+          cancelText='Cancel'
           placeholder='Enter your application notes here...'
           isLoading={applyToTrain.isPending}
         />

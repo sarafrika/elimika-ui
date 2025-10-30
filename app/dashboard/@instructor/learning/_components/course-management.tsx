@@ -77,7 +77,9 @@ export default function CourseMangementPage() {
         {/* Results */}
         <div className='mb-6'>
           <div className='flex items-center justify-between'>
-            <p className='text-muted-foreground text-sm'>Undertake more courses to boost your instructor profile</p>
+            <p className='text-muted-foreground text-sm'>
+              Undertake more courses to boost your instructor profile
+            </p>
             <p className='text-muted-foreground text-sm'>
               {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
             </p>
@@ -92,7 +94,9 @@ export default function CourseMangementPage() {
               course={course as any}
               isStudentView={true}
               handleEnroll={() => router.push(`/dashboard/learning/enroll/${course.uuid}`)}
-              handleSearchInstructor={() => router.push(`/dashboard/learning/instructor/${course.uuid}`)}
+              handleSearchInstructor={() =>
+                router.push(`/dashboard/learning/instructor/${course.uuid}`)
+              }
               handleClick={() => router.push(`/dashboard/learning/${course.uuid}`)}
             />
           ))}

@@ -262,7 +262,8 @@ export function CourseCreatorOnboardingForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Share your background, expertise, and course creation philosophy. Rich text is supported.
+                      Share your background, expertise, and course creation philosophy. Rich text is
+                      supported.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

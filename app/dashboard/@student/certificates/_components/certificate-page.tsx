@@ -31,15 +31,14 @@ import {
   Trophy,
   Verified,
 } from 'lucide-react';
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { verifyCertificateOptions } from '../../../../../services/client/@tanstack/react-query.gen';
 import { CertificateErrorModal } from './certificate-error-modal';
 import { CertificateSuccessModal } from './certificate-success-modal';
 pdfMake.vfs = pdfFonts.vfs;
-
 
 // Mock certificates data
 export const CERTIFICATES_DATA = {
@@ -54,7 +53,7 @@ export const CERTIFICATES_DATA = {
   certificates: [
     {
       id: 'CERT-2024-001',
-      certificateNumber: "CERT-2024-JAV-001234",
+      certificateNumber: 'CERT-2024-JAV-001234',
       title: 'Data Science Fundamentals',
       issuer: 'Springfield University',
       instructor: 'Dr. Lisa Chen',
@@ -79,7 +78,7 @@ export const CERTIFICATES_DATA = {
     },
     {
       id: 'CERT-2024-002',
-      certificateNumber: "CERT-2024-JAV-001234",
+      certificateNumber: 'CERT-2024-JAV-001234',
       title: 'Advanced React Development',
       issuer: 'Springfield University',
       instructor: 'John Smith',
@@ -104,7 +103,7 @@ export const CERTIFICATES_DATA = {
     },
     {
       id: 'BADGE-2024-003',
-      certificateNumber: "CERT-2024-JAV-001234",
+      certificateNumber: 'CERT-2024-JAV-001234',
       title: 'Digital Marketing Strategy',
       issuer: 'Springfield University',
       instructor: 'Mike Wilson',
@@ -129,7 +128,7 @@ export const CERTIFICATES_DATA = {
     },
     {
       id: 'SKILL-2024-004',
-      certificateNumber: "CERT-2024-JAV-001234",
+      certificateNumber: 'CERT-2024-JAV-001234',
       title: 'Python Programming Specialist',
       issuer: 'Tech Skills Consortium',
       instructor: 'Various Instructors',
@@ -193,7 +192,7 @@ export default function CertificatesPage() {
 
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [openErrorModal, setOpenErrorModal] = useState(false);
-  const [verifyCertificateNumber, setVerifyCertificateNumber] = useState<string | null>(null)
+  const [verifyCertificateNumber, setVerifyCertificateNumber] = useState<string | null>(null);
 
   const { data, isError, isSuccess } = useQuery({
     ...verifyCertificateOptions({
@@ -209,7 +208,6 @@ export default function CertificatesPage() {
     }
     if (isError) setOpenErrorModal(true);
   }, [isSuccess, isError, data]);
-
 
   const { student, certificates, inProgress } = CERTIFICATES_DATA;
 
@@ -256,9 +254,7 @@ export default function CertificatesPage() {
   const handleDownloadCertificate = (cert: CertificateData) => {
     const doc = certificatePDF(cert);
     const pdf = pdfMake.createPdf(doc);
-    pdf.download(
-      `Elimika-${cert.id ? cert.id + "-" : ""}${new Date().getTime()}.pdf`
-    );
+    pdf.download(`Elimika-${cert.id ? cert.id + '-' : ''}${new Date().getTime()}.pdf`);
   };
 
   const handleShare = (certificateId: string) => {
@@ -267,7 +263,7 @@ export default function CertificatesPage() {
   };
 
   const handleVerify = (certificateNumber: string) => {
-    setVerifyCertificateNumber(certificateNumber)
+    setVerifyCertificateNumber(certificateNumber);
   };
 
   return (
@@ -647,7 +643,11 @@ export default function CertificatesPage() {
                           <Eye className='mr-1 h-3 w-3' />
                           View
                         </Button>
-                        <Button onClick={() => handleDownloadCertificate(certificate as any)} variant='outline' size='sm'>
+                        <Button
+                          onClick={() => handleDownloadCertificate(certificate as any)}
+                          variant='outline'
+                          size='sm'
+                        >
                           <Download className='h-3 w-3' />
                         </Button>
                         <Button variant='outline' size='sm'>

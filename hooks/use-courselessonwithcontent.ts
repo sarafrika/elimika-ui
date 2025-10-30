@@ -49,10 +49,7 @@ export function useCourseLessonsWithContent({ courseUuid }: Params) {
     content: lessonContentQueries[index]?.data,
   }));
 
-  const {
-    data: contentTypeList,
-    isFetching: contentTypeFetching,
-  } = useQuery(
+  const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery(
     getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
   );
 

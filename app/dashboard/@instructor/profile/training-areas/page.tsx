@@ -100,11 +100,7 @@ export default function TrainingAreasSettings() {
             title='Focus areas'
             description='Add or remove the disciplines you would like to facilitate.'
             footer={
-              <Button
-                type='submit'
-                className='min-w-36'
-                disabled={!isEditing || isConfirming}
-              >
+              <Button type='submit' className='min-w-36' disabled={!isEditing || isConfirming}>
                 {isConfirming ? (
                   <span className='flex items-center gap-2'>
                     <Spinner className='h-4 w-4' />

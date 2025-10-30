@@ -33,21 +33,36 @@ import {
   createAssignmentMutation,
   deleteAssignmentMutation,
   getAllAssessmentRubricsOptions,
-  getAllAssignmentsOptions,
   getAllAssignmentsQueryKey,
   getCourseLessonsOptions,
   updateAssignmentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, BookOpenCheck, Calendar, ClipboardCheck, Grip, MoreVertical, PlusCircle, Trash, XIcon } from 'lucide-react';
+import {
+  BookOpen,
+  BookOpenCheck,
+  Calendar,
+  ClipboardCheck,
+  Grip,
+  MoreVertical,
+  PlusCircle,
+  Trash,
+  XIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
 import DeleteModal from '../../../../components/custom-modals/delete-modal';
 import RichTextRenderer from '../../../../components/editors/richTextRenders';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../../../../components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../../../components/ui/dropdown-menu';
 import { CustomLoadingState } from './loading-state';
 
 const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
@@ -93,7 +108,6 @@ function AssignmentForm({
 
   const qc = useQueryClient();
   const user = useUserProfile();
-
 
   const { data: lessons, isLoading: lessonIsLoading } = useQuery({
     ...getCourseLessonsOptions({
@@ -236,7 +250,6 @@ function AssignmentForm({
                     value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
                     onChange={e => field.onChange(new Date(e.target.value))}
                   />
-
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -415,20 +428,23 @@ type AssignmentListProps = {
   courseTitle: string;
   courseId?: string;
   onAddAssignment: () => void;
+  loading: boolean;
+  assignments: any;
 };
 
-function AssignmentList({ courseTitle, courseId, onAddAssignment }: AssignmentListProps) {
+function AssignmentList({
+  courseTitle,
+  courseId,
+  onAddAssignment,
+  assignments,
+  loading,
+}: AssignmentListProps) {
   const qc = useQueryClient();
   const [openAssignmentModal, setOpenAssignmentModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
   const [editingAssignmetId, setEditingAssignmentId] = useState();
   const [editingAssignmentData, setEditingAssignmentData] = useState();
-
-  const { data, isLoading, isFetched } = useQuery(
-    getAllAssignmentsOptions({ query: { pageable: {} } })
-  );
-  const assignments = data?.data?.content;
 
   const handleEditAssignment = (assignment: any) => {
     setOpenAssignmentModal(true);
@@ -460,8 +476,8 @@ function AssignmentList({ courseTitle, courseId, onAddAssignment }: AssignmentLi
     );
   };
 
-  if (isLoading) {
-    return <CustomLoadingState subHeading='Fetching course assignments...' />
+  if (loading) {
+    return <CustomLoadingState subHeading='Fetching course assignments...' />;
   }
 
   return (
@@ -480,32 +496,35 @@ function AssignmentList({ courseTitle, courseId, onAddAssignment }: AssignmentLi
         </Button>
       </div>
 
-      {isLoading ? (
+      {loading ? (
         <CustomLoadingState subHeading='Fetching course assignments' />
       ) : assignments?.length === 0 ? (
         <div className='text-muted-foreground rounded-lg border border-dashed p-12 text-center'>
           <BookOpenCheck className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No assignments found for this course.</h3>
-          <p className='text-muted-foreground mt-2'>You can create new assignments for this course.</p>
+          <p className='text-muted-foreground mt-2'>
+            You can create new assignments for this course.
+          </p>
         </div>
       ) : (
         <div className='space-y-3'>
           {assignments?.map((assignment: any, index: any) => (
             <div
               key={assignment?.uuid || index}
-              className='w-full group relative flex items-start gap-4 transition-all rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+              className='group relative flex w-full items-start gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur transition-all lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
             >
               <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
 
               <div className='w-full flex-1 space-y-3'>
-                <div className='w-full flex items-start justify-between'>
-                  <div className='w-full flex flex-col items-start'>
-                    <div className='w-full flex flex-row items-center justify-between'>
+                <div className='flex w-full items-start justify-between'>
+                  <div className='flex w-full flex-col items-start'>
+                    <div className='flex w-full flex-row items-center justify-between'>
                       <h3 className='text-lg font-medium'>{assignment?.title}</h3>
                       <span className='mr-2 inline-flex items-center gap-2 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1 text-xs font-semibold text-blue-600 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'>
-                        {assignment?.is_published ? "Published" : "Draft"}
+                        {assignment?.is_published ? 'Published' : 'Draft'}
                       </span>
-                    </div>                    <div className='text-muted-foreground text-sm'>
+                    </div>{' '}
+                    <div className='text-muted-foreground text-sm'>
                       <RichTextRenderer htmlString={assignment?.description} maxChars={400} />
                     </div>
                   </div>
@@ -541,11 +560,10 @@ function AssignmentList({ courseTitle, courseId, onAddAssignment }: AssignmentLi
                   </DropdownMenu>
                 </div>
 
-
                 <div className='text-muted-foreground grid grid-cols-2 gap-4 text-sm'>
                   <div className='flex items-center gap-1.5'>
                     <Calendar className='h-4 w-4' />
-                    <span className='font-semibold'>Date Due: {"  "}</span>
+                    <span className='font-semibold'>Date Due: {'  '}</span>
                     <span>
                       {assignment?.due_date &&
                         new Date(assignment.due_date).toLocaleString('en-US', {
@@ -557,24 +575,23 @@ function AssignmentList({ courseTitle, courseId, onAddAssignment }: AssignmentLi
 
                   <div className='flex items-center gap-1.5'>
                     <Calendar className='h-4 w-4' />
-                    <span className='font-semibold'>Maximum points: {"  "}</span>
+                    <span className='font-semibold'>Maximum points: {'  '}</span>
                     <span>{assignment?.max_points}</span>
                   </div>
 
                   <div className='flex items-center gap-1.5'>
                     <BookOpen className='h-4 w-4' />
-                    <span className='font-semibold'>Submission types: {"  "}</span>
-                    <span className="flex flex-wrap gap-2">
+                    <span className='font-semibold'>Submission types: {'  '}</span>
+                    <span className='flex flex-wrap gap-2'>
                       {assignment?.submission_types?.map((type: any, index: any) => (
                         <span
                           key={index}
-                          className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800"
+                          className='inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800'
                         >
                           {type.charAt(0).toUpperCase() + type.slice(1)}
                         </span>
                       ))}
                     </span>
-
                   </div>
                 </div>
               </div>

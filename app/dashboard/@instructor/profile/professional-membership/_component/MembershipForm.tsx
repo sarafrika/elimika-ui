@@ -170,7 +170,8 @@ export default function ProfessionalBodySettings() {
   const handleSubmit = (data: ProfessionalMembershipFormValues) => {
     requestConfirmation({
       title: 'Save membership updates?',
-      description: 'Keeping these organisations up to date builds trust with learners and partners.',
+      description:
+        'Keeping these organisations up to date builds trust with learners and partners.',
       confirmLabel: 'Save memberships',
       cancelLabel: 'Keep editing',
       onConfirm: () => saveMemberships(data),
@@ -311,7 +312,11 @@ export default function ProfessionalBodySettings() {
                                     !field.value && 'text-muted-foreground'
                                   )}
                                 >
-                                  {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                                  {field.value ? (
+                                    format(field.value, 'PPP')
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
                                   <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
                                 </Button>
                               </FormControl>
@@ -347,7 +352,11 @@ export default function ProfessionalBodySettings() {
                                   )}
                                   disabled={form.watch(`professional_bodies.${index}.is_active`)}
                                 >
-                                  {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                                  {field.value ? (
+                                    format(field.value, 'PPP')
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
                                   <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
                                 </Button>
                               </FormControl>
@@ -371,7 +380,7 @@ export default function ProfessionalBodySettings() {
                     control={form.control}
                     name={`professional_bodies.${index}.is_active`}
                     render={({ field }) => (
-                      <FormItem className='flex flex-row items-center space-x-3 space-y-0'>
+                      <FormItem className='flex flex-row items-center space-y-0 space-x-3'>
                         <FormControl>
                           <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>

@@ -70,7 +70,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
   const { data: assessmentData } = useQuery(
     getCourseAssessmentsOptions({
       path: { courseUuid: courseId as string },
-      query: { pageable: {} }
+      query: { pageable: {} },
     })
   );
 

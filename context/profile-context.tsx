@@ -35,13 +35,13 @@ type ExtendedInstructor = Instructor & {
 
 const UserProfileContext = createContext<
   | (Partial<UserProfileType> & {
-    isLoading: boolean;
-    invalidateQuery: () => void;
-    clearProfile: () => void;
-    setActiveDomain: (domain: UserDomain) => void;
-    activeDomain: UserDomain | null;
-    hasMultipleDomains: boolean;
-  })
+      isLoading: boolean;
+      invalidateQuery: () => void;
+      clearProfile: () => void;
+      setActiveDomain: (domain: UserDomain) => void;
+      activeDomain: UserDomain | null;
+      hasMultipleDomains: boolean;
+    })
   | null
 >(null);
 
@@ -50,7 +50,7 @@ export const useUserProfile = () => useContext(UserProfileContext);
 export default function UserProfileProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const qc = useQueryClient();
-  const router = useRouter()
+  const router = useRouter();
 
   const { data, isLoading, isError, refetch } = useQuery(
     createQueryOptions(session?.user?.email, {
@@ -78,7 +78,7 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
       if (typeof window !== 'undefined') {
         localStorage.removeItem(ELIMIKA_DASHBOARD_STORAGE_KEY);
       }
-      router.replace('/')
+      router.replace('/');
     }
   }, [status]);
 

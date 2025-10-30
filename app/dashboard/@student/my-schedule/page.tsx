@@ -1,13 +1,15 @@
 'use client';
 
-import {
-  getStudentScheduleOptions
-} from '@/services/client/@tanstack/react-query.gen';
+import { getStudentScheduleOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 import { useStudent } from '@/context/student-context';
-import { AvailabilityData, ClassScheduleItem, convertToCalendarEvents } from '../../@instructor/availability/components/types';
+import {
+  AvailabilityData,
+  ClassScheduleItem,
+  convertToCalendarEvents,
+} from '../../@instructor/availability/components/types';
 import TimetableManager from './_components/timetable-manager';
 
 const Page = () => {

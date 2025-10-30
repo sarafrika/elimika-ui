@@ -58,14 +58,16 @@ export default function CourseCreatorProfilePage() {
       content: (
         <div className='space-y-4 text-sm'>
           <div className='space-y-1'>
-            <p className='text-xs uppercase tracking-wide text-muted-foreground'>Bio</p>
+            <p className='text-muted-foreground text-xs tracking-wide uppercase'>Bio</p>
             {profile.bio ? (
               <HTMLTextPreview
                 htmlContent={profile.bio}
-                className='prose prose-sm max-w-none text-muted-foreground'
+                className='prose prose-sm text-muted-foreground max-w-none'
               />
             ) : (
-              <p className='text-muted-foreground'>A professional summary has not been added yet.</p>
+              <p className='text-muted-foreground'>
+                A professional summary has not been added yet.
+              </p>
             )}
           </div>
         </div>

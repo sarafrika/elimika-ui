@@ -61,16 +61,14 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   }, [profile, router]);
 
   const userDomains = useMemo(
-    () => ((profile?.user_domain ?? []) as KnownDomain[]),
+    () => (profile?.user_domain ?? []) as KnownDomain[],
     [profile?.user_domain]
   );
   const activeDomain = (profile?.activeDomain ?? null) as KnownDomain | null;
   const selectableDomains = useMemo(
     () =>
       Array.from(
-        new Set(
-          userDomains.map(domain => (domain === 'organization' ? 'organisation' : domain))
-        )
+        new Set(userDomains.map(domain => (domain === 'organization' ? 'organisation' : domain)))
       ) as UserDomain[],
     [userDomains]
   );
@@ -153,7 +151,7 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
     }
   }, [activeDomain, domainSlot, dashboardProps, shouldUseDefaultSlot]);
 
-  const currentDashboard = shouldUseDefaultSlot ? defaultSlot : domainSlot ?? defaultSlot;
+  const currentDashboard = shouldUseDefaultSlot ? defaultSlot : (domainSlot ?? defaultSlot);
   const sidebarDomain =
     activeDomain === 'organization' ? ('organisation' as UserDomain) : (activeDomain as UserDomain);
   // Show loading if profile exists but domains are not loaded yet

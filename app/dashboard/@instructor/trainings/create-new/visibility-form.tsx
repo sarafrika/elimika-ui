@@ -190,7 +190,10 @@ export function VisibilityForm({ data, onUpdate, onNext, onPrev }: VisibilityFor
                       type='number'
                       {...field}
                       value={field.value ?? ''}
-                      onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                      onChange={e => {
+                        const value = e.target.value;
+                        field.onChange(value === '' ? null : parseFloat(value));
+                      }}
                       step='0.01'
                       className='max-w-32'
                     />

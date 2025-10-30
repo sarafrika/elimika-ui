@@ -12,7 +12,10 @@ import React, { forwardRef, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import { getCourseByUuidQueryKey, updateCourseMutation } from '../../../../services/client/@tanstack/react-query.gen';
+import {
+  getCourseByUuidQueryKey,
+  updateCourseMutation,
+} from '../../../../services/client/@tanstack/react-query.gen';
 import { FormSection } from './course-creation-form';
 import {
   courseCreationSchema,
@@ -137,8 +140,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
             onChange(uploadedUrl);
             toast.success(data?.message);
 
-            queryClient.invalidateQueries({ queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }) });
-
+            queryClient.invalidateQueries({
+              queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
+            });
           },
           onError: (error: any) => {
             const status = error?.response?.status;
@@ -178,10 +182,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     return (
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className='space-y-6'
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
           {/* Intro Video Upload */}
           <FormSection
             title='Promotional Video'
@@ -267,8 +268,6 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
               )}
             />
           </FormSection>
-
-
 
           {/* Banner Upload */}
           <FormSection title='Course Banner' description='Upload a banner image for your course.'>

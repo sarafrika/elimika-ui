@@ -19,6 +19,7 @@ import {
   getCourseLessonOptions,
   getLessonContentOptions,
   getLessonContentQueryKey,
+  searchAssignmentsOptions,
   searchQuizzesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -140,11 +141,15 @@ const LessonDetailsPage = () => {
           },
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   // Quiz management
-  const { data: quizzesData, refetch: refetchQuizzes, isFetching: quizIsFetching } = useQuery(
+  const {
+    data: quizzesData,
+    refetch: refetchQuizzes,
+    isFetching: quizIsFetching,
+  } = useQuery(
     searchQuizzesOptions({ query: { searchParams: { lesson_uuid: '' }, pageable: {} } })
   );
 
@@ -154,6 +159,15 @@ const LessonDetailsPage = () => {
       prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
     );
   };
+
+  // Assignment management
+  const {
+    data: assignmentData,
+    refetch: refetchAssignments,
+    isFetching: assignmentIsFetching,
+  } = useQuery(
+    searchAssignmentsOptions({ query: { searchParams: { lesson_uuid: '' }, pageable: {} } })
+  );
 
   const [editingQuizData, setEditingQuizData] = useState<QuizFormValues | null>(null);
 
@@ -203,14 +217,14 @@ const LessonDetailsPage = () => {
     );
   };
 
-  const loading = isLoading || contentIsLoading
+  const loading = isLoading || contentIsLoading;
 
   if (loading) {
     return <CustomLoadingState subHeading='Loading skills and resources' />;
   }
 
   return (
-    <div className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20  max-w-6xl'>
+    <div className='max-w-6xl space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
       <div className='mb-6 flex items-end justify-between'>
         <div className='flex flex-col gap-2'>
           <h1 className='text-2xl font-semibold'>{lesson?.title}</h1>
@@ -249,7 +263,7 @@ const LessonDetailsPage = () => {
           </p>
         </CardHeader>
 
-        <div className='space-y-6 mx-3'>
+        <div className='mx-3 space-y-6'>
           {contentItems.length > 0 ? (
             contentItems.map((item: any) => {
               const type = contentTypeData.find((ct: any) => ct.uuid === item.content_type_uuid);
@@ -258,7 +272,7 @@ const LessonDetailsPage = () => {
               return (
                 <div
                   key={item.uuid}
-                  className='group flex text-muted-foreground cursor-default items-center justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+                  className='group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
                 >
                   <div className='flex flex-col gap-1'>
                     <div className='flex items-center gap-2'>
@@ -274,7 +288,7 @@ const LessonDetailsPage = () => {
 
                     {item.content_text && (
                       <div className='mt-2 text-sm text-gray-700 dark:text-gray-300'>
-                        <RichTextRenderer htmlString={item.content_text} />
+                        <RichTextRenderer htmlString={item.content_text} maxChars={500} />
                       </div>
                     )}
 
@@ -363,124 +377,246 @@ const LessonDetailsPage = () => {
           </p>
         </CardHeader>
 
-        {quizIsFetching ? <>Loading...</> : <CardContent>
-          <div className='w-full mt-1 flex flex-col gap-2 space-y-2'>
-            {quizzesData?.data?.content?.map((quiz: any, i: any) => (
-              <div
-                key={i}
-                className='w-full group flex text-muted-foreground cursor-default items-start justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
-              >
-                <div className='w-full flex flex-col gap-3 p-4 bg-white/80 dark:bg-blue-950/40 border border-blue-200/40 dark:border-blue-500/25 rounded-2xl shadow-lg shadow-blue-200/30 dark:shadow-blue-900/20'>
-                  {/* Header */}
-                  <div className='flex items-start gap-3'>
-                    <div className='flex-shrink-0'>
-                      <div className='rounded-full bg-green-100 text-green-600 p-1'>
-                        <CheckCircle className='h-5 w-5' />
-                      </div>
-                    </div>
-                    <div className='flex flex-col w-full gap-2'>
-                      {/* Quiz Title */}
-                      <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-100'>{quiz.title}</h3>
+        {quizIsFetching ? (
+          <>Loading...</>
+        ) : (
+          <CardContent>
+            <div className='mt-1 flex w-full flex-col gap-2 space-y-2'>
+              {quizzesData?.data?.content
+                ?.filter((quiz: any) => quiz.lesson_uuid === lessonId)
+                ?.map((quiz: any, i: number) => (
+                  <div
+                    key={i}
+                    className='group text-muted-foreground flex w-full cursor-default items-start justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+                  >
+                    <div className='flex w-full flex-col gap-3 rounded-2xl border border-blue-200/40 bg-white/80 p-4 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+                      {/* Header */}
+                      <div className='flex items-start gap-3'>
+                        <div className='flex-shrink-0'>
+                          <div className='rounded-full bg-green-100 p-1 text-green-600'>
+                            <CheckCircle className='h-5 w-5' />
+                          </div>
+                        </div>
+                        <div className='flex w-full flex-col gap-2'>
+                          {/* Quiz Title */}
+                          <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-100'>
+                            {quiz.title}
+                          </h3>
 
-                      {/* Quiz Description */}
-                      <div className='text-sm text-gray-600 dark:text-gray-300'>
-                        <RichTextRenderer htmlString={(quiz?.description as string) || 'No skill provided'} />
+                          {/* Quiz Description */}
+                          <div className='text-sm text-gray-600 dark:text-gray-300'>
+                            <RichTextRenderer
+                              htmlString={(quiz?.description as string) || 'No skill provided'}
+                            />
+                          </div>
+
+                          {/* Info Bar: Time Limit + Passing Score */}
+                          <div className='mt-1 flex flex-col text-sm text-gray-700 md:flex-row md:gap-4 dark:text-gray-300'>
+                            <span className='flex items-center gap-1'>
+                              <span>📅</span> {quiz.time_limit_display}
+                            </span>
+                            <span className='flex items-center gap-1'>
+                              <span>🏆</span> Passing Score: {quiz.passing_score}
+                            </span>
+                          </div>
+
+                          {/* Toggle Button */}
+                          <div className='mt-2'>
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => toggleQuizQuestions(i)}
+                            >
+                              {expandedQuizIndexes.includes(i)
+                                ? 'Hide Questions'
+                                : 'Show Questions'}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Info Bar: Time Limit + Passing Score */}
-                      <div className='flex flex-col md:flex-row md:gap-4 text-sm text-gray-700 dark:text-gray-300 mt-1'>
-                        <span className='flex items-center gap-1'>
-                          <span>📅</span> {quiz.time_limit_display}
-                        </span>
-                        <span className='flex items-center gap-1'>
-                          <span>🏆</span> Passing Score: {quiz.passing_score}
-                        </span>
-                      </div>
+                      {/* Conditionally Render Questions */}
+                      {expandedQuizIndexes.includes(i) && (
+                        <div className='mt-3'>
+                          <QuizQuestions quizUuid={quiz.uuid} />
+                        </div>
+                      )}
 
-                      {/* Toggle Button */}
-                      <div className='mt-2'>
+                      {/* Add New Question Button at the bottom */}
+                      <div className='mt-4 flex justify-start'>
                         <Button
-                          variant='outline'
+                          variant='default'
                           size='sm'
-                          onClick={() => toggleQuizQuestions(i)}
+                          onClick={() => handleAddQuestions(quiz)}
+                          className='flex items-center gap-1'
                         >
-                          {expandedQuizIndexes.includes(i) ? 'Hide Questions' : 'Show Questions'}
+                          <PlusCircle className='h-4 w-4' />
+                          Add New Question
                         </Button>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Conditionally Render Questions */}
-                  {expandedQuizIndexes.includes(i) && (
-                    <div className='mt-3'>
-                      <QuizQuestions quizUuid={quiz.uuid} />
+                    {/* Edit and Delete buttons (hidden by default) */}
+                    <div className='absolute right-2 items-start opacity-0 transition-opacity group-hover:opacity-100'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='opacity-0 transition-opacity group-hover:opacity-100'
+                          >
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem onClick={() => handleEditQuiz(quiz)}>
+                            <PenLine className='mr-1 h-4 w-4' />
+                            Edit Quiz
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem onClick={() => handleAddQuestions(quiz)}>
+                            <PlusCircle className='mr-1 h-4 w-4' />
+                            Add Questions
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className='text-red-600'
+                            onClick={() => handleDeleteQuiz(quiz)}
+                          >
+                            <Trash className='mr-1 h-4 w-4' />
+                            Delete Quiz
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                  )}
-
-                  {/* Add New Question Button at the bottom */}
-                  <div className='mt-4 flex justify-start'>
-                    <Button
-                      variant='default'
-                      size='sm'
-                      onClick={() => handleAddQuestions(quiz)}
-                      className='flex items-center gap-1'
-                    >
-                      <PlusCircle className='h-4 w-4' />
-                      Add New Question
-                    </Button>
                   </div>
+                ))}
+
+              {quizzesData?.data?.content?.length === 0 && (
+                <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
+                  <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
+                  <p className='font-medium'>No Quiz created yet</p>
+                  <p className='mt-1 text-sm'>
+                    Start by creating quizes for your skill under this course.
+                  </p>
                 </div>
+              )}
+            </div>
+          </CardContent>
+        )}
+      </Card>
 
-
-                {/* Edit and Delete buttons (hidden by default) */}
-                <div className='absolute right-2 items-start opacity-0 transition-opacity group-hover:opacity-100'>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='opacity-0 transition-opacity group-hover:opacity-100'
-                      >
-                        <MoreVertical className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem onClick={() => handleEditQuiz(quiz)}>
-                        <PenLine className='mr-1 h-4 w-4' />
-                        Edit Quiz
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem onClick={() => handleAddQuestions(quiz)}>
-                        <PlusCircle className='mr-1 h-4 w-4' />
-                        Add Questions
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className='text-red-600'
-                        onClick={() => handleDeleteQuiz(quiz)}
-                      >
-                        <Trash className='mr-1 h-4 w-4' />
-                        Delete Quiz
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            ))}
-
-            {quizzesData?.data?.content?.length === 0 && (
-              <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
-                <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
-                <p className='font-medium'>No Quiz created yet</p>
-                <p className='mt-1 text-sm'>
-                  Start by creating quizes for your skill under this course.
-                </p>
-              </div>
-            )}
+      <Card>
+        <CardHeader className='mt-4'>
+          <div className='flex flex-row items-center justify-between gap-4'>
+            <p className='text-lg font-semibold'>Skill Assignments</p>
+            <Button
+              onClick={() => {}}
+              variant='secondary'
+              size='sm'
+              className='flex w-fit items-center gap-1'
+            >
+              <PlusCircle className='h-4 w-4' />
+              Add Assignment
+            </Button>
           </div>
-        </CardContent>}
+          <p className='text-muted-foreground text-sm'>
+            Manage and review assignments assigned to this skill. Use assignmetns to assess
+            learners&apos; understanding and reinforce key concepts.
+          </p>
+        </CardHeader>
 
+        {assignmentIsFetching ? (
+          <>Loading...</>
+        ) : (
+          <CardContent>
+            <div className='mt-1 flex w-full flex-col gap-2 space-y-2'>
+              {assignmentData?.data?.content
+                ?.filter((a: any) => a.lesson_uuid === lessonId)
+                ?.map((a: any, i: number) => (
+                  <div
+                    key={i}
+                    className='group text-muted-foreground flex w-full cursor-default items-start justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+                  >
+                    <div className='flex w-full flex-col gap-3 rounded-2xl border border-blue-200/40 bg-white/80 p-4 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+                      {/* Header */}
+                      <div className='flex items-start gap-3'>
+                        <div className='flex-shrink-0'>
+                          <div className='rounded-full bg-green-100 p-1 text-green-600'>
+                            <CheckCircle className='h-5 w-5' />
+                          </div>
+                        </div>
+                        <div className='flex w-full flex-col gap-2'>
+                          {/* Quiz Title */}
+                          <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-100'>
+                            {a.title}
+                          </h3>
+
+                          {/* Quiz Description */}
+                          <div className='text-sm text-gray-600 dark:text-gray-300'>
+                            <RichTextRenderer
+                              htmlString={(a?.description as string) || 'No skill provided'}
+                            />
+                          </div>
+
+                          {/* Info Bar: Time Limit + Passing Score */}
+                          <div className='mt-1 flex flex-col text-sm text-gray-700 md:flex-row md:gap-4 dark:text-gray-300'>
+                            <span className='flex items-center gap-1'>
+                              <span>📅</span> {a.time_limit_display}
+                            </span>
+                            <span className='flex items-center gap-1'>
+                              <span>🏆</span> Passing Score: {a.passing_score}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Edit and Delete buttons (hidden by default) */}
+                    <div className='absolute right-2 items-start opacity-0 transition-opacity group-hover:opacity-100'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='opacity-0 transition-opacity group-hover:opacity-100'
+                          >
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem onClick={() => handleEditQuiz(alert)}>
+                            <PenLine className='mr-1 h-4 w-4' />
+                            Edit Assignment
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className='text-red-600'
+                            onClick={() => handleDeleteQuiz(a)}
+                          >
+                            <Trash className='mr-1 h-4 w-4' />
+                            Delete Assignment
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                ))}
+
+              {quizzesData?.data?.content?.length === 0 && (
+                <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
+                  <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
+                  <p className='font-medium'>No Quiz created yet</p>
+                  <p className='mt-1 text-sm'>
+                    Start by creating quizes for your skill under this course.
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Content dialogs */}

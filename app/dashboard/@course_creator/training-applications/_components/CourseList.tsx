@@ -52,19 +52,19 @@ export default function CourseList({
             <Skeleton className='h-[100px] w-full px-4' />
             <Skeleton className='h-[100px] w-full px-4' />
           </div>
-        ) : <>
-          {courses.map(course => (
-            <CourseCard
-              key={course.uuid}
-              course={course}
-              isSelected={selectedCourse?.uuid === course.uuid}
-              onSelect={onCourseSelect}
-              onDelete={onCourseDelete}
-            />
-          ))}
-        </>}
-
-
+        ) : (
+          <>
+            {courses.map(course => (
+              <CourseCard
+                key={course.uuid}
+                course={course}
+                isSelected={selectedCourse?.uuid === course.uuid}
+                onSelect={onCourseSelect}
+                onDelete={onCourseDelete}
+              />
+            ))}
+          </>
+        )}
       </div>
     </div>
   );

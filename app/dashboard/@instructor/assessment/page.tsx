@@ -1,24 +1,29 @@
-'use client'
+'use client';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileCheck, FileText, ListChecks } from "lucide-react";
-import { useState } from "react";
-import AssignmentsPage from "./assignments/page";
-import ExamsPage from "./exams/page";
-import QuizPage from "./quiz/page";
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FileCheck, FileText, ListChecks } from 'lucide-react';
+import { useState } from 'react';
+import AssignmentsPage from './assignments/page';
+import ExamsPage from './exams/page';
+import QuizPage from './quiz/page';
 
 export default function AssessmentManagementPage() {
   const [activeTab, setActiveTab] = useState('assignments');
 
-
   return (
     <div>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8" >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className='space-y-8'>
         <TabsList className='grid w-full grid-cols-3'>
-          <TabsTrigger value='assignments'> <FileText />  Assignment</TabsTrigger>
-          <TabsTrigger value='quiz'><ListChecks />  Quiz</TabsTrigger>
-          <TabsTrigger value='exams'><FileCheck />  Exams</TabsTrigger>
+          <TabsTrigger value='assignments'>
+            {' '}
+            <FileText /> Assignment
+          </TabsTrigger>
+          <TabsTrigger value='quiz'>
+            <ListChecks /> Quiz
+          </TabsTrigger>
+          <TabsTrigger value='exams'>
+            <FileCheck /> Exams
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value='assignments' className='space-y-6'>
@@ -34,5 +39,5 @@ export default function AssessmentManagementPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

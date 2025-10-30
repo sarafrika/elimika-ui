@@ -13,17 +13,22 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 
 interface TrainCourseCardProps {
-  course: Course;
+  course: Course & { application?: any };
+  applicationStatus?: string | null;
+  applicationReviewNote?: string | null;
   handleClick: () => void;
-  handleQuickApply: () => void
+  handleQuickApply: () => void;
 }
 
-export function TrainCourseCard({ course, handleClick, handleQuickApply }: TrainCourseCardProps) {
-  const router = useRouter();
-
+export function TrainCourseCard({
+  course,
+  applicationStatus,
+  applicationReviewNote,
+  handleClick,
+  handleQuickApply,
+}: TrainCourseCardProps) {
   const getInitials = (name: string) => {
     return name
       ?.split(' ')
@@ -128,7 +133,7 @@ export function TrainCourseCard({ course, handleClick, handleQuickApply }: Train
           </div>
 
           {/* Title and Subtitle */}
-          <h3 className="group-hover:text-primary mb-1 font-bold line-clamp-2 min-h-12 transition-colors">
+          <h3 className='group-hover:text-primary mb-1 line-clamp-2 min-h-12 font-bold transition-colors'>
             {course?.name}
           </h3>
 
@@ -167,34 +172,63 @@ export function TrainCourseCard({ course, handleClick, handleQuickApply }: Train
           </div>
 
           {/* Price and Actions */}
-          {course?.is_free ? <div>
-            <span className='text-primary font-bold'>
-              {'Free course'}
-            </span>
-          </div> : <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              {course?.price && (
-                <span className='text-muted-foreground text-sm line-through'>
-                  KES {course?.price}
-                </span>
-              )}
+          {course?.is_free ? (
+            <div>
+              <span className='text-primary font-bold'>{'Free course'}</span>
             </div>
-          </div>}
+          ) : (
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                {course?.price && (
+                  <span className='text-muted-foreground text-sm line-through'>
+                    KES {course?.price}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
 
-        <div className='flex justify-between p-4'>
+        <div className='flex flex-col justify-end gap-2 self-end p-4'>
           <Button
-            onClick={handleQuickApply}
             size='sm'
+            onClick={handleQuickApply}
+            disabled={!!applicationStatus && applicationStatus !== 'revoked'}
+            className={`border ${
+              applicationStatus === 'pending'
+                ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
+                : applicationStatus === 'approved'
+                  ? 'border-green-400 bg-green-50 text-green-800'
+                  : applicationStatus === 'revoked'
+                    ? 'border-red-400 bg-red-50 text-red-800'
+                    : 'border-gray-300 bg-white text-gray-800'
+            }`}
           >
-            Quick apply
+            {applicationStatus
+              ? applicationStatus.charAt(0).toUpperCase() + applicationStatus.slice(1)
+              : 'Apply to train'}
           </Button>
-          <Button
+
+          <span
+            className={`text-center text-sm ${
+              applicationStatus === 'pending'
+                ? 'text-yellow-800'
+                : applicationStatus === 'approved'
+                  ? 'text-green-800'
+                  : applicationStatus === 'revoked'
+                    ? 'text-red-800'
+                    : 'text-muted-foreground'
+            }`}
+          >
+            {applicationReviewNote || 'Review note not provided'}
+          </span>
+
+          {/* <Button
             onClick={() => router.push(`/dashboard/apply-to-train/${course?.uuid}`)}
             size='sm'
           >
             Apply to train
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>

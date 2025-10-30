@@ -235,19 +235,19 @@ export const InstructorProfileModal: React.FC<Props> = ({
               </TabsContent>
 
               {/* Certifications Tab */}
-              <TabsContent value="certifications" className="space-y-4">
+              <TabsContent value='certifications' className='space-y-4'>
                 {Array.isArray(certifications) && certifications.length > 0 ? (
-                  certifications.map((cert) => (
+                  certifications.map(cert => (
                     <Card key={cert.id}>
-                      <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="rounded-lg bg-blue-100 p-3">
-                            <Award className="h-6 w-6 text-blue-600" aria-hidden="true" />
+                      <CardContent className='p-6'>
+                        <div className='flex items-start gap-4'>
+                          <div className='rounded-lg bg-blue-100 p-3'>
+                            <Award className='h-6 w-6 text-blue-600' aria-hidden='true' />
                           </div>
                           <div>
-                            <h4 className="text-base font-semibold">{cert.name}</h4>
-                            <p className="text-muted-foreground text-sm">{cert.issuer}</p>
-                            <p className="text-muted-foreground mt-1 text-sm">
+                            <h4 className='text-base font-semibold'>{cert.name}</h4>
+                            <p className='text-muted-foreground text-sm'>{cert.issuer}</p>
+                            <p className='text-muted-foreground mt-1 text-sm'>
                               Issued {cert.year ? cert.year : 'N/A'}
                             </p>
                           </div>
@@ -256,10 +256,10 @@ export const InstructorProfileModal: React.FC<Props> = ({
                     </Card>
                   ))
                 ) : (
-                  <div className="text-muted-foreground flex flex-col items-center justify-center py-12 text-center">
-                    <Award className="mb-4 h-10 w-10 text-gray-400" />
-                    <h3 className="text-lg font-semibold">No Certifications Found</h3>
-                    <p className="mt-1 text-sm">
+                  <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
+                    <Award className='mb-4 h-10 w-10 text-gray-400' />
+                    <h3 className='text-lg font-semibold'>No Certifications Found</h3>
+                    <p className='mt-1 text-sm'>
                       You haven&apos;t earned any certifications for this course yet.
                     </p>
                   </div>
@@ -338,10 +338,11 @@ const reviews = [
   {
     id: 'review-3',
     studentName: 'Emily Wang',
-    studentImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+    studentImage:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
     rating: 5,
     comment: 'Incredibly knowledgeable and explains complex concepts clearly.',
     date: new Date(2024, 8, 10),
     course: 'Data Science',
   },
-]
+];

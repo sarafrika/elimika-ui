@@ -30,6 +30,7 @@ import {
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
   getClassRecurrencePatternOptions,
+  searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
   updateClassDefinitionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -38,7 +39,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FieldErrors, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
@@ -78,12 +79,36 @@ export default function ClassDetailsForm({
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
+
+  const { data: appliedCourses } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+    }),
+    enabled: !!instructor?.uuid,
+  });
+
+  const approvedCourses = useMemo(() => {
+    if (!courses?.data?.content || !appliedCourses?.data?.content) return [];
+    const appliedMap = new Map(
+      appliedCourses.data.content
+        .filter(app => app.status === 'approved')
+        .map(app => [app.course_uuid, app])
+    );
+
+    return courses.data.content
+      .map(course => ({
+        ...course,
+        application: appliedMap.get(course.uuid) || null,
+      }))
+      .filter(course => course.application !== null);
+  }, [courses, appliedCourses]);
+
   const { data: programs } = useQuery(
     searchTrainingProgramsOptions({
       query: { pageable: {}, searchParams: { instructorUuid: instructor?.uuid } },
     })
   );
-  const [selectedCourseProgram, setSelectedCourseProgram] = useState<any | null>(null)
+  const [selectedCourseProgram, setSelectedCourseProgram] = useState<any | null>(null);
 
   useEffect(() => {
     if (!resolveId) return;
@@ -148,7 +173,7 @@ export default function ClassDetailsForm({
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
 
   const handleError = (errors: FieldErrors) => {
-    toast.error("Form validation errors");
+    toast.error('Form validation errors');
   };
 
   const handleSubmit = async (values: ClassFormValues) => {
@@ -306,21 +331,20 @@ export default function ClassDetailsForm({
               name='course_uuid'
               render={({ field }) => (
                 <FormItem className='w-full flex-1'>
-                  <FormLabel>Assign Course or Program</FormLabel>
+                  <FormLabel>
+                    Assign Course or Program (Select from a list of courses you have been approved
+                    to train)
+                  </FormLabel>
                   <Select
                     onValueChange={value => {
-                      field.onChange(value); // Set selected UUID
+                      field.onChange(value);
 
-                      // Try to find the selected course or program
-                      const selectedCourse = courses?.data?.content?.find(
-                        course => course.uuid === value
-                      );
+                      const selectedCourse = approvedCourses?.find(course => course.uuid === value);
                       // const selectedProgram = programs?.data?.content?.find(
                       //   program => program.uuid === value
                       // );
 
-                      const maxParticipants =
-                        selectedCourse?.class_limit;
+                      const maxParticipants = selectedCourse?.class_limit;
                       // const maxParticipants =
                       //   selectedCourse?.class_limit ?? selectedProgram?.class_limit;
 
@@ -328,8 +352,7 @@ export default function ClassDetailsForm({
                         form.setValue('max_participants', maxParticipants);
                       }
 
-                      setSelectedCourseProgram(selectedCourse)
-
+                      setSelectedCourseProgram(selectedCourse);
                     }}
                     value={field.value}
                   >
@@ -337,7 +360,7 @@ export default function ClassDetailsForm({
                       <SelectValue placeholder='Select a course' />
                     </SelectTrigger>
                     <SelectContent className='pb-4'>
-                      {courses?.data?.content?.map(course => (
+                      {approvedCourses?.map(course => (
                         <SelectItem
                           className='pb-1'
                           key={course.uuid}
@@ -554,7 +577,8 @@ export default function ClassDetailsForm({
                     <Input type='number' min='0' step='0.01' {...field} />
                   </FormControl>
                   <FormDescription>
-                    Instructor-led classes must charge at least this KES {selectedCourseProgram?.minimum_training_fee}.
+                    Instructor-led classes must charge at least this KES{' '}
+                    {selectedCourseProgram?.minimum_training_fee}.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -640,10 +664,6 @@ export default function ClassDetailsForm({
             />
 
             <div className='flex justify-end gap-2 pt-6'>
-              <Button type='button' variant='outline' onClick={handleNextStep}>
-                Next
-              </Button>
-
               <Button
                 type='submit'
                 className='flex min-w-[120px] items-center justify-center gap-2'
@@ -653,6 +673,10 @@ export default function ClassDetailsForm({
                   <Spinner />
                 )}
                 {resolveId ? 'Update Class Traninig' : 'Create Class Traninig'}
+              </Button>
+
+              <Button type='button' variant='outline' onClick={handleNextStep}>
+                Next
               </Button>
             </div>
           </form>
