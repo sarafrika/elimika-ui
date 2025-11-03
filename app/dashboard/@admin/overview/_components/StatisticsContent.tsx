@@ -2,13 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import KPICards from './KPICards';
 import AnalyticsCharts from './AnalyticsCharts';
 import SystemHealth from './SystemHealth';
 import ActivityFeed from './ActivityFeed';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 export default function StatisticsContent() {
   const { data, error, isLoading, refetch } = useQuery(getDashboardStatisticsOptions());
@@ -48,7 +48,7 @@ export default function StatisticsContent() {
       {/* Analytics Charts & System Health */}
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='lg:col-span-2'>
-          <AnalyticsCharts />
+          <AnalyticsCharts statistics={statistics} isLoading={isLoading} />
         </div>
         <div className='lg:col-span-1'>
           <SystemHealth statistics={statistics} isLoading={isLoading} />
@@ -56,7 +56,7 @@ export default function StatisticsContent() {
       </div>
 
       {/* Activity Feed */}
-      <ActivityFeed />
+      <ActivityFeed statistics={statistics} isLoading={isLoading} />
     </div>
   );
 }
