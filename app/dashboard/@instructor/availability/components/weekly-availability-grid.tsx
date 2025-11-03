@@ -188,9 +188,10 @@ export function WeeklyAvailabilityGrid({
   const getEventSpanHeight = (event: CalendarEvent) => {
     const startTime = new Date(`2000-01-01T${event.startTime}:00`);
     const endTime = new Date(`2000-01-01T${event.endTime}:00`);
+
     const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
-    const slots = Math.ceil(durationMinutes / 60); // 60-minute slots
-    return slots;
+    const slots = Math.ceil(durationMinutes / 60);
+    return slots + 1;
   };
 
   const shouldSkipSlot = (day: string, time: string, date: Date) => {
@@ -479,11 +480,11 @@ export function WeeklyAvailabilityGrid({
                                 </div>
                               )}
 
-                              {!status && !eventInSlot && (
+                              {/* {!status && !eventInSlot && (
                                 <div className='flex items-center justify-center'>
                                   <Plus className='h-3 w-3 text-gray-400' />
                                 </div>
-                              )}
+                              )} */}
                             </button>
                           )}
                         </div>

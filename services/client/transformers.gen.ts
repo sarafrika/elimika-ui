@@ -57,6 +57,8 @@ import type {
   UpdateClassDefinitionResponse,
   ScheduleRecurringClassFromDefinitionResponse,
   UpdateRecurringClassScheduleResponse,
+  GetLessonPlanResponse,
+  SaveLessonPlanResponse,
   GetClassRecurrencePatternResponse,
   UpdateClassRecurrencePatternResponse,
   GetCertificateByUuidResponse,
@@ -160,6 +162,10 @@ import type {
   AddItemResponse,
   CompleteCartResponse,
   CreateClassDefinitionResponse,
+  GetQuizSchedulesResponse,
+  CreateQuizScheduleResponse,
+  GetAssignmentSchedulesResponse,
+  CreateAssignmentScheduleResponse,
   CreateClassRecurrencePatternResponse,
   GetAllCertificatesResponse,
   CreateCertificateResponse,
@@ -180,6 +186,8 @@ import type {
   UnverifyInstructorResponse,
   GetCartResponse,
   UpdateCartResponse,
+  UpdateQuizScheduleResponse,
+  UpdateAssignmentScheduleResponse,
   GetAllUsersResponse,
   GetInvitationsSentByUserResponse,
   GetPendingInvitationsForUserResponse,
@@ -1361,6 +1369,45 @@ export const updateRecurringClassScheduleResponseTransformer = async (
   return data;
 };
 
+const classLessonPlanSchemaResponseTransformer = (data: any) => {
+  if (data.scheduled_start) {
+    data.scheduled_start = new Date(data.scheduled_start);
+  }
+  if (data.scheduled_end) {
+    data.scheduled_end = new Date(data.scheduled_end);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseListClassLessonPlanSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classLessonPlanSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getLessonPlanResponseTransformer = async (
+  data: any
+): Promise<GetLessonPlanResponse> => {
+  data = apiResponseListClassLessonPlanSchemaResponseTransformer(data);
+  return data;
+};
+
+export const saveLessonPlanResponseTransformer = async (
+  data: any
+): Promise<SaveLessonPlanResponse> => {
+  data = apiResponseListClassLessonPlanSchemaResponseTransformer(data);
+  return data;
+};
+
 const recurrencePatternSchemaResponseTransformer = (data: any) => {
   if (data.end_date) {
     data.end_date = new Date(data.end_date);
@@ -2248,9 +2295,11 @@ const enrollmentSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
-const apiResponseEnrollmentSchemaResponseTransformer = (data: any) => {
+const apiResponseListEnrollmentSchemaResponseTransformer = (data: any) => {
   if (data.data) {
-    data.data = enrollmentSchemaResponseTransformer(data.data);
+    data.data = data.data.map((item: any) => {
+      return enrollmentSchemaResponseTransformer(item);
+    });
   }
   return data;
 };
@@ -2258,7 +2307,7 @@ const apiResponseEnrollmentSchemaResponseTransformer = (data: any) => {
 export const enrollStudentResponseTransformer = async (
   data: any
 ): Promise<EnrollStudentResponse> => {
-  data = apiResponseEnrollmentSchemaResponseTransformer(data);
+  data = apiResponseListEnrollmentSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2812,6 +2861,101 @@ export const createClassDefinitionResponseTransformer = async (
   return data;
 };
 
+const classQuizScheduleSchemaResponseTransformer = (data: any) => {
+  if (data.visible_at) {
+    data.visible_at = new Date(data.visible_at);
+  }
+  if (data.due_at) {
+    data.due_at = new Date(data.due_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseListClassQuizScheduleSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classQuizScheduleSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getQuizSchedulesResponseTransformer = async (
+  data: any
+): Promise<GetQuizSchedulesResponse> => {
+  data = apiResponseListClassQuizScheduleSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseClassQuizScheduleSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = classQuizScheduleSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const createQuizScheduleResponseTransformer = async (
+  data: any
+): Promise<CreateQuizScheduleResponse> => {
+  data = apiResponseClassQuizScheduleSchemaResponseTransformer(data);
+  return data;
+};
+
+const classAssignmentScheduleSchemaResponseTransformer = (data: any) => {
+  if (data.visible_at) {
+    data.visible_at = new Date(data.visible_at);
+  }
+  if (data.due_at) {
+    data.due_at = new Date(data.due_at);
+  }
+  if (data.grading_due_at) {
+    data.grading_due_at = new Date(data.grading_due_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseListClassAssignmentScheduleSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classAssignmentScheduleSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getAssignmentSchedulesResponseTransformer = async (
+  data: any
+): Promise<GetAssignmentSchedulesResponse> => {
+  data = apiResponseListClassAssignmentScheduleSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseClassAssignmentScheduleSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = classAssignmentScheduleSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const createAssignmentScheduleResponseTransformer = async (
+  data: any
+): Promise<CreateAssignmentScheduleResponse> => {
+  data = apiResponseClassAssignmentScheduleSchemaResponseTransformer(data);
+  return data;
+};
+
 export const createClassRecurrencePatternResponseTransformer = async (
   data: any
 ): Promise<CreateClassRecurrencePatternResponse> => {
@@ -3032,6 +3176,20 @@ export const getCartResponseTransformer = async (data: any): Promise<GetCartResp
 
 export const updateCartResponseTransformer = async (data: any): Promise<UpdateCartResponse> => {
   data = cartResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateQuizScheduleResponseTransformer = async (
+  data: any
+): Promise<UpdateQuizScheduleResponse> => {
+  data = apiResponseClassQuizScheduleSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateAssignmentScheduleResponseTransformer = async (
+  data: any
+): Promise<UpdateAssignmentScheduleResponse> => {
+  data = apiResponseClassAssignmentScheduleSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3629,6 +3787,13 @@ export const searchDocumentsResponseTransformer = async (
   return data;
 };
 
+const apiResponseEnrollmentSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = enrollmentSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
 export const getEnrollmentResponseTransformer = async (
   data: any
 ): Promise<GetEnrollmentResponse> => {
@@ -3665,15 +3830,6 @@ export const getStudentScheduleResponseTransformer = async (
   data: any
 ): Promise<GetStudentScheduleResponse> => {
   data = apiResponseListStudentScheduleSchemaResponseTransformer(data);
-  return data;
-};
-
-const apiResponseListEnrollmentSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = data.data.map((item: any) => {
-      return enrollmentSchemaResponseTransformer(item);
-    });
-  }
   return data;
 };
 

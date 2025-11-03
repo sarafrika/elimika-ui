@@ -2,18 +2,18 @@
 
 import { Separator } from '@/components/ui/separator';
 
-interface CoursesLayoutProps {
+interface ClassesLayoutProps {
   children: React.ReactNode;
 }
 
-export default function CoursesLayout({ children }: CoursesLayoutProps) {
+export default function ClassesLayout({ children }: ClassesLayoutProps) {
   return (
     <div className='space-y-8 p-4 pb-16 md:p-10'>
       <div className='flex w-full items-center justify-between lg:max-w-[75%]'>
         <div>
-          <h2 className='text-2xl font-bold tracking-tight'>My Courses</h2>
+          <h2 className='text-2xl font-bold tracking-tight'>My Classes</h2>
           <p className='mt-1 text-gray-600'>
-            Explore and manage the courses you’re currently enrolled in. Track your progress, access
+            Explore and manage the classes you’re currently enrolled in. Track your progress, access
             course materials, and stay up to date with lessons.
           </p>
         </div>

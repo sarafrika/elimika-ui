@@ -280,6 +280,12 @@ import type {
   UpdateRecurringClassScheduleData,
   UpdateRecurringClassScheduleResponses,
   UpdateRecurringClassScheduleErrors,
+  GetLessonPlanData,
+  GetLessonPlanResponses,
+  GetLessonPlanErrors,
+  SaveLessonPlanData,
+  SaveLessonPlanResponses,
+  SaveLessonPlanErrors,
   DeleteClassRecurrencePatternData,
   DeleteClassRecurrencePatternResponses,
   DeleteClassRecurrencePatternErrors,
@@ -313,6 +319,9 @@ import type {
   UpdateAssignmentData,
   UpdateAssignmentResponses,
   UpdateAssignmentErrors,
+  UpdateCurrencyData,
+  UpdateCurrencyResponses,
+  UpdateCurrencyErrors,
   DeclineInvitationData,
   DeclineInvitationResponses,
   DeclineInvitationErrors,
@@ -646,6 +655,18 @@ import type {
   CreateClassDefinitionData,
   CreateClassDefinitionResponses,
   CreateClassDefinitionErrors,
+  GetQuizSchedulesData,
+  GetQuizSchedulesResponses,
+  GetQuizSchedulesErrors,
+  CreateQuizScheduleData,
+  CreateQuizScheduleResponses,
+  CreateQuizScheduleErrors,
+  GetAssignmentSchedulesData,
+  GetAssignmentSchedulesResponses,
+  GetAssignmentSchedulesErrors,
+  CreateAssignmentScheduleData,
+  CreateAssignmentScheduleResponses,
+  CreateAssignmentScheduleErrors,
   CreateClassRecurrencePatternData,
   CreateClassRecurrencePatternResponses,
   CreateClassRecurrencePatternErrors,
@@ -703,6 +724,21 @@ import type {
   UnverifyInstructorData,
   UnverifyInstructorResponses,
   UnverifyInstructorErrors,
+  ListAllData,
+  ListAllResponses,
+  ListAllErrors,
+  CreateCurrencyData,
+  CreateCurrencyResponses,
+  CreateCurrencyErrors,
+  MakeDefaultData,
+  MakeDefaultResponses,
+  MakeDefaultErrors,
+  DeactivateData,
+  DeactivateResponses,
+  DeactivateErrors,
+  ActivateData,
+  ActivateResponses,
+  ActivateErrors,
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusResponses,
   UpdateScheduledInstanceStatusErrors,
@@ -718,6 +754,18 @@ import type {
   UpdateCartData,
   UpdateCartResponses,
   UpdateCartErrors,
+  DeleteQuizScheduleData,
+  DeleteQuizScheduleResponses,
+  DeleteQuizScheduleErrors,
+  UpdateQuizScheduleData,
+  UpdateQuizScheduleResponses,
+  UpdateQuizScheduleErrors,
+  DeleteAssignmentScheduleData,
+  DeleteAssignmentScheduleResponses,
+  DeleteAssignmentScheduleErrors,
+  UpdateAssignmentScheduleData,
+  UpdateAssignmentScheduleResponses,
+  UpdateAssignmentScheduleErrors,
   GetAllUsersData,
   GetAllUsersResponses,
   GetAllUsersErrors,
@@ -946,6 +994,12 @@ import type {
   HasCapacityForEnrollmentData,
   HasCapacityForEnrollmentResponses,
   HasCapacityForEnrollmentErrors,
+  ListActiveCurrenciesData,
+  ListActiveCurrenciesResponses,
+  ListActiveCurrenciesErrors,
+  GetDefaultCurrencyData,
+  GetDefaultCurrencyResponses,
+  GetDefaultCurrencyErrors,
   GetStatusTransitionsData,
   GetStatusTransitionsResponses,
   GetStatusTransitionsErrors,
@@ -1206,6 +1260,8 @@ import {
   updateClassDefinitionResponseTransformer,
   scheduleRecurringClassFromDefinitionResponseTransformer,
   updateRecurringClassScheduleResponseTransformer,
+  getLessonPlanResponseTransformer,
+  saveLessonPlanResponseTransformer,
   getClassRecurrencePatternResponseTransformer,
   updateClassRecurrencePatternResponseTransformer,
   getCertificateByUuidResponseTransformer,
@@ -1309,6 +1365,10 @@ import {
   addItemResponseTransformer,
   completeCartResponseTransformer,
   createClassDefinitionResponseTransformer,
+  getQuizSchedulesResponseTransformer,
+  createQuizScheduleResponseTransformer,
+  getAssignmentSchedulesResponseTransformer,
+  createAssignmentScheduleResponseTransformer,
   createClassRecurrencePatternResponseTransformer,
   getAllCertificatesResponseTransformer,
   createCertificateResponseTransformer,
@@ -1329,6 +1389,8 @@ import {
   unverifyInstructorResponseTransformer,
   getCartResponseTransformer,
   updateCartResponseTransformer,
+  updateQuizScheduleResponseTransformer,
+  updateAssignmentScheduleResponseTransformer,
   getAllUsersResponseTransformer,
   getInvitationsSentByUserResponseTransformer,
   getPendingInvitationsForUserResponseTransformer,
@@ -4138,6 +4200,64 @@ export const updateRecurringClassSchedule = <ThrowOnError extends boolean = fals
 };
 
 /**
+ * Get the lesson plan for a class definition
+ */
+export const getLessonPlan = <ThrowOnError extends boolean = false>(
+  options: Options<GetLessonPlanData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetLessonPlanResponses,
+    GetLessonPlanErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getLessonPlanResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/lesson-plan',
+    ...options,
+  });
+};
+
+/**
+ * Replace the lesson plan for a class definition
+ */
+export const saveLessonPlan = <ThrowOnError extends boolean = false>(
+  options: Options<SaveLessonPlanData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    SaveLessonPlanResponses,
+    SaveLessonPlanErrors,
+    ThrowOnError
+  >({
+    responseTransformer: saveLessonPlanResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/lesson-plan',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete a recurrence pattern by UUID
  */
 export const deleteClassRecurrencePattern = <ThrowOnError extends boolean = false>(
@@ -4446,6 +4566,36 @@ export const updateAssignment = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/assignments/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Update an existing currency
+ */
+export const updateCurrency = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCurrencyData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCurrencyResponses,
+    UpdateCurrencyErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/currencies/{code}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -6454,7 +6604,7 @@ export const blockTime = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Enroll a student in a scheduled class instance
+ * Enroll a student into a class across all scheduled instances
  */
 export const enrollStudent = <ThrowOnError extends boolean = false>(
   options: Options<EnrollStudentData, ThrowOnError>
@@ -7918,6 +8068,122 @@ export const createClassDefinition = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List quiz schedules for a class definition
+ */
+export const getQuizSchedules = <ThrowOnError extends boolean = false>(
+  options: Options<GetQuizSchedulesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetQuizSchedulesResponses,
+    GetQuizSchedulesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getQuizSchedulesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/quizzes',
+    ...options,
+  });
+};
+
+/**
+ * Create a quiz schedule for a class definition
+ */
+export const createQuizSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<CreateQuizScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateQuizScheduleResponses,
+    CreateQuizScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createQuizScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/quizzes',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List assignment schedules for a class definition
+ */
+export const getAssignmentSchedules = <ThrowOnError extends boolean = false>(
+  options: Options<GetAssignmentSchedulesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAssignmentSchedulesResponses,
+    GetAssignmentSchedulesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAssignmentSchedulesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/assignments',
+    ...options,
+  });
+};
+
+/**
+ * Create an assignment schedule for a class definition
+ */
+export const createAssignmentSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<CreateAssignmentScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateAssignmentScheduleResponses,
+    CreateAssignmentScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createAssignmentScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/assignments',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Create a new recurrence pattern
  */
 export const createClassRecurrencePattern = <ThrowOnError extends boolean = false>(
@@ -8468,6 +8734,132 @@ export const unverifyInstructor = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List all platform currencies (active and inactive)
+ */
+export const listAll = <ThrowOnError extends boolean = false>(
+  options?: Options<ListAllData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<ListAllResponses, ListAllErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/currencies',
+    ...options,
+  });
+};
+
+/**
+ * Register a new currency
+ */
+export const createCurrency = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCurrencyData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateCurrencyResponses,
+    CreateCurrencyErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/currencies',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Set the default platform currency
+ */
+export const makeDefault = <ThrowOnError extends boolean = false>(
+  options: Options<MakeDefaultData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    MakeDefaultResponses,
+    MakeDefaultErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/currencies/{code}/default',
+    ...options,
+  });
+};
+
+/**
+ * Deactivate a currency, preventing new use on the platform
+ */
+export const deactivate = <ThrowOnError extends boolean = false>(
+  options: Options<DeactivateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DeactivateResponses,
+    DeactivateErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/currencies/{code}/deactivate',
+    ...options,
+  });
+};
+
+/**
+ * Activate a currency for use on the platform
+ */
+export const activate = <ThrowOnError extends boolean = false>(
+  options: Options<ActivateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<ActivateResponses, ActivateErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/currencies/{code}/activate',
+    ...options,
+  });
+};
+
+/**
  * Update the status of a scheduled instance
  */
 export const updateScheduledInstanceStatus = <ThrowOnError extends boolean = false>(
@@ -8598,6 +8990,120 @@ export const updateCart = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/commerce/carts/{cartId}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete a quiz schedule for a class definition
+ */
+export const deleteQuizSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteQuizScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteQuizScheduleResponses,
+    DeleteQuizScheduleErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/quizzes/{scheduleUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a quiz schedule for a class definition
+ */
+export const updateQuizSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateQuizScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    UpdateQuizScheduleResponses,
+    UpdateQuizScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateQuizScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/quizzes/{scheduleUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete an assignment schedule for a class definition
+ */
+export const deleteAssignmentSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteAssignmentScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteAssignmentScheduleResponses,
+    DeleteAssignmentScheduleErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/assignments/{scheduleUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update an assignment schedule for a class definition
+ */
+export const updateAssignmentSchedule = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateAssignmentScheduleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    UpdateAssignmentScheduleResponses,
+    UpdateAssignmentScheduleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateAssignmentScheduleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{classUuid}/assignments/{scheduleUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -10953,6 +11459,58 @@ export const hasCapacityForEnrollment = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/instance/{instanceUuid}/capacity',
+    ...options,
+  });
+};
+
+/**
+ * List active platform currencies
+ */
+export const listActiveCurrencies = <ThrowOnError extends boolean = false>(
+  options?: Options<ListActiveCurrenciesData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListActiveCurrenciesResponses,
+    ListActiveCurrenciesErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/currencies',
+    ...options,
+  });
+};
+
+/**
+ * Get the platform default currency
+ */
+export const getDefaultCurrency = <ThrowOnError extends boolean = false>(
+  options?: Options<GetDefaultCurrencyData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetDefaultCurrencyResponses,
+    GetDefaultCurrencyErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/currencies/default',
     ...options,
   });
 };

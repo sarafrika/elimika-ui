@@ -84,6 +84,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { useInstructor } from '../../../../../context/instructor-context';
 
 function formatToYYYYMMDD(date: Date): string {
   const year = date.getFullYear();
@@ -143,6 +144,8 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
     },
   });
 
+  const instructor = useInstructor();
+
   const [continuousRegistration, setContinuousRegistration] = useState(false);
   const updateClassMutation = useMutation(updateClassDefinitionMutation());
 
@@ -150,7 +153,7 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
   const scheduleClass = useMutation(scheduleClassMutation());
 
   const onSubmit = (values: AcademicPeriodFormValues) => {
-    if (!classId) return;
+    // if (!classId) return;
     // updateClassMutation.mutate({
     //   body: {
     //     ...classData,
@@ -168,27 +171,28 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
     //   }
     // })
 
-    // scheduleClass.mutate(
-    //   {
-    //     body: {
-    //       class_definition_uuid: classData?.uuid,
-    //       instructor_uuid: classData?.default_instructor_uuid as string,
-    //       // @ts-ignore
-    //       start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
-    //       // @ts-ignore
-    //       end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
-    //       timezone: 'UTC',
-    //     },
-    //   },
-    //   {
-    //     onSuccess: data => {
-    //       toast.success(data?.message);
-    //       onNext();
-    //     },
-    //   }
-    // );
+    scheduleClass.mutate(
+      {
+        body: {
+          class_definition_uuid: classData?.uuid,
+          instructor_uuid:
+            (classData?.default_instructor_uuid as string) || (instructor?.uuid as string),
+          // @ts-ignore
+          start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
+          // @ts-ignore
+          end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
+          timezone: 'UTC',
+        },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          onNext();
+        },
+      }
+    );
 
-    onNext();
+    // onNext();
   };
 
   const onError = (errors: any) => {
@@ -367,7 +371,13 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
           <Button variant='outline' onClick={onPrev} className='gap-2'>
             <ChevronLeft className='h-4 w-4' /> Previous
           </Button>
-          <Button type='submit'>Next: Timetable</Button>
+
+          <div className='flex flex-row items-center gap-4'>
+            <Button type='submit'>Save & Continue</Button>
+            <Button type='button' onClick={onNext}>
+              Next: Timetable
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

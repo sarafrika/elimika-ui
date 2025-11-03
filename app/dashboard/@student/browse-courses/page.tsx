@@ -186,27 +186,28 @@ export default function MyCoursesPage() {
               </TabsList>
 
               {/* Subcategories */}
-              {selectedCategory !== 'all' && currentCategory?.subcategories?.length as any > 0 && (
-                <div className='mb-6 flex flex-wrap gap-2'>
-                  <Button
-                    variant={selectedSubcategory === '' ? 'default' : 'outline'}
-                    size='sm'
-                    onClick={() => setSelectedSubcategory('')}
-                  >
-                    All {currentCategory?.name}
-                  </Button>
-                  {currentCategory?.subcategories.map(sub => (
+              {selectedCategory !== 'all' &&
+                (currentCategory?.subcategories?.length as any) > 0 && (
+                  <div className='mb-6 flex flex-wrap gap-2'>
                     <Button
-                      key={sub}
-                      variant={selectedSubcategory === sub ? 'default' : 'outline'}
+                      variant={selectedSubcategory === '' ? 'default' : 'outline'}
                       size='sm'
-                      onClick={() => setSelectedSubcategory(sub)}
+                      onClick={() => setSelectedSubcategory('')}
                     >
-                      {sub}
+                      All {currentCategory?.name}
                     </Button>
-                  ))}
-                </div>
-              )}
+                    {currentCategory?.subcategories.map(sub => (
+                      <Button
+                        key={sub}
+                        variant={selectedSubcategory === sub ? 'default' : 'outline'}
+                        size='sm'
+                        onClick={() => setSelectedSubcategory(sub)}
+                      >
+                        {sub}
+                      </Button>
+                    ))}
+                  </div>
+                )}
             </Tabs>
           </div>
         </div>

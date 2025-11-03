@@ -86,6 +86,7 @@ export function TrainingClassList({
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState('all');
 
   const { difficultyMap } = useDifficultyLevels();
   const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
@@ -105,11 +106,16 @@ export function TrainingClassList({
       (statusFilter === 'available' && cls.current_enrollments < cls.max_participants) ||
       (statusFilter === 'full' && cls.current_enrollments >= cls.max_participants);
 
-    return matchesSearch && matchesLocation && matchesStatus;
+    const matchesActive =
+      activeFilter === 'all' ||
+      (activeFilter === 'active' && cls.is_active) ||
+      (activeFilter === 'inactive' && !cls.is_active);
+
+    return matchesSearch && matchesLocation && matchesStatus && matchesActive;
   });
 
-  const publishedClasses = filteredClasses?.filter(item => item.status === 'published');
-  const draftClasses = filteredClasses?.filter(item => item.status === 'draft');
+  const publishedClasses = classesWithCourseAndInstructor?.filter(item => item.is_active);
+  const draftClasses = classesWithCourseAndInstructor?.filter(item => !item.is_active);
 
   function openTimetableSchedule(uuid: string) {
     // timetable
@@ -133,12 +139,12 @@ export function TrainingClassList({
             <CardTitle className='text-muted-foreground text-sm'>Total Classes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-3xl font-semibold'>{filteredClasses?.length}</div>
+            <div className='text-3xl font-semibold'>{classesWithCourseAndInstructor?.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className=''>
-            <CardTitle className='text-muted-foreground text-sm'>Published Classes</CardTitle>
+            <CardTitle className='text-muted-foreground text-sm'>Active Classes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-3xl font-semibold'>{publishedClasses?.length}</div>
@@ -146,7 +152,7 @@ export function TrainingClassList({
         </Card>
         <Card>
           <CardHeader className=''>
-            <CardTitle className='text-muted-foreground text-sm'>Draft Classes</CardTitle>
+            <CardTitle className='text-muted-foreground text-sm'>Inactive Classes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-3xl font-semibold'>{draftClasses?.length}</div>
@@ -178,6 +184,18 @@ export function TrainingClassList({
               <SelectItem value='HYBRID'>Hybrid</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={activeFilter} onValueChange={setActiveFilter}>
+            <SelectTrigger className='w-[150px] bg-white/80'>
+              <SelectValue placeholder='Class Status' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All Classes</SelectItem>
+              <SelectItem value='active'>Active</SelectItem>
+              <SelectItem value='inactive'>Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+
           {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
                             <SelectTrigger className="w-[150px] bg-white/80">
                                 <SelectValue placeholder="Status" />
@@ -198,7 +216,7 @@ export function TrainingClassList({
       </div>
 
       {/* Classes Grid */}
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3'>
         {filteredClasses.map(cls => {
           const enrollmentPercentage = (cls.current_enrollments / cls.max_participants) * 100;
           const isFull = cls.current_enrollments >= cls.max_participants;

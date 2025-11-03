@@ -17,6 +17,7 @@ import { getCourseAssessmentsOptions } from '@/services/client/@tanstack/react-q
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Eye, FileQuestion, Plus, Trash2, Upload } from 'lucide-react';
 import React, { useState } from 'react';
+import { ResourceDetailsModal } from '../component/resources-details-modal';
 
 interface ResourcesFormProps {
   onNext: () => void;
@@ -28,6 +29,19 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
   const searchParams = new URLSearchParams(location.search);
   const classId = searchParams.get('id');
   const qc = useQueryClient();
+
+  const [selectedResource, setSelectedResource] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (resource: any) => {
+    setSelectedResource(resource);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedResource(null);
+  };
 
   const { data: cAssesssment } = useQuery({
     ...getCourseAssessmentsOptions({
@@ -147,7 +161,12 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
                         </div>
                       </div>
 
-                      <Button variant='outline' size='sm' className='gap-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='gap-2'
+                        onClick={() => openModal(c)}
+                      >
                         <Eye className='h-3 w-3' />
                         View
                       </Button>
@@ -347,6 +366,14 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
           </Card>
         ))}
       </div>
+
+      {/* Resource Details Modal */}
+      <ResourceDetailsModal
+        open={isModalOpen}
+        onClose={closeModal}
+        resource={selectedResource}
+        contentTypeMap={contentTypeMap}
+      />
 
       {/* Footer */}
       <div className='flex justify-between'>

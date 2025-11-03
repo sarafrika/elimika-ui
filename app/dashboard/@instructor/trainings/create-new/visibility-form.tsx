@@ -27,6 +27,7 @@ interface VisibilityFormProps {
   onUpdate: (updates: Partial<any>) => void;
   onNext: () => void;
   onPrev: () => void;
+  scheduleSummary: any;
 }
 
 const visibilitySchema = z.object({
@@ -38,27 +39,30 @@ const visibilitySchema = z.object({
 
 type VisibilityFormValues = z.infer<typeof visibilitySchema>;
 
-export function VisibilityForm({ data, onUpdate, onNext, onPrev }: VisibilityFormProps) {
+export function VisibilityForm({
+  data,
+  onUpdate,
+  onNext,
+  onPrev,
+  scheduleSummary,
+}: VisibilityFormProps) {
   const form = useForm<VisibilityFormValues>({
     resolver: zodResolver(visibilitySchema),
     mode: 'onBlur',
     defaultValues: {
       publicity: 'public',
       enrollmentLimit: data?.max_participants as any,
-      isFree: true,
-      price: 0,
+      isFree: false,
+      price: data?.training_fee,
     },
   });
 
   const watchIsFree = form.watch('isFree') ?? true;
   const watchPrice = form.watch('price') ?? 0;
 
-  const totalLessons =
-    data?.schedule?.skills?.reduce((acc: any, skill: any) => acc + skill.lessons.length, 0) || 0;
-
   const calculateTotalFee = () => {
     if (watchIsFree) return 0;
-    return watchPrice * totalLessons;
+    return watchPrice * scheduleSummary?.totalLessons;
   };
 
   const handleSubmit = (values: VisibilityFormValues) => {
@@ -134,9 +138,8 @@ export function VisibilityForm({ data, onUpdate, onNext, onPrev }: VisibilityFor
                   <Users className='text-muted-foreground h-5 w-5' />
                   <Input
                     type='number'
-                    {...field}
-                    value={field.value ?? ''}
-                    onChange={e => field.onChange(Number(e.target.value))}
+                    value={data?.max_participants ?? ''}
+                    readOnly
                     min={1}
                     max={1000}
                     className='max-w-32'
@@ -176,59 +179,57 @@ export function VisibilityForm({ data, onUpdate, onNext, onPrev }: VisibilityFor
           )}
         />
 
-        {!watchIsFree && (
-          <FormField
-            control={form.control}
-            name='price'
-            render={({ field }) => (
-              <FormItem className='space-y-2'>
-                <FormLabel>Rate per Lesson *</FormLabel>
-                <FormControl>
-                  <div className='flex items-center gap-2'>
-                    <DollarSign className='text-muted-foreground h-5 w-5' />
-                    <Input
-                      type='number'
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={e => {
-                        const value = e.target.value;
-                        field.onChange(value === '' ? null : parseFloat(value));
-                      }}
-                      step='0.01'
-                      className='max-w-32'
-                    />
-                    <span className='text-muted-foreground text-sm'>per lesson</span>
-                  </div>
-                </FormControl>
-                <FormMessage />
-                <FormDescription>From instructor&apos;s availability settings</FormDescription>
+        <FormField
+          control={form.control}
+          name='price'
+          render={({ field }) => (
+            <FormItem className='space-y-2'>
+              <FormLabel>Rate per Lesson *</FormLabel>
+              <FormControl>
+                <div className='flex items-center gap-2'>
+                  <DollarSign className='text-muted-foreground h-5 w-5' />
+                  <Input
+                    type='number'
+                    {...field}
+                    value={field.value ?? ''}
+                    onChange={e => {
+                      const value = e.target.value;
+                      field.onChange(value === '' ? null : parseFloat(value));
+                    }}
+                    step='0.01'
+                    className='max-w-32'
+                  />
+                  <span className='text-muted-foreground text-sm'>per lesson</span>
+                </div>
+              </FormControl>
+              <FormMessage />
+              <FormDescription>From instructor&apos;s availability settings</FormDescription>
 
-                {/* Pricing Summary */}
-                <Card className='mt-4 bg-gray-50'>
-                  <CardContent className='p-4'>
-                    <h4 className='mb-2 font-medium'>Pricing Summary</h4>
-                    <div className='space-y-2 text-sm'>
-                      <div className='flex justify-between'>
-                        <span>Rate per lesson:</span>
-                        <span>${watchPrice.toFixed(2)}</span>
-                      </div>
-                      <div className='flex justify-between'>
-                        <span>Total lessons:</span>
-                        <span>{totalLessons}</span>
-                      </div>
-                      <div className='flex justify-between border-t pt-2 font-medium'>
-                        <span>Total fee:</span>
-                        <span>${calculateTotalFee().toFixed(2)}</span>
-                      </div>
+              {/* Pricing Summary */}
+              <Card className='mt-4 bg-gray-50'>
+                <CardContent className='p-4'>
+                  <h4 className='mb-2 font-medium'>Pricing Summary</h4>
+                  <div className='space-y-2 text-sm'>
+                    <div className='flex justify-between'>
+                      <span>Rate per lesson:</span>
+                      <span>${watchPrice.toFixed(2)}</span>
                     </div>
-                  </CardContent>
-                </Card>
-              </FormItem>
-            )}
-          />
-        )}
+                    <div className='flex justify-between'>
+                      <span>Total lessons:</span>
+                      <span>{scheduleSummary?.totalLessons}</span>
+                    </div>
+                    <div className='flex justify-between border-t pt-2 font-medium'>
+                      <span>Total fee:</span>
+                      <span>${calculateTotalFee().toFixed(2)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </FormItem>
+          )}
+        />
 
-        {watchIsFree && (
+        {/* {watchIsFree && (
           <Card className='border-green-200 bg-green-50'>
             <CardContent className='p-4'>
               <div className='flex items-center gap-2 text-green-800'>
@@ -238,7 +239,7 @@ export function VisibilityForm({ data, onUpdate, onNext, onPrev }: VisibilityFor
               <p className='mt-1 text-sm text-green-700'>Students can enroll without any payment</p>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         {/* Summary */}
         <div className='rounded-lg bg-gray-50 p-4'>
@@ -260,8 +261,10 @@ export function VisibilityForm({ data, onUpdate, onNext, onPrev }: VisibilityFor
               <div className='font-medium'>{form.getValues('enrollmentLimit')}</div>
             </div>
             <div>
-              <span className='text-muted-foreground'>Price Type:</span>
-              <div className='font-medium'>{form.getValues('isFree') ? 'Free' : 'Paid'}</div>
+              <span className='text-muted-foreground'>Fee Status:</span>
+              <div className='font-medium'>
+                {form.getValues('isFree') ? 'Free Class' : 'Fee-based Class'}
+              </div>
             </div>
             {!watchIsFree && (
               <div>

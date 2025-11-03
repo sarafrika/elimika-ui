@@ -140,8 +140,8 @@ export default {
       icon: Book,
     },
     {
-      title: 'My Courses',
-      url: '/dashboard/my-courses',
+      title: 'My Classes',
+      url: '/dashboard/my-classes',
       icon: BookOpen,
     },
     {

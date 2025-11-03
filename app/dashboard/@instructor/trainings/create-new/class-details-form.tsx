@@ -36,13 +36,14 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Upload, X } from 'lucide-react';
+import { ChevronLeft, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { FieldErrors, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
+import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
 import {
   ClassFormValues,
   classSchema,
@@ -58,14 +59,18 @@ type ClassUploadOptions = {
 
 interface ClassDetailsProps {
   handleNextStep: () => void;
+  onPrev: () => void;
   classData: any;
+  combinedRecurrenceData: any;
   isLoading: boolean;
 }
 
 export default function ClassDetailsForm({
   handleNextStep,
   classData,
+  combinedRecurrenceData,
   isLoading,
+  onPrev,
 }: ClassDetailsProps) {
   const router = useRouter();
   const instructor = useInstructor();
@@ -181,12 +186,12 @@ export default function ClassDetailsForm({
       ...values,
       course_uuid: values?.course_uuid || classData?.course_uuid,
       max_participants: values?.max_participants || classData?.max_participants,
-      // location_type: values?.location_type || classData?.location_type,
-      recurrence_pattern_uuid: '08e567cc-bec5-4893-9217-03ff19f44895',
+      recurrence_pattern_uuid: combinedRecurrenceData?.response?.uuid,
       default_instructor_uuid: instructor?.uuid as string,
-      default_start_time: '2025-11-05T10:00:00',
-      default_end_time: '2026-10-05T12:00:00',
-      location_type: 'HYBRID',
+      location_type: combinedRecurrenceData?.payload?.location_type || classData?.location_type,
+      duration_minutes: combinedRecurrenceData?.payload?.duration || classData?.duration_minutes,
+      default_start_time: '2035-11-05T10:00:00',
+      default_end_time: '2035-12-05T12:00:00',
       class_time_validy: '2 months',
     };
 
@@ -321,7 +326,7 @@ export default function ClassDetailsForm({
 
       {isLoading ? (
         <div className='mx-auto items-center justify-center'>
-          <Spinner />
+          <CustomLoadingState subHeading='Fetching your class details' />
         </div>
       ) : (
         <Form {...form}>
@@ -572,7 +577,7 @@ export default function ClassDetailsForm({
               name='training_fee'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Training Fee</FormLabel>
+                  <FormLabel>Training Fee (Min. rate per hour per head)</FormLabel>
                   <FormControl>
                     <Input type='number' min='0' step='0.01' {...field} />
                   </FormControl>
@@ -663,21 +668,27 @@ export default function ClassDetailsForm({
               )}
             />
 
-            <div className='flex justify-end gap-2 pt-6'>
-              <Button
-                type='submit'
-                className='flex min-w-[120px] items-center justify-center gap-2'
-                disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
-              >
-                {(createClassDefinition.isPending || updateClassDefinition.isPending) && (
-                  <Spinner />
-                )}
-                {resolveId ? 'Update Class Traninig' : 'Create Class Traninig'}
+            <div className='flex justify-between gap-2 pt-6'>
+              <Button variant='outline' onClick={onPrev}>
+                <ChevronLeft className='mr-1 h-4 w-4' /> Previous
               </Button>
 
-              <Button type='button' variant='outline' onClick={handleNextStep}>
-                Next
-              </Button>
+              <div className='flex flex-row items-center gap-4'>
+                <Button
+                  type='submit'
+                  className='flex min-w-[120px] items-center justify-center gap-2'
+                  disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
+                >
+                  {(createClassDefinition.isPending || updateClassDefinition.isPending) && (
+                    <Spinner />
+                  )}
+                  {resolveId ? 'Update Class Traninig' : 'Create Class Traninig'}
+                </Button>
+
+                <Button type='button' variant='outline' onClick={handleNextStep}>
+                  Next
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

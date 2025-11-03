@@ -3,9 +3,16 @@
 import { Card } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
-import useCourseClassesWithDetails from '@/hooks/use-course-classes';
+import useBundledClassInfo from '@/hooks/use-course-classes';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import ConfirmModal from '../../../../../../components/custom-modals/confirm-modal';
+import {
+  enrollStudentMutation,
+  getStudentScheduleQueryKey,
+} from '../../../../../../services/client/@tanstack/react-query.gen';
 import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
 import EnrollCourseCard from '../../../../_components/enroll-course-card';
 
@@ -14,6 +21,7 @@ const EnrollmentPage = () => {
   const courseId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
   const student = useStudent();
+  const qc = useQueryClient();
 
   useEffect(() => {
     if (courseId) {
@@ -33,12 +41,47 @@ const EnrollmentPage = () => {
     }
   }, [replaceBreadcrumbs, courseId]);
 
+  const [openEnrollModal, setOpenEnrollModal] = useState(false);
   const [enrollingCourse, setEnrollingCourse] = useState<any | null>(null);
-  const { classes, loading, isError } = useCourseClassesWithDetails(
+  const { classes, loading, isError } = useBundledClassInfo(
     courseId,
-    '2025-10-23',
-    '2026-12-12'
+    '2024-10-23',
+    '2026-12-12',
+    student
   );
+
+  const enrollStudent = useMutation(enrollStudentMutation());
+  const handleEnrollStudent = () => {
+    if (student?.uuid && enrollingCourse?.uuid) {
+      enrollStudent.mutate(
+        {
+          body: { class_definition_uuid: enrollingCourse?.uuid, student_uuid: student?.uuid },
+        },
+        {
+          onSuccess: data => {
+            qc.invalidateQueries({
+              queryKey: getStudentScheduleQueryKey({
+                path: { studentUuid: student?.uuid as string },
+                query: {
+                  start: new Date('2025-11-02'),
+                  end: new Date('2025-12-19'),
+                },
+              }),
+            });
+            setOpenEnrollModal(false);
+            toast.success(data?.message || 'Student enrolled successfully');
+          },
+          onError: data => {
+            // @ts-ignore
+            toast.error(data?.error as string);
+            setOpenEnrollModal(false);
+          },
+        }
+      );
+    } else {
+      toast.error('Student not found');
+    }
+  };
 
   if (loading) {
     return <CustomLoadingState subHeading='Loading available classes...' />;
@@ -58,14 +101,32 @@ const EnrollmentPage = () => {
           {classes.map((cls: any) => (
             <EnrollCourseCard
               key={cls?.uuid}
+              href='#'
               cls={cls as any}
               enrollmentPercentage={5}
               isFull={false}
-              handleEnroll={() => setEnrollingCourse(cls)}
+              disableEnroll={cls?.enrollments?.length > 0}
+              handleEnroll={() => {
+                setOpenEnrollModal(true);
+                setEnrollingCourse(cls);
+              }}
+              variant='full'
             />
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        open={openEnrollModal}
+        setOpen={setOpenEnrollModal}
+        title='Enroll'
+        description='you will enrol for this class/program.'
+        onConfirm={handleEnrollStudent}
+        isLoading={enrollStudent.isPending}
+        confirmText='Enroll'
+        cancelText='No, cancel'
+        variant='destructive'
+      />
     </Card>
   );
 };

@@ -632,6 +632,11 @@ export type Quiz = {
    * **[REQUIRED]** Reference to the lesson UUID that contains this quiz.
    */
   lesson_uuid: string;
+  scope?: ScopeEnum;
+  /**
+   * **[OPTIONAL]** Reference to the class definition that owns this quiz when scope is CLASS_CLONE.
+   */
+  class_definition_uuid?: string;
   /**
    * **[REQUIRED]** Quiz title that clearly describes the assessment content.
    */
@@ -665,6 +670,10 @@ export type Quiz = {
    * **[OPTIONAL]** Indicates if the quiz is actively available to students. Can only be true for published quizzes.
    */
   active?: boolean;
+  /**
+   * **[READ-ONLY]** UUID of the course-level quiz that served as the template for this class clone.
+   */
+  readonly source_quiz_uuid?: string;
   /**
    * **[READ-ONLY]** Timestamp when the quiz was created. Automatically set by the system.
    */
@@ -758,13 +767,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1861,7 +1870,7 @@ export type Course = {
    */
   price?: number;
   /**
-   * **[OPTIONAL]** Minimum training fee that any instructor-led class for this course must meet or exceed.
+   * **[OPTIONAL]** Minimum rate per trainee per hour that any instructor-led class for this course must meet or exceed.
    */
   minimum_training_fee?: number;
   /**
@@ -2145,7 +2154,7 @@ export type ApiResponseCourseRequirement = {
 };
 
 /**
- * Individual lesson within a course containing structured learning content
+ * Individual lesson within a course containing structured learning content. Lesson timing is now defined during class scheduling by instructors.
  */
 export type Lesson = {
   /**
@@ -2164,14 +2173,6 @@ export type Lesson = {
    * **[REQUIRED]** Descriptive title of the lesson that clearly indicates the learning content.
    */
   title: string;
-  /**
-   * **[REQUIRED]** Estimated lesson duration in hours.
-   */
-  duration_hours: number;
-  /**
-   * **[REQUIRED]** Additional lesson duration in minutes (0-59).
-   */
-  duration_minutes: number;
   /**
    * **[OPTIONAL]** Detailed description of the lesson content and what students will learn.
    */
@@ -2205,10 +2206,6 @@ export type Lesson = {
    * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
    */
   readonly is_published?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable format of lesson duration.
-   */
-  readonly duration_display?: string;
   /**
    * **[READ-ONLY]** Formatted lesson sequence for display purposes.
    */
@@ -2689,7 +2686,7 @@ export type CommerceCatalogItemUpsertRequest = {
    */
   medusa_variant_id: string;
   /**
-   * Currency code for the variant
+   * Currency code for the variant. Defaults to the platform currency when omitted.
    */
   currency_code?: string;
   /**
@@ -2943,6 +2940,69 @@ export type ScheduledInstance = {
 };
 
 /**
+ * Lesson scheduling metadata scoped to a class definition
+ */
+export type ClassLessonPlan = {
+  /**
+   * **[READ-ONLY]** Unique identifier for this class lesson plan entry.
+   */
+  readonly uuid?: string;
+  /**
+   * **[REQUIRED]** Class definition that owns this plan entry.
+   */
+  class_definition_uuid?: string;
+  /**
+   * **[REQUIRED]** Lesson the plan entry references.
+   */
+  lesson_uuid?: string;
+  /**
+   * **[OPTIONAL]** Planned start timestamp in UTC.
+   */
+  scheduled_start?: Date;
+  /**
+   * **[OPTIONAL]** Planned end timestamp in UTC.
+   */
+  scheduled_end?: Date;
+  /**
+   * **[OPTIONAL]** Reference to a concrete scheduled instance created by timetabling.
+   */
+  scheduled_instance_uuid?: string;
+  /**
+   * **[OPTIONAL]** Instructor assigned to deliver this lesson.
+   */
+  instructor_uuid?: string;
+  /**
+   * **[OPTIONAL]** Trainer notes or reminders for the lesson.
+   */
+  notes?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when this plan entry was created.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** User identifier who created the plan entry.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the plan entry was last updated.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** User identifier who last updated the plan entry.
+   */
+  readonly updated_by?: string;
+};
+
+export type ApiResponseListClassLessonPlan = {
+  success?: boolean;
+  data?: Array<ClassLessonPlan>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
  * Recurrence pattern configuration for class scheduling with support for daily, weekly, and monthly patterns
  */
 export type RecurrencePattern = {
@@ -3165,6 +3225,11 @@ export type Assignment = {
    * **[REQUIRED]** Reference to the lesson UUID this assignment belongs to.
    */
   lesson_uuid: string;
+  scope?: ScopeEnum;
+  /**
+   * **[OPTIONAL]** Reference to the class definition that owns this assignment when scope is CLASS_CLONE.
+   */
+  class_definition_uuid?: string;
   /**
    * **[REQUIRED]** Title of the assignment that clearly describes its purpose.
    */
@@ -3197,6 +3262,10 @@ export type Assignment = {
    * **[OPTIONAL]** Indicates if the assignment is actively available for students. Can only be true for published assignments.
    */
   is_published?: boolean;
+  /**
+   * **[READ-ONLY]** UUID of the course-level assignment this class clone originates from.
+   */
+  readonly source_assignment_uuid?: string;
   /**
    * **[READ-ONLY]** Timestamp when the assignment was created. Automatically set by the system.
    */
@@ -3238,6 +3307,72 @@ export type ApiResponseAssignment = {
   error?: {
     [key: string]: unknown;
   };
+};
+
+/**
+ * Admin payload to update currency metadata
+ */
+export type CurrencyUpdateRequest = {
+  /**
+   * Official currency name
+   */
+  name?: string;
+  /**
+   * Optional display symbol
+   */
+  symbol?: string;
+  /**
+   * ISO numeric code
+   */
+  numeric_code?: number;
+  /**
+   * Number of fractional decimal places
+   */
+  decimal_places?: number;
+  /**
+   * Whether the currency is active
+   */
+  active?: boolean;
+};
+
+export type ApiResponseCurrency = {
+  success?: boolean;
+  data?: Currency;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type Currency = {
+  /**
+   * ISO 4217 alpha code
+   */
+  code?: string;
+  /**
+   * Official currency name
+   */
+  name?: string;
+  /**
+   * ISO numeric code
+   */
+  numericCode?: number;
+  /**
+   * Optional display symbol
+   */
+  symbol?: string;
+  /**
+   * Number of fractional decimal places
+   */
+  decimalPlaces?: number;
+  /**
+   * Indicates whether the currency is active for the platform
+   */
+  active?: boolean;
+  /**
+   * Indicates whether this is the platform default currency
+   */
+  defaultCurrency?: boolean;
 };
 
 export type ApiResponseVoid = {
@@ -3485,18 +3620,18 @@ export type ApiResponseInstructor = {
  */
 export type EnrollmentRequest = {
   /**
-   * **[REQUIRED]** Reference to the scheduled instance UUID to enroll in.
+   * **[REQUIRED]** Reference to the class definition UUID to enroll into.
    */
-  scheduled_instance_uuid: string;
+  class_definition_uuid: string;
   /**
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
 };
 
-export type ApiResponseEnrollment = {
+export type ApiResponseListEnrollment = {
   success?: boolean;
-  data?: Enrollment;
+  data?: Array<Enrollment>;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -3553,13 +3688,13 @@ export type Enrollment = {
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponse = {
@@ -3582,6 +3717,14 @@ export type CourseTrainingApplicationRequest = {
    * **[REQUIRED]** UUID of the instructor or organisation applying.
    */
   applicant_uuid: string;
+  /**
+   * **[REQUIRED]** Proposed compensation per trainee per hour for delivering this course.
+   */
+  rate_per_hour_per_head: number;
+  /**
+   * **[OPTIONAL]** ISO 4217 currency code drawn from the platform approved list. Defaults to the platform currency when omitted.
+   */
+  rate_currency?: string;
   /**
    * Optional notes to help the course creator evaluate the request.
    */
@@ -3631,6 +3774,14 @@ export type CourseTrainingApplication = {
    * **[READ-ONLY]** UUID of the applicant (Instructor or Organisation).
    */
   readonly applicant_uuid?: string;
+  /**
+   * **[READ-ONLY]** Instructor or organisation rate charged per trainee per hour.
+   */
+  readonly rate_per_hour_per_head?: number;
+  /**
+   * **[READ-ONLY]** ISO 4217 currency code for the proposed rate (managed by platform configuration).
+   */
+  readonly rate_currency?: string;
   /**
    * **[READ-ONLY]** When the application was submitted.
    */
@@ -3833,6 +3984,170 @@ export type SelectPaymentSessionRequest = {
   provider_id: string;
 };
 
+/**
+ * Class-level quiz schedule with release timing and override values
+ */
+export type ClassQuizSchedule = {
+  /**
+   * **[READ-ONLY]** Unique identifier for this class quiz schedule.
+   */
+  readonly uuid?: string;
+  /**
+   * **[REQUIRED]** Class definition that owns the quiz schedule.
+   */
+  class_definition_uuid?: string;
+  /**
+   * **[REQUIRED]** Lesson associated with the quiz for this class.
+   */
+  lesson_uuid?: string;
+  /**
+   * **[REQUIRED]** Quiz template or clone referenced by this schedule.
+   */
+  quiz_uuid?: string;
+  /**
+   * **[OPTIONAL]** Linked lesson plan entry for ordering context.
+   */
+  class_lesson_plan_uuid?: string;
+  /**
+   * **[OPTIONAL]** When the quiz is visible to students (UTC).
+   */
+  visible_at?: Date;
+  /**
+   * **[OPTIONAL]** Deadline for completing the quiz (UTC).
+   */
+  due_at?: Date;
+  /**
+   * **[OPTIONAL]** IANA timezone identifier for display purposes.
+   */
+  timezone?: string;
+  release_strategy?: ReleaseStrategyEnum;
+  /**
+   * **[OPTIONAL]** Overrides the quiz time limit (minutes) for this class.
+   */
+  time_limit_override?: number;
+  /**
+   * **[OPTIONAL]** Overrides the number of attempts allowed.
+   */
+  attempt_limit_override?: number;
+  /**
+   * **[OPTIONAL]** Overrides the passing score requirement.
+   */
+  passing_score_override?: number;
+  /**
+   * **[REQUIRED]** Instructor responsible for this quiz schedule.
+   */
+  instructor_uuid?: string;
+  /**
+   * **[OPTIONAL]** Instructor notes for this quiz schedule.
+   */
+  notes?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the schedule was created.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** User identifier who created the schedule.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the schedule was last updated.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** User identifier who last updated the schedule.
+   */
+  readonly updated_by?: string;
+};
+
+export type ApiResponseClassQuizSchedule = {
+  success?: boolean;
+  data?: ClassQuizSchedule;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Class-level assignment schedule with visibility windows and overrides
+ */
+export type ClassAssignmentSchedule = {
+  /**
+   * **[READ-ONLY]** Unique identifier for this class assignment schedule.
+   */
+  readonly uuid?: string;
+  /**
+   * **[REQUIRED]** Class definition that owns the assignment schedule.
+   */
+  class_definition_uuid?: string;
+  /**
+   * **[REQUIRED]** Lesson this assignment is associated with for the class.
+   */
+  lesson_uuid?: string;
+  /**
+   * **[REQUIRED]** Assignment template or clone that the schedule references.
+   */
+  assignment_uuid?: string;
+  /**
+   * **[OPTIONAL]** Lesson plan entry this schedule ties to.
+   */
+  class_lesson_plan_uuid?: string;
+  /**
+   * **[OPTIONAL]** When the assignment becomes visible to students (UTC).
+   */
+  visible_at?: Date;
+  /**
+   * **[OPTIONAL]** Submission deadline for the class (UTC).
+   */
+  due_at?: Date;
+  /**
+   * **[OPTIONAL]** Deadline for trainers to complete grading (UTC).
+   */
+  grading_due_at?: Date;
+  /**
+   * **[OPTIONAL]** IANA timezone identifier used when displaying deadlines.
+   */
+  timezone?: string;
+  release_strategy?: ReleaseStrategyEnum;
+  /**
+   * **[OPTIONAL]** Maximum attempts allowed for this class schedule (overrides template).
+   */
+  max_attempts?: number;
+  /**
+   * **[REQUIRED]** Instructor responsible for this assignment schedule.
+   */
+  instructor_uuid?: string;
+  /**
+   * **[OPTIONAL]** Instructor notes shown internally for context.
+   */
+  notes?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the schedule was created.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** User identifier who created the schedule.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the schedule was last updated.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** User identifier who last updated the schedule.
+   */
+  readonly updated_by?: string;
+};
+
+export type ApiResponseClassAssignmentSchedule = {
+  success?: boolean;
+  data?: ClassAssignmentSchedule;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
 export type ApiResponseAssignmentSubmission = {
   success?: boolean;
   data?: AssignmentSubmission;
@@ -3916,13 +4231,13 @@ export type AssignmentSubmission = {
    */
   readonly is_graded?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the submission based on its content type.
    */
   readonly submission_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
   /**
    * **[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.
    */
@@ -3947,6 +4262,40 @@ export type AdminDomainAssignmentRequest = {
    * Effective date for the admin assignment
    */
   effective_date?: Date;
+};
+
+/**
+ * Admin payload to register an additional platform currency
+ */
+export type CurrencyCreateRequest = {
+  /**
+   * ISO 4217 alpha code
+   */
+  code: string;
+  /**
+   * ISO numeric code
+   */
+  numeric_code?: number;
+  /**
+   * Official currency name
+   */
+  name: string;
+  /**
+   * Optional display symbol
+   */
+  symbol?: string;
+  /**
+   * Number of fractional decimal places
+   */
+  decimal_places: number;
+  /**
+   * Whether the currency is active immediately
+   */
+  active?: boolean;
+  /**
+   * Whether to set this currency as the platform default
+   */
+  default_currency?: boolean;
 };
 
 /**
@@ -4054,7 +4403,6 @@ export type Page = {
   totalPages?: number;
   first?: boolean;
   last?: boolean;
-  pageable?: PageableObject;
   size?: number;
   content?: Array<{
     [key: string]: unknown;
@@ -4062,21 +4410,22 @@ export type Page = {
   number?: number;
   sort?: SortObject;
   numberOfElements?: number;
+  pageable?: PageableObject;
   empty?: boolean;
 };
 
 export type PageableObject = {
+  offset?: bigint;
+  sort?: SortObject;
   paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
-  offset?: bigint;
-  sort?: SortObject;
   unpaged?: boolean;
 };
 
 export type SortObject = {
-  sorted?: boolean;
   empty?: boolean;
+  sorted?: boolean;
   unsorted?: boolean;
 };
 
@@ -4325,10 +4674,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -4340,6 +4685,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -4456,13 +4805,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -4714,6 +5063,15 @@ export type PagedDtoInstructorDocument = {
   links?: PageLinks;
 };
 
+export type ApiResponseEnrollment = {
+  success?: boolean;
+  data?: Enrollment;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
 export type ApiResponseListStudentSchedule = {
   success?: boolean;
   data?: Array<StudentSchedule>;
@@ -4771,27 +5129,27 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
-   */
-  readonly is_upcoming?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this class is upcoming.
+   */
+  readonly is_upcoming?: boolean;
 };
 
-export type ApiResponseListEnrollment = {
+export type ApiResponseLong = {
   success?: boolean;
-  data?: Array<Enrollment>;
+  data?: bigint;
   message?: string;
   error?: {
     [key: string]: unknown;
   };
 };
 
-export type ApiResponseLong = {
+export type ApiResponseListCurrency = {
   success?: boolean;
-  data?: bigint;
+  data?: Array<Currency>;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -4969,13 +5327,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -5156,6 +5514,24 @@ export type ApiResponseListCategory = {
 export type ApiResponseListCommerceCatalogItem = {
   success?: boolean;
   data?: Array<CommerceCatalogItem>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type ApiResponseListClassQuizSchedule = {
+  success?: boolean;
+  data?: Array<ClassQuizSchedule>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type ApiResponseListClassAssignmentSchedule = {
+  success?: boolean;
+  data?: Array<ClassAssignmentSchedule>;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -5559,6 +5935,19 @@ export const WeightUnitEnum = {
 export type WeightUnitEnum = (typeof WeightUnitEnum)[keyof typeof WeightUnitEnum];
 
 /**
+ * **[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.
+ */
+export const ScopeEnum = {
+  COURSE_TEMPLATE: 'COURSE_TEMPLATE',
+  CLASS_CLONE: 'CLASS_CLONE',
+} as const;
+
+/**
+ * **[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.
+ */
+export type ScopeEnum = (typeof ScopeEnum)[keyof typeof ScopeEnum];
+
+/**
  * **[REQUIRED]** Type of question determining the answer format and validation.
  */
 export const QuestionTypeEnum = {
@@ -5875,6 +6264,20 @@ export const StatusEnum6 = {
  * **[READ-ONLY]** Current status of the application.
  */
 export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+
+/**
+ * **[REQUIRED]** Strategy describing how this class schedule derives from the template.
+ */
+export const ReleaseStrategyEnum = {
+  INHERITED: 'INHERITED',
+  CUSTOM: 'CUSTOM',
+  CLONE: 'CLONE',
+} as const;
+
+/**
+ * **[REQUIRED]** Strategy describing how this class schedule derives from the template.
+ */
+export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof ReleaseStrategyEnum];
 
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
@@ -9056,6 +9459,74 @@ export type UpdateRecurringClassScheduleResponses = {
 export type UpdateRecurringClassScheduleResponse =
   UpdateRecurringClassScheduleResponses[keyof UpdateRecurringClassScheduleResponses];
 
+export type GetLessonPlanData = {
+  body?: never;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/lesson-plan';
+};
+
+export type GetLessonPlanErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetLessonPlanError = GetLessonPlanErrors[keyof GetLessonPlanErrors];
+
+export type GetLessonPlanResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListClassLessonPlan;
+};
+
+export type GetLessonPlanResponse = GetLessonPlanResponses[keyof GetLessonPlanResponses];
+
+export type SaveLessonPlanData = {
+  body: Array<ClassLessonPlan>;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/lesson-plan';
+};
+
+export type SaveLessonPlanErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SaveLessonPlanError = SaveLessonPlanErrors[keyof SaveLessonPlanErrors];
+
+export type SaveLessonPlanResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListClassLessonPlan;
+};
+
+export type SaveLessonPlanResponse = SaveLessonPlanResponses[keyof SaveLessonPlanResponses];
+
 export type DeleteClassRecurrencePatternData = {
   body?: never;
   path: {
@@ -9425,6 +9896,37 @@ export type UpdateAssignmentResponses = {
 };
 
 export type UpdateAssignmentResponse = UpdateAssignmentResponses[keyof UpdateAssignmentResponses];
+
+export type UpdateCurrencyData = {
+  body: CurrencyUpdateRequest;
+  path: {
+    code: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/currencies/{code}';
+};
+
+export type UpdateCurrencyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCurrencyError = UpdateCurrencyErrors[keyof UpdateCurrencyErrors];
+
+export type UpdateCurrencyResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCurrency;
+};
+
+export type UpdateCurrencyResponse = UpdateCurrencyResponses[keyof UpdateCurrencyResponses];
 
 export type DeclineInvitationData = {
   body?: never;
@@ -11813,15 +12315,15 @@ export type EnrollStudentErrors = {
   /**
    * Invalid enrollment request or conflicts
    */
-  400: ApiResponseEnrollment;
+  400: ApiResponseListEnrollment;
   /**
-   * Scheduled instance not found
+   * Class definition or scheduled instances not found
    */
   404: ResponseDtoVoid;
   /**
    * Student already enrolled
    */
-  409: ApiResponseEnrollment;
+  409: ApiResponseListEnrollment;
   /**
    * Internal Server Error
    */
@@ -11834,7 +12336,7 @@ export type EnrollStudentResponses = {
   /**
    * Student enrolled successfully
    */
-  201: ApiResponseEnrollment;
+  201: ApiResponseListEnrollment;
 };
 
 export type EnrollStudentResponse = EnrollStudentResponses[keyof EnrollStudentResponses];
@@ -13326,6 +13828,147 @@ export type CreateClassDefinitionResponses = {
 export type CreateClassDefinitionResponse =
   CreateClassDefinitionResponses[keyof CreateClassDefinitionResponses];
 
+export type GetQuizSchedulesData = {
+  body?: never;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/quizzes';
+};
+
+export type GetQuizSchedulesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetQuizSchedulesError = GetQuizSchedulesErrors[keyof GetQuizSchedulesErrors];
+
+export type GetQuizSchedulesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListClassQuizSchedule;
+};
+
+export type GetQuizSchedulesResponse = GetQuizSchedulesResponses[keyof GetQuizSchedulesResponses];
+
+export type CreateQuizScheduleData = {
+  body: ClassQuizSchedule;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/quizzes';
+};
+
+export type CreateQuizScheduleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateQuizScheduleError = CreateQuizScheduleErrors[keyof CreateQuizScheduleErrors];
+
+export type CreateQuizScheduleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassQuizSchedule;
+};
+
+export type CreateQuizScheduleResponse =
+  CreateQuizScheduleResponses[keyof CreateQuizScheduleResponses];
+
+export type GetAssignmentSchedulesData = {
+  body?: never;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/assignments';
+};
+
+export type GetAssignmentSchedulesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetAssignmentSchedulesError =
+  GetAssignmentSchedulesErrors[keyof GetAssignmentSchedulesErrors];
+
+export type GetAssignmentSchedulesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListClassAssignmentSchedule;
+};
+
+export type GetAssignmentSchedulesResponse =
+  GetAssignmentSchedulesResponses[keyof GetAssignmentSchedulesResponses];
+
+export type CreateAssignmentScheduleData = {
+  body: ClassAssignmentSchedule;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/assignments';
+};
+
+export type CreateAssignmentScheduleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateAssignmentScheduleError =
+  CreateAssignmentScheduleErrors[keyof CreateAssignmentScheduleErrors];
+
+export type CreateAssignmentScheduleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassAssignmentSchedule;
+};
+
+export type CreateAssignmentScheduleResponse =
+  CreateAssignmentScheduleResponses[keyof CreateAssignmentScheduleResponses];
+
 export type CreateClassRecurrencePatternData = {
   body: RecurrencePattern;
   path?: never;
@@ -14027,6 +14670,157 @@ export type UnverifyInstructorResponses = {
 export type UnverifyInstructorResponse =
   UnverifyInstructorResponses[keyof UnverifyInstructorResponses];
 
+export type ListAllData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/admin/currencies';
+};
+
+export type ListAllErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListAllError = ListAllErrors[keyof ListAllErrors];
+
+export type ListAllResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCurrency;
+};
+
+export type ListAllResponse = ListAllResponses[keyof ListAllResponses];
+
+export type CreateCurrencyData = {
+  body: CurrencyCreateRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/admin/currencies';
+};
+
+export type CreateCurrencyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateCurrencyError = CreateCurrencyErrors[keyof CreateCurrencyErrors];
+
+export type CreateCurrencyResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCurrency;
+};
+
+export type CreateCurrencyResponse = CreateCurrencyResponses[keyof CreateCurrencyResponses];
+
+export type MakeDefaultData = {
+  body?: never;
+  path: {
+    code: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/currencies/{code}/default';
+};
+
+export type MakeDefaultErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type MakeDefaultError = MakeDefaultErrors[keyof MakeDefaultErrors];
+
+export type MakeDefaultResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCurrency;
+};
+
+export type MakeDefaultResponse = MakeDefaultResponses[keyof MakeDefaultResponses];
+
+export type DeactivateData = {
+  body?: never;
+  path: {
+    code: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/currencies/{code}/deactivate';
+};
+
+export type DeactivateErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeactivateError = DeactivateErrors[keyof DeactivateErrors];
+
+export type DeactivateResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCurrency;
+};
+
+export type DeactivateResponse = DeactivateResponses[keyof DeactivateResponses];
+
+export type ActivateData = {
+  body?: never;
+  path: {
+    code: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/currencies/{code}/activate';
+};
+
+export type ActivateErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ActivateError = ActivateErrors[keyof ActivateErrors];
+
+export type ActivateResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCurrency;
+};
+
+export type ActivateResponse = ActivateResponses[keyof ActivateResponses];
+
 export type UpdateScheduledInstanceStatusData = {
   body?: never;
   path: {
@@ -14220,6 +15014,158 @@ export type UpdateCartResponses = {
 };
 
 export type UpdateCartResponse = UpdateCartResponses[keyof UpdateCartResponses];
+
+export type DeleteQuizScheduleData = {
+  body?: never;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+    /**
+     * Quiz schedule UUID
+     */
+    scheduleUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/quizzes/{scheduleUuid}';
+};
+
+export type DeleteQuizScheduleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteQuizScheduleError = DeleteQuizScheduleErrors[keyof DeleteQuizScheduleErrors];
+
+export type DeleteQuizScheduleResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateQuizScheduleData = {
+  body: ClassQuizSchedule;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+    /**
+     * Quiz schedule UUID
+     */
+    scheduleUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/quizzes/{scheduleUuid}';
+};
+
+export type UpdateQuizScheduleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateQuizScheduleError = UpdateQuizScheduleErrors[keyof UpdateQuizScheduleErrors];
+
+export type UpdateQuizScheduleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassQuizSchedule;
+};
+
+export type UpdateQuizScheduleResponse =
+  UpdateQuizScheduleResponses[keyof UpdateQuizScheduleResponses];
+
+export type DeleteAssignmentScheduleData = {
+  body?: never;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+    /**
+     * Assignment schedule UUID
+     */
+    scheduleUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/assignments/{scheduleUuid}';
+};
+
+export type DeleteAssignmentScheduleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteAssignmentScheduleError =
+  DeleteAssignmentScheduleErrors[keyof DeleteAssignmentScheduleErrors];
+
+export type DeleteAssignmentScheduleResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateAssignmentScheduleData = {
+  body: ClassAssignmentSchedule;
+  path: {
+    /**
+     * Class definition UUID
+     */
+    classUuid: string;
+    /**
+     * Assignment schedule UUID
+     */
+    scheduleUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{classUuid}/assignments/{scheduleUuid}';
+};
+
+export type UpdateAssignmentScheduleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateAssignmentScheduleError =
+  UpdateAssignmentScheduleErrors[keyof UpdateAssignmentScheduleErrors];
+
+export type UpdateAssignmentScheduleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassAssignmentSchedule;
+};
+
+export type UpdateAssignmentScheduleResponse =
+  UpdateAssignmentScheduleResponses[keyof UpdateAssignmentScheduleResponses];
 
 export type GetAllUsersData = {
   body?: never;
@@ -17004,6 +17950,67 @@ export type HasCapacityForEnrollmentResponses = {
 
 export type HasCapacityForEnrollmentResponse =
   HasCapacityForEnrollmentResponses[keyof HasCapacityForEnrollmentResponses];
+
+export type ListActiveCurrenciesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/currencies';
+};
+
+export type ListActiveCurrenciesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListActiveCurrenciesError =
+  ListActiveCurrenciesErrors[keyof ListActiveCurrenciesErrors];
+
+export type ListActiveCurrenciesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCurrency;
+};
+
+export type ListActiveCurrenciesResponse =
+  ListActiveCurrenciesResponses[keyof ListActiveCurrenciesResponses];
+
+export type GetDefaultCurrencyData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/currencies/default';
+};
+
+export type GetDefaultCurrencyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetDefaultCurrencyError = GetDefaultCurrencyErrors[keyof GetDefaultCurrencyErrors];
+
+export type GetDefaultCurrencyResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCurrency;
+};
+
+export type GetDefaultCurrencyResponse =
+  GetDefaultCurrencyResponses[keyof GetDefaultCurrencyResponses];
 
 export type GetStatusTransitionsData = {
   body?: never;

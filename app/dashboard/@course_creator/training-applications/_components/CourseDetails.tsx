@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Course } from '@/services/client';
 import {
@@ -17,8 +18,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileUser } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import Spinner from '../../../../../components/ui/spinner';
 import { CustomLoadingState } from '../../_components/loading-state';
+import InstructorDetailsModal from './InstructorDetailsModal';
 
 interface CourseDetailsProps {
   course: Course;
@@ -28,6 +29,9 @@ interface CourseDetailsProps {
 export default function CourseDetails({ course, className = '' }: CourseDetailsProps) {
   const [tab, setTab] = useState('pending');
   const qc = useQueryClient();
+
+  const [instructorModalOpen, setInstructorModalOpen] = useState(false);
+  const [selectedInstructor, setSelectedInstructor] = useState<any | null>(null);
 
   const {
     data: applications,
@@ -94,21 +98,29 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
         {isLoading && isFetching ? (
           <Spinner />
         ) : (
-          <Card key={app.uuid}>
+          <Card
+            key={app.uuid}
+            className='hover:bg-muted/40 cursor-pointer transition'
+            onClick={() => {
+              setSelectedInstructor(app);
+              setInstructorModalOpen(true);
+            }}
+          >
+            {' '}
             <CardHeader className='flex flex-row items-center justify-between'>
               <CardTitle className='text-base'>Application by {app.applicant_type}</CardTitle>
               <span
-                className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${app.status === 'pending'
+                className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${
+                  app.status === 'pending'
                     ? 'bg-yellow-100 text-yellow-800'
                     : app.status === 'approved'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
-                  }`}
+                }`}
               >
                 {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
               </span>
             </CardHeader>
-
             <CardContent className='space-y-3'>
               <div className=''>
                 <div>
@@ -297,8 +309,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                   className='data-[state=active]:bg-primary data-[state=active]:text-white'
                 >
                   Revoked
-                  {/* @ts-ignore */}
-                  ({applicationData.filter(a => a.status === 'revoked').length})
+                  {/* @ts-ignore */}({applicationData.filter(a => a.status === 'revoked').length})
                 </TabsTrigger>
               </TabsList>
 
@@ -315,6 +326,12 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
           </Card>
         )}
       </div>
+
+      <InstructorDetailsModal
+        open={instructorModalOpen}
+        setOpen={setInstructorModalOpen}
+        instructor={selectedInstructor}
+      />
 
       <NotesModal
         open={notesModalOpen}
