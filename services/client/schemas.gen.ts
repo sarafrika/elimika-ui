@@ -1289,6 +1289,9 @@ export const QuizSchema = {
   example: {
     uuid: 'q1u2i3z4-5a6s-7s8e-9s10-abcdefghijkl',
     lesson_uuid: 'l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl',
+    scope: 'COURSE_TEMPLATE',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    source_quiz_uuid: 'q1u2i3z4-5a6s-sourcequiz-abcdefghijkl',
     title: 'OOP Concepts Quiz',
     description: 'Test your understanding of object-oriented programming fundamentals',
     instructions: 'Answer all questions. You have 30 minutes to complete this quiz.',
@@ -1321,6 +1324,16 @@ export const QuizSchema = {
       format: 'uuid',
       description: '**[REQUIRED]** Reference to the lesson UUID that contains this quiz.',
       example: 'l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl',
+    },
+    scope: {
+      $ref: '#/components/schemas/ScopeEnum',
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the class definition that owns this quiz when scope is CLASS_CLONE.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
     },
     title: {
       type: 'string',
@@ -1383,6 +1396,14 @@ export const QuizSchema = {
       description:
         '**[OPTIONAL]** Indicates if the quiz is actively available to students. Can only be true for published quizzes.',
       example: true,
+    },
+    source_quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** UUID of the course-level quiz that served as the template for this class clone.',
+      example: 'q1u2i3z4-5a6s-sourcequiz-abcdefghijkl',
+      readOnly: true,
     },
     created_date: {
       type: 'string',
@@ -1563,16 +1584,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: 2,
-      readOnly: true,
-    },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: 2,
       readOnly: true,
     },
   },
@@ -3855,7 +3876,7 @@ export const CourseSchema = {
     minimum_training_fee: {
       type: 'number',
       description:
-        '**[OPTIONAL]** Minimum training fee that any instructor-led class for this course must meet or exceed.',
+        '**[OPTIONAL]** Minimum rate per trainee per hour that any instructor-led class for this course must meet or exceed.',
       example: 180,
       minimum: 0,
     },
@@ -4399,14 +4420,13 @@ export const ApiResponseCourseRequirementSchema = {
 
 export const LessonSchema = {
   type: 'object',
-  description: 'Individual lesson within a course containing structured learning content',
+  description:
+    'Individual lesson within a course containing structured learning content. Lesson timing is now defined during class scheduling by instructors.',
   example: {
     uuid: 'l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl',
     course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
     lesson_number: 3,
     title: 'Object-Oriented Programming Fundamentals',
-    duration_hours: 2,
-    duration_minutes: 30,
     description:
       'Introduction to OOP concepts including classes, objects, inheritance, and polymorphism',
     learning_objectives:
@@ -4417,7 +4437,6 @@ export const LessonSchema = {
     created_by: 'instructor@sarafrika.com',
     updated_date: '2024-04-15T15:30:00',
     updated_by: 'instructor@sarafrika.com',
-    duration_display: '2 hours 30 minutes',
     is_published: true,
     lesson_sequence: 'Lesson 3',
   },
@@ -4451,21 +4470,6 @@ export const LessonSchema = {
       example: 'Object-Oriented Programming Fundamentals',
       maxLength: 255,
       minLength: 0,
-    },
-    duration_hours: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[REQUIRED]** Estimated lesson duration in hours.',
-      example: 2,
-      minimum: 0,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[REQUIRED]** Additional lesson duration in minutes (0-59).',
-      example: 30,
-      maximum: 59,
-      minimum: 0,
     },
     description: {
       type: 'string',
@@ -4530,12 +4534,6 @@ export const LessonSchema = {
       example: true,
       readOnly: true,
     },
-    duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of lesson duration.',
-      example: 2,
-      readOnly: true,
-    },
     lesson_sequence: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted lesson sequence for display purposes.',
@@ -4543,14 +4541,7 @@ export const LessonSchema = {
       readOnly: true,
     },
   },
-  required: [
-    'course_uuid',
-    'duration_hours',
-    'duration_minutes',
-    'lesson_number',
-    'status',
-    'title',
-  ],
+  required: ['course_uuid', 'lesson_number', 'status', 'title'],
 } as const;
 
 export const ApiResponseLessonSchema = {
@@ -5506,7 +5497,7 @@ export const CommerceCatalogItemUpsertRequestSchema = {
     },
     currency_code: {
       type: 'string',
-      description: 'Currency code for the variant',
+      description: 'Currency code for the variant. Defaults to the platform currency when omitted.',
       example: 'USD',
     },
     active: {
@@ -5974,6 +5965,123 @@ export const ScheduledInstanceSchema = {
   ],
 } as const;
 
+export const ClassLessonPlanSchema = {
+  type: 'object',
+  description: 'Lesson scheduling metadata scoped to a class definition',
+  example: {
+    uuid: 'clp-1234-5678-90ab-cdef12345678',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
+    scheduled_start: '2024-05-10T09:00:00',
+    scheduled_end: '2024-05-10T10:30:00',
+    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
+    instructor_uuid: 'inst1234-5678-90ab-cdef123456789abc',
+    notes: 'Cover prerequisite concepts from the bootcamp cohort.',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-02T08:30:00',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for this class lesson plan entry.',
+      example: 'clp-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Class definition that owns this plan entry.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Lesson the plan entry references.',
+      example: 'lesson-1234-5678-90ab-cdef12345678',
+    },
+    scheduled_start: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Planned start timestamp in UTC.',
+      example: '2024-05-10T09:00:00',
+    },
+    scheduled_end: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Planned end timestamp in UTC.',
+      example: '2024-05-10T10:30:00',
+    },
+    scheduled_instance_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to a concrete scheduled instance created by timetabling.',
+      example: 'si123456-7890-abcd-ef01-234567890abc',
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Instructor assigned to deliver this lesson.',
+      example: 'inst1234-5678-90ab-cdef123456789abc',
+    },
+    notes: {
+      type: 'string',
+      description: '**[OPTIONAL]** Trainer notes or reminders for the lesson.',
+      example: 'Cover prerequisite concepts from the bootcamp cohort.',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when this plan entry was created.',
+      example: '2024-04-01T12:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User identifier who created the plan entry.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the plan entry was last updated.',
+      example: '2024-04-02T08:30:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User identifier who last updated the plan entry.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponseListClassLessonPlanSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassLessonPlan',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const RecurrencePatternSchema = {
   type: 'object',
   description:
@@ -6410,6 +6518,9 @@ export const AssignmentSchema = {
   example: {
     uuid: 'a1s2s3g4-5n6m-7e8n-9t10-abcdefghijkl',
     lesson_uuid: 'l1e2s3s4-5o6n-7u8u-9i10-abcdefghijkl',
+    scope: 'COURSE_TEMPLATE',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    source_assignment_uuid: 'a1s2s3g4-5n6m-7e8n-9t10-sourceassign',
     title: 'Music Theory Fundamentals Assignment',
     description:
       'Comprehensive assignment covering basic music theory concepts including scales, intervals, and chord progressions',
@@ -6445,6 +6556,16 @@ export const AssignmentSchema = {
       format: 'uuid',
       description: '**[REQUIRED]** Reference to the lesson UUID this assignment belongs to.',
       example: 'l1e2s3s4-5o6n-7u8u-9i10-abcdefghijkl',
+    },
+    scope: {
+      $ref: '#/components/schemas/ScopeEnum',
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the class definition that owns this assignment when scope is CLASS_CLONE.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
     },
     title: {
       type: 'string',
@@ -6500,6 +6621,14 @@ export const AssignmentSchema = {
       description:
         '**[OPTIONAL]** Indicates if the assignment is actively available for students. Can only be true for published assignments.',
       example: true,
+    },
+    source_assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** UUID of the course-level assignment this class clone originates from.',
+      example: 'a1s2s3g4-5n6m-7e8n-9t10-sourceassign',
+      readOnly: true,
     },
     created_date: {
       type: 'string',
@@ -6574,6 +6703,104 @@ export const ApiResponseAssignmentSchema = {
     },
     error: {
       type: 'object',
+    },
+  },
+} as const;
+
+export const CurrencyUpdateRequestSchema = {
+  type: 'object',
+  description: 'Admin payload to update currency metadata',
+  properties: {
+    name: {
+      type: 'string',
+      description: 'Official currency name',
+      example: 'Kenyan Shilling',
+      maxLength: 128,
+      minLength: 0,
+    },
+    symbol: {
+      type: 'string',
+      description: 'Optional display symbol',
+      example: 'KES',
+      maxLength: 16,
+      minLength: 0,
+    },
+    numeric_code: {
+      type: 'integer',
+      format: 'int32',
+      description: 'ISO numeric code',
+      example: 404,
+    },
+    decimal_places: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Number of fractional decimal places',
+      example: 2,
+      maximum: 6,
+      minimum: 0,
+    },
+    active: {
+      type: 'boolean',
+      description: 'Whether the currency is active',
+    },
+  },
+} as const;
+
+export const ApiResponseCurrencySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/Currency',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CurrencySchema = {
+  type: 'object',
+  properties: {
+    code: {
+      type: 'string',
+      description: 'ISO 4217 alpha code',
+      example: 'KES',
+    },
+    name: {
+      type: 'string',
+      description: 'Official currency name',
+      example: 'Kenyan Shilling',
+    },
+    numericCode: {
+      type: 'integer',
+      format: 'int32',
+      description: 'ISO numeric code',
+      example: 404,
+    },
+    symbol: {
+      type: 'string',
+      description: 'Optional display symbol',
+      example: 'KES',
+    },
+    decimalPlaces: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Number of fractional decimal places',
+      example: 2,
+    },
+    active: {
+      type: 'boolean',
+      description: 'Indicates whether the currency is active for the platform',
+    },
+    defaultCurrency: {
+      type: 'boolean',
+      description: 'Indicates whether this is the platform default currency',
     },
   },
 } as const;
@@ -7084,15 +7311,15 @@ export const EnrollmentRequestSchema = {
   type: 'object',
   description: 'Request to enroll a student in a scheduled class instance',
   example: {
-    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
     student_uuid: 'st123456-7890-abcd-ef01-234567890abc',
   },
   properties: {
-    scheduled_instance_uuid: {
+    class_definition_uuid: {
       type: 'string',
       format: 'uuid',
-      description: '**[REQUIRED]** Reference to the scheduled instance UUID to enroll in.',
-      example: 'si123456-7890-abcd-ef01-234567890abc',
+      description: '**[REQUIRED]** Reference to the class definition UUID to enroll into.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
     },
     student_uuid: {
       type: 'string',
@@ -7101,17 +7328,20 @@ export const EnrollmentRequestSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
   },
-  required: ['scheduled_instance_uuid', 'student_uuid'],
+  required: ['class_definition_uuid', 'student_uuid'],
 } as const;
 
-export const ApiResponseEnrollmentSchema = {
+export const ApiResponseListEnrollmentSchema = {
   type: 'object',
   properties: {
     success: {
       type: 'boolean',
     },
     data: {
-      $ref: '#/components/schemas/Enrollment',
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Enrollment',
+      },
     },
     message: {
       type: 'string',
@@ -7214,16 +7444,16 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -7254,6 +7484,8 @@ export const CourseTrainingApplicationRequestSchema = {
   example: {
     applicant_type: 'instructor',
     applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    rate_per_hour_per_head: 2500,
+    rate_currency: 'KES',
     application_notes: 'I hold the vendor certification required for this course.',
   },
   properties: {
@@ -7265,6 +7497,21 @@ export const CourseTrainingApplicationRequestSchema = {
       format: 'uuid',
       description: '**[REQUIRED]** UUID of the instructor or organisation applying.',
     },
+    rate_per_hour_per_head: {
+      type: 'number',
+      description:
+        '**[REQUIRED]** Proposed compensation per trainee per hour for delivering this course.',
+      example: 2500,
+      minimum: 0,
+    },
+    rate_currency: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** ISO 4217 currency code drawn from the platform approved list. Defaults to the platform currency when omitted.',
+      example: 'KES',
+      maxLength: 3,
+      pattern: '^[A-Za-z]{3}$',
+    },
     application_notes: {
       type: 'string',
       description: 'Optional notes to help the course creator evaluate the request.',
@@ -7272,7 +7519,7 @@ export const CourseTrainingApplicationRequestSchema = {
       minLength: 0,
     },
   },
-  required: ['applicant_type', 'applicant_uuid'],
+  required: ['applicant_type', 'applicant_uuid', 'rate_per_hour_per_head'],
 } as const;
 
 export const ApiResponseCourseTrainingApplicationSchema = {
@@ -7302,6 +7549,8 @@ export const CourseTrainingApplicationSchema = {
     applicant_type: 'instructor',
     applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
     status: 'pending',
+    rate_per_hour_per_head: 2500,
+    rate_currency: 'KES',
     application_notes: 'I have delivered similar courses for 5 years.',
     review_notes: null,
     reviewed_by: null,
@@ -7351,6 +7600,19 @@ export const CourseTrainingApplicationSchema = {
       type: 'string',
       format: 'uuid',
       description: '**[READ-ONLY]** UUID of the applicant (Instructor or Organisation).',
+      readOnly: true,
+    },
+    rate_per_hour_per_head: {
+      type: 'number',
+      description: '**[READ-ONLY]** Instructor or organisation rate charged per trainee per hour.',
+      example: 2500,
+      readOnly: true,
+    },
+    rate_currency: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** ISO 4217 currency code for the proposed rate (managed by platform configuration).',
+      example: 'KES',
       readOnly: true,
     },
     created_date: {
@@ -7638,6 +7900,301 @@ export const SelectPaymentSessionRequestSchema = {
   required: ['provider_id'],
 } as const;
 
+export const ClassQuizScheduleSchema = {
+  type: 'object',
+  description: 'Class-level quiz schedule with release timing and override values',
+  example: {
+    uuid: 'cqs-1234-5678-90ab-cdef12345678',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
+    quiz_uuid: 'quiz-1234-5678-90ab-cdef12345678',
+    class_lesson_plan_uuid: 'clp-1234-5678-90ab-cdef12345678',
+    visible_at: '2024-05-09T07:00:00',
+    due_at: '2024-05-09T23:59:00',
+    timezone: 'Africa/Nairobi',
+    release_strategy: 'CUSTOM',
+    time_limit_override: 45,
+    attempt_limit_override: 2,
+    passing_score_override: 75.5,
+    instructor_uuid: 'inst1234-5678-90ab-cdef123456789abc',
+    notes: 'Extend time limit for the evening session.',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-03T10:00:00',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for this class quiz schedule.',
+      example: 'cqs-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Class definition that owns the quiz schedule.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Lesson associated with the quiz for this class.',
+      example: 'lesson-1234-5678-90ab-cdef12345678',
+    },
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Quiz template or clone referenced by this schedule.',
+      example: 'quiz-1234-5678-90ab-cdef12345678',
+    },
+    class_lesson_plan_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Linked lesson plan entry for ordering context.',
+      example: 'clp-1234-5678-90ab-cdef12345678',
+    },
+    visible_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** When the quiz is visible to students (UTC).',
+      example: '2024-05-09T07:00:00',
+    },
+    due_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Deadline for completing the quiz (UTC).',
+      example: '2024-05-09T23:59:00',
+    },
+    timezone: {
+      type: 'string',
+      description: '**[OPTIONAL]** IANA timezone identifier for display purposes.',
+      example: 'Africa/Nairobi',
+    },
+    release_strategy: {
+      $ref: '#/components/schemas/ReleaseStrategyEnum',
+    },
+    time_limit_override: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Overrides the quiz time limit (minutes) for this class.',
+      example: 45,
+    },
+    attempt_limit_override: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Overrides the number of attempts allowed.',
+      example: 2,
+    },
+    passing_score_override: {
+      type: 'number',
+      description: '**[OPTIONAL]** Overrides the passing score requirement.',
+      example: 75.5,
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Instructor responsible for this quiz schedule.',
+      example: 'inst1234-5678-90ab-cdef123456789abc',
+    },
+    notes: {
+      type: 'string',
+      description: '**[OPTIONAL]** Instructor notes for this quiz schedule.',
+      example: 'Extend time limit for the evening session.',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the schedule was created.',
+      example: '2024-04-01T12:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User identifier who created the schedule.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the schedule was last updated.',
+      example: '2024-04-03T10:00:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User identifier who last updated the schedule.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponseClassQuizScheduleSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassQuizSchedule',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ClassAssignmentScheduleSchema = {
+  type: 'object',
+  description: 'Class-level assignment schedule with visibility windows and overrides',
+  example: {
+    uuid: 'cas-1234-5678-90ab-cdef12345678',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
+    assignment_uuid: 'assign-1234-5678-90ab-cdef12345678',
+    class_lesson_plan_uuid: 'clp-1234-5678-90ab-cdef12345678',
+    visible_at: '2024-05-08T07:00:00',
+    due_at: '2024-05-12T23:59:00',
+    grading_due_at: '2024-05-15T17:00:00',
+    timezone: 'Africa/Nairobi',
+    release_strategy: 'CUSTOM',
+    max_attempts: 2,
+    instructor_uuid: 'inst1234-5678-90ab-cdef123456789abc',
+    notes: 'Extend due date for the Nairobi cohort.',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-03T09:15:00',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for this class assignment schedule.',
+      example: 'cas-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Class definition that owns the assignment schedule.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Lesson this assignment is associated with for the class.',
+      example: 'lesson-1234-5678-90ab-cdef12345678',
+    },
+    assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Assignment template or clone that the schedule references.',
+      example: 'assign-1234-5678-90ab-cdef12345678',
+    },
+    class_lesson_plan_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Lesson plan entry this schedule ties to.',
+      example: 'clp-1234-5678-90ab-cdef12345678',
+    },
+    visible_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** When the assignment becomes visible to students (UTC).',
+      example: '2024-05-08T07:00:00',
+    },
+    due_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Submission deadline for the class (UTC).',
+      example: '2024-05-12T23:59:00',
+    },
+    grading_due_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Deadline for trainers to complete grading (UTC).',
+      example: '2024-05-15T17:00:00',
+    },
+    timezone: {
+      type: 'string',
+      description: '**[OPTIONAL]** IANA timezone identifier used when displaying deadlines.',
+      example: 'Africa/Nairobi',
+    },
+    release_strategy: {
+      $ref: '#/components/schemas/ReleaseStrategyEnum',
+    },
+    max_attempts: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Maximum attempts allowed for this class schedule (overrides template).',
+      example: 2,
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Instructor responsible for this assignment schedule.',
+      example: 'inst1234-5678-90ab-cdef123456789abc',
+    },
+    notes: {
+      type: 'string',
+      description: '**[OPTIONAL]** Instructor notes shown internally for context.',
+      example: 'Extend due date for the Nairobi cohort.',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the schedule was created.',
+      example: '2024-04-01T12:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User identifier who created the schedule.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the schedule was last updated.',
+      example: '2024-04-03T09:15:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** User identifier who last updated the schedule.',
+      example: 'instructor@sarafrika.com',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponseClassAssignmentScheduleSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassAssignmentSchedule',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const ApiResponseAssignmentSubmissionSchema = {
   type: 'object',
   properties: {
@@ -7813,17 +8370,17 @@ export const AssignmentSubmissionSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
     submission_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the submission based on its content type.',
       example: 'Mixed Media Submission',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
       readOnly: true,
     },
     submission_status_display: {
@@ -7868,6 +8425,61 @@ export const AdminDomainAssignmentRequestSchema = {
     },
   },
   required: ['assignment_type', 'domain_name'],
+} as const;
+
+export const CurrencyCreateRequestSchema = {
+  type: 'object',
+  description: 'Admin payload to register an additional platform currency',
+  properties: {
+    code: {
+      type: 'string',
+      description: 'ISO 4217 alpha code',
+      example: 'KES',
+      maxLength: 3,
+      minLength: 3,
+      pattern: '^[A-Za-z]{3}$',
+    },
+    numeric_code: {
+      type: 'integer',
+      format: 'int32',
+      description: 'ISO numeric code',
+      example: 404,
+    },
+    name: {
+      type: 'string',
+      description: 'Official currency name',
+      example: 'Kenyan Shilling',
+      maxLength: 128,
+      minLength: 0,
+    },
+    symbol: {
+      type: 'string',
+      description: 'Optional display symbol',
+      example: 'KES',
+      maxLength: 16,
+      minLength: 0,
+    },
+    decimal_places: {
+      type: 'integer',
+      format: 'int32',
+      default: '2',
+      description: 'Number of fractional decimal places',
+      example: 2,
+      maximum: 6,
+      minimum: 0,
+    },
+    active: {
+      type: 'boolean',
+      default: 'true',
+      description: 'Whether the currency is active immediately',
+    },
+    default_currency: {
+      type: 'boolean',
+      default: 'false',
+      description: 'Whether to set this currency as the platform default',
+    },
+  },
+  required: ['code', 'decimal_places', 'name'],
 } as const;
 
 export const UpdateCartRequestSchema = {
@@ -8109,9 +8721,6 @@ export const PageSchema = {
     last: {
       type: 'boolean',
     },
-    pageable: {
-      $ref: '#/components/schemas/PageableObject',
-    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -8133,6 +8742,9 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
+    pageable: {
+      $ref: '#/components/schemas/PageableObject',
+    },
     empty: {
       type: 'boolean',
     },
@@ -8142,6 +8754,13 @@ export const PageSchema = {
 export const PageableObjectSchema = {
   type: 'object',
   properties: {
+    offset: {
+      type: 'integer',
+      format: 'int64',
+    },
+    sort: {
+      $ref: '#/components/schemas/SortObject',
+    },
     paged: {
       type: 'boolean',
     },
@@ -8153,13 +8772,6 @@ export const PageableObjectSchema = {
       type: 'integer',
       format: 'int32',
     },
-    offset: {
-      type: 'integer',
-      format: 'int64',
-    },
-    sort: {
-      $ref: '#/components/schemas/SortObject',
-    },
     unpaged: {
       type: 'boolean',
     },
@@ -8169,10 +8781,10 @@ export const PageableObjectSchema = {
 export const SortObjectSchema = {
   type: 'object',
   properties: {
-    sorted: {
+    empty: {
       type: 'boolean',
     },
-    empty: {
+    sorted: {
       type: 'boolean',
     },
     unsorted: {
@@ -8721,12 +9333,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -8743,6 +9349,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
       readOnly: true,
     },
   },
@@ -9003,16 +9615,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -9578,6 +10190,24 @@ export const PagedDTOInstructorDocumentSchema = {
   },
 } as const;
 
+export const ApiResponseEnrollmentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/Enrollment',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const ApiResponseListStudentScheduleSchema = {
   type: 'object',
   properties: {
@@ -9694,38 +10324,17 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    is_upcoming: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended this class.',
       example: false,
       readOnly: true,
     },
-  },
-} as const;
-
-export const ApiResponseListEnrollmentSchema = {
-  type: 'object',
-  properties: {
-    success: {
+    is_upcoming: {
       type: 'boolean',
-    },
-    data: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/Enrollment',
-      },
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
+      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
+      example: true,
+      readOnly: true,
     },
   },
 } as const;
@@ -9739,6 +10348,27 @@ export const ApiResponseLongSchema = {
     data: {
       type: 'integer',
       format: 'int64',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseListCurrencySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Currency',
+      },
     },
     message: {
       type: 'string',
@@ -10134,16 +10764,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -10550,6 +11180,48 @@ export const ApiResponseListCommerceCatalogItemSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/CommerceCatalogItem',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseListClassQuizScheduleSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassQuizSchedule',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseListClassAssignmentScheduleSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassAssignmentSchedule',
       },
     },
     message: {
@@ -11249,6 +11921,14 @@ export const WeightUnitEnumSchema = {
   example: 'percentage',
 } as const;
 
+export const ScopeEnumSchema = {
+  type: 'string',
+  description:
+    '**[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.',
+  enum: ['COURSE_TEMPLATE', 'CLASS_CLONE'],
+  example: 'COURSE_TEMPLATE',
+} as const;
+
 export const QuestionTypeEnumSchema = {
   type: 'string',
   description: '**[REQUIRED]** Type of question determining the answer format and validation.',
@@ -11417,6 +12097,14 @@ export const StatusEnum6Schema = {
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected'],
   readOnly: true,
+} as const;
+
+export const ReleaseStrategyEnumSchema = {
+  type: 'string',
+  description:
+    '**[REQUIRED]** Strategy describing how this class schedule derives from the template.',
+  enum: ['INHERITED', 'CUSTOM', 'CLONE'],
+  example: 'CUSTOM',
 } as const;
 
 export const StatusEnum7Schema = {

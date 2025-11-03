@@ -93,6 +93,8 @@ import {
   cancelRecurringClassSchedule,
   scheduleRecurringClassFromDefinition,
   updateRecurringClassSchedule,
+  getLessonPlan,
+  saveLessonPlan,
   deleteClassRecurrencePattern,
   getClassRecurrencePattern,
   updateClassRecurrencePattern,
@@ -104,6 +106,7 @@ import {
   deleteAssignment,
   getAssignmentByUuid,
   updateAssignment,
+  updateCurrency,
   declineInvitation,
   acceptInvitation,
   uploadProfileImage,
@@ -215,6 +218,10 @@ import {
   addItem,
   completeCart,
   createClassDefinition,
+  getQuizSchedules,
+  createQuizSchedule,
+  getAssignmentSchedules,
+  createAssignmentSchedule,
   createClassRecurrencePattern,
   getAllCertificates,
   createCertificate,
@@ -234,11 +241,20 @@ import {
   unverifyOrganisation,
   verifyInstructor,
   unverifyInstructor,
+  listAll,
+  createCurrency,
+  makeDefault,
+  deactivate,
+  activate,
   updateScheduledInstanceStatus,
   reorderScoringLevels,
   markAttendance,
   getCart,
   updateCart,
+  deleteQuizSchedule,
+  updateQuizSchedule,
+  deleteAssignmentSchedule,
+  updateAssignmentSchedule,
   getAllUsers,
   getInvitationsSentByUser,
   getPendingInvitationsForUser,
@@ -315,6 +331,8 @@ import {
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
+  listActiveCurrencies,
+  getDefaultCurrency,
   getStatusTransitions,
   checkRubricAssociation,
   getPrimaryRubric,
@@ -613,6 +631,10 @@ import type {
   UpdateRecurringClassScheduleData,
   UpdateRecurringClassScheduleError,
   UpdateRecurringClassScheduleResponse,
+  GetLessonPlanData,
+  SaveLessonPlanData,
+  SaveLessonPlanError,
+  SaveLessonPlanResponse,
   DeleteClassRecurrencePatternData,
   DeleteClassRecurrencePatternError,
   DeleteClassRecurrencePatternResponse,
@@ -639,6 +661,9 @@ import type {
   UpdateAssignmentData,
   UpdateAssignmentError,
   UpdateAssignmentResponse,
+  UpdateCurrencyData,
+  UpdateCurrencyError,
+  UpdateCurrencyResponse,
   DeclineInvitationData,
   DeclineInvitationError,
   DeclineInvitationResponse,
@@ -954,6 +979,14 @@ import type {
   CreateClassDefinitionData,
   CreateClassDefinitionError,
   CreateClassDefinitionResponse,
+  GetQuizSchedulesData,
+  CreateQuizScheduleData,
+  CreateQuizScheduleError,
+  CreateQuizScheduleResponse,
+  GetAssignmentSchedulesData,
+  CreateAssignmentScheduleData,
+  CreateAssignmentScheduleError,
+  CreateAssignmentScheduleResponse,
   CreateClassRecurrencePatternData,
   CreateClassRecurrencePatternError,
   CreateClassRecurrencePatternResponse,
@@ -1011,6 +1044,19 @@ import type {
   UnverifyInstructorData,
   UnverifyInstructorError,
   UnverifyInstructorResponse,
+  ListAllData,
+  CreateCurrencyData,
+  CreateCurrencyError,
+  CreateCurrencyResponse,
+  MakeDefaultData,
+  MakeDefaultError,
+  MakeDefaultResponse,
+  DeactivateData,
+  DeactivateError,
+  DeactivateResponse,
+  ActivateData,
+  ActivateError,
+  ActivateResponse,
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusError,
   UpdateScheduledInstanceStatusResponse,
@@ -1024,6 +1070,16 @@ import type {
   UpdateCartData,
   UpdateCartError,
   UpdateCartResponse,
+  DeleteQuizScheduleData,
+  DeleteQuizScheduleError,
+  UpdateQuizScheduleData,
+  UpdateQuizScheduleError,
+  UpdateQuizScheduleResponse,
+  DeleteAssignmentScheduleData,
+  DeleteAssignmentScheduleError,
+  UpdateAssignmentScheduleData,
+  UpdateAssignmentScheduleError,
+  UpdateAssignmentScheduleResponse,
   GetAllUsersData,
   GetAllUsersError,
   GetAllUsersResponse,
@@ -1188,6 +1244,8 @@ import type {
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
+  ListActiveCurrenciesData,
+  GetDefaultCurrencyData,
   GetStatusTransitionsData,
   CheckRubricAssociationData,
   GetPrimaryRubricData,
@@ -3780,6 +3838,50 @@ export const updateRecurringClassScheduleMutation = (
   return mutationOptions;
 };
 
+export const getLessonPlanQueryKey = (options: Options<GetLessonPlanData>) =>
+  createQueryKey('getLessonPlan', options);
+
+/**
+ * Get the lesson plan for a class definition
+ */
+export const getLessonPlanOptions = (options: Options<GetLessonPlanData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getLessonPlan({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getLessonPlanQueryKey(options),
+  });
+};
+
+/**
+ * Replace the lesson plan for a class definition
+ */
+export const saveLessonPlanMutation = (
+  options?: Partial<Options<SaveLessonPlanData>>
+): UseMutationOptions<SaveLessonPlanResponse, SaveLessonPlanError, Options<SaveLessonPlanData>> => {
+  const mutationOptions: UseMutationOptions<
+    SaveLessonPlanResponse,
+    SaveLessonPlanError,
+    Options<SaveLessonPlanData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await saveLessonPlan({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Delete a recurrence pattern by UUID
  */
@@ -4060,6 +4162,29 @@ export const updateAssignmentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateAssignment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update an existing currency
+ */
+export const updateCurrencyMutation = (
+  options?: Partial<Options<UpdateCurrencyData>>
+): UseMutationOptions<UpdateCurrencyResponse, UpdateCurrencyError, Options<UpdateCurrencyData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCurrencyResponse,
+    UpdateCurrencyError,
+    Options<UpdateCurrencyData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCurrency({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -7707,7 +7832,7 @@ export const enrollStudentQueryKey = (options: Options<EnrollStudentData>) =>
   createQueryKey('enrollStudent', options);
 
 /**
- * Enroll a student in a scheduled class instance
+ * Enroll a student into a class across all scheduled instances
  */
 export const enrollStudentOptions = (options: Options<EnrollStudentData>) => {
   return queryOptions({
@@ -7725,7 +7850,7 @@ export const enrollStudentOptions = (options: Options<EnrollStudentData>) => {
 };
 
 /**
- * Enroll a student in a scheduled class instance
+ * Enroll a student into a class across all scheduled instances
  */
 export const enrollStudentMutation = (
   options?: Partial<Options<EnrollStudentData>>
@@ -10271,6 +10396,144 @@ export const createClassDefinitionMutation = (
   return mutationOptions;
 };
 
+export const getQuizSchedulesQueryKey = (options: Options<GetQuizSchedulesData>) =>
+  createQueryKey('getQuizSchedules', options);
+
+/**
+ * List quiz schedules for a class definition
+ */
+export const getQuizSchedulesOptions = (options: Options<GetQuizSchedulesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getQuizSchedules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getQuizSchedulesQueryKey(options),
+  });
+};
+
+export const createQuizScheduleQueryKey = (options: Options<CreateQuizScheduleData>) =>
+  createQueryKey('createQuizSchedule', options);
+
+/**
+ * Create a quiz schedule for a class definition
+ */
+export const createQuizScheduleOptions = (options: Options<CreateQuizScheduleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createQuizSchedule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createQuizScheduleQueryKey(options),
+  });
+};
+
+/**
+ * Create a quiz schedule for a class definition
+ */
+export const createQuizScheduleMutation = (
+  options?: Partial<Options<CreateQuizScheduleData>>
+): UseMutationOptions<
+  CreateQuizScheduleResponse,
+  CreateQuizScheduleError,
+  Options<CreateQuizScheduleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateQuizScheduleResponse,
+    CreateQuizScheduleError,
+    Options<CreateQuizScheduleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createQuizSchedule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getAssignmentSchedulesQueryKey = (options: Options<GetAssignmentSchedulesData>) =>
+  createQueryKey('getAssignmentSchedules', options);
+
+/**
+ * List assignment schedules for a class definition
+ */
+export const getAssignmentSchedulesOptions = (options: Options<GetAssignmentSchedulesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAssignmentSchedules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAssignmentSchedulesQueryKey(options),
+  });
+};
+
+export const createAssignmentScheduleQueryKey = (options: Options<CreateAssignmentScheduleData>) =>
+  createQueryKey('createAssignmentSchedule', options);
+
+/**
+ * Create an assignment schedule for a class definition
+ */
+export const createAssignmentScheduleOptions = (options: Options<CreateAssignmentScheduleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createAssignmentSchedule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createAssignmentScheduleQueryKey(options),
+  });
+};
+
+/**
+ * Create an assignment schedule for a class definition
+ */
+export const createAssignmentScheduleMutation = (
+  options?: Partial<Options<CreateAssignmentScheduleData>>
+): UseMutationOptions<
+  CreateAssignmentScheduleResponse,
+  CreateAssignmentScheduleError,
+  Options<CreateAssignmentScheduleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateAssignmentScheduleResponse,
+    CreateAssignmentScheduleError,
+    Options<CreateAssignmentScheduleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createAssignmentSchedule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const createClassRecurrencePatternQueryKey = (
   options: Options<CreateClassRecurrencePatternData>
 ) => createQueryKey('createClassRecurrencePattern', options);
@@ -11288,6 +11551,203 @@ export const unverifyInstructorMutation = (
   return mutationOptions;
 };
 
+export const listAllQueryKey = (options?: Options<ListAllData>) =>
+  createQueryKey('listAll', options);
+
+/**
+ * List all platform currencies (active and inactive)
+ */
+export const listAllOptions = (options?: Options<ListAllData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listAll({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listAllQueryKey(options),
+  });
+};
+
+export const createCurrencyQueryKey = (options: Options<CreateCurrencyData>) =>
+  createQueryKey('createCurrency', options);
+
+/**
+ * Register a new currency
+ */
+export const createCurrencyOptions = (options: Options<CreateCurrencyData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createCurrency({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createCurrencyQueryKey(options),
+  });
+};
+
+/**
+ * Register a new currency
+ */
+export const createCurrencyMutation = (
+  options?: Partial<Options<CreateCurrencyData>>
+): UseMutationOptions<CreateCurrencyResponse, CreateCurrencyError, Options<CreateCurrencyData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCurrencyResponse,
+    CreateCurrencyError,
+    Options<CreateCurrencyData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createCurrency({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const makeDefaultQueryKey = (options: Options<MakeDefaultData>) =>
+  createQueryKey('makeDefault', options);
+
+/**
+ * Set the default platform currency
+ */
+export const makeDefaultOptions = (options: Options<MakeDefaultData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await makeDefault({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: makeDefaultQueryKey(options),
+  });
+};
+
+/**
+ * Set the default platform currency
+ */
+export const makeDefaultMutation = (
+  options?: Partial<Options<MakeDefaultData>>
+): UseMutationOptions<MakeDefaultResponse, MakeDefaultError, Options<MakeDefaultData>> => {
+  const mutationOptions: UseMutationOptions<
+    MakeDefaultResponse,
+    MakeDefaultError,
+    Options<MakeDefaultData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await makeDefault({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deactivateQueryKey = (options: Options<DeactivateData>) =>
+  createQueryKey('deactivate', options);
+
+/**
+ * Deactivate a currency, preventing new use on the platform
+ */
+export const deactivateOptions = (options: Options<DeactivateData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await deactivate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: deactivateQueryKey(options),
+  });
+};
+
+/**
+ * Deactivate a currency, preventing new use on the platform
+ */
+export const deactivateMutation = (
+  options?: Partial<Options<DeactivateData>>
+): UseMutationOptions<DeactivateResponse, DeactivateError, Options<DeactivateData>> => {
+  const mutationOptions: UseMutationOptions<
+    DeactivateResponse,
+    DeactivateError,
+    Options<DeactivateData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deactivate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const activateQueryKey = (options: Options<ActivateData>) =>
+  createQueryKey('activate', options);
+
+/**
+ * Activate a currency for use on the platform
+ */
+export const activateOptions = (options: Options<ActivateData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await activate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: activateQueryKey(options),
+  });
+};
+
+/**
+ * Activate a currency for use on the platform
+ */
+export const activateMutation = (
+  options?: Partial<Options<ActivateData>>
+): UseMutationOptions<ActivateResponse, ActivateError, Options<ActivateData>> => {
+  const mutationOptions: UseMutationOptions<
+    ActivateResponse,
+    ActivateError,
+    Options<ActivateData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await activate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Update the status of a scheduled instance
  */
@@ -11402,6 +11862,110 @@ export const updateCartMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCart({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete a quiz schedule for a class definition
+ */
+export const deleteQuizScheduleMutation = (
+  options?: Partial<Options<DeleteQuizScheduleData>>
+): UseMutationOptions<unknown, DeleteQuizScheduleError, Options<DeleteQuizScheduleData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteQuizScheduleError,
+    Options<DeleteQuizScheduleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteQuizSchedule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update a quiz schedule for a class definition
+ */
+export const updateQuizScheduleMutation = (
+  options?: Partial<Options<UpdateQuizScheduleData>>
+): UseMutationOptions<
+  UpdateQuizScheduleResponse,
+  UpdateQuizScheduleError,
+  Options<UpdateQuizScheduleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateQuizScheduleResponse,
+    UpdateQuizScheduleError,
+    Options<UpdateQuizScheduleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateQuizSchedule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete an assignment schedule for a class definition
+ */
+export const deleteAssignmentScheduleMutation = (
+  options?: Partial<Options<DeleteAssignmentScheduleData>>
+): UseMutationOptions<
+  unknown,
+  DeleteAssignmentScheduleError,
+  Options<DeleteAssignmentScheduleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteAssignmentScheduleError,
+    Options<DeleteAssignmentScheduleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteAssignmentSchedule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update an assignment schedule for a class definition
+ */
+export const updateAssignmentScheduleMutation = (
+  options?: Partial<Options<UpdateAssignmentScheduleData>>
+): UseMutationOptions<
+  UpdateAssignmentScheduleResponse,
+  UpdateAssignmentScheduleError,
+  Options<UpdateAssignmentScheduleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateAssignmentScheduleResponse,
+    UpdateAssignmentScheduleError,
+    Options<UpdateAssignmentScheduleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateAssignmentSchedule({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -15522,6 +16086,48 @@ export const hasCapacityForEnrollmentOptions = (options: Options<HasCapacityForE
       return data;
     },
     queryKey: hasCapacityForEnrollmentQueryKey(options),
+  });
+};
+
+export const listActiveCurrenciesQueryKey = (options?: Options<ListActiveCurrenciesData>) =>
+  createQueryKey('listActiveCurrencies', options);
+
+/**
+ * List active platform currencies
+ */
+export const listActiveCurrenciesOptions = (options?: Options<ListActiveCurrenciesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listActiveCurrencies({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listActiveCurrenciesQueryKey(options),
+  });
+};
+
+export const getDefaultCurrencyQueryKey = (options?: Options<GetDefaultCurrencyData>) =>
+  createQueryKey('getDefaultCurrency', options);
+
+/**
+ * Get the platform default currency
+ */
+export const getDefaultCurrencyOptions = (options?: Options<GetDefaultCurrencyData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getDefaultCurrency({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getDefaultCurrencyQueryKey(options),
   });
 };
 

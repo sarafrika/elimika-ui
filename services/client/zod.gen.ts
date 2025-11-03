@@ -895,6 +895,15 @@ export const zApiResponseRubricScoring = z.object({
 });
 
 /**
+ * **[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.
+ */
+export const zScopeEnum = z
+  .enum(['COURSE_TEMPLATE', 'CLASS_CLONE'])
+  .describe(
+    '**[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.'
+  );
+
+/**
  * Quiz assessment with configurable questions, timing, and scoring
  */
 export const zQuiz = z
@@ -911,6 +920,14 @@ export const zQuiz = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Reference to the lesson UUID that contains this quiz.'),
+    scope: zScopeEnum.optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[OPTIONAL]** Reference to the class definition that owns this quiz when scope is CLASS_CLONE.'
+      )
+      .optional(),
     title: z
       .string()
       .min(0)
@@ -959,6 +976,14 @@ export const zQuiz = z
       .describe(
         '**[OPTIONAL]** Indicates if the quiz is actively available to students. Can only be true for published quizzes.'
       )
+      .optional(),
+    source_quiz_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** UUID of the course-level quiz that served as the template for this class clone.'
+      )
+      .readonly()
       .optional(),
     created_date: z
       .string()
@@ -1103,14 +1128,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
-      .readonly()
-      .optional(),
     question_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
   })
@@ -2939,7 +2964,7 @@ export const zCourse = z
       .number()
       .gte(0)
       .describe(
-        '**[OPTIONAL]** Minimum training fee that any instructor-led class for this course must meet or exceed.'
+        '**[OPTIONAL]** Minimum rate per trainee per hour that any instructor-led class for this course must meet or exceed.'
       )
       .optional(),
     creator_share_percentage: z
@@ -3267,7 +3292,7 @@ export const zApiResponseCourseRequirement = z.object({
 });
 
 /**
- * Individual lesson within a course containing structured learning content
+ * Individual lesson within a course containing structured learning content. Lesson timing is now defined during class scheduling by instructors.
  */
 export const zLesson = z
   .object({
@@ -3297,17 +3322,6 @@ export const zLesson = z
       .describe(
         '**[REQUIRED]** Descriptive title of the lesson that clearly indicates the learning content.'
       ),
-    duration_hours: z
-      .number()
-      .int()
-      .gte(0)
-      .describe('**[REQUIRED]** Estimated lesson duration in hours.'),
-    duration_minutes: z
-      .number()
-      .int()
-      .gte(0)
-      .lte(59)
-      .describe('**[REQUIRED]** Additional lesson duration in minutes (0-59).'),
     description: z
       .string()
       .min(0)
@@ -3364,18 +3378,15 @@ export const zLesson = z
       .describe('**[READ-ONLY]** Indicates if the lesson is published and accessible to students.')
       .readonly()
       .optional(),
-    duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of lesson duration.')
-      .readonly()
-      .optional(),
     lesson_sequence: z
       .string()
       .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
       .readonly()
       .optional(),
   })
-  .describe('Individual lesson within a course containing structured learning content');
+  .describe(
+    'Individual lesson within a course containing structured learning content. Lesson timing is now defined during class scheduling by instructors.'
+  );
 
 export const zApiResponseLesson = z.object({
   success: z.boolean().optional(),
@@ -4072,7 +4083,10 @@ export const zCommerceCatalogItemUpsertRequest = z
       .optional(),
     medusa_product_id: z.string().describe('Medusa product identifier'),
     medusa_variant_id: z.string().describe('Medusa variant identifier'),
-    currency_code: z.string().describe('Currency code for the variant').optional(),
+    currency_code: z
+      .string()
+      .describe('Currency code for the variant. Defaults to the platform currency when omitted.')
+      .optional(),
     active: z.boolean().describe('Active flag').optional(),
   })
   .describe('Payload for creating or updating catalog mappings');
@@ -4389,6 +4403,83 @@ export const zScheduledInstance = z
 export const zApiResponseListScheduledInstance = z.object({
   success: z.boolean().optional(),
   data: z.array(zScheduledInstance).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Lesson scheduling metadata scoped to a class definition
+ */
+export const zClassLessonPlan = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier for this class lesson plan entry.')
+      .readonly()
+      .optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Class definition that owns this plan entry.')
+      .optional(),
+    lesson_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Lesson the plan entry references.')
+      .optional(),
+    scheduled_start: z
+      .string()
+      .datetime()
+      .describe('**[OPTIONAL]** Planned start timestamp in UTC.')
+      .optional(),
+    scheduled_end: z
+      .string()
+      .datetime()
+      .describe('**[OPTIONAL]** Planned end timestamp in UTC.')
+      .optional(),
+    scheduled_instance_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Reference to a concrete scheduled instance created by timetabling.')
+      .optional(),
+    instructor_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Instructor assigned to deliver this lesson.')
+      .optional(),
+    notes: z
+      .string()
+      .describe('**[OPTIONAL]** Trainer notes or reminders for the lesson.')
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when this plan entry was created.')
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** User identifier who created the plan entry.')
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the plan entry was last updated.')
+      .readonly()
+      .optional(),
+    updated_by: z
+      .string()
+      .describe('**[READ-ONLY]** User identifier who last updated the plan entry.')
+      .readonly()
+      .optional(),
+  })
+  .describe('Lesson scheduling metadata scoped to a class definition');
+
+export const zApiResponseListClassLessonPlan = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zClassLessonPlan).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -4744,6 +4835,14 @@ export const zAssignment = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Reference to the lesson UUID this assignment belongs to.'),
+    scope: zScopeEnum.optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[OPTIONAL]** Reference to the class definition that owns this assignment when scope is CLASS_CLONE.'
+      )
+      .optional(),
     title: z
       .string()
       .min(0)
@@ -4785,6 +4884,14 @@ export const zAssignment = z
       .describe(
         '**[OPTIONAL]** Indicates if the assignment is actively available for students. Can only be true for published assignments.'
       )
+      .optional(),
+    source_assignment_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** UUID of the course-level assignment this class clone originates from.'
+      )
+      .readonly()
       .optional(),
     created_date: z
       .string()
@@ -4844,6 +4951,48 @@ export const zAssignment = z
 export const zApiResponseAssignment = z.object({
   success: z.boolean().optional(),
   data: zAssignment.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Admin payload to update currency metadata
+ */
+export const zCurrencyUpdateRequest = z
+  .object({
+    name: z.string().min(0).max(128).describe('Official currency name').optional(),
+    symbol: z.string().min(0).max(16).describe('Optional display symbol').optional(),
+    numeric_code: z.number().int().describe('ISO numeric code').optional(),
+    decimal_places: z
+      .number()
+      .int()
+      .gte(0)
+      .lte(6)
+      .describe('Number of fractional decimal places')
+      .optional(),
+    active: z.boolean().describe('Whether the currency is active').optional(),
+  })
+  .describe('Admin payload to update currency metadata');
+
+export const zCurrency = z.object({
+  code: z.string().describe('ISO 4217 alpha code').optional(),
+  name: z.string().describe('Official currency name').optional(),
+  numericCode: z.number().int().describe('ISO numeric code').optional(),
+  symbol: z.string().describe('Optional display symbol').optional(),
+  decimalPlaces: z.number().int().describe('Number of fractional decimal places').optional(),
+  active: z
+    .boolean()
+    .describe('Indicates whether the currency is active for the platform')
+    .optional(),
+  defaultCurrency: z
+    .boolean()
+    .describe('Indicates whether this is the platform default currency')
+    .optional(),
+});
+
+export const zApiResponseCurrency = z.object({
+  success: z.boolean().optional(),
+  data: zCurrency.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -5178,10 +5327,10 @@ export const zApiResponseInstructor = z.object({
  */
 export const zEnrollmentRequest = z
   .object({
-    scheduled_instance_uuid: z
+    class_definition_uuid: z
       .string()
       .uuid()
-      .describe('**[REQUIRED]** Reference to the scheduled instance UUID to enroll in.'),
+      .describe('**[REQUIRED]** Reference to the class definition UUID to enroll into.'),
     student_uuid: z
       .string()
       .uuid()
@@ -5266,22 +5415,22 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
   })
   .describe('A student enrollment in a scheduled class instance with attendance tracking');
 
-export const zApiResponseEnrollment = z.object({
+export const zApiResponseListEnrollment = z.object({
   success: z.boolean().optional(),
-  data: zEnrollment.optional(),
+  data: z.array(zEnrollment).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -5310,6 +5459,20 @@ export const zCourseTrainingApplicationRequest = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** UUID of the instructor or organisation applying.'),
+    rate_per_hour_per_head: z
+      .number()
+      .gte(0)
+      .describe(
+        '**[REQUIRED]** Proposed compensation per trainee per hour for delivering this course.'
+      ),
+    rate_currency: z
+      .string()
+      .max(3)
+      .regex(/^[A-Za-z]{3}$/)
+      .describe(
+        '**[OPTIONAL]** ISO 4217 currency code drawn from the platform approved list. Defaults to the platform currency when omitted.'
+      )
+      .optional(),
     application_notes: z
       .string()
       .min(0)
@@ -5359,6 +5522,18 @@ export const zCourseTrainingApplication = z
       .string()
       .uuid()
       .describe('**[READ-ONLY]** UUID of the applicant (Instructor or Organisation).')
+      .readonly()
+      .optional(),
+    rate_per_hour_per_head: z
+      .number()
+      .describe('**[READ-ONLY]** Instructor or organisation rate charged per trainee per hour.')
+      .readonly()
+      .optional(),
+    rate_currency: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** ISO 4217 currency code for the proposed rate (managed by platform configuration).'
+      )
       .readonly()
       .optional(),
     created_date: z
@@ -5525,6 +5700,215 @@ export const zSelectPaymentSessionRequest = z
   .describe('Specifies the payment provider to use for a cart');
 
 /**
+ * **[REQUIRED]** Strategy describing how this class schedule derives from the template.
+ */
+export const zReleaseStrategyEnum = z
+  .enum(['INHERITED', 'CUSTOM', 'CLONE'])
+  .describe(
+    '**[REQUIRED]** Strategy describing how this class schedule derives from the template.'
+  );
+
+/**
+ * Class-level quiz schedule with release timing and override values
+ */
+export const zClassQuizSchedule = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier for this class quiz schedule.')
+      .readonly()
+      .optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Class definition that owns the quiz schedule.')
+      .optional(),
+    lesson_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Lesson associated with the quiz for this class.')
+      .optional(),
+    quiz_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Quiz template or clone referenced by this schedule.')
+      .optional(),
+    class_lesson_plan_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Linked lesson plan entry for ordering context.')
+      .optional(),
+    visible_at: z
+      .string()
+      .datetime()
+      .describe('**[OPTIONAL]** When the quiz is visible to students (UTC).')
+      .optional(),
+    due_at: z
+      .string()
+      .datetime()
+      .describe('**[OPTIONAL]** Deadline for completing the quiz (UTC).')
+      .optional(),
+    timezone: z
+      .string()
+      .describe('**[OPTIONAL]** IANA timezone identifier for display purposes.')
+      .optional(),
+    release_strategy: zReleaseStrategyEnum.optional(),
+    time_limit_override: z
+      .number()
+      .int()
+      .describe('**[OPTIONAL]** Overrides the quiz time limit (minutes) for this class.')
+      .optional(),
+    attempt_limit_override: z
+      .number()
+      .int()
+      .describe('**[OPTIONAL]** Overrides the number of attempts allowed.')
+      .optional(),
+    passing_score_override: z
+      .number()
+      .describe('**[OPTIONAL]** Overrides the passing score requirement.')
+      .optional(),
+    instructor_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Instructor responsible for this quiz schedule.')
+      .optional(),
+    notes: z
+      .string()
+      .describe('**[OPTIONAL]** Instructor notes for this quiz schedule.')
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the schedule was created.')
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** User identifier who created the schedule.')
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the schedule was last updated.')
+      .readonly()
+      .optional(),
+    updated_by: z
+      .string()
+      .describe('**[READ-ONLY]** User identifier who last updated the schedule.')
+      .readonly()
+      .optional(),
+  })
+  .describe('Class-level quiz schedule with release timing and override values');
+
+export const zApiResponseClassQuizSchedule = z.object({
+  success: z.boolean().optional(),
+  data: zClassQuizSchedule.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Class-level assignment schedule with visibility windows and overrides
+ */
+export const zClassAssignmentSchedule = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier for this class assignment schedule.')
+      .readonly()
+      .optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Class definition that owns the assignment schedule.')
+      .optional(),
+    lesson_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Lesson this assignment is associated with for the class.')
+      .optional(),
+    assignment_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Assignment template or clone that the schedule references.')
+      .optional(),
+    class_lesson_plan_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Lesson plan entry this schedule ties to.')
+      .optional(),
+    visible_at: z
+      .string()
+      .datetime()
+      .describe('**[OPTIONAL]** When the assignment becomes visible to students (UTC).')
+      .optional(),
+    due_at: z
+      .string()
+      .datetime()
+      .describe('**[OPTIONAL]** Submission deadline for the class (UTC).')
+      .optional(),
+    grading_due_at: z
+      .string()
+      .datetime()
+      .describe('**[OPTIONAL]** Deadline for trainers to complete grading (UTC).')
+      .optional(),
+    timezone: z
+      .string()
+      .describe('**[OPTIONAL]** IANA timezone identifier used when displaying deadlines.')
+      .optional(),
+    release_strategy: zReleaseStrategyEnum.optional(),
+    max_attempts: z
+      .number()
+      .int()
+      .describe(
+        '**[OPTIONAL]** Maximum attempts allowed for this class schedule (overrides template).'
+      )
+      .optional(),
+    instructor_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Instructor responsible for this assignment schedule.')
+      .optional(),
+    notes: z
+      .string()
+      .describe('**[OPTIONAL]** Instructor notes shown internally for context.')
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the schedule was created.')
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe('**[READ-ONLY]** User identifier who created the schedule.')
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the schedule was last updated.')
+      .readonly()
+      .optional(),
+    updated_by: z
+      .string()
+      .describe('**[READ-ONLY]** User identifier who last updated the schedule.')
+      .readonly()
+      .optional(),
+  })
+  .describe('Class-level assignment schedule with visibility windows and overrides');
+
+export const zApiResponseClassAssignmentSchedule = z.object({
+  success: z.boolean().optional(),
+  data: zClassAssignmentSchedule.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
 export const zStatusEnum7 = z
@@ -5637,14 +6021,14 @@ export const zAssignmentSubmission = z
       .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     submission_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
     submission_status_display: z
@@ -5693,6 +6077,39 @@ export const zAdminDomainAssignmentRequest = z
       .optional(),
   })
   .describe('Admin domain assignment request containing domain type, reason, and effective date');
+
+/**
+ * Admin payload to register an additional platform currency
+ */
+export const zCurrencyCreateRequest = z
+  .object({
+    code: z
+      .string()
+      .length(3)
+      .regex(/^[A-Za-z]{3}$/)
+      .describe('ISO 4217 alpha code'),
+    numeric_code: z.number().int().describe('ISO numeric code').optional(),
+    name: z.string().min(0).max(128).describe('Official currency name'),
+    symbol: z.string().min(0).max(16).describe('Optional display symbol').optional(),
+    decimal_places: z
+      .number()
+      .int()
+      .gte(0)
+      .lte(6)
+      .describe('Number of fractional decimal places')
+      .default('2'),
+    active: z
+      .boolean()
+      .describe('Whether the currency is active immediately')
+      .optional()
+      .default('true'),
+    default_currency: z
+      .boolean()
+      .describe('Whether to set this currency as the platform default')
+      .optional()
+      .default('false'),
+  })
+  .describe('Admin payload to register an additional platform currency');
 
 /**
  * Fields that can be patched on an existing cart
@@ -5778,17 +6195,17 @@ export const zApiResponsePagedDtoStudent = z.object({
 });
 
 export const zSortObject = z.object({
-  sorted: z.boolean().optional(),
   empty: z.boolean().optional(),
+  sorted: z.boolean().optional(),
   unsorted: z.boolean().optional(),
 });
 
 export const zPageableObject = z.object({
+  offset: z.coerce.bigint().optional(),
+  sort: zSortObject.optional(),
   paged: z.boolean().optional(),
   pageNumber: z.number().int().optional(),
   pageSize: z.number().int().optional(),
-  offset: z.coerce.bigint().optional(),
-  sort: zSortObject.optional(),
   unpaged: z.boolean().optional(),
 });
 
@@ -5797,12 +6214,12 @@ export const zPage = z.object({
   totalPages: z.number().int().optional(),
   first: z.boolean().optional(),
   last: z.boolean().optional(),
-  pageable: zPageableObject.optional(),
   size: z.number().int().optional(),
   content: z.array(z.record(z.unknown())).optional(),
   number: z.number().int().optional(),
   sort: zSortObject.optional(),
   numberOfElements: z.number().int().optional(),
+  pageable: zPageableObject.optional(),
   empty: z.boolean().optional(),
 });
 
@@ -6048,11 +6465,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -6066,6 +6478,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -6211,14 +6628,14 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -6461,6 +6878,13 @@ export const zApiResponsePagedDtoInstructorDocument = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+export const zApiResponseEnrollment = z.object({
+  success: z.boolean().optional(),
+  data: zEnrollment.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 /**
  * A student's view of their scheduled classes with enrollment information
  */
@@ -6526,14 +6950,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    is_upcoming: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended this class.')
+      .readonly()
+      .optional(),
+    is_upcoming: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
       .readonly()
       .optional(),
   })
@@ -6546,16 +6970,16 @@ export const zApiResponseListStudentSchedule = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-export const zApiResponseListEnrollment = z.object({
+export const zApiResponseLong = z.object({
   success: z.boolean().optional(),
-  data: z.array(zEnrollment).optional(),
+  data: z.coerce.bigint().optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
 
-export const zApiResponseLong = z.object({
+export const zApiResponseListCurrency = z.object({
   success: z.boolean().optional(),
-  data: z.coerce.bigint().optional(),
+  data: z.array(zCurrency).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -6733,14 +7157,14 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -6949,6 +7373,20 @@ export const zApiResponseListCategory = z.object({
 export const zApiResponseListCommerceCatalogItem = z.object({
   success: z.boolean().optional(),
   data: z.array(zCommerceCatalogItem).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseListClassQuizSchedule = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zClassQuizSchedule).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseListClassAssignmentSchedule = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zClassAssignmentSchedule).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -8477,6 +8915,32 @@ export const zUpdateRecurringClassScheduleData = z.object({
  */
 export const zUpdateRecurringClassScheduleResponse = zApiResponseListScheduledInstance;
 
+export const zGetLessonPlanData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetLessonPlanResponse = zApiResponseListClassLessonPlan;
+
+export const zSaveLessonPlanData = z.object({
+  body: z.array(zClassLessonPlan),
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zSaveLessonPlanResponse = zApiResponseListClassLessonPlan;
+
 export const zDeleteClassRecurrencePatternData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -8614,6 +9078,19 @@ export const zUpdateAssignmentData = z.object({
  * Assignment updated successfully
  */
 export const zUpdateAssignmentResponse = zApiResponseAssignment;
+
+export const zUpdateCurrencyData = z.object({
+  body: zCurrencyUpdateRequest,
+  path: z.object({
+    code: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCurrencyResponse = zApiResponseCurrency;
 
 export const zDeclineInvitationData = z.object({
   body: z.never().optional(),
@@ -9634,7 +10111,7 @@ export const zEnrollStudentData = z.object({
 /**
  * Student enrolled successfully
  */
-export const zEnrollStudentResponse = zApiResponseEnrollment;
+export const zEnrollStudentResponse = zApiResponseListEnrollment;
 
 export const zGetAllCoursesData = z.object({
   body: z.never().optional(),
@@ -10251,6 +10728,58 @@ export const zCreateClassDefinitionData = z.object({
  */
 export const zCreateClassDefinitionResponse = zApiResponseClassDefinition;
 
+export const zGetQuizSchedulesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetQuizSchedulesResponse = zApiResponseListClassQuizSchedule;
+
+export const zCreateQuizScheduleData = z.object({
+  body: zClassQuizSchedule,
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateQuizScheduleResponse = zApiResponseClassQuizSchedule;
+
+export const zGetAssignmentSchedulesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetAssignmentSchedulesResponse = zApiResponseListClassAssignmentSchedule;
+
+export const zCreateAssignmentScheduleData = z.object({
+  body: zClassAssignmentSchedule,
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateAssignmentScheduleResponse = zApiResponseClassAssignmentSchedule;
+
 export const zCreateClassRecurrencePatternData = z.object({
   body: zRecurrencePattern,
   path: z.never().optional(),
@@ -10545,6 +11074,67 @@ export const zUnverifyInstructorData = z.object({
  */
 export const zUnverifyInstructorResponse = zApiResponseInstructor;
 
+export const zListAllData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListAllResponse = zApiResponseListCurrency;
+
+export const zCreateCurrencyData = z.object({
+  body: zCurrencyCreateRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateCurrencyResponse = zApiResponseCurrency;
+
+export const zMakeDefaultData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    code: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zMakeDefaultResponse = zApiResponseCurrency;
+
+export const zDeactivateData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    code: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDeactivateResponse = zApiResponseCurrency;
+
+export const zActivateData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    code: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zActivateResponse = zApiResponseCurrency;
+
 export const zUpdateScheduledInstanceStatusData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -10613,6 +11203,52 @@ export const zUpdateCartData = z.object({
  * Cart updated
  */
 export const zUpdateCartResponse = zCartResponse;
+
+export const zDeleteQuizScheduleData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+    scheduleUuid: z.string().uuid().describe('Quiz schedule UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateQuizScheduleData = z.object({
+  body: zClassQuizSchedule,
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+    scheduleUuid: z.string().uuid().describe('Quiz schedule UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateQuizScheduleResponse = zApiResponseClassQuizSchedule;
+
+export const zDeleteAssignmentScheduleData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+    scheduleUuid: z.string().uuid().describe('Assignment schedule UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateAssignmentScheduleData = z.object({
+  body: zClassAssignmentSchedule,
+  path: z.object({
+    classUuid: z.string().uuid().describe('Class definition UUID'),
+    scheduleUuid: z.string().uuid().describe('Assignment schedule UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateAssignmentScheduleResponse = zApiResponseClassAssignmentSchedule;
 
 export const zGetAllUsersData = z.object({
   body: z.never().optional(),
@@ -11734,6 +12370,28 @@ export const zHasCapacityForEnrollmentData = z.object({
  * Capacity check completed
  */
 export const zHasCapacityForEnrollmentResponse = zApiResponseBoolean;
+
+export const zListActiveCurrenciesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListActiveCurrenciesResponse = zApiResponseListCurrency;
+
+export const zGetDefaultCurrencyData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetDefaultCurrencyResponse = zApiResponseCurrency;
 
 export const zGetStatusTransitionsData = z.object({
   body: z.never().optional(),
