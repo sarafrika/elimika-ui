@@ -21,9 +21,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
-      <body className={`${nunitoSans.className} antialiased`}>
-        <RootProviders>{children}</RootProviders>
-        <Toaster richColors />
+      <body
+        className={`${nunitoSans.className} antialiased min-h-screen bg-background text-foreground`}
+      >
+        <div className='relative min-h-screen'>
+          <div className='pointer-events-none fixed inset-0 -z-20 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 transition-colors duration-500 dark:from-slate-950 dark:via-blue-950/40 dark:to-slate-950' />
+          <div className='pointer-events-none fixed inset-0 -z-30 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),_rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.25),_rgba(2,6,23,0))]' />
+          <RootProviders>
+            <div className='relative z-0 flex min-h-screen flex-col'>{children}</div>
+          </RootProviders>
+          <Toaster richColors />
+        </div>
       </body>
     </html>
   );

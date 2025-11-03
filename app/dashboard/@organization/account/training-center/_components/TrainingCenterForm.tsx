@@ -83,6 +83,25 @@ export default function TrainingCenterForm() {
     },
   });
 
+  const latitudeWatch = form.watch('latitude');
+  const longitudeWatch = form.watch('longitude');
+
+  const normalizeCoordinate = (value: unknown) => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  };
+
+  const watchedCoordinates = {
+    latitude: normalizeCoordinate(latitudeWatch),
+    longitude: normalizeCoordinate(longitudeWatch),
+  };
+
   const [isSaving, setIsSaving] = useState(false);
 
   const onSubmit = (orgData: TrainingCenterFormValues) => {
@@ -294,6 +313,7 @@ export default function TrainingCenterForm() {
                   <FormControl>
                     <LocationInput
                       {...field}
+                      coordinates={watchedCoordinates}
                       onSuggest={result => {
                         const feature = result.features[0];
                         if (!feature) return;
@@ -301,7 +321,10 @@ export default function TrainingCenterForm() {
                         const countryName =
                           (feature.properties?.context as any)?.country?.name ??
                           feature.properties?.context?.country_name;
-                        if (coordinates?.latitude && coordinates?.longitude) {
+                        if (
+                          typeof coordinates?.latitude === 'number' &&
+                          typeof coordinates?.longitude === 'number'
+                        ) {
                           form.setValue('latitude', coordinates.latitude);
                           form.setValue('longitude', coordinates.longitude);
                         }

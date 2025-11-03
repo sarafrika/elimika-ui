@@ -61,6 +61,25 @@ export function OrganizationOnboardingForm() {
     },
   });
 
+  const latitudeWatch = form.watch('latitude');
+  const longitudeWatch = form.watch('longitude');
+
+  const normalizeCoordinate = (value: unknown) => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  };
+
+  const watchedCoordinates = {
+    latitude: normalizeCoordinate(latitudeWatch),
+    longitude: normalizeCoordinate(longitudeWatch),
+  };
+
   const handleSubmit = async (data: OrganizationOnboardingFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
@@ -158,21 +177,32 @@ export function OrganizationOnboardingForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Location (Optional)</FormLabel>
-                    <FormControl>
-                      <LocationInput
-                        {...field}
-                        onRetrieve={d => {
-                          form.setValue('latitude', d.properties.coordinates.latitude);
-                          form.setValue('longitude', d.properties.coordinates.longitude);
-                          if (d.properties.context.country) {
-                            form.setValue('country', d.properties.context.country.name);
-                          }
-                          return d;
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Physical location or address of your organization
+                  <FormControl>
+                    <LocationInput
+                      {...field}
+                      coordinates={watchedCoordinates}
+                      onSuggest={result => {
+                        const feature = result.features[0];
+                        const coordinates = feature?.properties?.coordinates;
+                        const contextCountry =
+                          (feature?.properties?.context as any)?.country?.name ??
+                          feature?.properties?.context?.country_name;
+
+                        if (
+                          typeof coordinates?.latitude === 'number' &&
+                          typeof coordinates?.longitude === 'number'
+                        ) {
+                          form.setValue('latitude', coordinates.latitude);
+                          form.setValue('longitude', coordinates.longitude);
+                        }
+                        if (contextCountry) {
+                          form.setValue('country', contextCountry);
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Physical location or address of your organization
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
