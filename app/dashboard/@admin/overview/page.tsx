@@ -1,4 +1,4 @@
-// app/dashboard/@admin/statistics/page.tsx
+// app/dashboard/@admin/overview/page.tsx
 import { Loader2 } from 'lucide-react';
 import { Suspense } from 'react';
 import StatisticsContent from './_components/StatisticsContent';

@@ -18,12 +18,12 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { AdminDashboardStats } from '@/services/client/types.gen';
+import type { AdminDashboardStatsDTO } from '@/services/api/actions';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f97316', '#22d3ee'];
 
 interface AnalyticsChartsProps {
-  statistics?: AdminDashboardStats;
+  statistics?: AdminDashboardStatsDTO;
   isLoading: boolean;
 }
 

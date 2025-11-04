@@ -11,17 +11,30 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { AdminDashboardStatsDTO } from '@/services/api/actions';
 
 interface KPICardsProps {
-  statistics: any;
+  statistics?: AdminDashboardStatsDTO;
   isLoading: boolean;
 }
+
+const toNumber = (value?: bigint | number | string | null) => {
+  if (typeof value === 'bigint') return Number(value);
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
+
+const formatMetric = (value: number) => value.toLocaleString();
 
 export default function KPICards({ statistics, isLoading }: KPICardsProps) {
   const kpis = [
     {
       title: 'Total Users',
-      value: statistics?.user_metrics?.total_users ?? 0,
+      value: toNumber(statistics?.user_metrics?.total_users),
       icon: Users,
       description: 'Registered users',
       trend: '+5.2%',
@@ -29,7 +42,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
     },
     {
       title: 'Active Users (24h)',
-      value: statistics?.user_metrics?.active_users_24h ?? 0,
+      value: toNumber(statistics?.user_metrics?.active_users_24h),
       icon: UserCheck,
       description: 'Last 24 hours',
       trend: '+12.3%',
@@ -37,7 +50,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
     },
     {
       title: 'New Users (7d)',
-      value: statistics?.user_metrics?.new_registrations_7d ?? 0,
+      value: toNumber(statistics?.user_metrics?.new_registrations_7d),
       icon: TrendingUp,
       description: 'Last 7 days',
       trend: '+8.1%',
@@ -45,7 +58,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
     },
     {
       title: 'Organizations',
-      value: statistics?.organization_metrics?.total_organizations ?? 0,
+      value: toNumber(statistics?.organization_metrics?.total_organizations),
       icon: Building2,
       description: 'Total organizations',
       trend: '+2.4%',
@@ -53,7 +66,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
     },
     {
       title: 'Active Organizations',
-      value: statistics?.organization_metrics?.active_organizations ?? 0,
+      value: toNumber(statistics?.organization_metrics?.active_organizations),
       icon: Activity,
       description: 'Currently active',
       trend: '+1.8%',
@@ -61,7 +74,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
     },
     {
       title: 'Pending Approvals',
-      value: statistics?.organization_metrics?.pending_approvals ?? 0,
+      value: toNumber(statistics?.organization_metrics?.pending_approvals),
       icon: AlertCircle,
       description: 'Awaiting review',
       trend: null,
@@ -70,7 +83,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
     },
     {
       title: 'Total Courses',
-      value: statistics?.content_metrics?.total_courses ?? 0,
+      value: toNumber(statistics?.content_metrics?.total_courses),
       icon: BookOpen,
       description: 'Platform courses',
       trend: '+15.7%',
@@ -78,7 +91,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
     },
     {
       title: 'Total Admins',
-      value: statistics?.admin_metrics?.total_admins ?? 0,
+      value: toNumber(statistics?.admin_metrics?.total_admins),
       icon: Shield,
       description: 'System administrators',
       trend: null,
@@ -118,7 +131,7 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{kpi.value.toLocaleString()}</div>
+            <div className='text-2xl font-bold'>{formatMetric(kpi.value)}</div>
             <div className='flex items-center justify-between'>
               <p className='text-muted-foreground text-xs'>{kpi.description}</p>
               {kpi.trend && (

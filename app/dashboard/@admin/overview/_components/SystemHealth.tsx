@@ -4,11 +4,18 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle, AlertTriangle, Activity, Database, Clock, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import type { AdminDashboardStatsDTO } from '@/services/api/actions';
 
 interface SystemHealthProps {
-  statistics: any;
+  statistics?: AdminDashboardStatsDTO;
   isLoading: boolean;
 }
+
+const parsePercent = (value?: string) => {
+  if (!value) return 0;
+  const numeric = Number.parseFloat(value.replace(/%/g, ''));
+  return Number.isNaN(numeric) ? 0 : numeric;
+};
 
 export default function SystemHealth({ statistics, isLoading }: SystemHealthProps) {
   if (isLoading) {
@@ -32,6 +39,9 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
   const performance = statistics?.system_performance;
   const overallHealth = statistics?.overall_health ?? 'healthy';
 
+  const hasPerformanceData =
+    !!performance && Object.values(performance).some(value => value !== undefined && value !== null);
+
   const healthStatus = {
     healthy: { color: 'success', icon: CheckCircle, text: 'Healthy' },
     warning: { color: 'warning', icon: AlertTriangle, text: 'Warning' },
@@ -42,22 +52,14 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
     healthStatus[overallHealth as keyof typeof healthStatus] || healthStatus.healthy;
 
   // Parse storage usage percentage
-  const storageUsage = performance?.storage_usage
-    ? parseFloat(performance.storage_usage.replace('%', ''))
-    : 0;
+  const storageUsage = parsePercent(performance?.storage_usage);
 
   // Parse error rate percentage
-  const errorRate = performance?.error_rate
-    ? parseFloat(performance.error_rate.replace('%', ''))
-    : 0;
+  const errorRate = parsePercent(performance?.error_rate);
 
-  const serverUptime = performance?.server_uptime
-    ? parseFloat(performance.server_uptime.replace('%', ''))
-    : 0;
+  const serverUptime = parsePercent(performance?.server_uptime);
 
-  const averageResponseTime = performance?.average_response_time
-    ? parseFloat(performance.average_response_time.replace('%', ''))
-    : 0;
+  const averageResponseTime = parsePercent(performance?.average_response_time);
 
   return (
     <Card>
@@ -71,68 +73,77 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
         </div>
       </CardHeader>
       <CardContent className='space-y-6'>
-        {/* Server Uptime */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <Activity className='text-muted-foreground h-4 w-4' />
-              <span className='text-sm font-medium'>Server Uptime</span>
+        {hasPerformanceData ? (
+          <>
+            {/* Server Uptime */}
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <Activity className='text-muted-foreground h-4 w-4' />
+                  <span className='text-sm font-medium'>Server Uptime</span>
+                </div>
+                <span className='text-sm font-semibold'>{performance?.server_uptime ?? 'N/A'}</span>
+              </div>
+              <Progress value={serverUptime} className='h-2' />
             </div>
-            <span className='text-sm font-semibold'>{performance?.server_uptime ?? 'N/A'}</span>
-          </div>
-          <Progress value={serverUptime} className='h-2' />
-        </div>
 
-        <Separator />
+            <Separator />
 
-        {/* Response Time */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <Clock className='text-muted-foreground h-4 w-4' />
-              <span className='text-sm font-medium'>Avg Response Time</span>
+            {/* Response Time */}
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <Clock className='text-muted-foreground h-4 w-4' />
+                  <span className='text-sm font-medium'>Avg Response Time</span>
+                </div>
+                <span className='text-sm font-semibold'>
+                  {performance?.average_response_time ?? 'N/A'}
+                </span>
+              </div>
+              <Progress value={averageResponseTime} className='h-2' />
             </div>
-            <span className='text-sm font-semibold'>
-              {performance?.average_response_time ?? 'N/A'}
-            </span>
-          </div>
-          <Progress value={averageResponseTime} className='h-2' />
-        </div>
 
-        <Separator />
+            <Separator />
 
-        {/* Error Rate */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <AlertTriangle className='text-muted-foreground h-4 w-4' />
-              <span className='text-sm font-medium'>Error Rate</span>
+            {/* Error Rate */}
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <AlertTriangle className='text-muted-foreground h-4 w-4' />
+                  <span className='text-sm font-medium'>Error Rate</span>
+                </div>
+                <span className='text-sm font-semibold'>{performance?.error_rate ?? 'N/A'}</span>
+              </div>
+              <Progress
+                value={errorRate}
+                className='h-2'
+                // @ts-ignore
+                indicatorClassName={errorRate > 5 ? 'bg-destructive' : 'bg-success'}
+              />
             </div>
-            <span className='text-sm font-semibold'>{performance?.error_rate ?? 'N/A'}</span>
-          </div>
-          <Progress
-            value={errorRate}
-            className='h-2'
-            // @ts-ignore
-            indicatorClassName={errorRate > 5 ? 'bg-destructive' : 'bg-success'}
-          />
-        </div>
 
-        <Separator />
+            <Separator />
 
-        {/* Storage Usage */}
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <Database className='text-muted-foreground h-4 w-4' />
-              <span className='text-sm font-medium'>Storage Usage</span>
+            {/* Storage Usage */}
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <Database className='text-muted-foreground h-4 w-4' />
+                  <span className='text-sm font-medium'>Storage Usage</span>
+                </div>
+                <span className='text-sm font-semibold'>{performance?.storage_usage ?? 'N/A'}</span>
+              </div>
+              <Progress value={storageUsage} className='h-2' />
             </div>
-            <span className='text-sm font-semibold'>{performance?.storage_usage ?? 'N/A'}</span>
-          </div>
-          <Progress value={storageUsage} className='h-2' />
-        </div>
 
-        <Separator />
+            <Separator />
+          </>
+        ) : (
+          <div className='text-muted-foreground text-sm'>
+            No system telemetry was included in this snapshot. Metrics will appear once the
+            monitoring service begins reporting.
+          </div>
+        )}
 
         {/* Quick Stats */}
         <div className='bg-muted space-y-3 rounded-lg p-4'>

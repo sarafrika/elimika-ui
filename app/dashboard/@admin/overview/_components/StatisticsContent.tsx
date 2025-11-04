@@ -1,9 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAdminDashboardStatisticsOptions } from '@/services/api/tanstack-client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import KPICards from './KPICards';
 import AnalyticsCharts from './AnalyticsCharts';
@@ -11,7 +11,7 @@ import SystemHealth from './SystemHealth';
 import ActivityFeed from './ActivityFeed';
 
 export default function StatisticsContent() {
-  const { data, error, isLoading, refetch } = useQuery(getDashboardStatisticsOptions());
+  const { data, error, isLoading, refetch } = useQuery(getAdminDashboardStatisticsOptions());
 
   if (error) {
     return (
@@ -30,7 +30,8 @@ export default function StatisticsContent() {
     );
   }
 
-  const statistics = data?.data;
+  const statistics = data?.statistics;
+  const activityEvents = data?.activityEvents ?? [];
 
   return (
     <div className='flex flex-col gap-6'>
@@ -43,7 +44,18 @@ export default function StatisticsContent() {
       </div>
 
       {/* KPI Cards */}
-      <KPICards statistics={statistics} isLoading={isLoading} />
+      {!isLoading && !statistics && activityEvents.length === 0 ? (
+        <Alert variant='outline' className='border-dashed'>
+          <Info className='h-4 w-4' />
+          <AlertTitle>No statistics available</AlertTitle>
+          <AlertDescription>
+            The dashboard did not return any metrics for this snapshot. Once activity is recorded
+            you will see usage indicators and charts here.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <KPICards statistics={statistics} isLoading={isLoading} />
+      )}
 
       {/* Analytics Charts & System Health */}
       <div className='grid gap-6 lg:grid-cols-3'>
@@ -56,7 +68,7 @@ export default function StatisticsContent() {
       </div>
 
       {/* Activity Feed */}
-      <ActivityFeed statistics={statistics} isLoading={isLoading} />
+      <ActivityFeed statistics={statistics} events={activityEvents} isLoading={isLoading} />
     </div>
   );
 }
