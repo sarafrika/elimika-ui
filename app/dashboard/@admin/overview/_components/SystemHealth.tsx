@@ -1,7 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, AlertTriangle, Activity, Database, Clock, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import type { AdminDashboardStatsDTO } from '@/services/api/actions';
@@ -20,19 +17,16 @@ const parsePercent = (value?: string) => {
 export default function SystemHealth({ statistics, isLoading }: SystemHealthProps) {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>System Health</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
+      <DashboardChartCard
+        title='System health'
+        description='Operational signals for core platform services'
+      >
+        <div className='space-y-4'>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className='space-y-2'>
-              <Skeleton className='h-4 w-full' />
-              <Skeleton className='h-2 w-full' />
-            </div>
+            <Skeleton key={i} className='h-16 w-full' />
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardChartCard>
     );
   }
 
@@ -43,9 +37,9 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
     !!performance && Object.values(performance).some(value => value !== undefined && value !== null);
 
   const healthStatus = {
-    healthy: { color: 'success', icon: CheckCircle, text: 'Healthy' },
-    warning: { color: 'warning', icon: AlertTriangle, text: 'Warning' },
-    critical: { color: 'destructive', icon: AlertCircle, text: 'Critical' },
+    healthy: { status: 'healthy' as const, label: 'Healthy' },
+    warning: { status: 'warning' as const, label: 'Warning' },
+    critical: { status: 'critical' as const, label: 'Critical' },
   };
 
   const currentStatus =
@@ -150,20 +144,16 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
           <h4 className='text-sm font-semibold'>Admin Activity</h4>
           <div className='grid grid-cols-2 gap-4'>
             <div>
-              <p className='text-muted-foreground text-xs'>Active Sessions</p>
-              <p className='text-lg font-bold'>
-                {statistics?.admin_metrics?.active_admin_sessions ?? 0}
-              </p>
+              <p className='text-muted-foreground text-xs uppercase tracking-wide'>Active sessions</p>
+              <p className='text-lg font-bold'>{adminSessions}</p>
             </div>
             <div>
-              <p className='text-muted-foreground text-xs'>Actions Today</p>
-              <p className='text-lg font-bold'>
-                {statistics?.admin_metrics?.admin_actions_today ?? 0}
-              </p>
+              <p className='text-muted-foreground text-xs uppercase tracking-wide'>Actions today</p>
+              <p className='text-lg font-bold'>{adminActions}</p>
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </DashboardChartCard>
   );
 }

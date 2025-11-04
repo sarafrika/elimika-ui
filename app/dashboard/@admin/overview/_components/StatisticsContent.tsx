@@ -9,6 +9,13 @@ import KPICards from './KPICards';
 import AnalyticsCharts from './AnalyticsCharts';
 import SystemHealth from './SystemHealth';
 import ActivityFeed from './ActivityFeed';
+import {
+  DashboardSection,
+  DashboardSectionDescription,
+  DashboardSectionHeader,
+  DashboardSectionTitle,
+  DashboardShell,
+} from '@/components/ui/dashboard';
 
 export default function StatisticsContent() {
   const { data, error, isLoading, refetch } = useQuery(getAdminDashboardStatisticsOptions());
@@ -44,7 +51,7 @@ export default function StatisticsContent() {
         <div className='lg:col-span-1'>
           <SystemHealth statistics={statistics} isLoading={isLoading} />
         </div>
-      </div>
+      </DashboardSection>
 
       <ActivityFeed statistics={statistics} isLoading={isLoading} />
     </div>

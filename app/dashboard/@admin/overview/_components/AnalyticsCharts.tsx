@@ -101,17 +101,15 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Platform Analytics</CardTitle>
-          <CardDescription>Growth trends and user distribution</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-[260px] w-full' />
-          <Skeleton className='h-[260px] w-full' />
-        </CardContent>
-      </Card>
+      <DashboardChartCard
+        title='Platform analytics'
+        description='Growth trends and user distribution'
+        contentClassName='space-y-6'
+      >
+        <Skeleton className='h-10 w-full' />
+        <Skeleton className='h-[260px] w-full' />
+        <Skeleton className='h-[260px] w-full' />
+      </DashboardChartCard>
     );
   }
 
