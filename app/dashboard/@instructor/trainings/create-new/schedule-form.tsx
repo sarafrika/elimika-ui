@@ -33,7 +33,8 @@ export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: Schedule
     enabled: !!data?.course_uuid,
   });
 
-  const lessons = cLessons?.data?.content || [];
+  const lessonsData = cLessons?.data?.content;
+  const lessons = useMemo(() => lessonsData ?? [], [lessonsData]);
 
   const totalMinutes = useMemo(() => {
     return lessons.reduce((acc, item: any) => {
@@ -103,6 +104,7 @@ export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: Schedule
       totalHours,
       remainingMinutes,
     };
+    onSummaryChange(newSummary);
   }, [totalSkills, totalContents, totalHours, remainingMinutes, onSummaryChange]);
 
   return (

@@ -2,24 +2,21 @@
 
 import * as React from 'react';
 import * as ProgressPrimitive from '@radix-ui/react-progress';
-
 import { cn } from '@/lib/utils';
 
-type ProgressProps = React.ComponentProps<typeof ProgressPrimitive.Root> & {
+export interface ProgressProps
+  extends React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> {
   indicatorClassName?: string;
-};
+}
 
-function Progress({
+export function Progress({
   className,
   value,
   indicatorClassName,
   ...props
 }: ProgressProps) {
-export interface ProgressProps extends React.ComponentProps<typeof ProgressPrimitive.Root> {
-  indicatorClassName?: string;
-}
+  const clampedValue = Math.min(100, Math.max(0, value ?? 0));
 
-function Progress({ className, value, indicatorClassName, ...props }: ProgressProps) {
   return (
     <ProgressPrimitive.Root
       data-slot='progress'
@@ -28,11 +25,9 @@ function Progress({ className, value, indicatorClassName, ...props }: ProgressPr
     >
       <ProgressPrimitive.Indicator
         data-slot='progress-indicator'
-        className={cn('bg-primary h-full w-full flex-1 transition-all', indicatorClassName)}
-        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+        className={cn('bg-primary h-full flex-1 transition-all', indicatorClassName)}
+        style={{ transform: `translateX(-${100 - clampedValue}%)` }}
       />
     </ProgressPrimitive.Root>
   );
 }
-
-export { Progress };

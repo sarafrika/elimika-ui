@@ -1,36 +1,47 @@
 'use client';
-
 import { useQuery } from '@tanstack/react-query';
-import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { getDashboardActivityFeedOptions } from '@/services/client/admin-dashboard';
-import { getAdminDashboardStatisticsOptions } from '@/services/api/tanstack-client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Info } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import KPICards from './KPICards';
-import AnalyticsCharts from './AnalyticsCharts';
-import SystemHealth from './SystemHealth';
-import ActivityFeed from './ActivityFeed';
 import {
+  DashboardGrid,
   DashboardSection,
   DashboardSectionDescription,
   DashboardSectionHeader,
   DashboardSectionTitle,
   DashboardShell,
 } from '@/components/ui/dashboard';
+import { getDashboardActivityFeedOptions } from '@/services/client/admin-dashboard';
+import { getAdminDashboardStatisticsOptions } from '@/services/api/tanstack-client';
+import type { AdminDashboardActivityFeed } from '@/services/client/admin-dashboard';
+import type { ActivityEventDTO } from '@/services/api/actions';
+import KPICards from './KPICards';
+import AnalyticsCharts from './AnalyticsCharts';
+import SystemHealth from './SystemHealth';
+import ActivityFeed from './ActivityFeed';
+
+const mapActivityEventsToFeed = (events: ActivityEventDTO[]): AdminDashboardActivityFeed => ({
+  events: events.map(event => ({
+    id: event.id,
+    title: event.title,
+    summary: event.description,
+    description: event.description,
+    status: event.status,
+    occurredAt: event.occurredAt?.toISOString(),
+    createdAt: event.occurredAt?.toISOString(),
+  })),
+  message: 'Derived activity from the latest dashboard snapshot',
+});
 
 export default function StatisticsContent() {
   const {
-    data,
-    error,
-    isLoading,
-    refetch,
-  } = useQuery({
-    ...getDashboardStatisticsOptions(),
-    staleTime: 120_000,
-    refetchInterval: 120_000,
-    refetchOnWindowFocus: false,
-  });
+    data: statsResult,
+    error: statsError,
+    isLoading: isStatsLoading,
+    isFetching: isStatsFetching,
+    refetch: refetchStats,
+  } = useQuery(getAdminDashboardStatisticsOptions());
+
   const {
     data: activityFeed,
     error: activityError,
@@ -38,9 +49,8 @@ export default function StatisticsContent() {
     isFetching: isActivityFetching,
     refetch: refetchActivity,
   } = useQuery(getDashboardActivityFeedOptions());
-  const { data, error, isLoading, refetch } = useQuery(getAdminDashboardStatisticsOptions());
 
-  if (error) {
+  if (statsError) {
     return (
       <div className='flex min-h-[360px] items-center justify-center rounded-lg border border-dashed'>
         <Alert variant='destructive' className='max-w-lg'>
@@ -48,7 +58,7 @@ export default function StatisticsContent() {
           <AlertTitle>Error loading statistics</AlertTitle>
           <AlertDescription className='mt-2 space-y-4'>
             <p>Failed to load dashboard statistics.</p>
-            <Button onClick={() => refetch()} variant='outline' size='sm'>
+            <Button onClick={() => refetchStats()} variant='outline' size='sm'>
               Try again
             </Button>
           </AlertDescription>
@@ -57,46 +67,47 @@ export default function StatisticsContent() {
     );
   }
 
-  const statistics = data?.data;
-  const isInitialLoading = isLoading && !statistics;
+  const statistics = statsResult?.statistics;
+  const derivedActivityEvents = statsResult?.activityEvents ?? [];
+  const isInitialLoading = isStatsLoading && !statistics;
+
+  const fallbackFeed =
+    derivedActivityEvents.length > 0 ? mapActivityEventsToFeed(derivedActivityEvents) : undefined;
+
+  const feed = activityFeed ?? fallbackFeed;
 
   return (
-    <div className='flex flex-col gap-6'>
-      {/* Page Header */}
-      <div className='space-y-1'>
-        <h1 className='text-3xl font-bold tracking-tight'>Dashboard Statistics</h1>
-        <p className='text-muted-foreground'>
-          Real-time overview of platform metrics and system health
-        </p>
-      </div>
-
-      {/* KPI Cards */}
-      <KPICards statistics={statistics} isLoading={isInitialLoading} />
-  const statistics = data?.statistics;
-  const activityEvents = data?.activityEvents ?? [];
-
-  return (
-    <div className='flex flex-col gap-6'>
-      <KPICards statistics={statistics} isLoading={isLoading} />
-
-      <div className='grid gap-6 lg:grid-cols-3'>
-        <div className='lg:col-span-2'>
-          <AnalyticsCharts statistics={statistics} isLoading={isInitialLoading} />
-        </div>
-        <div className='lg:col-span-1'>
-          <SystemHealth statistics={statistics} isLoading={isInitialLoading} />
-        </div>
+    <DashboardShell className='space-y-8'>
+      <DashboardSection>
+        <DashboardSectionHeader>
+          <DashboardSectionTitle>Dashboard statistics</DashboardSectionTitle>
+          <DashboardSectionDescription>
+            Real-time overview of platform metrics and system health
+          </DashboardSectionDescription>
+        </DashboardSectionHeader>
+        <KPICards statistics={statistics} isLoading={isInitialLoading} />
       </DashboardSection>
 
-      {/* Activity Feed */}
-      <ActivityFeed
-        feed={activityFeed}
-        isLoading={isActivityLoading}
-        isRefetching={isActivityFetching}
-        error={activityError}
-        onRetry={refetchActivity}
-      />
-      <ActivityFeed statistics={statistics} isLoading={isLoading} />
-    </div>
+      <DashboardSection>
+        <DashboardGrid className='gap-6 lg:grid-cols-3'>
+          <div className='lg:col-span-2'>
+            <AnalyticsCharts statistics={statistics} isLoading={isInitialLoading} />
+          </div>
+          <div className='lg:col-span-1'>
+            <SystemHealth statistics={statistics} isLoading={isInitialLoading} />
+          </div>
+        </DashboardGrid>
+      </DashboardSection>
+
+      <DashboardSection>
+        <ActivityFeed
+          feed={feed}
+          isLoading={isActivityLoading && !feed}
+          isRefetching={isActivityFetching || isStatsFetching}
+          error={activityError}
+          onRetry={refetchActivity}
+        />
+      </DashboardSection>
+    </DashboardShell>
   );
 }

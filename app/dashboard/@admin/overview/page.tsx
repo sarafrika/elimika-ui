@@ -1,12 +1,10 @@
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import type { Metadata } from 'next';
 import StatisticsContent from './_components/StatisticsContent';
 import { AdminPage } from '@/components/admin/admin-page';
 import { adminRouteMap } from '../_components/admin-navigation';
-import type { Metadata } from 'next';
 
-export default function Page() {
-  return <StatisticsContent />;
 function StatisticsLoading() {
   return (
     <div className='flex min-h-[360px] items-center justify-center rounded-lg border border-dashed'>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DashboardChartCard } from '@/components/ui/dashboard';
 import {
   AdminTabs,
   AdminTabsContent,

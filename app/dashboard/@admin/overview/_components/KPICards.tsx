@@ -8,6 +8,8 @@ import {
   Activity,
   UserCheck,
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
 
@@ -26,23 +28,10 @@ const toNumber = (value?: bigint | number | string | null) => {
   return 0;
 };
 
-const formatMetric = (value: number) => value.toLocaleString();
+const formatMetricValue = (value?: bigint | number | string | null) =>
+  new Intl.NumberFormat().format(toNumber(value));
 
 export default function KPICards({ statistics, isLoading }: KPICardsProps) {
-  const toNumber = (value?: bigint | number | string | null) => {
-    if (typeof value === 'bigint') return Number(value);
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string') {
-      const parsed = Number(value);
-      return Number.isNaN(parsed) ? 0 : parsed;
-    }
-    return 0;
-  };
-
-  const formatMetric = (value?: bigint | number | string | null) => {
-    return new Intl.NumberFormat().format(toNumber(value));
-  };
-
   const kpis = [
     {
       id: 'total-users',
@@ -151,11 +140,20 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{formatMetric(kpi.value)}</div>
+            <div className='text-2xl font-bold'>{formatMetricValue(kpi.value)}</div>
             <div className='flex items-center justify-between'>
               <p className='text-muted-foreground text-xs'>{kpi.description}</p>
               {kpi.trend && (
-                <Badge variant={kpi.trendUp ? 'success' : 'destructive'} className='text-xs'>
+                <Badge
+                  variant={
+                    kpi.trendDirection === 'up'
+                      ? 'success'
+                      : kpi.trendDirection === 'down'
+                      ? 'destructive'
+                      : 'secondary'
+                  }
+                  className='text-xs'
+                >
                   {kpi.trend}
                 </Badge>
               )}
