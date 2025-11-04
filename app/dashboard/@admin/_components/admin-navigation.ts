@@ -1,15 +1,4 @@
-import {
-  BadgeDollarSign,
-  BookOpen,
-  Building2,
-  Headset,
-  LayoutDashboard,
-  MessageCircle,
-  Users,
-  UserCog,
-  UserRound,
-} from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import { DashboardIconName } from '@/components/icons';
 
 export type AdminRouteId =
   | 'overview'
@@ -36,14 +25,14 @@ export type AdminNavigationRoute = AdminNavigationBase & {
   type: 'item';
   id: AdminRouteId;
   href: string;
-  icon: LucideIcon;
+  icon: DashboardIconName;
   breadcrumbs?: AdminBreadcrumb[];
 };
 
 export type AdminNavigationGroup = AdminNavigationBase & {
   type: 'group';
   id: string;
-  icon?: LucideIcon;
+  icon?: DashboardIconName;
   children: AdminNavigationNode[];
 };
 
@@ -78,14 +67,14 @@ export const adminNavigation: AdminNavigationNode[] = [
     title: 'Overview',
     description: 'Monitor platform metrics, status updates, and trends.',
     href: '/dashboard/overview',
-    icon: LayoutDashboard,
+    icon: 'layout-dashboard',
   }),
   {
     type: 'group',
     id: 'people',
     title: 'People & Accounts',
     description: 'Manage every profile type connected to the platform.',
-    icon: Users,
+    icon: 'users',
     children: [
       withBreadcrumbs({
         type: 'item',
@@ -93,7 +82,7 @@ export const adminNavigation: AdminNavigationNode[] = [
         title: 'Course Creators',
         description: 'Review onboarding requests and maintain creator quality.',
         href: '/dashboard/course-creators',
-        icon: BookOpen,
+        icon: 'courses',
       }),
       withBreadcrumbs({
         type: 'item',
@@ -101,7 +90,7 @@ export const adminNavigation: AdminNavigationNode[] = [
         title: 'Instructors',
         description: 'Oversee instructor activity and verification workflows.',
         href: '/dashboard/instructors',
-        icon: UserRound,
+        icon: 'user-round',
       }),
       withBreadcrumbs({
         type: 'item',
@@ -109,7 +98,7 @@ export const adminNavigation: AdminNavigationNode[] = [
         title: 'Users',
         description: 'Search, filter, and administer every registered learner.',
         href: '/dashboard/users',
-        icon: Users,
+        icon: 'users',
       }),
       withBreadcrumbs({
         type: 'item',
@@ -117,7 +106,7 @@ export const adminNavigation: AdminNavigationNode[] = [
         title: 'Administrators',
         description: 'Audit and configure administrator access levels.',
         href: '/dashboard/administrators',
-        icon: UserCog,
+        icon: 'user-cog',
       }),
     ],
   },
@@ -126,7 +115,7 @@ export const adminNavigation: AdminNavigationNode[] = [
     id: 'organizations-stack',
     title: 'Organizations',
     description: 'Partner accounts and enterprise cohorts.',
-    icon: Building2,
+    icon: 'organizations',
     children: [
       withBreadcrumbs({
         type: 'item',
@@ -134,7 +123,7 @@ export const adminNavigation: AdminNavigationNode[] = [
         title: 'Organizations',
         description: 'Track onboarding progress and account health.',
         href: '/dashboard/organizations',
-        icon: Building2,
+        icon: 'organizations',
       }),
     ],
   },
@@ -143,7 +132,7 @@ export const adminNavigation: AdminNavigationNode[] = [
     id: 'operations',
     title: 'Operational Tools',
     description: 'Keep payments and communications running smoothly.',
-    icon: BadgeDollarSign,
+    icon: 'badge-dollar',
     children: [
       withBreadcrumbs({
         type: 'item',
@@ -151,7 +140,7 @@ export const adminNavigation: AdminNavigationNode[] = [
         title: 'Transactions',
         description: 'Inspect payouts, refunds, and financial performance.',
         href: '/dashboard/transactions',
-        icon: BadgeDollarSign,
+        icon: 'badge-dollar',
       }),
       withBreadcrumbs({
         type: 'item',
@@ -159,7 +148,7 @@ export const adminNavigation: AdminNavigationNode[] = [
         title: 'Notifications',
         description: 'Review system announcements and delivery logs.',
         href: '/dashboard/notifications',
-        icon: MessageCircle,
+        icon: 'message-circle',
       }),
       withBreadcrumbs({
         type: 'item',
@@ -167,7 +156,7 @@ export const adminNavigation: AdminNavigationNode[] = [
         title: 'Support',
         description: 'Coordinate support requests and knowledge base content.',
         href: '/dashboard/support',
-        icon: Headset,
+        icon: 'headset',
       }),
     ],
   },
