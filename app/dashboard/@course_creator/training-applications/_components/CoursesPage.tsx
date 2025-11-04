@@ -4,11 +4,12 @@ import DeleteModal from '@/components/custom-modals/delete-modal';
 import ErrorPage from '@/components/ErrorPage';
 import { Course } from '@/services/client';
 import {
-  deleteCourseCreatorMutation,
+  deleteCourseMutation,
   getAllCourseCreatorsQueryKey,
   getAllCoursesOptions,
+  getAllCoursesQueryKey,
   unverifyCourseCreatorMutation,
-  verifyCourseCreatorMutation
+  verifyCourseCreatorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
@@ -54,7 +55,7 @@ export default function CoursesPage() {
           },
         }
       );
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const handleUnverifyCourse = async (course: Course) => {
@@ -89,7 +90,7 @@ export default function CoursesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  const deleteCourseCreator = useMutation(deleteCourseCreatorMutation());
+  const deleteCourse = useMutation(deleteCourseMutation());
   const handleCourseCreatorDelete = (course: Course) => {
     setDeletingId(course.uuid as string);
     setOpenDeleteModal(true);
@@ -98,13 +99,13 @@ export default function CoursesPage() {
   const confirmDeleteCourseCreator = () => {
     if (!deletingId) return;
 
-    deleteCourseCreator.mutate(
+    deleteCourse.mutate(
       { path: { uuid: deletingId as string } },
       {
         onSuccess: () => {
-          toast.success('Course creator deleted successfully');
+          toast.success('Course deleted successfully');
           qc.invalidateQueries({
-            queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
+            queryKey: getAllCoursesQueryKey({ query: { pageable: {} } }),
           });
         },
       }
@@ -119,7 +120,7 @@ export default function CoursesPage() {
         course.objectives?.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Status filter
-      const courseStatus = course.status ? 'PUBLISHED' : 'DRAFT';
+      const courseStatus = course.status;
       const matchesStatus = statusFilter === 'all' || courseStatus === statusFilter;
 
       return matchesSearch && matchesStatus;
@@ -136,9 +137,7 @@ export default function CoursesPage() {
     });
 
   if (error) {
-    return (
-      <ErrorPage message={error?.message || 'Something went wrong while fetching courses'} />
-    );
+    return <ErrorPage message={error?.message || 'Something went wrong while fetching courses'} />;
   }
 
   return (
@@ -181,11 +180,11 @@ export default function CoursesPage() {
       <DeleteModal
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
-        title='Delete Course Creator'
-        description='This course creator will be deleted permanently. Are you sure you want to delete this course creator? This action cannot be undone.'
+        title='Delete Course'
+        description='This course will be deleted permanently. Are you sure you want to delete this course? This action cannot be undone.'
         onConfirm={confirmDeleteCourseCreator}
-        isLoading={deleteCourseCreator.isPending}
-        confirmText='Delete Course Creator'
+        isLoading={deleteCourse.isPending}
+        confirmText='Delete Course'
       />
     </div>
   );

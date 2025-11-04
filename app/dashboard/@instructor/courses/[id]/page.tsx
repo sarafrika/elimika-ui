@@ -1,5 +1,6 @@
 import ReusableCourseDetailsPage from '@/app/dashboard/_components/reusable-course-details';
 
-export default function CourseDetailsPage({ params }: { params: { id: string } }) {
-  return <ReusableCourseDetailsPage courseId={params.id} userRole='instructor' />;
+export default async function CourseDetailsPage({ params }: any) {
+  const { data } = await params;
+  return <ReusableCourseDetailsPage courseId={data?.id} userRole='instructor' />;
 }

@@ -47,9 +47,8 @@ export default function CourseFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value='all'>All Statuses</SelectItem>
-            <SelectItem value='pending'>Pending</SelectItem>
-            <SelectItem value='approved'>Approved</SelectItem>
-            {/* <SelectItem value='rejected'>Rejected</SelectItem> */}
+            <SelectItem value='published'>Published</SelectItem>
+            <SelectItem value='draft'>Draft</SelectItem>
           </SelectContent>
         </Select>
 

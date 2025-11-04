@@ -158,7 +158,7 @@ export default function CourseCreatorDetails({
             {courseCreator?.bio ? (
               <HTMLTextPreview
                 htmlContent={courseCreator.bio}
-                className='prose prose-sm max-w-none text-muted-foreground'
+                className='prose prose-sm text-muted-foreground max-w-none'
               />
             ) : (
               <p className='text-muted-foreground text-sm'>No biography information provided</p>

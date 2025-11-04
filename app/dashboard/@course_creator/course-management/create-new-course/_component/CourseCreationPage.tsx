@@ -11,6 +11,7 @@ import { useCourseCreator } from '@/context/course-creator-context';
 import {
   deleteCourseLessonMutation,
   deleteLessonContentMutation,
+  getAllAssignmentsOptions,
   getAllContentTypesOptions,
   getAllQuizzesOptions,
   getCourseByUuidOptions,
@@ -21,7 +22,7 @@ import {
   getLessonContentOptions,
   getLessonContentQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey
+  publishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -33,7 +34,7 @@ import {
   FileQuestion,
   GraduationCap,
   Palette,
-  SlidersHorizontal
+  SlidersHorizontal,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -52,7 +53,7 @@ import {
   LessonContentDialog,
   LessonDialog,
   LessonFormValues,
-  LessonList
+  LessonList,
 } from '../../../_components/lesson-management-form';
 import {
   CourseCreatorEmptyState,
@@ -129,7 +130,6 @@ export default function CourseCreationPage() {
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
 
-
   // GET COURSE CONTENT TYPES
   const { data: contentTypeList } = useQuery(
     getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
@@ -182,15 +182,15 @@ export default function CourseCreationPage() {
       // @ts-ignore
       training_requirements: Array.isArray(c.training_requirements)
         ? c.training_requirements.map(req => ({
-          uuid: req.uuid,
-          requirement_type: req.requirement_type,
-          name: req.name,
-          description: req.description ?? '',
-          quantity: req.quantity ?? undefined,
-          unit: req.unit ?? '',
-          provided_by: req.provided_by ?? 'course_creator',
-          is_mandatory: !!req.is_mandatory,
-        }))
+            uuid: req.uuid,
+            requirement_type: req.requirement_type,
+            name: req.name,
+            description: req.description ?? '',
+            quantity: req.quantity ?? undefined,
+            unit: req.unit ?? '',
+            provided_by: req.provided_by ?? 'course_creator',
+            is_mandatory: !!req.is_mandatory,
+          }))
         : [],
     });
   }, [courseId, course]);
@@ -203,6 +203,8 @@ export default function CourseCreationPage() {
     }),
     enabled: !!resolveId,
   });
+  const lessons = courseLessons?.data?.content;
+  const lessonUuids = lessons?.map((lesson: any) => lesson.uuid) || [];
 
   // GET COURSE LESSON BY ID
   const { data: lessonData } = useQuery({
@@ -267,33 +269,33 @@ export default function CourseCreationPage() {
   const content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
-        const matchedType = Array.isArray(contentTypeList?.data)
-          ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
-          : undefined;
+          const matchedType = Array.isArray(contentTypeList?.data)
+            ? contentTypeList.data.find(ct => ct.uuid === item?.content_type)
+            : undefined;
 
-        const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
+          const typeName = matchedType?.name ?? 'TEXT'; // fallback if undefined
 
-        return {
-          contentType: typeName.toUpperCase() as
-            | 'AUDIO'
-            | 'VIDEO'
-            | 'TEXT'
-            | 'LINK'
-            | 'PDF'
-            | 'YOUTUBE',
-          title: item?.title || '',
-          uuid: item?.uuid || '',
-          value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
-          duration:
-            typeof item?.estimated_duration === 'string'
-              ? parseInt(item.estimated_duration) || 0
-              : 0,
-          durationHours: item?.duration_hours || 0,
-          durationMinutes: item?.duration_minutes || 0,
-          contentTypeUuid: item?.content_type || '',
-          contentCategory: matchedType?.upload_category ?? '',
-        };
-      })
+          return {
+            contentType: typeName.toUpperCase() as
+              | 'AUDIO'
+              | 'VIDEO'
+              | 'TEXT'
+              | 'LINK'
+              | 'PDF'
+              | 'YOUTUBE',
+            title: item?.title || '',
+            uuid: item?.uuid || '',
+            value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
+            duration:
+              typeof item?.estimated_duration === 'string'
+                ? parseInt(item.estimated_duration) || 0
+                : 0,
+            durationHours: item?.duration_hours || 0,
+            durationMinutes: item?.duration_minutes || 0,
+            contentTypeUuid: item?.content_type || '',
+            contentCategory: matchedType?.upload_category ?? '',
+          };
+        })
       : [];
 
   const lessonInitialValues: Partial<LessonFormValues> = {
@@ -322,20 +324,20 @@ export default function CourseCreationPage() {
   };
 
   // GET COURSE QUIZZES
-  // const { data: quizData, isLoading: quizDataIsLoading } = useQuery(
-  //   searchQuizzesOptions({ query: { pageable: {}, searchParams: { lesson_uuid_eq: "ae193cc7-cad4-40c4-b864-cae8f2fae174" } }, })
-  // );
-
   const { data: quizData, isLoading: quizDataIsLoading } = useQuery(
     getAllQuizzesOptions({ query: { pageable: {} } })
   );
+  const quizzes = quizData?.data?.content; // Array of quizzes
+  const filteredQuizzes =
+    quizzes?.filter((quiz: any) => lessonUuids.includes(quiz.lesson_uuid)) || [];
 
-  // GET COURSE ASSESSMENTS
-  // const { data: assessmentData, isLoading: assessmentLoading } = useQuery(
-  //   getCourseAssessmentsOptions({
-  //     path: { courseUuid: resolveId }, query: { pageable: {} }
-  //   })
-  // );
+  // GET COURSE ASSIGNMENTS
+  const { data: assignmentData, isLoading: assignmentIsLoading } = useQuery(
+    getAllAssignmentsOptions({ query: { pageable: {} } })
+  );
+  const assignments = assignmentData?.data?.content;
+  const filteredAssignments =
+    assignments?.filter((assignment: any) => lessonUuids.includes(assignment.lesson_uuid)) || [];
 
   // PUBLISH COURSE MUTATION
   const PublishCourse = useMutation(publishCourseMutation());
@@ -357,7 +359,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   // DELETE LESSON MUTATION
@@ -382,7 +384,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
@@ -409,7 +411,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   if (creatorLoading) {
@@ -498,7 +500,7 @@ export default function CourseCreationPage() {
                 onAddLesson={openAddLessonModal}
                 onEditLesson={openEditLessonModal}
                 onDeleteLesson={handleDeleteLesson}
-                onReorderLessons={() => { }}
+                onReorderLessons={() => {}}
                 // lesson content
                 lessonContentsMap={lessonContentMap}
                 onAddLessonContent={openAddContentModal}
@@ -521,8 +523,8 @@ export default function CourseCreationPage() {
                   courseId={courseId as string}
                   lessonId={selectedLesson?.uuid}
                   initialValues={lessonInitialValues}
-                  onCancel={() => { }}
-                  onSuccess={(data) => {
+                  onCancel={() => {}}
+                  onSuccess={data => {
                     setCreatedCourseId(data?.uuid);
 
                     queryClient.invalidateQueries({
@@ -556,7 +558,7 @@ export default function CourseCreationPage() {
               <LessonContentDialog
                 courseId={resolveId}
                 lessonId={selectedLesson?.uuid || (selectedContent?.lesson_uuid as string)}
-                contentId={(selectedContent?.uuid as string) || ''}
+                contentId={selectedContent?.uuid as string}
                 isOpen={addContentModalOpen}
                 onOpenChange={setAddContentModalOpen}
                 onCancel={() => {
@@ -582,7 +584,6 @@ export default function CourseCreationPage() {
             </div>
           </StepperContent>
 
-
           <StepperContent
             step={2}
             title='Course Assessment'
@@ -597,7 +598,7 @@ export default function CourseCreationPage() {
                   <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
                 </div>
               </div>
-              < RubricsCreationPage />
+              <RubricsCreationPage />
             </div>
           </StepperContent>
 
@@ -616,7 +617,7 @@ export default function CourseCreationPage() {
                 <QuizList
                   courseTitle={course?.data?.name as string}
                   isLoading={quizDataIsLoading}
-                  quizzes={quizData?.data}
+                  quizzes={filteredQuizzes}
                   courseId={resolveId}
                   onAddQuiz={() => setAddQuizModal(true)}
                 />
@@ -644,6 +645,8 @@ export default function CourseCreationPage() {
                 courseTitle={course?.data?.name as string}
                 onAddAssignment={() => setAddAssignmentModal(true)}
                 courseId={resolveId as string}
+                assignments={filteredAssignments}
+                loading={assignmentIsLoading}
               />
 
               <AssignmentDialog
@@ -704,7 +707,6 @@ export default function CourseCreationPage() {
             nextButtonText='Continue to Review'
             previousButtonText='Back to Branding'
           >
-
             <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
               <div className='flex flex-row items-center justify-between'>
                 <div className='space-y-1'>
@@ -746,8 +748,10 @@ export default function CourseCreationPage() {
                   </div>
                 </div>
 
-                <Card className='p-6' >
-                  <CardDescription className='mb-3 text-xl font-semibold text-gray-800'>💰 Pricing</CardDescription>
+                <Card className='p-6'>
+                  <CardDescription className='mb-3 text-xl font-semibold text-gray-800'>
+                    💰 Pricing
+                  </CardDescription>
                   <div className='space-y-2 text-gray-700'>
                     <p>
                       <span className='font-medium'>Free Course:</span>{' '}

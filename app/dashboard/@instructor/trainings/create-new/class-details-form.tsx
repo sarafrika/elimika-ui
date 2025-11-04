@@ -30,18 +30,20 @@ import {
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
   getClassRecurrencePatternOptions,
+  searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
   updateClassDefinitionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Upload, X } from 'lucide-react';
+import { ChevronLeft, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FieldErrors, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
+import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
 import {
   ClassFormValues,
   classSchema,
@@ -57,14 +59,18 @@ type ClassUploadOptions = {
 
 interface ClassDetailsProps {
   handleNextStep: () => void;
+  onPrev: () => void;
   classData: any;
+  combinedRecurrenceData: any;
   isLoading: boolean;
 }
 
 export default function ClassDetailsForm({
   handleNextStep,
   classData,
+  combinedRecurrenceData,
   isLoading,
+  onPrev,
 }: ClassDetailsProps) {
   const router = useRouter();
   const instructor = useInstructor();
@@ -78,12 +84,36 @@ export default function ClassDetailsForm({
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
+
+  const { data: appliedCourses } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+    }),
+    enabled: !!instructor?.uuid,
+  });
+
+  const approvedCourses = useMemo(() => {
+    if (!courses?.data?.content || !appliedCourses?.data?.content) return [];
+    const appliedMap = new Map(
+      appliedCourses.data.content
+        .filter(app => app.status === 'approved')
+        .map(app => [app.course_uuid, app])
+    );
+
+    return courses.data.content
+      .map(course => ({
+        ...course,
+        application: appliedMap.get(course.uuid) || null,
+      }))
+      .filter(course => course.application !== null);
+  }, [courses, appliedCourses]);
+
   const { data: programs } = useQuery(
     searchTrainingProgramsOptions({
       query: { pageable: {}, searchParams: { instructorUuid: instructor?.uuid } },
     })
   );
-  const [selectedCourseProgram, setSelectedCourseProgram] = useState<any | null>(null)
+  const [selectedCourseProgram, setSelectedCourseProgram] = useState<any | null>(null);
 
   useEffect(() => {
     if (!resolveId) return;
@@ -148,7 +178,7 @@ export default function ClassDetailsForm({
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
 
   const handleError = (errors: FieldErrors) => {
-    toast.error("Form validation errors");
+    toast.error('Form validation errors');
   };
 
   const handleSubmit = async (values: ClassFormValues) => {
@@ -156,12 +186,12 @@ export default function ClassDetailsForm({
       ...values,
       course_uuid: values?.course_uuid || classData?.course_uuid,
       max_participants: values?.max_participants || classData?.max_participants,
-      // location_type: values?.location_type || classData?.location_type,
-      recurrence_pattern_uuid: '08e567cc-bec5-4893-9217-03ff19f44895',
+      recurrence_pattern_uuid: combinedRecurrenceData?.response?.uuid,
       default_instructor_uuid: instructor?.uuid as string,
-      default_start_time: '2025-11-05T10:00:00',
-      default_end_time: '2026-10-05T12:00:00',
-      location_type: 'HYBRID',
+      location_type: combinedRecurrenceData?.payload?.location_type || classData?.location_type,
+      duration_minutes: combinedRecurrenceData?.payload?.duration || classData?.duration_minutes,
+      default_start_time: '2035-11-05T10:00:00',
+      default_end_time: '2035-12-05T12:00:00',
       class_time_validy: '2 months',
     };
 
@@ -296,7 +326,7 @@ export default function ClassDetailsForm({
 
       {isLoading ? (
         <div className='mx-auto items-center justify-center'>
-          <Spinner />
+          <CustomLoadingState subHeading='Fetching your class details' />
         </div>
       ) : (
         <Form {...form}>
@@ -306,21 +336,20 @@ export default function ClassDetailsForm({
               name='course_uuid'
               render={({ field }) => (
                 <FormItem className='w-full flex-1'>
-                  <FormLabel>Assign Course or Program</FormLabel>
+                  <FormLabel>
+                    Assign Course or Program (Select from a list of courses you have been approved
+                    to train)
+                  </FormLabel>
                   <Select
                     onValueChange={value => {
-                      field.onChange(value); // Set selected UUID
+                      field.onChange(value);
 
-                      // Try to find the selected course or program
-                      const selectedCourse = courses?.data?.content?.find(
-                        course => course.uuid === value
-                      );
+                      const selectedCourse = approvedCourses?.find(course => course.uuid === value);
                       // const selectedProgram = programs?.data?.content?.find(
                       //   program => program.uuid === value
                       // );
 
-                      const maxParticipants =
-                        selectedCourse?.class_limit;
+                      const maxParticipants = selectedCourse?.class_limit;
                       // const maxParticipants =
                       //   selectedCourse?.class_limit ?? selectedProgram?.class_limit;
 
@@ -328,8 +357,7 @@ export default function ClassDetailsForm({
                         form.setValue('max_participants', maxParticipants);
                       }
 
-                      setSelectedCourseProgram(selectedCourse)
-
+                      setSelectedCourseProgram(selectedCourse);
                     }}
                     value={field.value}
                   >
@@ -337,7 +365,7 @@ export default function ClassDetailsForm({
                       <SelectValue placeholder='Select a course' />
                     </SelectTrigger>
                     <SelectContent className='pb-4'>
-                      {courses?.data?.content?.map(course => (
+                      {approvedCourses?.map(course => (
                         <SelectItem
                           className='pb-1'
                           key={course.uuid}
@@ -549,12 +577,13 @@ export default function ClassDetailsForm({
               name='training_fee'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Training Fee</FormLabel>
+                  <FormLabel>Training Fee (Min. rate per hour per head)</FormLabel>
                   <FormControl>
                     <Input type='number' min='0' step='0.01' {...field} />
                   </FormControl>
                   <FormDescription>
-                    Instructor-led classes must charge at least this KES {selectedCourseProgram?.minimum_training_fee}.
+                    Instructor-led classes must charge at least this KES{' '}
+                    {selectedCourseProgram?.minimum_training_fee}.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -639,21 +668,27 @@ export default function ClassDetailsForm({
               )}
             />
 
-            <div className='flex justify-end gap-2 pt-6'>
-              <Button type='button' variant='outline' onClick={handleNextStep}>
-                Next
+            <div className='flex justify-between gap-2 pt-6'>
+              <Button variant='outline' onClick={onPrev}>
+                <ChevronLeft className='mr-1 h-4 w-4' /> Previous
               </Button>
 
-              <Button
-                type='submit'
-                className='flex min-w-[120px] items-center justify-center gap-2'
-                disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
-              >
-                {(createClassDefinition.isPending || updateClassDefinition.isPending) && (
-                  <Spinner />
-                )}
-                {resolveId ? 'Update Class Traninig' : 'Create Class Traninig'}
-              </Button>
+              <div className='flex flex-row items-center gap-4'>
+                <Button
+                  type='submit'
+                  className='flex min-w-[120px] items-center justify-center gap-2'
+                  disabled={createClassDefinition.isPending || updateClassDefinition.isPending}
+                >
+                  {(createClassDefinition.isPending || updateClassDefinition.isPending) && (
+                    <Spinner />
+                  )}
+                  {resolveId ? 'Update Class Traninig' : 'Create Class Traninig'}
+                </Button>
+
+                <Button type='button' variant='outline' onClick={handleNextStep}>
+                  Next
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

@@ -2,7 +2,13 @@ import { Button } from '@/components/ui/button';
 import { Course } from '@/services/client';
 import { CheckCircle, Edit, MoreVertical, Trash2, User, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import CourseDetails from './CourseDetails';
 
 interface CourseDetailsPanelProps {
@@ -31,9 +37,7 @@ export default function CourseDetailsPanel({
           <div className='text-center'>
             <User className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
             <h2 className='mb-2 text-lg font-medium'>No Course Selected</h2>
-            <p className='text-muted-foreground'>
-              Select a course from the list to view details
-            </p>
+            <p className='text-muted-foreground'>Select a course from the list to view details</p>
           </div>
         </div>
       </div>
@@ -72,7 +76,10 @@ export default function CourseDetailsPanel({
             ) : (
               <Button
                 onClick={() => onUnverify(course)}
-                variant='outline' size='sm' className='gap-2'>
+                variant='outline'
+                size='sm'
+                className='gap-2'
+              >
                 Revoke Verification
               </Button>
             )}
@@ -87,7 +94,7 @@ export default function CourseDetailsPanel({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className='text-destructive'
-                  onClick={() => toast.message("Implement delete here")}
+                  onClick={() => toast.message('Implement delete here')}
                 >
                   <Trash2 className='mr-2 h-4 w-4' />
                   Delete Course
@@ -96,7 +103,7 @@ export default function CourseDetailsPanel({
             </DropdownMenu>
           </div>
 
-          <div className='flex lg:hidden items-center gap-2'>
+          <div className='flex items-center gap-2 lg:hidden'>
             <Button variant='ghost' size='sm'>
               <Edit className='h-4 w-4' />
             </Button>
@@ -111,7 +118,6 @@ export default function CourseDetailsPanel({
       <div className='flex-1 overflow-y-auto p-6'>
         <CourseDetails course={course} />
       </div>
-
     </div>
   );
 }

@@ -1,49 +1,62 @@
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { getResourceIcon } from '@/lib/resources-icon';
-import {
-  getClassDefinitionOptions,
-  getCourseLessonsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { getCourseLessonsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, FileQuestion } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface ScheduleFormProps {
   data: any;
   onNext: () => void;
   onPrev: () => void;
+  onSummaryChange?: (summary: {
+    totalSkills: number;
+    totalLessons: number;
+    totalHours: number;
+    remainingMinutes: number;
+  }) => void;
 }
 
 const instructors = ['Fetch org. instructors'];
 
-export function ScheduleForm({ data, onNext, onPrev }: ScheduleFormProps) {
-  const searchParams = new URLSearchParams(location.search);
-  const classId = searchParams.get('id');
-
-  const { data: cData } = useQuery({
-    ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
-    enabled: !!classId,
-  });
-  const clData = cData?.data;
-
+export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: ScheduleFormProps) {
   const { data: cLessons } = useQuery({
     ...getCourseLessonsOptions({
-      path: { courseUuid: clData?.course_uuid as string },
+      path: { courseUuid: data?.course_uuid as string },
       query: { pageable: {} },
     }),
-    enabled: !!clData?.course_uuid,
+    enabled: !!data?.course_uuid,
   });
+
+  const lessons = cLessons?.data?.content || [];
+
+  const totalMinutes = useMemo(() => {
+    return lessons.reduce((acc, item: any) => {
+      const h = item?.duration_hours || 0;
+      const m = item?.duration_minutes || 0;
+      return acc + (h * 60 + m);
+    }, 0);
+  }, [lessons]);
+
+  const totalHours = useMemo(() => Math.floor(totalMinutes / 60), [totalMinutes]);
+  const remainingMinutes = useMemo(() => totalMinutes % 60, [totalMinutes]);
+  const totalSkills = useMemo(() => lessons.length, [lessons]);
+
   const {
     isLoading: isAllLessonsDataLoading,
     lessons: lessonsWithContent,
     contentTypeMap,
-  } = useCourseLessonsWithContent({ courseUuid: clData?.course_uuid as string });
+  } = useCourseLessonsWithContent({ courseUuid: data?.course_uuid as string });
+
+  const totalContents = useMemo(
+    () => lessonsWithContent?.reduce((acc, item) => acc + (item?.content?.data?.length || 0), 0),
+    [lessonsWithContent]
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -81,6 +94,17 @@ export function ScheduleForm({ data, onNext, onPrev }: ScheduleFormProps) {
     }
   };
 
+  useEffect(() => {
+    if (!onSummaryChange) return;
+
+    const newSummary = {
+      totalSkills,
+      totalLessons: totalContents ?? 0,
+      totalHours,
+      remainingMinutes,
+    };
+  }, [totalSkills, totalContents, totalHours, remainingMinutes, onSummaryChange]);
+
   return (
     <div className='space-y-6'>
       {/* Instructor Selection */}
@@ -107,10 +131,10 @@ export function ScheduleForm({ data, onNext, onPrev }: ScheduleFormProps) {
           <Label>Skills & Lessons</Label>
         </div>
 
-        <div className='space-y-4'>
+        <div className='space-y-6'>
           {isAllLessonsDataLoading && <Spinner />}
 
-          {lessonsWithContent?.length === 0 && (
+          {!isAllLessonsDataLoading && lessonsWithContent?.length === 0 && (
             <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
               <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
               <h3 className='text-lg font-semibold'>No Lessons Found</h3>
@@ -125,10 +149,9 @@ export function ScheduleForm({ data, onNext, onPrev }: ScheduleFormProps) {
                   <CardTitle className='text-lg'>Skill {skillIndex + 1}</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className='space-y-4'>
+              <CardContent className='space-y-2'>
                 <div className='space-y-2'>
-                  <Label>Skill Title</Label>
-                  <Input value={skill.lesson?.title} onChange={e => {}} />
+                  <p className='font-bold'>{skill.lesson?.title}</p>
                   <div className='text-muted-foreground mb-1 line-clamp-2 text-sm'>
                     <HTMLTextPreview htmlContent={skill?.lesson?.description as string} />
                   </div>
@@ -137,7 +160,7 @@ export function ScheduleForm({ data, onNext, onPrev }: ScheduleFormProps) {
                 {/* Lessons */}
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between'>
-                    <Label>Contents</Label>
+                    <Label>Lesson Contents</Label>
                   </div>
 
                   <div className='space-y-2'>
@@ -173,12 +196,14 @@ export function ScheduleForm({ data, onNext, onPrev }: ScheduleFormProps) {
           </div>
           <div>
             <span className='text-muted-foreground'>Total Lessons:</span>
-            <div className='font-medium'>0</div>
+            <div className='font-medium'>{totalContents}</div>
           </div>
           <div>
             <span className='text-muted-foreground'>Total Hours:</span>
             {/* <div className="font-medium">{getTotalHours().toFixed(1)}h</div> */}
-            <div className='font-medium'>0 h</div>
+            <div className='font-medium'>
+              {totalHours} hours {remainingMinutes} minutes
+            </div>
           </div>
           <div>
             <span className='text-muted-foreground'>Available Slots:</span>
@@ -189,7 +214,7 @@ export function ScheduleForm({ data, onNext, onPrev }: ScheduleFormProps) {
                     <div className="mt-2 p-2 bg-yellow-100 text-yellow-800 rounded text-sm">
                         ⚠️ You have more lessons than available time slots. Consider extending the academic period or adding more days.
                     </div>
-                )} */}
+             )} */}
       </div>
 
       {errors.scheduling && <p className='text-destructive text-sm'>{errors.scheduling}</p>}

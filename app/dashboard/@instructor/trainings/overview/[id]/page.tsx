@@ -180,10 +180,24 @@ export default function ClassPreviewPage() {
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-4'>
           <div>
-            <h1 className='text-2xl font-semibold'>Published Class</h1>
-            <p className='text-muted-foreground'>Your class is now live and ready for students</p>
+            {classData?.is_active ? (
+              <>
+                <h1 className='text-2xl font-semibold text-green-700'>Active Class</h1>
+                <p className='text-muted-foreground'>
+                  Your class is live and accepting new students.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className='text-2xl font-semibold text-gray-700'>Inactive Class</h1>
+                <p className='text-muted-foreground'>
+                  This class is currently not active. Activate it to allow student enrollment.
+                </p>
+              </>
+            )}
           </div>
         </div>
+
         <Button
           onClick={() => router.push(`/dashboard/trainings/create-new?id=${classData?.uuid}`)}
           variant='outline'
@@ -195,20 +209,52 @@ export default function ClassPreviewPage() {
       </div>
 
       {/* Status Banner */}
-      <Card className='border-green-200 bg-green-50'>
-        <CardContent className='p-4'>
-          <div className='flex items-center gap-3'>
-            <CheckCircle className='h-6 w-6 text-green-600' />
-            <div>
-              <h3 className='font-semibold text-green-800'>Class Published Successfully!</h3>
-              <p className='text-sm text-green-700'>
-                Your class is now live and students can enroll. Share the registration link to start
-                getting enrollments.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        {classData?.is_active ? (
+          <Card className='border-green-200 bg-green-50'>
+            <CardContent className='p-4'>
+              <div className='flex items-center gap-3'>
+                <CheckCircle className='h-6 w-6 text-green-600' />
+                <div>
+                  <h3 className='font-semibold text-green-800'>Class Published Successfully!</h3>
+                  <p className='text-sm text-green-700'>
+                    Your class is now live and students can enroll. Share the registration link to
+                    start getting enrollments.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className='border-yellow-200 bg-yellow-50'>
+            <CardContent className='p-4'>
+              <div className='flex items-center gap-3'>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-6 w-6 text-yellow-600'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M12 9v2m0 4h.01M21 12A9 9 0 1112 3a9 9 0 019 9z'
+                  />
+                </svg>
+                <div>
+                  <h3 className='font-semibold text-yellow-800'>Class is Currently Inactive</h3>
+                  <p className='text-sm text-yellow-700'>
+                    Students cannot enroll in this class until it’s activated. You can activate it
+                    from your dashboard.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Class Preview Card */}
       <Card className='border-2'>

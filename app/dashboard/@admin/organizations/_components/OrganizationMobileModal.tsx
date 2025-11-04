@@ -32,9 +32,7 @@ export default function OrganizationMobileModal({
         </DialogHeader>
 
         <div className='py-4'>
-          <OrganizationDetails
-            organization={organization as any}
-          />
+          <OrganizationDetails organization={organization as any} />
         </div>
 
         {/* Action Buttons */}

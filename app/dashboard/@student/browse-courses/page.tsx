@@ -164,43 +164,50 @@ export default function MyCoursesPage() {
           </div>
 
           {/* Category Tabs */}
-          <div className='scrollbar-hidden w-auto lg:max-w-5xl 2xl:max-w-7xl overflow-hidden overflow-x-auto'>
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-              <TabsList className='scrollbar-hidden mb-4 flex overflow-x-auto'>
+          <div className='scrollbar-hidden w-auto overflow-hidden overflow-x-auto lg:max-w-5xl 2xl:max-w-7xl'>
+            <Tabs
+              value={selectedCategory}
+              onValueChange={val => {
+                setSelectedCategory(val);
+                if (val === 'all') setSelectedSubcategory('');
+              }}
+            >
+              <TabsList className='scrollbar-hidden mb-4 flex space-x-2 overflow-x-auto px-1'>
                 {CATEGORIES.map(category => (
                   <TabsTrigger
                     key={category.id}
                     value={category.id}
-                    className='flex-shrink-0 text-xs'
+                    className='flex flex-shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 hover:bg-gray-100 hover:text-black data-[state=active]:bg-white data-[state=active]:text-black dark:hover:bg-gray-700 dark:hover:text-white dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-white'
                   >
-                    <span className='mr-1'>{category.icon}</span>
+                    {category.icon && <span className='text-sm'>{category.icon}</span>}
                     {category.name}
                   </TabsTrigger>
                 ))}
               </TabsList>
 
               {/* Subcategories */}
-              {currentCategory && currentCategory.subcategories.length > 0 && (
-                <div className='mb-6 flex flex-wrap gap-2'>
-                  <Button
-                    variant={selectedSubcategory === '' ? 'default' : 'outline'}
-                    size='sm'
-                    onClick={() => setSelectedSubcategory('')}
-                  >
-                    All {currentCategory.name}
-                  </Button>
-                  {currentCategory.subcategories.map(sub => (
+              {selectedCategory !== 'all' &&
+                (currentCategory?.subcategories?.length as any) > 0 && (
+                  <div className='mb-6 flex flex-wrap gap-2'>
                     <Button
-                      key={sub}
-                      variant={selectedSubcategory === sub ? 'default' : 'outline'}
+                      variant={selectedSubcategory === '' ? 'default' : 'outline'}
                       size='sm'
-                      onClick={() => setSelectedSubcategory(sub)}
+                      onClick={() => setSelectedSubcategory('')}
                     >
-                      {sub}
+                      All {currentCategory?.name}
                     </Button>
-                  ))}
-                </div>
-              )}
+                    {currentCategory?.subcategories.map(sub => (
+                      <Button
+                        key={sub}
+                        variant={selectedSubcategory === sub ? 'default' : 'outline'}
+                        size='sm'
+                        onClick={() => setSelectedSubcategory(sub)}
+                      >
+                        {sub}
+                      </Button>
+                    ))}
+                  </div>
+                )}
             </Tabs>
           </div>
         </div>

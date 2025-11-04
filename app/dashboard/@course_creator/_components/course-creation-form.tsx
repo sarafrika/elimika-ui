@@ -130,11 +130,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       if (initialValues && Object.keys(initialValues).length > 0) {
         form.reset({
           ...form.getValues(), // preserve any unsaved edits (optional)
-          ...initialValues,    // overwrite with fetched data
+          ...initialValues, // overwrite with fetched data
         });
       }
     }, [initialValues, form]);
-
 
     const {
       // fields: categoryFields,
@@ -182,9 +181,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           return;
         }
 
-        toast.success(data?.message || "Category added successfully");
+        toast.success(data?.message || 'Category added successfully');
         dialogCloseRef.current?.click();
-        queryClient.invalidateQueries({ queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }) });
+        queryClient.invalidateQueries({
+          queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }),
+        });
         setCategoryInput('');
       },
     });
@@ -200,7 +201,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     // GET COURSE CATEGORIES
     const { data: categories } = useQuery(
       getAllCategoriesOptions({
-        query: { pageable: { page: 0, size: 100, }, },
+        query: { pageable: { page: 0, size: 100 } },
       })
     );
 
@@ -284,7 +285,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 // }
 
                 setActiveStep(1);
-                queryClient.invalidateQueries({ queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }) });
+                queryClient.invalidateQueries({
+                  queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
+                });
                 return;
               }
 
@@ -350,7 +353,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             onSuccess: data => {
               toast.success('Course created successfully');
               setActiveStep(1);
-              queryClient.invalidateQueries({ queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }) });
+              queryClient.invalidateQueries({
+                queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
+              });
 
               if (typeof successResponse === 'function') {
                 // @ts-ignore
@@ -465,7 +470,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 control={form.control}
                 name='is_free'
                 render={({ field }) => (
-                  <FormItem className='flex flex-row items-start space-x-3'>
+                  <FormItem className='hidden flex-row items-start space-x-3'>
                     <FormControl>
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
@@ -510,7 +515,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               </div>
             </div>
           </FormSection>
-
 
           <FormSection
             title='Monetization Controls'
@@ -890,7 +894,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                     </FormControl>
                     {difficultyIsLoading ? (
                       <SelectContent>
-                        <div>Loading...</div>
+                        <Spinner />
                       </SelectContent>
                     ) : (
                       <SelectContent>

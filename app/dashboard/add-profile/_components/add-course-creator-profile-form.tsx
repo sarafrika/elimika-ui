@@ -273,7 +273,8 @@ export default function AddCourseCreatorProfileForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Describe your background and course creation philosophy. Rich text is supported.
+                      Describe your background and course creation philosophy. Rich text is
+                      supported.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

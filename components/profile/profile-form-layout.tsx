@@ -14,7 +14,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import Spinner from '@/components/ui/spinner';
 import {
   ProfileFormConfirmationOptions,
@@ -84,7 +91,8 @@ export function ProfileFormShell({
   const requestConfirmation = useCallback((options: ProfileFormConfirmationOptions) => {
     setConfirmation({
       title: options.title ?? 'Confirm changes?',
-      description: options.description ?? 'Your updates will be submitted. Do you want to continue?',
+      description:
+        options.description ?? 'Your updates will be submitted. Do you want to continue?',
       confirmLabel: options.confirmLabel ?? 'Yes, continue',
       cancelLabel: options.cancelLabel ?? 'No, go back',
       onConfirm: options.onConfirm,
@@ -135,9 +143,13 @@ export function ProfileFormShell({
         <header className='flex flex-col gap-4 pb-6 md:flex-row md:items-end md:justify-between'>
           <div className='max-w-2xl space-y-2'>
             {eyebrow ? (
-              <p className='text-xs font-medium uppercase tracking-[0.2em] text-primary/80'>{eyebrow}</p>
+              <p className='text-primary/80 text-xs font-medium tracking-[0.2em] uppercase'>
+                {eyebrow}
+              </p>
             ) : null}
-            <h1 className='text-3xl font-semibold tracking-tight text-foreground sm:text-4xl'>{title}</h1>
+            <h1 className='text-foreground text-3xl font-semibold tracking-tight sm:text-4xl'>
+              {title}
+            </h1>
             {description ? (
               <p className='text-muted-foreground text-sm sm:text-base'>{description}</p>
             ) : null}
@@ -145,11 +157,19 @@ export function ProfileFormShell({
               <div className='flex flex-wrap gap-2 pt-1'>
                 {badges.map((badge, index) =>
                   typeof badge === 'string' ? (
-                    <Badge key={badge} variant='outline' className='bg-primary/5 text-xs font-medium capitalize'>
+                    <Badge
+                      key={badge}
+                      variant='outline'
+                      className='bg-primary/5 text-xs font-medium capitalize'
+                    >
                       {badge}
                     </Badge>
                   ) : (
-                    <Badge key={index} variant='outline' className='bg-primary/5 text-xs font-medium capitalize'>
+                    <Badge
+                      key={index}
+                      variant='outline'
+                      className='bg-primary/5 text-xs font-medium capitalize'
+                    >
                       {badge}
                     </Badge>
                   )
@@ -187,7 +207,9 @@ export function ProfileFormShell({
             ) : null}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isConfirming}>{confirmation?.cancelLabel ?? 'Cancel'}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isConfirming}>
+              {confirmation?.cancelLabel ?? 'Cancel'}
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirm} disabled={isConfirming}>
               {isConfirming ? (
                 <span className='flex items-center gap-2'>
@@ -195,7 +217,7 @@ export function ProfileFormShell({
                   Processing…
                 </span>
               ) : (
-                confirmation?.confirmLabel ?? 'Confirm'
+                (confirmation?.confirmLabel ?? 'Confirm')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -247,14 +269,17 @@ export function ProfileFormSection({
         </div>
       </CardHeader>
       <CardContent className={cn('p-6 sm:p-8', contentClassName)}>
-        <fieldset disabled={!isEditing} className={cn('space-y-6', !isEditing && 'pointer-events-none opacity-70')}>
+        <fieldset
+          disabled={!isEditing}
+          className={cn('space-y-6', !isEditing && 'pointer-events-none opacity-70')}
+        >
           {children}
         </fieldset>
       </CardContent>
       {footer ? (
         <CardFooter
           className={cn(
-            'flex flex-col items-stretch gap-3 border-t border-border/60 bg-muted/10 p-6 sm:flex-row sm:justify-end',
+            'border-border/60 bg-muted/10 flex flex-col items-stretch gap-3 border-t p-6 sm:flex-row sm:justify-end',
             !isEditing && 'pointer-events-none opacity-70'
           )}
         >

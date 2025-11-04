@@ -46,7 +46,16 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, BookOpenCheck, ClipboardCheck, Clock, Grip, MoreVertical, PlusCircle, Trash } from 'lucide-react';
+import {
+  BookOpen,
+  BookOpenCheck,
+  ClipboardCheck,
+  Clock,
+  Grip,
+  MoreVertical,
+  PlusCircle,
+  Trash,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -68,12 +77,12 @@ export const quizSchema = z.object({
   description: z.string().optional(),
   instructions: z.string().optional(),
   time_limit_minutes: z.coerce.number().optional(),
-  attempts_allowed: z
-    .coerce
+  attempts_allowed: z.coerce
     .number()
-    .min(1, "Attempts allowed must be at least 1")
+    .min(1, 'Attempts allowed must be at least 1')
     .optional()
-    .or(z.literal(undefined)), passing_score: z.coerce.number().optional(),
+    .or(z.literal(undefined)),
+  passing_score: z.coerce.number().optional(),
   status: z.string().optional(),
   active: z.boolean().default(false),
   rubric_uuid: z.string().optional(),
@@ -135,11 +144,11 @@ function QuizForm({
       updateQuiz.mutate(
         { path: { uuid: quizId }, body: payload as any },
         {
-          onSuccess: (data) => {
+          onSuccess: data => {
             toast.success(data?.message);
             qc.invalidateQueries({
               queryKey: searchQuizzesQueryKey({
-                query: { pageable: {}, searchParams: { lesson_uuid_eq: data?.data?.lesson_uuid } }
+                query: { pageable: {}, searchParams: { lesson_uuid_eq: data?.data?.lesson_uuid } },
               }),
             });
 
@@ -155,7 +164,7 @@ function QuizForm({
           onSuccess: (data: any) => {
             qc.invalidateQueries({
               queryKey: searchQuizzesQueryKey({
-                query: { pageable: {}, searchParams: { lesson_uuid_eq: data?.data?.lesson_uuid } }
+                query: { pageable: {}, searchParams: { lesson_uuid_eq: data?.data?.lesson_uuid } },
               }),
             });
             toast.success(data?.message);
@@ -761,12 +770,12 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
   const queryClient = useQueryClient();
   const deleteQuiz = useMutation(deleteQuizMutation());
 
-  const [deletingQuizData, setDeletingQuizData] = useState<any | null>(null)
+  const [deletingQuizData, setDeletingQuizData] = useState<any | null>(null);
   const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
   const handleDelete = (q: any) => {
-    setDeletingQuizData(q)
+    setDeletingQuizData(q);
     setDeletingQuizId(q.uuid as string);
     setOpenDeleteModal(true);
   };
@@ -781,7 +790,10 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
           toast.success('Quiz deleted successfully');
           queryClient.invalidateQueries({
             queryKey: searchQuizzesQueryKey({
-              query: { pageable: {}, searchParams: { lesson_uuid_eq: deletingQuizData?.lesson_uuid } }
+              query: {
+                pageable: {},
+                searchParams: { lesson_uuid_eq: deletingQuizData?.lesson_uuid },
+              },
             }),
           });
           setOpenDeleteModal(false);
@@ -798,8 +810,8 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
         <div className='space-y-1'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
           <p className='text-muted-foreground text-sm'>
-            You have {quizzes?.content?.length}{' '}
-            {quizzes?.content?.length === 1 ? 'quiz' : 'quizzes'} created under this course.
+            You have {quizzes?.length} {quizzes?.length === 1 ? 'quiz' : 'quizzes'} created under
+            this course.
           </p>
         </div>
         <Button onClick={onAddQuiz} className='self-start sm:self-end lg:self-center'>
@@ -810,25 +822,25 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
 
       {isLoading ? (
         <Spinner />
-      ) : quizzes?.content?.length === 0 ? (
+      ) : quizzes?.length === 0 ? (
         <div className='text-muted-foreground rounded-lg border border-dashed p-12 text-center'>
           <BookOpenCheck className='text-muted-foreground mx-auto h-12 w-12' />
           <h3 className='mt-4 text-lg font-medium'>No quizzes found for this course.</h3>
           <p className='text-muted-foreground mt-2'>You can create new quiz for this course.</p>
         </div>
       ) : (
-        <div className='space-y-8 w-full'>
-          {quizzes?.content.map((q: any, index: any) => (
+        <div className='w-full space-y-8'>
+          {quizzes?.map((q: any, index: any) => (
             <div
               key={q?.uuid || index}
-              className='w-full group relative flex items-start gap-4 transition-all rounded-[20px] border border-blue-200/40 bg-white/80 shadow-xl shadow-blue-200/30 backdrop-blur p-4 lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+              className='group relative flex w-full items-start gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur transition-all lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
             >
               <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
 
               <div className='w-full flex-1 space-y-3'>
-                <div className='w-full flex items-start justify-between'>
-                  <div className='w-full flex flex-col items-start'>
-                    <div className='w-full flex flex-row items-center justify-between'>
+                <div className='flex w-full items-start justify-between'>
+                  <div className='flex w-full flex-col items-start'>
+                    <div className='flex w-full flex-row items-center justify-between'>
                       <h3 className='text-lg font-medium'>{q.title}</h3>
                       <span className='mr-2 inline-flex items-center gap-2 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1 text-xs font-semibold text-blue-600 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'>
                         {q.status.charAt(0).toUpperCase() + q.status.slice(1)}
@@ -873,17 +885,15 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
                 <div className='text-muted-foreground flex items-center gap-4 text-sm'>
                   <div className='flex items-center gap-1.5'>
                     <Clock className='h-4 w-4' />
-                    <span className='font-semibold'>Time limit: {"  "}</span>
+                    <span className='font-semibold'>Time limit: {'  '}</span>
                     <span>{q?.time_limit_display}</span>
                   </div>
 
                   <div className='flex items-center gap-1.5'>
                     <BookOpen className='h-4 w-4' />
-                    <span className='font-semibold'>Attempts allowed: {"  "}</span>
+                    <span className='font-semibold'>Attempts allowed: {'  '}</span>
 
-                    <span>
-                      {q?.attempts_allowed || 'N/A'}
-                    </span>
+                    <span>{q?.attempts_allowed || 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -917,7 +927,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
                 quizId={selectedQuiz?.uuid}
                 lessonId={''}
                 courseId={courseId as string}
-                onSuccess={() => { }}
+                onSuccess={() => {}}
               />
             )}
           </ScrollArea>

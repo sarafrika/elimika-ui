@@ -1,11 +1,16 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import {
+  getClassDefinitionOptions,
+  getClassRecurrencePatternOptions,
+  getCourseByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
-import { Progress } from '../../../../../components/ui/progress';
-import { getClassDefinitionOptions } from '../../../../../services/client/@tanstack/react-query.gen';
+import { useEffect, useState } from 'react';
+import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
 import { AcademicPeriodForm, ClassData } from './academic-period-form';
 import ClassDetailsForm from './class-details-form';
 import { ResourcesForm } from './resources-form';
@@ -15,9 +20,9 @@ import { TimetableForm } from './time-table-form';
 import { VisibilityForm } from './visibility-form';
 
 const steps = [
+  { id: 'timetable', title: 'Timetable', description: 'Days, times, and schedule' },
   { id: 'details', title: 'Class Details', description: 'Basic information about your class' },
   { id: 'period', title: 'Academic Period', description: 'Start and end dates' },
-  { id: 'timetable', title: 'Timetable', description: 'Days, times, and schedule' },
   { id: 'schedule', title: 'Schedule', description: 'Skills, lessons, and instructor' },
   {
     id: 'visibility',
@@ -34,52 +39,53 @@ export default function ClassCreationPage() {
   const [createdClassId, setCreatedClassId] = useState<string | null>(null);
   const resolveId = classId ? (classId as string) : (createdClassId as string);
 
-  const { data, isLoading } = useQuery({
+  const { replaceBreadcrumbs } = useBreadcrumb();
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+      {
+        id: 'trainings',
+        title: 'Trainings',
+        url: `/dashboard/trainings`,
+      },
+      {
+        id: 'create-class',
+        title: `Create new class`,
+        url: `/dashboard/trainings/create-new`,
+        isLast: true,
+      },
+    ]);
+  }, [replaceBreadcrumbs]);
+
+  const { data, isLoading: isClassLoading } = useQuery({
     ...getClassDefinitionOptions({ path: { uuid: classId as string } }),
     enabled: !!classId,
   });
-  const clData = data?.data;
 
-  const [currentStep, setCurrentStep] = useState(0);
-  const [classData, setClassData] = useState<Partial<ClassData>>({
-    courseTitle: '',
-    classTitle: '',
-    subtitle: '',
-    category: '',
-    targetAudience: [],
-    description: '',
-    academicPeriod: {
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-    },
-    registrationPeriod: {
-      startDate: new Date(),
-    },
-    timetable: {
-      selectedDays: [],
-      timeSlots: [],
-      duration: '60',
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      classType: 'online',
-    },
-    schedule: {
-      instructor: '',
-      skills: [],
-    },
-    visibility: {
-      publicity: 'public',
-      enrollmentLimit: 20,
-      price: 0,
-      isFree: true,
-    },
-    resources: [],
-    assessments: [],
-    status: 'draft',
+  const { data: courseData, isLoading: isCourseLoading } = useQuery({
+    ...getCourseByUuidOptions({ path: { uuid: data?.data?.course_uuid as string } }),
+    enabled: !!data?.data?.course_uuid,
   });
 
-  const updateClassData = (updates: Partial<ClassData>) => {
-    setClassData(prev => ({ ...prev, ...updates }));
-  };
+  const { data: recurrenceData, isLoading: isRecurrenceLoading } = useQuery({
+    ...getClassRecurrencePatternOptions({
+      path: { uuid: data?.data?.recurrence_pattern_uuid as string },
+    }),
+    enabled: !!data?.data?.recurrence_pattern_uuid,
+  });
+
+  const isLoading = isClassLoading || isCourseLoading || isRecurrenceLoading;
+
+  const combinedData = data?.data
+    ? {
+        ...data.data,
+        course: courseData?.data || null,
+        recurrence: recurrenceData?.data || null,
+      }
+    : null;
+
+  const [currentStep, setCurrentStep] = useState(0);
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -97,16 +103,56 @@ export default function ClassCreationPage() {
 
   const handleComplete = (status: 'draft' | 'published') => {
     const finalClassData = {
-      ...classData,
       status,
     } as ClassData;
   };
 
+  const [createRecurrenceData, setCreateRecurrenceData] = useState<any>(null);
+
+  const [scheduleSummary, setScheduleSummary] = useState({
+    totalSkills: 0,
+    totalLessons: 0,
+    totalHours: 0,
+    remainingMinutes: 0,
+  });
+
+  const handleScheduleSummaryChange = (summary: {
+    totalSkills: number;
+    totalLessons: number;
+    totalHours: number;
+    remainingMinutes: number;
+  }) => {
+    setScheduleSummary(summary);
+  };
+
+  const [combinedRecurrenceData, setCombinedRecurrenceData] = useState<{
+    response?: any;
+    payload?: any;
+  }>({});
+
   const renderStepContent = () => {
     switch (steps[currentStep]?.id) {
+      case 'timetable':
+        return (
+          <TimetableForm
+            data={combinedData}
+            classId={resolveId as string}
+            onNext={({ response, payload }) => {
+              setCombinedRecurrenceData({ response, payload });
+              nextStep();
+            }}
+            onPrev={prevStep}
+          />
+        );
       case 'details':
         return (
-          <ClassDetailsForm isLoading={isLoading} handleNextStep={nextStep} classData={clData} />
+          <ClassDetailsForm
+            isLoading={isLoading}
+            handleNextStep={nextStep}
+            onPrev={prevStep}
+            classData={combinedData}
+            combinedRecurrenceData={combinedRecurrenceData}
+          />
         );
       case 'period':
         return (
@@ -114,27 +160,26 @@ export default function ClassCreationPage() {
             classId={resolveId as string}
             onNext={nextStep}
             onPrev={prevStep}
-            classData={clData}
-          />
-        );
-      case 'timetable':
-        return (
-          <TimetableForm
-            data={clData}
-            classId={resolveId as string}
-            onNext={nextStep}
-            onPrev={prevStep}
+            classData={combinedData}
           />
         );
       case 'schedule':
-        return <ScheduleForm data={clData} onNext={nextStep} onPrev={prevStep} />;
+        return (
+          <ScheduleForm
+            data={combinedData}
+            onNext={nextStep}
+            onPrev={prevStep}
+            onSummaryChange={handleScheduleSummaryChange} // 👈 pass down callback
+          />
+        );
       case 'visibility':
         return (
           <VisibilityForm
-            data={clData as any}
-            onUpdate={updateClassData}
+            data={combinedData as any}
+            onUpdate={() => {}}
             onNext={nextStep}
             onPrev={prevStep}
+            scheduleSummary={scheduleSummary}
           />
         );
       case 'resources':
@@ -144,15 +189,16 @@ export default function ClassCreationPage() {
               nextStep();
             }}
             onPrev={prevStep}
-            data={clData}
+            data={combinedData}
           />
         );
       case 'review':
         return (
           <ReviewPublishForm
-            data={classData as ClassData}
+            data={combinedData as any}
             onComplete={handleComplete}
             onPrev={prevStep}
+            scheduleSummary={scheduleSummary}
           />
         );
       default:

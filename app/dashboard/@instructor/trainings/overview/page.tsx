@@ -5,96 +5,30 @@ import { Button } from '@/components/ui/button';
 import { useInstructor } from '@/context/instructor-context';
 import {
   deactivateClassDefinitionMutation,
-  getClassDefinitionsForInstructorOptions,
   getClassDefinitionsForInstructorQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  PlusIcon
-} from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { PlusIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { TrainingClassComponent } from '../../../_components/training-class-component';
+import { TrainingClassList } from '../../../_components/training-class-list';
 import {
   ClassDialog,
   ScheduleDialog,
   TimetableScheduleDialog,
 } from '../../_components/class-management-form';
 
-export default function TrainingsPage() {
+interface TrainingPageProps {
+  classesWithCourseAndInstructor: any,
+  loading: boolean
+}
+
+export default function TrainingsPage({ classesWithCourseAndInstructor, loading }: TrainingPageProps) {
   const router = useRouter();
   const qc = useQueryClient();
   const instructor = useInstructor();
   const [openAddClass, setOpenAddClass] = useState(false);
-
-  const { data, isLoading, isPending, isFetching } = useQuery(
-    getClassDefinitionsForInstructorOptions({
-      path: { instructorUuid: instructor?.uuid as string },
-      query: { activeOnly: false },
-    })
-  );
-  // const classes = data?.data;
-
-  const classes = [
-    {
-      uuid: "cd123456-7890-abcd-ef01-234567890abc",
-      title: "Introduction to Java Programming",
-      description: "Comprehensive introduction to Java programming covering basics, OOP concepts, and practical application development.",
-      default_instructor_uuid: "inst1234-5678-90ab-cdef-123456789abc",
-      organisation_uuid: "org12345-6789-abcd-ef01-234567890abc",
-      course_uuid: "course123-4567-89ab-cdef-123456789abc",
-      training_fee: 240,
-      duration_minutes: 90,
-      location_type: "HYBRID",
-      max_participants: 25,
-      allow_waitlist: true,
-      recurrence_pattern_uuid: "rp123456-7890-abcd-ef01-234567890abc",
-      is_active: true,
-      created_date: "2024-09-05T10:00:00",
-      updated_date: "2024-09-05T15:30:00",
-      created_by: "admin@sarafrika.com",
-      updated_by: "admin@sarafrika.com",
-    },
-    {
-      uuid: "cd123456-7890-abcd-ef01-sdfldjsf",
-      title: "Introduction to Java Programming",
-      description: "Comprehensive introduction to Java programming covering basics, OOP concepts, and practical application development.",
-      default_instructor_uuid: "inst1234-5678-90ab-cdef-123456789abc",
-      organisation_uuid: "org12345-6789-abcd-ef01-234567890abc",
-      course_uuid: "course123-4567-89ab-cdef-123456789abc",
-      training_fee: 240,
-      duration_minutes: 90,
-      location_type: "HYBRID",
-      max_participants: 25,
-      allow_waitlist: true,
-      recurrence_pattern_uuid: "rp123456-7890-abcd-ef01-234567890abc",
-      is_active: true,
-      created_date: "2024-09-05T10:00:00",
-      updated_date: "2024-09-05T15:30:00",
-      created_by: "admin@sarafrika.com",
-      updated_by: "admin@sarafrika.com",
-    },
-    {
-      uuid: "cd123456-7890-abcd-ef01-sdfsdfsfd",
-      title: "Introduction to Java Programming",
-      description: "Comprehensive introduction to Java programming covering basics, OOP concepts, and practical application development.",
-      default_instructor_uuid: "inst1234-5678-90ab-cdef-123456789abc",
-      organisation_uuid: "org12345-6789-abcd-ef01-234567890abc",
-      course_uuid: "course123-4567-89ab-cdef-123456789abc",
-      training_fee: 240,
-      duration_minutes: 90,
-      location_type: "HYBRID",
-      max_participants: 25,
-      allow_waitlist: true,
-      recurrence_pattern_uuid: "rp123456-7890-abcd-ef01-234567890abc",
-      is_active: true,
-      created_date: "2024-09-05T10:00:00",
-      updated_date: "2024-09-05T15:30:00",
-      created_by: "admin@sarafrika.com",
-      updated_by: "admin@sarafrika.com",
-    },
-  ];
 
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
 
@@ -152,7 +86,14 @@ export default function TrainingsPage() {
         </Button>
       </div>
 
-      <TrainingClassComponent />
+      <TrainingClassList
+        onEdit={id => router.push(`/dashboard/trainings/create-new?id=${id}`)}
+        onDelete={openDeleteModal}
+        onOpenTimetable={openTimetableSchedule}
+        onOpenRecurring={openRecurrentSchedule}
+        classesWithCourseAndInstructor={classesWithCourseAndInstructor}
+        loading={loading}
+      />
 
       <ClassDialog
         isOpen={openAddClass}

@@ -1,13 +1,23 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Spinner from '@/components/ui/spinner';
 import { useStepper } from '@/components/ui/stepper';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
-import { getCourseByUuidQueryKey, updateCourseMutation } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getCourseByUuidQueryKey,
+  updateCourseMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { forwardRef } from 'react';
@@ -15,9 +25,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import { FormSection } from './course-creation-form';
-import {
-  courseCreationSchema,
-} from './course-creation-types';
+import { courseCreationSchema } from './course-creation-types';
 
 type CourseCreationFormValues = z.infer<typeof courseCreationSchema> & { [key: string]: any };
 
@@ -81,7 +89,7 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
           creator_share_percentage: data?.creator_share_percentage,
           instructor_share_percentage: data?.instructor_share_percentage,
           revenue_share_notes: data?.revenue_share_notes,
-          training_requirements: "",
+          training_requirements: '',
           status: 'draft',
           active: false,
           is_free: data?.is_free,
@@ -106,7 +114,9 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 //   successResponse(data?.data)
                 // }
 
-                queryClient.invalidateQueries({ queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }) });
+                queryClient.invalidateQueries({
+                  queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
+                });
                 setActiveStep(7);
                 return;
               }
@@ -121,7 +131,7 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 // @ts-ignore
               } else if (data?.message) {
                 // @ts-ignore
-                toast.error("Course updated successfully" || data.message);
+                toast.error('Course updated successfully' || data.message);
                 return;
               } else {
                 toast.error('An unknown error occurred.');
@@ -135,14 +145,11 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     const onError = (errors: any) => {
       // console.log(errors, "er")
-    }
+    };
 
     return (
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit, onError)}
-          className='space-y-6'
-        >
+        <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
           {/* Class Limit */}
           <FormSection
             title='Class Limit'

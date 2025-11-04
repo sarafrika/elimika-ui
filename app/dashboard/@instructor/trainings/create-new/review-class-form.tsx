@@ -1,6 +1,7 @@
-import { Badge } from '@/components/ui/badge';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useInstructor } from '@/context/instructor-context';
 import { format } from 'date-fns';
 import {
   BookOpen,
@@ -15,28 +16,25 @@ import {
   MapPin,
   Users,
 } from 'lucide-react';
-import Image from 'next/image';
-import { ClassData } from './academic-period-form';
 
 interface ReviewPublishFormProps {
-  data: ClassData;
+  data: Partial<any>;
   onComplete: (status: 'draft' | 'published') => void;
   onPrev: () => void;
+  scheduleSummary: any;
 }
 
-export function ReviewPublishForm({ data, onComplete, onPrev }: ReviewPublishFormProps) {
-  const totalLessons = data.schedule.skills.reduce((acc, skill) => acc + skill.lessons.length, 0);
-  const totalHours =
-    data.schedule.skills.reduce((total, skill) => {
-      return (
-        total +
-        skill.lessons.reduce((skillTotal, lesson) => {
-          return skillTotal + (parseInt(lesson.duration) || 0);
-        }, 0)
-      );
-    }, 0) / 60;
+export function ReviewPublishForm({
+  data,
+  onComplete,
+  onPrev,
+  scheduleSummary,
+}: ReviewPublishFormProps) {
+  const instructor = useInstructor();
 
-  const totalFee = data.visibility.isFree ? 0 : data.visibility.price * totalLessons;
+  const totalLessons = scheduleSummary?.totalLessons;
+  const totalHours = scheduleSummary?.totalHours;
+  const totalFee = scheduleSummary?.totalLessons;
 
   const formatDate = (date: Date) => {
     return format(date, 'MMM dd, yyyy');
@@ -56,10 +54,12 @@ export function ReviewPublishForm({ data, onComplete, onPrev }: ReviewPublishFor
         <CardHeader>
           <div className='flex items-start justify-between'>
             <div className='flex-1'>
-              <CardTitle className='text-xl'>{data.classTitle}</CardTitle>
-              {data.subtitle && <p className='text-muted-foreground mt-1'>{data.subtitle}</p>}
+              <CardTitle className='text-xl'>{data?.title}</CardTitle>
+              {<p className='text-muted-foreground mt-1'>No subtitle</p>}
+              {/* {data.subtitle && <p className='text-muted-foreground mt-1'>{data.subtitle}</p>} */}
             </div>
-            {data.coverImage && (
+
+            {/* {data.coverImage && (
               <Image
                 src={data.coverImage}
                 alt='Class cover'
@@ -67,7 +67,7 @@ export function ReviewPublishForm({ data, onComplete, onPrev }: ReviewPublishFor
                 width={24}
                 height={16}
               />
-            )}
+            )} */}
           </div>
         </CardHeader>
         <CardContent className='space-y-4'>
@@ -75,51 +75,50 @@ export function ReviewPublishForm({ data, onComplete, onPrev }: ReviewPublishFor
             <div className='flex items-center gap-2'>
               <Calendar className='text-muted-foreground h-4 w-4' />
               <div>
-                <div className='font-medium'>{formatDate(data.academicPeriod.startDate)}</div>
                 <div className='text-muted-foreground'>Start Date</div>
+                {/* <div className='font-medium'>{formatDate(data.startDate)}</div> */}
+                <div className='font-medium'>0.000</div>
               </div>
             </div>
             <div className='flex items-center gap-2'>
               <Users className='text-muted-foreground h-4 w-4' />
               <div>
-                <div className='font-medium'>{data.schedule.instructor}</div>
                 <div className='text-muted-foreground'>Instructor</div>
+                <div className='font-medium'>{instructor?.full_name}</div>
               </div>
             </div>
             <div className='flex items-center gap-2'>
               <Clock className='text-muted-foreground h-4 w-4' />
               <div>
+                <div className='text-muted-foreground'>Duration</div>
                 <div className='font-medium'>
                   {totalLessons} lessons • {totalHours.toFixed(1)}h
                 </div>
-                <div className='text-muted-foreground'>Duration</div>
               </div>
             </div>
             <div className='flex items-center gap-2'>
               <DollarSign className='text-muted-foreground h-4 w-4' />
               <div>
-                <div className='font-medium'>
-                  {data.visibility.isFree ? 'Free' : `$${totalFee.toFixed(2)}`}
-                </div>
                 <div className='text-muted-foreground'>Total Cost</div>
+                <div className='font-medium'>{`${totalFee.toFixed(2)}`}</div>
               </div>
             </div>
           </div>
 
-          {data.timetable.location && (
+          {data?.location_type && (
             <div className='flex items-center gap-2 text-sm'>
               <MapPin className='text-muted-foreground h-4 w-4' />
-              <span>{data.timetable.location}</span>
+              <span>{data?.location_type}</span>
             </div>
           )}
 
           <div className='flex flex-wrap gap-2'>
-            <Badge variant='outline'>{data.category}</Badge>
-            {data.targetAudience.map((audience, index) => (
+            {/* <Badge variant='outline'>{data.category}</Badge> */}
+            {/* {data.targetAudience.map((audience, index) => (
               <Badge key={index} variant='outline'>
                 {audience}
               </Badge>
-            ))}
+            ))} */}
           </div>
         </CardContent>
       </Card>
@@ -137,27 +136,31 @@ export function ReviewPublishForm({ data, onComplete, onPrev }: ReviewPublishFor
           <CardContent className='space-y-3'>
             <div>
               <span className='text-muted-foreground text-sm'>Course:</span>
-              <div className='font-medium'>{data.courseTitle}</div>
+              <div className='font-medium'>{data?.course?.name}</div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Description:</span>
-              <div className='mt-1 text-sm'>{data.description}</div>
-            </div>
-            <div>
-              <span className='text-muted-foreground text-sm'>Academic Period:</span>
-              <div className='font-medium'>
-                {formatDate(data.academicPeriod.startDate)} -{' '}
-                {formatDate(data.academicPeriod.endDate)}
+              <div className='mt-1 text-sm'>
+                <RichTextRenderer htmlString={data?.course?.description} maxChars={150} />
               </div>
             </div>
             <div>
+              <span className='text-muted-foreground text-sm'>Academic Period:</span>
+              {/* <div className='font-medium'>
+                {formatDate(data.academicPeriod.startDate)} -{' '}
+                {formatDate(data.academicPeriod.endDate)}
+              </div> */}
+              <div>From xxx - To xxx</div>
+            </div>
+            <div>
               <span className='text-muted-foreground text-sm'>Registration:</span>
-              <div className='font-medium'>
+              {/* <div className='font-medium'>
                 {formatDate(data.registrationPeriod.startDate)}
                 {data.registrationPeriod.endDate
                   ? ` - ${formatDate(data.registrationPeriod.endDate)}`
                   : ' (Continuous)'}
-              </div>
+              </div> */}
+              <p>Continous</p>
             </div>
           </CardContent>
         </Card>
@@ -173,23 +176,19 @@ export function ReviewPublishForm({ data, onComplete, onPrev }: ReviewPublishFor
           <CardContent className='space-y-3'>
             <div>
               <span className='text-muted-foreground text-sm'>Class Type:</span>
-              <div className='font-medium capitalize'>{data.timetable.classType}</div>
+              <div className='font-medium capitalize'>{data?.location_type}</div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Days:</span>
-              <div className='font-medium'>
-                {data.timetable.selectedDays
-                  .map(day => day.charAt(0).toUpperCase() + day.slice(1, 3))
-                  .join(', ')}
-              </div>
+              <div className='font-medium'>{data?.recurrence?.days_of_week}</div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Duration per session:</span>
-              <div className='font-medium'>{data.timetable.duration} minutes</div>
+              <div className='font-medium'>{Number(totalHours) / Number(totalLessons)} hours</div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Skills:</span>
-              <div className='font-medium'>{data.schedule.skills.length}</div>
+              <div className='font-medium'>{scheduleSummary?.totalSkills}</div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Total Lessons:</span>
@@ -210,24 +209,28 @@ export function ReviewPublishForm({ data, onComplete, onPrev }: ReviewPublishFor
             <div>
               <span className='text-muted-foreground text-sm'>Visibility:</span>
               <div className='flex items-center gap-2 font-medium'>
-                {data.visibility.publicity === 'public' ? (
-                  <Globe className='h-4 w-4 text-green-600' />
+                {data?.is_active ? (
+                  <>
+                    <Globe className='h-4 w-4 text-green-600' />
+                    Public
+                  </>
                 ) : (
-                  <Lock className='h-4 w-4 text-blue-600' />
+                  <>
+                    <Lock className='h-4 w-4 text-blue-600' />
+                    Private
+                  </>
                 )}
-                <span className='capitalize'>{data.visibility.publicity}</span>
+                <span className='capitalize'>{data?.is_active}</span>
               </div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Max Students:</span>
-              <div className='font-medium'>{data.visibility.enrollmentLimit}</div>
+              <div className='font-medium'>{data?.max_participants}</div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Pricing:</span>
               <div className='font-medium'>
-                {data.visibility.isFree
-                  ? 'Free'
-                  : `$${data.visibility.price}/lesson (Total: $${totalFee.toFixed(2)})`}
+                {/* {`$${data.visibility.price}/lesson (Total: $${totalFee.toFixed(2)})`} */}
               </div>
             </div>
           </CardContent>
@@ -267,7 +270,7 @@ export function ReviewPublishForm({ data, onComplete, onPrev }: ReviewPublishFor
               </p>
               <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
                 <div>
-                  <div className='font-medium text-green-800'>{data.schedule.skills.length}</div>
+                  <div className='font-medium text-green-800'>{scheduleSummary?.totalSkills}</div>
                   <div className='text-green-600'>Skills</div>
                 </div>
                 <div>

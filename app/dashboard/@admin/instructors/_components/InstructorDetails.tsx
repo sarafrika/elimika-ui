@@ -332,12 +332,12 @@ export default function InstructorDetails({
           {instructorInfo?.data?.bio ? (
             <HTMLTextPreview
               htmlContent={instructorInfo.data.bio}
-              className='prose prose-sm max-w-none text-muted-foreground'
+              className='prose prose-sm text-muted-foreground max-w-none'
             />
           ) : instructor.bio ? (
             <HTMLTextPreview
               htmlContent={instructor.bio}
-              className='prose prose-sm max-w-none text-muted-foreground'
+              className='prose prose-sm text-muted-foreground max-w-none'
             />
           ) : (
             <p className='text-muted-foreground text-sm'>No biography information provided</p>

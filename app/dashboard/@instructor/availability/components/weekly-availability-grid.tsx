@@ -128,9 +128,10 @@ export function WeeklyAvailabilityGrid({
     const start = new Date(`2000-01-01T${slot.startTime}:00`);
     const end = new Date(`2000-01-01T${slot.endTime}:00`);
     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-    return Math.ceil(durationMinutes / 60); // ✅ 60-minute slots
-  };
 
+    const slots = Math.ceil(durationMinutes / 60);
+    return slots + 1;
+  };
 
   // unavailable slots
   const getUnavailableForSlot = (day: string, time: string) => {
@@ -158,7 +159,9 @@ export function WeeklyAvailabilityGrid({
     const start = new Date(`2000-01-01T${slot.startTime}:00`);
     const end = new Date(`2000-01-01T${slot.endTime}:00`);
     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-    return Math.ceil(durationMinutes / 60); // ✅ 60-minute slots
+
+    const slots = Math.ceil(durationMinutes / 60);
+    return slots + 1;
   };
 
   // event slots
@@ -189,9 +192,10 @@ export function WeeklyAvailabilityGrid({
   const getEventSpanHeight = (event: CalendarEvent) => {
     const startTime = new Date(`2000-01-01T${event.startTime}:00`);
     const endTime = new Date(`2000-01-01T${event.endTime}:00`);
+
     const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
-    const slots = Math.ceil(durationMinutes / 60); // 60-minute slots
-    return slots;
+    const slots = Math.ceil(durationMinutes / 60);
+    return slots + 1;
   };
 
   const shouldSkipSlot = (day: string, time: string, date: Date) => {
@@ -407,7 +411,7 @@ export function WeeklyAvailabilityGrid({
                                 // ✅ Available block
                                 availabilitySlot && isAvailabilityStart
                                   ? {
-                                    height: `${getAvailabilitySpanHeight(availabilitySlot) * 36 + (getAvailabilitySpanHeight(availabilitySlot) - 1) * 8}px`,
+                                    height: `${getAvailabilitySpanHeight(availabilitySlot) * 36 + (getAvailabilitySpanHeight(availabilitySlot) + 0.5) * 8}px`,
                                     zIndex: 1,
                                     position: 'absolute',
                                     top: '4px',
@@ -418,22 +422,22 @@ export function WeeklyAvailabilityGrid({
                                   : // ✅ Unavailable block
                                   unavailableSlot && isUnavailableStart
                                     ? {
-                                      height: `${getUnavailableSpanHeight(unavailableSlot) * 36 + (getUnavailableSpanHeight(unavailableSlot) - 1) * 8}px`,
+                                      height: `${getUnavailableSpanHeight(unavailableSlot) * 36 + (getUnavailableSpanHeight(unavailableSlot) + 0.5) * 8}px`,
                                       zIndex: 1,
                                       position: 'absolute',
-                                      top: '4px',
-                                      left: '4px',
+                                      top: '1px',
+                                      left: '1px',
                                       right: '4px',
                                       backgroundColor: 'rgba(239,68,68,0.3)', // red tint
                                     }
                                     : // ✅ Event block
                                     eventInSlot && isEventStart
                                       ? {
-                                        height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) - 1) * 8}px`,
+                                        height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) + 0.5) * 8}px`,
                                         zIndex: 10,
                                         position: 'absolute',
-                                        top: '4px',
-                                        left: '4px',
+                                        top: '1px',
+                                        left: '1px',
                                         right: '4px',
                                       }
                                       : {}
@@ -480,11 +484,11 @@ export function WeeklyAvailabilityGrid({
                                 </div>
                               )}
 
-                              {!status && !eventInSlot && (
+                              {/* {!status && !eventInSlot && (
                                 <div className='flex items-center justify-center'>
                                   <Plus className='h-3 w-3 text-gray-400' />
                                 </div>
-                              )}
+                              )} */}
                             </button>
                           )}
                         </div>

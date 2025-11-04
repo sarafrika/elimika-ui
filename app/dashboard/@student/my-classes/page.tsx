@@ -1,52 +1,42 @@
 'use client';
 
-import { CustomPagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  getAllCoursesOptions,
-  listCatalogItemsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { CourseCard } from '../../_components/course-card';
+import { useStudent } from '../../../../context/student-context';
+import useStudentClassDefinitions from '../../../../hooks/use-student-class-definition';
+import EnrollCourseCard from '../../_components/enroll-course-card';
 
-export default function MyCoursesPage() {
+export default function MyClassesPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const student = useStudent();
 
-  const size = 20;
-  const [page, setPage] = useState(0);
+  const { classDefinitions, isError, loading } = useStudentClassDefinitions(student);
+  const classes = classDefinitions || [];
 
-  const { data, isLoading } = useQuery(
-    getAllCoursesOptions({ query: { pageable: { page, size } } })
-  );
+  // ✅ Updated filter to match new shape
+  const filteredClasses = classes.filter((course: any) => {
+    const title = course.classDetails?.title ?? '';
+    const subtitle = course.classDetails?.subtitle ?? '';
+    const subcategory = course.classDetails?.subcategory ?? '';
 
-  const { data: c, isLoading: cIsLoading } = useQuery(
-    listCatalogItemsOptions({ query: { active_only: false } })
-  );
-
-  const courses = data?.data?.content || [];
-  const paginationMetadata = data?.data?.metadata;
-
-  const filteredCourses = courses?.filter((course: any) => {
     const matchesSearch =
       searchQuery === '' ||
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.subtitle.toLowerCase().includes(searchQuery.toLowerCase());
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      subtitle.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesSubcategory =
-      selectedSubcategory === '' || course.subcategory === selectedSubcategory;
+    const matchesSubcategory = selectedSubcategory === '' || subcategory === selectedSubcategory;
 
     return matchesSearch && matchesSubcategory;
   });
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className='flex flex-col gap-6 space-y-2'>
         <Skeleton className='h-[150px] w-full' />
@@ -70,7 +60,7 @@ export default function MyCoursesPage() {
             <div className='relative flex-1'>
               <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
               <Input
-                placeholder='Search courses...'
+                placeholder='Search classes...'
                 className='pl-10'
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -87,31 +77,30 @@ export default function MyCoursesPage() {
         <div className='mb-6'>
           <div className='flex items-center justify-between'>
             <p className='text-muted-foreground text-sm'>
-              {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
+              {filteredClasses.length} class{filteredClasses.length !== 1 ? 'es' : ''} found
             </p>
           </div>
         </div>
 
         {/* Course Grid */}
         <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-          {filteredCourses.map(course => (
-            <CourseCard
-              key={course.uuid}
-              course={course as any}
-              isStudentView={true}
-              handleEnroll={() => { }}
-              handleSearchInstructor={() => { }}
-              // handleEnroll={() => router.push(`/dashboard/my-courses/instructor/123`)}
-              // handleSearchInstructor={() => router.push(`/my/browse-courses/enroll/${course.uuid}`)}
-              handleClick={() => router.push(`/dashboard/my-courses/${course.uuid}`)}
+          {filteredClasses.map(({ uuid, classDetails, enrollments, course }) => (
+            <EnrollCourseCard
+              key={uuid}
+              href={`/dashboard/my-classes/${uuid}`}
+              cls={classDetails}
+              enrollmentPercentage={5}
+              isFull={false}
+              disableEnroll={true}
+              handleEnroll={() => {}}
             />
           ))}
         </div>
 
-        {filteredCourses.length === 0 && (
+        {filteredClasses.length === 0 && (
           <div className='py-16 text-center'>
             <BookOpen className='text-muted-foreground mx-auto mb-4 h-16 w-16 opacity-50' />
-            <h3 className='mb-2'>No courses found</h3>
+            <h3 className='mb-2'>No classes found</h3>
             <p className='text-muted-foreground mb-4'>Try adjusting your search or filters</p>
             <Button
               variant='outline'
@@ -127,20 +116,10 @@ export default function MyCoursesPage() {
         )}
 
         {/* Load More */}
-        {filteredCourses.length > 0 && (
+        {filteredClasses.length > 0 && (
           <div className='my-12 text-center'>
             <Button variant='outline'>Load More Courses</Button>
           </div>
-        )}
-
-        {/* @ts-ignore */}
-        {paginationMetadata?.totalPages >= 1 && (
-          <CustomPagination
-            totalPages={paginationMetadata?.totalPages as number}
-            onPageChange={page => {
-              setPage(page - 1);
-            }}
-          />
         )}
       </div>
     </div>

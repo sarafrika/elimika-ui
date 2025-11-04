@@ -12,7 +12,6 @@ import { ClassData } from '../../../../@instructor/trainings/create-new/academic
 import { InstructorDirectory } from '../../../../_components/instructor-directory';
 import { ManageBookings } from '../../../../_components/manage-bookings';
 
-
 export type Instructor = {
   id: string;
   name: string;
@@ -112,7 +111,6 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const { data } = useQuery(
     getAllInstructorsOptions({ query: { pageable: { page: 0, size: 20 } } })
   );
-
 
   useEffect(() => {
     if (courseId) {

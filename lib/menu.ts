@@ -34,7 +34,7 @@ import {
   UserIcon,
   Users,
   UsersIcon,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import { ComponentType } from 'react';
 import { UserDomain } from './types';
@@ -140,8 +140,8 @@ export default {
       icon: Book,
     },
     {
-      title: 'My Courses',
-      url: '/dashboard/my-courses',
+      title: 'My Classes',
+      url: '/dashboard/my-classes',
       icon: BookOpen,
     },
     {
@@ -305,6 +305,11 @@ export default {
       icon: BookOpen,
     },
     {
+      title: 'Training Applications',
+      url: '/dashboard/training-applications',
+      icon: GraduationCap,
+    },
+    {
       title: 'Course Management',
       url: '/dashboard/course-management',
       icon: ClipboardList,
@@ -367,11 +372,6 @@ export default {
       title: 'Users',
       url: '/dashboard/users',
       icon: UsersIcon,
-    },
-    {
-      title: 'Courses',
-      url: '/dashboard/courses',
-      icon: BookOpen,
     },
     {
       title: 'Clases and Schedules',

@@ -142,20 +142,14 @@ export default function ManageProfileActions({ className = '' }: { className?: s
             ),
         };
       });
-  }, [
-    courseCreatorRemoval,
-    handleRemoval,
-    instructorRemoval,
-    profile,
-    studentRemoval,
-  ]);
+  }, [courseCreatorRemoval, handleRemoval, instructorRemoval, profile, studentRemoval]);
 
   const selectedProfile = removableProfiles.find(profile => profile.id === selectedDomain);
 
   if (!profile || profile.isLoading) {
     return (
       <div className='mt-16 flex justify-center'>
-        <Spinner className='h-5 w-5 text-muted-foreground' />
+        <Spinner className='text-muted-foreground h-5 w-5' />
       </div>
     );
   }
@@ -195,7 +189,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
   return (
     <section className={cn('space-y-6', className)}>
       <div className='space-y-2'>
-        <h2 className='text-lg font-semibold text-foreground'>Profile maintenance</h2>
+        <h2 className='text-foreground text-lg font-semibold'>Profile maintenance</h2>
         <p className='text-muted-foreground text-sm leading-relaxed'>
           Remove roles you no longer need or delete your account entirely. These actions are
           permanent and cannot be undone.
@@ -210,7 +204,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
               <Card key={profile.id} className='border-border/60 shadow-sm'>
                 <CardHeader>
                   <div className='flex items-center gap-3'>
-                    <div className='rounded-xl bg-muted/50 p-3'>
+                    <div className='bg-muted/50 rounded-xl p-3'>
                       <Icon className={`h-6 w-6 ${profile.accent}`} />
                     </div>
                     <div>
@@ -245,7 +239,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
             );
           })
         ) : (
-          <Card className='border-dashed border-primary/30 bg-primary/5 md:col-span-2'>
+          <Card className='border-primary/30 bg-primary/5 border-dashed md:col-span-2'>
             <CardHeader>
               <CardTitle>No additional profiles</CardTitle>
               <CardDescription>
@@ -259,14 +253,14 @@ export default function ManageProfileActions({ className = '' }: { className?: s
         <Card className='border-destructive/40 bg-destructive/5 xl:col-span-2'>
           <CardHeader>
             <div className='flex items-start gap-3'>
-              <div className='rounded-xl bg-destructive/10 p-3 text-destructive'>
+              <div className='bg-destructive/10 text-destructive rounded-xl p-3'>
                 <AlertTriangle className='h-6 w-6' />
               </div>
               <div>
-                <CardTitle className='text-lg font-semibold text-destructive'>
+                <CardTitle className='text-destructive text-lg font-semibold'>
                   Delete entire account
                 </CardTitle>
-                <CardDescription className='text-sm text-destructive/80'>
+                <CardDescription className='text-destructive/80 text-sm'>
                   This permanently deletes your Elimika account, removes all associated profiles,
                   and signs you out. This action cannot be undone.
                 </CardDescription>
@@ -293,11 +287,16 @@ export default function ManageProfileActions({ className = '' }: { className?: s
         </Card>
       </div>
 
-      <AlertDialog open={selectedDomain !== null} onOpenChange={open => !open && setSelectedDomain(null)}>
+      <AlertDialog
+        open={selectedDomain !== null}
+        onOpenChange={open => !open && setSelectedDomain(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {selectedProfile ? `Remove ${selectedProfile.title.toLowerCase()}?` : 'Remove profile?'}
+              {selectedProfile
+                ? `Remove ${selectedProfile.title.toLowerCase()}?`
+                : 'Remove profile?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               This action permanently removes the selected profile and any associated data. You will
@@ -306,10 +305,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={selectedProfile?.isLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmRemoval}
-              disabled={selectedProfile?.isLoading}
-            >
+            <AlertDialogAction onClick={handleConfirmRemoval} disabled={selectedProfile?.isLoading}>
               {selectedProfile?.isLoading ? (
                 <span className='flex items-center gap-2'>
                   <Spinner className='h-4 w-4' />

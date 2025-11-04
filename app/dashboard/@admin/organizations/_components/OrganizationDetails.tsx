@@ -141,10 +141,10 @@ export default function OrganizationDetails({
                 <span className='text-sm font-medium'>
                   {organization.created_date
                     ? new Date(organization.created_date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })
                     : 'N/A'}
                 </span>
               </div>
