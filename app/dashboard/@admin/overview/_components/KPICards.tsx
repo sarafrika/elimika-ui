@@ -1,102 +1,109 @@
-import { DashboardGrid, DashboardKpiCard } from '@/components/ui/dashboard';
-import type { DashboardIconName } from '@/components/icons';
+import {
+  Users,
+  Building2,
+  BookOpen,
+  Shield,
+  TrendingUp,
+  AlertCircle,
+  Activity,
+  UserCheck,
+} from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { AdminDashboardStatsDTO } from '@/services/api/actions';
 
 interface KPICardsProps {
-  statistics: any;
+  statistics?: AdminDashboardStatsDTO;
   isLoading: boolean;
 }
 
-export default function KPICards({ statistics, isLoading }: KPICardsProps) {
-  type KpiDefinition = {
-    key: string;
-    title: string;
-    value: number;
-    caption: string;
-    icon: DashboardIconName;
-    trend?: { value: string; direction?: 'up' | 'down' | 'flat'; tone?: 'positive' | 'negative' | 'warning'; };
-    highlight?: 'warning' | 'critical' | 'success';
-  };
+const toNumber = (value?: bigint | number | string | null) => {
+  if (typeof value === 'bigint') return Number(value);
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
 
-  const kpis: KpiDefinition[] = [
+const formatMetric = (value: number) => value.toLocaleString();
+
+export default function KPICards({ statistics, isLoading }: KPICardsProps) {
+  const kpis: AdminMetric[] = [
     {
-      key: 'total-users',
-      title: 'Total users',
-      value: statistics?.user_metrics?.total_users ?? 0,
-      caption: 'Registered users',
-      icon: 'users',
-      trend: { value: '+5.2%', direction: 'up', tone: 'positive' },
+      id: 'total-users',
+      title: 'Total Users',
+      value: toNumber(statistics?.user_metrics?.total_users),
+      icon: Users,
+      description: 'Registered users',
+      trend: '+5.2%',
+      trendDirection: 'up',
     },
     {
-      key: 'active-users',
-      title: 'Active users (24h)',
-      value: statistics?.user_metrics?.active_users_24h ?? 0,
-      caption: 'Last 24 hours',
-      icon: 'user-active',
-      trend: { value: '+12.3%', direction: 'up', tone: 'positive' },
+      id: 'active-users',
+      title: 'Active Users (24h)',
+      value: toNumber(statistics?.user_metrics?.active_users_24h),
+      icon: UserCheck,
+      description: 'Last 24 hours',
+      trend: '+12.3%',
+      trendDirection: 'up',
     },
     {
-      key: 'new-users',
-      title: 'New users (7d)',
-      value: statistics?.user_metrics?.new_registrations_7d ?? 0,
-      caption: 'Last 7 days',
-      icon: 'trend-up',
-      trend: { value: '+8.1%', direction: 'up', tone: 'positive' },
+      id: 'new-users',
+      title: 'New Users (7d)',
+      value: toNumber(statistics?.user_metrics?.new_registrations_7d),
+      icon: TrendingUp,
+      description: 'Last 7 days',
+      trend: '+8.1%',
+      trendDirection: 'up',
     },
     {
-      key: 'organizations',
+      id: 'organizations-total',
       title: 'Organizations',
-      value: statistics?.organization_metrics?.total_organizations ?? 0,
-      caption: 'Total organisations',
-      icon: 'organizations',
-      trend: { value: '+2.4%', direction: 'up', tone: 'positive' },
+      value: toNumber(statistics?.organization_metrics?.total_organizations),
+      icon: Building2,
+      description: 'Total organizations',
+      trend: '+2.4%',
+      trendDirection: 'up',
     },
     {
-      key: 'active-organizations',
-      title: 'Active organisations',
-      value: statistics?.organization_metrics?.active_organizations ?? 0,
-      caption: 'Currently active',
-      icon: 'activity',
-      trend: { value: '+1.8%', direction: 'up', tone: 'positive' },
+      id: 'organizations-active',
+      title: 'Active Organizations',
+      value: toNumber(statistics?.organization_metrics?.active_organizations),
+      icon: Activity,
+      description: 'Currently active',
+      trend: '+1.8%',
+      trendDirection: 'up',
     },
     {
-      key: 'pending-approvals',
-      title: 'Pending approvals',
-      value: statistics?.organization_metrics?.pending_approvals ?? 0,
-      caption: 'Awaiting review',
-      icon: 'warning',
-      highlight: 'warning',
+      id: 'pending-approvals',
+      title: 'Pending Approvals',
+      value: toNumber(statistics?.organization_metrics?.pending_approvals),
+      icon: AlertCircle,
+      description: 'Awaiting review',
+      trend: null,
+      trendDirection: null,
+      highlight: true,
     },
     {
-      key: 'total-courses',
-      title: 'Total courses',
-      value: statistics?.content_metrics?.total_courses ?? 0,
-      caption: 'Platform courses',
-      icon: 'courses',
-      trend: { value: '+15.7%', direction: 'up', tone: 'positive' },
+      id: 'total-courses',
+      title: 'Total Courses',
+      value: toNumber(statistics?.content_metrics?.total_courses),
+      icon: BookOpen,
+      description: 'Platform courses',
+      trend: '+15.7%',
+      trendDirection: 'up',
     },
     {
-      key: 'total-admins',
-      title: 'Total admins',
-      value: statistics?.admin_metrics?.total_admins ?? 0,
-      caption: 'System administrators',
-      icon: 'security',
+      id: 'total-admins',
+      title: 'Total Admins',
+      value: toNumber(statistics?.admin_metrics?.total_admins),
+      icon: Shield,
+      description: 'System administrators',
+      trend: null,
+      trendDirection: null,
     },
   ];
 
-  return (
-    <DashboardGrid columns='4'>
-      {kpis.map(kpi => (
-        <DashboardKpiCard
-          key={kpi.key}
-          title={kpi.title}
-          value={kpi.value}
-          caption={kpi.caption}
-          icon={kpi.icon}
-          trend={kpi.trend}
-          highlight={kpi.highlight}
-          isLoading={isLoading}
-        />
-      ))}
-    </DashboardGrid>
-  );
+  return <AdminMetricGrid metrics={kpis} isLoading={isLoading} skeletonCount={8} />;
 }

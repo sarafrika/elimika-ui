@@ -19,13 +19,15 @@
   },
   "iconLibrary": "lucide",
   "registry": {
-    "dashboard": [
-      "components/ui/dashboard/dashboard-shell.tsx",
-      "components/ui/dashboard/dashboard-kpi-card.tsx",
-      "components/ui/dashboard/dashboard-chart-card.tsx",
-      "components/ui/dashboard/dashboard-health-indicator.tsx",
-      "components/ui/dashboard/dashboard-metric-delta.tsx"
-    ],
-    "icons": ["components/icons/index.tsx"]
+    "admin": [
+      "components/admin/layout-shell.tsx",
+      "components/admin/layout-context.tsx",
+      "components/admin/admin-page.tsx",
+      "components/admin/admin-page-register.tsx",
+      "components/admin/admin-nav.tsx",
+      "components/admin/admin-filter-bar.tsx",
+      "components/admin/admin-metric-card.tsx",
+      "components/admin/admin-tabs.tsx"
+    ]
   }
 }
