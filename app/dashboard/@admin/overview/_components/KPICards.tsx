@@ -1,5 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Users,
   Building2,
@@ -18,6 +16,18 @@ interface KPICardsProps {
   isLoading: boolean;
 }
 
+const toNumber = (value?: bigint | number | string | null) => {
+  if (typeof value === 'bigint') return Number(value);
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
+
+const formatMetric = (value: number) => value.toLocaleString();
+
 export default function KPICards({ statistics, isLoading }: KPICardsProps) {
   const toNumber = (value?: bigint | number | string | null) => {
     if (typeof value === 'bigint') return Number(value);
@@ -35,69 +45,77 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
 
   const kpis = [
     {
+      id: 'total-users',
       title: 'Total Users',
       value: statistics?.user_metrics?.total_users,
       icon: Users,
       description: 'Registered users',
       trend: '+5.2%',
-      trendUp: true,
+      trendDirection: 'up',
     },
     {
+      id: 'active-users',
       title: 'Active Users (24h)',
       value: statistics?.user_metrics?.active_users_24h,
       icon: UserCheck,
       description: 'Last 24 hours',
       trend: '+12.3%',
-      trendUp: true,
+      trendDirection: 'up',
     },
     {
+      id: 'new-users',
       title: 'New Users (7d)',
       value: statistics?.user_metrics?.new_registrations_7d,
       icon: TrendingUp,
       description: 'Last 7 days',
       trend: '+8.1%',
-      trendUp: true,
+      trendDirection: 'up',
     },
     {
+      id: 'organizations-total',
       title: 'Organizations',
       value: statistics?.organization_metrics?.total_organizations,
       icon: Building2,
       description: 'Total organizations',
       trend: '+2.4%',
-      trendUp: true,
+      trendDirection: 'up',
     },
     {
+      id: 'organizations-active',
       title: 'Active Organizations',
       value: statistics?.organization_metrics?.active_organizations,
       icon: Activity,
       description: 'Currently active',
       trend: '+1.8%',
-      trendUp: true,
+      trendDirection: 'up',
     },
     {
+      id: 'pending-approvals',
       title: 'Pending Approvals',
       value: statistics?.organization_metrics?.pending_approvals,
       icon: AlertCircle,
       description: 'Awaiting review',
       trend: null,
-      trendUp: null,
+      trendDirection: null,
       highlight: true,
     },
     {
+      id: 'total-courses',
       title: 'Total Courses',
       value: statistics?.content_metrics?.total_courses,
       icon: BookOpen,
       description: 'Platform courses',
       trend: '+15.7%',
-      trendUp: true,
+      trendDirection: 'up',
     },
     {
+      id: 'total-admins',
       title: 'Total Admins',
       value: statistics?.admin_metrics?.total_admins,
       icon: Shield,
       description: 'System administrators',
       trend: null,
-      trendUp: null,
+      trendDirection: null,
     },
   ];
 

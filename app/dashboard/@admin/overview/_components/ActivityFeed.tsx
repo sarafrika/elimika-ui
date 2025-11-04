@@ -1,7 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -52,6 +52,8 @@ const getActivityIcon = (event: AdminDashboardActivityEvent) => {
     case 'notification':
     case 'notifications':
       return BellRing;
+    case 'compliance':
+      return Shield;
     default:
       return User;
   }
@@ -164,17 +166,16 @@ const renderMetadata = (metadata?: Record<string, unknown>) => {
 export default function ActivityFeed({ feed, isLoading, error, onRetry, isRefetching }: ActivityFeedProps) {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest events and actions across the platform</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
+      <DashboardChartCard
+        title='Recent activity'
+        description='Latest events and actions across the platform'
+      >
+        <div className='space-y-4'>
           {Array.from({ length: 5 }).map((_, index) => (
             <Skeleton key={index} className='h-20 w-full' />
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardChartCard>
     );
   }
 

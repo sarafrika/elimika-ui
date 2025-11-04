@@ -17,5 +17,17 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "iconLibrary": "lucide"
+  "iconLibrary": "lucide",
+  "registry": {
+    "admin": [
+      "components/admin/layout-shell.tsx",
+      "components/admin/layout-context.tsx",
+      "components/admin/admin-page.tsx",
+      "components/admin/admin-page-register.tsx",
+      "components/admin/admin-nav.tsx",
+      "components/admin/admin-filter-bar.tsx",
+      "components/admin/admin-metric-card.tsx",
+      "components/admin/admin-tabs.tsx"
+    ]
+  }
 }

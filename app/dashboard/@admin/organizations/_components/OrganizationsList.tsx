@@ -1,9 +1,9 @@
 'use client';
 import OrganizationCard from '@/app/dashboard/@admin/organizations/_components/OrganizationCard';
-import OrganizationFilters from '@/app/dashboard/@admin/organizations/_components/OrganizationFilters';
 import { useRouter, usePathname } from 'next/navigation';
 import { Organisation } from '@/services/client';
-import React from 'react';
+import React, { useMemo } from 'react';
+import { AdminFilterBar } from '@/components/admin/admin-filter-bar';
 
 interface OrganizationsListProps {
   organizations: Organisation[];
@@ -46,20 +46,65 @@ export default function OrganizationsList({
   const isSelected = (organization: Organisation) =>
     !selectedOrganization ? true : selectedOrganization?.uuid === organization.uuid;
 
+  const hasActiveFilters = useMemo(
+    () =>
+      Boolean(
+        searchQuery ||
+          activeFilter !== 'all' ||
+          verifiedFilter !== 'all' ||
+          sortField !== 'created_date'
+      ),
+    [searchQuery, activeFilter, verifiedFilter, sortField]
+  );
+
   return (
-    <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
-      <OrganizationFilters
-        searchQuery={searchQuery}
-        activeFilter={activeFilter}
-        verifiedFilter={verifiedFilter}
-        sortField={sortField}
-        sortOrder={sortOrder}
-        setSearchQuery={query => updateParams({ search: query })}
-        setActiveFilter={active => updateParams({ active })}
-        setVerifiedFilter={verified => updateParams({ verified })}
-        setSortField={field => updateParams({ sortField: field })}
-        setSortOrder={order => updateParams({ sortOrder: order })}
-        onClearFilters={handleClearFilters}
+    <div className='flex w-full max-w-md flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40'>
+      <AdminFilterBar
+        search={{
+          value: searchQuery,
+          onChange: query => updateParams({ search: query }),
+          placeholder: 'Search by name, location, or description',
+        }}
+        filters={[
+          {
+            id: 'status',
+            value: activeFilter,
+            onChange: value => updateParams({ active: value }),
+            options: [
+              { label: 'All Status', value: 'all' },
+              { label: 'Active', value: 'true' },
+              { label: 'Inactive', value: 'false' },
+            ],
+            placeholder: 'Status',
+            minWidth: 'min-w-[140px]',
+          },
+          {
+            id: 'verified',
+            value: verifiedFilter,
+            onChange: value => updateParams({ verified: value }),
+            options: [
+              { label: 'All Verification', value: 'all' },
+              { label: 'Verified', value: 'true' },
+              { label: 'Pending', value: 'false' },
+            ],
+            placeholder: 'Verification',
+            minWidth: 'min-w-[140px]',
+          },
+        ]}
+        sort={{
+          value: sortField,
+          onChange: field => updateParams({ sortField: field }),
+          options: [
+            { label: 'Date Created', value: 'created_date' },
+            { label: 'Last Updated', value: 'updated_date' },
+            { label: 'Name', value: 'name' },
+            { label: 'Location', value: 'location' },
+          ],
+          order: sortOrder,
+          onOrderChange: order => updateParams({ sortOrder: order }),
+        }}
+        dirty={hasActiveFilters}
+        onClear={handleClearFilters}
       />
 
       <div className='flex-1 overflow-y-auto'>

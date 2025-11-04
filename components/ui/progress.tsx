@@ -15,6 +15,11 @@ function Progress({
   indicatorClassName,
   ...props
 }: ProgressProps) {
+export interface ProgressProps extends React.ComponentProps<typeof ProgressPrimitive.Root> {
+  indicatorClassName?: string;
+}
+
+function Progress({ className, value, indicatorClassName, ...props }: ProgressProps) {
   return (
     <ProgressPrimitive.Root
       data-slot='progress'

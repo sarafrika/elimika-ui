@@ -1,7 +1,12 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AdminTabs,
+  AdminTabsContent,
+  AdminTabsList,
+  AdminTabsTrigger,
+} from '@/components/admin/admin-tabs';
 import {
   LineChart,
   Line,
@@ -18,12 +23,12 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { AdminDashboardStats } from '@/services/client/types.gen';
+import type { AdminDashboardStatsDTO } from '@/services/api/actions';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f97316', '#22d3ee'];
 
 interface AnalyticsChartsProps {
-  statistics?: AdminDashboardStats;
+  statistics?: AdminDashboardStatsDTO;
   isLoading: boolean;
 }
 
@@ -96,17 +101,15 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Platform Analytics</CardTitle>
-          <CardDescription>Growth trends and user distribution</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-[260px] w-full' />
-          <Skeleton className='h-[260px] w-full' />
-        </CardContent>
-      </Card>
+      <DashboardChartCard
+        title='Platform analytics'
+        description='Growth trends and user distribution'
+        contentClassName='space-y-6'
+      >
+        <Skeleton className='h-10 w-full' />
+        <Skeleton className='h-[260px] w-full' />
+        <Skeleton className='h-[260px] w-full' />
+      </DashboardChartCard>
     );
   }
 
@@ -117,14 +120,14 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
         <CardDescription>Growth trends and user distribution</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue='user-growth' className='space-y-4'>
-          <TabsList className='grid w-full grid-cols-3'>
-            <TabsTrigger value='user-growth'>User Growth</TabsTrigger>
-            <TabsTrigger value='org-growth'>Organizations</TabsTrigger>
-            <TabsTrigger value='distribution'>Distribution</TabsTrigger>
-          </TabsList>
+        <AdminTabs defaultValue='user-growth'>
+          <AdminTabsList>
+            <AdminTabsTrigger value='user-growth'>User Growth</AdminTabsTrigger>
+            <AdminTabsTrigger value='org-growth'>Organizations</AdminTabsTrigger>
+            <AdminTabsTrigger value='distribution'>Distribution</AdminTabsTrigger>
+          </AdminTabsList>
 
-          <TabsContent value='user-growth' className='space-y-4'>
+          <AdminTabsContent value='user-growth' className='space-y-4'>
             {hasUserData ? (
               <>
                 <div className='h-[300px]'>
@@ -172,9 +175,9 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                 No user metrics available for the current dashboard snapshot.
               </p>
             )}
-          </TabsContent>
+          </AdminTabsContent>
 
-          <TabsContent value='org-growth' className='space-y-4'>
+          <AdminTabsContent value='org-growth' className='space-y-4'>
             {hasOrgData ? (
               <>
                 <div className='h-[300px]'>
@@ -219,9 +222,9 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                 No organisation metrics available for the current dashboard snapshot.
               </p>
             )}
-          </TabsContent>
+          </AdminTabsContent>
 
-          <TabsContent value='distribution' className='space-y-4'>
+          <AdminTabsContent value='distribution' className='space-y-4'>
             {hasDistributionData ? (
               <>
                 <div className='h-[300px]'>
@@ -262,8 +265,8 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                 No distribution metrics available for the current dashboard snapshot.
               </p>
             )}
-          </TabsContent>
-        </Tabs>
+          </AdminTabsContent>
+        </AdminTabs>
       </CardContent>
     </Card>
   );

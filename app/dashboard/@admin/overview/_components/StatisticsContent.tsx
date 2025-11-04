@@ -3,13 +3,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { getDashboardActivityFeedOptions } from '@/services/client/admin-dashboard';
+import { getAdminDashboardStatisticsOptions } from '@/services/api/tanstack-client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import KPICards from './KPICards';
 import AnalyticsCharts from './AnalyticsCharts';
 import SystemHealth from './SystemHealth';
 import ActivityFeed from './ActivityFeed';
+import {
+  DashboardSection,
+  DashboardSectionDescription,
+  DashboardSectionHeader,
+  DashboardSectionTitle,
+  DashboardShell,
+} from '@/components/ui/dashboard';
 
 export default function StatisticsContent() {
   const {
@@ -30,17 +38,18 @@ export default function StatisticsContent() {
     isFetching: isActivityFetching,
     refetch: refetchActivity,
   } = useQuery(getDashboardActivityFeedOptions());
+  const { data, error, isLoading, refetch } = useQuery(getAdminDashboardStatisticsOptions());
 
   if (error) {
     return (
-      <div className='flex h-[calc(100vh-120px)] items-center justify-center'>
+      <div className='flex min-h-[360px] items-center justify-center rounded-lg border border-dashed'>
         <Alert variant='destructive' className='max-w-lg'>
           <AlertCircle className='h-4 w-4' />
-          <AlertTitle>Error Loading Statistics</AlertTitle>
+          <AlertTitle>Error loading statistics</AlertTitle>
           <AlertDescription className='mt-2 space-y-4'>
             <p>Failed to load dashboard statistics.</p>
             <Button onClick={() => refetch()} variant='outline' size='sm'>
-              Try Again
+              Try again
             </Button>
           </AlertDescription>
         </Alert>
@@ -63,8 +72,13 @@ export default function StatisticsContent() {
 
       {/* KPI Cards */}
       <KPICards statistics={statistics} isLoading={isInitialLoading} />
+  const statistics = data?.statistics;
+  const activityEvents = data?.activityEvents ?? [];
 
-      {/* Analytics Charts & System Health */}
+  return (
+    <div className='flex flex-col gap-6'>
+      <KPICards statistics={statistics} isLoading={isLoading} />
+
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='lg:col-span-2'>
           <AnalyticsCharts statistics={statistics} isLoading={isInitialLoading} />
@@ -72,7 +86,7 @@ export default function StatisticsContent() {
         <div className='lg:col-span-1'>
           <SystemHealth statistics={statistics} isLoading={isInitialLoading} />
         </div>
-      </div>
+      </DashboardSection>
 
       {/* Activity Feed */}
       <ActivityFeed
@@ -82,6 +96,7 @@ export default function StatisticsContent() {
         error={activityError}
         onRetry={refetchActivity}
       />
+      <ActivityFeed statistics={statistics} isLoading={isLoading} />
     </div>
   );
 }
