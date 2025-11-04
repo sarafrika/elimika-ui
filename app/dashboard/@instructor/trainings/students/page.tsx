@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import Spinner from '@/components/ui/spinner';
 import {
   Table,
   TableBody,
@@ -11,13 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import Spinner from '../../../../../components/ui/spinner';
 import {
   getAllStudentsOptions,
   getStudentScheduleOptions,
-  getUserByUuidOptions,
-} from '../../../../../services/client/@tanstack/react-query.gen';
+  getUserByUuidOptions
+} from '@/services/client/@tanstack/react-query.gen';
+import { useQueries, useQuery } from '@tanstack/react-query';
 
 const sampleEnrollmentData = {
   success: true,
@@ -84,13 +83,21 @@ const sampleEnrollmentData = {
   error: {},
 };
 
-export default function StudentsPage() {
+interface StudentsPageProps {
+  classesWithCourseAndInstructor: any,
+  loading: boolean
+}
+
+export default function StudentsPage({ classesWithCourseAndInstructor, loading }: StudentsPageProps) {
   const { data: sData } = useQuery(
     getAllStudentsOptions({
       query: { pageable: { page: 0, size: 50 } },
     })
   );
   const students = sData?.data?.content ?? [];
+
+  // console.log(classesWithCourseAndInstructor, "CLAS")
+  // console.log(students, "STU")
 
   const studentDetailQueries = useQueries({
     queries: students.map(student => ({
@@ -167,14 +174,14 @@ export default function StudentsPage() {
                 ))}
               </TableBody>
 
-              <TableBody>
+              {/* <TableBody>
                 {sampleEnrollmentData?.data?.content?.map(student => (
                   <TableRow key={student.uuid}>
                     <TableCell>
                       <div className='flex items-center gap-4'>
                         <Avatar>
                           <AvatarImage src={''} />
-                          {/* <AvatarFallback>{"Student name"}</AvatarFallback> */}
+                          <AvatarFallback>{"Student name"}</AvatarFallback>
                         </Avatar>
                         <div>
                           <p className='font-medium'>{'student name'}</p>
@@ -197,7 +204,7 @@ export default function StudentsPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-              </TableBody>
+              </TableBody> */}
             </Table>
           </CardContent>
         )}

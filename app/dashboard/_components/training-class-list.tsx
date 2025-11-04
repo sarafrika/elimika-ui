@@ -39,7 +39,6 @@ import RichTextRenderer from '../../../components/editors/richTextRenders';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { useInstructor } from '../../../context/instructor-context';
 import { useDifficultyLevels } from '../../../hooks/use-difficultyLevels';
-import useInstructorClassesWithDetails from '../../../hooks/use-instructor-classes';
 import { CustomLoadingState } from '../@course_creator/_components/loading-state';
 
 export const getLocationBadgeColor = (location: string) => {
@@ -73,6 +72,8 @@ interface TrainingClassListProps {
   onDelete?: (id: string) => void;
   onOpenTimetable?: (id: string) => void;
   onOpenRecurring?: (id: string) => void;
+  classesWithCourseAndInstructor: any;
+  loading: boolean
 }
 
 export function TrainingClassList({
@@ -80,20 +81,23 @@ export function TrainingClassList({
   onDelete,
   onOpenTimetable,
   onOpenRecurring,
+  classesWithCourseAndInstructor,
+  loading
 }: TrainingClassListProps) {
-  const instructor = useInstructor();
   const router = useRouter();
+  const instructor = useInstructor();
+  const { difficultyMap } = useDifficultyLevels();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeFilter, setActiveFilter] = useState('all');
 
-  const { difficultyMap } = useDifficultyLevels();
-  const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
-    instructor?.uuid as string
-  );
+  // const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
+  //   instructor?.uuid as string
+  // );
 
-  const filteredClasses = classesWithCourseAndInstructor?.filter(cls => {
+  const filteredClasses = classesWithCourseAndInstructor?.filter((cls: any) => {
     const matchesSearch =
       cls.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       cls?.course?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -114,8 +118,8 @@ export function TrainingClassList({
     return matchesSearch && matchesLocation && matchesStatus && matchesActive;
   });
 
-  const publishedClasses = classesWithCourseAndInstructor?.filter(item => item.is_active);
-  const draftClasses = classesWithCourseAndInstructor?.filter(item => !item.is_active);
+  const publishedClasses = classesWithCourseAndInstructor?.filter((item: any) => item.is_active);
+  const draftClasses = classesWithCourseAndInstructor?.filter((item: any) => !item.is_active);
 
   function openTimetableSchedule(uuid: string) {
     // timetable
@@ -217,7 +221,7 @@ export function TrainingClassList({
 
       {/* Classes Grid */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3'>
-        {filteredClasses.map(cls => {
+        {filteredClasses.map((cls: any) => {
           const enrollmentPercentage = (cls.current_enrollments / cls.max_participants) * 100;
           const isFull = cls.current_enrollments >= cls.max_participants;
           const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'N/A';
@@ -393,11 +397,10 @@ export function TrainingClassList({
                       </div>
                       <div className='h-2 overflow-hidden rounded-full bg-blue-100'>
                         <div
-                          className={`h-full transition-all duration-500 ${
-                            enrollmentPercentage >= 80
-                              ? 'bg-gradient-to-r from-orange-400 to-red-500'
-                              : 'bg-gradient-to-r from-blue-400 to-indigo-500'
-                          }`}
+                          className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80
+                            ? 'bg-gradient-to-r from-orange-400 to-red-500'
+                            : 'bg-gradient-to-r from-blue-400 to-indigo-500'
+                            }`}
                           style={{ width: `${enrollmentPercentage}%` }}
                         />
                       </div>

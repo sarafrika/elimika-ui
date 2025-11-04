@@ -19,7 +19,12 @@ import {
   TimetableScheduleDialog,
 } from '../../_components/class-management-form';
 
-export default function TrainingsPage() {
+interface TrainingPageProps {
+  classesWithCourseAndInstructor: any,
+  loading: boolean
+}
+
+export default function TrainingsPage({ classesWithCourseAndInstructor, loading }: TrainingPageProps) {
   const router = useRouter();
   const qc = useQueryClient();
   const instructor = useInstructor();
@@ -86,6 +91,8 @@ export default function TrainingsPage() {
         onDelete={openDeleteModal}
         onOpenTimetable={openTimetableSchedule}
         onOpenRecurring={openRecurrentSchedule}
+        classesWithCourseAndInstructor={classesWithCourseAndInstructor}
+        loading={loading}
       />
 
       <ClassDialog

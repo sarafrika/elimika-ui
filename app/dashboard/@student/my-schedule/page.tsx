@@ -17,10 +17,9 @@ import TimetableManager from './_components/timetable-manager';
 const Page = () => {
   const student = useStudent();
 
-  // Default start and end dates
   const defaultStartDate = new Date();
   const defaultEndDate = new Date();
-  defaultEndDate.setMonth(defaultEndDate.getMonth() + 3); // default 3 months range
+  defaultEndDate.setMonth(defaultEndDate.getMonth() + 6); // default 6 months range
 
   const [startDate, setStartDate] = useState(defaultStartDate.toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(defaultEndDate.toISOString().slice(0, 10));
@@ -83,7 +82,10 @@ const Page = () => {
       </div>
 
       {/* Timetable */}
-      <TimetableManager availabilityData={availabilityData} onAvailabilityUpdate={updated => {}} />
+      <TimetableManager
+        availabilityData={availabilityData}
+        onAvailabilityUpdate={updated => { }}
+      />
     </div>
   );
 };

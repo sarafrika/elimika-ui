@@ -128,7 +128,9 @@ export function WeeklyAvailabilityGrid({
     const start = new Date(`2000-01-01T${slot.startTime}:00`);
     const end = new Date(`2000-01-01T${slot.endTime}:00`);
     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-    return Math.ceil(durationMinutes / 60); // ✅ 60-minute slots
+
+    const slots = Math.ceil(durationMinutes / 60);
+    return slots + 1;
   };
 
   // unavailable slots
@@ -157,7 +159,9 @@ export function WeeklyAvailabilityGrid({
     const start = new Date(`2000-01-01T${slot.startTime}:00`);
     const end = new Date(`2000-01-01T${slot.endTime}:00`);
     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-    return Math.ceil(durationMinutes / 60); // ✅ 60-minute slots
+
+    const slots = Math.ceil(durationMinutes / 60);
+    return slots + 1;
   };
 
   // event slots
@@ -407,35 +411,35 @@ export function WeeklyAvailabilityGrid({
                                 // ✅ Available block
                                 availabilitySlot && isAvailabilityStart
                                   ? {
-                                      height: `${getAvailabilitySpanHeight(availabilitySlot) * 36 + (getAvailabilitySpanHeight(availabilitySlot) - 1) * 8}px`,
+                                    height: `${getAvailabilitySpanHeight(availabilitySlot) * 36 + (getAvailabilitySpanHeight(availabilitySlot) + 0.5) * 8}px`,
+                                    zIndex: 1,
+                                    position: 'absolute',
+                                    top: '4px',
+                                    left: '4px',
+                                    right: '4px',
+                                    backgroundColor: 'rgba(34,197,94,0.3)', // green tint
+                                  }
+                                  : // ✅ Unavailable block
+                                  unavailableSlot && isUnavailableStart
+                                    ? {
+                                      height: `${getUnavailableSpanHeight(unavailableSlot) * 36 + (getUnavailableSpanHeight(unavailableSlot) + 0.5) * 8}px`,
                                       zIndex: 1,
                                       position: 'absolute',
-                                      top: '4px',
-                                      left: '4px',
+                                      top: '1px',
+                                      left: '1px',
                                       right: '4px',
-                                      backgroundColor: 'rgba(34,197,94,0.3)', // green tint
+                                      backgroundColor: 'rgba(239,68,68,0.3)', // red tint
                                     }
-                                  : // ✅ Unavailable block
-                                    unavailableSlot && isUnavailableStart
-                                    ? {
-                                        height: `${getUnavailableSpanHeight(unavailableSlot) * 36 + (getUnavailableSpanHeight(unavailableSlot) - 1) * 8}px`,
-                                        zIndex: 1,
-                                        position: 'absolute',
-                                        top: '4px',
-                                        left: '4px',
-                                        right: '4px',
-                                        backgroundColor: 'rgba(239,68,68,0.3)', // red tint
-                                      }
                                     : // ✅ Event block
-                                      eventInSlot && isEventStart
+                                    eventInSlot && isEventStart
                                       ? {
-                                          height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) - 1) * 8}px`,
-                                          zIndex: 10,
-                                          position: 'absolute',
-                                          top: '4px',
-                                          left: '4px',
-                                          right: '4px',
-                                        }
+                                        height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) + 0.5) * 8}px`,
+                                        zIndex: 10,
+                                        position: 'absolute',
+                                        top: '1px',
+                                        left: '1px',
+                                        right: '4px',
+                                      }
                                       : {}
                               }
                             >
