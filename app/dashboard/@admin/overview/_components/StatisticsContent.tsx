@@ -15,14 +15,14 @@ export default function StatisticsContent() {
 
   if (error) {
     return (
-      <div className='flex h-[calc(100vh-120px)] items-center justify-center'>
+      <div className='flex min-h-[360px] items-center justify-center rounded-lg border border-dashed'>
         <Alert variant='destructive' className='max-w-lg'>
           <AlertCircle className='h-4 w-4' />
-          <AlertTitle>Error Loading Statistics</AlertTitle>
+          <AlertTitle>Error loading statistics</AlertTitle>
           <AlertDescription className='mt-2 space-y-4'>
             <p>Failed to load dashboard statistics.</p>
             <Button onClick={() => refetch()} variant='outline' size='sm'>
-              Try Again
+              Try again
             </Button>
           </AlertDescription>
         </Alert>
@@ -35,29 +35,8 @@ export default function StatisticsContent() {
 
   return (
     <div className='flex flex-col gap-6'>
-      {/* Page Header */}
-      <div className='space-y-1'>
-        <h1 className='text-3xl font-bold tracking-tight'>Dashboard Statistics</h1>
-        <p className='text-muted-foreground'>
-          Real-time overview of platform metrics and system health
-        </p>
-      </div>
+      <KPICards statistics={statistics} isLoading={isLoading} />
 
-      {/* KPI Cards */}
-      {!isLoading && !statistics && activityEvents.length === 0 ? (
-        <Alert variant='outline' className='border-dashed'>
-          <Info className='h-4 w-4' />
-          <AlertTitle>No statistics available</AlertTitle>
-          <AlertDescription>
-            The dashboard did not return any metrics for this snapshot. Once activity is recorded
-            you will see usage indicators and charts here.
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <KPICards statistics={statistics} isLoading={isLoading} />
-      )}
-
-      {/* Analytics Charts & System Health */}
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='lg:col-span-2'>
           <AnalyticsCharts statistics={statistics} isLoading={isLoading} />
@@ -67,8 +46,7 @@ export default function StatisticsContent() {
         </div>
       </div>
 
-      {/* Activity Feed */}
-      <ActivityFeed statistics={statistics} events={activityEvents} isLoading={isLoading} />
+      <ActivityFeed statistics={statistics} isLoading={isLoading} />
     </div>
   );
 }

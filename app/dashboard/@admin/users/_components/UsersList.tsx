@@ -1,9 +1,9 @@
 'use client';
 import UserCard from '@/app/dashboard/@admin/users/_components/UserCard';
-import UserFilters from '@/app/dashboard/@admin/users/_components/UserFilters';
 import { useRouter, usePathname } from 'next/navigation';
 import { User } from '@/services/client';
-import React from 'react';
+import React, { useMemo } from 'react';
+import { AdminFilterBar } from '@/components/admin/admin-filter-bar';
 
 interface UsersListProps {
   users: User[];
@@ -45,20 +45,67 @@ export default function UsersList({
 
   const isSelected = (user: User) => (!selectedUser ? true : selectedUser?.uuid === user.uuid);
 
+  const hasActiveFilters = useMemo(
+    () =>
+      Boolean(
+        searchQuery ||
+          activeFilter !== 'all' ||
+          domainFilter !== 'all' ||
+          sortField !== 'created_date'
+      ),
+    [searchQuery, activeFilter, domainFilter, sortField]
+  );
+
   return (
-    <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
-      <UserFilters
-        searchQuery={searchQuery}
-        activeFilter={activeFilter}
-        domainFilter={domainFilter}
-        sortField={sortField}
-        sortOrder={sortOrder}
-        setSearchQuery={query => updateParams({ search: query })}
-        setActiveFilter={active => updateParams({ active })}
-        setDomainFilter={domain => updateParams({ domain })}
-        setSortField={field => updateParams({ sortField: field })}
-        setSortOrder={order => updateParams({ sortOrder: order })}
-        onClearFilters={handleClearFilters}
+    <div className='flex w-full max-w-md flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40'>
+      <AdminFilterBar
+        search={{
+          value: searchQuery,
+          onChange: query => updateParams({ search: query }),
+          placeholder: 'Search by name, email, or username',
+        }}
+        filters={[
+          {
+            id: 'active',
+            value: activeFilter,
+            onChange: value => updateParams({ active: value }),
+            options: [
+              { label: 'All Status', value: 'all' },
+              { label: 'Active', value: 'true' },
+              { label: 'Inactive', value: 'false' },
+            ],
+            placeholder: 'Status',
+            minWidth: 'min-w-[140px]',
+          },
+          {
+            id: 'domain',
+            value: domainFilter,
+            onChange: value => updateParams({ domain: value }),
+            options: [
+              { label: 'All Domains', value: 'all' },
+              { label: 'Admin', value: 'admin' },
+              { label: 'Instructor', value: 'instructor' },
+              { label: 'Student', value: 'student' },
+            ],
+            placeholder: 'Domain',
+            minWidth: 'min-w-[140px]',
+          },
+        ]}
+        sort={{
+          value: sortField,
+          onChange: field => updateParams({ sortField: field }),
+          options: [
+            { label: 'Date Created', value: 'created_date' },
+            { label: 'Last Updated', value: 'updated_date' },
+            { label: 'First Name', value: 'first_name' },
+            { label: 'Last Name', value: 'last_name' },
+            { label: 'Email', value: 'email' },
+          ],
+          order: sortOrder,
+          onOrderChange: order => updateParams({ sortOrder: order }),
+        }}
+        dirty={hasActiveFilters}
+        onClear={handleClearFilters}
       />
 
       <div className='flex-1 overflow-y-auto'>
