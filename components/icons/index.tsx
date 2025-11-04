@@ -7,18 +7,24 @@ import {
   ArrowRight,
   ArrowUpRight,
   BarChart3,
+  BadgeDollarSign,
   BookOpen,
   Building2,
   CheckCircle2,
   Clock,
   Database,
+  Headset,
   GaugeCircle,
+  LayoutDashboard,
   LineChart,
+  MessageCircle,
   PieChart,
   Shield,
   Sparkles,
   TrendingUp,
   UserCheck,
+  UserCog,
+  UserRound,
   Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -46,6 +52,12 @@ export const dashboardIconMap = {
   'delta-up': ArrowUpRight,
   'delta-down': ArrowDownRight,
   'delta-flat': ArrowRight,
+  'layout-dashboard': LayoutDashboard,
+  'badge-dollar': BadgeDollarSign,
+  'message-circle': MessageCircle,
+  headset: Headset,
+  'user-cog': UserCog,
+  'user-round': UserRound,
 } satisfies Record<string, LucideIconComponent>;
 
 export type DashboardIconName = keyof typeof dashboardIconMap;

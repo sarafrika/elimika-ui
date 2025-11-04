@@ -9,6 +9,7 @@ import {
 } from '@/app/dashboard/@admin/_components/admin-navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { Icon } from '@/components/icons';
 
 export function AdminNavigationMenu({
   navigation,
@@ -68,7 +69,7 @@ function AdminNavigationGroupBlock({
     <div className='space-y-3'>
       <div className='flex flex-col gap-1'>
         <div className='flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-          {node.icon && <node.icon className='h-4 w-4' />}
+          {node.icon && <Icon name={node.icon} className='h-4 w-4' />}
           <span>{node.title}</span>
         </div>
         {node.description && <p className='text-muted-foreground text-xs'>{node.description}</p>}
@@ -107,7 +108,7 @@ function AdminNavigationLink({
       )}
       onClick={onNavigate}
     >
-      <node.icon className='h-4 w-4' />
+      <Icon name={node.icon} className='h-4 w-4' />
       <span>{node.title}</span>
     </Link>
   );
