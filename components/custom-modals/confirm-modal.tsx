@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
 
@@ -45,7 +44,7 @@ export default function ConfirmModal({
       <DialogContent className='max-w-md'>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription className='my-2'>{description}</DialogDescription>}
+          {description && <div className='my-2'>{description}</div>}
           {children}
         </DialogHeader>
 

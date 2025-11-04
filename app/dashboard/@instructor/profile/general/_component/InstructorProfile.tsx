@@ -124,6 +124,25 @@ export default function InstructorProfile() {
     },
   });
 
+  const instructorLatitude = form.watch('instructor.latitude');
+  const instructorLongitude = form.watch('instructor.longitude');
+
+  const normalizeCoordinate = (value: unknown) => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  };
+
+  const instructorCoordinates = {
+    latitude: normalizeCoordinate(instructorLatitude),
+    longitude: normalizeCoordinate(instructorLongitude),
+  };
+
   const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = (updatedProfileData: GeneralProfileFormValues) => {
@@ -429,19 +448,17 @@ export default function InstructorProfile() {
                   <FormControl>
                     <LocationInput
                       {...field}
+                      coordinates={instructorCoordinates}
                       onSuggest={loc => {
-                        if (loc.features.length > 0) {
-                          form.setValue(
-                            'instructor.latitude',
-                            loc?.features[0]!.properties?.coordinates.latitude as any
-                          );
-
-                          form.setValue(
-                            'instructor.longitude',
-                            loc?.features[0]!.properties?.coordinates.longitude as any
-                          );
+                        const feature = loc.features[0];
+                        const coords = feature?.properties?.coordinates;
+                        if (
+                          typeof coords?.latitude === 'number' &&
+                          typeof coords?.longitude === 'number'
+                        ) {
+                          form.setValue('instructor.latitude', coords.latitude as any);
+                          form.setValue('instructor.longitude', coords.longitude as any);
                         }
-                        return loc;
                       }}
                     />
                   </FormControl>

@@ -61,7 +61,7 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
   const [activeDomain, setActiveDomain] = useState<UserDomain | null>(null);
 
   // Update active domain when profile data changes
-  /* useEffect(() => {
+  useEffect(() => {
     if (data && !isError && data.user_domain && data.user_domain.length > 0) {
       let defaultDomain = localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY);
       const domain = (defaultDomain || data.user_domain[0]) as UserDomain;
@@ -69,7 +69,7 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
         setActiveDomain(domain);
       }
     }
-  }, [data, isError]); */
+  }, [data, isError]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -81,10 +81,6 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
       router.replace('/');
     }
   }, [status]);
-
-  useEffect(() => {
-    setActiveDomain(localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY) as UserDomain | null);
-  }, []);
 
   function clearProfile() {
     void qc.invalidateQueries({ queryKey: ['profile'] });

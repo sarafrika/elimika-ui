@@ -42,7 +42,7 @@ const EnrollmentPage = () => {
   }, [replaceBreadcrumbs, courseId]);
 
   const [openEnrollModal, setOpenEnrollModal] = useState(false);
-  const [enrollingCourse, setEnrollingCourse] = useState<any | null>(null);
+  const [enrollingClass, setEnrollingClass] = useState<any | null>(null);
   const { classes, loading, isError } = useBundledClassInfo(
     courseId,
     '2024-10-23',
@@ -52,10 +52,10 @@ const EnrollmentPage = () => {
 
   const enrollStudent = useMutation(enrollStudentMutation());
   const handleEnrollStudent = () => {
-    if (student?.uuid && enrollingCourse?.uuid) {
+    if (student?.uuid && enrollingClass?.uuid) {
       enrollStudent.mutate(
         {
-          body: { class_definition_uuid: enrollingCourse?.uuid, student_uuid: student?.uuid },
+          body: { class_definition_uuid: enrollingClass?.uuid, student_uuid: student?.uuid },
         },
         {
           onSuccess: data => {
@@ -108,7 +108,7 @@ const EnrollmentPage = () => {
               disableEnroll={cls?.enrollments?.length > 0}
               handleEnroll={() => {
                 setOpenEnrollModal(true);
-                setEnrollingCourse(cls);
+                setEnrollingClass(cls);
               }}
               variant='full'
             />
@@ -119,13 +119,42 @@ const EnrollmentPage = () => {
       <ConfirmModal
         open={openEnrollModal}
         setOpen={setOpenEnrollModal}
-        title='Enroll'
-        description='you will enrol for this class/program.'
+        title="Confirm Enrollment"
+        description={
+          <div className="space-y-3 text-sm text-gray-700">
+            <p>
+              You are about to <strong>enroll</strong> in the following class/program:
+            </p>
+
+            <div className="rounded-md bg-gray-50 border p-3">
+              <p><strong>Course Name:</strong> {enrollingClass?.course?.name}</p>
+              <p><strong>Instructor:</strong> {enrollingClass?.instructor?.full_name}</p>
+              {/* <p><strong>Schedule:</strong> {enrollingCourse?.scheduleSummary}</p> */}
+              <p><strong>Start Date:</strong> {(enrollingClass?.default_start_time)}</p>
+              <p><strong>End Date:</strong> {(enrollingClass?.default_end_time)}</p>
+              {enrollingClass?.location_type && (
+                <p><strong>Location:</strong> {enrollingClass?.location_type}</p>
+              )}
+            </div>
+
+            <p>
+              By enrolling, you’ll gain access to course materials, session updates,
+              and any assessments or assignments tied to this program. Ensure that
+              you’ve reviewed your class schedule and that this time slot works for you.
+            </p>
+
+            <p><strong>Training Fee:{"  "} </strong>KES {enrollingClass?.training_fee}</p>
+
+            <p className="text-yellow-600 font-medium">
+              Note: Once enrolled, you may need to contact your instructor or admin to withdraw.
+            </p>
+          </div>
+        }
         onConfirm={handleEnrollStudent}
         isLoading={enrollStudent.isPending}
-        confirmText='Enroll'
-        cancelText='No, cancel'
-        variant='destructive'
+        confirmText="Yes, Enroll Me"
+        cancelText="No, Cancel"
+        variant="primary"
       />
     </Card>
   );

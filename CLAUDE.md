@@ -22,13 +22,7 @@ pnpm format           # Format code with Prettier
 ```
 
 ### Testing
-```bash
-pnpm test             # Run all Playwright tests
-pnpm test:ui          # Run tests in UI mode
-pnpm test:headed      # Run tests in headed browser
-pnpm test:debug       # Debug tests
-pnpm test:report      # Show test report
-```
+Automated browser tests are currently unconfigured; coordinate with the team before introducing new tooling.
 
 ### API Type Generation
 ```bash
@@ -184,7 +178,4 @@ Workflows in `.github/workflows/`:
 
 ## Testing
 
-- Playwright tests in `tests/` directory
-- Test utilities in `tests/utils/`
-- Tests cover auth, onboarding, business logic, dashboards, and UI
-- Dev server must be running for tests (configured in `playwright.config.ts`)
+- Browser-based E2E coverage is currently not configured; align with the team before adding suites or tooling.

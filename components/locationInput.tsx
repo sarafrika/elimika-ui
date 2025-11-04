@@ -30,6 +30,11 @@ export type MapboxRetrieveResponse = {
   features: MapboxRetrieveFeature[];
 };
 
+type CoordinatesInput = {
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+};
+
 type LocationInputProps = {
   value?: string;
   onChange?: (value: any) => void;
@@ -40,6 +45,9 @@ type LocationInputProps = {
   disabled?: boolean;
   className?: string;
   onSuggest?: (response: MapboxRetrieveResponse) => void;
+  coordinates?: CoordinatesInput;
+  showMapPreview?: boolean;
+  mapZoom?: number;
 };
 
 const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -56,17 +64,51 @@ export default function LocationInput({
   disabled,
   className,
   onSuggest,
+  coordinates,
+  showMapPreview = true,
+  mapZoom = 13,
 }: LocationInputProps) {
   const [query, setQuery] = useState(value ?? '');
   const [suggestions, setSuggestions] = useState<MapboxSuggestFeature[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFeature, setSelectedFeature] = useState<MapboxRetrieveFeature | null>(null);
+  const [selectedCoordinates, setSelectedCoordinates] = useState<{
+    latitude?: number;
+    longitude?: number;
+  }>({});
+  const [selectedPlaceLabel, setSelectedPlaceLabel] = useState<string | null>(null);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setQuery(value ?? '');
   }, [value]);
+
+  useEffect(() => {
+    const normalizeCoordinate = (coord?: number | string | null) => {
+      if (coord === '' || coord === null || coord === undefined) {
+        return undefined;
+      }
+      if (typeof coord === 'number') {
+        return Number.isFinite(coord) ? coord : undefined;
+      }
+      const parsed = Number(coord);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    };
+
+    const lat = normalizeCoordinate(coordinates?.latitude);
+    const lon = normalizeCoordinate(coordinates?.longitude);
+
+    if (lat !== undefined && lon !== undefined) {
+      setSelectedCoordinates(prev => {
+        if (prev.latitude === lat && prev.longitude === lon) {
+          return prev;
+        }
+        return { latitude: lat, longitude: lon };
+      });
+    }
+  }, [coordinates?.latitude, coordinates?.longitude]);
 
   useEffect(() => {
     if (!mapboxToken) {
@@ -125,13 +167,19 @@ export default function LocationInput({
 
   const handleSelect = useCallback(
     async (suggestion: MapboxSuggestFeature) => {
-      setQuery(suggestion.place_formatted ?? suggestion.name);
-      onChange?.(suggestion.place_formatted ?? suggestion.name);
+      const label = suggestion.place_formatted ?? suggestion.name ?? null;
+      setQuery(label ?? '');
+      onChange?.(label ?? '');
       setIsOpen(false);
+      setSuggestions([]);
+      setSelectedPlaceLabel(label);
 
-      if (!mapboxToken || !onSuggest) {
+      if (!mapboxToken) {
         return;
       }
+
+      setIsLoading(true);
+      setError(null);
 
       try {
         const params = new URLSearchParams({
@@ -157,9 +205,21 @@ export default function LocationInput({
             },
           };
         });
-        onSuggest({ ...data, features });
+
+        const primary = features[0] ?? null;
+        setSelectedFeature(primary);
+        if (primary?.properties?.coordinates) {
+          const { latitude, longitude } = primary.properties.coordinates;
+          if (typeof latitude === 'number' && typeof longitude === 'number') {
+            setSelectedCoordinates({ latitude, longitude });
+          }
+        }
+
+        onSuggest?.({ ...data, features });
       } catch (err) {
         setError('Unable to retrieve location details.');
+      } finally {
+        setIsLoading(false);
       }
     },
     [onChange, onSuggest]
@@ -199,6 +259,37 @@ export default function LocationInput({
     if (error) return error;
     return null;
   }, [disabled, error]);
+
+  const hasCoordinates =
+    typeof selectedCoordinates.latitude === 'number' &&
+    Number.isFinite(selectedCoordinates.latitude) &&
+    typeof selectedCoordinates.longitude === 'number' &&
+    Number.isFinite(selectedCoordinates.longitude);
+
+  const mapPreviewUrl = useMemo(() => {
+    if (!showMapPreview || !mapboxToken || !hasCoordinates) {
+      return null;
+    }
+
+    const { latitude, longitude } = selectedCoordinates;
+    const lat = latitude as number;
+    const lon = longitude as number;
+    const zoom = Math.min(Math.max(mapZoom, 3), 18);
+    const pinColor = '0061ed';
+    const size = '600x320';
+    const baseUrl = 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static';
+
+    return `${baseUrl}/pin-s+${pinColor}(${lon},${lat})/${lon},${lat},${zoom}/${size}@2x?access_token=${mapboxToken}`;
+  }, [hasCoordinates, mapZoom, selectedCoordinates, showMapPreview]);
+
+  const formattedLatitude =
+    hasCoordinates && selectedCoordinates.latitude !== undefined
+      ? selectedCoordinates.latitude.toFixed(5)
+      : null;
+  const formattedLongitude =
+    hasCoordinates && selectedCoordinates.longitude !== undefined
+      ? selectedCoordinates.longitude.toFixed(5)
+      : null;
 
   return (
     <div className='relative'>
@@ -260,6 +351,48 @@ export default function LocationInput({
       {isOpen && !isLoading && suggestions.length === 0 && query.length >= 3 ? (
         <div className='border-border bg-popover text-muted-foreground absolute z-30 mt-1 w-full rounded-md border px-3 py-2 text-sm shadow-lg'>
           No matches found.
+        </div>
+      ) : null}
+
+      {showMapPreview ? (
+        <div className='mt-4 space-y-2'>
+          {mapPreviewUrl ? (
+            <div className='overflow-hidden rounded-xl border border-blue-200/40 bg-white/85 shadow-sm shadow-blue-200/20 dark:border-blue-500/20 dark:bg-blue-950/25 dark:shadow-blue-900/10'>
+              <div className='aspect-[3/2] w-full overflow-hidden bg-muted'>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={mapPreviewUrl}
+                  alt={`Map preview${selectedPlaceLabel ? ` of ${selectedPlaceLabel}` : ''}`}
+                  className='h-full w-full object-cover'
+                  loading='lazy'
+                />
+              </div>
+              <div className='flex flex-col gap-2 border-t border-blue-200/20 bg-white/90 p-3 text-xs text-muted-foreground dark:border-blue-500/10 dark:bg-blue-950/40 dark:text-slate-200 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='space-y-1'>
+                  <p className='text-foreground text-sm font-medium'>
+                    {selectedFeature?.name ?? selectedPlaceLabel ?? 'Selected location'}
+                  </p>
+                  <p className='text-muted-foreground text-xs'>
+                    {selectedFeature?.place_formatted ?? selectedPlaceLabel ?? query}
+                  </p>
+                </div>
+                {hasCoordinates ? (
+                  <div className='flex flex-wrap items-center gap-3 sm:justify-end'>
+                    <span className='rounded-full bg-blue-100 px-3 py-1 text-[11px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'>
+                      Lat: {formattedLatitude}
+                    </span>
+                    <span className='rounded-full bg-blue-100 px-3 py-1 text-[11px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'>
+                      Lng: {formattedLongitude}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : mapboxToken ? (
+            <p className='text-muted-foreground text-xs'>
+              Select a suggestion to preview it on the map and capture coordinates.
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

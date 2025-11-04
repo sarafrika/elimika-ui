@@ -15,7 +15,7 @@ import {
   searchAssessmentRubricsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import isEqual from 'lodash.isequal';
+import deepEqual from 'fast-deep-equal';
 import { PlusCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -72,7 +72,7 @@ export default function RubricsCreationPage() {
   const [rubrics, setRubrics] = useState(memoizedRubricsWithDetails);
 
   useEffect(() => {
-    if (!rubricDataIsLoading && !isEqual(memoizedRubricsWithDetails, rubrics)) {
+    if (!rubricDataIsLoading && !deepEqual(memoizedRubricsWithDetails, rubrics)) {
       setRubrics(memoizedRubricsWithDetails);
     }
   }, [memoizedRubricsWithDetails, rubricDataIsLoading, rubrics]);
