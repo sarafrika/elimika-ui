@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getDashboardActivityFeedOptions } from '@/services/client/admin-dashboard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,24 @@ import SystemHealth from './SystemHealth';
 import ActivityFeed from './ActivityFeed';
 
 export default function StatisticsContent() {
-  const { data, error, isLoading, refetch } = useQuery(getDashboardStatisticsOptions());
+  const {
+    data,
+    error,
+    isLoading,
+    refetch,
+  } = useQuery({
+    ...getDashboardStatisticsOptions(),
+    staleTime: 120_000,
+    refetchInterval: 120_000,
+    refetchOnWindowFocus: false,
+  });
+  const {
+    data: activityFeed,
+    error: activityError,
+    isLoading: isActivityLoading,
+    isFetching: isActivityFetching,
+    refetch: refetchActivity,
+  } = useQuery(getDashboardActivityFeedOptions());
 
   if (error) {
     return (
@@ -31,6 +49,7 @@ export default function StatisticsContent() {
   }
 
   const statistics = data?.data;
+  const isInitialLoading = isLoading && !statistics;
 
   return (
     <div className='flex flex-col gap-6'>
@@ -43,20 +62,26 @@ export default function StatisticsContent() {
       </div>
 
       {/* KPI Cards */}
-      <KPICards statistics={statistics} isLoading={isLoading} />
+      <KPICards statistics={statistics} isLoading={isInitialLoading} />
 
       {/* Analytics Charts & System Health */}
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='lg:col-span-2'>
-          <AnalyticsCharts statistics={statistics} isLoading={isLoading} />
+          <AnalyticsCharts statistics={statistics} isLoading={isInitialLoading} />
         </div>
         <div className='lg:col-span-1'>
-          <SystemHealth statistics={statistics} isLoading={isLoading} />
+          <SystemHealth statistics={statistics} isLoading={isInitialLoading} />
         </div>
       </div>
 
       {/* Activity Feed */}
-      <ActivityFeed statistics={statistics} isLoading={isLoading} />
+      <ActivityFeed
+        feed={activityFeed}
+        isLoading={isActivityLoading}
+        isRefetching={isActivityFetching}
+        error={activityError}
+        onRetry={refetchActivity}
+      />
     </div>
   );
 }

@@ -4,9 +4,10 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle, AlertTriangle, Activity, Database, Clock, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import type { AdminDashboardStats } from '@/services/client/types.gen';
 
 interface SystemHealthProps {
-  statistics: any;
+  statistics?: AdminDashboardStats;
   isLoading: boolean;
 }
 
@@ -32,7 +33,10 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
   const performance = statistics?.system_performance;
   const overallHealth = statistics?.overall_health ?? 'healthy';
 
-  const healthStatus = {
+  const healthStatus: Record<
+    'healthy' | 'warning' | 'critical',
+    { color: 'success' | 'warning' | 'destructive'; icon: typeof CheckCircle; text: string }
+  > = {
     healthy: { color: 'success', icon: CheckCircle, text: 'Healthy' },
     warning: { color: 'warning', icon: AlertTriangle, text: 'Warning' },
     critical: { color: 'destructive', icon: AlertCircle, text: 'Critical' },
@@ -41,30 +45,46 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
   const currentStatus =
     healthStatus[overallHealth as keyof typeof healthStatus] || healthStatus.healthy;
 
-  // Parse storage usage percentage
-  const storageUsage = performance?.storage_usage
-    ? parseFloat(performance.storage_usage.replace('%', ''))
-    : 0;
+  const parsePercentage = (value?: string) => {
+    if (!value) return undefined;
+    const match = value.match(/[\d.]+/);
+    if (!match) return undefined;
+    const parsed = Number.parseFloat(match[0]);
+    if (Number.isNaN(parsed)) return undefined;
+    return Math.min(100, Math.max(0, parsed));
+  };
 
-  // Parse error rate percentage
-  const errorRate = performance?.error_rate
-    ? parseFloat(performance.error_rate.replace('%', ''))
-    : 0;
+  const toNumber = (value?: bigint | number | string | null) => {
+    if (typeof value === 'bigint') return Number(value);
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  };
 
-  const serverUptime = performance?.server_uptime
-    ? parseFloat(performance.server_uptime.replace('%', ''))
-    : 0;
+  const storageUsage = parsePercentage(performance?.storage_usage) ?? 0;
+  const errorRate = parsePercentage(performance?.error_rate) ?? 0;
+  const serverUptime = parsePercentage(performance?.server_uptime) ?? 0;
 
-  const averageResponseTime = performance?.average_response_time
-    ? parseFloat(performance.average_response_time.replace('%', ''))
-    : 0;
+  const responseTimeRaw = performance?.average_response_time;
+  const responseTimeValue = responseTimeRaw
+    ? Number.parseFloat(responseTimeRaw.replace(/[a-zA-Z]/g, ''))
+    : undefined;
+  const responseTimeSeverity: 'success' | 'warning' | 'destructive' | 'secondary' = (() => {
+    if (responseTimeValue === undefined || Number.isNaN(responseTimeValue)) return 'secondary';
+    if (responseTimeValue <= 400) return 'success';
+    if (responseTimeValue <= 800) return 'warning';
+    return 'destructive';
+  })();
 
   return (
     <Card>
       <CardHeader>
         <div className='flex items-center justify-between'>
           <CardTitle>System Health</CardTitle>
-          <Badge variant={currentStatus.color as any} className='gap-1'>
+          <Badge variant={currentStatus.color} className='gap-1'>
             <currentStatus.icon className='h-3 w-3' />
             {currentStatus.text}
           </Badge>
@@ -80,7 +100,7 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
             </div>
             <span className='text-sm font-semibold'>{performance?.server_uptime ?? 'N/A'}</span>
           </div>
-          <Progress value={serverUptime} className='h-2' />
+          <Progress value={serverUptime} indicatorClassName='bg-success' className='h-2' />
         </div>
 
         <Separator />
@@ -96,7 +116,12 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
               {performance?.average_response_time ?? 'N/A'}
             </span>
           </div>
-          <Progress value={averageResponseTime} className='h-2' />
+          <div className='flex items-center justify-between text-xs text-muted-foreground'>
+            <span>Target &lt; 500ms</span>
+            <Badge variant={responseTimeSeverity}>
+              {responseTimeValue ? `${responseTimeValue.toFixed(0)} ms` : 'Unknown'}
+            </Badge>
+          </div>
         </div>
 
         <Separator />
@@ -112,9 +137,8 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
           </div>
           <Progress
             value={errorRate}
-            className='h-2'
-            // @ts-ignore
             indicatorClassName={errorRate > 5 ? 'bg-destructive' : 'bg-success'}
+            className='h-2'
           />
         </div>
 
@@ -141,13 +165,13 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
             <div>
               <p className='text-muted-foreground text-xs'>Active Sessions</p>
               <p className='text-lg font-bold'>
-                {statistics?.admin_metrics?.active_admin_sessions ?? 0}
+                {toNumber(statistics?.admin_metrics?.active_admin_sessions).toLocaleString()}
               </p>
             </div>
             <div>
               <p className='text-muted-foreground text-xs'>Actions Today</p>
               <p className='text-lg font-bold'>
-                {statistics?.admin_metrics?.admin_actions_today ?? 0}
+                {toNumber(statistics?.admin_metrics?.admin_actions_today).toLocaleString()}
               </p>
             </div>
           </div>
