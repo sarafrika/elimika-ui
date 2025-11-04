@@ -1,7 +1,6 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,6 +15,8 @@ import {
   BellRing,
 } from 'lucide-react';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
+import { DashboardChartCard } from '@/components/ui/dashboard';
+import { Icon } from '@/components/icons';
 
 interface ActivityFeedProps {
   statistics?: AdminDashboardStats;
@@ -81,17 +82,16 @@ const getStatusBadge = (status: string) => {
 export default function ActivityFeed({ statistics, isLoading }: ActivityFeedProps) {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest events and actions across the platform</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
+      <DashboardChartCard
+        title='Recent activity'
+        description='Latest events and actions across the platform'
+      >
+        <div className='space-y-4'>
           {Array.from({ length: 5 }).map((_, index) => (
             <Skeleton key={index} className='h-20 w-full' />
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardChartCard>
     );
   }
 
@@ -175,45 +175,40 @@ export default function ActivityFeed({ statistics, isLoading }: ActivityFeedProp
   }>;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
-        <CardDescription>Latest events and actions across the platform</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className='h-[400px] pr-4'>
-          {activityData.length > 0 ? (
-            <div className='space-y-4'>
-              {activityData.map(activity => {
-                const Icon = getActivityIcon(activity.type);
-                return (
-                  <div
-                    key={activity.id}
-                    className='hover:bg-muted/50 flex items-start gap-4 rounded-lg border p-4 transition-colors'
-                  >
-                    <div className='bg-primary/10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full'>
-                      <Icon className='text-primary h-5 w-5' />
-                    </div>
-                    <div className='flex-1 space-y-1'>
-                      <p className='text-sm'>
-                        <span className='font-medium'>{activity.user}</span>{' '}
-                        <span className='text-muted-foreground'>{activity.action}</span>
-                      </p>
-                      <p className='text-muted-foreground text-xs'>{activity.timestamp}</p>
-                    </div>
-                    {getStatusBadge(activity.status)}
+    <DashboardChartCard
+      title='Recent activity'
+      description='Latest events and actions across the platform'
+      contentClassName='p-0'
+    >
+      <ScrollArea className='h-[400px] p-6 pr-8'>
+        {activityData.length > 0 ? (
+          <div className='space-y-4'>
+            {activityData.map(activity => {
+              const ActivityIcon = getActivityIcon(activity.type);
+              return (
+                <div key={activity.id} className='dashboard-activity-card'>
+                  <div className='dashboard-card-icon'>
+                    <ActivityIcon className='h-5 w-5' />
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className='flex h-32 flex-col items-center justify-center text-center text-sm text-muted-foreground'>
-              <Shield className='mb-2 h-6 w-6' />
-              No recent activity to display for this snapshot.
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
+                  <div className='flex-1 space-y-1'>
+                    <p className='text-sm'>
+                      <span className='font-medium'>{activity.user}</span>{' '}
+                      <span className='text-muted-foreground'>{activity.action}</span>
+                    </p>
+                    <p className='text-muted-foreground text-xs'>{activity.timestamp}</p>
+                  </div>
+                  {getStatusBadge(activity.status)}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className='flex h-32 flex-col items-center justify-center text-center text-sm text-muted-foreground'>
+            <Icon name='security' className='mb-2 h-6 w-6' />
+            No recent activity to display for this snapshot.
+          </div>
+        )}
+      </ScrollArea>
+    </DashboardChartCard>
   );
 }

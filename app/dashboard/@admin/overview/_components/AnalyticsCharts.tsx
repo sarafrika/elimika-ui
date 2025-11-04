@@ -1,6 +1,5 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   LineChart,
@@ -19,6 +18,7 @@ import {
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
+import { DashboardChartCard } from '@/components/ui/dashboard';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f97316', '#22d3ee'];
 
@@ -96,28 +96,25 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Platform Analytics</CardTitle>
-          <CardDescription>Growth trends and user distribution</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-[260px] w-full' />
-          <Skeleton className='h-[260px] w-full' />
-        </CardContent>
-      </Card>
+      <DashboardChartCard
+        title='Platform analytics'
+        description='Growth trends and user distribution'
+        contentClassName='space-y-6'
+      >
+        <Skeleton className='h-10 w-full' />
+        <Skeleton className='h-[260px] w-full' />
+        <Skeleton className='h-[260px] w-full' />
+      </DashboardChartCard>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Platform Analytics</CardTitle>
-        <CardDescription>Growth trends and user distribution</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue='user-growth' className='space-y-4'>
+    <DashboardChartCard
+      title='Platform analytics'
+      description='Growth trends and user distribution'
+      contentClassName='space-y-6'
+    >
+      <Tabs defaultValue='user-growth' className='space-y-4'>
           <TabsList className='grid w-full grid-cols-3'>
             <TabsTrigger value='user-growth'>User Growth</TabsTrigger>
             <TabsTrigger value='org-growth'>Organizations</TabsTrigger>
@@ -263,8 +260,7 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
               </p>
             )}
           </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+      </Tabs>
+    </DashboardChartCard>
   );
 }

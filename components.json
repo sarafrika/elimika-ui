@@ -17,5 +17,15 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "iconLibrary": "lucide"
+  "iconLibrary": "lucide",
+  "registry": {
+    "dashboard": [
+      "components/ui/dashboard/dashboard-shell.tsx",
+      "components/ui/dashboard/dashboard-kpi-card.tsx",
+      "components/ui/dashboard/dashboard-chart-card.tsx",
+      "components/ui/dashboard/dashboard-health-indicator.tsx",
+      "components/ui/dashboard/dashboard-metric-delta.tsx"
+    ],
+    "icons": ["components/icons/index.tsx"]
+  }
 }

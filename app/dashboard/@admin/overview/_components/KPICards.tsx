@@ -1,16 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  Users,
-  Building2,
-  BookOpen,
-  Shield,
-  TrendingUp,
-  AlertCircle,
-  Activity,
-  UserCheck,
-} from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DashboardGrid, DashboardKpiCard } from '@/components/ui/dashboard';
+import type { DashboardIconName } from '@/components/icons';
 
 interface KPICardsProps {
   statistics: any;
@@ -18,118 +7,96 @@ interface KPICardsProps {
 }
 
 export default function KPICards({ statistics, isLoading }: KPICardsProps) {
-  const kpis = [
+  type KpiDefinition = {
+    key: string;
+    title: string;
+    value: number;
+    caption: string;
+    icon: DashboardIconName;
+    trend?: { value: string; direction?: 'up' | 'down' | 'flat'; tone?: 'positive' | 'negative' | 'warning'; };
+    highlight?: 'warning' | 'critical' | 'success';
+  };
+
+  const kpis: KpiDefinition[] = [
     {
-      title: 'Total Users',
+      key: 'total-users',
+      title: 'Total users',
       value: statistics?.user_metrics?.total_users ?? 0,
-      icon: Users,
-      description: 'Registered users',
-      trend: '+5.2%',
-      trendUp: true,
+      caption: 'Registered users',
+      icon: 'users',
+      trend: { value: '+5.2%', direction: 'up', tone: 'positive' },
     },
     {
-      title: 'Active Users (24h)',
+      key: 'active-users',
+      title: 'Active users (24h)',
       value: statistics?.user_metrics?.active_users_24h ?? 0,
-      icon: UserCheck,
-      description: 'Last 24 hours',
-      trend: '+12.3%',
-      trendUp: true,
+      caption: 'Last 24 hours',
+      icon: 'user-active',
+      trend: { value: '+12.3%', direction: 'up', tone: 'positive' },
     },
     {
-      title: 'New Users (7d)',
+      key: 'new-users',
+      title: 'New users (7d)',
       value: statistics?.user_metrics?.new_registrations_7d ?? 0,
-      icon: TrendingUp,
-      description: 'Last 7 days',
-      trend: '+8.1%',
-      trendUp: true,
+      caption: 'Last 7 days',
+      icon: 'trend-up',
+      trend: { value: '+8.1%', direction: 'up', tone: 'positive' },
     },
     {
+      key: 'organizations',
       title: 'Organizations',
       value: statistics?.organization_metrics?.total_organizations ?? 0,
-      icon: Building2,
-      description: 'Total organizations',
-      trend: '+2.4%',
-      trendUp: true,
+      caption: 'Total organisations',
+      icon: 'organizations',
+      trend: { value: '+2.4%', direction: 'up', tone: 'positive' },
     },
     {
-      title: 'Active Organizations',
+      key: 'active-organizations',
+      title: 'Active organisations',
       value: statistics?.organization_metrics?.active_organizations ?? 0,
-      icon: Activity,
-      description: 'Currently active',
-      trend: '+1.8%',
-      trendUp: true,
+      caption: 'Currently active',
+      icon: 'activity',
+      trend: { value: '+1.8%', direction: 'up', tone: 'positive' },
     },
     {
-      title: 'Pending Approvals',
+      key: 'pending-approvals',
+      title: 'Pending approvals',
       value: statistics?.organization_metrics?.pending_approvals ?? 0,
-      icon: AlertCircle,
-      description: 'Awaiting review',
-      trend: null,
-      trendUp: null,
-      highlight: true,
+      caption: 'Awaiting review',
+      icon: 'warning',
+      highlight: 'warning',
     },
     {
-      title: 'Total Courses',
+      key: 'total-courses',
+      title: 'Total courses',
       value: statistics?.content_metrics?.total_courses ?? 0,
-      icon: BookOpen,
-      description: 'Platform courses',
-      trend: '+15.7%',
-      trendUp: true,
+      caption: 'Platform courses',
+      icon: 'courses',
+      trend: { value: '+15.7%', direction: 'up', tone: 'positive' },
     },
     {
-      title: 'Total Admins',
+      key: 'total-admins',
+      title: 'Total admins',
       value: statistics?.admin_metrics?.total_admins ?? 0,
-      icon: Shield,
-      description: 'System administrators',
-      trend: null,
-      trendUp: null,
+      caption: 'System administrators',
+      icon: 'security',
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className='flex flex-row items-center justify-between pb-2'>
-              <Skeleton className='h-4 w-24' />
-              <Skeleton className='h-8 w-8 rounded-full' />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className='mb-2 h-8 w-16' />
-              <Skeleton className='h-3 w-32' />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-      {kpis.map((kpi, index) => (
-        <Card key={index} className={kpi.highlight ? 'border-warning bg-warning/5' : ''}>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>{kpi.title}</CardTitle>
-            <div
-              className={`rounded-full p-2 ${kpi.highlight ? 'bg-warning/20' : 'bg-primary/10'}`}
-            >
-              <kpi.icon className={`h-4 w-4 ${kpi.highlight ? 'text-warning' : 'text-primary'}`} />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{kpi.value.toLocaleString()}</div>
-            <div className='flex items-center justify-between'>
-              <p className='text-muted-foreground text-xs'>{kpi.description}</p>
-              {kpi.trend && (
-                <Badge variant={kpi.trendUp ? 'success' : 'destructive'} className='text-xs'>
-                  {kpi.trend}
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+    <DashboardGrid columns='4'>
+      {kpis.map(kpi => (
+        <DashboardKpiCard
+          key={kpi.key}
+          title={kpi.title}
+          value={kpi.value}
+          caption={kpi.caption}
+          icon={kpi.icon}
+          trend={kpi.trend}
+          highlight={kpi.highlight}
+          isLoading={isLoading}
+        />
       ))}
-    </div>
+    </DashboardGrid>
   );
 }
