@@ -25,7 +25,7 @@ export default function CourseCreatorDetailsPanel({
 }: CourseCreatorDetailsPanelProps) {
   if (!courseCreator) {
     return (
-      <div className='hidden flex-1 flex-col lg:flex'>
+      <div className='hidden flex-1 flex-col rounded-xl border border-border/60 bg-card/20 lg:flex'>
         <div className='flex flex-1 items-center justify-center'>
           <div className='text-center'>
             <User className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
@@ -40,9 +40,9 @@ export default function CourseCreatorDetailsPanel({
   }
 
   return (
-    <div className='hidden flex-1 flex-col lg:flex'>
+    <div className='hidden flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/10 lg:flex'>
       {/* Header */}
-      <div className='bg-background border-b p-6'>
+      <div className='border-b bg-background/80 p-6 backdrop-blur'>
         <div className='flex items-center justify-between'>
           <h1 className='text-2xl font-semibold'>Course Creator Details</h1>
           <div className='flex items-center gap-2'>
@@ -62,7 +62,7 @@ export default function CourseCreatorDetailsPanel({
       </div>
 
       {/* Action Buttons */}
-      <div className='bg-background border-t p-6'>
+      <div className='border-t bg-background/60 p-6 backdrop-blur'>
         <div className='flex gap-3'>
           <Button
             onClick={() => onApprove(courseCreator)}

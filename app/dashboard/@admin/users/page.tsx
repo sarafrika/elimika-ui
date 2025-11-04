@@ -3,20 +3,23 @@ import { getAllUsers, search } from '@/services/client';
 import UserDetailsPanel from '@/app/dashboard/@admin/users/_components/UserDetailsPanel';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import { AdminPage } from '@/components/admin/admin-page';
+import { adminRouteMap } from '../_components/admin-navigation';
+import type { Metadata } from 'next';
 
 // Loading Component
 function UsersLoading() {
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
-      <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
+    <div className='flex flex-col gap-6 lg:flex-row lg:gap-8'>
+      <div className='flex w-full max-w-md flex-col overflow-hidden rounded-xl border border-dashed bg-card/40 p-6'>
         <div className='flex flex-1 items-center justify-center'>
           <div className='text-center'>
-            <Loader2 className='text-primary mx-auto mb-4 h-8 w-8 animate-spin' />
-            <p className='text-muted-foreground text-sm'>Loading users...</p>
+            <Loader2 className='text-primary mx-auto mb-4 h-6 w-6 animate-spin' />
+            <p className='text-muted-foreground text-sm'>Loading users…</p>
           </div>
         </div>
       </div>
-      <div className='hidden flex-1 lg:block' />
+      <div className='hidden flex-1 rounded-xl border border-dashed lg:block' />
     </div>
   );
 }
@@ -98,7 +101,7 @@ async function UsersContent({
   const selectedUser = users.find(user => user.uuid === searchParams?.id) ?? users[0] ?? null;
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+    <div className='flex flex-col gap-6 lg:flex-row lg:gap-8'>
       <UsersList
         users={users}
         searchQuery={searchQuery}
@@ -122,8 +125,15 @@ export default async function Page({
   const params = await searchParams;
 
   return (
-    <Suspense fallback={<UsersLoading />}>
-      <UsersContent searchParams={params} />
-    </Suspense>
+    <AdminPage meta={adminRouteMap.users}>
+      <Suspense fallback={<UsersLoading />}>
+        <UsersContent searchParams={params} />
+      </Suspense>
+    </AdminPage>
   );
 }
+
+export const metadata: Metadata = {
+  title: `${adminRouteMap.users.title} | Admin Dashboard`,
+  description: adminRouteMap.users.description,
+};
