@@ -145,7 +145,7 @@ export default function CourseCreatorsPage() {
   }
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+    <div className='flex flex-col gap-6 lg:flex-row lg:gap-8'>
       {/* Left Sidebar - Instructor List */}
       <CreatorsList
         courseCreators={filteredAndSortedCourseCreators as any}
