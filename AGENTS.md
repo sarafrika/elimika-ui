@@ -24,6 +24,7 @@
 - Follow the short `type: summary` convention from history (e.g., `ft: availability calendar fixes`); keep subjects under 72 characters.
 - Reference related issues or product requirements, summarize user impact, and include screenshots or recordings for UI changes.
 - Confirm `pnpm lint`, `pnpm format`, and `pnpm openapi-ts` (when API contracts shift) succeed before requesting review.
+- Avoid amending commits once pushed; prefer additive follow-up commits for traceability.
 
 ## Security & Configuration Tips
 - Never commit `.env.local`; derive new env vars from `env.example` and document defaults or secrets in the PR.
