@@ -1,3 +1,4 @@
+import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
 import { updateCourseMutation } from '@/services/client/@tanstack/react-query.gen';
 import { zApiResponsePagedDtoCourse, zCourse } from '@/services/client/zod.gen';
@@ -28,16 +29,6 @@ export interface AdminCourseListResult {
   totalItems: number;
   hasNext: boolean;
   hasPrevious: boolean;
-}
-
-function toNumber(value: number | bigint | undefined, fallback = 0) {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-  if (typeof value === 'number') {
-    return value;
-  }
-  return fallback;
 }
 
 function buildCourseFilters(params: AdminCourseListParams) {

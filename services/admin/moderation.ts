@@ -1,3 +1,4 @@
+import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -79,16 +80,6 @@ function normalizeModerationParams(params: ModerationQueueParams = {}): Moderati
     entityType: params.entityType ?? '',
     search: params.search ?? '',
   } satisfies ModerationQueueParams;
-}
-
-function toNumber(value: number | bigint | undefined, fallback = 0) {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-  if (typeof value === 'number') {
-    return value;
-  }
-  return fallback;
 }
 
 function buildModerationFilters(params: ModerationQueueParams) {

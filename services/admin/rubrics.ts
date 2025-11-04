@@ -1,3 +1,4 @@
+import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
 import { updateAssessmentRubricMutation } from '@/services/client/@tanstack/react-query.gen';
 import { zApiResponsePagedDtoAssessmentRubric, zAssessmentRubric } from '@/services/client/zod.gen';
@@ -29,16 +30,6 @@ export interface AdminRubricListResult {
   totalItems: number;
   hasNext: boolean;
   hasPrevious: boolean;
-}
-
-function toNumber(value: number | bigint | undefined, fallback = 0) {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-  if (typeof value === 'number') {
-    return value;
-  }
-  return fallback;
 }
 
 function buildRubricFilters(params: AdminRubricListParams) {
