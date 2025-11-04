@@ -1,9 +1,6 @@
 import AdministratorsList from '@/app/dashboard/@admin/administrators/_components/AdministratorsList';
 import { search } from '@/services/client';
 import AdministratorDetailsPanel from '@/app/dashboard/@admin/administrators/_components/AdministratorDetailsPanel';
-import { AdminPage } from '@/components/admin/admin-page';
-import { adminRouteMap } from '../_components/admin-navigation';
-import type { Metadata } from 'next';
 
 export default async function Page({
   searchParams,
@@ -51,24 +48,17 @@ export default async function Page({
     null;
 
   return (
-    <AdminPage meta={adminRouteMap.administrators}>
-      <div className='flex flex-col gap-6 lg:flex-row lg:gap-8'>
-        <AdministratorsList
-          administrators={administrators}
-          searchQuery={searchQuery}
-          activeFilter={activeFilter}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          selectedAdministrator={selectedAdministrator}
-        />
+    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+      <AdministratorsList
+        administrators={administrators}
+        searchQuery={searchQuery}
+        activeFilter={activeFilter}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        selectedAdministrator={selectedAdministrator}
+      />
 
-        <AdministratorDetailsPanel administrator={selectedAdministrator} />
-      </div>
-    </AdminPage>
+      <AdministratorDetailsPanel administrator={selectedAdministrator} />
+    </div>
   );
 }
-
-export const metadata: Metadata = {
-  title: `${adminRouteMap.administrators.title} | Admin Dashboard`,
-  description: adminRouteMap.administrators.description,
-};

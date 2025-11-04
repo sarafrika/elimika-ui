@@ -1,3 +1,5 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Users,
   Building2,
@@ -8,103 +10,79 @@ import {
   Activity,
   UserCheck,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { AdminDashboardStats } from '@/services/client/types.gen';
 
 interface KPICardsProps {
-  statistics?: AdminDashboardStats;
+  statistics: any;
   isLoading: boolean;
 }
-
-const toNumber = (value?: bigint | number | string | null) => {
-  if (typeof value === 'bigint') return Number(value);
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isNaN(parsed) ? 0 : parsed;
-  }
-  return 0;
-};
-
-const formatMetricValue = (value?: bigint | number | string | null) =>
-  new Intl.NumberFormat().format(toNumber(value));
 
 export default function KPICards({ statistics, isLoading }: KPICardsProps) {
   const kpis = [
     {
-      id: 'total-users',
       title: 'Total Users',
-      value: statistics?.user_metrics?.total_users,
+      value: statistics?.user_metrics?.total_users ?? 0,
       icon: Users,
       description: 'Registered users',
       trend: '+5.2%',
-      trendDirection: 'up',
+      trendUp: true,
     },
     {
-      id: 'active-users',
       title: 'Active Users (24h)',
-      value: statistics?.user_metrics?.active_users_24h,
+      value: statistics?.user_metrics?.active_users_24h ?? 0,
       icon: UserCheck,
       description: 'Last 24 hours',
       trend: '+12.3%',
-      trendDirection: 'up',
+      trendUp: true,
     },
     {
-      id: 'new-users',
       title: 'New Users (7d)',
-      value: statistics?.user_metrics?.new_registrations_7d,
+      value: statistics?.user_metrics?.new_registrations_7d ?? 0,
       icon: TrendingUp,
       description: 'Last 7 days',
       trend: '+8.1%',
-      trendDirection: 'up',
+      trendUp: true,
     },
     {
-      id: 'organizations-total',
       title: 'Organizations',
-      value: statistics?.organization_metrics?.total_organizations,
+      value: statistics?.organization_metrics?.total_organizations ?? 0,
       icon: Building2,
       description: 'Total organizations',
       trend: '+2.4%',
-      trendDirection: 'up',
+      trendUp: true,
     },
     {
-      id: 'organizations-active',
       title: 'Active Organizations',
-      value: statistics?.organization_metrics?.active_organizations,
+      value: statistics?.organization_metrics?.active_organizations ?? 0,
       icon: Activity,
       description: 'Currently active',
       trend: '+1.8%',
-      trendDirection: 'up',
+      trendUp: true,
     },
     {
-      id: 'pending-approvals',
       title: 'Pending Approvals',
-      value: statistics?.organization_metrics?.pending_approvals,
+      value: statistics?.organization_metrics?.pending_approvals ?? 0,
       icon: AlertCircle,
       description: 'Awaiting review',
       trend: null,
-      trendDirection: null,
+      trendUp: null,
       highlight: true,
     },
     {
-      id: 'total-courses',
       title: 'Total Courses',
-      value: statistics?.content_metrics?.total_courses,
+      value: statistics?.content_metrics?.total_courses ?? 0,
       icon: BookOpen,
       description: 'Platform courses',
       trend: '+15.7%',
-      trendDirection: 'up',
+      trendUp: true,
     },
     {
-      id: 'total-admins',
       title: 'Total Admins',
-      value: statistics?.admin_metrics?.total_admins,
+      value: statistics?.admin_metrics?.total_admins ?? 0,
       icon: Shield,
       description: 'System administrators',
       trend: null,
-      trendDirection: null,
+      trendUp: null,
     },
   ];
 
@@ -140,20 +118,11 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{formatMetricValue(kpi.value)}</div>
+            <div className='text-2xl font-bold'>{kpi.value.toLocaleString()}</div>
             <div className='flex items-center justify-between'>
               <p className='text-muted-foreground text-xs'>{kpi.description}</p>
               {kpi.trend && (
-                <Badge
-                  variant={
-                    kpi.trendDirection === 'up'
-                      ? 'success'
-                      : kpi.trendDirection === 'down'
-                      ? 'destructive'
-                      : 'secondary'
-                  }
-                  className='text-xs'
-                >
+                <Badge variant={kpi.trendUp ? 'success' : 'destructive'} className='text-xs'>
                   {kpi.trend}
                 </Badge>
               )}

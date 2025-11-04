@@ -4321,19 +4321,6 @@ export interface paths {
     trace?: never;
   };
 }
-
-// -- Custom adapters -------------------------------------------------------
-
-export type AdminDashboardStatsDTO = import('@/services/client/types.gen').AdminDashboardStats;
-
-export interface ActivityEventDTO {
-  id?: string;
-  category?: string;
-  title?: string;
-  description?: string;
-  status?: string;
-  occurred_at?: string;
-}
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {

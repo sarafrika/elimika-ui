@@ -169,7 +169,7 @@ export default function InstructorsPage() {
   }
 
   return (
-    <div className='flex flex-col gap-6 lg:flex-row lg:gap-8'>
+    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
       {/* Left Sidebar - Instructor List */}
       <InstructorsList
         instructors={filteredAndSortedInstructors as any}
