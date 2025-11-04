@@ -1,9 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getDashboardStatisticsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAdminDashboardStatisticsOptions } from '@/services/api/tanstack-client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import KPICards from './KPICards';
 import AnalyticsCharts from './AnalyticsCharts';
@@ -11,7 +11,7 @@ import SystemHealth from './SystemHealth';
 import ActivityFeed from './ActivityFeed';
 
 export default function StatisticsContent() {
-  const { data, error, isLoading, refetch } = useQuery(getDashboardStatisticsOptions());
+  const { data, error, isLoading, refetch } = useQuery(getAdminDashboardStatisticsOptions());
 
   if (error) {
     return (
@@ -30,7 +30,8 @@ export default function StatisticsContent() {
     );
   }
 
-  const statistics = data?.data;
+  const statistics = data?.statistics;
+  const activityEvents = data?.activityEvents ?? [];
 
   return (
     <div className='flex flex-col gap-6'>
