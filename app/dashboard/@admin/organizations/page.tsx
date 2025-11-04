@@ -3,19 +3,22 @@ import { getAllOrganisations } from '@/services/client';
 import OrganizationDetailsPanel from '@/app/dashboard/@admin/organizations/_components/OrganizationDetailsPanel';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import { AdminPage } from '@/components/admin/admin-page';
+import { adminRouteMap } from '../_components/admin-navigation';
+import type { Metadata } from 'next';
 
 function OrganizationsLoading() {
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
-      <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
+    <div className='flex flex-col gap-6 lg:flex-row lg:gap-8'>
+      <div className='flex w-full max-w-md flex-col overflow-hidden rounded-xl border border-dashed bg-card/40 p-6'>
         <div className='flex flex-1 items-center justify-center'>
           <div className='text-center'>
-            <Loader2 className='text-primary mx-auto mb-4 h-8 w-8 animate-spin' />
-            <p className='text-muted-foreground text-sm'>Loading organizations...</p>
+            <Loader2 className='text-primary mx-auto mb-4 h-6 w-6 animate-spin' />
+            <p className='text-muted-foreground text-sm'>Loading organizations…</p>
           </div>
         </div>
       </div>
-      <div className='hidden flex-1 lg:block' />
+      <div className='hidden flex-1 rounded-xl border border-dashed lg:block' />
     </div>
   );
 }
@@ -70,7 +73,7 @@ async function OrganizationsContent({
     organizations.find(org => org.uuid === searchParams?.id) ?? organizations[0] ?? null;
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+    <div className='flex flex-col gap-6 lg:flex-row lg:gap-8'>
       <OrganizationsList
         organizations={organizations}
         searchQuery={searchQuery}
@@ -93,8 +96,15 @@ export default async function Page({
   const params = await searchParams;
 
   return (
-    <Suspense fallback={<OrganizationsLoading />}>
-      <OrganizationsContent searchParams={params} />
-    </Suspense>
+    <AdminPage meta={adminRouteMap.organizations}>
+      <Suspense fallback={<OrganizationsLoading />}>
+        <OrganizationsContent searchParams={params} />
+      </Suspense>
+    </AdminPage>
   );
 }
+
+export const metadata: Metadata = {
+  title: `${adminRouteMap.organizations.title} | Admin Dashboard`,
+  description: adminRouteMap.organizations.description,
+};

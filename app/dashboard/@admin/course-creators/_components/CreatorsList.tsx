@@ -1,8 +1,8 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { CourseCreator } from '@/services/client';
-import React from 'react';
+import React, { useMemo } from 'react';
 import CourseCreatorCard from './CreatorCard';
-import CourseCreatorFilters from './CreatorFilters';
+import { AdminFilterBar } from '@/components/admin/admin-filter-bar';
 
 interface CreatorsListProps {
   courseCreators: CourseCreator[];
@@ -33,27 +33,54 @@ export default function CreatorsList({
   getStatusBadgeComponent,
   isLoading,
 }: CreatorsListProps) {
+  const hasActiveFilters = useMemo(
+    () => Boolean(searchQuery || statusFilter !== 'all'),
+    [searchQuery, statusFilter]
+  );
+
   return (
-    <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
-      {/* Search and Filters Header */}
-      <CourseCreatorFilters
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
+    <div className='flex w-full max-w-md flex-col overflow-hidden rounded-xl border border-border/60 bg-card/40'>
+      <AdminFilterBar
+        search={{
+          value: searchQuery,
+          onChange: setSearchQuery,
+          placeholder: 'Search course creators',
+        }}
+        filters={[
+          {
+            id: 'status',
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { label: 'All Statuses', value: 'all' },
+              { label: 'Pending', value: 'pending' },
+              { label: 'Approved', value: 'approved' },
+            ],
+            placeholder: 'Status',
+            minWidth: 'min-w-[140px]',
+          },
+        ]}
+        sort={{
+          value: 'created_date',
+          onChange: () => {},
+          options: [{ label: 'Date Created', value: 'created_date' }],
+          order: sortOrder,
+          onOrderChange: setSortOrder,
+        }}
+        dirty={hasActiveFilters || sortOrder !== 'desc'}
+        onClear={() => {
+          setSearchQuery('');
+          setStatusFilter('all');
+          setSortOrder('desc');
+        }}
       />
 
-      {/* Instructor List */}
       <div className='flex-1 overflow-y-auto'>
         {isLoading && (
-          <div className='flex flex-col gap-3'>
-            <Skeleton className='h-[100px] w-full px-4' />
-            <Skeleton className='h-[100px] w-full px-4' />
-            <Skeleton className='h-[100px] w-full px-4' />
-            <Skeleton className='h-[100px] w-full px-4' />
-            <Skeleton className='h-[100px] w-full px-4' />
+          <div className='flex flex-col gap-3 p-4'>
+            <Skeleton className='h-[88px] w-full' />
+            <Skeleton className='h-[88px] w-full' />
+            <Skeleton className='h-[88px] w-full' />
           </div>
         )}
 

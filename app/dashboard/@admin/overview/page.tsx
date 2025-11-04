@@ -1,23 +1,32 @@
-// app/dashboard/@admin/statistics/page.tsx
-import { Loader2 } from 'lucide-react';
 import { Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
 import StatisticsContent from './_components/StatisticsContent';
+import { AdminPage } from '@/components/admin/admin-page';
+import { adminRouteMap } from '../_components/admin-navigation';
+import type { Metadata } from 'next';
 
 function StatisticsLoading() {
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] items-center justify-center'>
+    <div className='flex min-h-[360px] items-center justify-center rounded-lg border border-dashed'>
       <div className='text-center'>
         <Loader2 className='text-primary mx-auto mb-4 h-8 w-8 animate-spin' />
-        <p className='text-muted-foreground text-sm'>Loading statistics...</p>
+        <p className='text-muted-foreground text-sm'>Loading statistics…</p>
       </div>
     </div>
   );
 }
 
+export const metadata: Metadata = {
+  title: `${adminRouteMap.overview.title} | Admin Dashboard`,
+  description: adminRouteMap.overview.description,
+};
+
 export default function Page() {
   return (
-    <Suspense fallback={<StatisticsLoading />}>
-      <StatisticsContent />
-    </Suspense>
+    <AdminPage meta={adminRouteMap.overview}>
+      <Suspense fallback={<StatisticsLoading />}>
+        <StatisticsContent />
+      </Suspense>
+    </AdminPage>
   );
 }
