@@ -14,11 +14,10 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { formatCourseDate } from '@/lib/format-course-date';
@@ -151,8 +150,8 @@ export default function PublishedCoursesComponent({
       {publishedCourses?.length >= 1 && (
         <div className='overflow-hidden rounded-t-lg border border-gray-200'>
           <Table>
-            <TableCaption className='py-4'>A list of your published courses</TableCaption>
-            <TableHeader className='bg-gray-200'>
+            {/* <TableCaption className='py-4'>A list of your published courses</TableCaption> */}
+            <TableHeader className='bg-stone-50'>
               <TableRow>
                 <TableHead>
                   <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
@@ -166,7 +165,7 @@ export default function PublishedCoursesComponent({
               </TableRow>
             </TableHeader>
 
-            <TableBody>
+            <TableBody className='bg-white'>
               <>
                 {publishedCourses?.map((course: any) => (
                   <TableRow key={course.uuid}>
@@ -174,7 +173,7 @@ export default function PublishedCoursesComponent({
                       <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                     </TableHead>
 
-                    <TableCell className='py-4'>
+                    <TableCell className='py-2'>
                       <Image
                         src={(course?.thumbnail_url as string) || '/illustration.png'}
                         alt='thumbnail'
@@ -194,7 +193,7 @@ export default function PublishedCoursesComponent({
                       <div className='flex max-w-[250px] flex-wrap gap-1'>
                         {Array.isArray(course.category_names) &&
                           course.category_names.map((name: string) => (
-                            <Badge key={name} variant='default' className='capitalize'>
+                            <Badge key={name} variant='default' className='capitalize rounded-full bg-blue-500' >
                               {name}
                             </Badge>
                           ))}

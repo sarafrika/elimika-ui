@@ -4,7 +4,13 @@ import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
@@ -13,9 +19,19 @@ import {
   getCourseByUuidOptions,
   getCourseLessonsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { DialogTitle } from '@radix-ui/react-dialog';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, BookOpenCheck, CheckCircle, Clock, Users } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  BookOpen,
+  BookOpenCheck,
+  CheckCircle,
+  Clock,
+  FileWarning,
+  GraduationCap,
+  Layers,
+  Users,
+  Video,
+} from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -24,23 +40,13 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
   const params = useParams();
   const router = useRouter();
   const courseId = params?.id;
-  const qc = useQueryClient();
-
   const { replaceBreadcrumbs } = useBreadcrumb();
+
   useEffect(() => {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
-      {
-        id: 'course-management',
-        title: 'Course-management',
-        url: '/dashboard/course-management/drafts',
-      },
-      {
-        id: 'preview',
-        title: 'Preview',
-        url: `/dashboard/course-management/preview/${courseId}`,
-        isLast: true,
-      },
+      { id: 'course-management', title: 'Course Management', url: '/dashboard/course-management/drafts' },
+      { id: 'preview', title: 'Preview', url: `/dashboard/course-management/preview/${courseId}`, isLast: true },
     ]);
   }, [replaceBreadcrumbs, courseId]);
 
@@ -49,16 +55,15 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
     router.push(`/dashboard/course-management/create-new-course?id=${courseId}`);
   };
 
-  // GET COURSE BY ID
+  // FETCH COURSE DETAILS
   const { data: courseDetail, isLoading } = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId as string } }),
     enabled: !!courseId,
   });
-  // @ts-ignore
   const course = courseDetail?.data;
 
-  // GET COURSE LESSONS
-  const { data: courseLessons } = useQuery({
+  // FETCH LESSONS
+  const { data: lessonsData } = useQuery({
     ...getCourseLessonsOptions({
       path: { courseUuid: courseId as string },
       query: { pageable: { page: 0, size: 100 } },
@@ -66,267 +71,245 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
     enabled: !!courseId,
   });
 
-  // GET COURSE ASSESSMENTS
-  const { data: assessmentData } = useQuery(
-    getCourseAssessmentsOptions({
+  // FETCH ASSESSMENTS
+  const { data: assessmentsData } = useQuery({
+    ...getCourseAssessmentsOptions({
       path: { courseUuid: courseId as string },
       query: { pageable: {} },
-    })
-  );
+    }),
+    enabled: !!courseId,
+  });
 
-  if (isLoading)
+  if (isLoading) {
     return (
-      <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
-        <div className='h-20 w-full animate-pulse rounded bg-gray-200'></div>
-        <div className='mt-10 flex items-center justify-center'>
+      <div className='flex flex-col gap-4'>
+        <div className='h-48 w-full animate-pulse rounded bg-gray-200'></div>
+        <div className='flex items-center justify-center'>
           <Spinner />
         </div>
-        <div className='h-16 w-full animate-pulse rounded bg-gray-200'></div>
-        <div className='h-12 w-full animate-pulse rounded bg-gray-200'></div>
       </div>
     );
+  }
 
   return (
-    <div className='mx-auto max-w-4xl space-y-8 p-4'>
-      <div>
-        <Image
-          src={course?.banner_url as string}
-          alt='banner'
-          width={128}
-          height={128}
-          className='max-h-[250px] w-full'
-        />
-      </div>
-
-      <div className='space-y-4'>
-        <div className='flex flex-row items-center gap-4'>
+    <div className='mx-auto max-w-5xl space-y-10 p-6'>
+      {/* Banner */}
+      {course?.banner_url && (
+        <div className='relative h-60 w-full overflow-hidden rounded-lg shadow-md'>
           <Image
-            src={(course?.thumbnail_url as string) || '/illustration.png'}
-            alt='thumbnail'
-            width={48}
-            height={48}
-            className='min-h-12 min-w-12 rounded-md bg-stone-300'
+            src={course?.banner_url as string}
+            alt='Course banner'
+            fill
+            className='object-cover'
+            priority
           />
-
-          <h1 className='text-4xl font-bold tracking-tight md:max-w-[90%]'>{course?.name}</h1>
         </div>
-        <div className='px-4 py-4'>
-          <HTMLTextPreview htmlContent={course?.description as string} />
-        </div>
+      )}
 
-        <div className='flex flex-wrap items-center gap-2'>
-          <span className='text-sm font-medium'>Categories:</span>
-          {course?.category_names?.map((i: any) => (
-            <Badge key={i} variant='outline'>
-              {i}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      <div className=''>
-        <div className='col-span-1 space-y-6 md:col-span-2'>
-          <Card>
-            <CardHeader>
-              <CardTitle>What You&apos;ll Learn</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className='grid grid-cols-1'>
-                <li className='flex items-start gap-2'>
-                  <span className='min-h-4 min-w-4'>
-                    <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
-                  </span>
-                  <div className=''>
-                    <HTMLTextPreview htmlContent={course?.objectives as string} />
-                  </div>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className='mt-4'>
-              <CardTitle>Lesson Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='mt-2 flex flex-col gap-2 space-y-4'>
-                {courseLessons?.data?.content
-                  ?.slice()
-                  ?.sort((a: any, b: any) => a.lesson_number - b.lesson_number)
-                  ?.map((lesson: any, i: any) => (
-                    <div
-                      key={i}
-                      className='flex flex-row gap-2 border-b pb-4 last:border-none last:pb-4'
-                    >
-                      <div>
-                        <span className='min-h-4 min-w-4'>
-                          <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
-                        </span>
-                      </div>
-                      <div className='flex flex-col gap-2'>
-                        <h3 className='font-semibold'>{lesson.title}</h3>
-                        <RichTextRenderer
-                          htmlString={(lesson?.description as string) || 'No lesson provided'}
-                        />
-
-                        {/* <ul className="mt-2 space-y-2">
-                      {lesson.lectures.map((lecture, j) => (
-                        <li key={j} className="flex items-center">
-                          <Video className="mr-2 h-4 w-4" />
-                          <span>{lecture.title}</span>
-                          <span className="text-muted-foreground ml-auto text-sm">{lecture.duration}</span>
-                        </li>
-                      ))}
-                    </ul> */}
-
-                        <h3 className='font-semibold'>
-                          <span>📅 Duration:</span> {lesson.duration_display}
-                        </h3>
-                      </div>
-                    </div>
-                  ))}
-
-                {courseLessons?.data?.content?.length === 0 && (
-                  <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
-                    <BookOpen className='text-muted-foreground mb-2 h-8 w-8' />
-                    <p className='font-medium'>No lessons available</p>
-                    <p className='mt-1 text-sm'>
-                      Start by adding your first lesson to this course.
-                    </p>
-                    <Button
-                      variant='outline'
-                      className='mt-4'
-                      onClick={() =>
-                        router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
-                      }
-                    >
-                      + Add Lesson
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className='mt-4'>
-              <CardTitle>Course Assessments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='mt-2 flex flex-col gap-2 space-y-4'>
-                {assessmentData?.data?.content?.slice()?.map((assessment: any, i: any) => (
-                  <div
-                    key={i}
-                    className='flex flex-row gap-2 border-b pb-4 last:border-none last:pb-4'
-                  >
-                    <div>
-                      <span className='min-h-4 min-w-4'>
-                        <BookOpenCheck className='mt-1 h-4 w-4' />
-                      </span>
-                    </div>
-                    <div className='flex flex-col gap-2'>
-                      <h3 className='font-semibold'>{assessment.title}</h3>
-                      <RichTextRenderer
-                        htmlString={(assessment?.description as string) || 'No assessment provided'}
-                      />
-
-                      <h3 className='font-semibold'>
-                        <span>📅 Duration:</span> {assessment.duration_display}
-                      </h3>
-                    </div>
-                  </div>
-                ))}
-
-                {assessmentData?.data?.content?.length === 0 && (
-                  <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
-                    <BookOpenCheck className='text-muted-foreground mb-2 h-8 w-8' />
-                    <p className='font-medium'>No assessment available</p>
-                    <p className='mt-1 text-sm'>
-                      Start by adding lessons to your course, then add assessments under each
-                      lesson.
-                    </p>
-                    <Button
-                      variant='outline'
-                      className='mt-4'
-                      onClick={() =>
-                        router.push(`/dashboard/course-management/create-new-course?id=${courseId}`)
-                      }
-                    >
-                      + Add Lesson
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-
-            <div className='mt-4 flex max-w-[300px] flex-col gap-2 self-end'>
-              <CardHeader className='flex gap-2'>
-                <CardTitle>Course Details</CardTitle>
-                <CardDescription>by {authorName}</CardDescription>
-              </CardHeader>
-
-              <CardContent className='space-y-2'>
-                <div className='flex items-center'>
-                  <Users className='mr-2 h-4 w-4' />
-                  <span>
-                    {course?.class_limit === 0
-                      ? 'Unlimited'
-                      : `Up to ${course?.class_limit} students`}
-                  </span>
-                </div>
-                <div className='flex items-center'>
-                  <Clock className='mr-2 h-4 w-4' />
-                  <span>Approx. {course?.total_duration_display} to complete</span>
-                </div>
-
-                <Button size='lg' className='mt-4 w-full'>
-                  Enroll Now
-                </Button>
-                <Button size='lg' variant='outline' className='w-full' onClick={handleConfirm}>
-                  Edit Course
-                </Button>
-
-                {/* Modal */}
-                <Dialog open={open} onOpenChange={setOpen}>
-                  <DialogContent className='sm:max-w-md'>
-                    <DialogTitle />
-                    <DialogHeader>
-                      <h3 className='text-xl font-semibold text-gray-900'>Edit Course</h3>
-                      <p className='text-sm text-gray-500'>
-                        Are you sure you want to edit this course?
-                      </p>
-                    </DialogHeader>
-
-                    <div className='mt-4 space-y-3 text-sm text-gray-700'>
-                      <p>
-                        This action will <strong>unpublish</strong> the course. You&apos;`ll need to
-                        re-publish it after making your changes.
-                      </p>
-                      <p>
-                        Any currently enrolled students will retain access, but the course will no
-                        longer be discoverable publicly until it&apos;`s re-published.
-                      </p>
-                    </div>
-
-                    <DialogFooter className='pt-6'>
-                      <Button
-                        variant='outline'
-                        onClick={() => setOpen(false)}
-                        className='w-full sm:w-auto'
-                      >
-                        Cancel
-                      </Button>
-                      <Button onClick={handleConfirm} className='w-full sm:w-auto'>
-                        Confirm & Continue
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </CardContent>
+      {/* Course Header */}
+      <section className='flex flex-col gap-4 border-b pb-6 md:flex-row md:items-center md:justify-between'>
+        <div className='flex items-center gap-4'>
+          <Image
+            src={course?.thumbnail_url as string || '/illustration.png'}
+            alt='Course thumbnail'
+            width={80}
+            height={80}
+            className='rounded-md object-cover shadow-sm'
+          />
+          <div>
+            <h1 className='text-3xl font-bold'>{course?.name}</h1>
+            <p className='text-muted-foreground text-sm'>By {authorName}</p>
+            <div className='mt-2 flex flex-wrap items-center gap-2'>
+              {course?.category_names?.map((cat: string) => (
+                <Badge key={cat} variant='secondary'>{cat}</Badge>
+              ))}
+              {course?.difficulty_uuid && (
+                <Badge variant='outline' className='text-xs'>
+                  Difficulty: Intermediate
+                </Badge>
+              )}
+              <Badge variant='outline' className='capitalize'>
+                {course?.lifecycle_stage}
+              </Badge>
             </div>
-          </Card>
+          </div>
         </div>
+
+        <div className='flex gap-3'>
+          {/* <Button size='lg'>Enroll Now</Button> */}
+          <Button variant='outline' size='lg' onClick={() => setOpen(true)}>
+            Edit Course
+          </Button>
+        </div>
+      </section>
+
+      {/* Description */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Course Overview</CardTitle>
+          <CardDescription>
+            A quick summary of what this course offers.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <HTMLTextPreview htmlContent={course?.description ?? 'No description provided.'} />
+        </CardContent>
+      </Card>
+
+      {/* Key Info Section */}
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+        <Card>
+          <CardHeader>
+            <CardTitle>What You’ll Learn</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <HTMLTextPreview htmlContent={course?.objectives ?? 'No objectives provided.'} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Prerequisites</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <HTMLTextPreview htmlContent={course?.prerequisites ?? 'No prerequisites listed.'} />
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Lessons */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lesson Content</CardTitle>
+          <CardDescription>All lessons included in this course.</CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-2'>
+          {lessonsData?.data?.content?.length ? (
+            lessonsData.data.content
+              .sort((a: any, b: any) => a.lesson_number - b.lesson_number)
+              .map((lesson: any) => (
+                <div key={lesson.uuid} className='border-b pb-4 last:border-0'>
+                  <div className='flex items-center gap-2'>
+                    <CheckCircle className='text-green-500 h-4 w-4' />
+                    <h3 className='font-semibold'>{lesson.title}</h3>
+                  </div>
+                  <RichTextRenderer htmlString={lesson.description ?? 'No description.'} />
+                  <p className='mt-1 text-sm text-muted-foreground'>
+                    <Clock className='mr-1 inline-block h-4 w-4' /> {lesson.duration_display}
+                  </p>
+                </div>
+              ))
+          ) : (
+            <EmptyState
+              icon={BookOpen}
+              title='No Lessons Available'
+              description='Start by adding your first lesson to this course.'
+              actionLabel='Add Lesson'
+              onAction={handleConfirm}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Assessments */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Course Assessments</CardTitle>
+          <CardDescription>Tests and quizzes included.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {assessmentsData?.data?.content?.length ? (
+            assessmentsData.data.content.map((assessment: any) => (
+              <div key={assessment.uuid} className='border-b pb-4 last:border-0'>
+                <div className='flex items-center gap-2'>
+                  <BookOpenCheck className='text-blue-500 h-4 w-4' />
+                  <h3 className='font-semibold'>{assessment.title}</h3>
+                </div>
+                <RichTextRenderer htmlString={assessment.description ?? 'No description.'} />
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  <Clock className='mr-1 inline-block h-4 w-4' /> {assessment.duration_display}
+                </p>
+              </div>
+            ))
+          ) : (
+            <EmptyState
+              icon={FileWarning}
+              title='No Assessments Yet'
+              description='You can create assessments once lessons are added.'
+              actionLabel='Add Assessment'
+              onAction={handleConfirm}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Course Details & Meta Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Course Details</CardTitle>
+          <CardDescription>Additional course information and limits.</CardDescription>
+        </CardHeader>
+        <CardContent className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+          <DetailItem icon={Users} label='Class Limit' value={course?.class_limit || 'Unlimited'} />
+          <DetailItem icon={Clock} label='Total Duration' value={course?.total_duration_display} />
+          <DetailItem icon={GraduationCap} label='Enrollment' value={course?.accepts_new_enrollments ? 'Open' : 'Closed'} />
+          <DetailItem icon={Layers} label='Lifecycle Stage' value={course?.lifecycle_stage} />
+          <DetailItem icon={Video} label='Intro Video' value={course?.intro_video_url ? 'Available' : 'Not provided'} />
+          <DetailItem icon={BookOpen} label='Minimum Training Fee (per hour per head)' value={`$${course?.minimum_training_fee}`} />
+          <DetailItem icon={CheckCircle} label='Revenue Split' value={`Instructor: ${course?.instructor_share_percentage}% / Creator: ${course?.creator_share_percentage}%`} />
+          <DetailItem
+            icon={Clock}
+            label="Created On"
+            value={course?.created_date ? format(new Date(course.created_date), 'PPP') : '—'}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Edit Confirmation Modal */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <h3 className='text-lg font-semibold'>Edit Course</h3>
+            <p className='text-sm text-muted-foreground'>
+              Editing will unpublish this course. It will need re-approval before going live again.
+            </p>
+          </DialogHeader>
+          <DialogFooter className='pt-4'>
+            <Button variant='outline' onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirm}>Confirm & Continue</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* -----------------------------
+  🔹 REUSABLE COMPONENTS
+--------------------------------*/
+function DetailItem({ icon: Icon, label, value }: any) {
+  return (
+    <div className='flex items-center text-sm'>
+      <Icon className='mr-2 h-4 w-4 text-muted-foreground' />
+      <span className='font-medium'>{label}:</span>
+      <span className='ml-1 text-muted-foreground'>{value}</span>
+    </div>
+  );
+}
+
+function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: any) {
+  return (
+    <div className='flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center'>
+      <Icon className='mb-3 h-8 w-8 text-muted-foreground' />
+      <h3 className='text-lg font-semibold'>{title}</h3>
+      <p className='mt-1 text-sm text-muted-foreground'>{description}</p>
+      {actionLabel && (
+        <Button variant='outline' className='mt-4' onClick={onAction}>
+          + {actionLabel}
+        </Button>
+      )}
     </div>
   );
 }

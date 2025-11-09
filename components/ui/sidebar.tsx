@@ -180,7 +180,7 @@ function Sidebar({
         {/* Menu Hamburger Icon */}
         <button
           onClick={() => setOpenMobile(true)}
-          className='fixed left-4 z-50 my-3 flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-gray-50 shadow-md transition hover:bg-gray-100 focus:ring-2 focus:ring-indigo-400 focus:outline-none'
+          className='fixed left-4 -top-1 z-50 my-3 flex h-8 w-8 items-center justify-center rounded-sm border border-gray-300 bg-gray-50 shadow-md transition hover:bg-gray-100 focus:ring-2 focus:ring-indigo-400 focus:outline-none'
           aria-label='Open Sidebar'
         >
           <svg
@@ -576,7 +576,7 @@ function SidebarMenuAction({
         'peer-data-[size=lg]/menu-button:top-2.5',
         'group-data-[collapsible=icon]:hidden',
         showOnHover &&
-          'peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0',
+        'peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0',
         className
       )}
       {...props}
@@ -718,5 +718,6 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar,
+  useSidebar
 };
+

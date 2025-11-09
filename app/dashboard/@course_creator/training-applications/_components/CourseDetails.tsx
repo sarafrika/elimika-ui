@@ -54,14 +54,18 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
   );
   const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
 
-  const handleActionSubmit = (notes: string) => {
+  const handleActionSubmit = (data: {
+    notes: string;
+    rate_per_hour_per_head: number;
+    rate_currency: string;
+  }) => {
     if (!selectedUuid || !selectedAction) return;
 
     applicationAction.mutate(
       {
         path: { applicationUuid: selectedUuid, courseUuid: course?.uuid as string },
         query: { action: selectedAction },
-        body: { review_notes: notes },
+        body: { review_notes: data?.notes },
       },
       {
         onSuccess: data => {
@@ -100,54 +104,57 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
         ) : (
           <Card
             key={app.uuid}
-            className='hover:bg-muted/40 cursor-pointer transition'
-            onClick={() => {
-              setSelectedInstructor(app);
-              setInstructorModalOpen(true);
-            }}
+
+            className='p-0'
           >
-            {' '}
-            <CardHeader className='flex flex-row items-center justify-between'>
-              <CardTitle className='text-base'>Application by {app.applicant_type}</CardTitle>
-              <span
-                className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${
-                  app.status === 'pending'
+            <CardContent
+              onClick={() => {
+                setSelectedInstructor(app);
+                setInstructorModalOpen(true);
+              }}
+              className='py-4 hover:bg-muted/40 cursor-pointer transition'>
+              <CardHeader className='px-0 py-4 flex flex-row items-center justify-between'>
+                <CardTitle className='text-base'>Application by {app.applicant_type}</CardTitle>
+                <span
+                  className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${app.status === 'pending'
                     ? 'bg-yellow-100 text-yellow-800'
                     : app.status === 'approved'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-              </span>
-            </CardHeader>
-            <CardContent className='space-y-3'>
-              <div className=''>
+                    }`}
+                >
+                  {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                </span>
+              </CardHeader>
+
+              <div className='space-y-3 '>
+                <div className=''>
+                  <div>
+                    <p className='text-muted-foreground text-sm font-medium'>Applicant UUID</p>
+                    <p className='text-sm'>{app.applicant_uuid}</p>
+                  </div>
+                </div>
+
                 <div>
-                  <p className='text-muted-foreground text-sm font-medium'>Applicant UUID</p>
-                  <p className='text-sm'>{app.applicant_uuid}</p>
+                  <p className='text-muted-foreground text-sm font-medium'>Application Notes</p>
+                  <p className='text-sm'>{app.application_notes || 'No notes provided'}</p>
+                </div>
+
+                <div>
+                  <p className='text-muted-foreground text-sm font-medium'>Date</p>
+                  <p className='text-sm'>{new Date(app.created_date).toLocaleString()}</p>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <p className='text-muted-foreground text-sm font-medium'>Review Note</p>
+                  <p className='text-sm'>{app.review_notes || 'No review notes provided'}</p>
                 </div>
               </div>
+            </CardContent>
 
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Application Notes</p>
-                <p className='text-sm'>{app.application_notes || 'No notes provided'}</p>
-              </div>
-
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Date</p>
-                <p className='text-sm'>{new Date(app.created_date).toLocaleString()}</p>
-              </div>
-
-              <Separator />
-
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Review Note</p>
-                <p className='text-sm'>{app.review_notes || 'No review notes provided'}</p>
-              </div>
-
-              <Separator />
-
+            <CardContent className='pb-4'>
               {/* CTA Buttons */}
               <div className='flex justify-end gap-3 pt-2'>
                 {app.status === 'pending' && (
@@ -309,7 +316,8 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                   className='data-[state=active]:bg-primary data-[state=active]:text-white'
                 >
                   Revoked
-                  {/* @ts-ignore */}({applicationData.filter(a => a.status === 'revoked').length})
+                  {/* @ts-ignore */}
+                  ({applicationData.filter(a => a.status === 'revoked').length})
                 </TabsTrigger>
               </TabsList>
 
@@ -359,6 +367,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 : 'Save'
         }
         cancelText='Cancel'
+        userType='course_creator'
       />
     </div>
   );

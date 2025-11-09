@@ -97,7 +97,11 @@ export default function CourseMangementPage() {
   }, [combinedCourses, searchQuery, statusFilter, sortOrder]);
 
   const applyToTrain = useMutation(submitTrainingApplicationMutation());
-  const handleApplyToTrain = (notes: string) => {
+  const handleApplyToTrain = (data: {
+    notes: string;
+    rate_per_hour_per_head: number;
+    rate_currency: string;
+  }) => {
     if (!applyingCourseId) return;
 
     applyToTrain.mutate(
@@ -105,7 +109,9 @@ export default function CourseMangementPage() {
         body: {
           applicant_type: profile?.activeDomain as ApplicantTypeEnum,
           applicant_uuid: instructor?.uuid as string,
-          application_notes: notes,
+          application_notes: data?.notes,
+          rate_per_hour_per_head: data?.rate_per_hour_per_head,
+          rate_currency: data?.rate_currency
         },
         path: { courseUuid: applyingCourseId },
       },
@@ -191,6 +197,10 @@ export default function CourseMangementPage() {
               applicationReviewNote={course.application?.review_notes || null}
               handleClick={() => router.push(`/dashboard/courses/${course.uuid}`)}
               handleQuickApply={() => {
+                setApplyModal(true);
+                setApplyingCourseId(course?.uuid as string);
+              }}
+              handleReapplyToTrain={() => {
                 setApplyModal(true);
                 setApplyingCourseId(course?.uuid as string);
               }}

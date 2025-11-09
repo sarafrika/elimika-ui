@@ -15,7 +15,7 @@ interface EnrollCourseCardProps {
   enrollmentPercentage: number;
   handleEnroll: (cls: any) => void;
   disableEnroll: boolean;
-  variant?: 'full' | 'minimal'; // 👈 added
+  variant?: 'full' | 'minimal';
 }
 
 export default function EnrollCourseCard({
@@ -55,7 +55,10 @@ export default function EnrollCourseCard({
                 <MapPin className='mr-1 h-3 w-3' />
                 {cls?.location_type.replace('_', ' ')}
               </Badge>
-              <Badge className={`backdrop-blur-sm`}>{difficultyName}</Badge>
+
+              {variant === "full" &&
+                <Badge className={`backdrop-blur-sm`}>{difficultyName}</Badge>
+              }
             </div>
 
             {isFull && (
@@ -64,31 +67,32 @@ export default function EnrollCourseCard({
               </div>
             )}
 
-            {/* Floating Add to Cart */}
-            <Button
-              size='icon'
-              variant='secondary'
-              className='absolute right-3 bottom-3 z-30 rounded-full border border-blue-200 bg-white/90 hover:bg-blue-100'
-              onClick={e => {
-                e.stopPropagation();
-                toast.success('Implement add to cart:', cls.uuid);
-              }}
-            >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                strokeWidth={2}
-                stroke='currentColor'
-                className='h-4 w-4 text-blue-600'
+            {variant === "full" &&
+              <Button
+                size='icon'
+                variant='secondary'
+                className='absolute right-3 bottom-3 z-30 rounded-full border border-blue-200 bg-white/90 hover:bg-blue-100'
+                onClick={e => {
+                  e.stopPropagation();
+                  toast.success('Implement add to cart:', cls.uuid);
+                }}
               >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8h13.2L17 13M7 13h10m-4 8a1 1 0 100-2 1 1 0 000 2zm-6 0a1 1 0 100-2 1 1 0 000 2z'
-                />
-              </svg>
-            </Button>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={2}
+                  stroke='currentColor'
+                  className='h-4 w-4 text-blue-600'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8h13.2L17 13M7 13h10m-4 8a1 1 0 100-2 1 1 0 000 2zm-6 0a1 1 0 100-2 1 1 0 000 2z'
+                  />
+                </svg>
+              </Button>}
+
           </div>
 
           {/* Card Body */}
@@ -149,11 +153,10 @@ export default function EnrollCourseCard({
                 </div>
                 <div className='h-2 overflow-hidden rounded-full bg-blue-100'>
                   <div
-                    className={`h-full transition-all duration-500 ${
-                      enrollmentPercentage >= 80
-                        ? 'bg-gradient-to-r from-orange-400 to-red-500'
-                        : 'bg-gradient-to-r from-blue-400 to-indigo-500'
-                    }`}
+                    className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80
+                      ? 'bg-gradient-to-r from-orange-400 to-red-500'
+                      : 'bg-gradient-to-r from-blue-400 to-indigo-500'
+                      }`}
                     style={{ width: `${enrollmentPercentage}%` }}
                   />
                 </div>
