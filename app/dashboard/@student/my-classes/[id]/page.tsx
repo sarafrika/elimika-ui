@@ -365,7 +365,7 @@ export default function ClassDetailsPage() {
                           </div>
                         </>
                       )}
-                      {contentTypeName === 'text' && (
+                      {(contentTypeName === 'text' || contentTypeName === 'pdf') && (
                         <>
                           <div className="p-3 bg-purple-100 rounded-lg">
                             <BookOpen className="w-6 h-6 text-purple-600" />
