@@ -9,7 +9,7 @@ interface ClassesLayoutProps {
 export default function ClassesLayout({ children }: ClassesLayoutProps) {
   return (
     <div className='space-y-8 p-4 pb-16 md:p-10'>
-      <div className='flex w-full items-center justify-between lg:max-w-[75%]'>
+      <div className='flex w-full items-center justify-between xl:max-w-[1200px]'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>My Classes</h2>
           <p className='mt-1 text-gray-600'>
@@ -20,7 +20,7 @@ export default function ClassesLayout({ children }: ClassesLayoutProps) {
       </div>
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
-        <div className='flex-1 lg:max-w-7xl'>{children}</div>
+        <div className='flex-1 lg:max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem]'>{children}</div>
       </div>
     </div>
   );

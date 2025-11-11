@@ -164,7 +164,7 @@ export default function MyCoursesPage() {
           </div>
 
           {/* Category Tabs */}
-          <div className='scrollbar-hidden w-auto overflow-hidden overflow-x-auto lg:max-w-5xl 2xl:max-w-7xl'>
+          <div className='scrollbar-hidden w-auto overflow-hidden overflow-x-auto lg:max-w-5xl 2xl:max-w-[110rem]'>
             <Tabs
               value={selectedCategory}
               onValueChange={val => {

@@ -208,7 +208,7 @@ export default function ClassDetailsPage() {
         <div className="min-h-screen">
           {/* Header */}
           <div className="border-b">
-            <div className="max-w-7xl mx-auto py-4">
+            <div className="mx-auto max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem] py-4">
               {/* <Button variant="ghost" onClick={onBack} className="gap-2 mb-4">
             <ChevronLeft className="w-4 h-4" />
             Back to Courses
@@ -259,14 +259,14 @@ export default function ClassDetailsPage() {
 
           {/* Progress Bar */}
           <div className="bg-white border-b">
-            <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="mx-auto max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem] px-6 py-4">
               <Progress value={progress?.percentage} className="h-2 mb-2" />
               <p className="text-sm font-medium">{Math.round(progress?.percentage)}% completed</p>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="max-w-7xl mx-auto py-8">
+          <div className="mx-auto max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem] py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Course Program */}
               <div className="lg:col-span-2">
