@@ -347,7 +347,6 @@ export default function ClassDetailsPage() {
 
               {/* Right Column - Lesson Details */}
               <div className="space-y-6">
-                {/* Current Lesson Card */}
                 <Card>
                   <CardHeader>
                     <CardTitle>{selectedLesson?.title}</CardTitle>
