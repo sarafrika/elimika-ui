@@ -103,7 +103,7 @@ export default function AvailabilitySettings() {
   return (
     <ProfileFormShell
       eyebrow='Instructor'
-      title='Instructo Rates'
+      title='Instructor Rates'
       description='Define the hourly rates you offer.'
       badges={domainBadges}
     >

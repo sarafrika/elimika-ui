@@ -23,6 +23,7 @@ const sidebarNavItems = [
 
 export default function CourseManagementLayout({ children }: CourseManagementLayoutProps) {
   const pathname = usePathname();
+  const hideNav = pathname.startsWith('/dashboard/course-management/create-new-course');
 
   return (
     <div className='space-y-6 p-4 pb-16 md:py-10'>
@@ -34,26 +35,28 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
       </div>
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
-        <aside className=''>
-          <nav className='flex space-x-2 lg:mb-6 lg:flex-row lg:space-y-1 lg:space-x-6'>
-            {sidebarNavItems.map(item => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  buttonVariants({ variant: 'ghost' }),
-                  pathname === item.href
-                    ? 'bg-muted hover:bg-muted'
-                    : 'hover:bg-transparent hover:underline',
-                  'justify-start lg:min-w-[200px] lg:justify-center'
-                )}
-              >
-                {item.title}
-              </Link>
-            ))}
-          </nav>
-        </aside>
-        <div className='lg:auto flex-1'>{children}</div>
+        {!hideNav && (
+          <aside className=''>
+            <nav className='flex space-x-2 lg:mb-6 lg:flex-row lg:space-y-1 lg:space-x-6'>
+              {sidebarNavItems.map(item => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    buttonVariants({ variant: 'ghost' }),
+                    pathname === item.href
+                      ? 'bg-muted hover:bg-muted'
+                      : 'hover:bg-transparent hover:underline',
+                    'justify-start lg:min-w-[200px] lg:justify-center'
+                  )}
+                >
+                  {item.title}
+                </Link>
+              ))}
+            </nav>
+          </aside>
+        )}
+        <div className='lg:auto flex-1 max-w-7xl'>{children}</div>
       </div>
     </div>
   );

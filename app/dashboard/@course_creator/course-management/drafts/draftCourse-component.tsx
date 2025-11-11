@@ -14,11 +14,10 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { formatCourseDate } from '@/lib/format-course-date';
@@ -30,17 +29,17 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   EyeIcon,
-  FilePenIcon,
   MoreVertical,
   PenIcon,
   PlusIcon,
   Square,
-  TrashIcon,
+  TrashIcon
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { CustomEmptyState } from '../../_components/loading-state';
 
 export default function DraftCoursesComponent({ courseCreatorId }: { courseCreatorId?: string }) {
   const queryClient = useQueryClient();
@@ -101,7 +100,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const draftCourses = data?.data?.content || [];
@@ -134,25 +133,24 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
       )}
 
       {isFetched && draftCourses?.length === 0 && (
-        <div className='bg-muted/20 rounded-md border py-12 text-center'>
-          <FilePenIcon className='text-muted-foreground mx-auto h-12 w-12' />
-          <h3 className='mt-4 text-lg font-medium'>No draft courses</h3>
-          <p className='text-muted-foreground mt-2'>
-            You don&apos;t have any draft courses. Start by creating a new course to get started.
-          </p>
-          <Button className='mt-4' asChild>
+        <>
+          <CustomEmptyState
+            headline='No draft courses'
+            subHeading=' You don&apos;t have any draft courses. Start by creating a new course to get started.'
+          />
+          {/* <Button className='mt-4' asChild>
             <Link href='/dashboard/course-management/create-new-course'>
               Create Your First Course
             </Link>
-          </Button>
-        </div>
+          </Button> */}
+        </>
       )}
 
       {draftCourses?.length >= 1 && (
         <div className='overflow-hidden rounded-t-lg border border-gray-200'>
           <Table>
-            <TableCaption className='py-4'>A list of your course drafts</TableCaption>
-            <TableHeader className='bg-gray-200'>
+            {/* <TableCaption className='py-4'>A list of your course drafts</TableCaption> */}
+            <TableHeader className='bg-stone-50'>
               <TableRow>
                 <TableHead>
                   <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
@@ -169,12 +167,12 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
             <TableBody>
               <>
                 {draftCourses?.map((course: any) => (
-                  <TableRow key={course.uuid}>
+                  <TableRow key={course.uuid} className='bg-white'>
                     <TableHead>
                       <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                     </TableHead>
 
-                    <TableCell className='py-4'>
+                    <TableCell className='py-2'>
                       <Image
                         src={(course?.thumbnail_url as string) || '/illustration.png'}
                         alt='thumbnail'
@@ -194,7 +192,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                       <div className='flex max-w-[250px] flex-wrap gap-1'>
                         {Array.isArray(course.category_names) &&
                           course.category_names.map((name: string) => (
-                            <Badge key={name} variant='default' className='capitalize'>
+                            <Badge key={name} variant='default' className='capitalize rounded-full'>
                               {name}
                             </Badge>
                           ))}

@@ -184,7 +184,9 @@ export function ReviewPublishForm({
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Duration per session:</span>
-              <div className='font-medium'>{Number(totalHours) / Number(totalLessons)} hours</div>
+              {/* <div className='font-medium'>{Number(totalHours) / Number(totalLessons)} hours</div> */}
+              <div className='font-medium'>{Number(data?.duration_minutes) / 60} hours</div>
+
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Skills:</span>

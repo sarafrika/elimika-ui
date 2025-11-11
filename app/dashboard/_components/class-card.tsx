@@ -1,19 +1,19 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Clock, MapPin, Users } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import ConfirmModal from '../../../components/custom-modals/confirm-modal';
-import { Badge } from '../../../components/ui/badge';
-import { Button } from '../../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { useStudent } from '../../../context/student-context';
+import ConfirmModal from '@/components/custom-modals/confirm-modal';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useStudent } from '@/context/student-context';
 import {
   enrollStudentMutation,
   getInstructorByUuidOptions,
   getStudentScheduleQueryKey,
-} from '../../../services/client/@tanstack/react-query.gen';
+} from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Calendar, Clock, MapPin, Users } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 const stripHtml = (html: string) => html.replace(/<[^>]+>/g, '');
 
@@ -56,7 +56,7 @@ export const ClassCard = ({
     if (student?.uuid && uuid) {
       enrollStudent.mutate(
         {
-          body: { scheduled_instance_uuid: uuid, student_uuid: student?.uuid },
+          body: { class_definition_uuid: uuid, student_uuid: student?.uuid },
         },
         {
           onSuccess: data => {

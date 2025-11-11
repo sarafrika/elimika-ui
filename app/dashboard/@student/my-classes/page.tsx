@@ -2,12 +2,13 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useStudent } from '@/context/student-context';
+import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { BookOpen, Filter, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useStudent } from '../../../../context/student-context';
-import useStudentClassDefinitions from '../../../../hooks/use-student-class-definition';
+import { useEffect, useState } from 'react';
+import { CustomLoadingState } from '../../@course_creator/_components/loading-state';
 import EnrollCourseCard from '../../_components/enroll-course-card';
 
 export default function MyClassesPage() {
@@ -16,6 +17,18 @@ export default function MyClassesPage() {
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const student = useStudent();
+
+  const { replaceBreadcrumbs } = useBreadcrumb();
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+      {
+        id: 'my-classes',
+        title: 'My Classes',
+        url: '/dashboard/my-classes',
+      }
+    ]);
+  }, [replaceBreadcrumbs]);
 
   const { classDefinitions, isError, loading } = useStudentClassDefinitions(student);
   const classes = classDefinitions || [];
@@ -38,16 +51,7 @@ export default function MyClassesPage() {
 
   if (loading) {
     return (
-      <div className='flex flex-col gap-6 space-y-2'>
-        <Skeleton className='h-[150px] w-full' />
-
-        <div className='flex flex-row items-center justify-between gap-4'>
-          <Skeleton className='h-[250px] w-2/3' />
-          <Skeleton className='h-[250px] w-1/3' />
-        </div>
-
-        <Skeleton className='h-[100px] w-full' />
-      </div>
+      <CustomLoadingState subHeading='Fetching your classes...' />
     );
   }
 
@@ -92,7 +96,8 @@ export default function MyClassesPage() {
               enrollmentPercentage={5}
               isFull={false}
               disableEnroll={true}
-              handleEnroll={() => {}}
+              handleEnroll={() => { }}
+              variant='minimal'
             />
           ))}
         </div>

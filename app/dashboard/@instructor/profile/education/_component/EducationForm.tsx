@@ -28,8 +28,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { InstructorEducation } from '@/services/api/schema';
 import { deleteInstructorEducation } from '@/services/client';
@@ -201,10 +201,11 @@ export default function EducationSettings() {
   }
 
   const domainBadges =
-    user?.user_domain?.map(domain =>
+    // @ts-ignore
+    user?.data?.user_domain?.map((domain: any) =>
       domain
         .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
 

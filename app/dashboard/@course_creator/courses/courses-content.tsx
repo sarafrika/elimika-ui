@@ -119,7 +119,12 @@ export default function CourseCreatorCoursesContent() {
                 <TableRow>
                   <TableHead className='w-[34%]'>Course</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Minimum training fee</TableHead>
+                  <TableHead>
+                    <div className='flex flex-col gap-0.5' >
+                      <p>Minimum training fee</p>
+                      <p>(per person per head)</p>
+                    </div>
+                  </TableHead>
                   <TableHead>Revenue split</TableHead>
                   <TableHead>Requirements</TableHead>
                   <TableHead>Last updated</TableHead>

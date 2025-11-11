@@ -1,18 +1,18 @@
 'use client';
 
+import ConfirmModal from '@/components/custom-modals/confirm-modal';
 import { Card } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import useBundledClassInfo from '@/hooks/use-course-classes';
+import {
+  enrollStudentMutation,
+  getStudentScheduleQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import ConfirmModal from '../../../../../../components/custom-modals/confirm-modal';
-import {
-  enrollStudentMutation,
-  getStudentScheduleQueryKey,
-} from '../../../../../../services/client/@tanstack/react-query.gen';
 import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
 import EnrollCourseCard from '../../../../_components/enroll-course-card';
 
@@ -64,7 +64,7 @@ const EnrollmentPage = () => {
                 path: { studentUuid: student?.uuid as string },
                 query: {
                   start: new Date('2025-11-02'),
-                  end: new Date('2025-12-19'),
+                  end: new Date('2026-12-19'),
                 },
               }),
             });

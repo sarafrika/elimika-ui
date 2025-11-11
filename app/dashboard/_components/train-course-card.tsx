@@ -11,7 +11,7 @@ import {
   getCourseCreatorByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Clock, Heart, Play, Share, Star, Users } from 'lucide-react';
+import { BookOpen, CheckCircle2, Clock, Heart, Pencil, Play, Share, Star, Users, XCircle } from 'lucide-react';
 import Image from 'next/image';
 
 interface TrainCourseCardProps {
@@ -20,6 +20,7 @@ interface TrainCourseCardProps {
   applicationReviewNote?: string | null;
   handleClick: () => void;
   handleQuickApply: () => void;
+  handleReapplyToTrain: () => void
 }
 
 export function TrainCourseCard({
@@ -28,6 +29,7 @@ export function TrainCourseCard({
   applicationReviewNote,
   handleClick,
   handleQuickApply,
+  handleReapplyToTrain
 }: TrainCourseCardProps) {
   const getInitials = (name: string) => {
     return name
@@ -62,6 +64,19 @@ export function TrainCourseCard({
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const renderIcon = () => {
+    switch (applicationStatus) {
+      case 'approved':
+        return <CheckCircle2 className="w-4 h-4 text-emerald-600" />;
+      case 'pending':
+        return <Clock className="w-4 h-4 text-yellow-600" />;
+      case 'revoked':
+        return <XCircle className="w-4 h-4 text-rose-600" />;
+      default:
+        return <Pencil className="w-4 h-4 text-gray-500" />;
     }
   };
 
@@ -189,47 +204,67 @@ export function TrainCourseCard({
           )}
         </CardContent>
 
-        <div className='flex flex-col justify-end gap-2 self-end p-4'>
-          <Button
-            size='sm'
-            onClick={handleQuickApply}
-            disabled={!!applicationStatus && applicationStatus !== 'revoked'}
-            className={`border ${
-              applicationStatus === 'pending'
-                ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
-                : applicationStatus === 'approved'
-                  ? 'border-green-400 bg-green-50 text-green-800'
-                  : applicationStatus === 'revoked'
-                    ? 'border-red-400 bg-red-50 text-red-800'
-                    : 'border-gray-300 bg-white text-gray-800'
-            }`}
-          >
-            {applicationStatus
-              ? applicationStatus.charAt(0).toUpperCase() + applicationStatus.slice(1)
-              : 'Apply to train'}
-          </Button>
+        <div className="w-full flex flex-col items-start gap-3 p-4">
+          {/* Action button */}
+          <div className='w-full flex flex-row items-center justify-between gap-4' >
+            <Button
+              size="sm"
+              onClick={handleQuickApply}
+              disabled={!!applicationStatus && applicationStatus !== 'revoked'}
+              className={`
+      relative flex items-center gap-2 transition-all duration-200
+      border rounded-md font-medium
+      ${applicationStatus === 'pending'
+                  ? 'border-yellow-400 bg-yellow-50 text-yellow-900 hover:bg-yellow-100'
+                  : applicationStatus === 'approved'
+                    ? 'border-emerald-400 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+                    : applicationStatus === 'revoked'
+                      ? 'border-rose-400 bg-rose-50 text-rose-900 hover:bg-rose-100'
+                      : 'border-gray-300 bg-white text-gray-800 hover:bg-gray-50'}
+      disabled:opacity-60 disabled:cursor-not-allowed
+    `}
+            >
+              {renderIcon()}
+              {applicationStatus
+                ? `${applicationStatus.charAt(0).toUpperCase()}${applicationStatus.slice(1)}`
+                : 'Apply to Train'}
+            </Button>
 
+            {/* Secondary reapply button */}
+            {applicationStatus === 'revoked' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleReapplyToTrain}
+                className="
+        border-sky-400 text-sky-700 
+        hover:bg-sky-50 hover:text-sky-900 
+        transition-all duration-200
+      "
+              >
+                <Pencil className="w-4 h-4 mr-1" />
+                Reapply to Train
+              </Button>
+            )}
+
+          </div>
+          {/* Review note */}
           <span
-            className={`text-center text-sm ${
-              applicationStatus === 'pending'
+            className={`
+      text-xs text-center italic transition-colors duration-200
+      ${applicationStatus === 'pending'
                 ? 'text-yellow-800'
                 : applicationStatus === 'approved'
-                  ? 'text-green-800'
+                  ? 'text-emerald-800'
                   : applicationStatus === 'revoked'
-                    ? 'text-red-800'
-                    : 'text-muted-foreground'
-            }`}
+                    ? 'text-rose-800'
+                    : 'text-gray-500'}
+    `}
           >
-            {applicationReviewNote || 'Review note not provided'}
+            {applicationReviewNote || 'No review note provided'}
           </span>
-
-          {/* <Button
-            onClick={() => router.push(`/dashboard/apply-to-train/${course?.uuid}`)}
-            size='sm'
-          >
-            Apply to train
-          </Button> */}
         </div>
+
       </div>
     </div>
   );

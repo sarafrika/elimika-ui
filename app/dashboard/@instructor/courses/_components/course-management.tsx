@@ -18,9 +18,10 @@ import { ApplicantTypeEnum } from '@/services/client';
 import {
   getAllCoursesOptions,
   searchTrainingApplicationsOptions,
+  searchTrainingApplicationsQueryKey,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, Filter, Search, SortAsc, SortDesc } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
@@ -28,6 +29,7 @@ import { toast } from 'sonner';
 import { TrainCourseCard } from '../../../_components/train-course-card';
 
 export default function CourseMangementPage() {
+  const qc = useQueryClient()
   const router = useRouter();
   const instructor = useInstructor();
   const profile = useUserProfile();
@@ -37,6 +39,8 @@ export default function CourseMangementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [applyModal, setApplyModal] = useState(false);
   const [applyingCourseId, setApplyingCourseId] = useState<string | null>(null);
+  const [applyingCourse, setApplyingCourse] = useState<any | null>(null);
+
 
   const size = 20;
   const [page, setPage] = useState(0);
@@ -97,7 +101,11 @@ export default function CourseMangementPage() {
   }, [combinedCourses, searchQuery, statusFilter, sortOrder]);
 
   const applyToTrain = useMutation(submitTrainingApplicationMutation());
-  const handleApplyToTrain = (notes: string) => {
+  const handleApplyToTrain = (data: {
+    notes: string;
+    rate_per_hour_per_head: number;
+    rate_currency: string;
+  }) => {
     if (!applyingCourseId) return;
 
     applyToTrain.mutate(
@@ -105,12 +113,17 @@ export default function CourseMangementPage() {
         body: {
           applicant_type: profile?.activeDomain as ApplicantTypeEnum,
           applicant_uuid: instructor?.uuid as string,
-          application_notes: notes,
+          application_notes: data?.notes,
+          rate_per_hour_per_head: data?.rate_per_hour_per_head,
+          rate_currency: data?.rate_currency
         },
         path: { courseUuid: applyingCourseId },
       },
       {
         onSuccess: data => {
+          qc.invalidateQueries({
+            queryKey: searchTrainingApplicationsQueryKey({ query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } } }),
+          });
           toast.success(data?.message);
           setApplyModal(false);
         },
@@ -193,6 +206,11 @@ export default function CourseMangementPage() {
               handleQuickApply={() => {
                 setApplyModal(true);
                 setApplyingCourseId(course?.uuid as string);
+                setApplyingCourse(course as any)
+              }}
+              handleReapplyToTrain={() => {
+                setApplyModal(true);
+                setApplyingCourseId(course?.uuid as string);
               }}
             />
           ))}
@@ -256,6 +274,7 @@ export default function CourseMangementPage() {
           cancelText='Cancel'
           placeholder='Enter your application notes here...'
           isLoading={applyToTrain.isPending}
+          minimum_rate={applyingCourse?.minimum_training_fee}
         />
       </div>
     </div>

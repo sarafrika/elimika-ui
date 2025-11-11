@@ -116,7 +116,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         intro_video_url: '',
         duration_hours: 0,
         duration_minutes: 1,
-        minimum_training_fee: initialValues?.minimum_training_fee ?? 0,
+        minimum_training_fee: 0,
         creator_share_percentage: 50,
         instructor_share_percentage: 50,
         revenue_share_notes: '',
@@ -377,7 +377,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       if (isFree) {
         form.setValue('price', 0);
         form.setValue('sale_price', 0);
-        form.setValue('minimum_training_fee', 0);
+        // form.setValue('minimum_training_fee', 0);
       }
     }, [isFree, form]);
 
@@ -526,7 +526,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 name='minimum_training_fee'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Minimum Training Fee</FormLabel>
+                    <FormLabel>Minimum Training Fee (per hour per head)</FormLabel>
                     <FormControl>
                       <Input type='number' min='0' step='0.01' {...field} />
                     </FormControl>

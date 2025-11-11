@@ -399,10 +399,10 @@ function LessonList({
                       </div>
 
                       <div className='text-muted-foreground flex items-center gap-4 text-sm'>
-                        <div className='flex items-center gap-1.5'>
+                        {/* <div className='flex items-center gap-1.5'>
                           <Clock className='h-4 w-4' />
                           <span>{getTotalDuration(lesson) / 60} hours</span>
-                        </div>
+                        </div> */}
 
                         <div className='flex items-center gap-1.5'>
                           <BookOpen className='h-4 w-4' />
@@ -1331,7 +1331,7 @@ function LessonContentForm({
                       {contentTypeData.map((value: any) => {
                         const Icon =
                           ContentTypeIcons[
-                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
                           ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
@@ -1626,7 +1626,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   return (
@@ -2244,5 +2244,6 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList,
+  LessonList
 };
+
