@@ -64,4 +64,9 @@ export async function fileToBinaryString(file: File) {
     .join('');
 }
 
-export const ELIMIKA_DASHBOARD_STORAGE_KEY = 'elimika-dashboard-view';
+const DASHBOARD_STORAGE_PREFIX = 'elimika-dashboard-view';
+
+export const getDashboardStorageKey = (identifier?: string) => {
+  const safeIdentifier = (identifier ?? 'default').toString().trim() || 'default';
+  return `${DASHBOARD_STORAGE_PREFIX}:${safeIdentifier}`;
+};

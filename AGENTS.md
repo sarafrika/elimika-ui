@@ -1,32 +1,198 @@
-# Repository Guidelines
+## Repository Coding & UI Implementation Guidelines  
+_Last updated: 2025-11-11_  
+_Applies to: all frontend engineers, designers, and fullstack agents contributing to the platform_
 
-## Project Structure & Module Organization
-- Next.js routes and server components live in `app/`; shared UI primitives sit in `components/` with registry metadata in `components.json`.
-- Domain logic stays in `services/` and `lib/`; global state goes to `store/`, React contexts to `context/`, and Tailwind layers to `styles/`.
-- Static assets go in `public/`, richer brand imagery in `assets/`, and Docker resources in `docker/`; copy env templates from `env.example`.
+---
 
-## Build, Test, and Development Commands
-- `pnpm install` syncs dependencies (project standardizes on `pnpm@10.15.0`).
-- `pnpm dev` launches the Turbopack Next server; supply secrets via `.env.local`.
-- `pnpm build` produces the production bundle; pair with `pnpm start` to verify the output.
-- `pnpm lint` runs ESLint and `pnpm format` applies Prettier with Tailwind sorting; use both before committing.
-- `pnpm openapi-ts` regenerates the typed API client defined in `openapi-ts.config.ts`; run after schema changes land.
+## 🔧 Project Structure & Module Organization
 
-## Coding Style & Naming Conventions
-- TypeScript is the default; favor small composable components and hooks scoped to their feature directories.
-- Prettier enforces two-space indentation, single quotes, and Tailwind class sorting (`prettier-plugin-tailwindcss`).
-- ESLint blocks `console.*`; component files use `PascalCase`, hooks use `useCamelCase.ts`, and utilities live in `lib/foo.ts`.
+- **Routing and Pages**:  
+  Use the Next.js App Router (`/app/`) with layout-based structure per domain or user role. Group routes under `/(student)/`, `/(admin)/`, `/(instructor)/`, etc., to enable contextual layouts and navigation.
 
-## Testing Guidelines
-- Automated browser testing is currently unconfigured; coordinate with the team before introducing new suites or tooling.
+  Example:
+  ```
+  app/
+    (student)/
+      dashboard/
+      courses/
+    (admin)/
+      dashboard/
+      users/
+  ```
 
-## Commit & Pull Request Guidelines
-- Follow the short `type: summary` convention from history (e.g., `ft: availability calendar fixes`); keep subjects under 72 characters.
-- Pair every commit with a detailed body describing what changed and why; avoid single-line commits without context.
-- Reference related issues or product requirements, summarize user impact, and include screenshots or recordings for UI changes.
-- Confirm `pnpm lint`, `pnpm format`, and `pnpm openapi-ts` (when API contracts shift) succeed before requesting review.
+- **UI Primitives**:  
+  All base components (e.g., buttons, cards, forms) live in `/components/ui/`. Register them in `components.json` for project-wide consistency.
 
-## Security & Configuration Tips
-- Never commit `.env.local`; derive new env vars from `env.example` and document defaults or secrets in the PR.
-- Validate auth changes under `app/(auth)/` against the staging NextAuth provider before merging.
-- Docker compose profiles in `docker/` assume local SSL; flag port or domain deviations in your PR notes.
+- **State & Logic**:
+  - Global state: `/store/`
+  - React contexts: `/context/`
+  - Services (API logic): `/services/`
+  - Utilities: `/lib/`
+
+- **Assets & Config**:
+  - Static assets: `/public/`
+  - Branded illustrations/images: `/assets/`
+  - Tailwind + Theme configs: `/styles/`
+  - Docker files: `/docker/`
+  - Environment templates: `/env.example`
+
+---
+
+## ⚙️ Build, Test, and Development
+
+| Task                 | Command                        |
+|----------------------|--------------------------------|
+| Install deps         | `pnpm install` (requires `pnpm@10.15.0`) |
+| Start dev server     | `pnpm dev`                     |
+| Build prod bundle    | `pnpm build && pnpm start`     |
+| Format & Lint        | `pnpm format` and `pnpm lint`  |
+| Regenerate API client| `pnpm openapi-ts`              |
+
+---
+
+## 🎨 UI & Design System Conventions
+
+### Themes
+
+- Supports light, dark, and system preferences.
+- Colors, typography, spacing defined in `design-system.ts` and Tailwind config.
+- Primary color: **Elimika Blue `#0061ED`**, avoid default Tailwind purples or raw Tailwind palettes.
+- Decorative gradients are **light-mode only**. Wrap gradient layers with `dark:hidden` (or equivalent) so dark/system themes fall back to solid surfaces that respect `bg-background`.
+
+### Design Tokens
+
+| Token            | Use                              |
+|------------------|-----------------------------------|
+| `--card-bg`      | Surface backgrounds               |
+| `--accent`       | Primary brand accent              |
+| `--radius`       | Corner rounding (e.g. `28px`)     |
+| `--section-gap`  | Vertical spacing between sections |
+
+Use only standardized utility generators like `getCardClasses()`, not custom values.
+
+### Components
+
+- Built on `shadcn/ui` primitives. Use these for buttons, forms, alerts, modals, tabs, etc.
+- Extend existing components instead of creating new variants.
+- Use `react-hook-form` + `zod` with consistent error display and layout.
+- Shared UI helpers (e.g., `BrandPill`, `ProfileFormShell`, sidebar primitives) must be reused before creating bespoke markup.
+
+---
+
+## 🧭 Layout & Navigation Patterns
+
+- **Sidebar + Topbar Layout**:
+  - Sidebar shows role-specific items (configured in `lib/menu.ts`)
+  - Topbar includes logo, breadcrumb, profile menu, and theme/role switcher
+
+- **Role-based Dashboards**:
+  - Student: enrolled courses, upcoming tasks, timetable
+  - Instructor: teaching schedule, grading tools, lesson editor
+  - Admin: user management, analytics, content moderation
+
+- **Breadcrumbs**:
+  - Set using `useBreadcrumb()` in all routes
+  - Appears below topbar if page depth > 1
+
+---
+
+## 🧱 Component Styling Rules
+
+- **Spacing**: Use Tailwind spacing utilities tied to token scale (`p-6`, `gap-4`)
+- **Cards**: Apply `bg-card`, `rounded-xl`, `shadow-md` from shared utils
+- **Icons**: Use Lucide icons only, sized consistently
+- **Typography**: Scale ranges from `text-sm` to `text-3xl` based on design system
+- **Badges**: Use `<Badge variant="success" />`, no manual styling
+- **Loading states**: Prefer `<Skeleton>` (shadcn) or existing skeleton components. Avoid bespoke spinners/loaders unless a screen already uses them for a specific interaction.
+
+---
+
+## 🌙 Theme Modes & Color Rules
+
+- Implemented via `next-themes` using Tailwind `dark:` variants and CSS vars
+- Light and dark styles must match design system tokens
+- **Never** use hardcoded hex values or Tailwind color utilities (`text-blue-600`, `bg-gray-50`, etc.) in `app/**` or `components/**`. Always derive colors from CSS tokens (`text-foreground`, `bg-card`, `text-primary`, etc.).
+- `pnpm lint` runs `scripts/check-brand-colors.mjs` to enforce palette usage. Fix violations instead of disabling rules.
+
+---
+
+## 🔌 API Integration (HeyAPI + React Query)
+
+- Use OpenAPI-generated query functions only:
+
+  ```ts
+  const { data } = useQuery({
+    ...getClassOptions({ path: { id } }),
+  });
+  ```
+
+- No raw fetch calls permitted
+- After schema changes, run:
+  ```bash
+  pnpm openapi-ts
+  ```
+
+- Use `<Skeleton>` components for loading, `<ErrorMessage />` for failures
+- API results are cached and revalidated with TanStack Query
+
+---
+
+## 📦 Coding Style & File Naming
+
+- TypeScript required
+- File naming conventions:
+  - Components: `PascalCase.tsx`
+  - Hooks: `useThing.ts`
+  - Utils: `lib/thing.ts`
+- ESLint blocks all `console.*`; use `logger.ts` if needed
+
+---
+
+## ✅ Commit & PR Protocol
+
+- Use `type: short summary` format:
+  ```
+  ft: add student dashboard
+  fix: patch broken auth redirect
+  chore: update dependencies
+  ```
+
+- Subject <72 chars, body explains rationale, links issues
+- Include screenshots or videos for UI changes
+- Ensure the following pass before pushing:
+  ```
+  pnpm lint
+  pnpm format
+  pnpm openapi-ts
+  ```
+
+---
+
+## 🧪 Testing
+
+- No E2E/browser testing yet; coordinate before adding new tooling
+- Manually test:
+  - Both themes (light/dark)
+  - Mobile breakpoints
+  - Async loading and skeleton states
+  - Navigation across roles
+
+---
+
+## 🔐 Security & Secrets
+
+- Never commit `.env.local`  
+- Derive all new env vars from `env.example`  
+- Note new secrets and config requirements in PR descriptions  
+- Test auth changes under `app/(auth)/` on staging before merge  
+
+---
+
+## 📚 References
+
+- Design system: `design-system.ts`
+- API SDK config: `openapi-ts.config.ts`
+- Navigation: `lib/menu.ts`, `app/(role)/layout.tsx`
+- Shared components: `components/ui/`
+- Breadcrumbs: `context/breadcrumb.tsx`
+- Loading UX: `components/skeleton/`

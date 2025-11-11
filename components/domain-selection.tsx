@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserDomain } from '@/lib/types';
 import { BookOpen, GraduationCap, Sparkles, Users } from 'lucide-react';
+import { BrandPill } from '@/components/ui/brand-pill';
 import { useState } from 'react';
 
 interface DomainSelectionProps {
@@ -17,49 +18,49 @@ const domainConfig = {
     icon: BookOpen,
     title: 'Student Dashboard',
     description: 'Access your courses, assignments, and academic progress.',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-    borderColor: 'border-blue-200 dark:border-blue-800',
+    color: 'text-primary',
+    bgColor: 'bg-primary/10 dark:bg-primary/15',
+    borderColor: 'border-primary/30 dark:border-primary/30',
   },
   instructor: {
     icon: GraduationCap,
     title: 'Instructor Dashboard',
     description: 'Manage your classes, create content, and track student performance.',
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
-    borderColor: 'border-emerald-200 dark:border-emerald-800',
+    color: 'text-success',
+    bgColor: 'bg-success/10 dark:bg-success/20',
+    borderColor: 'border-success/30 dark:border-success/30',
   },
   course_creator: {
     icon: Sparkles,
     title: 'Course Creator Dashboard',
     description: 'Design, publish, and monetise your courses across Elimika.',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-    borderColor: 'border-purple-200 dark:border-purple-800',
+    color: 'text-accent',
+    bgColor: 'bg-accent/10 dark:bg-accent/20',
+    borderColor: 'border-accent/30 dark:border-accent/30',
   },
   organisation_user: {
     icon: Users,
     title: 'Organization Dashboard',
     description: 'Oversee institutional operations, users, and system administration.',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-    borderColor: 'border-purple-200 dark:border-purple-800',
+    color: 'text-accent',
+    bgColor: 'bg-accent/10 dark:bg-accent/20',
+    borderColor: 'border-accent/30 dark:border-accent/30',
   },
   organisation: {
     icon: Users,
     title: 'Organization Dashboard',
     description: 'Oversee institutional operations, users, and system administration.',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-    borderColor: 'border-purple-200 dark:border-purple-800',
+    color: 'text-accent',
+    bgColor: 'bg-accent/10 dark:bg-accent/20',
+    borderColor: 'border-accent/30 dark:border-accent/30',
   },
   admin: {
     icon: Users,
     title: 'Admin Dashboard',
     description: 'System administration and platform management.',
-    color: 'text-red-600',
-    bgColor: 'bg-red-50 dark:bg-red-900/20',
-    borderColor: 'border-red-200 dark:border-red-800',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10 dark:bg-destructive/20',
+    borderColor: 'border-destructive/30 dark:border-destructive/30',
   },
 } as const;
 
@@ -77,13 +78,16 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4 dark:from-slate-900 dark:to-slate-800'>
+    <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-secondary/40 p-4 dark:bg-background dark:bg-none'>
       <div className='w-full max-w-4xl'>
         <div className='mb-8 text-center'>
-          <h1 className='mb-2 text-3xl font-bold text-slate-900 dark:text-slate-100'>
+          <BrandPill className='mx-auto mb-4 normal-case tracking-[0.3em] text-xs'>
+            Dashboard selection
+          </BrandPill>
+          <h1 className='mb-2 text-3xl font-bold text-foreground'>
             Welcome back{userName ? `, ${userName}` : ''}!
           </h1>
-          <p className='text-lg text-slate-600 dark:text-slate-400'>
+          <p className='text-lg text-muted-foreground'>
             You have access to multiple dashboards. Choose which one you&apos;d like to enter.
           </p>
         </div>
@@ -102,7 +106,7 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
                 className={`cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg ${
                   isSelected
                     ? `ring-offset-background ring-2 ring-offset-2 ${config.borderColor} ${config.bgColor}`
-                    : 'hover:border-slate-300 dark:hover:border-slate-600'
+                    : 'hover:border-border'
                 }`}
                 onClick={() => handleDomainSelect(domain)}
               >
@@ -110,12 +114,12 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
                   <div className={`mx-auto mb-4 rounded-full p-3 ${config.bgColor}`}>
                     <Icon className={`h-8 w-8 ${config.color}`} />
                   </div>
-                  <CardTitle className='text-xl font-semibold text-slate-900 dark:text-slate-100'>
+                  <CardTitle className='text-xl font-semibold text-foreground'>
                     {config.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className='text-center leading-relaxed text-slate-600 dark:text-slate-400'>
+                  <CardDescription className='text-center leading-relaxed text-muted-foreground'>
                     {config.description}
                   </CardDescription>
                 </CardContent>
@@ -136,7 +140,7 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
         </div>
 
         <div className='mt-6 text-center'>
-          <p className='text-sm text-slate-500 dark:text-slate-500'>
+          <p className='text-sm text-muted-foreground'>
             You can switch between dashboards anytime from your profile menu.
           </p>
         </div>

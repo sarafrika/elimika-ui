@@ -110,11 +110,11 @@ export default function AddStudentProfileForm() {
       </div>
 
       <div className='mb-8 text-center'>
-        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100'>
-          <GraduationCap className='h-8 w-8 text-blue-600' />
+        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary'>
+          <GraduationCap className='h-8 w-8' />
         </div>
-        <h1 className='mb-2 text-3xl font-bold text-gray-900'>Add Student Profile</h1>
-        <p className='text-gray-600'>
+        <h1 className='text-foreground mb-2 text-3xl font-bold'>Add Student Profile</h1>
+        <p className='text-muted-foreground'>
           Set up your student profile - all fields are optional and can be completed later
         </p>
       </div>

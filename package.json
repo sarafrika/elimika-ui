@@ -7,7 +7,8 @@
     "build": "next build",
     "openapi-ts": "openapi-ts",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint && node scripts/check-brand-colors.mjs",
+    "lint:palette": "node scripts/check-brand-colors.mjs",
     "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\""
   },
   "dependencies": {

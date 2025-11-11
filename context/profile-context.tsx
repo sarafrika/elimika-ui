@@ -21,8 +21,8 @@ import {
 import { queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { ELIMIKA_DASHBOARD_STORAGE_KEY } from '../lib/utils';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { getDashboardStorageKey } from '../lib/utils';
 
 type DomainTypes = UserDomain;
 
@@ -59,28 +59,39 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
   );
 
   const [activeDomain, setActiveDomain] = useState<UserDomain | null>(null);
+  const storageIdentifier = data?.uuid ?? session?.user?.email ?? undefined;
+  const dashboardStorageKey = useMemo(
+    () => getDashboardStorageKey(storageIdentifier),
+    [storageIdentifier]
+  );
 
   // Update active domain when profile data changes
   useEffect(() => {
     if (data && !isError && data.user_domain && data.user_domain.length > 0) {
-      let defaultDomain = localStorage.getItem(ELIMIKA_DASHBOARD_STORAGE_KEY);
-      const domain = (defaultDomain || data.user_domain[0]) as UserDomain;
-      if (domain !== null) {
+      let persistedDomain: UserDomain | null = null;
+      if (typeof window !== 'undefined') {
+        const cachedDomain = localStorage.getItem(dashboardStorageKey) as UserDomain | null;
+        if (cachedDomain && data.user_domain.includes(cachedDomain)) {
+          persistedDomain = cachedDomain;
+        }
+      }
+      const domain = (persistedDomain ?? data.user_domain[0]) as UserDomain;
+      if (domain) {
         setActiveDomain(domain);
       }
     }
-  }, [data, isError]);
+  }, [data, isError, dashboardStorageKey]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       clearProfile();
       setActiveDomain(null);
       if (typeof window !== 'undefined') {
-        localStorage.removeItem(ELIMIKA_DASHBOARD_STORAGE_KEY);
+        localStorage.removeItem(dashboardStorageKey);
       }
       router.replace('/');
     }
-  }, [status]);
+  }, [status, dashboardStorageKey]);
 
   function clearProfile() {
     void qc.invalidateQueries({ queryKey: ['profile'] });
@@ -99,7 +110,7 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
         setActiveDomain: (domain: UserDomain) => {
           setActiveDomain(domain);
           if (typeof window !== 'undefined') {
-            localStorage.setItem(ELIMIKA_DASHBOARD_STORAGE_KEY, domain);
+            localStorage.setItem(dashboardStorageKey, domain);
           }
         },
         activeDomain,

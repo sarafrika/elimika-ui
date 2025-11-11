@@ -26,32 +26,32 @@ const domainConfig = {
   student: {
     icon: BookOpen,
     title: 'Student Dashboard',
-    color: 'text-blue-600',
+    color: 'text-primary',
   },
   instructor: {
     icon: GraduationCap,
     title: 'Instructor Dashboard',
-    color: 'text-emerald-600',
+    color: 'text-success',
   },
   course_creator: {
     icon: Sparkles,
     title: 'Course Creator Dashboard',
-    color: 'text-blue-600',
+    color: 'text-primary',
   },
   organisation_user: {
     icon: Users,
     title: 'Organization Dashboard',
-    color: 'text-blue-600',
+    color: 'text-primary',
   },
   organisation: {
     icon: Users,
     title: 'Organization Dashboard',
-    color: 'text-blue-600',
+    color: 'text-primary',
   },
   admin: {
     icon: Shield,
     title: 'Admin Dashboard',
-    color: 'text-red-600',
+    color: 'text-destructive',
   },
 } as const;
 
@@ -137,7 +137,7 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
             >
               <Icon className={`h-4 w-4 ${config.color}`} />
               <span>{config.title}</span>
-              {isActive && <div className='ml-auto h-2 w-2 rounded-full bg-blue-600' />}
+              {isActive && <div className='ml-auto h-2 w-2 rounded-full bg-primary' />}
             </DropdownMenuItem>
           );
         })}
