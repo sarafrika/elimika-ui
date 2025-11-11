@@ -103,6 +103,7 @@ Use only standardized utility generators like `getCardClasses()`, not custom val
 - **Icons**: Use Lucide icons only, sized consistently
 - **Typography**: Scale ranges from `text-sm` to `text-3xl` based on design system
 - **Badges**: Use `<Badge variant="success" />`, no manual styling
+- **Loading states**: Prefer `<Skeleton>` (shadcn) or existing skeleton components. Avoid bespoke spinners/loaders unless a screen already uses them for a specific interaction.
 
 ---
 
