@@ -3,6 +3,9 @@ import { defaultPaginationKeywords, defineConfig } from '@hey-api/openapi-ts';
 export default defineConfig({
   input: {
     path: 'https://api.elimika.sarafrika.com/v3/api-docs',
+    headers: {
+      accept: 'application/json',
+    },
     watch: true,
   },
   output: {
