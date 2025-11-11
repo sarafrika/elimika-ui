@@ -1,88 +1,69 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  Users,
-  Building2,
-  BookOpen,
-  Shield,
-  TrendingUp,
-  AlertCircle,
-  Activity,
-  UserCheck,
-} from 'lucide-react';
+import { Users, Building2, BookOpen, Shield, Activity, UserCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { AdminDashboardStats } from '@/services/client/types.gen';
+import { formatCount } from '@/lib/metrics';
 
 interface KPICardsProps {
-  statistics: any;
+  statistics?: AdminDashboardStats;
   isLoading: boolean;
 }
 
 export default function KPICards({ statistics, isLoading }: KPICardsProps) {
+  const userMetrics = statistics?.user_metrics;
+  const organizationMetrics = statistics?.organization_metrics;
+  const learningMetrics = statistics?.learning_metrics;
+  const adminMetrics = statistics?.admin_metrics;
+
   const kpis = [
     {
       title: 'Total Users',
-      value: statistics?.user_metrics?.total_users ?? 0,
+      value: formatCount(userMetrics?.total_users),
       icon: Users,
-      description: 'Registered users',
-      trend: '+5.2%',
-      trendUp: true,
+      description: 'Registered platform-wide users',
     },
     {
       title: 'Active Users (24h)',
-      value: statistics?.user_metrics?.active_users_24h ?? 0,
+      value: formatCount(userMetrics?.active_users_24h),
       icon: UserCheck,
-      description: 'Last 24 hours',
-      trend: '+12.3%',
-      trendUp: true,
+      description: 'Signed in during the last 24 hours',
     },
     {
-      title: 'New Users (7d)',
-      value: statistics?.user_metrics?.new_registrations_7d ?? 0,
-      icon: TrendingUp,
-      description: 'Last 7 days',
-      trend: '+8.1%',
-      trendUp: true,
+      title: 'New Registrations (7d)',
+      value: formatCount(userMetrics?.new_registrations_7d),
+      icon: Activity,
+      description: 'Accounts created in the past 7 days',
     },
     {
       title: 'Organizations',
-      value: statistics?.organization_metrics?.total_organizations ?? 0,
+      value: formatCount(organizationMetrics?.total_organizations),
       icon: Building2,
-      description: 'Total organizations',
-      trend: '+2.4%',
-      trendUp: true,
+      description: 'Organizations onboarded onto Elimika',
     },
     {
       title: 'Active Organizations',
-      value: statistics?.organization_metrics?.active_organizations ?? 0,
-      icon: Activity,
-      description: 'Currently active',
-      trend: '+1.8%',
-      trendUp: true,
+      value: formatCount(organizationMetrics?.active_organizations),
+      icon: CheckCircle2,
+      description: 'Organizations with active status',
     },
     {
-      title: 'Pending Approvals',
-      value: statistics?.organization_metrics?.pending_approvals ?? 0,
-      icon: AlertCircle,
-      description: 'Awaiting review',
-      trend: null,
-      trendUp: null,
+      title: 'Pending Organization Approvals',
+      value: formatCount(organizationMetrics?.pending_approvals),
+      icon: AlertTriangle,
+      description: 'Awaiting onboarding review',
       highlight: true,
     },
     {
       title: 'Total Courses',
-      value: statistics?.content_metrics?.total_courses ?? 0,
+      value: formatCount(learningMetrics?.total_courses ?? learningMetrics?.published_courses),
       icon: BookOpen,
-      description: 'Platform courses',
-      trend: '+15.7%',
-      trendUp: true,
+      description: 'Courses available across the platform',
     },
     {
       title: 'Total Admins',
-      value: statistics?.admin_metrics?.total_admins ?? 0,
+      value: formatCount(adminMetrics?.total_admins),
       icon: Shield,
-      description: 'System administrators',
-      trend: null,
-      trendUp: null,
+      description: 'System and organization administrators',
     },
   ];
 
@@ -118,14 +99,9 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{kpi.value.toLocaleString()}</div>
+            <div className='text-2xl font-bold'>{kpi.value}</div>
             <div className='flex items-center justify-between'>
               <p className='text-muted-foreground text-xs'>{kpi.description}</p>
-              {kpi.trend && (
-                <Badge variant={kpi.trendUp ? 'success' : 'destructive'} className='text-xs'>
-                  {kpi.trend}
-                </Badge>
-              )}
             </div>
           </CardContent>
         </Card>

@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
+import { toNumber } from '@/lib/metrics';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f97316', '#22d3ee'];
 
@@ -26,16 +27,6 @@ interface AnalyticsChartsProps {
   statistics?: AdminDashboardStats;
   isLoading: boolean;
 }
-
-const toNumber = (value?: bigint | number | string | null) => {
-  if (typeof value === 'bigint') return Number(value);
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isNaN(parsed) ? 0 : parsed;
-  }
-  return 0;
-};
 
 export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChartsProps) {
   const userMetrics = statistics?.user_metrics;

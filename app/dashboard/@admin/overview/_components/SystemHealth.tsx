@@ -4,9 +4,11 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle, AlertTriangle, Activity, Database, Clock, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import type { AdminDashboardStats } from '@/services/client/types.gen';
+import { formatCount } from '@/lib/metrics';
 
 interface SystemHealthProps {
-  statistics: any;
+  statistics?: AdminDashboardStats;
   isLoading: boolean;
 }
 
@@ -32,39 +34,46 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
   const performance = statistics?.system_performance;
   const overallHealth = statistics?.overall_health ?? 'healthy';
 
-  const healthStatus = {
+  const healthStatus: Record<
+    'healthy' | 'warning' | 'critical',
+    { color: 'success' | 'warning' | 'destructive'; icon: typeof CheckCircle; text: string }
+  > = {
     healthy: { color: 'success', icon: CheckCircle, text: 'Healthy' },
     warning: { color: 'warning', icon: AlertTriangle, text: 'Warning' },
     critical: { color: 'destructive', icon: AlertCircle, text: 'Critical' },
   };
 
-  const currentStatus =
-    healthStatus[overallHealth as keyof typeof healthStatus] || healthStatus.healthy;
+  const statusKey =
+    overallHealth === 'warning' || overallHealth === 'critical' ? overallHealth : 'healthy';
+  const currentStatus = healthStatus[statusKey];
 
   // Parse storage usage percentage
   const storageUsage = performance?.storage_usage
-    ? parseFloat(performance.storage_usage.replace('%', ''))
+    ? Number.parseFloat(performance.storage_usage.replace('%', ''))
     : 0;
 
   // Parse error rate percentage
   const errorRate = performance?.error_rate
-    ? parseFloat(performance.error_rate.replace('%', ''))
+    ? Number.parseFloat(performance.error_rate.replace('%', ''))
     : 0;
 
   const serverUptime = performance?.server_uptime
-    ? parseFloat(performance.server_uptime.replace('%', ''))
+    ? Number.parseFloat(performance.server_uptime.replace('%', ''))
     : 0;
 
   const averageResponseTime = performance?.average_response_time
-    ? parseFloat(performance.average_response_time.replace('%', ''))
+    ? Number.parseFloat(performance.average_response_time.replace('%', ''))
     : 0;
+  const adminMetrics = statistics?.admin_metrics;
+  const normalisePercent = (value: number) =>
+    Number.isFinite(value) ? Math.min(Math.max(value, 0), 100) : 0;
 
   return (
     <Card>
       <CardHeader>
         <div className='flex items-center justify-between'>
           <CardTitle>System Health</CardTitle>
-          <Badge variant={currentStatus.color as any} className='gap-1'>
+          <Badge variant={currentStatus.color} className='gap-1'>
             <currentStatus.icon className='h-3 w-3' />
             {currentStatus.text}
           </Badge>
@@ -80,7 +89,7 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
             </div>
             <span className='text-sm font-semibold'>{performance?.server_uptime ?? 'N/A'}</span>
           </div>
-          <Progress value={serverUptime} className='h-2' />
+          <Progress value={normalisePercent(serverUptime)} className='h-2' />
         </div>
 
         <Separator />
@@ -96,7 +105,7 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
               {performance?.average_response_time ?? 'N/A'}
             </span>
           </div>
-          <Progress value={averageResponseTime} className='h-2' />
+          <Progress value={normalisePercent(averageResponseTime)} className='h-2' />
         </div>
 
         <Separator />
@@ -111,9 +120,8 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
             <span className='text-sm font-semibold'>{performance?.error_rate ?? 'N/A'}</span>
           </div>
           <Progress
-            value={errorRate}
+            value={normalisePercent(errorRate)}
             className='h-2'
-            // @ts-ignore
             indicatorClassName={errorRate > 5 ? 'bg-destructive' : 'bg-success'}
           />
         </div>
@@ -129,7 +137,7 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
             </div>
             <span className='text-sm font-semibold'>{performance?.storage_usage ?? 'N/A'}</span>
           </div>
-          <Progress value={storageUsage} className='h-2' />
+          <Progress value={normalisePercent(storageUsage)} className='h-2' />
         </div>
 
         <Separator />
@@ -140,15 +148,19 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
           <div className='grid grid-cols-2 gap-4'>
             <div>
               <p className='text-muted-foreground text-xs'>Active Sessions</p>
-              <p className='text-lg font-bold'>
-                {statistics?.admin_metrics?.active_admin_sessions ?? 0}
-              </p>
+              <p className='text-lg font-bold'>{formatCount(adminMetrics?.active_admin_sessions)}</p>
             </div>
             <div>
               <p className='text-muted-foreground text-xs'>Actions Today</p>
-              <p className='text-lg font-bold'>
-                {statistics?.admin_metrics?.admin_actions_today ?? 0}
-              </p>
+              <p className='text-lg font-bold'>{formatCount(adminMetrics?.admin_actions_today)}</p>
+            </div>
+            <div>
+              <p className='text-muted-foreground text-xs'>System Admins</p>
+              <p className='text-lg font-bold'>{formatCount(adminMetrics?.system_admins)}</p>
+            </div>
+            <div>
+              <p className='text-muted-foreground text-xs'>Organisation Admins</p>
+              <p className='text-lg font-bold'>{formatCount(adminMetrics?.organization_admins)}</p>
             </div>
           </div>
         </div>

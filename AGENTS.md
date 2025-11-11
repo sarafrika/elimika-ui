@@ -22,6 +22,7 @@
 
 ## Commit & Pull Request Guidelines
 - Follow the short `type: summary` convention from history (e.g., `ft: availability calendar fixes`); keep subjects under 72 characters.
+- Pair every commit with a detailed body describing what changed and why; avoid single-line commits without context.
 - Reference related issues or product requirements, summarize user impact, and include screenshots or recordings for UI changes.
 - Confirm `pnpm lint`, `pnpm format`, and `pnpm openapi-ts` (when API contracts shift) succeed before requesting review.
 

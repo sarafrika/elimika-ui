@@ -359,6 +359,11 @@ export default {
       icon: PlusCircle,
     },
     {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: BookOpen,
+    },
+    {
       title: 'Instructors',
       url: '/dashboard/instructors',
       icon: Users,
@@ -372,6 +377,16 @@ export default {
       title: 'Users',
       url: '/dashboard/users',
       icon: UsersIcon,
+    },
+    {
+      title: 'Rubrics',
+      url: '/dashboard/rubrics',
+      icon: ClipboardList,
+    },
+    {
+      title: 'Moderation',
+      url: '/dashboard/moderation',
+      icon: ShieldCheck,
     },
     {
       title: 'Clases and Schedules',
