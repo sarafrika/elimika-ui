@@ -57,15 +57,19 @@ export function AdminDataTableToolbar({
             {filters?.map(filter => (
               <Select
                 key={filter.id}
-                value={filter.value}
-                onValueChange={filter.onValueChange}
+                value={filter.value || '__all__'}
+                onValueChange={value => filter.onValueChange(value === '__all__' ? '' : value)}
               >
                 <SelectTrigger className='w-[160px] whitespace-nowrap'>
                   <SelectValue placeholder={filter.label} />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value='__all__'>{filter.label}</SelectItem>
                   {filter.options.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem
+                      key={option.value}
+                      value={option.value || '__all__'}
+                    >
                       {option.label}
                     </SelectItem>
                   ))}
