@@ -56,7 +56,7 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
             </nav>
           </aside>
         )}
-        <div className='lg:auto flex-1 max-w-7xl'>{children}</div>
+        <div className='lg:auto flex-1 max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem]'>{children}</div>
       </div>
     </div>
   );

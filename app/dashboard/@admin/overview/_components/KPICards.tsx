@@ -2,7 +2,6 @@ import { Users, Building2, BookOpen, Shield, Activity, UserCheck, AlertTriangle,
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
-import { formatCount } from '@/lib/metrics';
 
 interface KPICardsProps {
   statistics?: AdminDashboardStats;
@@ -18,50 +17,50 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
   const kpis = [
     {
       title: 'Total Users',
-      value: formatCount(userMetrics?.total_users),
+      value: userMetrics?.total_users,
       icon: Users,
       description: 'Registered platform-wide users',
     },
     {
       title: 'Active Users (24h)',
-      value: formatCount(userMetrics?.active_users_24h),
+      value: userMetrics?.active_users_24h,
       icon: UserCheck,
       description: 'Signed in during the last 24 hours',
     },
     {
       title: 'New Registrations (7d)',
-      value: formatCount(userMetrics?.new_registrations_7d),
+      value: userMetrics?.new_registrations_7d,
       icon: Activity,
       description: 'Accounts created in the past 7 days',
     },
     {
       title: 'Organizations',
-      value: formatCount(organizationMetrics?.total_organizations),
+      value: organizationMetrics?.total_organizations,
       icon: Building2,
       description: 'Organizations onboarded onto Elimika',
     },
     {
       title: 'Active Organizations',
-      value: formatCount(organizationMetrics?.active_organizations),
+      value: organizationMetrics?.active_organizations,
       icon: CheckCircle2,
       description: 'Organizations with active status',
     },
     {
       title: 'Pending Organization Approvals',
-      value: formatCount(organizationMetrics?.pending_approvals),
+      value: organizationMetrics?.pending_approvals,
       icon: AlertTriangle,
       description: 'Awaiting onboarding review',
       highlight: true,
     },
     {
       title: 'Total Courses',
-      value: formatCount(learningMetrics?.total_courses ?? learningMetrics?.published_courses),
+      value: learningMetrics?.total_courses ?? learningMetrics?.published_courses,
       icon: BookOpen,
       description: 'Courses available across the platform',
     },
     {
       title: 'Total Admins',
-      value: formatCount(adminMetrics?.total_admins),
+      value: adminMetrics?.total_admins,
       icon: Shield,
       description: 'System and organization administrators',
     },

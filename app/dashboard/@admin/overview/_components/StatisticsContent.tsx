@@ -8,7 +8,6 @@ import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAdminActivityFeed } from '@/services/admin';
-import { zAdminDashboardStats } from '@/services/client/zod.gen';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
 import KPICards from './KPICards';
 import AnalyticsCharts from './AnalyticsCharts';
@@ -43,21 +42,30 @@ export default function StatisticsContent() {
     );
   }
 
-  const parsedStatistics = data?.data ? zAdminDashboardStats.safeParse(data.data) : undefined;
-  const validatedStatistics: AdminDashboardStats | undefined = parsedStatistics?.success
-    ? parsedStatistics.data
-    : undefined;
+  const statistics: AdminDashboardStats | undefined = data?.data;
 
   let lastUpdatedLabel: string | null = null;
-  if (validatedStatistics?.timestamp) {
+  if (statistics?.timestamp) {
     const timestamp =
-      validatedStatistics.timestamp instanceof Date
-        ? validatedStatistics.timestamp
-        : new Date(validatedStatistics.timestamp);
+      statistics.timestamp instanceof Date ? statistics.timestamp : new Date(statistics.timestamp);
 
     if (!Number.isNaN(timestamp.getTime())) {
       lastUpdatedLabel = formatDistanceToNow(timestamp, { addSuffix: true });
     }
+  }
+
+  if (!statistics && !isLoading) {
+    return (
+      <Alert className='flex flex-col items-start gap-3'>
+        <AlertCircle className='h-4 w-4' />
+        <div>
+          <AlertTitle>No statistics available</AlertTitle>
+          <AlertDescription>
+            We couldn&apos;t retrieve dashboard metrics right now. Please try again later.
+          </AlertDescription>
+        </div>
+      </Alert>
+    );
   }
 
   return (
@@ -78,24 +86,24 @@ export default function StatisticsContent() {
       </div>
 
       {/* KPI Cards */}
-      <KPICards statistics={validatedStatistics} isLoading={isLoading} />
+      <KPICards statistics={statistics} isLoading={isLoading} />
 
       {/* Analytics Charts & System Health */}
       <div className='grid gap-6 lg:grid-cols-3'>
         <div className='lg:col-span-2'>
-          <AnalyticsCharts statistics={validatedStatistics} isLoading={isLoading} />
+          <AnalyticsCharts statistics={statistics} isLoading={isLoading} />
         </div>
         <div className='lg:col-span-1'>
-          <SystemHealth statistics={validatedStatistics} isLoading={isLoading} />
+          <SystemHealth statistics={statistics} isLoading={isLoading} />
         </div>
       </div>
 
       {/* Expanded Metrics */}
-      <MetricsBreakdown statistics={validatedStatistics} isLoading={isLoading} />
+      <MetricsBreakdown statistics={statistics} isLoading={isLoading} />
 
       {/* Activity Feed */}
       <ActivityFeed
-        statistics={validatedStatistics}
+        statistics={statistics}
         events={activityFeed?.events ?? []}
         isLoading={isLoading}
         isEventsLoading={isActivityFeedLoading || isActivityFeedRefetching}

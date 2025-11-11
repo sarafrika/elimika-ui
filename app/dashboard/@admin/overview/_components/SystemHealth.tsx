@@ -5,7 +5,6 @@ import { CheckCircle, AlertTriangle, Activity, Database, Clock, AlertCircle } fr
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
-import { formatCount } from '@/lib/metrics';
 
 interface SystemHealthProps {
   statistics?: AdminDashboardStats;
@@ -148,19 +147,19 @@ export default function SystemHealth({ statistics, isLoading }: SystemHealthProp
           <div className='grid grid-cols-2 gap-4'>
             <div>
               <p className='text-muted-foreground text-xs'>Active Sessions</p>
-              <p className='text-lg font-bold'>{formatCount(adminMetrics?.active_admin_sessions)}</p>
+              <p className='text-lg font-bold'>{adminMetrics?.active_admin_sessions ?? '—'}</p>
             </div>
             <div>
               <p className='text-muted-foreground text-xs'>Actions Today</p>
-              <p className='text-lg font-bold'>{formatCount(adminMetrics?.admin_actions_today)}</p>
+              <p className='text-lg font-bold'>{adminMetrics?.admin_actions_today ?? '—'}</p>
             </div>
             <div>
               <p className='text-muted-foreground text-xs'>System Admins</p>
-              <p className='text-lg font-bold'>{formatCount(adminMetrics?.system_admins)}</p>
+              <p className='text-lg font-bold'>{adminMetrics?.system_admins ?? '—'}</p>
             </div>
             <div>
               <p className='text-muted-foreground text-xs'>Organisation Admins</p>
-              <p className='text-lg font-bold'>{formatCount(adminMetrics?.organization_admins)}</p>
+              <p className='text-lg font-bold'>{adminMetrics?.organization_admins ?? '—'}</p>
             </div>
           </div>
         </div>

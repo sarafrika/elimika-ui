@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
-import { formatCount, formatPercentage } from '@/lib/metrics';
+import { formatPercentage } from '@/lib/metrics';
 
 interface MetricsBreakdownProps {
   statistics?: AdminDashboardStats;
@@ -60,10 +60,10 @@ export default function MetricsBreakdown({ statistics, isLoading }: MetricsBreak
       title: 'User Overview',
       description: 'Platform-wide user engagement and acquisition.',
       metrics: [
-        { label: 'Total users', value: formatCount(userMetrics?.total_users) },
-        { label: 'Active past 24h', value: formatCount(userMetrics?.active_users_24h) },
-        { label: 'New registrations (7d)', value: formatCount(userMetrics?.new_registrations_7d) },
-        { label: 'Suspended accounts', value: formatCount(userMetrics?.suspended_accounts) },
+        { label: 'Total users', value: userMetrics?.total_users },
+        { label: 'Active past 24h', value: userMetrics?.active_users_24h },
+        { label: 'New registrations (7d)', value: userMetrics?.new_registrations_7d },
+        { label: 'Suspended accounts', value: userMetrics?.suspended_accounts },
       ],
     },
     {
@@ -71,24 +71,24 @@ export default function MetricsBreakdown({ statistics, isLoading }: MetricsBreak
       title: 'Learning Performance',
       description: 'Course and enrollment progression across Elimika.',
       metrics: [
-        { label: 'Published courses', value: formatCount(learningMetrics?.published_courses) },
-        { label: 'In review', value: formatCount(learningMetrics?.in_review_courses) },
-        { label: 'Drafts', value: formatCount(learningMetrics?.draft_courses) },
+        { label: 'Published courses', value: learningMetrics?.published_courses },
+        { label: 'In review', value: learningMetrics?.in_review_courses },
+        { label: 'Drafts', value: learningMetrics?.draft_courses },
         {
           label: 'Average course progress',
           value: formatPercentage(learningMetrics?.average_course_progress),
         },
         {
           label: 'Total enrollments',
-          value: formatCount(learningMetrics?.total_course_enrollments),
+          value: learningMetrics?.total_course_enrollments,
         },
         {
           label: 'Active enrollments',
-          value: formatCount(learningMetrics?.active_course_enrollments),
+          value: learningMetrics?.active_course_enrollments,
         },
         {
           label: 'New enrollments (7d)',
-          value: formatCount(learningMetrics?.new_course_enrollments_7d),
+          value: learningMetrics?.new_course_enrollments_7d,
         },
         {
           label: 'Average quality score',
@@ -103,23 +103,23 @@ export default function MetricsBreakdown({ statistics, isLoading }: MetricsBreak
       metrics: [
         {
           label: 'Verified instructors',
-          value: formatCount(complianceMetrics?.verified_instructors),
+          value: complianceMetrics?.verified_instructors,
         },
         {
           label: 'Pending instructor verification',
-          value: formatCount(complianceMetrics?.pending_instructor_verifications),
+          value: complianceMetrics?.pending_instructor_verifications,
         },
         {
           label: 'Expiring documents (30d)',
-          value: formatCount(complianceMetrics?.expiring_instructor_documents_30d),
+          value: complianceMetrics?.expiring_instructor_documents_30d,
         },
         {
           label: 'Verified course creators',
-          value: formatCount(complianceMetrics?.verified_course_creators),
+          value: complianceMetrics?.verified_course_creators,
         },
         {
           label: 'Pending course creator checks',
-          value: formatCount(complianceMetrics?.pending_course_creator_verifications),
+          value: complianceMetrics?.pending_course_creator_verifications,
         },
       ],
     },
@@ -128,17 +128,17 @@ export default function MetricsBreakdown({ statistics, isLoading }: MetricsBreak
       title: 'Commerce Snapshot',
       description: 'Orders and monetisation across the platform.',
       metrics: [
-        { label: 'Total orders', value: formatCount(commerceMetrics?.total_orders) },
-        { label: 'Orders last 30d', value: formatCount(commerceMetrics?.orders_last_30d) },
-        { label: 'Captured orders', value: formatCount(commerceMetrics?.captured_orders) },
-        { label: 'Unique customers', value: formatCount(commerceMetrics?.unique_customers) },
+        { label: 'Total orders', value: commerceMetrics?.total_orders },
+        { label: 'Orders last 30d', value: commerceMetrics?.orders_last_30d },
+        { label: 'Captured orders', value: commerceMetrics?.captured_orders },
+        { label: 'Unique customers', value: commerceMetrics?.unique_customers },
         {
           label: 'New customers (30d)',
-          value: formatCount(commerceMetrics?.new_customers_last_30d),
+          value: commerceMetrics?.new_customers_last_30d,
         },
         {
           label: 'Course purchases (30d)',
-          value: formatCount(commerceMetrics?.course_purchases_last_30d),
+          value: commerceMetrics?.course_purchases_last_30d,
         },
       ],
     },
@@ -149,19 +149,19 @@ export default function MetricsBreakdown({ statistics, isLoading }: MetricsBreak
       metrics: [
         {
           label: 'Notifications created (7d)',
-          value: formatCount(communicationMetrics?.notifications_created_7d),
+          value: communicationMetrics?.notifications_created_7d,
         },
         {
           label: 'Delivered (7d)',
-          value: formatCount(communicationMetrics?.notifications_delivered_7d),
+          value: communicationMetrics?.notifications_delivered_7d,
         },
         {
           label: 'Failed (7d)',
-          value: formatCount(communicationMetrics?.notifications_failed_7d),
+          value: communicationMetrics?.notifications_failed_7d,
         },
         {
           label: 'Pending delivery',
-          value: formatCount(communicationMetrics?.pending_notifications),
+          value: communicationMetrics?.pending_notifications,
         },
       ],
     },
@@ -170,21 +170,19 @@ export default function MetricsBreakdown({ statistics, isLoading }: MetricsBreak
       title: 'Timetabling Utilisation',
       description: 'Scheduling and attendance across instructor-led sessions.',
       metrics: [
-        { label: 'Sessions next 7d', value: formatCount(timetablingMetrics?.sessions_next_7d) },
-        { label: 'Sessions last 30d', value: formatCount(timetablingMetrics?.sessions_last_30d) },
+        { label: 'Sessions next 7d', value: timetablingMetrics?.sessions_next_7d },
+        { label: 'Sessions last 30d', value: timetablingMetrics?.sessions_last_30d },
         {
           label: 'Sessions completed (30d)',
-          value: formatCount(timetablingMetrics?.sessions_completed_last_30d),
+          value: timetablingMetrics?.sessions_completed_last_30d,
         },
         {
           label: 'Sessions cancelled (30d)',
-          value: formatCount(timetablingMetrics?.sessions_cancelled_last_30d),
+          value: timetablingMetrics?.sessions_cancelled_last_30d,
         },
         {
           label: 'Attendance (30d)',
-          value: `${formatCount(
-            timetablingMetrics?.attended_enrollments_last_30d
-          )} attended / ${formatCount(timetablingMetrics?.absent_enrollments_last_30d)} absent`,
+          value: `${timetablingMetrics?.attended_enrollments_last_30d ?? '—'} attended / ${timetablingMetrics?.absent_enrollments_last_30d ?? '—'} absent`,
         },
       ],
     },

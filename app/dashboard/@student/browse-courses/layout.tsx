@@ -17,7 +17,7 @@ export default function CoursesLayout({ children }: CoursesLayoutProps) {
       </div>
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
-        <div className='flex-1 lg:max-w-7xl'>{children}</div>
+        <div className='flex-1 lg:max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem]'>{children}</div>
       </div>
     </div>
   );

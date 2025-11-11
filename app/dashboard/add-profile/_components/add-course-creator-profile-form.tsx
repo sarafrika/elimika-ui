@@ -13,6 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
 import { createCourseCreator } from '@/services/client';
 import { zCourseCreator } from '@/services/client/zod.gen';
@@ -126,12 +127,13 @@ export default function AddCourseCreatorProfileForm() {
 
   if (user?.isLoading) {
     return (
-      <div className='mx-auto max-w-2xl p-6'>
-        <div className='flex h-64 items-center justify-center'>
-          <div className='flex animate-pulse flex-col items-center gap-3'>
-            <div className='h-12 w-12 rounded-full bg-muted' />
-            <div className='h-4 w-32 rounded bg-muted' />
-          </div>
+      <div className='mx-auto max-w-2xl space-y-4 p-6'>
+        <Skeleton className='h-4 w-24' />
+        <Skeleton className='h-8 w-56' />
+        <div className='space-y-3 rounded-3xl border border-border/60 bg-card/70 p-6 shadow-sm'>
+          <Skeleton className='h-5 w-1/2' />
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-3/4' />
         </div>
       </div>
     );
