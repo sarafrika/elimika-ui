@@ -142,17 +142,17 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
 
   // Keep all the styling classes
   const inputClasses =
-    'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white text-gray-900';
-  const labelClasses = 'block text-sm font-medium text-gray-700';
+    'mt-1 block w-full rounded-md border-border shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 bg-card text-foreground';
+  const labelClasses = 'block text-sm font-medium text-muted-foreground';
   const buttonPrimaryClasses =
     'inline-flex items-center justify-center rounded-md border border-transparent bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2';
   const buttonSecondaryClasses =
-    'inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1';
+    'inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1';
   const buttonDangerClasses =
-    'inline-flex items-center justify-center rounded-md border border-red-500 bg-transparent px-3 py-1.5 text-sm font-medium text-red-500 shadow-sm hover:bg-red-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1';
+    'inline-flex items-center justify-center rounded-md border border-destructive bg-transparent px-3 py-1.5 text-sm font-medium text-destructive shadow-sm hover:bg-destructive hover:text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-1';
   const cardBaseClasses = 'bg-white shadow-xl rounded-xl overflow-hidden';
   const cardContentClasses = 'p-6 sm:p-8';
-  const sectionTitleClasses = 'text-2xl font-semibold text-gray-800 mb-6';
+  const sectionTitleClasses = 'text-2xl font-semibold text-foreground mb-6';
   const addMoreButtonClasses =
     'inline-flex items-center text-sky-600 hover:text-sky-800 text-sm font-medium';
 

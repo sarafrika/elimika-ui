@@ -56,7 +56,8 @@ _Applies to: all frontend engineers, designers, and fullstack agents contributin
 
 - Supports light, dark, and system preferences.
 - Colors, typography, spacing defined in `design-system.ts` and Tailwind config.
-- Primary color: **Elimika Blue `#0061ED`**, avoid default Tailwind purples.
+- Primary color: **Elimika Blue `#0061ED`**, avoid default Tailwind purples or raw Tailwind palettes.
+- Decorative gradients are **light-mode only**. Wrap gradient layers with `dark:hidden` (or equivalent) so dark/system themes fall back to solid surfaces that respect `bg-background`.
 
 ### Design Tokens
 
@@ -74,6 +75,7 @@ Use only standardized utility generators like `getCardClasses()`, not custom val
 - Built on `shadcn/ui` primitives. Use these for buttons, forms, alerts, modals, tabs, etc.
 - Extend existing components instead of creating new variants.
 - Use `react-hook-form` + `zod` with consistent error display and layout.
+- Shared UI helpers (e.g., `BrandPill`, `ProfileFormShell`, sidebar primitives) must be reused before creating bespoke markup.
 
 ---
 
@@ -108,7 +110,8 @@ Use only standardized utility generators like `getCardClasses()`, not custom val
 
 - Implemented via `next-themes` using Tailwind `dark:` variants and CSS vars
 - Light and dark styles must match design system tokens
-- Do not use hardcoded hex or arbitrary Tailwind colors
+- **Never** use hardcoded hex values or Tailwind color utilities (`text-blue-600`, `bg-gray-50`, etc.) in `app/**` or `components/**`. Always derive colors from CSS tokens (`text-foreground`, `bg-card`, `text-primary`, etc.).
+- `pnpm lint` runs `scripts/check-brand-colors.mjs` to enforce palette usage. Fix violations instead of disabling rules.
 
 ---
 

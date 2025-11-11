@@ -92,7 +92,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
             description:
               'Access courses as a learner. Removing this profile detaches your student record.',
             icon: BookOpen,
-            accent: 'text-blue-600',
+            accent: 'text-primary',
             uuid,
             isLoading: studentRemoval.isPending,
             onRemove: () =>
@@ -112,7 +112,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
             description:
               'Teach courses and manage content. Removing this profile deletes your instructor record.',
             icon: Users,
-            accent: 'text-emerald-600',
+            accent: 'text-success',
             uuid,
             isLoading: instructorRemoval.isPending,
             onRemove: () =>
@@ -125,13 +125,13 @@ export default function ManageProfileActions({ className = '' }: { className?: s
         }
 
         const uuid = profile.courseCreator?.uuid;
-        return {
-          id: domain,
-          title: 'Course creator profile',
-          description:
-            'Design and publish courses. Removing this profile clears your creator data.',
-          icon: GraduationCap,
-          accent: 'text-indigo-600',
+          return {
+            id: domain,
+            title: 'Course creator profile',
+            description:
+              'Design and publish courses. Removing this profile clears your creator data.',
+            icon: GraduationCap,
+            accent: 'text-accent',
           uuid,
           isLoading: courseCreatorRemoval.isPending,
           onRemove: () =>

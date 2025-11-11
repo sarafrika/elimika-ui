@@ -26,23 +26,23 @@ export default function ErrorPage({
 
   return (
     <main
-      className='flex h-full w-full flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900'
+      className='flex h-full w-full flex-1 items-center justify-center bg-secondary/60 dark:bg-background'
       role='main'
       aria-label='Error page'
     >
-      <section className='flex w-full max-w-md flex-col items-center rounded-xl bg-white p-8 shadow-lg dark:bg-gray-800'>
+      <section className='flex w-full max-w-md flex-col items-center rounded-xl bg-card p-8 shadow-lg shadow-primary/10 dark:bg-card/90'>
         <div className='mb-4 animate-bounce text-5xl' aria-hidden='true'>
           <span role='img' aria-label='Error'>
             ❌
           </span>
         </div>
-        <h2 className='mb-2 text-2xl font-extrabold text-gray-800 dark:text-gray-100'>
+        <h2 className='mb-2 text-2xl font-extrabold text-foreground'>
           An Error Occurred
         </h2>
-        <p className='mb-2 text-center text-gray-600 dark:text-gray-300'>{message}</p>
+        <p className='mb-2 text-center text-muted-foreground'>{message}</p>
         {details && (
           <pre
-            className='mb-2 w-full overflow-x-auto rounded bg-red-50 p-2 text-xs text-red-400 dark:bg-gray-900'
+            className='mb-2 w-full overflow-x-auto rounded bg-destructive/10 p-2 text-xs text-destructive dark:bg-background'
             aria-label='Error details'
           >
             {details}
@@ -50,7 +50,7 @@ export default function ErrorPage({
         )}
         <button
           onClick={handleAction}
-          className='mt-4 rounded-lg bg-red-500 px-6 py-2 font-semibold text-white shadow transition-colors hover:bg-red-600 focus:ring-2 focus:ring-red-400 focus:outline-none'
+          className='mt-4 rounded-lg bg-destructive px-6 py-2 font-semibold text-destructive-foreground shadow transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive/40'
           autoFocus
         >
           {actionLabel}

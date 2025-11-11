@@ -44,7 +44,7 @@ export default function UserBadge({
       <Avatar>
         <AvatarImage src={user.profile_image_url} alt='@shadcn' />
         <AvatarFallback>
-          <div className='rounded-full bg-gray-300 p-3'>
+          <div className='rounded-full bg-secondary p-3 text-primary'>
             <UserIcon size={iconSize} />
           </div>
         </AvatarFallback>

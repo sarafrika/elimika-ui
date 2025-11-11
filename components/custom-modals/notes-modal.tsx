@@ -93,7 +93,7 @@ export default function NotesModal({
 
         {/* Notes Field */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Notes</label>
+          <label className="text-sm font-medium text-muted-foreground">Notes</label>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -104,10 +104,10 @@ export default function NotesModal({
 
         {userType === "instructor" && <>
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-muted-foreground">
               Rate per Hour (per Head).
             </label>
-            <p className="text-[12px] font-medium text-gray-700">
+            <p className="text-[12px] font-medium text-muted-foreground">
               Mimum trainig fee set by course creator is {minimum_rate} KES
             </p>
             <Input
@@ -121,7 +121,7 @@ export default function NotesModal({
 
           {/* Currency */}
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Currency</label>
+            <label className="text-sm font-medium text-muted-foreground">Currency</label>
             <Select value={currency} onValueChange={setCurrency}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select currency" />

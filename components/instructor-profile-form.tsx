@@ -169,11 +169,11 @@ export function InstructorProfileForm({
   };
 
   const buttonPrimaryClasses =
-    'inline-flex items-center justify-center rounded-md border border-transparent bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2';
+    'inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2';
   const buttonSecondaryClasses =
-    'inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1';
+    'inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1';
   const cardContentClasses = 'p-6 sm:p-8';
-  const sectionTitleClasses = 'text-2xl font-semibold text-gray-800 mb-6';
+  const sectionTitleClasses = 'text-2xl font-semibold text-foreground mb-6';
 
   return (
     <div className='bg-background flex min-h-screen flex-col px-4 py-8 sm:px-8 lg:px-16'>
@@ -717,7 +717,7 @@ export function InstructorProfileForm({
                 </TabsContent>
               </Tabs>
 
-              <div className='mt-8 flex justify-between border-t border-gray-200 pt-4'>
+              <div className='mt-8 flex justify-between border-t border-border pt-4'>
                 {tabOrder.indexOf(activeTab) > 0 ? (
                   <Button type='button' onClick={handlePrevious} className={buttonSecondaryClasses}>
                     Previous

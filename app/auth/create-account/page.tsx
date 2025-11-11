@@ -451,13 +451,20 @@ export default function CreateAccountPage() {
               sizes='(max-width: 1024px) 100vw, 40vw'
               priority
             />
-            <div className='absolute right-8 bottom-8'>
+            <div className='absolute right-8 bottom-8 flex items-center'>
               <Image
                 src='/logos/elimika/Elimika Logo Design-02.svg'
-                alt='Elimika Logo'
+                alt='Elimika logo'
                 width={120}
                 height={40}
-                className='opacity-90'
+                className='opacity-90 drop-shadow dark:hidden'
+              />
+              <Image
+                src='/logos/elimika/Elimika Logo Design-02-white.svg'
+                alt='Elimika logo in white'
+                width={120}
+                height={40}
+                className='hidden opacity-90 drop-shadow dark:block'
               />
             </div>
           </div>
