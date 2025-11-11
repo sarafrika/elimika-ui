@@ -128,9 +128,9 @@ export default function AddCourseCreatorProfileForm() {
     return (
       <div className='mx-auto max-w-2xl p-6'>
         <div className='flex h-64 items-center justify-center'>
-          <div className='flex animate-pulse flex-col items-center'>
-            <div className='mb-3 h-12 w-12 rounded-full bg-gray-200'></div>
-            <div className='h-4 w-32 rounded bg-gray-200'></div>
+          <div className='flex animate-pulse flex-col items-center gap-3'>
+            <div className='h-12 w-12 rounded-full bg-muted' />
+            <div className='h-4 w-32 rounded bg-muted' />
           </div>
         </div>
       </div>
@@ -141,11 +141,11 @@ export default function AddCourseCreatorProfileForm() {
     return (
       <div className='mx-auto max-w-2xl p-6'>
         <div className='flex h-64 flex-col items-center justify-center'>
-          <div className='mb-4 text-red-600'>
+          <div className='mb-4 text-destructive'>
             <GraduationCap className='h-16 w-16' />
           </div>
-          <h2 className='mb-2 text-xl font-semibold text-gray-900'>Unable to Load Profile</h2>
-          <p className='text-gray-600'>
+          <h2 className='text-foreground mb-2 text-xl font-semibold'>Unable to Load Profile</h2>
+          <p className='text-muted-foreground'>
             Please refresh the page or contact support if the issue persists.
           </p>
         </div>
@@ -167,11 +167,11 @@ export default function AddCourseCreatorProfileForm() {
       </div>
 
       <div className='mb-8 text-center'>
-        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100'>
-          <GraduationCap className='h-8 w-8 text-blue-600' />
+        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent/15 text-accent'>
+          <GraduationCap className='h-8 w-8' />
         </div>
-        <h1 className='mb-2 text-3xl font-bold text-gray-900'>Add Course Creator Profile</h1>
-        <p className='text-gray-600'>Complete your profile to start creating courses</p>
+        <h1 className='text-foreground mb-2 text-3xl font-bold'>Add Course Creator Profile</h1>
+        <p className='text-muted-foreground'>Complete your profile to start creating courses</p>
       </div>
 
       <Form {...form}>

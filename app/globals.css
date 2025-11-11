@@ -50,117 +50,150 @@
 }
 
 :root {
-  /* Updated colors to match Elimika blue */
-  --background: oklch(1 0 0); /* White */
-  --foreground: oklch(0.2 0.01 265); /* Dark gray for text */
-  --card: oklch(1 0 0); /* White */
-  --card-foreground: oklch(0.2 0.01 265); /* Dark gray */
-  --popover: oklch(1 0 0); /* White */
-  --popover-foreground: oklch(0.2 0.01 265); /* Dark gray */
+  color-scheme: light;
 
-  /* Elimika blue as primary color - #0061ED */
-  --primary: #0061ed; /* Elimika blue fallback */
-  --primary: oklch(0.527 0.2 258.4); /* Elimika blue #0061ED */
-  --primary-foreground: #ffffff; /* White fallback */
-  --primary-foreground: oklch(1 0 0); /* White text on blue */
+  /* Core Elimika palette */
+  --el-neutral-0: #ffffff;
+  --el-neutral-50: #f7f9fc;
+  --el-neutral-100: #eff2f8;
+  --el-neutral-200: #dde3ee;
+  --el-neutral-300: #c7cfe0;
+  --el-neutral-400: #a3aec4;
+  --el-neutral-500: #7b859f;
+  --el-neutral-600: #5c6276;
+  --el-neutral-700: #45495c;
+  --el-neutral-800: #2f3243;
+  --el-neutral-900: #1c1f2b;
+  --el-neutral-950: #0d1019;
 
-  --destructive: oklch(0.65 0.25 27);
-  --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.65 0.25 142);
-  --success-foreground: oklch(1 0 0);
-  --warning: oklch(0.8 0.15 85);
-  --warning-foreground: oklch(0.2 0.05 85);
-  --info: oklch(0.527 0.2 258.4); /* Elimika blue for info */
-  --info-foreground: oklch(1 0 0);
+  --el-brand-50: #eef4ff;
+  --el-brand-100: #dbe8ff;
+  --el-brand-200: #b8d1ff;
+  --el-brand-300: #8db5ff;
+  --el-brand-400: #5a92ff;
+  --el-brand-500: #1f74ff;
+  --el-brand-600: #0a63f5;
+  --el-brand-700: #0050d6;
+  --el-brand-800: #0f3da3;
+  --el-brand-900: #0f2b6b;
+  --el-brand-950: #07163b;
 
-  /* Light blue for secondary colors */
-  --secondary: oklch(0.92 0.03 250); /* Very light blue */
-  --secondary-foreground: oklch(0.2 0.01 265); /* Dark gray on light blue */
+  --el-highlight-50: #effdfb;
+  --el-highlight-100: #d0f7f0;
+  --el-highlight-200: #a4ede2;
+  --el-highlight-300: #71dfd3;
+  --el-highlight-400: #45c7c1;
+  --el-highlight-500: #1dafb0;
+  --el-highlight-600: #118d92;
+  --el-highlight-700: #136f73;
+  --el-highlight-800: #145659;
+  --el-highlight-900: #123f41;
+  --el-highlight-950: #072223;
 
-  --muted: oklch(0.95 0.02 250); /* Even lighter blue */
-  --muted-foreground: oklch(0.5 0.05 265); /* Medium gray */
+  --el-accent-azure: #5ad1ff;
+  --el-accent-iris: #816bff;
+  --el-accent-blush: #ff7dc4;
+  --el-accent-amber: #f5b649;
+  --el-accent-jade: #26d7a0;
 
-  /* Accent colors - slightly darker blue */
-  --accent: oklch(0.45 0.18 258.4); /* Slightly darker Elimika blue */
-  --accent-foreground: oklch(1 0 0); /* White */
+  --el-info-500: #3b82f6;
+  --el-success-500: #10c180;
+  --el-warning-500: #f97316;
+  --el-danger-500: #ef2f4b;
 
-  --border: oklch(0.9 0.03 250); /* Light blue border */
-  --input: oklch(0.9 0.03 250); /* Light blue input */
-  --ring: #0061ed; /* Elimika blue fallback */
-  --ring: oklch(0.527 0.2 258.4); /* Elimika blue for focus rings */
+  --radius: 0.75rem;
 
-  /* Chart colors */
-  --chart-1: oklch(0.527 0.2 258.4); /* Elimika blue */
-  --chart-2: oklch(0.6 0.15 220); /* Light blue */
-  --chart-3: oklch(0.65 0.12 200); /* Cyan-ish */
-  --chart-4: oklch(0.7 0.1 180); /* Teal-ish */
-  --chart-5: oklch(0.75 0.08 160); /* Green-ish */
+  --background: var(--el-neutral-50);
+  --foreground: var(--el-neutral-900);
+  --card: var(--el-neutral-0);
+  --card-foreground: var(--el-neutral-900);
+  --popover: var(--el-neutral-0);
+  --popover-foreground: var(--el-neutral-900);
 
-  --radius: 0.5rem; /* Slightly reduced radius */
+  --primary: var(--el-brand-600);
+  --primary-foreground: var(--el-neutral-0);
+  --secondary: color-mix(in oklch, var(--el-brand-50) 70%, white);
+  --secondary-foreground: var(--el-neutral-800);
+  --muted: color-mix(in oklch, var(--el-neutral-100) 75%, white);
+  --muted-foreground: var(--el-neutral-500);
+  --accent: var(--el-accent-azure);
+  --accent-foreground: var(--el-neutral-900);
 
-  /* Sidebar - using light gray like in the first image */
-  --sidebar: oklch(0.97 0.003 250); /* Light gray */
-  --sidebar-foreground: oklch(0.2 0.01 265); /* Dark gray text */
-  --sidebar-primary: oklch(0.527 0.2 258.4); /* Elimika blue for accents only */
-  --sidebar-primary-foreground: oklch(1 0 0); /* White */
-  --sidebar-accent: oklch(0.92 0.01 250); /* Light gray accent */
-  --sidebar-accent-foreground: oklch(0.2 0.01 265); /* Dark gray */
-  --sidebar-border: oklch(0.92 0.01 250); /* Light gray border */
-  --sidebar-ring: oklch(0.527 0.2 258.4); /* Elimika blue for focus */
+  --destructive: var(--el-danger-500);
+  --destructive-foreground: var(--el-neutral-0);
+  --success: var(--el-success-500);
+  --success-foreground: var(--el-neutral-0);
+  --warning: var(--el-warning-500);
+  --warning-foreground: var(--el-neutral-900);
+  --info: var(--el-info-500);
+  --info-foreground: var(--el-neutral-0);
+
+  --border: var(--el-neutral-200);
+  --input: var(--el-neutral-200);
+  --ring: var(--el-brand-500);
+
+  --chart-1: var(--el-brand-600);
+  --chart-2: var(--el-accent-azure);
+  --chart-3: var(--el-accent-amber);
+  --chart-4: var(--el-accent-iris);
+  --chart-5: var(--el-accent-jade);
+
+  --sidebar: color-mix(in oklch, var(--el-brand-50) 60%, white);
+  --sidebar-foreground: var(--el-neutral-800);
+  --sidebar-primary: var(--el-brand-600);
+  --sidebar-primary-foreground: var(--el-neutral-0);
+  --sidebar-accent: color-mix(in oklch, var(--el-brand-50) 40%, white);
+  --sidebar-accent-foreground: var(--el-neutral-700);
+  --sidebar-border: var(--el-neutral-200);
+  --sidebar-ring: var(--el-brand-500);
 }
 
 .dark {
-  --background: oklch(0.15 0.01 265); /* Very dark gray/black */
-  --foreground: oklch(0.98 0.005 250); /* Almost white */
-  --card: oklch(0.18 0.01 265); /* Dark gray */
-  --card-foreground: oklch(0.98 0.005 250); /* Almost white */
-  --popover: oklch(0.18 0.01 265); /* Dark gray */
-  --popover-foreground: oklch(0.98 0.005 250); /* Almost white */
+  color-scheme: dark;
 
-  /* Keep Elimika blue as primary, but slightly brighter in dark mode */
-  --primary: #1a73ff; /* Brighter blue fallback */
-  --primary: oklch(0.58 0.22 258.4); /* Brighter Elimika blue */
-  --primary-foreground: #ffffff; /* White fallback */
-  --primary-foreground: oklch(1 0 0); /* White text */
+  --background: var(--el-neutral-950);
+  --foreground: var(--el-neutral-50);
+  --card: color-mix(in oklch, var(--el-neutral-900) 90%, black);
+  --card-foreground: var(--el-neutral-50);
+  --popover: var(--el-neutral-900);
+  --popover-foreground: var(--el-neutral-50);
 
-  --secondary: oklch(0.25 0.05 264); /* Dark blue */
-  --secondary-foreground: oklch(0.98 0.005 250); /* Almost white */
+  --primary: var(--el-brand-400);
+  --primary-foreground: var(--el-neutral-950);
+  --secondary: color-mix(in oklch, var(--el-brand-900) 70%, black);
+  --secondary-foreground: var(--el-neutral-50);
+  --muted: color-mix(in oklch, var(--el-neutral-800) 60%, black);
+  --muted-foreground: var(--el-neutral-300);
+  --accent: var(--el-accent-iris);
+  --accent-foreground: var(--el-neutral-50);
 
-  --muted: oklch(0.25 0.05 264); /* Dark blue */
-  --muted-foreground: oklch(0.7 0.05 250); /* Lighter gray */
+  --destructive: color-mix(in oklch, var(--el-danger-500) 80%, black);
+  --destructive-foreground: var(--el-neutral-0);
+  --success: color-mix(in oklch, var(--el-success-500) 80%, black);
+  --success-foreground: var(--el-neutral-0);
+  --warning: color-mix(in oklch, var(--el-warning-500) 80%, black);
+  --warning-foreground: var(--el-neutral-950);
+  --info: color-mix(in oklch, var(--el-info-500) 85%, black);
+  --info-foreground: var(--el-neutral-0);
 
-  --accent: oklch(0.35 0.1 258.4); /* Medium-dark Elimika blue */
-  --accent-foreground: oklch(0.98 0.005 250); /* Almost white */
+  --border: color-mix(in oklch, var(--el-neutral-800) 85%, black);
+  --input: color-mix(in oklch, var(--el-neutral-800) 75%, black);
+  --ring: var(--el-brand-400);
 
-  --destructive: oklch(0.25 0.15 27);
-  --destructive-foreground: oklch(0.75 0.2 27);
-  --success: oklch(0.25 0.15 142);
-  --success-foreground: oklch(0.6 0.2 142);
-  --warning: oklch(0.35 0.15 65);
-  --warning-foreground: oklch(0.85 0.15 65);
-  --info: oklch(0.35 0.15 258.4); /* Elimika blue for info */
-  --info-foreground: oklch(0.85 0.15 258.4);
+  --chart-1: var(--el-brand-400);
+  --chart-2: var(--el-accent-iris);
+  --chart-3: var(--el-accent-amber);
+  --chart-4: var(--el-accent-jade);
+  --chart-5: var(--el-accent-blush);
 
-  --border: oklch(0.25 0.05 264); /* Dark blue */
-  --input: oklch(0.25 0.05 264); /* Dark blue */
-  --ring: oklch(0.58 0.22 258.4); /* Brighter Elimika blue */
-
-  /* Chart colors for dark mode */
-  --chart-1: oklch(0.58 0.22 258.4); /* Elimika blue */
-  --chart-2: oklch(0.65 0.15 220); /* Light blue */
-  --chart-3: oklch(0.7 0.18 60); /* Gold/orange */
-  --chart-4: oklch(0.65 0.25 300); /* Purple */
-  --chart-5: oklch(0.55 0.2 20); /* Red-orange */
-
-  /* Sidebar colors for dark mode - more subtle */
-  --sidebar: oklch(0.2 0.01 265); /* Dark gray */
-  --sidebar-foreground: oklch(0.98 0.005 250); /* Almost white */
-  --sidebar-primary: oklch(0.58 0.22 258.4); /* Elimika blue for accents only */
-  --sidebar-primary-foreground: oklch(0.98 0.005 250); /* Almost white */
-  --sidebar-accent: oklch(0.25 0.01 265); /* Slightly lighter dark gray */
-  --sidebar-accent-foreground: oklch(0.98 0.005 250); /* Almost white */
-  --sidebar-border: oklch(0.25 0.01 265); /* Slightly lighter dark gray */
-  --sidebar-ring: oklch(0.58 0.22 258.4); /* Elimika blue for focus */
+  --sidebar: color-mix(in oklch, var(--el-neutral-900) 70%, black);
+  --sidebar-foreground: var(--el-neutral-100);
+  --sidebar-primary: var(--el-brand-400);
+  --sidebar-primary-foreground: var(--el-neutral-950);
+  --sidebar-accent: color-mix(in oklch, var(--el-highlight-700) 65%, black);
+  --sidebar-accent-foreground: var(--el-neutral-50);
+  --sidebar-border: color-mix(in oklch, var(--el-neutral-800) 80%, black);
+  --sidebar-ring: var(--el-brand-400);
 }
 
 @layer base {

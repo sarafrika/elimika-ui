@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Nunito_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
+import { ThemeProvider } from '@/components/theme-provider';
 import { RootProviders } from '@/context/root-providers';
 
 const nunitoSans = Nunito_Sans({
@@ -20,18 +21,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'>
+    <html lang='en' suppressHydrationWarning>
       <body
         className={`${nunitoSans.className} antialiased min-h-screen bg-background text-foreground`}
       >
-        <div className='relative min-h-screen'>
-          <div className='pointer-events-none fixed inset-0 -z-20 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 transition-colors duration-500 dark:from-slate-950 dark:via-blue-950/40 dark:to-slate-950' />
-          <div className='pointer-events-none fixed inset-0 -z-30 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),_rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.25),_rgba(2,6,23,0))]' />
-          <RootProviders>
-            <div className='relative z-0 flex min-h-screen flex-col'>{children}</div>
-          </RootProviders>
-          <Toaster richColors />
-        </div>
+        <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+          <div className='relative min-h-screen'>
+            <div
+              aria-hidden='true'
+              className='pointer-events-none fixed inset-0 -z-20 transition-colors duration-500 dark:hidden'
+              style={{
+                background:
+                  'linear-gradient(135deg, color-mix(in oklch, var(--primary) 10%, var(--el-neutral-0)) 0%, color-mix(in oklch, var(--el-highlight-200) 35%, var(--el-neutral-0)) 100%)',
+              }}
+            />
+            <div
+              aria-hidden='true'
+              className='pointer-events-none fixed inset-0 -z-30 dark:hidden'
+              style={{
+                background:
+                  'radial-gradient(circle at 15% 0%, color-mix(in oklch, var(--primary) 28%, transparent) 0%, transparent 55%)',
+              }}
+            />
+            <RootProviders>
+              <div className='relative z-0 flex min-h-screen flex-col'>{children}</div>
+            </RootProviders>
+            <Toaster richColors />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,3 +1,5 @@
+import { elimikaPalette, elimikaThemeRoles } from '@/lib/theme/colors';
+
 /**
  * Elimika Design System
  *
@@ -13,6 +15,10 @@
  */
 
 export const elimikaDesignSystem = {
+  // Foundation color data
+  palette: elimikaPalette,
+  themeRoles: elimikaThemeRoles,
+
   // Spacing & Layout
   spacing: {
     section: 'space-y-8',

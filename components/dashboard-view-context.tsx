@@ -1,8 +1,8 @@
 'use client';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useUserProfile } from '../context/profile-context';
 import { UserDomain } from '../lib/types';
-import { ELIMIKA_DASHBOARD_STORAGE_KEY } from '../lib/utils';
+import { getDashboardStorageKey } from '../lib/utils';
 
 export const AvailableViews = ['student', 'admin', 'instructor', 'course_creator', 'organization'];
 const dashboardViews = [...AvailableViews] as const;
@@ -30,13 +30,17 @@ export function DashboardViewProvider({
   const [view, setViewState] = useState<DashboardView>(
     initialView ?? profile?.activeDomain ?? 'student'
   );
+  const dashboardStorageKey = useMemo(
+    () => getDashboardStorageKey(profile?.uuid ?? profile?.email ?? undefined),
+    [profile?.uuid, profile?.email]
+  );
 
   // Save to localStorage on change
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(ELIMIKA_DASHBOARD_STORAGE_KEY, view);
+      localStorage.setItem(dashboardStorageKey, view);
     }
-  }, [view]);
+  }, [view, dashboardStorageKey]);
 
   // Only allow switching to available views
   const setView = (v: DashboardView) => {

@@ -49,15 +49,15 @@ const defaultStyles = `
   }
 
   .html-text-preview blockquote {
-    border-left: 4px solid #ccc;
+    border-left: 4px solid var(--border);
     padding-left: 1em;
     margin: 1em 0;
-    color: #666;
+    color: var(--muted-foreground);
     font-style: italic;
   }
 
   .html-text-preview a {
-    color: #007bff;
+    color: var(--primary);
     text-decoration: underline;
   }
 `;

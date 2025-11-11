@@ -180,14 +180,14 @@ function Sidebar({
         {/* Menu Hamburger Icon */}
         <button
           onClick={() => setOpenMobile(true)}
-          className='fixed left-4 -top-1 z-50 my-3 flex h-8 w-8 items-center justify-center rounded-sm border border-gray-300 bg-gray-50 shadow-md transition hover:bg-gray-100 focus:ring-2 focus:ring-indigo-400 focus:outline-none'
+          className='fixed left-4 -top-1 z-50 my-3 flex h-8 w-8 items-center justify-center rounded-sm border border-border bg-secondary shadow-md transition hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-primary/60'
           aria-label='Open Sidebar'
         >
           <svg
             xmlns='http://www.w3.org/2000/svg'
             aria-hidden='true'
             role='img'
-            className='h-5 w-5 text-[#000]'
+            className='h-5 w-5 text-foreground'
             viewBox='0 0 24 24'
           >
             <path
@@ -481,7 +481,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+  'peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 after:pointer-events-none after:absolute after:inset-y-1 after:left-0 after:w-1 after:rounded-full after:bg-transparent data-[active=true]:after:bg-primary group-data-[collapsible=icon]:after:hidden data-[active=true]:shadow-[0_2px_12px_rgba(0,0,0,0.08)]',
   {
     variants: {
       variant: {
@@ -720,4 +720,3 @@ export {
   SidebarTrigger,
   useSidebar
 };
-

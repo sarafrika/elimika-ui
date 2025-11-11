@@ -3,6 +3,7 @@
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppBreadcrumb } from '@/components/ui/app-breadcrumb';
 import { DomainSwitcher } from '@/components/domain-switcher';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 // export default function DashboardTopBar({
 //   showToggle = true,
@@ -36,11 +37,12 @@ export default function DashboardTopBar({ showToggle = true }: { showToggle?: bo
       {!showToggle ? (
         !isMobile && <AppBreadcrumb />
       ) : (
-        <>
+        <div className='flex w-full items-center gap-3'>
           {!isMobile && <AppBreadcrumb />}
           <div className='flex-1' />
+          <ThemeSwitcher size='icon' />
           <DomainSwitcher />
-        </>
+        </div>
       )}
     </div>
   );
