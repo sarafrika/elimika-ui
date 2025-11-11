@@ -21,8 +21,8 @@ import {
 import { Input } from '@/components/ui/input';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { useMutation } from '@tanstack/react-query';
 import { Grip, PlusCircle, Trash2 } from 'lucide-react';
@@ -205,10 +205,11 @@ export default function ProfessionalExperienceSettings() {
   }
 
   const domainBadges =
-    user?.user_domain?.map(domain =>
+    // @ts-ignore
+    user?.data?.user_domain?.map((domain: any) =>
       domain
         .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
 

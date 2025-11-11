@@ -290,7 +290,7 @@ export function TrainingClassList({
                             <PenIcon className='mr-2 h-4 w-4' />
                             Edit Class
                           </DropdownMenuItem>
-                          <DropdownMenuItem
+                          {/* <DropdownMenuItem
                             onClick={() => onOpenTimetable?.(cls.uuid)}
                             className='flex w-full cursor-pointer items-center'
                           >
@@ -303,7 +303,7 @@ export function TrainingClassList({
                           >
                             <Calendar className='mr-2 h-4 w-4' />
                             Schedule Recurring
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => onDelete?.(cls.uuid)}
@@ -321,7 +321,7 @@ export function TrainingClassList({
                   <div className='space-y-4 p-5'>
                     {/* Title and Course */}
                     <div className='space-y-2'>
-                      <h3 className='line-clamp-2 transition-colors group-hover:text-blue-600'>
+                      <h3 className='line-clamp-1 transition-colors group-hover:text-blue-600'>
                         {cls?.title}
                       </h3>
                       <div className='text-muted-foreground flex items-center gap-2 text-sm'>
@@ -423,6 +423,8 @@ export function TrainingClassList({
                         </span>
                       </div>
                     </div>
+
+                    <Button>Invite Students</Button>
                   </div>
                 </div>
               </div>

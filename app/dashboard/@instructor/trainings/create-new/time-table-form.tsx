@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { createClassRecurrencePatternMutation } from '@/services/client/@tanstack/react-query.gen';
+import { useEffect } from 'react';
 
 interface TimetableFormProps {
   classId: string;
@@ -71,14 +72,15 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
     recurrence_type: recurrence?.recurrence_type || 'WEEKLY',
     interval_value: recurrence?.interval_value || 1,
     day_of_month: null,
-    end_date: (recurrenceEndDate as string) || '2025-12-31',
-    occurrence_count: recurrence?.occurrence_count || 43,
+    end_date: (recurrenceEndDate as string) || '2026-12-31',
+    occurrence_count: recurrence?.occurrence_count || 0,
   };
 
   const {
     control,
     handleSubmit,
     watch,
+    reset,
     setValue,
     formState: { errors },
   } = useForm<TimetableFormData>({
@@ -91,6 +93,32 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
     name: 'availability',
   });
 
+  useEffect(() => {
+    if (data) {
+      const recurrence = data?.recurrence ?? {};
+      const recurrenceEndDate = recurrence?.end_date
+        ? new Date(recurrence.end_date).toISOString().split("T")[0]
+        : "";
+
+      reset({
+        location_type: data?.location_type ?? "",
+        location: data?.location ?? "",
+        duration: data?.duration_minutes ?? "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        availability: daysOfWeek.map(day => ({
+          day: day.full,
+          enabled: false,
+          slots: [],
+        })),
+        recurrence_type: recurrence?.recurrence_type || "WEEKLY",
+        interval_value: recurrence?.interval_value || 1,
+        day_of_month: null,
+        end_date: recurrenceEndDate || "2026-12-31",
+        occurrence_count: recurrence?.occurrence_count || 0,
+      });
+    }
+  }, [data, reset]);
+
   const createTimetable = useMutation(createClassRecurrencePatternMutation());
 
   const toggleDay = (dayIndex: number) => {
@@ -100,7 +128,9 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
   };
 
   const onSubmit = (values: TimetableFormData) => {
-    const enabledDays = values.availability.filter(d => d.enabled).map(d => d.day.toUpperCase());
+    const enabledDays = values.availability
+      .filter(d => d.enabled)
+      .map(d => d.day.toUpperCase());
 
     const payload = {
       ...values,
@@ -115,9 +145,10 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
     };
 
     if (classId) {
+      // ✅ FIXED: pass the actual data forward
       onNext({
         response: null,
-        payload: {},
+        payload,
       });
     } else {
       createTimetable.mutate(
@@ -134,10 +165,11 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
     }
   };
 
+
   const handleNextStep = () => {
     onNext({
       response: null,
-      payload: {},
+      payload: { ...recurrence, data },
     });
   };
 
@@ -297,14 +329,11 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
       </Card>
 
       <div className='flex justify-end gap-4'>
-        {/* <Button variant="outline" onClick={onPrev}>
-          <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-        </Button> */}
         <Button type='submit'>Save & Continue</Button>
 
-        <Button type='button' variant='outline' onClick={handleNextStep}>
+        {/* <Button type='button' variant='outline' onClick={handleNextStep}>
           Next
-        </Button>
+        </Button> */}
       </div>
     </form>
   );

@@ -72,6 +72,8 @@ export const classSchema = z.object({
   max_participants: z.coerce.number().optional(),
   allow_waitlist: z.boolean().default(false),
   recurrence_pattern_uuid: z.string().optional(),
+  class_visibility: z.string().min(1, "class_visibility is required"),
+  session_format: z.string().min(1, "session_format is required"),
   is_active: z.boolean().default(false),
 });
 

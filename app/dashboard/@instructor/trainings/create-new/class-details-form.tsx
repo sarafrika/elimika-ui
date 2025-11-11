@@ -149,6 +149,8 @@ export default function ClassDetailsForm({
       max_participants: 0,
       recurrence_pattern_uuid: '',
       location_type: '',
+      class_visibility: 'PUBLIC',
+      session_format: 'GROUP',
       is_active: false,
     },
   });
@@ -589,6 +591,58 @@ export default function ClassDetailsForm({
                 </FormItem>
               )}
             />
+
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* CLASS VISIBILITY */}
+              <FormField
+                control={form.control}
+                name="class_visibility"
+                render={({ field }) => (
+                  <FormItem className="w-full flex-1">
+                    <FormLabel>Class Visibility</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select visibility" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PUBLIC">PUBLIC</SelectItem>
+                        <SelectItem value="PRIVATE">PRIVATE</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* SESSION FORMAT */}
+              <FormField
+                control={form.control}
+                name="session_format"
+                render={({ field }) => (
+                  <FormItem className="w-full flex-1">
+                    <FormLabel>Session Format</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select session format" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="GROUP">GROUP</SelectItem>
+                        <SelectItem value="PRIVATE">PRIVATE</SelectItem>
+                        <SelectItem value="HYBRID">HYBRID</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
 
             <FormField
               control={form.control}

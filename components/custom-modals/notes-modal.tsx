@@ -37,7 +37,8 @@ interface NotesModalProps {
   variant?: 'default' | 'destructive' | 'primary' | 'secondary';
   saveButtonProps?: React.ComponentProps<typeof Button>;
   cancelButtonProps?: React.ComponentProps<typeof Button>;
-  userType?: 'course_creator' | 'instructor'
+  userType?: 'course_creator' | 'instructor';
+  minimum_rate: any
 }
 
 export default function NotesModal({
@@ -53,7 +54,8 @@ export default function NotesModal({
   variant = 'default',
   saveButtonProps,
   cancelButtonProps,
-  userType = "instructor"
+  userType = "instructor",
+  minimum_rate
 }: NotesModalProps) {
   const [notes, setNotes] = useState('');
   const [ratePerHour, setRatePerHour] = useState<number | ''>(50);
@@ -103,8 +105,11 @@ export default function NotesModal({
         {userType === "instructor" && <>
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-700">
-              Rate per Hour (per Head)
+              Rate per Hour (per Head).
             </label>
+            <p className="text-[12px] font-medium text-gray-700">
+              Mimum trainig fee set by course creator is {minimum_rate} KES
+            </p>
             <Input
               type="number"
               min={0}
