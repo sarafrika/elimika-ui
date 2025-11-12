@@ -24,7 +24,7 @@ import {
 import { zUser } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { Loader2, Search, ShieldAlert, Users } from 'lucide-react';
+import { Loader2, Search, ShieldAlert } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
@@ -61,8 +61,6 @@ export type UserFormValues = z.infer<typeof userFormSchema>;
 
 export interface AdminUserWorkspaceProps {
   title: string;
-  description: string;
-  badgeLabel: string;
   fixedDomain?: string;
   searchPlaceholder?: string;
   emptyStateTitle?: string;
@@ -71,8 +69,6 @@ export interface AdminUserWorkspaceProps {
 
 export function AdminUserWorkspace({
   title,
-  description,
-  badgeLabel,
   fixedDomain,
   searchPlaceholder = 'Search by name, email, or username…',
   emptyStateTitle = 'No records match your filters',
@@ -128,9 +124,6 @@ export function AdminUserWorkspace({
   return (
     <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
       <UserListPanel
-        title={title}
-        description={description}
-        badgeLabel={badgeLabel}
         users={users}
         selectedUserId={selectedUserId}
         onSelect={handleSelectUser}
@@ -152,16 +145,14 @@ export function AdminUserWorkspace({
         showDomainFilter={!fixedDomain}
         searchPlaceholder={searchPlaceholder}
         isLoading={isLoading}
-        totalItems={totalItems}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
-        activeUsers={activeUsers}
         emptyStateTitle={emptyStateTitle}
         emptyStateDescription={emptyStateDescription}
       />
 
-      <UserDetailsPanel user={selectedUser} badgeLabel={badgeLabel} />
+      <UserDetailsPanel user={selectedUser} panelTitle={title} />
 
       <UserDetailSheet
         user={selectedUser}
@@ -173,9 +164,6 @@ export function AdminUserWorkspace({
 }
 
 interface UserListPanelProps {
-  title: string;
-  description: string;
-  badgeLabel: string;
   users: AdminUser[];
   selectedUserId: string | null;
   onSelect: (user: AdminUser) => void;
@@ -188,19 +176,14 @@ interface UserListPanelProps {
   showDomainFilter: boolean;
   searchPlaceholder: string;
   isLoading: boolean;
-  totalItems: number;
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  activeUsers: number;
   emptyStateTitle: string;
   emptyStateDescription: string;
 }
 
 function UserListPanel({
-  title,
-  description,
-  badgeLabel,
   users,
   selectedUserId,
   onSelect,
@@ -213,11 +196,9 @@ function UserListPanel({
   showDomainFilter,
   searchPlaceholder,
   isLoading,
-  totalItems,
   page,
   totalPages,
   onPageChange,
-  activeUsers,
   emptyStateTitle,
   emptyStateDescription,
 }: UserListPanelProps) {
@@ -285,57 +266,44 @@ function UserListPanel({
   };
 
   return (
-    <div className='border-border/60 flex w-full flex-col border-b bg-card/95 backdrop-blur lg:max-w-md lg:border-b-0 lg:border-r'>
-      <div className='border-border/60 border-b p-6'>
-        <Badge variant='outline' className='border-border/60 bg-muted/60 text-xs font-semibold uppercase tracking-wide'>
-          {badgeLabel}
-        </Badge>
-        <h1 className='mt-3 text-2xl font-semibold'>{title}</h1>
-        <p className='text-muted-foreground mt-1 text-sm'>{description}</p>
-
-        <div className='text-muted-foreground mt-6 flex flex-wrap gap-3 text-xs'>
-          <span className='rounded-full border px-3 py-1'>In view: {totalItems}</span>
-          <span className='rounded-full border px-3 py-1'>Active: {activeUsers}</span>
+    <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
+      <div className='space-y-4 border-b p-4'>
+        <div className='relative'>
+          <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
+          <Input
+            value={searchQuery}
+            onChange={event => onSearchChange(event.target.value)}
+            placeholder={searchPlaceholder}
+            className='pl-9'
+          />
         </div>
-
-        <div className='mt-6 space-y-3'>
-          <div className='relative'>
-            <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
-            <Input
-              value={searchQuery}
-              onChange={event => onSearchChange(event.target.value)}
-              placeholder={searchPlaceholder}
-              className='pl-9'
-            />
-          </div>
-          <div className='flex flex-col gap-3 sm:flex-row'>
-            <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-              <SelectTrigger className='bg-background/80'>
-                <SelectValue placeholder='Status' />
+        <div className='flex flex-col gap-2'>
+          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+            <SelectTrigger>
+              <SelectValue placeholder='Status' />
+            </SelectTrigger>
+            <SelectContent>
+              {statusFilterOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {showDomainFilter ? (
+            <Select value={domainFilter} onValueChange={onDomainFilterChange}>
+              <SelectTrigger>
+                <SelectValue placeholder='Domain' />
               </SelectTrigger>
               <SelectContent>
-                {statusFilterOptions.map(option => (
+                {domainFilterOptions.map(option => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {showDomainFilter ? (
-              <Select value={domainFilter} onValueChange={onDomainFilterChange}>
-                <SelectTrigger className='bg-background/80'>
-                  <SelectValue placeholder='Domain' />
-                </SelectTrigger>
-                <SelectContent>
-                  {domainFilterOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
 
@@ -348,7 +316,7 @@ function UserListPanel({
           Previous
         </Button>
         <div className='text-muted-foreground'>
-          Page {totalItems === 0 ? 0 : page + 1} / {totalPages}
+          Page {totalPages === 0 ? 0 : page + 1} / {totalPages}
         </div>
         <Button
           variant='ghost'
@@ -365,10 +333,10 @@ function UserListPanel({
 
 interface UserDetailsPanelProps {
   user: AdminUser | null;
-  badgeLabel: string;
+  panelTitle: string;
 }
 
-function UserDetailsPanel({ user, badgeLabel }: UserDetailsPanelProps) {
+function UserDetailsPanel({ user, panelTitle }: UserDetailsPanelProps) {
   const updateUser = useUpdateAdminUser();
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
@@ -404,18 +372,23 @@ function UserDetailsPanel({ user, badgeLabel }: UserDetailsPanelProps) {
   };
 
   return (
-    <div className='border-border/60 hidden w-full flex-col bg-card p-6 lg:flex lg:max-w-3xl lg:border-l'>
+    <div className='hidden flex-1 flex-col bg-card lg:flex'>
       {user ? (
         <>
-          <div className='flex items-start justify-between gap-4'>
+          <div className='border-b p-6'>
+            <h2 className='text-2xl font-semibold'>{panelTitle}</h2>
+            <p className='text-muted-foreground text-sm'>Moderate profile details and access</p>
+          </div>
+          <div className='flex items-start justify-between gap-4 border-b px-6 py-4'>
             <div>
-              <p className='text-xs uppercase tracking-wide text-muted-foreground'>{badgeLabel}</p>
-              <h2 className='mt-2 text-2xl font-semibold'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}</h2>
-              <p className='text-muted-foreground text-sm'>{user.email}</p>
+              <p className='text-sm font-semibold'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}</p>
+              <p className='text-muted-foreground text-xs'>{user.email}</p>
             </div>
             <Badge variant={user.active ? 'secondary' : 'outline'}>{user.active ? 'Active' : 'Inactive'}</Badge>
           </div>
-          <UserDetailsForm form={form} onSubmit={handleSubmit} isPending={updateUser.isPending} user={user} />
+          <div className='flex-1 overflow-y-auto px-6'>
+            <UserDetailsForm form={form} onSubmit={handleSubmit} isPending={updateUser.isPending} user={user} />
+          </div>
         </>
       ) : (
         <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
