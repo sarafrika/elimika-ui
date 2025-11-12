@@ -59,8 +59,7 @@ export function AdminDataTable<TData>({
 
   return (
     <Card className='border-border/50 overflow-hidden border shadow-sm'>
-      <CardHeader className='relative space-y-4 overflow-hidden'>
-        <div className='absolute inset-x-0 top-0 h-1 bg-primary' />
+      <CardHeader className='space-y-4'>
         <div className='flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between'>
           <div>
             <Badge variant='outline' className='border-primary/40 bg-primary/10 text-xs font-semibold uppercase tracking-wide'>
