@@ -24,7 +24,7 @@ import {
 import { zUser } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { Loader2, Search, ShieldAlert } from 'lucide-react';
+import { Loader2, ShieldAlert } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
@@ -62,7 +62,6 @@ export type UserFormValues = z.infer<typeof userFormSchema>;
 export interface AdminUserWorkspaceProps {
   title: string;
   fixedDomain?: string;
-  searchPlaceholder?: string;
   emptyStateTitle?: string;
   emptyStateDescription?: string;
 }
@@ -70,12 +69,10 @@ export interface AdminUserWorkspaceProps {
 export function AdminUserWorkspace({
   title,
   fixedDomain,
-  searchPlaceholder = 'Search by name, email, or username…',
   emptyStateTitle = 'No records match your filters',
   emptyStateDescription = 'Adjust search terms or filter selections to discover more entries.',
 }: AdminUserWorkspaceProps) {
   const [page, setPage] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [domainFilter, setDomainFilter] = useState<string>(fixedDomain ?? 'all');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -90,13 +87,9 @@ export function AdminUserWorkspace({
   const { data, isLoading } = useAdminUsers({
     page,
     size: 20,
-    search: searchQuery,
-    status: statusFilter,
-    domain: fixedDomain ?? domainFilter,
   });
 
   const users = useMemo(() => data?.items ?? [], [data?.items]);
-  const totalItems = data?.totalItems ?? 0;
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
 
   useEffect(() => {
@@ -112,8 +105,6 @@ export function AdminUserWorkspace({
   }, [data?.totalPages, page]);
 
   const selectedUser = users.find(user => user.uuid === selectedUserId) ?? null;
-  const activeUsers = useMemo(() => users.filter(user => user.active).length, [users]);
-
   const handleSelectUser = (user: AdminUser | null) => {
     setSelectedUserId(user?.uuid ?? null);
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
@@ -127,11 +118,6 @@ export function AdminUserWorkspace({
         users={users}
         selectedUserId={selectedUserId}
         onSelect={handleSelectUser}
-        searchQuery={searchQuery}
-        onSearchChange={value => {
-          setSearchQuery(value);
-          setPage(0);
-        }}
         statusFilter={statusFilter}
         onStatusFilterChange={value => {
           setStatusFilter((value as typeof statusFilter) || 'all');
@@ -143,7 +129,6 @@ export function AdminUserWorkspace({
           setPage(0);
         }}
         showDomainFilter={!fixedDomain}
-        searchPlaceholder={searchPlaceholder}
         isLoading={isLoading}
         page={page}
         totalPages={totalPages}
@@ -167,14 +152,11 @@ interface UserListPanelProps {
   users: AdminUser[];
   selectedUserId: string | null;
   onSelect: (user: AdminUser) => void;
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
   statusFilter: 'all' | 'active' | 'inactive';
   onStatusFilterChange: (value: string) => void;
   domainFilter: string;
   onDomainFilterChange: (value: string) => void;
   showDomainFilter: boolean;
-  searchPlaceholder: string;
   isLoading: boolean;
   page: number;
   totalPages: number;
@@ -187,14 +169,11 @@ function UserListPanel({
   users,
   selectedUserId,
   onSelect,
-  searchQuery,
-  onSearchChange,
   statusFilter,
   onStatusFilterChange,
   domainFilter,
   onDomainFilterChange,
   showDomainFilter,
-  searchPlaceholder,
   isLoading,
   page,
   totalPages,
@@ -202,6 +181,22 @@ function UserListPanel({
   emptyStateTitle,
   emptyStateDescription,
 }: UserListPanelProps) {
+  const filteredUsers = users.filter(user => {
+    if (statusFilter === 'active' && !user.active) return false;
+    if (statusFilter === 'inactive' && user.active) return false;
+    if (showDomainFilter && domainFilter !== 'all') {
+      const domains = Array.isArray(user.user_domain)
+        ? user.user_domain
+        : user.user_domain
+          ? [user.user_domain]
+          : [];
+      if (!domains.includes(domainFilter)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   const renderContent = () => {
     if (isLoading) {
       return Array.from({ length: 6 }).map((_, index) => (
@@ -212,7 +207,7 @@ function UserListPanel({
       ));
     }
 
-    if (users.length === 0) {
+    if (filteredUsers.length === 0) {
       return (
         <div className='flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/30 p-6 text-center'>
           <ShieldAlert className='mb-3 h-10 w-10 text-muted-foreground' />
@@ -222,7 +217,7 @@ function UserListPanel({
       );
     }
 
-    return users.map(user => (
+    return filteredUsers.map(user => (
       <button
         key={user.uuid ?? user.email}
         type='button'
@@ -267,16 +262,7 @@ function UserListPanel({
 
   return (
     <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
-      <div className='space-y-4 border-b p-4'>
-        <div className='relative'>
-          <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
-          <Input
-            value={searchQuery}
-            onChange={event => onSearchChange(event.target.value)}
-            placeholder={searchPlaceholder}
-            className='pl-9'
-          />
-        </div>
+      <div className='space-y-2 border-b p-4'>
         <div className='flex flex-col gap-2'>
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
             <SelectTrigger>
