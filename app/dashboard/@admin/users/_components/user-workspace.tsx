@@ -1,0 +1,682 @@
+'use client';
+
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
+import {
+  AdminUser,
+  useAdminUsers,
+  useUpdateAdminUser,
+} from '@/services/admin';
+import { zUser } from '@/services/client/zod.gen';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { Loader2, Search, ShieldAlert, Users } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm, UseFormReturn } from 'react-hook-form';
+import { z } from 'zod';
+import { toast } from 'sonner';
+
+const userFormSchema = z.object({
+  first_name: zUser.shape.first_name,
+  middle_name: zUser.shape.middle_name.optional(),
+  last_name: zUser.shape.last_name,
+  email: zUser.shape.email,
+  username: zUser.shape.username,
+  phone_number: zUser.shape.phone_number,
+  dob: zUser.shape.dob,
+  gender: zUser.shape.gender.optional(),
+  active: zUser.shape.active,
+});
+
+const statusFilterOptions = [
+  { label: 'All statuses', value: 'all' },
+  { label: 'Active only', value: 'active' },
+  { label: 'Inactive', value: 'inactive' },
+];
+
+const domainFilterOptions = [
+  { label: 'All domains', value: 'all' },
+  { label: 'Students', value: 'student' },
+  { label: 'Instructors', value: 'instructor' },
+  { label: 'Course creators', value: 'course_creator' },
+  { label: 'Administrators', value: 'admin' },
+  { label: 'Organisation users', value: 'organisation_user' },
+];
+
+export type UserFormValues = z.infer<typeof userFormSchema>;
+
+export interface AdminUserWorkspaceProps {
+  title: string;
+  description: string;
+  badgeLabel: string;
+  fixedDomain?: string;
+  searchPlaceholder?: string;
+  emptyStateTitle?: string;
+  emptyStateDescription?: string;
+}
+
+export function AdminUserWorkspace({
+  title,
+  description,
+  badgeLabel,
+  fixedDomain,
+  searchPlaceholder = 'Search by name, email, or username…',
+  emptyStateTitle = 'No records match your filters',
+  emptyStateDescription = 'Adjust search terms or filter selections to discover more entries.',
+}: AdminUserWorkspaceProps) {
+  const [page, setPage] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [domainFilter, setDomainFilter] = useState<string>(fixedDomain ?? 'all');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  useEffect(() => {
+    if (fixedDomain) {
+      setDomainFilter(fixedDomain);
+    }
+  }, [fixedDomain]);
+
+  const { data, isLoading } = useAdminUsers({
+    page,
+    size: 20,
+    search: searchQuery,
+    status: statusFilter,
+    domain: fixedDomain ?? domainFilter,
+  });
+
+  const users = useMemo(() => data?.items ?? [], [data?.items]);
+  const totalItems = data?.totalItems ?? 0;
+  const totalPages = Math.max(data?.totalPages ?? 1, 1);
+
+  useEffect(() => {
+    if (!selectedUserId && users.length > 0) {
+      setSelectedUserId(users[0]?.uuid ?? null);
+    }
+  }, [selectedUserId, users]);
+
+  useEffect(() => {
+    if (page >= (data?.totalPages ?? 1)) {
+      setPage(0);
+    }
+  }, [data?.totalPages, page]);
+
+  const selectedUser = users.find(user => user.uuid === selectedUserId) ?? null;
+  const activeUsers = useMemo(() => users.filter(user => user.active).length, [users]);
+
+  const handleSelectUser = (user: AdminUser | null) => {
+    setSelectedUserId(user?.uuid ?? null);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsSheetOpen(true);
+    }
+  };
+
+  return (
+    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+      <UserListPanel
+        title={title}
+        description={description}
+        badgeLabel={badgeLabel}
+        users={users}
+        selectedUserId={selectedUserId}
+        onSelect={handleSelectUser}
+        searchQuery={searchQuery}
+        onSearchChange={value => {
+          setSearchQuery(value);
+          setPage(0);
+        }}
+        statusFilter={statusFilter}
+        onStatusFilterChange={value => {
+          setStatusFilter((value as typeof statusFilter) || 'all');
+          setPage(0);
+        }}
+        domainFilter={domainFilter}
+        onDomainFilterChange={value => {
+          setDomainFilter(value || 'all');
+          setPage(0);
+        }}
+        showDomainFilter={!fixedDomain}
+        searchPlaceholder={searchPlaceholder}
+        isLoading={isLoading}
+        totalItems={totalItems}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        activeUsers={activeUsers}
+        emptyStateTitle={emptyStateTitle}
+        emptyStateDescription={emptyStateDescription}
+      />
+
+      <UserDetailsPanel user={selectedUser} badgeLabel={badgeLabel} />
+
+      <UserDetailSheet
+        user={selectedUser}
+        open={isSheetOpen && Boolean(selectedUser)}
+        onOpenChange={setIsSheetOpen}
+      />
+    </div>
+  );
+}
+
+interface UserListPanelProps {
+  title: string;
+  description: string;
+  badgeLabel: string;
+  users: AdminUser[];
+  selectedUserId: string | null;
+  onSelect: (user: AdminUser) => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  statusFilter: 'all' | 'active' | 'inactive';
+  onStatusFilterChange: (value: string) => void;
+  domainFilter: string;
+  onDomainFilterChange: (value: string) => void;
+  showDomainFilter: boolean;
+  searchPlaceholder: string;
+  isLoading: boolean;
+  totalItems: number;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  activeUsers: number;
+  emptyStateTitle: string;
+  emptyStateDescription: string;
+}
+
+function UserListPanel({
+  title,
+  description,
+  badgeLabel,
+  users,
+  selectedUserId,
+  onSelect,
+  searchQuery,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  domainFilter,
+  onDomainFilterChange,
+  showDomainFilter,
+  searchPlaceholder,
+  isLoading,
+  totalItems,
+  page,
+  totalPages,
+  onPageChange,
+  activeUsers,
+  emptyStateTitle,
+  emptyStateDescription,
+}: UserListPanelProps) {
+  const renderContent = () => {
+    if (isLoading) {
+      return Array.from({ length: 6 }).map((_, index) => (
+        <div key={`skeleton-${index}`} className='border-border/60 animate-pulse rounded-2xl border bg-muted/40 p-4'>
+          <div className='h-4 w-1/2 rounded bg-muted' />
+          <div className='mt-2 h-3 w-1/3 rounded bg-muted' />
+        </div>
+      ));
+    }
+
+    if (users.length === 0) {
+      return (
+        <div className='flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/30 p-6 text-center'>
+          <ShieldAlert className='mb-3 h-10 w-10 text-muted-foreground' />
+          <p className='text-sm font-medium'>{emptyStateTitle}</p>
+          <p className='text-muted-foreground text-xs'>{emptyStateDescription}</p>
+        </div>
+      );
+    }
+
+    return users.map(user => (
+      <button
+        key={user.uuid ?? user.email}
+        type='button'
+        className={cn(
+          'border-border/60 w-full rounded-2xl border bg-card p-4 text-left transition hover:border-primary/50 hover:bg-primary/5',
+          selectedUserId === user.uuid ? 'border-primary bg-primary/5' : undefined
+        )}
+        onClick={() => onSelect(user)}
+      >
+        <div className='flex items-start gap-3'>
+          <Avatar className='h-10 w-10'>
+            <AvatarFallback>
+              {user.first_name?.[0]}
+              {user.last_name?.[0]}
+            </AvatarFallback>
+          </Avatar>
+          <div className='flex-1'>
+            <div className='flex items-center justify-between gap-2'>
+              <div>
+                <p className='font-semibold leading-tight'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'Unnamed user'}</p>
+                <p className='text-muted-foreground text-xs'>{user.email}</p>
+              </div>
+              <Badge variant={user.active ? 'secondary' : 'outline'} className='text-xs'>
+                {user.active ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
+            <div className='mt-3 flex flex-wrap gap-1.5'>
+              {(Array.isArray(user.user_domain) ? user.user_domain : user.user_domain ? [user.user_domain] : []).map(domain => (
+                <Badge key={`${user.uuid}-${domain}`} variant='outline' className='uppercase text-[10px]'>
+                  {String(domain).replace(/_/g, ' ')}
+                </Badge>
+              ))}
+            </div>
+            <p className='text-muted-foreground mt-3 text-xs'>
+              Joined {user.created_date ? format(new Date(user.created_date), 'dd MMM yyyy') : '—'}
+            </p>
+          </div>
+        </div>
+      </button>
+    ));
+  };
+
+  return (
+    <div className='border-border/60 flex w-full flex-col border-b bg-card/95 backdrop-blur lg:max-w-md lg:border-b-0 lg:border-r'>
+      <div className='border-border/60 border-b p-6'>
+        <Badge variant='outline' className='border-border/60 bg-muted/60 text-xs font-semibold uppercase tracking-wide'>
+          {badgeLabel}
+        </Badge>
+        <h1 className='mt-3 text-2xl font-semibold'>{title}</h1>
+        <p className='text-muted-foreground mt-1 text-sm'>{description}</p>
+
+        <div className='text-muted-foreground mt-6 flex flex-wrap gap-3 text-xs'>
+          <span className='rounded-full border px-3 py-1'>In view: {totalItems}</span>
+          <span className='rounded-full border px-3 py-1'>Active: {activeUsers}</span>
+        </div>
+
+        <div className='mt-6 space-y-3'>
+          <div className='relative'>
+            <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
+            <Input
+              value={searchQuery}
+              onChange={event => onSearchChange(event.target.value)}
+              placeholder={searchPlaceholder}
+              className='pl-9'
+            />
+          </div>
+          <div className='flex flex-col gap-3 sm:flex-row'>
+            <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+              <SelectTrigger className='bg-background/80'>
+                <SelectValue placeholder='Status' />
+              </SelectTrigger>
+              <SelectContent>
+                {statusFilterOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {showDomainFilter ? (
+              <Select value={domainFilter} onValueChange={onDomainFilterChange}>
+                <SelectTrigger className='bg-background/80'>
+                  <SelectValue placeholder='Domain' />
+                </SelectTrigger>
+                <SelectContent>
+                  {domainFilterOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <ScrollArea className='flex-1 px-6 py-4'>
+        <div className='flex flex-col gap-4 pb-8'>{renderContent()}</div>
+      </ScrollArea>
+
+      <div className='border-border/60 flex items-center justify-between border-t px-6 py-4 text-sm'>
+        <Button variant='ghost' size='sm' onClick={() => onPageChange(Math.max(page - 1, 0))} disabled={page === 0}>
+          Previous
+        </Button>
+        <div className='text-muted-foreground'>
+          Page {totalItems === 0 ? 0 : page + 1} / {totalPages}
+        </div>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={() => onPageChange(Math.min(page + 1, totalPages - 1))}
+          disabled={page + 1 >= totalPages}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface UserDetailsPanelProps {
+  user: AdminUser | null;
+  badgeLabel: string;
+}
+
+function UserDetailsPanel({ user, badgeLabel }: UserDetailsPanelProps) {
+  const updateUser = useUpdateAdminUser();
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: user ? mapUserToForm(user) : undefined,
+    mode: 'onBlur',
+  });
+
+  useEffect(() => {
+    form.reset(user ? mapUserToForm(user) : undefined);
+  }, [user, form]);
+
+  const handleSubmit = (values: UserFormValues) => {
+    if (!user?.uuid) return;
+
+    updateUser.mutate(
+      {
+        path: { uuid: user.uuid },
+        body: {
+          ...user,
+          ...values,
+          middle_name: values.middle_name || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('User updated successfully');
+        },
+        onError: error => {
+          toast.error(error instanceof Error ? error.message : 'Failed to update user');
+        },
+      }
+    );
+  };
+
+  return (
+    <div className='border-border/60 hidden w-full flex-col bg-card p-6 lg:flex lg:max-w-3xl lg:border-l'>
+      {user ? (
+        <>
+          <div className='flex items-start justify-between gap-4'>
+            <div>
+              <p className='text-xs uppercase tracking-wide text-muted-foreground'>{badgeLabel}</p>
+              <h2 className='mt-2 text-2xl font-semibold'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}</h2>
+              <p className='text-muted-foreground text-sm'>{user.email}</p>
+            </div>
+            <Badge variant={user.active ? 'secondary' : 'outline'}>{user.active ? 'Active' : 'Inactive'}</Badge>
+          </div>
+          <UserDetailsForm form={form} onSubmit={handleSubmit} isPending={updateUser.isPending} user={user} />
+        </>
+      ) : (
+        <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
+          Select a record from the list to begin a review.
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface UserDetailSheetProps {
+  user: AdminUser | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+function UserDetailSheet({ user, open, onOpenChange }: UserDetailSheetProps) {
+  const updateUser = useUpdateAdminUser();
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: user ? mapUserToForm(user) : undefined,
+    mode: 'onBlur',
+  });
+
+  useEffect(() => {
+    form.reset(user ? mapUserToForm(user) : undefined);
+  }, [user, form]);
+
+  const handleSubmit = (values: UserFormValues) => {
+    if (!user?.uuid) return;
+
+    updateUser.mutate(
+      {
+        path: { uuid: user.uuid },
+        body: {
+          ...user,
+          ...values,
+          middle_name: values.middle_name || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('User updated successfully');
+          onOpenChange(false);
+        },
+        onError: error => {
+          toast.error(error instanceof Error ? error.message : 'Failed to update user');
+        },
+      }
+    );
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className='w-full max-w-xl border-l'>
+        <SheetHeader>
+          <SheetTitle>Review user details</SheetTitle>
+          <SheetDescription>Manage identity info, toggle access, and record compliance notes.</SheetDescription>
+        </SheetHeader>
+        <ScrollArea className='mt-4 flex-1 pr-3'>
+          {user ? (
+            <UserDetailsForm form={form} onSubmit={handleSubmit} isPending={updateUser.isPending} user={user} />
+          ) : (
+            <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
+              Select a user to manage details.
+            </div>
+          )}
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+interface UserDetailsFormProps {
+  form: UseFormReturn<UserFormValues>;
+  onSubmit: (values: UserFormValues) => void;
+  isPending: boolean;
+  user: AdminUser | null;
+}
+
+function UserDetailsForm({ form, onSubmit, isPending, user }: UserDetailsFormProps) {
+  return (
+    <Form {...form}>
+      <form className='mt-6 space-y-6 pb-6' onSubmit={form.handleSubmit(onSubmit)}>
+        <div className='grid gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='first_name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First name</FormLabel>
+                <FormControl>
+                  <Input placeholder='Jane' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='last_name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last name</FormLabel>
+                <FormControl>
+                  <Input placeholder='Doe' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='middle_name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Middle name</FormLabel>
+                <FormControl>
+                  <Input placeholder='Optional' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type='email' placeholder='jane@example.com' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='username'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <Input placeholder='janedoe' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='phone_number'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone number</FormLabel>
+                <FormControl>
+                  <Input placeholder='+254712345678' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='dob'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date of birth</FormLabel>
+                <FormControl>
+                  <Input type='date' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='gender'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Gender</FormLabel>
+                <Select value={field.value ?? ''} onValueChange={value => field.onChange(value || undefined)}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select gender' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value=''>Not specified</SelectItem>
+                    <SelectItem value='MALE'>Male</SelectItem>
+                    <SelectItem value='FEMALE'>Female</SelectItem>
+                    <SelectItem value='OTHER'>Other</SelectItem>
+                    <SelectItem value='PREFER_NOT_TO_SAY'>Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name='active'
+          render={({ field }) => (
+            <FormItem className='flex flex-row items-center justify-between rounded-xl border bg-muted/40 p-4'>
+              <div className='space-y-0.5'>
+                <FormLabel>Account status</FormLabel>
+                <p className='text-muted-foreground text-xs'>
+                  Toggle to immediately enable or disable user access.
+                </p>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <div className='rounded-xl border bg-muted/40 p-4 text-xs text-muted-foreground'>
+          <div className='grid gap-2 sm:grid-cols-2'>
+            <div>
+              <span className='font-medium text-foreground'>Created:</span>{' '}
+              {user?.created_date ? format(new Date(user.created_date), 'dd MMM yyyy, HH:mm') : '—'}
+            </div>
+            <div>
+              <span className='font-medium text-foreground'>Updated:</span>{' '}
+              {user?.updated_date ? format(new Date(user.updated_date), 'dd MMM yyyy, HH:mm') : '—'}
+            </div>
+            <div>
+              <span className='font-medium text-foreground'>Domains:</span>{' '}
+              {(Array.isArray(user?.user_domain) ? user?.user_domain : user?.user_domain ? [user?.user_domain] : [])
+                .map(domain => domain?.toString().replace(/_/g, ' '))
+                .join(', ') || '—'}
+            </div>
+            <div>
+              <span className='font-medium text-foreground'>UUID:</span> {user?.uuid ?? '—'}
+            </div>
+          </div>
+        </div>
+
+        <Button type='submit' disabled={isPending} className='w-full sm:w-auto'>
+          {isPending ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
+          Save changes
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+function mapUserToForm(user: AdminUser): UserFormValues {
+  return {
+    first_name: user.first_name ?? '',
+    middle_name: user.middle_name ?? '',
+    last_name: user.last_name ?? '',
+    email: user.email ?? '',
+    username: user.username ?? '',
+    phone_number: user.phone_number ?? '',
+    dob: user.dob ?? '',
+    gender: (user.gender as UserFormValues['gender']) ?? undefined,
+    active: Boolean(user.active),
+  };
+}
