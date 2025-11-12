@@ -16,7 +16,6 @@ import {
   DollarSign,
   FileCheck,
   FileText,
-  GitBranch,
   GraduationCap,
   Handshake,
   Layers,
@@ -388,11 +387,6 @@ export default {
           title: 'Administrators',
           url: '/dashboard/administrators',
           icon: ShieldCheck,
-        },
-        {
-          title: 'Branches',
-          url: '/dashboard/branches',
-          icon: GitBranch,
         },
         {
           title: 'System Config',

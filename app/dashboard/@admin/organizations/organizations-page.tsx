@@ -13,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -22,6 +23,7 @@ import {
   useUpdateAdminOrganisation,
   useVerifyAdminOrganisation,
 } from '@/services/admin';
+import { useAdminBranches } from '@/services/admin/branches';
 import { zOrganisation } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -379,6 +381,7 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
               {organisation.admin_verified ? 'Verified' : 'Pending'}
             </Badge>
           </div>
+          <OrganisationBranchesCard organisationUuid={organisation.uuid} />
           <OrganisationDetailsForm
             form={form}
             onSubmit={handleSubmit}
@@ -470,14 +473,17 @@ function OrganisationDetailSheet({ organisation, open, onOpenChange }: Organisat
         </SheetHeader>
         <ScrollArea className='mt-4 flex-1 pr-3'>
           {organisation ? (
-            <OrganisationDetailsForm
-              form={form}
-              onSubmit={handleSubmit}
-              isPending={updateOrganisation.isPending}
-              organisation={organisation}
-              onVerification={handleVerification}
-              isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
-            />
+            <>
+              <OrganisationBranchesCard organisationUuid={organisation.uuid} variant='compact' />
+              <OrganisationDetailsForm
+                form={form}
+                onSubmit={handleSubmit}
+                isPending={updateOrganisation.isPending}
+                organisation={organisation}
+                onVerification={handleVerification}
+                isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
+              />
+            </>
           ) : (
             <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
               Select an organisation to manage details.
@@ -654,4 +660,74 @@ function mapOrganisationToForm(organisation: AdminOrganisation): OrganisationFor
     location: organisation.location ?? '',
     country: organisation.country ?? '',
   };
+}
+
+interface OrganisationBranchesCardProps {
+  organisationUuid?: string;
+  variant?: 'default' | 'compact';
+}
+
+function OrganisationBranchesCard({ organisationUuid, variant = 'default' }: OrganisationBranchesCardProps) {
+  const { data, isLoading } = useAdminBranches(
+    organisationUuid
+      ? {
+          organizationUuid: organisationUuid,
+          page: 0,
+          size: 5,
+        }
+      : null
+  );
+
+  if (!organisationUuid) return null;
+
+  const branches = data?.items ?? [];
+  const totalBranches = data?.totalItems ?? branches.length;
+  const wrapperMargin = variant === 'compact' ? 'mt-4' : 'mt-6';
+
+  return (
+    <div className={`rounded-2xl border border-border/60 bg-muted/30 p-4 ${wrapperMargin}`}>
+      <div className='flex items-center justify-between'>
+        <div>
+          <p className='text-xs uppercase tracking-wide text-muted-foreground'>Branches</p>
+          <p className='text-xl font-semibold'>{isLoading ? '—' : totalBranches}</p>
+          <p className='text-muted-foreground text-xs'>Organisation training locations in view</p>
+        </div>
+        <Badge variant='secondary' className='text-xs'>
+          {isLoading ? 'Loading' : `${totalBranches} total`}
+        </Badge>
+      </div>
+
+      <div className='mt-4 space-y-3'>
+        {isLoading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              <div key={`branch-skeleton-${index}`} className='rounded-xl border border-dashed border-border/60 p-3'>
+                <Skeleton className='h-4 w-32' />
+                <Skeleton className='mt-2 h-3 w-20' />
+              </div>
+            ))
+          : branches.length > 0
+            ? branches.map((branch, index) => (
+                <div key={branch.uuid ?? `${branch.branch_name ?? 'branch'}-${index}`} className='rounded-xl border border-dashed border-border/60 p-3'>
+                  <div className='flex items-center justify-between gap-3'>
+                    <div>
+                      <p className='font-medium leading-tight'>{branch.branch_name ?? 'Unnamed branch'}</p>
+                      <p className='text-muted-foreground text-xs'>
+                        {branch.location ?? branch.branch_code ?? 'Location not provided'}
+                      </p>
+                    </div>
+                    <Badge variant={branch.active ? 'secondary' : 'outline'} className='text-xs'>
+                      {branch.active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+                  {branch.branch_code ? (
+                    <p className='text-muted-foreground mt-2 text-xs'>Code: {branch.branch_code}</p>
+                  ) : null}
+                </div>
+              ))
+            : (
+                <p className='text-muted-foreground text-sm'>No branches registered yet.</p>
+              )}
+      </div>
+    </div>
+  );
 }
