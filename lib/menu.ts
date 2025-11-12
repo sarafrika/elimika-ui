@@ -350,50 +350,44 @@ export default {
   ],
   admin: [
     {
-      title: 'Administration',
+      title: 'Overview',
+      url: '/dashboard/overview',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Users',
+      url: '/dashboard/users',
+      icon: UsersIcon,
+    },
+    {
+      title: 'Students',
+      url: '/dashboard/students',
+      icon: School,
+    },
+    {
+      title: 'Instructors',
+      url: '/dashboard/instructors',
+      icon: GraduationCap,
+    },
+    {
+      title: 'Course Creators',
+      url: '/dashboard/course-creators',
+      icon: Sparkles,
+    },
+    {
+      title: 'Organizations',
+      url: '/dashboard/organizations',
+      icon: Building2,
+    },
+    {
+      title: 'Administrators',
+      url: '/dashboard/administrators',
       icon: ShieldCheck,
-      items: [
-        {
-          title: 'Overview',
-          url: '/dashboard/overview',
-          icon: LayoutDashboard,
-        },
-        {
-          title: 'Users',
-          url: '/dashboard/users',
-          icon: UsersIcon,
-        },
-        {
-          title: 'Students',
-          url: '/dashboard/students',
-          icon: School,
-        },
-        {
-          title: 'Instructors',
-          url: '/dashboard/instructors',
-          icon: GraduationCap,
-        },
-        {
-          title: 'Course Creators',
-          url: '/dashboard/course-creators',
-          icon: Sparkles,
-        },
-        {
-          title: 'Organizations',
-          url: '/dashboard/organizations',
-          icon: Building2,
-        },
-        {
-          title: 'Administrators',
-          url: '/dashboard/administrators',
-          icon: ShieldCheck,
-        },
-        {
-          title: 'System Config',
-          url: '/dashboard/system-config',
-          icon: Settings,
-        },
-      ],
+    },
+    {
+      title: 'System Config',
+      url: '/dashboard/system-config',
+      icon: Settings,
     },
   ],
   organisation_user: [
