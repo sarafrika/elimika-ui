@@ -69,12 +69,12 @@ export default function TimetableManager({
                     return (
                       <Card
                         key={idx}
-                        className="shadow-sm border border-gray-200 hover:shadow-md transition"
+                        className="shadow-sm border border-muted-foreground hover:shadow-md transition"
                       >
                         <CardHeader>
                           <div className="text-lg font-semibold">{data.title}</div>
                         </CardHeader>
-                        <CardContent className="text-sm text-gray-700 space-y-1">
+                        <CardContent className="text-sm text-muted-foreground space-y-1">
                           <div className="flex flex-row items-center gap-2">
                             <p>{data.day}</p> {" - "}
                             <p>{date.toDateString()}</p>

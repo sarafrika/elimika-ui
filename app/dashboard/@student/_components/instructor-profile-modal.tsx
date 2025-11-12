@@ -4,12 +4,14 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
   Award,
+  BookOpen,
   Briefcase,
   Calendar,
   CheckCircle,
@@ -38,6 +40,10 @@ export const InstructorProfileModal: React.FC<Props> = ({
   const [showBooking, setShowBooking] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<BookingSlot[]>([]);
 
+  const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
+    instructor?.uuid as string
+  );
+
   const handleStartBooking = () => {
     setShowBooking(true);
   };
@@ -57,7 +63,7 @@ export const InstructorProfileModal: React.FC<Props> = ({
       <Dialog open={true} onOpenChange={onClose}>
         <DialogContent className='max-h-[90vh] max-w-5xl'>
           <DialogTitle />
-          <ScrollArea className='mb-8 max-h-[calc(90vh-80px)] py-2'>
+          <ScrollArea className="mb-8 max-h-[calc(90vh-80px)] py-4">
             <DialogHeader>
               <DialogTitle>Book Session with {instructor.full_name}</DialogTitle>
             </DialogHeader>
@@ -187,138 +193,233 @@ export const InstructorProfileModal: React.FC<Props> = ({
               </TabsList>
 
               {/* Overview Tab */}
-              <TabsContent value='overview' className='space-y-6'>
-                {/* Bio */}
-                <Card className='p-6'>
-                  <h3 className='mb-3'>About</h3>
-                  <div className='text-muted-foreground'>
-                    <RichTextRenderer htmlString={instructor.bio} />
-                  </div>
-                </Card>
+              <div className="relative min-h-[60vh]"> {/* 👈 ensures fixed height */}
+                <TabsContent value='overview' className='space-y-6'>
+                  {/* Bio */}
+                  <Card className='p-6'>
+                    <h3 className='mb-3'>About</h3>
+                    <div className='text-muted-foreground'>
+                      <RichTextRenderer htmlString={instructor.bio} />
+                    </div>
+                  </Card>
 
-                {/* Skills */}
-                <Card className='p-6'>
-                  <h3 className='mb-3'>Skills & Expertise</h3>
-                  <div className='flex flex-wrap gap-2'>
-                    {skills?.map(skill => (
-                      <Badge key={skill} variant='secondary'>
-                        {skill}
+                  {/* Skills */}
+                  <Card className='p-6'>
+                    <h3 className='mb-3'>Skills & Expertise</h3>
+                    <div className='flex flex-wrap gap-2'>
+                      {skills?.map(skill => (
+                        <Badge key={skill} variant='secondary'>
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Card>
+
+                  {/* Specializations */}
+                  <Card className='p-6'>
+                    <h3 className='mb-3'>Specializations</h3>
+                    <div className='flex flex-wrap gap-2'>
+                      {specializations?.map(spec => (
+                        <Badge key={spec} variant='outline'>
+                          {spec}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Card>
+
+                  {/* Classes */}
+                  <Card className="mb-6 p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                      <CardTitle className="text-lg font-semibold">
+                        Available Instructor Classes
+                      </CardTitle>
+                      <Badge variant="secondary">
+                        {classesWithCourseAndInstructor?.length || 0} Classes
                       </Badge>
-                    ))}
-                  </div>
-                </Card>
+                    </div>
 
-                {/* Specializations */}
-                <Card className='p-6'>
-                  <h3 className='mb-3'>Specializations</h3>
-                  <div className='flex flex-wrap gap-2'>
-                    {specializations?.map(spec => (
-                      <Badge key={spec} variant='outline'>
-                        {spec}
-                      </Badge>
-                    ))}
-                  </div>
-                </Card>
+                    {classesWithCourseAndInstructor?.length > 0 ? (
+                      <div className="divide-y divide-gray-100 rounded-md border border-muted-foreground">
+                        {classesWithCourseAndInstructor.map(course => (
+                          <div
+                            key={course?.uuid}
+                            className="flex items-start gap-3 p-4 transition hover:bg-secondary"
+                          >
+                            <CheckCircle className="mt-1 h-5 w-5 text-green-600" />
 
-                {/* Courses */}
-                <Card className='mb-6 p-6'>
-                  <h3 className='mb-3'>Available Courses</h3>
-                  <ul className='space-y-2'>
-                    {courses?.map(course => (
-                      <li key={course} className='text-muted-foreground flex items-center gap-2'>
-                        <CheckCircle className='h-4 w-4 text-green-600' />
-                        {course}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              </TabsContent>
-
-              {/* Certifications Tab */}
-              <TabsContent value='certifications' className='space-y-4'>
-                {Array.isArray(certifications) && certifications.length > 0 ? (
-                  certifications.map(cert => (
-                    <Card key={cert.id}>
-                      <CardContent className='p-6'>
-                        <div className='flex items-start gap-4'>
-                          <div className='rounded-lg bg-blue-100 p-3'>
-                            <Award className='h-6 w-6 text-blue-600' aria-hidden='true' />
+                            <div className="flex flex-col">
+                              <div>
+                                <p className="font-medium">{course?.title}</p>
+                                <p className="text-sm text-muted-foreground">0% enrollment</p>
+                              </div>
+                              <div className="mt-1 flex items-start gap-2 text-sm text-muted-foreground">
+                                <BookOpen className="h-4 w-4 text-gray-500" />
+                                <span>{course?.course?.name}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className='text-base font-semibold'>{cert.name}</h4>
-                            <p className='text-muted-foreground text-sm'>{cert.issuer}</p>
-                            <p className='text-muted-foreground mt-1 text-sm'>
-                              Issued {cert.year ? cert.year : 'N/A'}
-                            </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                        <BookOpen className="mb-3 h-8 w-8 text-gray-400" />
+                        <h4 className="text-lg font-medium">No Classes Available</h4>
+                        <p className="mt-1 text-sm">
+                          This instructor hasn’t created any classes yet.
+                        </p>
+                      </div>
+                    )}
+                  </Card>
+                </TabsContent>
+
+                {/* Reviews Tab */}
+                <TabsContent value="reviews" className="space-y-4">
+                  {Array.isArray(reviews) && reviews.length > 0 ? (
+                    reviews.map((review) => (
+                      <Card key={review.id} className="hover:bg-gray-50 transition">
+                        <CardContent className="flex flex-col gap-3 p-6">
+                          {/* Reviewer Header */}
+                          <div className="flex items-center gap-4">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={review.studentImage} alt={review.studentName} />
+                              <AvatarFallback>
+                                {review.studentName.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+
+                            <div className="flex-1">
+                              <div className='flex flex-row items-center justify-between' >
+                                <p className="font-medium text-gray-900">{review.studentName}</p>
+                                <div className="flex items-center gap-0.5">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-4 w-4 ${i < review.rating
+                                        ? 'fill-yellow-500 text-yellow-500'
+                                        : 'text-gray-300'
+                                        }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <BookOpen className="h-4 w-4" />
+                                {review.course}
+                                <span className="text-gray-800">•</span>
+                                <Calendar className="h-4 w-4" />
+                                {review.date.toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })}
+                              </div>
+                            </div>
                           </div>
+
+                          {/* Comment */}
+                          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                            {review.comment}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                      <Star className="mb-4 h-10 w-10 text-gray-400" />
+                      <h3 className="text-lg font-semibold">No Reviews Yet</h3>
+                      <p className="mt-1 text-sm">
+                        This instructor hasn’t received any reviews yet.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Certifications Tab */}
+                <TabsContent value='certifications' className='space-y-4'>
+                  {Array.isArray(certifications) && certifications.length > 0 ? (
+                    certifications.map(cert => (
+                      <Card key={cert.id}>
+                        <CardContent className='p-6'>
+                          <div className='flex items-start gap-4'>
+                            <div className='rounded-lg bg-blue-100 p-3'>
+                              <Award className='h-6 w-6 text-blue-600' aria-hidden='true' />
+                            </div>
+                            <div>
+                              <h4 className='text-base font-semibold'>{cert.name}</h4>
+                              <p className='text-muted-foreground text-sm'>{cert.issuer}</p>
+                              <p className='text-muted-foreground mt-1 text-sm'>
+                                Issued {cert.year ? cert.year : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
+                      <Award className='mb-4 h-10 w-10 text-gray-400' />
+                      <h3 className='text-lg font-semibold'>No Certifications Found</h3>
+                      <p className='mt-1 text-sm'>
+                        You haven&apos;t earned any certifications for this course yet.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Rates Tab */}
+                <TabsContent value='rates' className='space-y-4'>
+                  <Card className='p-6'>
+                    <h3 className='mb-4'>Rate Card</h3>
+                    <div className='space-y-4'>
+                      <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
+                        <div>
+                          <p>Hourly Rate</p>
+                          <p className='text-muted-foreground text-sm'>1 hour session</p>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                    <Award className='mb-4 h-10 w-10 text-gray-400' />
-                    <h3 className='text-lg font-semibold'>No Certifications Found</h3>
-                    <p className='mt-1 text-sm'>
-                      You haven&apos;t earned any certifications for this course yet.
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* Rates Tab */}
-              <TabsContent value='rates' className='space-y-4'>
-                <Card className='p-6'>
-                  <h3 className='mb-4'>Rate Card</h3>
-                  <div className='space-y-4'>
-                    <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                      <div>
-                        <p>Hourly Rate</p>
-                        <p className='text-muted-foreground text-sm'>1 hour session</p>
+                        <p className='text-2xl'>
+                          {/* {instructor.rateCard.currency} ${instructor.rateCard.hourly} */}
+                          rate xx
+                        </p>
                       </div>
-                      <p className='text-2xl'>
-                        {/* {instructor.rateCard.currency} ${instructor.rateCard.hourly} */}
-                        rate xx
-                      </p>
-                    </div>
 
-                    <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                      <div>
-                        <p>Half Day</p>
-                        <p className='text-muted-foreground text-sm'>4 hours session</p>
+                      <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
+                        <div>
+                          <p>Half Day</p>
+                          <p className='text-muted-foreground text-sm'>4 hours session</p>
+                        </div>
+                        <p className='text-2xl'>
+                          {/* {instructor.rateCard.currency} ${instructor.rateCard.halfDay} */}
+                          rate xx
+                        </p>
                       </div>
-                      <p className='text-2xl'>
-                        {/* {instructor.rateCard.currency} ${instructor.rateCard.halfDay} */}
-                        rate xx
-                      </p>
-                    </div>
 
-                    <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                      <div>
-                        <p>Full Day</p>
-                        <p className='text-muted-foreground text-sm'>8 hours session</p>
+                      <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
+                        <div>
+                          <p>Full Day</p>
+                          <p className='text-muted-foreground text-sm'>8 hours session</p>
+                        </div>
+                        <p className='text-2xl'>
+                          {/* {instructor.rateCard.currency} ${instructor.rateCard.fullDay} */}
+                          rate xx
+                        </p>
                       </div>
-                      <p className='text-2xl'>
-                        {/* {instructor.rateCard.currency} ${instructor.rateCard.fullDay} */}
-                        rate xx
-                      </p>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
 
-                <Card className='mb-6 border-blue-200 bg-blue-50 p-6'>
-                  <div className='flex gap-3'>
-                    <DollarSign className='h-5 w-5 text-blue-600' />
-                    <div>
-                      <p className='text-blue-900'>Pricing Information</p>
-                      <p className='mt-1 text-sm text-blue-700'>
-                        All rates are in KES/NAIRA. Custom packages and group discounts are
-                        available. Contact instructor for details.
-                      </p>
+                  <Card className='mb-6 border-blue-200 bg-blue-50 p-6'>
+                    <div className='flex gap-3'>
+                      <DollarSign className='h-5 w-5 text-blue-600' />
+                      <div>
+                        <p className='text-blue-900'>Pricing Information</p>
+                        <p className='mt-1 text-sm text-blue-700'>
+                          All rates are in KES/NAIRA. Custom packages and group discounts are
+                          available. Contact instructor for details.
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </TabsContent>
+                  </Card>
+                </TabsContent>
+              </div>
             </Tabs>
           </div>
         </ScrollArea>
@@ -329,7 +430,6 @@ export const InstructorProfileModal: React.FC<Props> = ({
 
 const skills = ['Python', 'TensorFlow', 'Pandas', 'Scikit-learn', 'SQL', 'Statistics'];
 const specializations = ['Data Science', 'Machine Learning', 'Python', 'AI'];
-const courses = ['Introduction to Data Science', 'Machine Learning Fundamentals'];
 const certifications = [
   { id: 'cert-3', name: 'Deep Learning Specialization', issuer: 'DeepLearning.AI', year: 2020 },
   { id: 'cert-4', name: 'Google Cloud Professional Data Engineer', issuer: 'Google', year: 2021 },

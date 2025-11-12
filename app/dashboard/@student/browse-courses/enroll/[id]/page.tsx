@@ -95,7 +95,19 @@ const EnrollmentPage = () => {
       </div>
 
       {classes.length === 0 ? (
-        <Card className='text-gray-500'>No classes available for this course.</Card>
+        <Card className="flex flex-col items-center justify-center p-6 text-center text-gray-500 space-y-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-10 w-10 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10m-9 4h4m-8 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <h3 className="text-lg font-medium text-gray-700">No Classes Available</h3>
+          <p className="text-sm text-gray-500">It looks like this course doesn’t have any classes yet.</p>
+        </Card>
       ) : (
         <div className='flex flex-row flex-wrap gap-4'>
           {classes.map((cls: any) => (
@@ -103,7 +115,7 @@ const EnrollmentPage = () => {
               key={cls?.uuid}
               href='#'
               cls={cls as any}
-              enrollmentPercentage={5}
+              enrollmentPercentage={0}
               isFull={false}
               disableEnroll={cls?.enrollments?.length > 0}
               handleEnroll={() => {

@@ -107,7 +107,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
   const paginationMetadata = data?.data?.metadata;
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 max-w-6xl'>
       <div className='mb-6 flex items-end justify-between'>
         <div>
           <h1 className='text-2xl font-semibold'>Your Draft Courses</h1>
@@ -150,7 +150,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
         <div className='overflow-hidden rounded-t-lg border border-gray-200'>
           <Table>
             {/* <TableCaption className='py-4'>A list of your course drafts</TableCaption> */}
-            <TableHeader className='bg-stone-50'>
+            <TableHeader className=''>
               <TableRow>
                 <TableHead>
                   <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
@@ -167,7 +167,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
             <TableBody>
               <>
                 {draftCourses?.map((course: any) => (
-                  <TableRow key={course.uuid} className='bg-white'>
+                  <TableRow key={course.uuid} className=''>
                     <TableHead>
                       <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
                     </TableHead>
@@ -178,14 +178,16 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                         alt='thumbnail'
                         width={48}
                         height={48}
-                        className='min-h-12 min-w-12 rounded-md bg-stone-300'
+                        className='min-h-12 min-w-12 rounded-md'
                       />
                     </TableCell>
 
                     <TableCell className='font-medium'>
                       <div>
-                        <div className='max-w-[270px] truncate'>{course.name}</div>
-                        <RichTextRenderer htmlString={course?.description} maxChars={42} />{' '}
+                        <h1 className='max-w-[270px] truncate'>{course.name}</h1>
+                        <div className='text-muted-foreground text-xs' >
+                          <RichTextRenderer htmlString={course?.description} maxChars={42} />
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

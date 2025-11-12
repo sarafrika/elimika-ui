@@ -3,7 +3,8 @@
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, Users } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
 import useSearchTrainingInstructors from '../../../../../hooks/use-search-training-instructors';
 import { ClassData } from '../../../@instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../_components/instructor-directory';
@@ -101,6 +102,24 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const bookings = exampleBookings || [];
   const [activeTab, setActiveTab] = useState('browse');
   const { data: trainingInstructors, loading } = useSearchTrainingInstructors();
+  const { replaceBreadcrumbs } = useBreadcrumb();
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+      {
+        id: 'courses',
+        title: 'Browse Courses',
+        url: `/dashboard/browse-courses`,
+      },
+      {
+        id: 'book-instructor',
+        title: `Book Instructor`,
+        url: `/dashboard/browse-courses/instructor`,
+      },
+    ]);
+  }, [replaceBreadcrumbs]);
+
 
   const handleBookingComplete = (newBooking: Booking) => {
     // setBookings((prev: any) => [...prev, newBooking]);

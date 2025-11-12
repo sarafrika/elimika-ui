@@ -12,7 +12,7 @@ export default function ClassesLayout({ children }: ClassesLayoutProps) {
       <div className='flex w-full items-center justify-between xl:max-w-[1200px]'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>My Classes</h2>
-          <p className='mt-1 text-gray-600'>
+          <p className='mt-1 text-muted-foreground'>
             Explore and manage the classes you’re currently enrolled in. Track your progress, access
             course materials, and stay up to date with lessons.
           </p>

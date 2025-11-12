@@ -4,7 +4,7 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Course } from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
@@ -69,8 +69,8 @@ export function CourseCard({
   };
 
   return (
-    <div
-      className='group max-w-[360px] cursor-pointer rounded-lg border-[1px] border-gray-400 bg-white transition-all hover:-translate-y-1 hover:shadow-lg'
+    <Card
+      className='group max-w-[360px] p-0 cursor-pointer rounded-lg border-[1px] border-gray-400 transition-all hover:-translate-y-1 hover:shadow-lg'
       onClick={handleClick}
     >
       <div className='relative'>
@@ -217,6 +217,6 @@ export function CourseCard({
           </div>
         </CardContent>
       </div>
-    </div>
+    </Card>
   );
 }

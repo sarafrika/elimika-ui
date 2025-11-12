@@ -2,15 +2,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
-import { Briefcase, Building, MapPin, Star, Users, Video } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTrigger,
-} from '../../../../components/ui/dialog';
+} from '@/components/ui/dialog';
+import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { Briefcase, Building, MapPin, Star, Users, Video } from 'lucide-react';
 import { InstructorSkillCard } from '../../@instructor/profile/skill-card/_component/instructor-skill-card';
 import { sampleSkills } from '../../@instructor/profile/skill-card/_component/InstructorSkillsForm';
 
@@ -51,7 +51,7 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
             {/* Rating */}
             <div className='mt-2 flex items-center justify-between gap-1'>
               <span className='text-muted-foreground text-sm'>
-                {/* ({instructor.totalReviews} reviews) */}2 reviews
+                {/* ({instructor.totalReviews} reviews) */}xx reviews
               </span>
               <div className='flex flex-row items-center gap-2'>
                 <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
@@ -70,8 +70,7 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
           </div>
           <div className='text-muted-foreground flex items-center gap-2'>
             <Briefcase className='h-4 w-4' />
-            <span>{'5'} years</span>
-            {/* <span>{instructor.experience} years</span> */}
+            <span>{instructor.total_experience_years} years</span>
           </div>
         </div>
 

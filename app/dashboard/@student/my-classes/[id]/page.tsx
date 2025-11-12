@@ -225,11 +225,11 @@ export default function ClassDetailsPage() {
                 </div>
                 <div className="flex-1">
                   <h1 className="text-3xl font-medium mb-2">{classData?.title}</h1>
-                  <div className="text-gray-600 mb-4" >
+                  <div className="mb-4 text-muted-foreground">
                     <RichTextRenderer htmlString={classData?.description as string} />
                   </div>
 
-                  <div className="flex items-center gap-6 text-sm text-gray-600">
+                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4" />
                       <span>{classData?.duration_formatted}</span>
@@ -258,7 +258,7 @@ export default function ClassDetailsPage() {
           </div>
 
           {/* Progress Bar */}
-          <div className="bg-white border-b">
+          <div className="border-b">
             <div className="mx-auto max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem] px-6 py-4">
               <Progress value={progress?.percentage} className="h-2 mb-2" />
               <p className="text-sm font-medium">{Math.round(progress?.percentage)}% completed</p>
@@ -283,17 +283,17 @@ export default function ClassDetailsPage() {
                             open={expandedModules.includes(skill?.lesson?.uuid as string)}
                             onOpenChange={() => toggleModule(skill?.lesson?.uuid as string)}
                           >
-                            <Card className="border-2">
+                            <Card className="border-2 py-2.5">
                               <CollapsibleTrigger className="w-full">
-                                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                <CardHeader className="cursor-pointer hover:bg-muted transition-colors py-2">
                                   <div className="flex items-center justify-between">
                                     <div className='flex flex-row gap-2 items-center'>
                                       <h3 className="font-medium text-left">{skillIndex + 1}.</h3>                                    <h3 className="font-medium text-left">{skill?.lesson?.title}</h3>
                                     </div>
                                     {expandedModules.includes(skill?.lesson?.uuid as string) ? (
-                                      <ChevronUp className="w-5 h-5 text-gray-500" />
+                                      <ChevronUp className="w-5 h-5 text-muted-foreground" />
                                     ) : (
-                                      <ChevronDown className="w-5 h-5 text-gray-500" />
+                                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
                                     )}
                                   </div>
                                 </CardHeader>
@@ -308,7 +308,7 @@ export default function ClassDetailsPage() {
                                         onClick={() => handleLessonSelect(content)}
                                         // disabled={content.locked}
                                         disabled={false}
-                                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-all bg-blue-50 border-2 border-blue-200 hover:bg-gray-50`}
+                                        className={`w-full flex items-center justify-between p-3 rounded-lg transition-all border-2 border-muted`}
                                       >
                                         <div className="flex items-center gap-3">
                                           {/* {getLessonIcon(lesson.type, lesson.completed, lesson.locked)} */}
@@ -316,7 +316,7 @@ export default function ClassDetailsPage() {
 
                                           <div className="text-left">
                                             <p className="font-medium">{content.title}</p>
-                                            <p className="text-sm text-gray-500 capitalize">
+                                            <p className="text-sm text-muted-foreground capitalize">
                                               {content.type}
                                             </p>
                                           </div>
@@ -347,7 +347,6 @@ export default function ClassDetailsPage() {
 
               {/* Right Column - Lesson Details */}
               <div className="space-y-6">
-                {/* Current Lesson Card */}
                 <Card>
                   <CardHeader>
                     <CardTitle>{selectedLesson?.title}</CardTitle>
@@ -498,20 +497,20 @@ export default function ClassDetailsPage() {
                   <CardHeader>
                     <CardTitle className="text-base">Your Progress</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 text-muted-foreground text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Completed Lessons</span>
+                      <span className="">Completed Lessons</span>
                       <span className="font-medium">
                         {progress.completedLessons} / {progress.totalLessons}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Overall Progress</span>
+                      <span className="">Overall Progress</span>
                       <span className="font-medium">{Math.round(progress.percentage)}%</span>
                     </div>
                     <Separator />
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Time Spent</span>
+                      <span className="">Time Spent</span>
                       <span className="font-medium">2h 45m</span>
                     </div>
                   </CardContent>
