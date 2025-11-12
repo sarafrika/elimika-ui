@@ -163,7 +163,7 @@ export default function AddProfileSelector() {
             {/* Decorative gradient overlay */}
             <div
               className={cn(
-                'pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-10',
+                'pointer-events-none absolute inset-0 rounded-3xl bg-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-20',
                 type.accent.glow
               )}
             />

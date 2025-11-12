@@ -78,7 +78,7 @@ export function DomainSelection({ domains, onDomainSelect, userName }: DomainSel
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-secondary/40 p-4 dark:bg-background dark:bg-none'>
+    <div className='flex min-h-screen items-center justify-center bg-background p-4 dark:bg-background'>
       <div className='w-full max-w-4xl'>
         <div className='mb-8 text-center'>
           <BrandPill className='mx-auto mb-4 normal-case tracking-[0.3em] text-xs'>

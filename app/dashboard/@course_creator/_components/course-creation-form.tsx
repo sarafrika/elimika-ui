@@ -385,7 +385,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'
+          className='space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'
         >
           {/* Course Name */}
           <FormSection

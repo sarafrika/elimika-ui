@@ -48,7 +48,7 @@ export const SkillsFundWalletCard = ({ wallet, user, role }: SkillsFundWalletCar
         </div>
       </Card>
 
-      <Card className='border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-6'>
+      <Card className='border-green-200 bg-card p-6'>
         <div className='mb-4 flex items-start justify-between'>
           <div>
             <p className='text-muted-foreground text-sm'>Skills Wallet Balance</p>

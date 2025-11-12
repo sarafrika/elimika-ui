@@ -38,22 +38,6 @@ const sarafrikaPoints = [
 export default function Home() {
   return (
     <div className='relative min-h-screen overflow-hidden bg-background text-foreground'>
-      <div
-        aria-hidden='true'
-        className='pointer-events-none absolute inset-0 -z-10 opacity-80 transition-colors duration-500 dark:hidden'
-        style={{
-          background:
-            'linear-gradient(135deg, color-mix(in oklch, var(--primary) 8%, transparent) 0%, color-mix(in oklch, var(--el-highlight-200) 22%, transparent) 55%, color-mix(in oklch, var(--background) 90%, var(--el-neutral-0)) 100%)',
-        }}
-      />
-      <div
-        aria-hidden='true'
-        className='pointer-events-none absolute inset-y-0 right-0 -z-10 w-1/2 opacity-70 blur-3xl dark:hidden'
-        style={{
-          background:
-            'radial-gradient(circle at 80% 20%, color-mix(in oklch, var(--primary) 28%, transparent) 0%, transparent 60%)',
-        }}
-      />
 
       <nav className='sticky top-0 z-40 border-b border-border/60 bg-card/80 backdrop-blur'>
         <div className='mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5'>
@@ -94,28 +78,6 @@ export default function Home() {
 
       <main>
         <section className='relative overflow-hidden border-b border-border/50'>
-          <div
-            className='absolute inset-0 -z-10 opacity-90 dark:hidden'
-            style={{
-              background:
-                'linear-gradient(130deg, color-mix(in oklch, var(--primary) 15%, transparent) 0%, color-mix(in oklch, var(--el-highlight-200) 25%, transparent) 40%, color-mix(in oklch, var(--background) 90%, transparent) 100%)',
-            }}
-          />
-          <div
-            className='absolute top-32 -left-24 h-64 w-64 rounded-full blur-3xl dark:hidden'
-            style={{
-              background:
-                'radial-gradient(circle, color-mix(in oklch, var(--primary) 30%, transparent) 0%, transparent 70%)',
-            }}
-          />
-          <div
-            className='absolute -right-20 bottom-10 h-64 w-64 rounded-full blur-3xl dark:hidden'
-            style={{
-              background:
-                'radial-gradient(circle, color-mix(in oklch, var(--accent) 35%, transparent) 0%, transparent 75%)',
-            }}
-          />
-
           <div className='relative mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-6 pb-24 pt-24 text-center lg:pt-28'>
             <span className='inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-primary shadow-sm'>
               Product experience

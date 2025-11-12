@@ -41,7 +41,7 @@ export default function CourseCreatorOverviewContent() {
 
   return (
     <div className='mx-auto w-full max-w-6xl space-y-8 px-4 py-10'>
-      <header className='rounded-xl bg-gradient-to-r from-purple-500/10 to-purple-500/5 p-6'>
+      <header className='rounded-xl border border-border bg-card p-6 shadow-sm'>
         <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
           <div>
             <p className='text-sm tracking-widest text-purple-600 uppercase dark:text-purple-300'>

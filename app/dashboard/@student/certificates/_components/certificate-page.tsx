@@ -415,7 +415,7 @@ export default function CertificatesPage() {
                     </CardHeader>
                     <CardContent className='space-y-4'>
                       {/* Certificate Preview */}
-                      <div className='rounded-lg border-2 border-dashed border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-100 p-6'>
+                      <div className='rounded-lg border-2 border-dashed border-blue-200 bg-card p-6'>
                         <div className='space-y-2 text-center'>
                           <div className='bg-primary/20 mx-auto flex h-16 w-16 items-center justify-center rounded-full'>
                             <Award className='text-primary h-8 w-8' />
@@ -602,7 +602,7 @@ export default function CertificatesPage() {
                     key={certificate.id}
                     className='overflow-hidden transition-all hover:-translate-y-1 hover:shadow-xl'
                   >
-                    <div className='from-primary/5 to-primary/10 bg-gradient-to-br p-8'>
+                    <div className='bg-card p-8'>
                       <div className='space-y-3 text-center'>
                         <div className='bg-primary/20 mx-auto flex h-20 w-20 items-center justify-center rounded-full'>
                           <TypeIcon className='text-primary h-10 w-10' />

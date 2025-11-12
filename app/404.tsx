@@ -3,10 +3,7 @@ import Link from 'next/link';
 
 export default function NotFoundPage() {
   return (
-    <main className='relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-secondary via-background to-card px-6 py-12 dark:bg-background dark:bg-none'>
-      <div className='pointer-events-none absolute inset-0 dark:hidden'>
-        <div className='from-primary/10 absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] via-transparent to-transparent' />
-      </div>
+    <main className='relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-6 py-12 dark:bg-background'>
 
       <div className='relative z-10 flex max-w-2xl flex-col items-center gap-8 text-center'>
         <div className='border-primary/20 text-primary dark:text-primary/80 rounded-full border bg-card/80 px-4 py-2 text-xs font-medium tracking-[0.2em] uppercase dark:bg-card/40'>

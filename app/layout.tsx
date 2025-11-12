@@ -27,22 +27,6 @@ export default function RootLayout({
       >
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <div className='relative min-h-screen'>
-            <div
-              aria-hidden='true'
-              className='pointer-events-none fixed inset-0 -z-20 transition-colors duration-500 dark:hidden'
-              style={{
-                background:
-                  'linear-gradient(135deg, color-mix(in oklch, var(--primary) 10%, var(--el-neutral-0)) 0%, color-mix(in oklch, var(--el-highlight-200) 35%, var(--el-neutral-0)) 100%)',
-              }}
-            />
-            <div
-              aria-hidden='true'
-              className='pointer-events-none fixed inset-0 -z-30 dark:hidden'
-              style={{
-                background:
-                  'radial-gradient(circle at 15% 0%, color-mix(in oklch, var(--primary) 28%, transparent) 0%, transparent 55%)',
-              }}
-            />
             <RootProviders>
               <div className='relative z-0 flex min-h-screen flex-col'>{children}</div>
             </RootProviders>

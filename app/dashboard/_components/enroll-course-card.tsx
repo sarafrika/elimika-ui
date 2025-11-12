@@ -38,7 +38,7 @@ export default function EnrollCourseCard({
         <div className='h-full overflow-hidden rounded-2xl'>
           {/* Image Header */}
           <div className='relative h-48 overflow-hidden'>
-            <div className='absolute inset-0 z-10 bg-gradient-to-br from-blue-400/20 via-cyan-400/20 to-indigo-500/20' />
+            <div className='absolute inset-0 z-10 bg-primary/10' />
             <Image
               src={
                 cls?.course?.thumbnail_url ||
@@ -130,9 +130,8 @@ export default function EnrollCourseCard({
 
             {/* Instructor */}
             {variant === 'full' && (
-              <div className='flex items-center gap-2 rounded-lg border border-blue-100/50 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 
-                  dark:border-blue-900/50 dark:from-gray-800 dark:to-gray-900 dark:bg-gradient-to-r'>
-                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 text-sm text-white shadow-md'>
+              <div className='flex items-center gap-2 rounded-lg border border-blue-100/50 bg-muted p-2.5 dark:border-blue-900/50 dark:bg-muted/30'>
+                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground shadow-md'>
                   {cls?.instructor?.full_name?.charAt(0)}
                 </div>
                 <div className='min-w-0 flex-1'>
@@ -157,10 +156,9 @@ export default function EnrollCourseCard({
                 </div>
                 <div className='h-2 overflow-hidden rounded-full bg-blue-100'>
                   <div
-                    className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80
-                      ? 'bg-gradient-to-r from-orange-400 to-red-500'
-                      : 'bg-gradient-to-r from-blue-400 to-indigo-500'
-                      }`}
+                    className={`h-full transition-all duration-500 ${
+                      enrollmentPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                    }`}
                     style={{ width: `${enrollmentPercentage}%` }}
                   />
                 </div>
@@ -190,7 +188,7 @@ export default function EnrollCourseCard({
                   className={
                     disableEnroll
                       ? 'flex cursor-default items-center gap-2 bg-green-600 text-white shadow-sm hover:bg-green-700'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm hover:from-blue-700 hover:to-indigo-700'
+                      : 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
                   }
                 >
                   {disableEnroll ? (
