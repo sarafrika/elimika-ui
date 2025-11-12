@@ -359,14 +359,14 @@ export function WeeklyAvailabilityGrid({
       {/* Grid */}
       <div className='overflow-hidden rounded-lg border'>
         {/* Header Row */}
-        <div className='grid grid-cols-8 border-b bg-gray-50'>
+        <div className='grid grid-cols-8 border-b'>
           <div className='border-r p-3'>
-            <Clock className='h-4 w-4 text-gray-500' />
+            <Clock className='h-4 w-4 text-muted-foreground' />
           </div>
           {days.map((day, index) => (
             <div key={day} className='border-r p-3 text-center last:border-r-0'>
               <div className='text-sm font-medium'>{day}</div>
-              <div className='mt-1 text-xs text-gray-500'>
+              <div className='mt-1 text-xs text-muted-foreground'>
                 {weekDates[index]?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </div>
             </div>
@@ -377,7 +377,7 @@ export function WeeklyAvailabilityGrid({
         <div className='max-h-[600px] overflow-y-auto'>
           {timeSlots.map(time => (
             <div key={time} className='grid grid-cols-8 border-b last:border-b-0'>
-              <div className='flex items-center border-r bg-gray-50 p-2 text-xs text-gray-600'>
+              <div className='flex items-center border-r p-2 text-xs text-muted-foreground'>
                 {time}
               </div>
               {days.map((day, dayIndex) => {
@@ -527,7 +527,7 @@ export function WeeklyAvailabilityGrid({
       {/* Quick Actions */}
       <Card className='p-4'>
         <div className='flex items-center justify-between'>
-          <div className='text-sm text-gray-600'>
+          <div className='text-sm text-muted-foreground'>
             Click any time slot to add or edit events • Drag to select multiple slots for bulk
             actions
           </div>

@@ -1,6 +1,7 @@
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { BookOpen, CheckCircle, MapPin } from 'lucide-react';
 import Image from 'next/image';
@@ -33,8 +34,8 @@ export default function EnrollCourseCard({
 
   return (
     <div className='group cursor-pointer'>
-      <div className='relative h-full w-full max-w-full rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl sm:w-[360px]'>
-        <div className='h-full overflow-hidden rounded-2xl bg-white'>
+      <Card className='relative h-full w-full max-w-full rounded-2xl p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl sm:w-[360px] border border-muted-foreground'>
+        <div className='h-full overflow-hidden rounded-2xl'>
           {/* Image Header */}
           <div className='relative h-48 overflow-hidden'>
             <div className='absolute inset-0 z-10 bg-gradient-to-br from-blue-400/20 via-cyan-400/20 to-indigo-500/20' />
@@ -120,7 +121,7 @@ export default function EnrollCourseCard({
                 <Badge
                   key={idx}
                   variant='outline'
-                  className='border-blue-200/50 bg-blue-50/50 text-xs text-blue-700'
+                  className='border-muted-foreground bg-muted-foreground text-xs text-primary-foreground'
                 >
                   {category}
                 </Badge>
@@ -129,13 +130,16 @@ export default function EnrollCourseCard({
 
             {/* Instructor */}
             {variant === 'full' && (
-              <div className='flex items-center gap-2 rounded-lg border border-blue-100/50 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5'>
+              <div className='flex items-center gap-2 rounded-lg border border-blue-100/50 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 
+                  dark:border-blue-900/50 dark:from-gray-800 dark:to-gray-900 dark:bg-gradient-to-r'>
                 <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 text-sm text-white shadow-md'>
                   {cls?.instructor?.full_name?.charAt(0)}
                 </div>
                 <div className='min-w-0 flex-1'>
-                  <p className='text-muted-foreground text-xs'>Instructor</p>
-                  <p className='truncate text-sm'>{cls?.instructor?.full_name}</p>
+                  <p className='text-muted-foreground text-xs dark:text-gray-400'>Instructor</p>
+                  <p className='truncate text-sm text-gray-900 dark:text-gray-100'>
+                    {cls?.instructor?.full_name}
+                  </p>
                 </div>
               </div>
             )}
@@ -167,7 +171,7 @@ export default function EnrollCourseCard({
             <div className='flex items-center justify-between border-t border-blue-100/50 pt-3'>
               {variant === 'full' ? (
                 <div className='flex items-center gap-2'>
-                  <span className='text-lg font-medium text-gray-900'>
+                  <span className='text-lg font-medium'>
                     KES {cls?.training_fee || 'N/A'}
                   </span>
                 </div>
@@ -202,7 +206,7 @@ export default function EnrollCourseCard({
             </div>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

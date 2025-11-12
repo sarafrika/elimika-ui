@@ -427,7 +427,7 @@ export const InstructorDirectory: React.FC<Props> = ({
             </Button>
           </Card>
         ) : (
-          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3'>
             {filteredInstructors?.map((instructor: any, index: any) => (
               <div key={index}>
                 <InstructorCard

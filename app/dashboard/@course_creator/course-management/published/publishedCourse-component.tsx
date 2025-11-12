@@ -118,7 +118,7 @@ export default function PublishedCoursesComponent({
   const paginationMetadata = data?.data?.metadata || {};
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 max-w-6xl'>
       <div className='mb-6 flex items-end justify-between'>
         <div>
           <h1 className='text-2xl font-semibold'>Your Published Courses</h1>
@@ -151,7 +151,7 @@ export default function PublishedCoursesComponent({
         <div className='overflow-hidden rounded-t-lg border border-gray-200'>
           <Table>
             {/* <TableCaption className='py-4'>A list of your published courses</TableCaption> */}
-            <TableHeader className='bg-stone-50'>
+            <TableHeader className=''>
               <TableRow>
                 <TableHead>
                   <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
@@ -165,7 +165,7 @@ export default function PublishedCoursesComponent({
               </TableRow>
             </TableHeader>
 
-            <TableBody className='bg-white'>
+            <TableBody className=''>
               <>
                 {publishedCourses?.map((course: any) => (
                   <TableRow key={course.uuid}>
@@ -179,14 +179,16 @@ export default function PublishedCoursesComponent({
                         alt='thumbnail'
                         width={48}
                         height={48}
-                        className='min-h-12 min-w-12 rounded-md bg-stone-300'
+                        className='min-h-12 min-w-12 rounded-md'
                       />
                     </TableCell>
 
                     <TableCell className='font-medium'>
                       <div>
-                        <div className='max-w-[270px] truncate'>{course.name}</div>
-                        <RichTextRenderer htmlString={course?.description} maxChars={42} />{' '}
+                        <h1 className='max-w-[270px] truncate'>{course.name}</h1>
+                        <div className='text-muted-foreground text-xs' >
+                          <RichTextRenderer htmlString={course?.description} maxChars={42} />
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

@@ -243,9 +243,9 @@ export function MonthlyAvailabilityGrid({
       </div>
 
       {/* Calendar Grid */}
-      <div className='overflow-hidden rounded-lg border bg-white'>
+      <div className='overflow-hidden rounded-lg border'>
         {/* Weekday Headers */}
-        <div className='grid grid-cols-7 border-b bg-gray-50'>
+        <div className='grid grid-cols-7 border-b'>
           {weekdays.map(day => (
             <div key={day} className='border-r p-3 text-center text-sm font-medium last:border-r-0'>
               {day}
@@ -266,7 +266,7 @@ export function MonthlyAvailabilityGrid({
                     <div className={getDayClass(date, status)} onClick={() => handleDayClick(date)}>
                       <div className='flex h-full items-start justify-between'>
                         <span
-                          className={`text-sm font-medium ${!isCurrentMonth ? 'text-gray-400' : ''}`}
+                          className={`text-sm font-medium ${!isCurrentMonth ? 'text-muted-foreground' : ''}`}
                         >
                           {date.getDate()}
                         </span>
@@ -291,19 +291,19 @@ export function MonthlyAvailabilityGrid({
                           {status.events.slice(0, 2).map((event, idx) => (
                             <div
                               key={event.id}
-                              className='mb-1 truncate rounded border border-blue-200 bg-blue-100 px-1 py-0.5 text-xs text-blue-800'
+                              className='mb-1 truncate rounded border border-blue-200 px-1 py-0.5 text-xs text-primary'
                             >
                               <div className='flex items-center gap-1'>
                                 <Clock className='h-2 w-2' />
                                 <span className='font-medium'>{event.title}</span>
                               </div>
-                              <div className='text-xs text-blue-600'>
+                              <div className='text-xs'>
                                 {event.startTime} - {event.endTime}
                               </div>
                             </div>
                           ))}
                           {status.events.length > 2 && (
-                            <div className='text-xs font-medium text-gray-500'>
+                            <div className='text-xs font-medium text-muted-foreground'>
                               +{status.events.length - 2} more events
                             </div>
                           )}
@@ -347,7 +347,7 @@ export function MonthlyAvailabilityGrid({
                       )}
 
                       {status.booked > 0 && (
-                        <div className='text-blue-600'>
+                        <div className='text-primary'>
                           📚 {status.booked} booked/classes/events
                         </div>
                       )}

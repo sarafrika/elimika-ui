@@ -1,6 +1,6 @@
 'use client';
 
-import { Card } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useCourseClassesWithDetails from '@/hooks/use-course-classes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -88,10 +88,10 @@ const EnrollmentPage = () => {
 
   return (
     <Card className='space-y-4 px-6 py-10'>
-      <div>
-        <h1 className='text-2xl font-semibold'>Explore Classes Open for Enrollment</h1>
-        <p className='text-gray-600'>Discover courses designed to help you grow and succeed.</p>
-      </div>
+      <CardHeader>
+        <CardTitle className='text-2xl font-semibold'>Explore Classes Open for Enrollment</CardTitle>
+        <CardDescription className=''>Discover courses designed to help you grow and succeed.</CardDescription>
+      </CardHeader>
 
       {classes.length === 0 ? (
         <CustomEmptyState

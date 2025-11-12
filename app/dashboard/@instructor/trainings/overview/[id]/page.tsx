@@ -129,7 +129,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const shareToSocial = (platform: string) => {
@@ -365,7 +365,7 @@ export default function ClassPreviewPage() {
           <TabsTrigger value='details'>Class Details</TabsTrigger>
           <TabsTrigger value='schedule'>Schedule</TabsTrigger>
           <TabsTrigger value='skills'>Skills</TabsTrigger>
-          <TabsTrigger value='assignments'>Assignments</TabsTrigger>
+          <TabsTrigger value='assignments'>Assessments</TabsTrigger>
           <TabsTrigger value='students'>Students</TabsTrigger>
         </TabsList>
 
@@ -455,9 +455,8 @@ export default function ClassPreviewPage() {
                   return (
                     <div
                       key={s.uuid}
-                      className={`mb-4 flex items-center justify-between rounded p-4 shadow-sm ${
-                        isCancelled ? 'bg-red-100' : 'bg-white'
-                      }`}
+                      className={`mb-4 flex items-center justify-between rounded p-4 shadow-sm ${isCancelled ? 'bg-red-100' : 'bg-white'
+                        }`}
                     >
                       <div>
                         <p className='font-semibold'>
@@ -474,9 +473,8 @@ export default function ClassPreviewPage() {
                       {/* Active / Not Active Badge */}
                       <div>
                         <span
-                          className={`rounded-full px-3 py-1 text-sm font-medium ${
-                            isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                          }`}
+                          className={`rounded-full px-3 py-1 text-sm font-medium ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                            }`}
                         >
                           {isActive ? 'Active' : 'Not active'}
                         </span>

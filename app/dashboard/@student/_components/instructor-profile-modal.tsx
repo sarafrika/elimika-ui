@@ -4,7 +4,7 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -230,26 +230,26 @@ export const InstructorProfileModal: React.FC<Props> = ({
                   {/* Classes */}
                   <Card className="mb-6 p-6">
                     <div className="mb-4 flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <CardTitle className="text-lg font-semibold">
                         Available Instructor Classes
-                      </h3>
+                      </CardTitle>
                       <Badge variant="secondary">
                         {classesWithCourseAndInstructor?.length || 0} Classes
                       </Badge>
                     </div>
 
                     {classesWithCourseAndInstructor?.length > 0 ? (
-                      <div className="divide-y divide-gray-100 rounded-md border border-gray-100">
+                      <div className="divide-y divide-gray-100 rounded-md border border-muted-foreground">
                         {classesWithCourseAndInstructor.map(course => (
                           <div
                             key={course?.uuid}
-                            className="flex items-start gap-3 p-4 transition hover:bg-gray-50"
+                            className="flex items-start gap-3 p-4 transition hover:bg-secondary"
                           >
                             <CheckCircle className="mt-1 h-5 w-5 text-green-600" />
 
                             <div className="flex flex-col">
                               <div>
-                                <p className="font-medium text-gray-800">{course?.title}</p>
+                                <p className="font-medium">{course?.title}</p>
                                 <p className="text-sm text-muted-foreground">0% enrollment</p>
                               </div>
                               <div className="mt-1 flex items-start gap-2 text-sm text-muted-foreground">
