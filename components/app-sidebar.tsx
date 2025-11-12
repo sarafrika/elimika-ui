@@ -42,6 +42,15 @@ export function AppSidebar({
       .map(part => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
 
+  const domainNavSections: Array<{ key: UserDomain; label: string }> = [
+    { key: 'student', label: 'Student surfaces' },
+    { key: 'instructor', label: 'Instructor surfaces' },
+    { key: 'course_creator', label: 'Course creator surfaces' },
+    { key: 'organisation_user', label: 'Organisation surfaces' },
+  ];
+
+  const shouldShowAllDomainNav = activeDomain === 'admin';
+
   // Label for the sidebar group
   const groupLabel = activeDomain ? `${formatDomainName(activeDomain)} Panel` : 'Panel';
 
@@ -74,6 +83,30 @@ export function AppSidebar({
             pathname={pathname}
           />
         </SidebarGroupContent>
+
+        {shouldShowAllDomainNav && (
+          <div className='mt-6 space-y-4'>
+            <SidebarGroupLabel>All domain workspaces</SidebarGroupLabel>
+            <SidebarGroupContent className='space-y-4'>
+              {domainNavSections.map(section => (
+                <div
+                  key={section.key}
+                  className='rounded-2xl border border-border/60 bg-card/90 p-4 shadow-sm'
+                >
+                  <div className='text-sm font-semibold text-foreground'>{section.label}</div>
+                  <div className='mt-2 rounded-xl border border-border/50 bg-muted/40 p-2'>
+                    <NavMain
+                      items={getMenuItems(section.key)}
+                      activeDomain={section.key}
+                      pathname={pathname}
+                    />
+                  </div>
+                </div>
+              ))}
+            </SidebarGroupContent>
+          </div>
+        )}
+
         {/* Secondary menu */}
         <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>

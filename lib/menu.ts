@@ -350,34 +350,40 @@ export default {
   ],
   admin: [
     {
-      title: 'Overview',
-      url: '/dashboard/overview',
-      icon: LayoutDashboard,
-    },
-    {
-      title: 'Instructors',
-      url: '/dashboard/instructors',
-      icon: GraduationCap,
-    },
-    {
-      title: 'Users',
-      url: '/dashboard/users',
-      icon: UsersIcon,
-    },
-    {
-      title: 'Organizations',
-      url: '/dashboard/organizations',
-      icon: Building2,
-    },
-    {
-      title: 'Branches',
-      url: '/dashboard/branches',
-      icon: GitBranch,
-    },
-    {
-      title: 'System Config',
-      url: '/dashboard/system-config',
-      icon: Settings,
+      title: 'Admin workspace',
+      icon: ShieldCheck,
+      items: [
+        {
+          title: 'Overview',
+          url: '/dashboard/overview',
+          icon: LayoutDashboard,
+        },
+        {
+          title: 'Users',
+          url: '/dashboard/users',
+          icon: UsersIcon,
+        },
+        {
+          title: 'Instructors',
+          url: '/dashboard/instructors',
+          icon: GraduationCap,
+        },
+        {
+          title: 'Organizations',
+          url: '/dashboard/organizations',
+          icon: Building2,
+        },
+        {
+          title: 'Branches',
+          url: '/dashboard/branches',
+          icon: GitBranch,
+        },
+        {
+          title: 'System Config',
+          url: '/dashboard/system-config',
+          icon: Settings,
+        },
+      ],
     },
   ],
   organisation_user: [
