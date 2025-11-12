@@ -1,10 +1,11 @@
 'use client';
 
-import { AdminDataTable, AdminDataTableColumn } from '@/components/admin/data-table';
+import { AdminDataTable } from '@/components/admin/data-table/data-table';
+import { AdminDataTableColumn } from '@/components/admin/data-table/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
