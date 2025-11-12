@@ -24,6 +24,7 @@ import {
   LucideBookUser,
   Mails,
   MessageCircle,
+  GitBranch,
   PlusCircle,
   School,
   Settings,
@@ -354,24 +355,9 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Course Creators',
-      url: '/dashboard/course-creators',
-      icon: PlusCircle,
-    },
-    {
-      title: 'Courses',
-      url: '/dashboard/courses',
-      icon: BookOpen,
-    },
-    {
       title: 'Instructors',
       url: '/dashboard/instructors',
-      icon: Users,
-    },
-    {
-      title: 'Organizations',
-      url: '/dashboard/organizations',
-      icon: Building2,
+      icon: GraduationCap,
     },
     {
       title: 'Users',
@@ -379,34 +365,19 @@ export default {
       icon: UsersIcon,
     },
     {
-      title: 'Rubrics',
-      url: '/dashboard/rubrics',
-      icon: ClipboardList,
+      title: 'Organizations',
+      url: '/dashboard/organizations',
+      icon: Building2,
     },
     {
-      title: 'Moderation',
-      url: '/dashboard/moderation',
-      icon: ShieldCheck,
+      title: 'Branches',
+      url: '/dashboard/branches',
+      icon: GitBranch,
     },
     {
-      title: 'Clases and Schedules',
-      url: '/dashboard/classes',
-      icon: School,
-    },
-    {
-      title: 'Transactions',
-      url: '/dashboard/transactions',
-      icon: BadgeDollarSign,
-    },
-    {
-      title: 'Notifications',
-      url: '/dashboard/notifications',
-      icon: BellIcon,
-    },
-    {
-      title: 'Help & Support',
-      url: '/dashboard/support',
-      icon: MessageCircle,
+      title: 'System Config',
+      url: '/dashboard/system-config',
+      icon: Settings,
     },
   ],
   organisation_user: [
