@@ -16,7 +16,6 @@ import {
   DollarSign,
   FileCheck,
   FileText,
-  GitBranch,
   GraduationCap,
   Handshake,
   Layers,
@@ -25,11 +24,11 @@ import {
   LucideBookUser,
   Mails,
   MessageCircle,
+  GitBranch,
   PlusCircle,
   School,
   Settings,
   ShieldCheck,
-  Sparkles,
   Star,
   UserCircle,
   UserCog,
@@ -60,10 +59,17 @@ export type MenuItem = {
 export function markActiveMenuItem(items: MenuItem[], currentPath: string): MenuItem[] {
   return items.map(item => {
     const newItem: MenuItem = { ...item };
-    newItem.isActive = item.url ? currentPath.startsWith(item.url) : false;
+
+    // ==> Mark as active only if exact match // newItem.isActive = item.url === currentPath;
+
+    // == Mark as active only if exact match or path starts with item.url
+    newItem.isActive = currentPath.startsWith(item?.url as any);
 
     if (item.items && item.items.length > 0) {
       newItem.items = markActiveMenuItem(item.items, currentPath);
+
+      // ==> Mark parent as active if child is active
+      // if (newItem.items.some(child => child.isActive)) newItem.isActive = true
     }
 
     return newItem;
@@ -85,85 +91,23 @@ type Menu = {
   course_creator?: MenuItem[];
 };
 
-const studentNav: MenuItem[] = [
-  { title: 'Overview', url: '/dashboard/overview', icon: LayoutDashboard },
-  { title: 'Browse Courses', url: '/dashboard/browse-courses', icon: Book },
-  { title: 'My Classes', url: '/dashboard/my-classes', icon: BookOpen },
-  { title: 'My Schedule', url: '/dashboard/my-schedule', icon: Calendar },
-  { title: 'Skills Fund', url: '/dashboard/skills-fund', icon: Wallet },
-  { title: 'My Grades', url: '/dashboard/grades', icon: Award },
-  { title: 'My Certificates', url: '/dashboard/certificates', icon: Star },
-  { title: 'Profile', url: '/dashboard/profile', icon: UserCircle },
-];
-
-const instructorNav: MenuItem[] = [
-  { title: 'Overview', url: '/dashboard/overview', icon: LayoutDashboard },
-  { title: 'Courses', url: '/dashboard/courses', icon: BookOpen },
-  { title: 'Trainings', url: '/dashboard/trainings', icon: ClipboardList },
-  { title: 'Availability', url: '/dashboard/availability', icon: CalendarClock },
-  { title: 'Opportunities', url: '/dashboard/opportunities', icon: Handshake },
-  { title: 'Analytics', url: '/dashboard/analytics', icon: ChartNoAxesCombined },
-  { title: 'Profile', url: '/dashboard/profile', icon: UserCircle },
-];
-
-const courseCreatorNav: MenuItem[] = [
-  { title: 'Overview', url: '/dashboard/overview', icon: LayoutDashboard },
-  {
-    title: 'Course Management',
-    icon: LibraryIcon,
-    items: [
-      { title: 'Create New Course', url: '/dashboard/course-management/create-new-course' },
-      { title: 'Drafts', url: '/dashboard/course-management/drafts' },
-      { title: 'Published', url: '/dashboard/course-management/published', icon: FileCheck },
-    ],
-  },
-  { title: 'Analytics', url: '/dashboard/analytics', icon: ChartNoAxesCombined },
-  { title: 'Verification', url: '/dashboard/verification', icon: ShieldCheck },
-  { title: 'Profile', url: '/dashboard/profile', icon: UserCircle },
-];
-
-const organisationNav: MenuItem[] = [
-  { title: 'Overview', url: '/dashboard/overview', icon: LayoutDashboard },
-  { title: 'Instructors', url: '/dashboard/instructors', icon: Briefcase },
-  { title: 'Students', url: '/dashboard/students', icon: Users },
-  { title: 'Course Management', url: '/dashboard/course-management', icon: BookOpen },
-  { title: 'Invites', url: '/dashboard/invites', icon: Mails },
-  { title: 'Classes', url: '/dashboard/classes', icon: ClipboardList },
-  { title: 'Branches', url: '/dashboard/branches', icon: Building },
-  { title: 'Skills Fund', url: '/dashboard/skills-fund', icon: Wallet },
-  { title: 'Users', url: '/dashboard/users', icon: UserCog },
-  { title: 'Account', url: '/dashboard/account', icon: Settings },
-];
-
-const adminNav: MenuItem[] = [
-  {
-    title: 'Admin workspace',
-    icon: ShieldCheck,
-    items: [
-      { title: 'Overview', url: '/dashboard/overview', icon: LayoutDashboard },
-      { title: 'Users', url: '/dashboard/users', icon: UsersIcon },
-      { title: 'Instructors', url: '/dashboard/instructors', icon: GraduationCap },
-      { title: 'Course Creators', url: '/dashboard/course-creators', icon: Sparkles },
-      { title: 'Organizations', url: '/dashboard/organizations', icon: Building2 },
-      { title: 'Branches', url: '/dashboard/branches', icon: GitBranch },
-      { title: 'System Config', url: '/dashboard/system-config', icon: Settings },
-    ],
-  },
-];
-
-const mainNav: MenuItem[] = [
-  {
-    title: 'Course Management',
-    icon: LibraryIcon,
-    items: courseCreatorNav[1]?.items ?? [],
-  },
-  { title: 'Analytics', url: '/dashboard/analytics', icon: ChartNoAxesCombined },
-  { title: 'Verification', url: '/dashboard/verification', icon: ShieldCheck },
-  { title: 'Profile', url: '/dashboard/profile', icon: UserCircle },
-];
-
-const menu: Menu = {
-  main: mainNav,
+export default {
+  main: [
+    {
+      title: 'Course Management',
+      icon: LibraryIcon,
+      items: [
+        {
+          title: 'Create New Course',
+          url: '/dashboard/course-management/create-new-course',
+        },
+        {
+          title: 'Drafts',
+          url: '/dashboard/course-management/drafts',
+        },
+      ],
+    },
+  ] as MenuItem[],
   secondary: [
     process.env.NODE_ENV === 'development' && {
       title: 'API Docs',
@@ -173,14 +117,325 @@ const menu: Menu = {
     },
   ] as MenuItem[],
   user: [
-    { title: 'Profile', url: '/dashboard/profile', icon: UserIcon },
-    { title: 'Account', url: '/dashboard/account', icon: BoltIcon },
-  ],
-  admin: adminNav,
-  student: studentNav,
-  instructor: instructorNav,
-  organisation_user: organisationNav,
-  course_creator: courseCreatorNav,
-};
+    {
+      title: 'Profile',
+      url: '/dashboard/profile',
+      icon: UserIcon,
+    },
 
-export default menu;
+    {
+      title: 'Account',
+      url: '/dashboard/account',
+      icon: BoltIcon,
+    },
+  ],
+  student: [
+    {
+      title: 'Overview',
+      url: '/dashboard/overview',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Browse Courses',
+      url: '/dashboard/browse-courses',
+      icon: Book,
+    },
+    {
+      title: 'My Classes',
+      url: '/dashboard/my-classes',
+      icon: BookOpen,
+    },
+    {
+      title: 'My Schedule',
+      url: '/dashboard/my-schedule',
+      icon: Calendar,
+    },
+    {
+      title: 'Skills Fund',
+      url: '/dashboard/skills-fund',
+      icon: Wallet,
+    },
+    {
+      title: 'My Grades',
+      url: '/dashboard/grades',
+      icon: Award,
+    },
+    {
+      title: 'My Certificates',
+      url: '/dashboard/certificates',
+      icon: Star,
+    },
+    {
+      title: 'Profile',
+      url: '/dashboard/profile',
+      icon: UserCircle,
+    },
+  ],
+  instructor: [
+    {
+      title: 'Overview',
+      url: '/dashboard/overview',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: BookOpen,
+    },
+    {
+      title: 'Trainings',
+      url: '/dashboard/trainings',
+      icon: ClipboardList,
+      // items: [
+      //   {
+      //     title: 'Overview',
+      //     url: '/dashboard/trainings/overview',
+      //     icon: LayoutDashboard,
+      //   },
+      //   {
+      //     title: 'Timetable',
+      //     url: '/dashboard/trainings/timetable',
+      //     icon: Calendar,
+      //   },
+      //   {
+      //     title: 'Students',
+      //     url: '/dashboard/trainings/students',
+      //     icon: Users,
+      //   },
+      // ],
+    },
+    {
+      title: 'Assessment',
+      url: '/dashboard/assessment',
+      icon: Layers,
+      // items: [
+      //   {
+      //     title: 'Assignments',
+      //     url: '/dashboard/assessment/assignments',
+      //     icon: FileText,
+      //   },
+      //   {
+      //     title: 'Quiz',
+      //     url: '/dashboard/assessment/quiz',
+      //     icon: ListChecks,
+      //   },
+      //   {
+      //     title: 'Exams',
+      //     url: '/dashboard/assessment/exams',
+      //     icon: FileCheck,
+      //   },
+      // ],
+    },
+    {
+      title: 'Waiting List',
+      url: '/dashboard/waiting-list',
+      icon: Mails,
+    },
+    {
+      title: 'Learning',
+      url: '/dashboard/learning',
+      icon: GraduationCap,
+    },
+    {
+      title: 'Bookings',
+      url: '/dashboard/bookings',
+      icon: CalendarClock,
+    },
+    {
+      title: 'Skills Fund',
+      url: '/dashboard/skills-fund',
+      icon: Wallet,
+    },
+    {
+      title: 'Opportunities',
+      url: '/dashboard/opportunities',
+      icon: Handshake,
+      // items: [
+      //   {
+      //     title: 'Jobs',
+      //     url: '/dashboard/opportunities/jobs',
+      //     icon: Briefcase,
+      //   },
+      //   {
+      //     title: 'Apprenticeships',
+      //     url: '/dashboard/opportunities/apprenticeships',
+      //     icon: Wrench,
+      //   },
+      //   {
+      //     title: 'Attachment',
+      //     url: '/dashboard/opportunities/attachment',
+      //     icon: UserPlus,
+      //   },
+      // ],
+    },
+    {
+      title: 'Libraries',
+      url: '/dashboard/libraries',
+      icon: LucideBookUser,
+    },
+    {
+      title: 'Earnings',
+      url: '/dashboard/earnings',
+      icon: DollarSign,
+    },
+    {
+      title: 'Notifications',
+      url: '/dashboard/notifications',
+      icon: Bell,
+    },
+    {
+      title: 'Analytics',
+      url: '/dashboard/analytics',
+      icon: ChartNoAxesCombined,
+    },
+    {
+      title: 'Profile',
+      url: '/dashboard/profile',
+      icon: UserCircle,
+    },
+  ],
+  course_creator: [
+    {
+      title: 'Overview',
+      url: '/dashboard/overview',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Courses',
+      url: '/dashboard/courses',
+      icon: BookOpen,
+    },
+    {
+      title: 'Training Applications',
+      url: '/dashboard/training-applications',
+      icon: GraduationCap,
+    },
+    {
+      title: 'Course Management',
+      url: '/dashboard/course-management',
+      icon: ClipboardList,
+      items: [
+        {
+          title: 'Create New Course',
+          url: '/dashboard/course-management/create-new-course',
+          icon: PlusCircle,
+        },
+        {
+          title: 'Drafts',
+          url: '/dashboard/course-management/drafts',
+          icon: FileText,
+        },
+        {
+          title: 'Published',
+          url: '/dashboard/course-management/published',
+          icon: FileCheck,
+        },
+      ],
+    },
+    {
+      title: 'Analytics',
+      url: '/dashboard/analytics',
+      icon: ChartNoAxesCombined,
+    },
+    {
+      title: 'Verification',
+      url: '/dashboard/verification',
+      icon: ShieldCheck,
+    },
+    {
+      title: 'Profile',
+      url: '/dashboard/profile',
+      icon: UserCircle,
+    },
+  ],
+  admin: [
+    {
+      title: 'Admin workspace',
+      icon: ShieldCheck,
+      items: [
+        {
+          title: 'Overview',
+          url: '/dashboard/overview',
+          icon: LayoutDashboard,
+        },
+        {
+          title: 'Users',
+          url: '/dashboard/users',
+          icon: UsersIcon,
+        },
+        {
+          title: 'Instructors',
+          url: '/dashboard/instructors',
+          icon: GraduationCap,
+        },
+        {
+          title: 'Organizations',
+          url: '/dashboard/organizations',
+          icon: Building2,
+        },
+        {
+          title: 'Branches',
+          url: '/dashboard/branches',
+          icon: GitBranch,
+        },
+        {
+          title: 'System Config',
+          url: '/dashboard/system-config',
+          icon: Settings,
+        },
+      ],
+    },
+  ],
+  organisation_user: [
+    {
+      title: 'Overview',
+      url: '/dashboard/overview',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Instructors',
+      url: '/dashboard/instructors',
+      icon: Briefcase,
+    },
+    {
+      title: 'Students',
+      url: '/dashboard/students',
+      icon: Users,
+    },
+    {
+      title: 'Course Management',
+      url: '/dashboard/course-management',
+      icon: BookOpen,
+    },
+    {
+      title: 'Invites',
+      url: '/dashboard/invites',
+      icon: Mails,
+    },
+    {
+      title: 'Classes',
+      url: '/dashboard/classes',
+      icon: ClipboardList,
+    },
+    {
+      title: 'Branches',
+      url: '/dashboard/branches',
+      icon: Building,
+    },
+    {
+      title: 'Skills Fund',
+      url: '/dashboard/skills-fund',
+      icon: Wallet,
+    },
+    {
+      title: 'Users',
+      url: '/dashboard/users',
+      icon: UserCog,
+    },
+    {
+      title: 'Account',
+      url: '/dashboard/account',
+      icon: Settings,
+    },
+  ],
+} as Menu;
