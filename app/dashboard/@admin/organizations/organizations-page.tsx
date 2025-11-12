@@ -138,10 +138,10 @@ export default function AdminOrganisationsPage() {
 
   return (
     <div className='mx-auto flex w-full max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem] flex-col gap-6 px-4 py-10 2xl:px-10'>
-      <div className='relative overflow-hidden rounded-3xl border border-primary/20 bg-card p-6 shadow-sm'>
+      <div className='relative overflow-hidden rounded-3xl border border-border/60 bg-card p-6 shadow-sm'>
         <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
           <div className='space-y-2'>
-            <Badge variant='outline' className='border-primary/60 bg-primary/10 text-xs font-semibold uppercase tracking-wide'>
+            <Badge variant='outline' className='border-border/60 bg-muted/80 text-xs font-semibold uppercase tracking-wide'>
               Trust & compliance
             </Badge>
             <h1 className='text-3xl font-semibold tracking-tight'>Organisation registry</h1>
