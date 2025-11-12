@@ -22,6 +22,7 @@ import ActivityFeed from './ActivityFeed';
 import MetricsBreakdown from './MetricsBreakdown';
 import { VerificationSnapshot } from './VerificationSnapshot';
 import { RecentActivitySummary } from './RecentActivitySummary';
+import { EnrollmentComplianceCard, type EnrollmentComplianceMetrics } from './EnrollmentComplianceCard';
 
 export default function StatisticsContent() {
   const router = useRouter();
@@ -36,10 +37,15 @@ export default function StatisticsContent() {
     refetch: refetchActivityFeed,
   } = useAdminActivityFeed();
 
-  const statistics: AdminDashboardStats | undefined = data?.data;
+  type ExtendedAdminDashboardStats = AdminDashboardStats & {
+    enrollment_compliance_metrics?: EnrollmentComplianceMetrics;
+  };
+
+  const statistics = data?.data as ExtendedAdminDashboardStats | undefined;
   const adminMetrics = statistics?.admin_metrics;
   const organizationMetrics = statistics?.organization_metrics;
   const complianceMetrics = statistics?.compliance_metrics;
+  const enrollmentComplianceMetrics = statistics?.enrollment_compliance_metrics;
 
   const missionStats = useMemo(
     () => [
@@ -232,6 +238,7 @@ export default function StatisticsContent() {
         <aside className='space-y-6'>
           <SystemHealth statistics={statistics} isLoading={isLoading} />
           <VerificationSnapshot statistics={statistics} />
+          <EnrollmentComplianceCard metrics={enrollmentComplianceMetrics} />
           <RecentActivitySummary
             events={activityFeed?.events ?? []}
             isLoading={isActivityFeedLoading || isActivityFeedRefetching}

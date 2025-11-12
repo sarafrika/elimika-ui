@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAdminOrganisations, type AdminOrganisation } from '@/services/admin/organizations';
-import { useAdminBranches } from '@/services/admin/branches';
+import { useAdminBranches, useBranchUsers } from '@/services/admin/branches';
+import type { TrainingBranch } from '@/services/client/types.gen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,8 @@ export function AdminBranchesContent() {
   const [orgSearch, setOrgSearch] = useState('');
   const [branchSearch, setBranchSearch] = useState('');
   const [selectedOrg, setSelectedOrg] = useState<AdminOrganisation | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<TrainingBranch | null>(null);
+  const [branchUserPage, setBranchUserPage] = useState(0);
 
   const {
     data: orgData,
@@ -49,6 +52,24 @@ export function AdminBranchesContent() {
   );
 
   const branches = branchesData?.items ?? [];
+
+  useEffect(() => {
+    setSelectedBranch(null);
+    setBranchUserPage(0);
+  }, [activeOrgUuid]);
+
+  const branchUsersParams =
+    activeOrgUuid && selectedBranch?.uuid
+      ? {
+          organizationUuid: activeOrgUuid,
+          branchUuid: selectedBranch.uuid,
+          page: branchUserPage,
+          size: 20,
+        }
+      : null;
+
+  const { data: branchUsersData, isLoading: isBranchUsersLoading } =
+    useBranchUsers(branchUsersParams);
 
   return (
     <div className='grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]'>
@@ -165,21 +186,27 @@ export function AdminBranchesContent() {
                 ))}
 
               {!isBranchesLoading &&
-                branches.map(branch => (
-                  <div
-                    key={branch.uuid}
-                    className='rounded-2xl border border-border/60 p-4 shadow-sm'
-                  >
-                    <div className='flex flex-wrap items-center justify-between gap-2'>
-                      <div>
-                        <p className='text-lg font-semibold'>{branch.branch_name}</p>
-                        <p className='text-muted-foreground text-sm'>{branch.address ?? '—'}</p>
+                branches.map(branch => {
+                  const isSelected = selectedBranch?.uuid === branch.uuid;
+                  return (
+                    <button
+                      key={branch.uuid}
+                      type='button'
+                      onClick={() => setSelectedBranch(branch)}
+                      className={`w-full rounded-2xl border p-4 text-left shadow-sm transition ${
+                        isSelected ? 'border-primary bg-primary/5' : 'border-border/60 hover:border-primary/40'
+                      }`}
+                    >
+                      <div className='flex flex-wrap items-center justify-between gap-2'>
+                        <div>
+                          <p className='text-lg font-semibold'>{branch.branch_name}</p>
+                          <p className='text-muted-foreground text-sm'>{branch.address ?? '—'}</p>
+                        </div>
+                        <Badge variant={branch.active ? 'success' : 'outline'}>
+                          {branch.active ? 'Active' : 'Inactive'}
+                        </Badge>
                       </div>
-                      <Badge variant={branch.active ? 'success' : 'outline'}>
-                        {branch.active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
-                    <div className='mt-3 grid gap-2 text-sm md:grid-cols-2'>
+                      <div className='mt-3 grid gap-2 text-sm md:grid-cols-2'>
                       <div>
                         <p className='text-muted-foreground text-xs uppercase'>Point of contact</p>
                         <p className='font-medium'>{branch.poc_name}</p>
@@ -198,8 +225,9 @@ export function AdminBranchesContent() {
                         </p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  </button>
+                );
+              })}
 
               {!isBranchesLoading && branches.length === 0 && activeOrg && (
                 <p className='text-muted-foreground text-sm'>
@@ -212,6 +240,96 @@ export function AdminBranchesContent() {
               )}
             </div>
           </ScrollArea>
+
+          <div className='rounded-2xl border border-border/60 p-4'>
+            {selectedBranch ? (
+              <div className='space-y-3'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <div>
+                    <p className='text-sm font-semibold'>Members</p>
+                    <p className='text-muted-foreground text-xs'>
+                      {selectedBranch.branch_name} · {branchUsersData?.totalItems ?? 0} records
+                    </p>
+                  </div>
+                  <div className='ml-auto flex items-center gap-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setBranchUserPage(prev => Math.max(prev - 1, 0))}
+                      disabled={branchUserPage === 0 || !branchUsersData}
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() =>
+                        setBranchUserPage(prev =>
+                          branchUsersData && prev + 1 < branchUsersData.totalPages ? prev + 1 : prev
+                        )
+                      }
+                      disabled={
+                        !branchUsersData || branchUserPage + 1 >= (branchUsersData.totalPages ?? 0)
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+                {branchUsersData && branchUsersData.totalPages > 1 && (
+                  <p className='text-muted-foreground text-xs'>
+                    Page {branchUserPage + 1} of {branchUsersData.totalPages}
+                  </p>
+                )}
+
+                {isBranchUsersLoading && (
+                  <div className='space-y-2'>
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className='rounded-xl border border-border/60 p-3'>
+                        <Skeleton className='h-4 w-32' />
+                        <Skeleton className='mt-1 h-3 w-24' />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!isBranchUsersLoading && branchUsersData && branchUsersData.items.length === 0 && (
+                  <p className='text-muted-foreground text-sm'>
+                    No members assigned to this branch yet.
+                  </p>
+                )}
+
+                {!isBranchUsersLoading && branchUsersData && branchUsersData.items.length > 0 && (
+                  <div className='space-y-2'>
+                    {branchUsersData.items.map(user => (
+                      <div
+                        key={user.uuid ?? user.email}
+                        className='rounded-xl border border-border/60 p-3 text-sm'
+                      >
+                        <p className='font-semibold'>
+                          {[user.first_name, user.last_name].filter(Boolean).join(' ') ||
+                            user.username ||
+                            'Unnamed user'}
+                        </p>
+                        <p className='text-muted-foreground text-xs'>{user.email ?? 'No email'}</p>
+                        <div className='mt-2 flex flex-wrap gap-2'>
+                          {(user.user_domain ?? []).map(domain => (
+                            <Badge key={domain} variant='outline'>
+                              {domain}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className='text-muted-foreground text-sm'>
+                Select a branch to view assigned members.
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
