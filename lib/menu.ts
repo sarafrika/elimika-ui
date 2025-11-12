@@ -350,7 +350,7 @@ export default {
   ],
   admin: [
     {
-      title: 'Admin workspace',
+      title: 'Administration',
       icon: ShieldCheck,
       items: [
         {
