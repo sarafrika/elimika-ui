@@ -25,6 +25,7 @@ import {
   Mails,
   MessageCircle,
   PlusCircle,
+  School,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -361,6 +362,11 @@ export default {
           title: 'Users',
           url: '/dashboard/users',
           icon: UsersIcon,
+        },
+        {
+          title: 'Students',
+          url: '/dashboard/students',
+          icon: School,
         },
         {
           title: 'Instructors',
