@@ -19,6 +19,7 @@ export type UserDomain =
   | 'student'
   | 'instructor'
   | 'admin'
+  | 'parent'
   | 'course_creator'
   | 'organisation_user'
   | 'organisation';

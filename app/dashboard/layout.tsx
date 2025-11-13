@@ -17,6 +17,7 @@ type KnownDomain = UserDomain | 'organization';
 const domainToSlotKeyMap: Record<KnownDomain, keyof DashboardChildrenTypes> = {
   student: 'student',
   admin: 'admin',
+  parent: 'parent',
   instructor: 'instructor',
   course_creator: 'course_creator',
   organisation: 'organization',
@@ -27,6 +28,7 @@ const domainToSlotKeyMap: Record<KnownDomain, keyof DashboardChildrenTypes> = {
 const domainToDashboardViewMap: Record<KnownDomain, DashboardView> = {
   student: 'student',
   admin: 'admin',
+  parent: 'parent',
   instructor: 'instructor',
   course_creator: 'course_creator',
   organisation: 'organization',

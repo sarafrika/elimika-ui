@@ -442,4 +442,26 @@ export default {
       icon: Settings,
     },
   ],
+  parent: [
+    {
+      title: 'Overview',
+      url: '/dashboard/overview',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Attendance',
+      url: '/dashboard/attendance',
+      icon: CalendarClock,
+    },
+    {
+      title: 'Notifications',
+      url: '/dashboard/notifications',
+      icon: Bell,
+    },
+    {
+      title: 'Billing',
+      url: '/dashboard/billing',
+      icon: DollarSign,
+    },
+  ],
 } as Menu;
