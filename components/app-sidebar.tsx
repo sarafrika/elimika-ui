@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 import { useTrainingCenter } from '../context/training-center-provide';
+import { useUserProfile } from '../context/profile-context';
 import { NavMain } from './nav-main';
 
 export function AppSidebar({
@@ -26,7 +27,9 @@ export function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar> & { activeDomain: UserDomain }) {
   const trainingCenter = useTrainingCenter();
+  const profile = useUserProfile();
   const pathname = usePathname();
+  const isAdmin = profile?.user_domain?.includes('admin');
 
   // Helper to get menu items for a domain
   const getMenuItems = (domain: UserDomain) => {
@@ -72,6 +75,7 @@ export function AppSidebar({
             items={getMenuItems(activeDomain)}
             activeDomain={activeDomain}
             pathname={pathname}
+            isAdmin={Boolean(isAdmin)}
           />
         </SidebarGroupContent>
 

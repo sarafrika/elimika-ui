@@ -20,7 +20,7 @@ function AdminSidebar(): React.JSX.Element {
         <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            <NavMain items={menu.admin!} activeDomain='admin' pathname={pathname} />
+            <NavMain items={menu.admin!} activeDomain='admin' pathname={pathname} isAdmin />
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarContent>
