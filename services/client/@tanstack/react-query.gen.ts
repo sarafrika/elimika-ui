@@ -8,6 +8,8 @@ import {
   deleteTrainingBranch,
   getTrainingBranchByUuid,
   updateTrainingBranch,
+  getRule,
+  updateRule,
   deleteStudent,
   getStudentById,
   updateStudent,
@@ -115,6 +117,8 @@ import {
   checkStudentConflict,
   scheduleClass,
   checkInstructorConflict,
+  listRules,
+  createRule,
   getAllStudents,
   createStudent,
   getAllAssessmentRubrics,
@@ -173,6 +177,7 @@ import {
   createAvailabilitySlot,
   setAvailabilityPatterns,
   blockTime,
+  createLink,
   enrollStudent,
   getAllCourses,
   createCourse,
@@ -237,8 +242,7 @@ import {
   returnSubmission,
   gradeSubmission,
   assignAdminDomain,
-  verifyOrganisation,
-  unverifyOrganisation,
+  moderateOrganisation,
   verifyInstructor,
   unverifyInstructor,
   listAll,
@@ -325,6 +329,8 @@ import {
   searchExperience,
   searchEducation,
   searchDocuments,
+  getStudentDashboard,
+  getMyStudents,
   cancelEnrollment,
   getEnrollment,
   getStudentSchedule,
@@ -392,10 +398,13 @@ import {
   getAdminEligibleUsers,
   getAdminUsers,
   isOrganisationVerified,
+  getPendingOrganisations,
   isInstructorVerified,
   getDashboardStatistics,
+  getDashboardActivity,
   cancelInvitation,
   cleanupOldInvitations,
+  revokeLink,
   dissociateRubric,
   dissociateRubricByContext,
   removeCategoryFromCourse,
@@ -422,6 +431,10 @@ import type {
   UpdateTrainingBranchData,
   UpdateTrainingBranchError,
   UpdateTrainingBranchResponse,
+  GetRuleData,
+  UpdateRuleData,
+  UpdateRuleError,
+  UpdateRuleResponse,
   DeleteStudentData,
   DeleteStudentError,
   DeleteStudentResponse,
@@ -688,6 +701,12 @@ import type {
   CheckInstructorConflictData,
   CheckInstructorConflictError,
   CheckInstructorConflictResponse,
+  ListRulesData,
+  ListRulesError,
+  ListRulesResponse,
+  CreateRuleData,
+  CreateRuleError,
+  CreateRuleResponse,
   GetAllStudentsData,
   GetAllStudentsError,
   GetAllStudentsResponse,
@@ -850,6 +869,9 @@ import type {
   BlockTimeData,
   BlockTimeError,
   BlockTimeResponse,
+  CreateLinkData,
+  CreateLinkError,
+  CreateLinkResponse,
   EnrollStudentData,
   EnrollStudentError,
   EnrollStudentResponse,
@@ -1032,12 +1054,9 @@ import type {
   AssignAdminDomainData,
   AssignAdminDomainError,
   AssignAdminDomainResponse,
-  VerifyOrganisationData,
-  VerifyOrganisationError,
-  VerifyOrganisationResponse,
-  UnverifyOrganisationData,
-  UnverifyOrganisationError,
-  UnverifyOrganisationResponse,
+  ModerateOrganisationData,
+  ModerateOrganisationError,
+  ModerateOrganisationResponse,
   VerifyInstructorData,
   VerifyInstructorError,
   VerifyInstructorResponse,
@@ -1234,6 +1253,8 @@ import type {
   SearchDocumentsData,
   SearchDocumentsError,
   SearchDocumentsResponse,
+  GetStudentDashboardData,
+  GetMyStudentsData,
   CancelEnrollmentData,
   CancelEnrollmentError,
   CancelEnrollmentResponse,
@@ -1349,14 +1370,23 @@ import type {
   GetAdminUsersError,
   GetAdminUsersResponse,
   IsOrganisationVerifiedData,
+  GetPendingOrganisationsData,
+  GetPendingOrganisationsError,
+  GetPendingOrganisationsResponse,
   IsInstructorVerifiedData,
   GetDashboardStatisticsData,
+  GetDashboardActivityData,
+  GetDashboardActivityError,
+  GetDashboardActivityResponse,
   CancelInvitationData,
   CancelInvitationError,
   CancelInvitationResponse,
   CleanupOldInvitationsData,
   CleanupOldInvitationsError,
   CleanupOldInvitationsResponse,
+  RevokeLinkData,
+  RevokeLinkError,
+  RevokeLinkResponse,
   DissociateRubricData,
   DissociateRubricError,
   DissociateRubricResponse,
@@ -1543,6 +1573,51 @@ export const updateTrainingBranchMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateTrainingBranch({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getRuleQueryKey = (options: Options<GetRuleData>) =>
+  createQueryKey('getRule', options);
+
+/**
+ * Fetch rule
+ * Fetches a single rule by its UUID
+ */
+export const getRuleOptions = (options: Options<GetRuleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRuleQueryKey(options),
+  });
+};
+
+/**
+ * Update rule
+ */
+export const updateRuleMutation = (
+  options?: Partial<Options<UpdateRuleData>>
+): UseMutationOptions<UpdateRuleResponse, UpdateRuleError, Options<UpdateRuleData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateRuleResponse,
+    UpdateRuleError,
+    Options<UpdateRuleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateRule({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -4626,6 +4701,117 @@ export const checkInstructorConflictMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await checkInstructorConflict({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listRulesQueryKey = (options: Options<ListRulesData>) =>
+  createQueryKey('listRules', options);
+
+/**
+ * List rules
+ * Returns paginated list of system rules with optional filters
+ */
+export const listRulesOptions = (options: Options<ListRulesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listRules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listRulesQueryKey(options),
+  });
+};
+
+export const listRulesInfiniteQueryKey = (
+  options: Options<ListRulesData>
+): QueryKey<Options<ListRulesData>> => createQueryKey('listRules', options, true);
+
+/**
+ * List rules
+ * Returns paginated list of system rules with optional filters
+ */
+export const listRulesInfiniteOptions = (options: Options<ListRulesData>) => {
+  return infiniteQueryOptions<
+    ListRulesResponse,
+    ListRulesError,
+    InfiniteData<ListRulesResponse>,
+    QueryKey<Options<ListRulesData>>,
+    number | Pick<QueryKey<Options<ListRulesData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListRulesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listRules({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listRulesInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const createRuleQueryKey = (options: Options<CreateRuleData>) =>
+  createQueryKey('createRule', options);
+
+/**
+ * Create rule
+ */
+export const createRuleOptions = (options: Options<CreateRuleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createRule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createRuleQueryKey(options),
+  });
+};
+
+/**
+ * Create rule
+ */
+export const createRuleMutation = (
+  options?: Partial<Options<CreateRuleData>>
+): UseMutationOptions<CreateRuleResponse, CreateRuleError, Options<CreateRuleData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateRuleResponse,
+    CreateRuleError,
+    Options<CreateRuleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createRule({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -7818,6 +8004,52 @@ export const blockTimeMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await blockTime({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const createLinkQueryKey = (options: Options<CreateLinkData>) =>
+  createQueryKey('createLink', options);
+
+/**
+ * Link a guardian to a learner
+ * Grants a guardian/parent access to monitor a learner using their own credentials.
+ */
+export const createLinkOptions = (options: Options<CreateLinkData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createLink({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createLinkQueryKey(options),
+  });
+};
+
+/**
+ * Link a guardian to a learner
+ * Grants a guardian/parent access to monitor a learner using their own credentials.
+ */
+export const createLinkMutation = (
+  options?: Partial<Options<CreateLinkData>>
+): UseMutationOptions<CreateLinkResponse, CreateLinkError, Options<CreateLinkData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateLinkResponse,
+    CreateLinkError,
+    Options<CreateLinkData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createLink({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -11351,17 +11583,17 @@ export const assignAdminDomainMutation = (
   return mutationOptions;
 };
 
-export const verifyOrganisationQueryKey = (options: Options<VerifyOrganisationData>) =>
-  createQueryKey('verifyOrganisation', options);
+export const moderateOrganisationQueryKey = (options: Options<ModerateOrganisationData>) =>
+  createQueryKey('moderateOrganisation', options);
 
 /**
- * Verify an organization
- * Verifies/approves an organization by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified organizations gain access to additional platform features and display verification badges.
+ * Moderate organization verification
+ * Handles organization approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
  */
-export const verifyOrganisationOptions = (options: Options<VerifyOrganisationData>) => {
+export const moderateOrganisationOptions = (options: Options<ModerateOrganisationData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await verifyOrganisation({
+      const { data } = await moderateOrganisation({
         ...options,
         ...queryKey[0],
         signal,
@@ -11369,78 +11601,28 @@ export const verifyOrganisationOptions = (options: Options<VerifyOrganisationDat
       });
       return data;
     },
-    queryKey: verifyOrganisationQueryKey(options),
+    queryKey: moderateOrganisationQueryKey(options),
   });
 };
 
 /**
- * Verify an organization
- * Verifies/approves an organization by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified organizations gain access to additional platform features and display verification badges.
+ * Moderate organization verification
+ * Handles organization approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
  */
-export const verifyOrganisationMutation = (
-  options?: Partial<Options<VerifyOrganisationData>>
+export const moderateOrganisationMutation = (
+  options?: Partial<Options<ModerateOrganisationData>>
 ): UseMutationOptions<
-  VerifyOrganisationResponse,
-  VerifyOrganisationError,
-  Options<VerifyOrganisationData>
+  ModerateOrganisationResponse,
+  ModerateOrganisationError,
+  Options<ModerateOrganisationData>
 > => {
   const mutationOptions: UseMutationOptions<
-    VerifyOrganisationResponse,
-    VerifyOrganisationError,
-    Options<VerifyOrganisationData>
+    ModerateOrganisationResponse,
+    ModerateOrganisationError,
+    Options<ModerateOrganisationData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await verifyOrganisation({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const unverifyOrganisationQueryKey = (options: Options<UnverifyOrganisationData>) =>
-  createQueryKey('unverifyOrganisation', options);
-
-/**
- * Remove verification from an organization
- * Removes verification from an organization by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
- */
-export const unverifyOrganisationOptions = (options: Options<UnverifyOrganisationData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await unverifyOrganisation({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: unverifyOrganisationQueryKey(options),
-  });
-};
-
-/**
- * Remove verification from an organization
- * Removes verification from an organization by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
- */
-export const unverifyOrganisationMutation = (
-  options?: Partial<Options<UnverifyOrganisationData>>
-): UseMutationOptions<
-  UnverifyOrganisationResponse,
-  UnverifyOrganisationError,
-  Options<UnverifyOrganisationData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UnverifyOrganisationResponse,
-    UnverifyOrganisationError,
-    Options<UnverifyOrganisationData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await unverifyOrganisation({
+      const { data } = await moderateOrganisation({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -15910,6 +16092,48 @@ export const searchDocumentsInfiniteOptions = (options: Options<SearchDocumentsD
   );
 };
 
+export const getStudentDashboardQueryKey = (options: Options<GetStudentDashboardData>) =>
+  createQueryKey('getStudentDashboard', options);
+
+/**
+ * Fetch learner dashboard for guardian access
+ */
+export const getStudentDashboardOptions = (options: Options<GetStudentDashboardData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentDashboard({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentDashboardQueryKey(options),
+  });
+};
+
+export const getMyStudentsQueryKey = (options?: Options<GetMyStudentsData>) =>
+  createQueryKey('getMyStudents', options);
+
+/**
+ * List guardian-linked students
+ */
+export const getMyStudentsOptions = (options?: Options<GetMyStudentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMyStudents({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMyStudentsQueryKey(options),
+  });
+};
+
 /**
  * Cancel a student enrollment
  */
@@ -18718,6 +18942,77 @@ export const isOrganisationVerifiedOptions = (options: Options<IsOrganisationVer
   });
 };
 
+export const getPendingOrganisationsQueryKey = (options: Options<GetPendingOrganisationsData>) =>
+  createQueryKey('getPendingOrganisations', options);
+
+/**
+ * Get pending organization approvals
+ * Retrieves a paginated list of organizations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
+ */
+export const getPendingOrganisationsOptions = (options: Options<GetPendingOrganisationsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPendingOrganisations({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPendingOrganisationsQueryKey(options),
+  });
+};
+
+export const getPendingOrganisationsInfiniteQueryKey = (
+  options: Options<GetPendingOrganisationsData>
+): QueryKey<Options<GetPendingOrganisationsData>> =>
+  createQueryKey('getPendingOrganisations', options, true);
+
+/**
+ * Get pending organization approvals
+ * Retrieves a paginated list of organizations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
+ */
+export const getPendingOrganisationsInfiniteOptions = (
+  options: Options<GetPendingOrganisationsData>
+) => {
+  return infiniteQueryOptions<
+    GetPendingOrganisationsResponse,
+    GetPendingOrganisationsError,
+    InfiniteData<GetPendingOrganisationsResponse>,
+    QueryKey<Options<GetPendingOrganisationsData>>,
+    | number
+    | Pick<QueryKey<Options<GetPendingOrganisationsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetPendingOrganisationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPendingOrganisations({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPendingOrganisationsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const isInstructorVerifiedQueryKey = (options: Options<IsInstructorVerifiedData>) =>
   createQueryKey('isInstructorVerified', options);
 
@@ -18760,6 +19055,75 @@ export const getDashboardStatisticsOptions = (options?: Options<GetDashboardStat
     },
     queryKey: getDashboardStatisticsQueryKey(options),
   });
+};
+
+export const getDashboardActivityQueryKey = (options: Options<GetDashboardActivityData>) =>
+  createQueryKey('getDashboardActivity', options);
+
+/**
+ * Get admin dashboard activity feed
+ * Retrieves a paginated list of recent administrative actions captured by the request audit trail.
+ */
+export const getDashboardActivityOptions = (options: Options<GetDashboardActivityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getDashboardActivity({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getDashboardActivityQueryKey(options),
+  });
+};
+
+export const getDashboardActivityInfiniteQueryKey = (
+  options: Options<GetDashboardActivityData>
+): QueryKey<Options<GetDashboardActivityData>> =>
+  createQueryKey('getDashboardActivity', options, true);
+
+/**
+ * Get admin dashboard activity feed
+ * Retrieves a paginated list of recent administrative actions captured by the request audit trail.
+ */
+export const getDashboardActivityInfiniteOptions = (options: Options<GetDashboardActivityData>) => {
+  return infiniteQueryOptions<
+    GetDashboardActivityResponse,
+    GetDashboardActivityError,
+    InfiniteData<GetDashboardActivityResponse>,
+    QueryKey<Options<GetDashboardActivityData>>,
+    | number
+    | Pick<QueryKey<Options<GetDashboardActivityData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetDashboardActivityData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getDashboardActivity({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getDashboardActivityInfiniteQueryKey(options),
+    }
+  );
 };
 
 /**
@@ -18808,6 +19172,29 @@ export const cleanupOldInvitationsMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await cleanupOldInvitations({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Revoke guardian access
+ */
+export const revokeLinkMutation = (
+  options?: Partial<Options<RevokeLinkData>>
+): UseMutationOptions<RevokeLinkResponse, RevokeLinkError, Options<RevokeLinkData>> => {
+  const mutationOptions: UseMutationOptions<
+    RevokeLinkResponse,
+    RevokeLinkError,
+    Options<RevokeLinkData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await revokeLink({
         ...options,
         ...localOptions,
         throwOnError: true,

@@ -168,6 +168,73 @@ export type ApiResponseTrainingBranch = {
   };
 };
 
+export type JsonNode = {
+  [key: string]: unknown;
+};
+
+export type SystemRuleRequest = {
+  category: SchemaEnum;
+  /**
+   * Unique key within the category
+   */
+  key: string;
+  scope?: ScopeEnum;
+  /**
+   * Optional reference identifier for the scope (tenant UUID, country code, etc.)
+   */
+  scopeReference?: string;
+  /**
+   * Priority used when multiple rules match
+   */
+  priority?: number;
+  status?: SchemaEnum2;
+  valueType?: ValueTypeEnum;
+  /**
+   * Rule payload describing configuration
+   */
+  valuePayload: JsonNode;
+  /**
+   * Optional JSON condition block
+   */
+  conditions?: JsonNode;
+  /**
+   * Start of the effective window. Defaults to now if omitted.
+   */
+  effectiveFrom?: Date;
+  /**
+   * Optional end of the effective window
+   */
+  effectiveTo?: Date;
+};
+
+export type ApiResponseSystemRuleResponse = {
+  success?: boolean;
+  data?: SystemRuleResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type SystemRuleResponse = {
+  uuid?: string;
+  category?: SchemaEnum;
+  key?: string;
+  scope?: ScopeEnum;
+  scopeReference?: string;
+  priority?: number;
+  status?: SchemaEnum2;
+  valueType?: ValueTypeEnum;
+  valuePayload?: JsonNode;
+  conditions?: JsonNode;
+  effectiveFrom?: Date;
+  effectiveTo?: Date;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+};
+
 /**
  * Student profile information including guardian contacts and academic details. Links to a base user account.
  */
@@ -180,6 +247,10 @@ export type Student = {
    * **[REQUIRED]** Reference to the base user account UUID. Links student profile to user authentication and personal details.
    */
   user_uuid: string;
+  /**
+   * **[OPTIONAL]** Demographic tag used for growth controls (e.g., youth_female, adult).
+   */
+  demographic_tag?: string;
   /**
    * **[OPTIONAL]** Full name of the primary guardian/parent. This is the main emergency contact for the student.
    */
@@ -197,8 +268,8 @@ export type Student = {
    */
   second_guardian_mobile?: string;
   primaryGuardianContact?: string;
-  allGuardianContacts?: Array<string>;
   secondaryGuardianContact?: string;
+  allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
    */
@@ -632,7 +703,7 @@ export type Quiz = {
    * **[REQUIRED]** Reference to the lesson UUID that contains this quiz.
    */
   lesson_uuid: string;
-  scope?: ScopeEnum;
+  scope?: ScopeEnum2;
   /**
    * **[OPTIONAL]** Reference to the class definition that owns this quiz when scope is CLASS_CLONE.
    */
@@ -767,13 +838,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -826,6 +897,10 @@ export type QuizQuestionOption = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
+   */
+  readonly option_summary?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the option based on its correctness status.
    */
   readonly option_category?: string;
@@ -841,10 +916,6 @@ export type QuizQuestionOption = {
    * **[READ-ONLY]** Status description indicating whether this option is correct or incorrect.
    */
   readonly correctness_status?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
-   */
-  readonly option_summary?: string;
 };
 
 export type ApiResponseQuizQuestionOption = {
@@ -884,7 +955,7 @@ export type TrainingProgram = {
    * **[OPTIONAL]** Learning objectives and goals students will achieve upon program completion.
    */
   objectives?: string;
-  status: SchemaEnum;
+  status: SchemaEnum4;
   /**
    * **[OPTIONAL]** Required knowledge and skills students should have before starting this program.
    */
@@ -1905,7 +1976,7 @@ export type Course = {
    * **[OPTIONAL]** URL to course banner image for detailed course pages.
    */
   banner_url?: string;
-  status: SchemaEnum;
+  status: SchemaEnum4;
   /**
    * **[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.
    */
@@ -2778,6 +2849,8 @@ export type ClassDefinition = {
    * **[OPTIONAL]** Training fee charged for sessions created from this class definition. Must meet the course minimum training fee when a course is linked.
    */
   training_fee?: number;
+  class_visibility: ClassVisibilityEnum;
+  session_format: SessionFormatEnum;
   /**
    * **[REQUIRED]** Default start time for class sessions.
    */
@@ -3225,7 +3298,7 @@ export type Assignment = {
    * **[REQUIRED]** Reference to the lesson UUID this assignment belongs to.
    */
   lesson_uuid: string;
-  scope?: ScopeEnum;
+  scope?: ScopeEnum2;
   /**
    * **[OPTIONAL]** Reference to the class definition that owns this assignment when scope is CLASS_CLONE.
    */
@@ -3616,6 +3689,48 @@ export type ApiResponseInstructor = {
 };
 
 /**
+ * Represents a guardian's access rights to a learner profile.
+ */
+export type GuardianStudentLink = {
+  uuid?: string;
+  studentUuid?: string;
+  guardianUserUuid?: string;
+  studentName?: string;
+  guardianDisplayName?: string;
+  relationshipType?: RelationshipTypeEnum;
+  shareScope?: ShareScopeEnum;
+  status?: StatusEnum5;
+  primaryGuardian?: boolean;
+  linkedDate?: Date;
+  revokedDate?: Date;
+  notes?: string;
+};
+
+/**
+ * Request payload to link a guardian/parent to a learner profile.
+ */
+export type GuardianStudentLinkRequest = {
+  /**
+   * UUID for the student profile to be monitored
+   */
+  studentUuid: string;
+  /**
+   * UUID for the guardian's user account
+   */
+  guardianUserUuid: string;
+  relationshipType: RelationshipTypeEnum;
+  shareScope: ShareScopeEnum;
+  /**
+   * Marks this guardian as the primary contact
+   */
+  isPrimary?: boolean;
+  /**
+   * Optional note shown in audits or invitation emails
+   */
+  notes?: string;
+};
+
+/**
  * Request to enroll a student in a scheduled class instance
  */
 export type EnrollmentRequest = {
@@ -3654,7 +3769,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum5;
+  status?: StatusEnum6;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -3688,13 +3803,13 @@ export type Enrollment = {
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
-   */
-  readonly status_description?: string;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   */
+  readonly status_description?: string;
 };
 
 export type ApiResponse = {
@@ -3718,17 +3833,36 @@ export type CourseTrainingApplicationRequest = {
    */
   applicant_uuid: string;
   /**
-   * **[REQUIRED]** Proposed compensation per trainee per hour for delivering this course.
+   * **[REQUIRED]** Instructor rate card across privacy/session segments.
    */
-  rate_per_hour_per_head: number;
-  /**
-   * **[OPTIONAL]** ISO 4217 currency code drawn from the platform approved list. Defaults to the platform currency when omitted.
-   */
-  rate_currency?: string;
+  rate_card: CourseTrainingRateCard;
   /**
    * Optional notes to help the course creator evaluate the request.
    */
   application_notes?: string;
+};
+
+export type CourseTrainingRateCard = {
+  /**
+   * **[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.
+   */
+  currency?: string;
+  /**
+   * Private 1:1 session rate per learner per hour.
+   */
+  private_individual_rate: number;
+  /**
+   * Private group session rate per learner per hour.
+   */
+  private_group_rate: number;
+  /**
+   * Public individual rate per learner per hour.
+   */
+  public_individual_rate: number;
+  /**
+   * Public group rate per learner per hour.
+   */
+  public_group_rate: number;
 };
 
 export type ApiResponseCourseTrainingApplication = {
@@ -3748,7 +3882,7 @@ export type CourseTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum6;
+  status?: StatusEnum7;
   /**
    * Submission notes provided by the applicant.
    */
@@ -3775,13 +3909,9 @@ export type CourseTrainingApplication = {
    */
   readonly applicant_uuid?: string;
   /**
-   * **[READ-ONLY]** Instructor or organisation rate charged per trainee per hour.
+   * **[READ-ONLY]** Approved rate card for this application.
    */
-  readonly rate_per_hour_per_head?: number;
-  /**
-   * **[READ-ONLY]** ISO 4217 currency code for the proposed rate (managed by platform configuration).
-   */
-  readonly rate_currency?: string;
+  rate_card?: CourseTrainingRateCard;
   /**
    * **[READ-ONLY]** When the application was submitted.
    */
@@ -3840,6 +3970,18 @@ export type CartItemResponse = {
    */
   variant_id?: string;
   /**
+   * Price per unit in the smallest currency denomination
+   */
+  unit_price?: bigint;
+  /**
+   * Subtotal for the line item in the smallest currency denomination
+   */
+  subtotal?: bigint;
+  /**
+   * Total for the line item after discounts in the smallest currency denomination
+   */
+  total?: bigint;
+  /**
    * Custom metadata captured for the line item
    */
   metadata?: {
@@ -3866,10 +4008,57 @@ export type OrderResponse = {
    */
   payment_status?: string;
   /**
+   * Currency code associated to the order totals
+   */
+  currency_code?: string;
+  /**
+   * Subtotal in the smallest currency denomination
+   */
+  subtotal?: bigint;
+  /**
+   * Total in the smallest currency denomination
+   */
+  total?: bigint;
+  /**
    * Timestamp when the order was created
    */
   created_at?: Date;
+  /**
+   * Platform fee breakdown applied to this order
+   */
+  platform_fee?: PlatformFeeBreakdown;
   items?: Array<CartItemResponse>;
+};
+
+/**
+ * Computed platform fee details applied to an order
+ */
+export type PlatformFeeBreakdown = {
+  /**
+   * Fee amount in major currency units after adjustments
+   */
+  amount?: number;
+  /**
+   * Currency code the fee is denominated in
+   */
+  currency?: string;
+  mode?: ModeEnum;
+  /**
+   * Percentage rate applied when mode is PERCENTAGE
+   */
+  rate?: number;
+  /**
+   * Order total used to compute the platform fee
+   */
+  baseAmount?: number;
+  /**
+   * Identifier of the rule that produced the fee
+   */
+  ruleUuid?: string;
+  /**
+   * Timestamp when the fee was evaluated
+   */
+  evaluatedAt?: Date;
 };
 
 /**
@@ -4185,7 +4374,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum7;
+  status: StatusEnum8;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -4252,7 +4441,7 @@ export type AssignmentSubmission = {
  * Admin domain assignment request containing domain type, reason, and effective date
  */
 export type AdminDomainAssignmentRequest = {
-  domain_name: SchemaEnum2;
+  domain_name: SchemaEnum5;
   assignment_type: AssignmentTypeEnum;
   /**
    * Reason for assigning admin privileges
@@ -4379,6 +4568,21 @@ export type ApiResponsePagedDtoTrainingBranch = {
 
 export type PagedDtoTrainingBranch = {
   content?: Array<TrainingBranch>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoSystemRuleResponse = {
+  success?: boolean;
+  data?: PagedDtoSystemRuleResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoSystemRuleResponse = {
+  content?: Array<SystemRuleResponse>;
   metadata?: PageMetadata;
   links?: PageLinks;
 };
@@ -4652,7 +4856,7 @@ export type QuizAttempt = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum8;
+  status: StatusEnum9;
   /**
    * **[READ-ONLY]** Timestamp when the attempt was created. Automatically set by the system.
    */
@@ -4674,6 +4878,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -4685,10 +4893,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -4775,7 +4979,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum9;
+  status: StatusEnum10;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -4805,13 +5009,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -5063,6 +5267,52 @@ export type PagedDtoInstructorDocument = {
   links?: PageLinks;
 };
 
+export type GuardianStudentDashboardDto = {
+  studentUuid?: string;
+  studentName?: string;
+  shareScope?: ShareScopeEnum;
+  status?: StatusEnum5;
+  courseProgress?: Array<LearnerCourseProgressView>;
+  programProgress?: Array<LearnerProgramProgressView>;
+};
+
+export type LearnerCourseProgressView = {
+  enrollmentUuid?: string;
+  courseUuid?: string;
+  courseName?: string;
+  status?: string;
+  progressPercentage?: number;
+  updatedDate?: Date;
+};
+
+export type LearnerProgramProgressView = {
+  enrollmentUuid?: string;
+  programUuid?: string;
+  programName?: string;
+  status?: string;
+  progressPercentage?: number;
+  updatedDate?: Date;
+};
+
+export type ApiResponseListGuardianStudentSummaryDto = {
+  success?: boolean;
+  data?: Array<GuardianStudentSummaryDto>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type GuardianStudentSummaryDto = {
+  linkUuid?: string;
+  studentUuid?: string;
+  studentName?: string;
+  relationshipType?: RelationshipTypeEnum;
+  shareScope?: ShareScopeEnum;
+  status?: StatusEnum5;
+  primaryGuardian?: boolean;
+};
+
 export type ApiResponseEnrollment = {
   success?: boolean;
   data?: Enrollment;
@@ -5119,7 +5369,7 @@ export type StudentSchedule = {
   readonly timezone?: string;
   location_type?: LocationTypeEnum;
   scheduling_status?: StatusEnum3;
-  enrollment_status?: StatusEnum5;
+  enrollment_status?: StatusEnum6;
   /**
    * **[READ-ONLY]** Timestamp when attendance was marked (if applicable).
    */
@@ -5173,7 +5423,7 @@ export type PagedDtoCourse = {
 
 export type ApiResponseListContentStatus = {
   success?: boolean;
-  data?: Array<SchemaEnum>;
+  data?: Array<SchemaEnum4>;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -5297,7 +5547,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum9;
+  status: StatusEnum10;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -5327,13 +5577,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -5794,6 +6044,79 @@ export type UserMetrics = {
 };
 
 /**
+ * Represents a recent administrative action recorded by the platform
+ */
+export type AdminActivityEvent = {
+  /**
+   * Unique identifier for the activity event
+   */
+  event_uuid?: string;
+  /**
+   * When the activity occurred (UTC)
+   */
+  occurred_at?: Date;
+  /**
+   * Human-readable summary of the activity
+   */
+  summary?: string;
+  /**
+   * HTTP method invoked by the admin request
+   */
+  http_method?: string;
+  /**
+   * Endpoint path that was called
+   */
+  endpoint?: string;
+  /**
+   * Query string (if any) that accompanied the request
+   */
+  query?: string;
+  /**
+   * Response status returned for the request
+   */
+  response_status?: number;
+  /**
+   * Processing time in milliseconds for the request
+   */
+  processing_time_ms?: bigint;
+  /**
+   * Administrator who performed the action (full name if available)
+   */
+  actor_name?: string;
+  /**
+   * Email address of the administrator who performed the action
+   */
+  actor_email?: string;
+  /**
+   * UUID of the administrator, if authenticated
+   */
+  actor_uuid?: string;
+  /**
+   * Comma-separated list of domains attached to the administrator during the request
+   */
+  actor_domains?: string;
+  /**
+   * Unique request identifier captured by the audit trail
+   */
+  request_id?: string;
+};
+
+export type ApiResponsePagedDtoAdminActivityEvent = {
+  success?: boolean;
+  data?: PagedDtoAdminActivityEvent;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoAdminActivityEvent = {
+  content?: Array<AdminActivityEvent>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+/**
  * Valid African phone number in international or local format
  */
 export type AfricanPhoneNumber = unknown;
@@ -5859,20 +6182,45 @@ export type DocumentUrl = unknown;
 export type SocialMediaUrl = unknown;
 
 export const SchemaEnum = {
+  PLATFORM_FEE: 'PLATFORM_FEE',
+  AGE_GATE: 'AGE_GATE',
+  ENROLLMENT_GUARD: 'ENROLLMENT_GUARD',
+  CUSTOM: 'CUSTOM',
+} as const;
+
+export type SchemaEnum = (typeof SchemaEnum)[keyof typeof SchemaEnum];
+
+export const SchemaEnum2 = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+} as const;
+
+export type SchemaEnum2 = (typeof SchemaEnum2)[keyof typeof SchemaEnum2];
+
+export const SchemaEnum3 = {
+  APPROVE: 'approve',
+  REJECT: 'reject',
+  REVOKE: 'revoke',
+} as const;
+
+export type SchemaEnum3 = (typeof SchemaEnum3)[keyof typeof SchemaEnum3];
+
+export const SchemaEnum4 = {
   DRAFT: 'draft',
   IN_REVIEW: 'in_review',
   PUBLISHED: 'published',
   ARCHIVED: 'archived',
 } as const;
 
-export type SchemaEnum = (typeof SchemaEnum)[keyof typeof SchemaEnum];
+export type SchemaEnum4 = (typeof SchemaEnum4)[keyof typeof SchemaEnum4];
 
-export const SchemaEnum2 = {
+export const SchemaEnum5 = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum2 = (typeof SchemaEnum2)[keyof typeof SchemaEnum2];
+export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -5906,6 +6254,38 @@ export const UserDomainEnum = {
 export type UserDomainEnum = (typeof UserDomainEnum)[keyof typeof UserDomainEnum];
 
 /**
+ * Scope the rule applies to
+ */
+export const ScopeEnum = {
+  GLOBAL: 'GLOBAL',
+  TENANT: 'TENANT',
+  REGION: 'REGION',
+  DEMOGRAPHIC: 'DEMOGRAPHIC',
+  SEGMENT: 'SEGMENT',
+} as const;
+
+/**
+ * Scope the rule applies to
+ */
+export type ScopeEnum = (typeof ScopeEnum)[keyof typeof ScopeEnum];
+
+/**
+ * Payload interpretation hint
+ */
+export const ValueTypeEnum = {
+  JSON: 'JSON',
+  DECIMAL: 'DECIMAL',
+  INTEGER: 'INTEGER',
+  BOOLEAN: 'BOOLEAN',
+  STRING: 'STRING',
+} as const;
+
+/**
+ * Payload interpretation hint
+ */
+export type ValueTypeEnum = (typeof ValueTypeEnum)[keyof typeof ValueTypeEnum];
+
+/**
  * **[REQUIRED]** Rubric publication status in the content workflow.
  */
 export const StatusEnum = {
@@ -5937,7 +6317,7 @@ export type WeightUnitEnum = (typeof WeightUnitEnum)[keyof typeof WeightUnitEnum
 /**
  * **[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.
  */
-export const ScopeEnum = {
+export const ScopeEnum2 = {
   COURSE_TEMPLATE: 'COURSE_TEMPLATE',
   CLASS_CLONE: 'CLASS_CLONE',
 } as const;
@@ -5945,7 +6325,7 @@ export const ScopeEnum = {
 /**
  * **[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.
  */
-export type ScopeEnum = (typeof ScopeEnum)[keyof typeof ScopeEnum];
+export type ScopeEnum2 = (typeof ScopeEnum2)[keyof typeof ScopeEnum2];
 
 /**
  * **[REQUIRED]** Type of question determining the answer format and validation.
@@ -6134,6 +6514,32 @@ export const ProvidedByEnum = {
 export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum];
 
 /**
+ * **[REQUIRED]** Visibility of the class when offerings are published.
+ */
+export const ClassVisibilityEnum = {
+  PUBLIC: 'PUBLIC',
+  PRIVATE: 'PRIVATE',
+} as const;
+
+/**
+ * **[REQUIRED]** Visibility of the class when offerings are published.
+ */
+export type ClassVisibilityEnum = (typeof ClassVisibilityEnum)[keyof typeof ClassVisibilityEnum];
+
+/**
+ * **[REQUIRED]** Session format indicating whether the delivery targets an individual learner or group.
+ */
+export const SessionFormatEnum = {
+  INDIVIDUAL: 'INDIVIDUAL',
+  GROUP: 'GROUP',
+} as const;
+
+/**
+ * **[REQUIRED]** Session format indicating whether the delivery targets an individual learner or group.
+ */
+export type SessionFormatEnum = (typeof SessionFormatEnum)[keyof typeof SessionFormatEnum];
+
+/**
  * **[REQUIRED]** Default delivery format for the class.
  */
 export const LocationTypeEnum = {
@@ -6223,10 +6629,34 @@ export const StatusEnum4 = {
  */
 export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
 
+export const RelationshipTypeEnum = {
+  PARENT: 'PARENT',
+  GUARDIAN: 'GUARDIAN',
+  SPONSOR: 'SPONSOR',
+} as const;
+
+export type RelationshipTypeEnum = (typeof RelationshipTypeEnum)[keyof typeof RelationshipTypeEnum];
+
+export const ShareScopeEnum = {
+  FULL: 'FULL',
+  ACADEMICS: 'ACADEMICS',
+  ATTENDANCE: 'ATTENDANCE',
+} as const;
+
+export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
+
+export const StatusEnum5 = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  REVOKED: 'REVOKED',
+} as const;
+
+export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum5 = {
+export const StatusEnum6 = {
   ENROLLED: 'ENROLLED',
   ATTENDED: 'ATTENDED',
   ABSENT: 'ABSENT',
@@ -6236,7 +6666,7 @@ export const StatusEnum5 = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
 
 /**
  * **[REQUIRED]** Applicant type initiating the request.
@@ -6254,7 +6684,7 @@ export type ApplicantTypeEnum = (typeof ApplicantTypeEnum)[keyof typeof Applican
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum6 = {
+export const StatusEnum7 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -6263,7 +6693,20 @@ export const StatusEnum6 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+
+/**
+ * How the platform fee was configured
+ */
+export const ModeEnum = {
+  PERCENTAGE: 'PERCENTAGE',
+  FLAT: 'FLAT',
+} as const;
+
+/**
+ * How the platform fee was configured
+ */
+export type ModeEnum = (typeof ModeEnum)[keyof typeof ModeEnum];
 
 /**
  * **[REQUIRED]** Strategy describing how this class schedule derives from the template.
@@ -6282,7 +6725,7 @@ export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof Rele
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum7 = {
+export const StatusEnum8 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -6293,7 +6736,7 @@ export const StatusEnum7 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
 /**
  * Type of assignment - global or organization-specific
@@ -6311,7 +6754,7 @@ export type AssignmentTypeEnum = (typeof AssignmentTypeEnum)[keyof typeof Assign
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const StatusEnum8 = {
+export const StatusEnum9 = {
   IN_PROGRESS: 'IN_PROGRESS',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
@@ -6320,12 +6763,12 @@ export const StatusEnum8 = {
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum9 = {
+export const StatusEnum10 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -6335,7 +6778,7 @@ export const StatusEnum9 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
 /**
  * Display name of the role/domain being offered
@@ -6560,6 +7003,68 @@ export type UpdateTrainingBranchResponses = {
 
 export type UpdateTrainingBranchResponse =
   UpdateTrainingBranchResponses[keyof UpdateTrainingBranchResponses];
+
+export type GetRuleData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/system-rules/{uuid}';
+};
+
+export type GetRuleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetRuleError = GetRuleErrors[keyof GetRuleErrors];
+
+export type GetRuleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSystemRuleResponse;
+};
+
+export type GetRuleResponse = GetRuleResponses[keyof GetRuleResponses];
+
+export type UpdateRuleData = {
+  body: SystemRuleRequest;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/system-rules/{uuid}';
+};
+
+export type UpdateRuleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateRuleError = UpdateRuleErrors[keyof UpdateRuleErrors];
+
+export type UpdateRuleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSystemRuleResponse;
+};
+
+export type UpdateRuleResponse = UpdateRuleResponses[keyof UpdateRuleResponses];
 
 export type DeleteStudentData = {
   body?: never;
@@ -10232,6 +10737,68 @@ export type CheckInstructorConflictResponses = {
 export type CheckInstructorConflictResponse =
   CheckInstructorConflictResponses[keyof CheckInstructorConflictResponses];
 
+export type ListRulesData = {
+  body?: never;
+  path?: never;
+  query: {
+    category?: SchemaEnum;
+    status?: SchemaEnum2;
+    pageable: Pageable;
+  };
+  url: '/api/v1/system-rules';
+};
+
+export type ListRulesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListRulesError = ListRulesErrors[keyof ListRulesErrors];
+
+export type ListRulesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoSystemRuleResponse;
+};
+
+export type ListRulesResponse = ListRulesResponses[keyof ListRulesResponses];
+
+export type CreateRuleData = {
+  body: SystemRuleRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/system-rules';
+};
+
+export type CreateRuleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateRuleError = CreateRuleErrors[keyof CreateRuleErrors];
+
+export type CreateRuleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSystemRuleResponse;
+};
+
+export type CreateRuleResponse = CreateRuleResponses[keyof CreateRuleResponses];
+
 export type GetAllStudentsData = {
   body?: never;
   path?: never;
@@ -12303,6 +12870,35 @@ export type BlockTimeResponses = {
 };
 
 export type BlockTimeResponse = BlockTimeResponses[keyof BlockTimeResponses];
+
+export type CreateLinkData = {
+  body: GuardianStudentLinkRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/guardians/links';
+};
+
+export type CreateLinkErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateLinkError = CreateLinkErrors[keyof CreateLinkErrors];
+
+export type CreateLinkResponses = {
+  /**
+   * Guardian link created
+   */
+  201: GuardianStudentLink;
+};
+
+export type CreateLinkResponse = CreateLinkResponses[keyof CreateLinkResponses];
 
 export type EnrollStudentData = {
   body: EnrollmentRequest;
@@ -14494,24 +15090,32 @@ export type AssignAdminDomainResponses = {
 export type AssignAdminDomainResponse =
   AssignAdminDomainResponses[keyof AssignAdminDomainResponses];
 
-export type VerifyOrganisationData = {
+export type ModerateOrganisationData = {
   body?: never;
   path: {
     /**
-     * UUID of the organization to verify. Must be an existing organization identifier.
+     * UUID of the organization to moderate. Must be an existing organization identifier.
      */
     uuid: string;
   };
-  query?: {
+  query: {
     /**
-     * Optional reason for verification
+     * Moderation action to perform
+     */
+    action: SchemaEnum3;
+    /**
+     * Optional reason for the chosen moderation action
      */
     reason?: string;
   };
-  url: '/api/v1/admin/organizations/{uuid}/verify';
+  url: '/api/v1/admin/organizations/{uuid}/moderate';
 };
 
-export type VerifyOrganisationErrors = {
+export type ModerateOrganisationErrors = {
+  /**
+   * Invalid moderation action supplied
+   */
+  400: ApiResponseOrganisation;
   /**
    * Insufficient privileges - system admin required
    */
@@ -14526,62 +15130,18 @@ export type VerifyOrganisationErrors = {
   500: ResponseDtoVoid;
 };
 
-export type VerifyOrganisationError = VerifyOrganisationErrors[keyof VerifyOrganisationErrors];
+export type ModerateOrganisationError =
+  ModerateOrganisationErrors[keyof ModerateOrganisationErrors];
 
-export type VerifyOrganisationResponses = {
+export type ModerateOrganisationResponses = {
   /**
-   * Organization verified successfully
+   * Organization moderation completed successfully
    */
   200: ApiResponseOrganisation;
 };
 
-export type VerifyOrganisationResponse =
-  VerifyOrganisationResponses[keyof VerifyOrganisationResponses];
-
-export type UnverifyOrganisationData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the organization to remove verification from. Must be an existing organization identifier.
-     */
-    uuid: string;
-  };
-  query?: {
-    /**
-     * Optional reason for removing verification
-     */
-    reason?: string;
-  };
-  url: '/api/v1/admin/organizations/{uuid}/unverify';
-};
-
-export type UnverifyOrganisationErrors = {
-  /**
-   * Insufficient privileges - system admin required
-   */
-  403: ApiResponseOrganisation;
-  /**
-   * Organization not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type UnverifyOrganisationError =
-  UnverifyOrganisationErrors[keyof UnverifyOrganisationErrors];
-
-export type UnverifyOrganisationResponses = {
-  /**
-   * Organization verification removed successfully
-   */
-  200: ApiResponseOrganisation;
-};
-
-export type UnverifyOrganisationResponse =
-  UnverifyOrganisationResponses[keyof UnverifyOrganisationResponses];
+export type ModerateOrganisationResponse =
+  ModerateOrganisationResponses[keyof ModerateOrganisationResponses];
 
 export type VerifyInstructorData = {
   body?: never;
@@ -15933,7 +16493,7 @@ export type GetRubricsByStatusData = {
     /**
      * Content status to filter by
      */
-    status: SchemaEnum;
+    status: SchemaEnum4;
   };
   query: {
     pageable: Pageable;
@@ -17722,6 +18282,67 @@ export type SearchDocumentsResponses = {
 };
 
 export type SearchDocumentsResponse = SearchDocumentsResponses[keyof SearchDocumentsResponses];
+
+export type GetStudentDashboardData = {
+  body?: never;
+  path: {
+    studentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/guardians/students/{studentUuid}/dashboard';
+};
+
+export type GetStudentDashboardErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetStudentDashboardError = GetStudentDashboardErrors[keyof GetStudentDashboardErrors];
+
+export type GetStudentDashboardResponses = {
+  /**
+   * Dashboard data ready
+   */
+  200: GuardianStudentDashboardDto;
+};
+
+export type GetStudentDashboardResponse =
+  GetStudentDashboardResponses[keyof GetStudentDashboardResponses];
+
+export type GetMyStudentsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/guardians/me/students';
+};
+
+export type GetMyStudentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetMyStudentsError = GetMyStudentsErrors[keyof GetMyStudentsErrors];
+
+export type GetMyStudentsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListGuardianStudentSummaryDto;
+};
+
+export type GetMyStudentsResponse = GetMyStudentsResponses[keyof GetMyStudentsResponses];
 
 export type CancelEnrollmentData = {
   body?: never;
@@ -20070,6 +20691,39 @@ export type IsOrganisationVerifiedResponses = {
 export type IsOrganisationVerifiedResponse =
   IsOrganisationVerifiedResponses[keyof IsOrganisationVerifiedResponses];
 
+export type GetPendingOrganisationsData = {
+  body?: never;
+  path?: never;
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/organizations/pending';
+};
+
+export type GetPendingOrganisationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetPendingOrganisationsError =
+  GetPendingOrganisationsErrors[keyof GetPendingOrganisationsErrors];
+
+export type GetPendingOrganisationsResponses = {
+  /**
+   * Pending organizations retrieved successfully
+   */
+  200: ApiResponsePagedDtoOrganisation;
+};
+
+export type GetPendingOrganisationsResponse =
+  GetPendingOrganisationsResponses[keyof GetPendingOrganisationsResponses];
+
 export type IsInstructorVerifiedData = {
   body?: never;
   path: {
@@ -20140,6 +20794,39 @@ export type GetDashboardStatisticsResponses = {
 
 export type GetDashboardStatisticsResponse =
   GetDashboardStatisticsResponses[keyof GetDashboardStatisticsResponses];
+
+export type GetDashboardActivityData = {
+  body?: never;
+  path?: never;
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/dashboard/activity-feed';
+};
+
+export type GetDashboardActivityErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetDashboardActivityError =
+  GetDashboardActivityErrors[keyof GetDashboardActivityErrors];
+
+export type GetDashboardActivityResponses = {
+  /**
+   * Dashboard activity retrieved successfully
+   */
+  200: ApiResponsePagedDtoAdminActivityEvent;
+};
+
+export type GetDashboardActivityResponse =
+  GetDashboardActivityResponses[keyof GetDashboardActivityResponses];
 
 export type CancelInvitationData = {
   body?: never;
@@ -20223,6 +20910,39 @@ export type CleanupOldInvitationsResponses = {
 
 export type CleanupOldInvitationsResponse =
   CleanupOldInvitationsResponses[keyof CleanupOldInvitationsResponses];
+
+export type RevokeLinkData = {
+  body?: never;
+  path: {
+    linkUuid: string;
+  };
+  query?: {
+    reason?: string;
+  };
+  url: '/api/v1/guardians/links/{linkUuid}';
+};
+
+export type RevokeLinkErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RevokeLinkError = RevokeLinkErrors[keyof RevokeLinkErrors];
+
+export type RevokeLinkResponses = {
+  /**
+   * Guardian access revoked
+   */
+  200: ApiResponseVoid;
+};
+
+export type RevokeLinkResponse = RevokeLinkResponses[keyof RevokeLinkResponses];
 
 export type DissociateRubricData = {
   body?: never;
@@ -20350,7 +21070,7 @@ export type RemoveAdminDomainData = {
     /**
      * Domain name to remove
      */
-    domain: SchemaEnum2;
+    domain: SchemaEnum5;
   };
   query?: {
     /**

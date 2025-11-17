@@ -25,6 +25,12 @@ import type {
   UpdateTrainingBranchData,
   UpdateTrainingBranchResponses,
   UpdateTrainingBranchErrors,
+  GetRuleData,
+  GetRuleResponses,
+  GetRuleErrors,
+  UpdateRuleData,
+  UpdateRuleResponses,
+  UpdateRuleErrors,
   DeleteStudentData,
   DeleteStudentResponses,
   DeleteStudentErrors,
@@ -346,6 +352,12 @@ import type {
   CheckInstructorConflictData,
   CheckInstructorConflictResponses,
   CheckInstructorConflictErrors,
+  ListRulesData,
+  ListRulesResponses,
+  ListRulesErrors,
+  CreateRuleData,
+  CreateRuleResponses,
+  CreateRuleErrors,
   GetAllStudentsData,
   GetAllStudentsResponses,
   GetAllStudentsErrors,
@@ -520,6 +532,9 @@ import type {
   BlockTimeData,
   BlockTimeResponses,
   BlockTimeErrors,
+  CreateLinkData,
+  CreateLinkResponses,
+  CreateLinkErrors,
   EnrollStudentData,
   EnrollStudentResponses,
   EnrollStudentErrors,
@@ -712,12 +727,9 @@ import type {
   AssignAdminDomainData,
   AssignAdminDomainResponses,
   AssignAdminDomainErrors,
-  VerifyOrganisationData,
-  VerifyOrganisationResponses,
-  VerifyOrganisationErrors,
-  UnverifyOrganisationData,
-  UnverifyOrganisationResponses,
-  UnverifyOrganisationErrors,
+  ModerateOrganisationData,
+  ModerateOrganisationResponses,
+  ModerateOrganisationErrors,
   VerifyInstructorData,
   VerifyInstructorResponses,
   VerifyInstructorErrors,
@@ -976,6 +988,12 @@ import type {
   SearchDocumentsData,
   SearchDocumentsResponses,
   SearchDocumentsErrors,
+  GetStudentDashboardData,
+  GetStudentDashboardResponses,
+  GetStudentDashboardErrors,
+  GetMyStudentsData,
+  GetMyStudentsResponses,
+  GetMyStudentsErrors,
   CancelEnrollmentData,
   CancelEnrollmentResponses,
   CancelEnrollmentErrors,
@@ -1177,18 +1195,27 @@ import type {
   IsOrganisationVerifiedData,
   IsOrganisationVerifiedResponses,
   IsOrganisationVerifiedErrors,
+  GetPendingOrganisationsData,
+  GetPendingOrganisationsResponses,
+  GetPendingOrganisationsErrors,
   IsInstructorVerifiedData,
   IsInstructorVerifiedResponses,
   IsInstructorVerifiedErrors,
   GetDashboardStatisticsData,
   GetDashboardStatisticsResponses,
   GetDashboardStatisticsErrors,
+  GetDashboardActivityData,
+  GetDashboardActivityResponses,
+  GetDashboardActivityErrors,
   CancelInvitationData,
   CancelInvitationResponses,
   CancelInvitationErrors,
   CleanupOldInvitationsData,
   CleanupOldInvitationsResponses,
   CleanupOldInvitationsErrors,
+  RevokeLinkData,
+  RevokeLinkResponses,
+  RevokeLinkErrors,
   DissociateRubricData,
   DissociateRubricResponses,
   DissociateRubricErrors,
@@ -1208,6 +1235,8 @@ import {
   updateUserResponseTransformer,
   getTrainingBranchByUuidResponseTransformer,
   updateTrainingBranchResponseTransformer,
+  getRuleResponseTransformer,
+  updateRuleResponseTransformer,
   getStudentByIdResponseTransformer,
   updateStudentResponseTransformer,
   getAssessmentRubricByUuidResponseTransformer,
@@ -1274,6 +1303,8 @@ import {
   getAllTrainingBranchesResponseTransformer,
   createTrainingBranchResponseTransformer,
   scheduleClassResponseTransformer,
+  listRulesResponseTransformer,
+  createRuleResponseTransformer,
   getAllStudentsResponseTransformer,
   createStudentResponseTransformer,
   getAllAssessmentRubricsResponseTransformer,
@@ -1322,6 +1353,7 @@ import {
   addInstructorDocumentResponseTransformer,
   verifyDocumentResponseTransformer,
   createAvailabilitySlotResponseTransformer,
+  createLinkResponseTransformer,
   enrollStudentResponseTransformer,
   getAllCoursesResponseTransformer,
   createCourseResponseTransformer,
@@ -1383,8 +1415,7 @@ import {
   returnSubmissionResponseTransformer,
   gradeSubmissionResponseTransformer,
   assignAdminDomainResponseTransformer,
-  verifyOrganisationResponseTransformer,
-  unverifyOrganisationResponseTransformer,
+  moderateOrganisationResponseTransformer,
   verifyInstructorResponseTransformer,
   unverifyInstructorResponseTransformer,
   getCartResponseTransformer,
@@ -1447,6 +1478,7 @@ import {
   searchExperienceResponseTransformer,
   searchEducationResponseTransformer,
   searchDocumentsResponseTransformer,
+  getStudentDashboardResponseTransformer,
   getEnrollmentResponseTransformer,
   getStudentScheduleResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
@@ -1497,7 +1529,9 @@ import {
   getOrganizationAdminUsersResponseTransformer,
   getAdminEligibleUsersResponseTransformer,
   getAdminUsersResponseTransformer,
+  getPendingOrganisationsResponseTransformer,
   getDashboardStatisticsResponseTransformer,
+  getDashboardActivityResponseTransformer,
   removeAdminDomainResponseTransformer,
 } from './transformers.gen';
 
@@ -1682,6 +1716,59 @@ export const updateTrainingBranch = <ThrowOnError extends boolean = false>(
       ...options.headers,
     },
   });
+};
+
+/**
+ * Fetch rule
+ * Fetches a single rule by its UUID
+ */
+export const getRule = <ThrowOnError extends boolean = false>(
+  options: Options<GetRuleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetRuleResponses, GetRuleErrors, ThrowOnError>({
+    responseTransformer: getRuleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/system-rules/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update rule
+ */
+export const updateRule = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateRuleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<UpdateRuleResponses, UpdateRuleErrors, ThrowOnError>(
+    {
+      responseTransformer: updateRuleResponseTransformer,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/system-rules/{uuid}',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    }
+  );
 };
 
 /**
@@ -4841,6 +4928,61 @@ export const checkInstructorConflict = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List rules
+ * Returns paginated list of system rules with optional filters
+ */
+export const listRules = <ThrowOnError extends boolean = false>(
+  options: Options<ListRulesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<ListRulesResponses, ListRulesErrors, ThrowOnError>({
+    responseTransformer: listRulesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/system-rules',
+    ...options,
+  });
+};
+
+/**
+ * Create rule
+ */
+export const createRule = <ThrowOnError extends boolean = false>(
+  options: Options<CreateRuleData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateRuleResponses,
+    CreateRuleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createRuleResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/system-rules',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get all students
  * Fetches a paginated list of students.
  */
@@ -6600,6 +6742,38 @@ export const blockTime = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/instructors/{instructorUuid}/availability/block',
     ...options,
+  });
+};
+
+/**
+ * Link a guardian to a learner
+ * Grants a guardian/parent access to monitor a learner using their own credentials.
+ */
+export const createLink = <ThrowOnError extends boolean = false>(
+  options: Options<CreateLinkData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateLinkResponses,
+    CreateLinkErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createLinkResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/guardians/links',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -8622,18 +8796,18 @@ export const assignAdminDomain = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Verify an organization
- * Verifies/approves an organization by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified organizations gain access to additional platform features and display verification badges.
+ * Moderate organization verification
+ * Handles organization approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
  */
-export const verifyOrganisation = <ThrowOnError extends boolean = false>(
-  options: Options<VerifyOrganisationData, ThrowOnError>
+export const moderateOrganisation = <ThrowOnError extends boolean = false>(
+  options: Options<ModerateOrganisationData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).post<
-    VerifyOrganisationResponses,
-    VerifyOrganisationErrors,
+    ModerateOrganisationResponses,
+    ModerateOrganisationErrors,
     ThrowOnError
   >({
-    responseTransformer: verifyOrganisationResponseTransformer,
+    responseTransformer: moderateOrganisationResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -8644,35 +8818,7 @@ export const verifyOrganisation = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/admin/organizations/{uuid}/verify',
-    ...options,
-  });
-};
-
-/**
- * Remove verification from an organization
- * Removes verification from an organization by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
- */
-export const unverifyOrganisation = <ThrowOnError extends boolean = false>(
-  options: Options<UnverifyOrganisationData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    UnverifyOrganisationResponses,
-    UnverifyOrganisationErrors,
-    ThrowOnError
-  >({
-    responseTransformer: unverifyOrganisationResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/admin/organizations/{uuid}/unverify',
+    url: '/api/v1/admin/organizations/{uuid}/moderate',
     ...options,
   });
 };
@@ -11304,6 +11450,59 @@ export const searchDocuments = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Fetch learner dashboard for guardian access
+ */
+export const getStudentDashboard = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentDashboardData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentDashboardResponses,
+    GetStudentDashboardErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStudentDashboardResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/guardians/students/{studentUuid}/dashboard',
+    ...options,
+  });
+};
+
+/**
+ * List guardian-linked students
+ */
+export const getMyStudents = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMyStudentsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetMyStudentsResponses,
+    GetMyStudentsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/guardians/me/students',
+    ...options,
+  });
+};
+
+/**
  * Cancel a student enrollment
  */
 export const cancelEnrollment = <ThrowOnError extends boolean = false>(
@@ -13276,6 +13475,34 @@ export const isOrganisationVerified = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get pending organization approvals
+ * Retrieves a paginated list of organizations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
+ */
+export const getPendingOrganisations = <ThrowOnError extends boolean = false>(
+  options: Options<GetPendingOrganisationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetPendingOrganisationsResponses,
+    GetPendingOrganisationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getPendingOrganisationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/organizations/pending',
+    ...options,
+  });
+};
+
+/**
  * Check if instructor is verified
  * Checks whether a specific instructor has been verified by an admin. Returns true if the instructor has admin verification status.
  */
@@ -13331,6 +13558,34 @@ export const getDashboardStatistics = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get admin dashboard activity feed
+ * Retrieves a paginated list of recent administrative actions captured by the request audit trail.
+ */
+export const getDashboardActivity = <ThrowOnError extends boolean = false>(
+  options: Options<GetDashboardActivityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetDashboardActivityResponses,
+    GetDashboardActivityErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getDashboardActivityResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/dashboard/activity-feed',
+    ...options,
+  });
+};
+
+/**
  * Cancel pending invitation
  * Cancels a pending invitation within this organization, preventing it from being accepted or declined. Only the original inviter or an organization administrator can cancel invitations. This action is irreversible and the invitation cannot be reactivated.
  */
@@ -13380,6 +13635,32 @@ export const cleanupOldInvitations = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/invitations/maintenance/cleanup',
+    ...options,
+  });
+};
+
+/**
+ * Revoke guardian access
+ */
+export const revokeLink = <ThrowOnError extends boolean = false>(
+  options: Options<RevokeLinkData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    RevokeLinkResponses,
+    RevokeLinkErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/guardians/links/{linkUuid}',
     ...options,
   });
 };
