@@ -17,6 +17,11 @@ import {
   getUserByUuidOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { format } from "date-fns";
+import { Search, Upload } from "lucide-react";
+import { useState } from "react";
+import { Input } from '../../../../../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 
 const sampleEnrollmentData = {
   success: true,
@@ -88,6 +93,8 @@ interface StudentsPageProps {
   loading: boolean
 }
 
+type Status = "Submit" | "Excused" | "Missing";
+
 export default function StudentsPage({ classesWithCourseAndInstructor, loading }: StudentsPageProps) {
   const { data: sData } = useQuery(
     getAllStudentsOptions({
@@ -120,9 +127,161 @@ export default function StudentsPage({ classesWithCourseAndInstructor, loading }
   });
   const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
 
+  const [selectedStudent, setSelectedStudent] = useState("Dianne Russel");
+  const [grade, setGrade] = useState<number>(80);
+  const [status, setStatus] = useState<Status>("Submit");
+
+  const sampleStudents = [
+    { name: "Dianne Russel", section: "A" },
+    { name: "Eleanor Pena", section: "A" },
+    { name: "Jacob Jones", section: "B" },
+    { name: "Brooklyn Simmons", section: "C" },
+    { name: "Leslie Alexander", section: "C" },
+    { name: "Floyd Miles", section: "B" },
+    { name: "Theresa Webb", section: "A" },
+  ];
+
+  const files = [
+    { name: "Mockrocket-Capture.png" },
+    { name: "Products-v3_black_card.svg" },
+    { name: "Desktop-245.pdf" },
+    { name: "Screencapture-Hexamoon-Admin.png" },
+  ];
+
   return (
     <div className='space-y-6'>
       <h2 className='text-2xl font-bold tracking-tight'>Your Students</h2>
+      <Card className="flex flex-row h-auto pb-20">
+        {/* Sidebar */}
+        <aside className="w-64 border-r border-border/100 p-4 flex flex-col">
+          <h2 className="text-lg font-semibold mb-4">All Students</h2>
+          <div className="relative flex flex-row items-center mb-3">
+            <Search size={16} className="absolute left-3 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search Student"
+              className="pl-10 pr-3 py-2 border border-border/100 rounded-lg w-full text-sm"
+            />
+          </div>
+          <ul className="overflow-y-auto space-y-2 flex-1">
+            {sampleStudents.map((student) => (
+              <li
+                key={student.name}
+                onClick={() => setSelectedStudent(student.name)}
+                className={`p-2 rounded-sm cursor-pointer flex flex-col items-start ${selectedStudent === student.name ? "bg-purple-100 text-purple-700 font-medium" : "hover:bg-gray-100"
+                  }`}
+              >
+                {student.name}
+                <span className="text-xs ml-1">Section {student.section}</span>
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-bold">Final Exam</h1>
+            <span className="text-sm text-muted-foreground font-medium">Speed Grade</span>
+          </div>
+
+          <Card className="grid lg:grid-cols-3 gap-6 p-0">
+            {/* Middle: Assignment */}
+            <div className="lg:col-span-2 p-5 rounded-xl shadow-sm border border-border/100">
+              <CardDescription className="flex justify-between mb-2 text-sm">
+                <p>
+                  Submission Date: <span className="text-muted-foreground font-medium">10/02/2024</span>
+                </p>
+                <p>
+                  Assignment Point: <span className="font-semibold text-muted-foreground">80/100 (80%)</span>
+                </p>
+              </CardDescription>
+
+              <img
+                src="https://cdn.dribbble.com/userupload/9452662/file/original-12d4e45f5c3d41b9d6b18e0d5c09c785.png?resize=752x"
+                alt="Assignment Preview"
+                className="rounded-xl w-full object-cover mb-4"
+              />
+
+              <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the
+                industry&apos;s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and
+                scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap
+                into electronic typesetting, remaining essentially unchanged.
+              </p>
+
+              <div className="aspect-video rounded-lg flex items-center justify-center">
+                <button className="text-white bg-primary hover:bg-primary/80 p-3 rounded-full shadow">
+                  ▶
+                </button>
+              </div>
+            </div>
+
+            {/* Right: Submission Panel */}
+            <Card className="rounded-xl p-5 shadow-sm border border-border/100 space-y-4 text-sm">
+              <h2 className="text-lg font-semibold">Submission</h2>
+
+              <div className="flex items-center justify-between">
+                <span className="">Due Date:</span>
+                <span className="font-medium text-green-600">02/10/2024</span>
+              </div>
+
+              <div>
+                <label>Grade</label>
+                <input
+                  type="number"
+                  value={grade}
+                  onChange={(e) => setGrade(Number(e.target.value))}
+                  className="border rounded-lg w-full p-2 mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Status</label>
+
+                <Select
+                  value={status}
+                  onValueChange={(value: Status) => setStatus(value)}
+                >
+                  <SelectTrigger className="border rounded-lg w-full p-2 mt-1 text-sm">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="Submit">Submit</SelectItem>
+                    <SelectItem value="Excused">Excused</SelectItem>
+                    <SelectItem value="Missing">Missing</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+
+              <div>
+                <label>Submission Details</label>
+                <div className="mt-2 space-y-2 text-sm">
+                  <p>Word Count: <span className="font-medium">500</span></p>
+                  <p className="font-semibold mt-3">Files Uploaded:</p>
+                  <ul className="space-y-3">
+                    {files.map((file) => (
+                      <li key={file.name} className="flex items-center gap-2 text-muted-foreground/80 hover:text-muted-foreground/100 cursor-pointer">
+                        <Upload size={18} className="text-muted-foreground" /> {file.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-4">
+                <button className="bg-primary/80 px-4 py-2 rounded-sm text-sm hover:bg-primary/100">
+                  Save Grade
+                </button>
+                <span className="text-xs text-muted-foreground">Graded {format(new Date(), "dd/MM/yyyy")}</span>
+              </div>
+            </Card>
+          </Card>
+        </main>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Enrolled Students</CardTitle>

@@ -199,7 +199,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className='border' >
           <TabsTrigger value='browse'>Browse Instructors</TabsTrigger>
           <TabsTrigger value='bookings'>
             My Bookings {bookings?.length > 0 && `(${bookings?.length})`}

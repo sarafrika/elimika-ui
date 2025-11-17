@@ -40,7 +40,6 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Card, CardDescription } from '../../../../../../components/ui/card';
 import { AssignmentDialog, AssignmentList } from '../../../_components/assignment-management-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, CourseFormRef } from '../../../_components/course-creation-form';
@@ -747,17 +746,17 @@ export default function CourseCreationPage() {
                   </div>
                 </div>
 
-                <Card className='p-6'>
-                  <CardDescription className='mb-3 text-xl font-semibold text-gray-800'>
+                <div className='p-6'>
+                  <div className='mb-3 text-xl font-semibold text-foreground'>
                     💰 Pricing
-                  </CardDescription>
-                  <div className='space-y-2 text-gray-700'>
+                  </div>
+                  <div className='space-y-2 text-muted-foreground'>
                     <p>
                       <span className='font-medium'>Free Course:</span>{' '}
                       {course?.data?.is_free ? 'Yes' : 'No'}
                     </p>
                   </div>
-                </Card>
+                </div>
 
                 {/* Course Information */}
                 <section>
@@ -771,17 +770,17 @@ export default function CourseCreationPage() {
                     />
                   </div>
 
-                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>
-                    📘 Course Information
+                  <h3 className='mb-3 text-xl font-semibold text-foregrounds'>
+                    Course Information
                   </h3>
-                  <div className='space-y-3 text-gray-700'>
+                  <div className='space-y-3'>
                     <p>
                       <span className='font-medium'>
                         <strong>Name</strong>:
                       </span>
                       {course?.data?.name}
                     </p>
-                    <div className='html-text-preview'>
+                    <div className='html-text-preview text-muted-foreground'>
                       <div className='mb-1 font-bold'>Description:</div>
                       <RichTextRenderer htmlString={course?.data?.description as string} />
                     </div>
@@ -790,10 +789,10 @@ export default function CourseCreationPage() {
 
                 {/* Learning Objectives */}
                 <section>
-                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>
+                  <h3 className='mb-3 text-xl font-semibold'>
                     🎯 Learning Objectives
                   </h3>
-                  <div className='html-text-preview text-gray-700'>
+                  <div className='html-text-preview text-muted-foreground'>
                     <HTMLTextPreview htmlContent={course?.data?.objectives as string} />
                   </div>
                 </section>
@@ -805,12 +804,12 @@ export default function CourseCreationPage() {
 
                 {/* Categories */}
                 <section className='flex flex-col items-start gap-4 sm:flex-row sm:items-center'>
-                  <h3 className='text-xl font-semibold text-gray-800'>🏷️ Categories</h3>
+                  <h3 className='text-xl font-semibold'>🏷️ Categories</h3>
                   <div className='flex flex-wrap gap-2'>
                     {course?.data?.category_names?.map((category: string, idx: number) => (
                       <span
                         key={idx}
-                        className='rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800'
+                        className='rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-primary'
                       >
                         {category}
                       </span>
@@ -820,7 +819,7 @@ export default function CourseCreationPage() {
 
                 {/* course content */}
                 <div className='mt-4'>
-                  <h3 className='mb-3 text-xl font-semibold text-gray-800'>Course Content</h3>
+                  <h3 className='mb-3 text-xl font-semibold'>Course Content</h3>
                 </div>
                 <section>
                   <div className='-mt-2 flex flex-col gap-2 space-y-4'>

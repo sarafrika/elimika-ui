@@ -12,7 +12,7 @@ export default function ScheduleLayout({ children }: ScheduleLayoutProps) {
       <div className='flex w-full items-center justify-between lg:max-w-[75%]'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>My Schedule</h2>
-          <p className='mt-1 text-gray-600'>
+          <p className='mt-1 text-muted-foreground'>
             View your upcoming classes, sessions, and important dates. Stay on top of your learning
             schedule and never miss a session.
           </p>

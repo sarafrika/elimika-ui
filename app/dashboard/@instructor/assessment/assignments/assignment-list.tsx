@@ -21,6 +21,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, MoreVertical, PenLine, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Card } from '../../../../../components/ui/card';
 import { AssignmentDialog } from '../../../@course_creator/_components/assignment-management-form';
 
 export default function AssignmentListPage() {
@@ -112,9 +113,9 @@ export default function AssignmentListPage() {
       {!isLoading && !isFetching && isFetched && (
         <div className='space-y-4'>
           {assignments?.map((item, index) => (
-            <div
+            <Card
               key={item.uuid || index}
-              className='group relative flex flex-col gap-3 rounded-2xl border border-blue-200/40 bg-white/80 p-5 shadow-lg shadow-blue-200/30 transition-all hover:translate-y-[1px] hover:shadow-blue-300/40 dark:border-blue-500/20 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+              className='group relative flex flex-col gap-3 px-4'
             >
               {/* Assignment Header with Meta Info */}
               <div className='flex items-start justify-between'>
@@ -194,7 +195,7 @@ export default function AssignmentListPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

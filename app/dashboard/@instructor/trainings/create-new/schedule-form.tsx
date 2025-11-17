@@ -187,7 +187,7 @@ export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: Schedule
       </div>
 
       {/* Schedule Summary */}
-      <div className='rounded-lg bg-gray-50 p-4'>
+      <Card className='rounded-lg p-4'>
         <h4 className='mb-2 font-medium'>Schedule Summary</h4>
         <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
           <div>
@@ -215,7 +215,7 @@ export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: Schedule
                         ⚠️ You have more lessons than available time slots. Consider extending the academic period or adding more days.
                     </div>
              )} */}
-      </div>
+      </Card>
 
       {errors.scheduling && <p className='text-destructive text-sm'>{errors.scheduling}</p>}
 

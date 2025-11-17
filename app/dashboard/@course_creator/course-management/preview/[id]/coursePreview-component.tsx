@@ -95,13 +95,14 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
     <div className='mx-auto max-w-5xl space-y-10 p-6'>
       {/* Banner */}
       {course?.banner_url && (
-        <div className='relative h-60 w-full overflow-hidden rounded-lg shadow-md'>
+        <div className="relative h-60 w-full overflow-hidden rounded-lg shadow-md">
           <Image
-            src={course?.banner_url as string}
-            alt='Course banner'
-            fill
-            className='object-cover'
+            src={course.banner_url}
+            alt="Course banner"
+            className="object-cover w-full h-full"
             priority
+            width={1200}
+            height={300}
           />
         </div>
       )}
@@ -109,13 +110,19 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
       {/* Course Header */}
       <section className='flex flex-col gap-4 border-b pb-6 md:flex-row md:items-center md:justify-between'>
         <div className='flex items-center gap-4'>
-          <Image
-            src={course?.thumbnail_url as string || '/illustration.png'}
-            alt='Course thumbnail'
-            width={80}
-            height={80}
-            className='rounded-md object-cover shadow-sm'
-          />
+          {course?.thumbnail_url && (
+            <div className="relative w-20 h-20 rounded-md overflow-hidden shadow-sm">
+              <Image
+                src={course.thumbnail_url}
+                alt="Course thumbnail"
+                className="w-full h-full object-cover"
+                priority
+                width={20}
+                height={20}
+              />
+            </div>
+          )}
+
           <div>
             <h1 className='text-3xl font-bold'>{course?.name}</h1>
             <p className='text-muted-foreground text-sm'>By {authorName}</p>
@@ -255,7 +262,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
           <DetailItem icon={GraduationCap} label='Enrollment' value={course?.accepts_new_enrollments ? 'Open' : 'Closed'} />
           <DetailItem icon={Layers} label='Lifecycle Stage' value={course?.lifecycle_stage} />
           <DetailItem icon={Video} label='Intro Video' value={course?.intro_video_url ? 'Available' : 'Not provided'} />
-          <DetailItem icon={BookOpen} label='Minimum Training Fee (per hour per head)' value={`$${course?.minimum_training_fee}`} />
+          <DetailItem icon={BookOpen} label='Minimum Training Fee (per hour per head)' value={`KES ${course?.minimum_training_fee}`} />
           <DetailItem icon={CheckCircle} label='Revenue Split' value={`Instructor: ${course?.instructor_share_percentage}% / Creator: ${course?.creator_share_percentage}%`} />
           <DetailItem
             icon={Clock}

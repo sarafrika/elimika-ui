@@ -1,8 +1,8 @@
 'use client';
 
-import { Separator } from '../../../../components/ui/separator';
-import { useUserProfile } from '../../../../context/profile-context';
-import { getInvitationsSentByUser } from '../../../../services/client';
+import { Separator } from '@/components/ui/separator';
+import { useUserProfile } from '@/context/profile-context';
+import { getInvitationsSentByUser } from '@/services/client';
 import InviteList from '../../@organization/invites/_components/InviteList';
 
 export default function WaitingListPage() {

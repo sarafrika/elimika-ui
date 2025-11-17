@@ -96,6 +96,7 @@ export default function ClassPreviewPage() {
     }),
     enabled: !!classData?.course_uuid,
   });
+
   const { instructorInfo } = useInstructorInfo({
     instructorUuid: classData?.default_instructor_uuid as string,
   });
@@ -447,15 +448,18 @@ export default function ClassPreviewPage() {
                                 })}
                             </div> */}
 
-              <div>
+              <Card>
                 {timetable?.data?.map(s => {
                   const isCancelled = s?.status === 'CANCELLED';
                   const isActive = s?.is_currently_active;
+                  const isPast = s?.time_range
+                    ? new Date(s.time_range) < new Date()
+                    : false;
 
                   return (
                     <div
                       key={s.uuid}
-                      className={`mb-4 flex items-center justify-between rounded p-4 shadow-sm ${isCancelled ? 'bg-red-100' : 'bg-white'
+                      className={`mb-4 flex items-center justify-between rounded p-4 shadow-sm ${isCancelled ? 'bg-red-100' : 'bg-card'
                         }`}
                     >
                       <div>
@@ -471,18 +475,27 @@ export default function ClassPreviewPage() {
                       </div>
 
                       {/* Active / Not Active Badge */}
-                      <div>
+                      <div className="flex gap-2">
+                        {/* ACTIVE / NOT ACTIVE */}
                         <span
                           className={`rounded-full px-3 py-1 text-sm font-medium ${isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
                             }`}
                         >
                           {isActive ? 'Active' : 'Not active'}
                         </span>
+
+                        {/* OCCURRED / UPCOMING */}
+                        <span
+                          className={`rounded-full px-3 py-1 text-sm font-medium ${isPast ? 'bg-gray-600 text-white' : 'bg-blue-500 text-white'
+                            }`}
+                        >
+                          {isPast ? 'Occurred' : 'Upcoming'}
+                        </span>
                       </div>
                     </div>
                   );
                 })}
-              </div>
+              </Card>
             </CardContent>
           </Card>
         </TabsContent>
@@ -493,10 +506,10 @@ export default function ClassPreviewPage() {
               {isAllLessonsDataLoading && <Spinner />}
 
               {lessonsWithContent?.length === 0 && (
-                <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center'>
-                  <FileQuestion className='mb-3 h-8 w-8 text-gray-400' />
-                  <h4 className='text-sm font-medium'>No Class Resources</h4>
-                  <p className='text-sm text-gray-500'>
+                <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center text-sm'>
+                  <FileQuestion className='mb-3 h-8 w-8 text-muted-foreground' />
+                  <h4 className='font-medium'>No Class Resources</h4>
+                  <p>
                     This class doesn&apos;t have any resources/content yet.
                   </p>
                 </div>
@@ -516,7 +529,7 @@ export default function ClassPreviewPage() {
                     return (
                       <div
                         key={c.uuid}
-                        className='flex items-center justify-between rounded-lg bg-gray-50 p-3'
+                        className='flex items-center justify-between rounded-lg p-3 hover:bg-card'
                       >
                         <div className='flex items-center gap-3'>
                           {getResourceIcon(contentTypeName)}

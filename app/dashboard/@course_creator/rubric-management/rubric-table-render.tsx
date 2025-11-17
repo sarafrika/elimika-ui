@@ -81,15 +81,15 @@ const RubricTable: React.FC<RubricTableProps> = ({
   return (
     <div className='overflow-hidden rounded-lg border shadow-sm'>
       {/* Header */}
-      <div className='flex items-center justify-between bg-gray-200 px-4 py-3 font-semibold text-black'>
+      <div className='flex items-center rounded-t-lg justify-between px-4 py-3 font-semibold'>
         <div className='w-full'>
           <button onClick={() => setOpen(!open)} className='flex w-full flex-col gap-2 text-left'>
             <p>{rubric.title}</p>
-            <p className='line-clamp-2 max-w-[95%] text-sm font-normal text-gray-800'>
+            <p className='line-clamp-2 max-w-[95%] text-sm font-normal text-muted-foreground'>
               {rubric.description}
             </p>
 
-            <div className='flex flex-row gap-6 text-sm font-normal text-gray-800'>
+            <div className='flex flex-row gap-6 text-sm font-normal'>
               <p className='flex items-center gap-1'>
                 <Triangle size={14} fill='green' /> Type: {rubric.rubric_type}
               </p>
@@ -103,7 +103,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='ghost' size='icon' className='text-black hover:bg-blue-700'>
+            <Button variant='ghost' size='icon' className='hover:bg-blue-700'>
               <EllipsisVertical className='h-4 w-4' />
             </Button>
           </DropdownMenuTrigger>
@@ -136,7 +136,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className='bg-gray-100'>
+                <TableRow className=''>
                   <TableHead className='min-w-[240px]'>Criteria</TableHead>
                   {[...sortedLevels]
                     .sort((a, b) => a.level_order - b.level_order)
@@ -149,7 +149,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
                         <div>
                           {level.name}
                           <br />
-                          <span className='text-sm text-gray-500'>({level.points} pts)</span>
+                          <span className='text-sm text-muted-foreground'>({level.points} pts)</span>
                         </div>
 
                         <div className='absolute top-1 right-1 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
@@ -180,7 +180,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
                       <div className='flex items-start justify-between gap-2 py-2'>
                         <div className='flex-1'>
                           <div className='font-medium'>{crit.component_name}</div>
-                          <div className='text-xs whitespace-pre-wrap text-gray-500'>
+                          <div className='text-xs whitespace-pre-wrap text-muted-foreground'>
                             {crit.description}
                           </div>
                         </div>
@@ -229,15 +229,15 @@ const RubricTable: React.FC<RubricTableProps> = ({
                         >
                           {cell ? (
                             <>
-                              <div className='w-auto text-xs whitespace-pre-wrap text-gray-500'>
+                              <div className='w-auto text-xs whitespace-pre-wrap text-muted-foreground'>
                                 {cell.description ? (
                                   <p className='mb-1'>{cell.description}</p>
                                 ) : (
-                                  <span className='text-gray-400 italic'>No description</span>
+                                  <span className='text-muted-foreground italic'>No description</span>
                                 )}
                               </div>
 
-                              <div className='text-xs text-gray-500'>{cell.points} pts</div>
+                              <div className='text-xs text-muted-foreground'>{cell.points} pts</div>
 
                               <div className='absolute top-1 right-1 hidden gap-1 group-hover:flex'>
                                 <Button
@@ -257,7 +257,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
                               </div>
                             </>
                           ) : (
-                            <span className='text-gray-400'>-</span>
+                            <span className='text-muted-foreground'>-</span>
                           )}
                         </TableCell>
                       );

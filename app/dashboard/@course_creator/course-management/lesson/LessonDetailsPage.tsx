@@ -141,7 +141,7 @@ const LessonDetailsPage = () => {
           },
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   // Quiz management
@@ -512,7 +512,7 @@ const LessonDetailsPage = () => {
           <div className='flex flex-row items-center justify-between gap-4'>
             <p className='text-lg font-semibold'>Skill Assignments</p>
             <Button
-              onClick={() => {}}
+              onClick={() => { }}
               variant='secondary'
               size='sm'
               className='flex w-fit items-center gap-1'

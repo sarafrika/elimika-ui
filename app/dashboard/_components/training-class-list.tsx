@@ -27,6 +27,7 @@ import {
   MapPin,
   MoreVertical,
   PenIcon,
+  Play,
   Search,
   SlidersHorizontal,
   Users,
@@ -70,6 +71,7 @@ export const getDifficultyColor = (difficulty: string) => {
 interface TrainingClassListProps {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onInviteStudents: (cls: any) => void;
   onOpenTimetable?: (id: string) => void;
   onOpenRecurring?: (id: string) => void;
   classesWithCourseAndInstructor: any;
@@ -79,6 +81,7 @@ interface TrainingClassListProps {
 export function TrainingClassList({
   onEdit,
   onDelete,
+  onInviteStudents,
   onOpenTimetable,
   onOpenRecurring,
   classesWithCourseAndInstructor,
@@ -165,14 +168,14 @@ export function TrainingClassList({
       </div>
 
       {/* Filters and Search */}
-      <div className='flex flex-wrap items-center gap-4 rounded-xl border border-blue-100/50 bg-white/60 p-4 shadow-sm backdrop-blur-sm'>
+      <div className='flex flex-wrap items-center gap-4 rounded-xl border border-border-100/50 p-4 shadow-sm backdrop-blur-sm'>
         <div className='relative min-w-[300px] flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
           <Input
             placeholder='Search classes, courses, or instructors...'
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className='bg-white/80 pl-10'
+            className='pl-10'
           />
         </div>
         <div className='flex items-center gap-2'>
@@ -220,16 +223,16 @@ export function TrainingClassList({
       </div>
 
       {/* Classes Grid */}
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
         {filteredClasses.map((cls: any) => {
           const enrollmentPercentage = (cls.current_enrollments / cls.max_participants) * 100;
           const isFull = cls.current_enrollments >= cls.max_participants;
           const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'N/A';
 
           return (
-            <div key={cls.uuid} className='group cursor-pointer'>
-              <div className='relative h-full max-w-[380px] rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl'>
-                <div className='h-full overflow-hidden rounded-2xl bg-white'>
+            <div key={cls.uuid} className='group cursor-pointer border border-border/100 rounded-2xl'>
+              <div className='relative h-full max-w-[380px] rounded-2xl p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl'>
+                <div className='h-full overflow-hidden rounded-2xl'>
                   {/* Image Header */}
                   <div className='relative h-48 overflow-hidden'>
                     <div className='absolute inset-0 z-10 bg-gradient-to-br from-blue-400/20 via-cyan-400/20 to-indigo-500/20' />
@@ -321,11 +324,11 @@ export function TrainingClassList({
                   <div className='space-y-4 p-5'>
                     {/* Title and Course */}
                     <div className='space-y-2'>
-                      <h3 className='line-clamp-1 transition-colors group-hover:text-blue-600'>
+                      <h3 className='line-clamp-1 transition-colors group-hover:text-primary'>
                         {cls?.title}
                       </h3>
                       <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-                        <BookOpen className='h-3.5 w-3.5 text-blue-500' />
+                        <BookOpen className='h-3.5 w-3.5 text-primary' />
                         <span className='line-clamp-1'>{cls?.course?.name}</span>
                       </div>
                     </div>
@@ -341,7 +344,7 @@ export function TrainingClassList({
                         <Badge
                           key={idx}
                           variant='outline'
-                          className='border-blue-200/50 bg-blue-50/50 text-xs text-blue-700'
+                          className='border-border-100/50 text-xs text-primary'
                         >
                           {category}
                         </Badge>
@@ -349,7 +352,7 @@ export function TrainingClassList({
                     </div>
 
                     {/* Instructor */}
-                    <div className='flex items-center gap-2 rounded-lg border border-blue-100/50 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5'>
+                    <div className='flex items-center gap-2 rounded-lg border border-border-100/50 p-2.5'>
                       <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 text-sm text-white shadow-md'>
                         {cls?.instructor?.full_name?.charAt(0)}
                       </div>
@@ -360,7 +363,7 @@ export function TrainingClassList({
                     </div>
 
                     {/* Stats Grid */}
-                    <div className='grid grid-cols-2 gap-3 border-t border-blue-100/50 pt-2'>
+                    <div className='grid grid-cols-2 gap-3 border-t border-border-100/50 pt-2'>
                       <div className='flex items-center gap-2 text-sm'>
                         <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100'>
                           <Clock className='h-4 w-4 text-blue-600' />
@@ -407,7 +410,7 @@ export function TrainingClassList({
                     </div>
 
                     {/* Footer */}
-                    <div className='flex items-center justify-between border-t border-blue-100/50 pt-2'>
+                    <div className='flex items-center justify-between border-t border-border-100/50 pt-2'>
                       <div className='flex items-center gap-1.5'>
                         <span className='text-lg'>KES {cls?.training_fee || 'N/A'}</span>
                       </div>
@@ -424,7 +427,10 @@ export function TrainingClassList({
                       </div>
                     </div>
 
-                    <Button>Invite Students</Button>
+                    <div className='flex flex-row items-center justify-between' >
+                      <Button variant={'ghost'} onClick={() => onInviteStudents(cls)} className='border border-border/100'  >Invite Students</Button>
+                      <Button onClick={() => router.push(`/dashboard/trainings/instructor-console/${cls?.uuid}`)}> <Play />  Start Class</Button>
+                    </div>
                   </div>
                 </div>
               </div>

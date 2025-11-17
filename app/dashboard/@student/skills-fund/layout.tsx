@@ -11,7 +11,7 @@ export default function SkillsFundLayout({ children }: SkillsFundLayoutProps) {
     <div className='space-y-8 p-4 pb-16 md:p-10'>
       <div>
         <h2 className='text-2xl font-bold tracking-tight'>Skills Fund</h2>
-        <p className='mt-1 text-gray-600'>
+        <p className='mt-1 text-muted-foreground'>
           Empowering Growth through Skills Funding. Access scholarships, grants, and support for
           your learning journey.
         </p>
