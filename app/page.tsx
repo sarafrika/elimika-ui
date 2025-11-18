@@ -61,6 +61,9 @@ export default function Home() {
           </Link>
 
           <div className='flex items-center gap-4 text-sm font-medium text-muted-foreground'>
+            <Link className='transition hover:text-primary focus-visible:text-primary' href='/classes'>
+              Classes
+            </Link>
             <Link className='transition hover:text-primary focus-visible:text-primary' href='#product'>
               Product
             </Link>
@@ -92,6 +95,12 @@ export default function Home() {
             </p>
             <div className='flex flex-col items-center gap-4 sm:flex-row'>
               <LoginButton />
+              <Link
+                href='/classes'
+                className='inline-flex items-center justify-center gap-2 rounded-full border border-primary/50 bg-primary/10 px-7 py-3 text-sm font-semibold text-primary shadow hover:border-primary/70'
+              >
+                Browse classes <ArrowRight className='h-4 w-4' />
+              </Link>
               <Link
                 href='#product'
                 className='inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-7 py-3 text-sm font-medium text-primary shadow hover:border-primary/60 hover:text-primary'
