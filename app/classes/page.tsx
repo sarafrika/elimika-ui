@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PublicTopNav } from '@/components/PublicTopNav';
 import { useUserProfile } from '@/context/profile-context';
 import {
   addItemMutation,
@@ -291,7 +292,8 @@ export default function ClassesCataloguePage() {
     selectPaymentProvider.isPending || checkout.isPending || enrollStudent.isPending;
 
   return (
-    <div className='bg-background text-foreground'>
+    <div className='min-h-screen bg-background text-foreground'>
+      <PublicTopNav />
       <div className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
         <header className='space-y-4'>
           <div className='inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm'>
