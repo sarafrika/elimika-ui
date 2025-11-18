@@ -1,3 +1,4 @@
+import LoginButton from '@/components/LoginButton';
 import { PublicTopNav } from '@/components/PublicTopNav';
 import { BrandPill } from '@/components/ui/brand-pill';
 import { ArrowRight, BookOpenCheck, GraduationCap, LayoutDashboard, Sparkles } from 'lucide-react';
