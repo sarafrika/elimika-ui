@@ -30,15 +30,15 @@ export default function PublicCoursesPage() {
     <div className='min-h-screen bg-background text-foreground'>
       <PublicTopNav />
       <div className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
-        <header className='space-y-6 rounded-[36px] border border-blue-200/40 bg-white/80 p-8 shadow-xl shadow-blue-200/30 backdrop-blur-sm dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20 lg:p-12'>
-          <div className='inline-flex items-center gap-2 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-blue-600 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'>
+        <header className='space-y-6 rounded-[36px] border border-border bg-card p-8 shadow-xl backdrop-blur-sm lg:p-12'>
+          <div className='inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-primary'>
             Course Catalogue
           </div>
           <div className='space-y-4'>
-            <h1 className='text-3xl font-semibold text-slate-900 dark:text-blue-50 sm:text-4xl'>
+            <h1 className='text-3xl font-semibold text-foreground sm:text-4xl'>
               Explore published courses
             </h1>
-            <p className='max-w-3xl text-base text-slate-600 dark:text-slate-200'>
+            <p className='max-w-3xl text-base text-muted-foreground'>
               Discover comprehensive courses created by expert instructors. Each course offers
               structured learning paths designed to help you master new skills.
             </p>
@@ -65,9 +65,9 @@ export default function PublicCoursesPage() {
               </CardHeader>
             </Card>
           ) : courses.length === 0 ? (
-            <Card className='border-blue-200/60 bg-card/80'>
+            <Card className='border-border bg-card/80'>
               <CardHeader className='space-y-3 text-center'>
-                <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/40'>
+                <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10'>
                   <BookOpen className='h-6 w-6 text-primary' />
                 </div>
                 <CardTitle className='text-foreground'>No published courses yet</CardTitle>
@@ -115,11 +115,11 @@ function CourseCard({ course }: { course: Course }) {
   );
 
   return (
-    <Card className='group h-full rounded-[28px] border-blue-200/60 bg-white/90 shadow-lg shadow-blue-200/30 transition hover:-translate-y-1 hover:border-blue-400/70 hover:shadow-xl hover:shadow-blue-200/40 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+    <Card className='group h-full rounded-[28px] border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg'>
       <CardHeader className='space-y-3'>
         <div className='flex items-start justify-between gap-3'>
           <div className='flex-1 space-y-2'>
-            <CardTitle className='line-clamp-2 text-lg font-semibold leading-6 text-slate-900 dark:text-blue-50'>
+            <CardTitle className='line-clamp-2 text-lg font-semibold leading-6 text-foreground'>
               {title}
             </CardTitle>
             <div className='flex flex-wrap gap-2'>
@@ -132,7 +132,7 @@ function CourseCard({ course }: { course: Course }) {
               {level && (
                 <Badge
                   variant='outline'
-                  className='rounded-full border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'
+                  className='rounded-full border border-primary/30 bg-primary/10 text-primary'
                 >
                   {level}
                 </Badge>
@@ -141,39 +141,39 @@ function CourseCard({ course }: { course: Course }) {
           </div>
         </div>
         <CardDescription
-          className='line-clamp-3 text-sm leading-6 text-slate-600 dark:text-slate-200'
+          className='line-clamp-3 text-sm leading-6 text-muted-foreground'
           dangerouslySetInnerHTML={{ __html: safeDescription }}
         />
       </CardHeader>
       <CardContent className='space-y-4'>
         <div className='space-y-2.5'>
           {duration_weeks && (
-            <div className='flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300'>
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <Clock className='h-4 w-4 text-primary' />
               <span>
                 {duration_weeks} {duration_weeks === 1 ? 'week' : 'weeks'} duration
               </span>
             </div>
           )}
-          <div className='flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300'>
+          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
             <GraduationCap className='h-4 w-4 text-primary' />
             <span>Expert-led instruction</span>
           </div>
-          <div className='flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300'>
+          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
             <Layers className='h-4 w-4 text-primary' />
             <span>Structured learning path</span>
           </div>
         </div>
 
-        <div className='flex items-center justify-between border-t border-blue-200/40 pt-4 dark:border-blue-500/25'>
-          <div className='text-sm font-medium text-slate-600 dark:text-slate-300'>
+        <div className='flex items-center justify-between border-t border-border pt-4'>
+          <div className='text-sm font-medium text-muted-foreground'>
             Learn more
           </div>
           <Link href={courseUuid ? `/courses/${encodeURIComponent(courseUuid)}` : '/courses'}>
             <Button
               size='sm'
               disabled={!is_published || !courseUuid}
-              className='rounded-full bg-primary px-6 shadow-lg shadow-blue-200/40 transition hover:bg-primary/90 hover:shadow-xl dark:shadow-blue-900/20'
+              className='rounded-full bg-primary px-6 shadow-lg transition hover:bg-primary/90'
             >
               View Course
             </Button>

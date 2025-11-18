@@ -72,8 +72,7 @@ async function main() {
   }
 
   if (violations.length) {
-    for (const _violation of violations) {
-    }
+    process.stderr.write(`${JSON.stringify(violations, null, 2)}\n`);
     process.exit(1);
   }
 }

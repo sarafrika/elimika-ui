@@ -107,10 +107,10 @@ export default function CartPage() {
         {/* Header */}
         <div className='flex items-center justify-between'>
           <div className='space-y-2'>
-            <h1 className='text-3xl font-semibold text-slate-900 dark:text-blue-50 sm:text-4xl'>
+            <h1 className='text-3xl font-semibold text-foreground sm:text-4xl'>
               Shopping Cart
             </h1>
-            <p className='text-sm text-slate-600 dark:text-slate-200'>
+            <p className='text-sm text-muted-foreground'>
               {isEmpty ? 'Your cart is empty' : `${cartItems.length} ${cartItems.length === 1 ? 'item' : 'items'} in your cart`}
             </p>
           </div>
@@ -125,9 +125,9 @@ export default function CartPage() {
 
         {isEmpty ? (
           /* Empty Cart State */
-          <Card className='border-blue-200/60 bg-card/80'>
+          <Card className='border-border bg-card/80'>
             <CardHeader className='space-y-4 text-center'>
-              <div className='mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/40'>
+              <div className='mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10'>
                 <ShoppingCart className='h-10 w-10 text-primary' />
               </div>
               <CardTitle className='text-2xl text-foreground'>Your cart is empty</CardTitle>
@@ -138,7 +138,7 @@ export default function CartPage() {
               <Link href='/courses' className='inline-block pt-4'>
                 <Button
                   size='lg'
-                  className='rounded-full bg-primary px-8 shadow-lg shadow-blue-200/40 transition hover:bg-primary/90 hover:shadow-xl dark:shadow-blue-900/20'
+                  className='rounded-full bg-primary px-8 shadow-lg transition hover:bg-primary/90'
                 >
                   Browse Courses
                   <ArrowRight className='ml-2 h-4 w-4' />
@@ -151,9 +151,9 @@ export default function CartPage() {
           <div className='grid gap-6 lg:grid-cols-3'>
             {/* Cart Items - Left Column */}
             <div className='space-y-4 lg:col-span-2'>
-              <Card className='rounded-[28px] border-blue-200/60 bg-white/90 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+              <Card className='rounded-[28px] border border-border bg-card shadow-lg'>
                 <CardHeader>
-                  <CardTitle className='flex items-center gap-2 text-xl text-slate-900 dark:text-blue-50'>
+                  <CardTitle className='flex items-center gap-2 text-xl text-foreground'>
                     <Package className='h-5 w-5 text-primary' />
                     Cart Items
                   </CardTitle>
@@ -163,7 +163,7 @@ export default function CartPage() {
                     <div key={item.id}>
                       <CartItem item={item} />
                       {index < cartItems.length - 1 && (
-                        <Separator className='mt-4 bg-blue-200/40 dark:bg-blue-500/25' />
+                        <Separator className='mt-4 bg-border' />
                       )}
                     </div>
                   ))}
@@ -192,65 +192,52 @@ export default function CartPage() {
 
             {/* Order Summary - Right Column */}
             <div className='lg:col-span-1'>
-              <Card className='sticky top-24 rounded-[28px] border-blue-200/60 bg-white/90 shadow-xl shadow-blue-200/40 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+              <Card className='sticky top-24 rounded-[28px] border border-border bg-card shadow-xl'>
                 <CardHeader>
-                  <CardTitle className='text-xl text-slate-900 dark:text-blue-50'>
-                    Order Summary
-                  </CardTitle>
+                  <CardTitle className='text-xl text-foreground'>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-4'>
                   <div className='space-y-3'>
                     <div className='flex items-center justify-between text-sm'>
-                      <span className='text-slate-600 dark:text-slate-300'>
+                      <span className='text-muted-foreground'>
                         Subtotal ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})
                       </span>
-                      <span className='font-semibold text-slate-900 dark:text-blue-50'>
-                        {formatMoney(subtotal)}
-                      </span>
+                      <span className='font-semibold text-foreground'>{formatMoney(subtotal)}</span>
                     </div>
                     {tax > 0 && (
                       <div className='flex items-center justify-between text-sm'>
-                        <span className='text-slate-600 dark:text-slate-300'>Tax</span>
-                        <span className='font-semibold text-slate-900 dark:text-blue-50'>
-                          {formatMoney(tax)}
-                        </span>
+                        <span className='text-muted-foreground'>Tax</span>
+                        <span className='font-semibold text-foreground'>{formatMoney(tax)}</span>
                       </div>
                     )}
                   </div>
 
-                  <Separator className='bg-blue-200/40 dark:bg-blue-500/25' />
+                  <Separator className='bg-border' />
 
                   <div className='flex items-center justify-between'>
-                    <span className='text-lg font-semibold text-slate-900 dark:text-blue-50'>
-                      Total
-                    </span>
+                    <span className='text-lg font-semibold text-foreground'>Total</span>
                     <span className='text-2xl font-bold text-primary'>{formatMoney(total)}</span>
                   </div>
 
                   <div className='space-y-3 pt-4'>
                     <Button
                       size='lg'
-                      className='w-full rounded-full bg-primary text-base font-semibold shadow-lg shadow-blue-200/40 transition hover:bg-primary/90 hover:shadow-xl dark:shadow-blue-900/20'
+                      className='w-full rounded-full bg-primary text-base font-semibold shadow-lg transition hover:bg-primary/90'
                     >
                       Proceed to Checkout
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
-                    <Button
-                      variant='outline'
-                      size='lg'
-                      className='w-full rounded-full border-blue-200 text-base font-medium dark:border-blue-500/40'
-                      asChild
-                    >
+                    <Button variant='outline' size='lg' className='w-full rounded-full text-base font-medium' asChild>
                       <Link href='/courses'>Continue Shopping</Link>
                     </Button>
                   </div>
 
                   <div className='space-y-2 pt-4'>
-                    <div className='flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300'>
+                    <div className='flex items-start gap-2 text-xs text-muted-foreground'>
                       <ShieldCheck className='h-4 w-4 shrink-0 text-primary' />
                       <span>Secure checkout powered by MPesa</span>
                     </div>
-                    <div className='flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300'>
+                    <div className='flex items-start gap-2 text-xs text-muted-foreground'>
                       <Package className='h-4 w-4 shrink-0 text-primary' />
                       <span>Instant course access after payment</span>
                     </div>
@@ -283,7 +270,7 @@ function CartItem({ item }: { item: CartItemResponse }) {
   return (
     <div className='flex gap-4'>
       {/* Course Image */}
-      <div className='relative h-24 w-32 shrink-0 overflow-hidden rounded-2xl bg-blue-50 dark:bg-blue-900/40'>
+      <div className='relative h-24 w-32 shrink-0 overflow-hidden rounded-2xl bg-muted'>
         {item.thumbnail ? (
           <img src={item.thumbnail} alt={title} className='h-full w-full object-cover' />
         ) : (
@@ -296,26 +283,26 @@ function CartItem({ item }: { item: CartItemResponse }) {
       {/* Course Info */}
       <div className='flex flex-1 flex-col justify-between'>
         <div className='space-y-1'>
-          <h3 className='font-semibold text-slate-900 dark:text-blue-50'>{title}</h3>
+          <h3 className='font-semibold text-foreground'>{title}</h3>
           {item.description && (
-            <p className='line-clamp-1 text-sm text-slate-600 dark:text-slate-200'>
+            <p className='line-clamp-1 text-sm text-muted-foreground'>
               {item.description}
             </p>
           )}
           {item.variant_sku && (
-            <p className='text-xs text-slate-500 dark:text-slate-400'>SKU: {item.variant_sku}</p>
+            <p className='text-xs text-muted-foreground'>SKU: {item.variant_sku}</p>
           )}
         </div>
 
         <div className='flex items-center justify-between'>
           {/* Quantity Display (read-only for now) */}
           <div className='flex items-center gap-2'>
-            <span className='text-sm text-slate-600 dark:text-slate-300'>Qty: {quantity}</span>
+            <span className='text-sm text-muted-foreground'>Qty: {quantity}</span>
           </div>
 
           {/* Price and Remove */}
           <div className='flex items-center gap-4'>
-            <span className='text-lg font-bold text-slate-900 dark:text-blue-50'>
+            <span className='text-lg font-bold text-foreground'>
               {formatMoney(itemTotal)}
             </span>
             <Button
@@ -343,13 +330,13 @@ function TrustBadge({
   description: string;
 }) {
   return (
-    <div className='flex flex-col items-center gap-2 rounded-2xl border border-blue-200/60 bg-blue-50/50 p-4 text-center dark:border-blue-500/25 dark:bg-blue-900/20'>
+    <div className='flex flex-col items-center gap-2 rounded-2xl border border-border bg-muted/50 p-4 text-center'>
       <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary/10'>
         <Icon className='h-5 w-5 text-primary' />
       </div>
       <div className='space-y-0.5'>
-        <p className='text-xs font-semibold text-slate-900 dark:text-blue-50'>{title}</p>
-        <p className='text-xs text-slate-600 dark:text-slate-300'>{description}</p>
+        <p className='text-xs font-semibold text-foreground'>{title}</p>
+        <p className='text-xs text-muted-foreground'>{description}</p>
       </div>
     </div>
   );

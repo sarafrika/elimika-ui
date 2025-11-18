@@ -120,7 +120,7 @@ export default function CourseDetailPage() {
         </Link>
 
         {/* Hero Section */}
-        <header className='space-y-6 rounded-[36px] border border-blue-200/40 bg-white/80 p-8 shadow-xl shadow-blue-200/30 backdrop-blur-sm dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20 lg:p-12'>
+        <header className='space-y-6 rounded-[36px] border border-border bg-card p-8 shadow-xl backdrop-blur-sm lg:p-12'>
           <div className='flex flex-wrap items-center gap-3'>
             <Badge
               variant={course.is_published ? 'default' : 'secondary'}
@@ -131,7 +131,7 @@ export default function CourseDetailPage() {
             {course.level && (
               <Badge
                 variant='outline'
-                className='rounded-full border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'
+                className='rounded-full border border-primary/30 bg-primary/10 text-primary'
               >
                 {course.level}
               </Badge>
@@ -139,11 +139,11 @@ export default function CourseDetailPage() {
           </div>
 
           <div className='space-y-4'>
-            <h1 className='text-3xl font-semibold text-slate-900 dark:text-blue-50 sm:text-4xl lg:text-5xl'>
+            <h1 className='text-3xl font-semibold text-foreground sm:text-4xl lg:text-5xl'>
               {course.title}
             </h1>
             <div
-              className='prose prose-slate max-w-none text-base text-slate-600 dark:prose-invert dark:text-slate-200'
+              className='prose max-w-none text-base text-muted-foreground dark:prose-invert'
               dangerouslySetInnerHTML={{ __html: safeDescription }}
             />
           </div>
@@ -151,23 +151,23 @@ export default function CourseDetailPage() {
           {/* Course Meta */}
           <div className='flex flex-wrap gap-6 pt-4'>
             {course.duration_weeks && (
-              <div className='flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300'>
+              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                 <Clock className='h-5 w-5 text-primary' />
                 <span className='font-medium'>
                   {course.duration_weeks} {course.duration_weeks === 1 ? 'week' : 'weeks'}
                 </span>
               </div>
             )}
-            <div className='flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300'>
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <GraduationCap className='h-5 w-5 text-primary' />
               <span className='font-medium'>Expert-led instruction</span>
             </div>
-            <div className='flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300'>
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <Layers className='h-5 w-5 text-primary' />
               <span className='font-medium'>Structured learning path</span>
             </div>
             {lessons.length > 0 && (
-              <div className='flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300'>
+              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                 <BookMarked className='h-5 w-5 text-primary' />
                 <span className='font-medium'>
                   {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
@@ -182,9 +182,9 @@ export default function CourseDetailPage() {
           {/* Left Column - Course Details */}
           <div className='space-y-6 lg:col-span-2'>
             {/* What You'll Learn */}
-            <Card className='rounded-[28px] border-blue-200/60 bg-white/90 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+            <Card className='rounded-[28px] border border-border bg-card shadow-lg'>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-xl text-slate-900 dark:text-blue-50'>
+                <CardTitle className='flex items-center gap-2 text-xl text-foreground'>
                   <Target className='h-5 w-5 text-primary' />
                   What you'll learn
                 </CardTitle>
@@ -197,9 +197,9 @@ export default function CourseDetailPage() {
                     'Build practical skills through hands-on exercises',
                     'Gain confidence in your abilities',
                   ].map((item, index) => (
-                    <li key={index} className='flex items-start gap-3'>
+                    <li key={index} className='flex items-start gap-3 text-muted-foreground'>
                       <CheckCircle2 className='h-5 w-5 shrink-0 text-primary' />
-                      <span className='text-sm text-slate-600 dark:text-slate-200'>{item}</span>
+                      <span className='text-sm'>{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -208,13 +208,13 @@ export default function CourseDetailPage() {
 
             {/* Course Curriculum */}
             {lessons.length > 0 && (
-              <Card className='rounded-[28px] border-blue-200/60 bg-white/90 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+              <Card className='rounded-[28px] border border-border bg-card shadow-lg'>
                 <CardHeader>
-                  <CardTitle className='flex items-center gap-2 text-xl text-slate-900 dark:text-blue-50'>
+                  <CardTitle className='flex items-center gap-2 text-xl text-foreground'>
                     <BookOpen className='h-5 w-5 text-primary' />
                     Course curriculum
                   </CardTitle>
-                  <CardDescription className='text-slate-600 dark:text-slate-200'>
+                  <CardDescription className='text-muted-foreground'>
                     {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'} to help you
                     master the material
                   </CardDescription>
@@ -230,15 +230,15 @@ export default function CourseDetailPage() {
             )}
 
             {/* Course Requirements */}
-            <Card className='rounded-[28px] border-blue-200/60 bg-white/90 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+            <Card className='rounded-[28px] border border-border bg-card shadow-lg'>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-xl text-slate-900 dark:text-blue-50'>
+                <CardTitle className='flex items-center gap-2 text-xl text-foreground'>
                   <Users className='h-5 w-5 text-primary' />
                   Requirements
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className='space-y-2 text-sm text-slate-600 dark:text-slate-200'>
+                <ul className='space-y-2 text-sm text-muted-foreground'>
                   <li className='flex items-start gap-3'>
                     <span className='mt-1 size-1.5 rounded-full bg-primary' />
                     <span>Basic understanding of the subject matter</span>
@@ -258,48 +258,48 @@ export default function CourseDetailPage() {
 
           {/* Right Column - Enrollment Card */}
           <div className='lg:col-span-1'>
-            <Card className='sticky top-24 rounded-[28px] border-blue-200/60 bg-white/90 shadow-xl shadow-blue-200/40 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
-              <CardHeader className='space-y-4'>
-                <div className='space-y-2'>
-                  <CardTitle className='text-2xl text-slate-900 dark:text-blue-50'>
-                    Enroll in this course
-                  </CardTitle>
-                  <CardDescription className='text-slate-600 dark:text-slate-200'>
-                    Start your learning journey today
-                  </CardDescription>
-                </div>
+              <Card className='sticky top-24 rounded-[28px] border border-border bg-card shadow-xl'>
+                <CardHeader className='space-y-4'>
+                  <div className='space-y-2'>
+                    <CardTitle className='text-2xl text-foreground'>
+                      Enroll in this course
+                    </CardTitle>
+                    <CardDescription className='text-muted-foreground'>
+                      Start your learning journey today
+                    </CardDescription>
+                  </div>
 
-                <Separator className='bg-blue-200/40 dark:bg-blue-500/25' />
+                  <Separator className='bg-border' />
 
                 {/* Course Info Summary */}
                 <div className='space-y-3'>
                   {course.duration_weeks && (
                     <div className='flex items-center justify-between text-sm'>
-                      <span className='text-slate-600 dark:text-slate-300'>Duration</span>
-                      <span className='font-semibold text-slate-900 dark:text-blue-50'>
+                      <span className='text-muted-foreground'>Duration</span>
+                      <span className='font-semibold text-foreground'>
                         {course.duration_weeks} {course.duration_weeks === 1 ? 'week' : 'weeks'}
                       </span>
                     </div>
                   )}
                   {course.level && (
                     <div className='flex items-center justify-between text-sm'>
-                      <span className='text-slate-600 dark:text-slate-300'>Level</span>
-                      <span className='font-semibold text-slate-900 dark:text-blue-50'>
+                      <span className='text-muted-foreground'>Level</span>
+                      <span className='font-semibold text-foreground'>
                         {course.level}
                       </span>
                     </div>
                   )}
                   {lessons.length > 0 && (
                     <div className='flex items-center justify-between text-sm'>
-                      <span className='text-slate-600 dark:text-slate-300'>Lessons</span>
-                      <span className='font-semibold text-slate-900 dark:text-blue-50'>
+                      <span className='text-muted-foreground'>Lessons</span>
+                      <span className='font-semibold text-foreground'>
                         {lessons.length}
                       </span>
                     </div>
                   )}
                   <div className='flex items-center justify-between text-sm'>
-                    <span className='text-slate-600 dark:text-slate-300'>Certificate</span>
-                    <span className='font-semibold text-slate-900 dark:text-blue-50'>
+                    <span className='text-muted-foreground'>Certificate</span>
+                    <span className='font-semibold text-foreground'>
                       Upon completion
                     </span>
                   </div>
@@ -310,24 +310,20 @@ export default function CourseDetailPage() {
                 <Button
                   size='lg'
                   disabled={!course.is_published}
-                  className='w-full rounded-full bg-primary text-base font-semibold shadow-lg shadow-blue-200/40 transition hover:bg-primary/90 hover:shadow-xl dark:shadow-blue-900/20'
+                  className='w-full rounded-full bg-primary text-base font-semibold shadow-lg transition hover:bg-primary/90'
                 >
                   {course.is_published ? 'Enroll Now' : 'Not Available'}
                 </Button>
-                <Button
-                  variant='outline'
-                  size='lg'
-                  className='w-full rounded-full border-blue-200 text-base font-medium dark:border-blue-500/40'
-                >
+                <Button variant='outline' size='lg' className='w-full rounded-full text-base font-medium'>
                   Contact Instructor
                 </Button>
 
                 <div className='space-y-2 pt-4'>
-                  <div className='flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300'>
+                  <div className='flex items-center gap-2 text-xs text-muted-foreground'>
                     <Calendar className='h-4 w-4 text-primary' />
                     <span>Flexible start dates available</span>
                   </div>
-                  <div className='flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300'>
+                  <div className='flex items-center gap-2 text-xs text-muted-foreground'>
                     <CheckCircle2 className='h-4 w-4 text-primary' />
                     <span>Full lifetime access</span>
                   </div>
@@ -348,16 +344,16 @@ function LessonItem({ lesson, index }: { lesson: CourseLesson; index: number }) 
   );
 
   return (
-    <div className='group rounded-2xl border border-blue-200/40 bg-blue-50/50 p-4 transition hover:border-blue-400/60 hover:bg-blue-50 dark:border-blue-500/25 dark:bg-blue-900/20 dark:hover:border-blue-400/40 dark:hover:bg-blue-900/30'>
+    <div className='group rounded-2xl border border-border bg-muted/40 p-4 transition hover:border-primary/40 hover:bg-primary/5'>
       <div className='flex items-start gap-4'>
         <div className='flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary'>
           {index}
         </div>
         <div className='flex-1 space-y-1'>
-          <h4 className='font-semibold text-slate-900 dark:text-blue-50'>{lesson.title}</h4>
+          <h4 className='font-semibold text-foreground'>{lesson.title}</h4>
           {safeDescription && (
             <div
-              className='line-clamp-2 text-sm text-slate-600 dark:text-slate-200'
+              className='line-clamp-2 text-sm text-muted-foreground'
               dangerouslySetInnerHTML={{ __html: safeDescription }}
             />
           )}

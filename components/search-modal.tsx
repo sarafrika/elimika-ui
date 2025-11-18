@@ -11,9 +11,24 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import {
   searchCoursesOptions,
   searchInstructorsOptions,
@@ -29,6 +44,8 @@ import {
   Clock,
   ArrowRight,
   Loader2,
+  Filter,
+  RotateCcw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -38,45 +55,135 @@ type SearchModalProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+type CourseFilters = {
+  title: string;
+  description: string;
+  level: string;
+  isPublished: boolean;
+};
+
+type InstructorFilters = {
+  firstName: string;
+  lastName: string;
+  bio: string;
+  professionalHeadline: string;
+  adminVerified: boolean;
+};
+
 export function SearchModal({ open, onOpenChange }: SearchModalProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'courses' | 'instructors'>('courses');
 
-  // Debounce search query to avoid too many API calls
-  const debouncedQuery = useDebounce(searchQuery, 300);
+  // Course filters
+  const [courseFilters, setCourseFilters] = useState<CourseFilters>({
+    title: '',
+    description: '',
+    level: '',
+    isPublished: true,
+  });
+
+  // Instructor filters
+  const [instructorFilters, setInstructorFilters] = useState<InstructorFilters>({
+    firstName: '',
+    lastName: '',
+    bio: '',
+    professionalHeadline: '',
+    adminVerified: true,
+  });
+
+  // Debounce filters
+  const debouncedCourseFilters = useDebounce(courseFilters, 400);
+  const debouncedInstructorFilters = useDebounce(instructorFilters, 400);
+
+  // Check if any course filter is active
+  const hasCourseFilters = useMemo(
+    () =>
+      Boolean(
+        debouncedCourseFilters.title ||
+          debouncedCourseFilters.description ||
+          debouncedCourseFilters.level
+      ),
+    [debouncedCourseFilters]
+  );
+
+  // Check if any instructor filter is active
+  const hasInstructorFilters = useMemo(
+    () =>
+      Boolean(
+        debouncedInstructorFilters.firstName ||
+          debouncedInstructorFilters.lastName ||
+          debouncedInstructorFilters.bio ||
+          debouncedInstructorFilters.professionalHeadline
+      ),
+    [debouncedInstructorFilters]
+  );
+
+  // Build course search params
+  const courseSearchParams = useMemo(() => {
+    const params: Record<string, unknown> = {
+      is_published: debouncedCourseFilters.isPublished,
+    };
+
+    if (debouncedCourseFilters.title) {
+      params.title_like = debouncedCourseFilters.title;
+    }
+    if (debouncedCourseFilters.description) {
+      params.description_like = debouncedCourseFilters.description;
+    }
+    if (debouncedCourseFilters.level) {
+      params.level = debouncedCourseFilters.level;
+    }
+
+    return params;
+  }, [debouncedCourseFilters]);
+
+  // Build instructor search params
+  const instructorSearchParams = useMemo(() => {
+    const params: Record<string, unknown> = {
+      admin_verified: debouncedInstructorFilters.adminVerified,
+    };
+
+    if (debouncedInstructorFilters.firstName) {
+      params.firstName_like = debouncedInstructorFilters.firstName;
+    }
+    if (debouncedInstructorFilters.lastName) {
+      params.lastName_like = debouncedInstructorFilters.lastName;
+    }
+    if (debouncedInstructorFilters.bio) {
+      params.bio_like = debouncedInstructorFilters.bio;
+    }
+    if (debouncedInstructorFilters.professionalHeadline) {
+      params.professional_headline_like = debouncedInstructorFilters.professionalHeadline;
+    }
+
+    return params;
+  }, [debouncedInstructorFilters]);
 
   // Search courses
   const coursesQuery = useQuery({
     ...searchCoursesOptions({
       query: {
-        searchParams: {
-          title_like: debouncedQuery,
-          is_published: true,
-        },
+        searchParams: courseSearchParams,
         pageable: {
           page: 0,
-          size: 10,
+          size: 20,
         },
       },
     }),
-    enabled: !!debouncedQuery && activeTab === 'courses',
+    enabled: hasCourseFilters && activeTab === 'courses',
   });
 
   // Search instructors
   const instructorsQuery = useQuery({
     ...searchInstructorsOptions({
       query: {
-        searchParams: {
-          firstName_like: debouncedQuery,
-          lastName_like: debouncedQuery,
-        },
+        searchParams: instructorSearchParams,
         pageable: {
           page: 0,
-          size: 10,
+          size: 20,
         },
       },
     }),
-    enabled: !!debouncedQuery && activeTab === 'instructors',
+    enabled: hasInstructorFilters && activeTab === 'instructors',
   });
 
   const courses = useMemo(
@@ -91,194 +198,369 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 
   const isLoading = coursesQuery.isLoading || instructorsQuery.isLoading;
 
-  const handleClearSearch = () => {
-    setSearchQuery('');
+  const handleResetCourseFilters = () => {
+    setCourseFilters({
+      title: '',
+      description: '',
+      level: '',
+      isPublished: true,
+    });
+  };
+
+  const handleResetInstructorFilters = () => {
+    setInstructorFilters({
+      firstName: '',
+      lastName: '',
+      bio: '',
+      professionalHeadline: '',
+      adminVerified: true,
+    });
   };
 
   const handleResultClick = () => {
     onOpenChange(false);
-    setSearchQuery('');
+    handleResetCourseFilters();
+    handleResetInstructorFilters();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-3xl rounded-[28px] border-blue-200/60 p-0 dark:border-blue-500/25'>
-        <DialogHeader className='border-b border-blue-200/40 px-6 pt-6 pb-4 dark:border-blue-500/25'>
-          <DialogTitle className='text-2xl text-slate-900 dark:text-blue-50'>
-            Search Elimika
+      <DialogContent className='max-w-6xl rounded-[28px] border-border p-0 max-h-[90vh]'>
+        <DialogHeader className='border-b border-border px-6 pt-6 pb-4'>
+          <DialogTitle className='text-2xl text-foreground'>
+            Advanced Search
           </DialogTitle>
-          <DialogDescription className='text-slate-600 dark:text-slate-200'>
-            Find courses and instructors across our platform
+          <DialogDescription className='text-muted-foreground'>
+            Search courses and instructors using multiple criteria
           </DialogDescription>
         </DialogHeader>
 
-        {/* Search Input */}
-        <div className='px-6 pt-2'>
-          <div className='relative'>
-            <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
-            <Input
-              type='search'
-              placeholder='Search for courses, instructors...'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className='h-12 w-full rounded-full border-blue-200/60 bg-white pl-11 pr-12 text-base shadow-sm transition focus-visible:border-blue-400 focus-visible:ring-2 focus-visible:ring-blue-200/50 dark:border-blue-500/30 dark:bg-blue-950/30'
-              autoFocus
-            />
-            {searchQuery && (
-              <Button
-                variant='ghost'
-                size='icon'
-                className='absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full'
-                onClick={handleClearSearch}
-              >
-                <X className='h-4 w-4' />
-              </Button>
-            )}
-            {isLoading && (
-              <div className='absolute right-12 top-1/2 -translate-y-1/2'>
-                <Loader2 className='h-5 w-5 animate-spin text-primary' />
+        <div className='flex flex-col lg:flex-row'>
+          {/* Left Sidebar - Filters */}
+          <div className='w-full border-b border-border bg-muted/50 p-6 lg:w-80 lg:border-b-0 lg:border-r'>
+            <div className='mb-4 flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <Filter className='h-4 w-4 text-primary' />
+                <h3 className='text-sm font-semibold text-foreground'>
+                  Search Filters
+                </h3>
               </div>
-            )}
+              {isLoading && <Loader2 className='h-4 w-4 animate-spin text-primary' />}
+            </div>
+
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as typeof activeTab)}
+              className='w-full'
+            >
+              <TabsList className='grid w-full grid-cols-2 rounded-full bg-muted p-1'>
+                <TabsTrigger
+                  value='courses'
+                  className='rounded-full data-[state=active]:bg-background data-[state=active]:shadow-sm'
+                >
+                  <BookOpen className='mr-2 h-3.5 w-3.5' />
+                  Courses
+                </TabsTrigger>
+                <TabsTrigger
+                  value='instructors'
+                  className='rounded-full data-[state=active]:bg-background data-[state=active]:shadow-sm'
+                >
+                  <Users className='mr-2 h-3.5 w-3.5' />
+                  Instructors
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Course Filters */}
+              <TabsContent value='courses' className='mt-4 space-y-4'>
+                <div className='space-y-3'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='course-title' className='text-xs font-medium'>
+                      Course Title
+                    </Label>
+                    <Input
+                      id='course-title'
+                      placeholder='Search by title...'
+                      value={courseFilters.title}
+                      onChange={(e) =>
+                        setCourseFilters({ ...courseFilters, title: e.target.value })
+                      }
+                      className='h-9 rounded-full'
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='course-description' className='text-xs font-medium'>
+                      Description
+                    </Label>
+                    <Input
+                      id='course-description'
+                      placeholder='Search in description...'
+                      value={courseFilters.description}
+                      onChange={(e) =>
+                        setCourseFilters({ ...courseFilters, description: e.target.value })
+                      }
+                      className='h-9 rounded-full'
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='course-level' className='text-xs font-medium'>
+                      Course Level
+                    </Label>
+                    <Select
+                      value={courseFilters.level}
+                      onValueChange={(value) =>
+                        setCourseFilters({ ...courseFilters, level: value })
+                      }
+                    >
+                      <SelectTrigger className='h-9 rounded-full'>
+                        <SelectValue placeholder='All levels' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value=''>All levels</SelectItem>
+                        <SelectItem value='Beginner'>Beginner</SelectItem>
+                        <SelectItem value='Intermediate'>Intermediate</SelectItem>
+                        <SelectItem value='Advanced'>Advanced</SelectItem>
+                        <SelectItem value='Expert'>Expert</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Separator className='my-3' />
+
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={handleResetCourseFilters}
+                    className='w-full rounded-full text-xs'
+                  >
+                    <RotateCcw className='mr-2 h-3 w-3' />
+                    Reset Filters
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Instructor Filters */}
+              <TabsContent value='instructors' className='mt-4 space-y-4'>
+                <div className='space-y-3'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='instructor-firstname' className='text-xs font-medium'>
+                      First Name
+                    </Label>
+                    <Input
+                      id='instructor-firstname'
+                      placeholder='Search by first name...'
+                      value={instructorFilters.firstName}
+                      onChange={(e) =>
+                        setInstructorFilters({ ...instructorFilters, firstName: e.target.value })
+                      }
+                      className='h-9 rounded-full'
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='instructor-lastname' className='text-xs font-medium'>
+                      Last Name
+                    </Label>
+                    <Input
+                      id='instructor-lastname'
+                      placeholder='Search by last name...'
+                      value={instructorFilters.lastName}
+                      onChange={(e) =>
+                        setInstructorFilters({ ...instructorFilters, lastName: e.target.value })
+                      }
+                      className='h-9 rounded-full'
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='instructor-headline' className='text-xs font-medium'>
+                      Professional Headline
+                    </Label>
+                    <Input
+                      id='instructor-headline'
+                      placeholder='Search by headline...'
+                      value={instructorFilters.professionalHeadline}
+                      onChange={(e) =>
+                        setInstructorFilters({
+                          ...instructorFilters,
+                          professionalHeadline: e.target.value,
+                        })
+                      }
+                      className='h-9 rounded-full'
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='instructor-bio' className='text-xs font-medium'>
+                      Biography
+                    </Label>
+                    <Input
+                      id='instructor-bio'
+                      placeholder='Search in bio...'
+                      value={instructorFilters.bio}
+                      onChange={(e) =>
+                        setInstructorFilters({ ...instructorFilters, bio: e.target.value })
+                      }
+                      className='h-9 rounded-full'
+                    />
+                  </div>
+
+                  <Separator className='my-3' />
+
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={handleResetInstructorFilters}
+                    className='w-full rounded-full text-xs'
+                  >
+                    <RotateCcw className='mr-2 h-3 w-3' />
+                    Reset Filters
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
-        </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className='px-6'>
-          <TabsList className='grid w-full grid-cols-2 rounded-full bg-blue-50 p-1 dark:bg-blue-900/40'>
-            <TabsTrigger
-              value='courses'
-              className='rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-blue-950'
-            >
-              <BookOpen className='mr-2 h-4 w-4' />
-              Courses
-              {courses.length > 0 && (
-                <Badge variant='secondary' className='ml-2 rounded-full px-2 py-0 text-xs'>
-                  {courses.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value='instructors'
-              className='rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-blue-950'
-            >
-              <Users className='mr-2 h-4 w-4' />
-              Instructors
-              {instructors.length > 0 && (
-                <Badge variant='secondary' className='ml-2 rounded-full px-2 py-0 text-xs'>
-                  {instructors.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Courses Results */}
-          <TabsContent value='courses' className='mt-4'>
-            <ScrollArea className='h-[400px] pr-4'>
-              {!debouncedQuery ? (
-                <div className='flex flex-col items-center justify-center py-16 text-center'>
-                  <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/40'>
-                    <BookOpen className='h-8 w-8 text-primary' />
+          {/* Right Content - Results */}
+          <div className='flex-1 p-6'>
+            <Tabs value={activeTab}>
+              {/* Courses Results */}
+              <TabsContent value='courses' className='mt-0'>
+                <div className='mb-4 flex items-center justify-between'>
+                  <div className='text-sm text-muted-foreground'>
+                    {hasCourseFilters ? (
+                      <>
+                        Found <span className='font-semibold text-foreground'>{courses.length}</span>{' '}
+                        {courses.length === 1 ? 'course' : 'courses'}
+                      </>
+                    ) : (
+                      'Enter search criteria to find courses'
+                    )}
                   </div>
-                  <p className='text-sm text-muted-foreground'>
-                    Start typing to search for courses
-                  </p>
+                  {courses.length > 0 && (
+                    <Badge variant='secondary' className='rounded-full'>
+                      {courses.length} results
+                    </Badge>
+                  )}
                 </div>
-              ) : coursesQuery.isLoading ? (
-                <div className='space-y-3'>
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className='h-24 w-full rounded-2xl' />
-                  ))}
-                </div>
-              ) : courses.length === 0 ? (
-                <div className='flex flex-col items-center justify-center py-16 text-center'>
-                  <p className='text-sm text-muted-foreground'>
-                    No courses found for "{debouncedQuery}"
-                  </p>
-                </div>
-              ) : (
-                <div className='space-y-2'>
-                  {courses.map((course) => (
-                    <CourseResult
-                      key={course.uuid}
-                      course={course}
-                      onClick={handleResultClick}
-                    />
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
 
-          {/* Instructors Results */}
-          <TabsContent value='instructors' className='mt-4'>
-            <ScrollArea className='h-[400px] pr-4'>
-              {!debouncedQuery ? (
-                <div className='flex flex-col items-center justify-center py-16 text-center'>
-                  <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/40'>
-                    <Users className='h-8 w-8 text-primary' />
+                <ScrollArea className='h-[500px] pr-4'>
+                  {!hasCourseFilters ? (
+                    <div className='flex flex-col items-center justify-center py-20 text-center'>
+                      <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20'>
+                        <Search className='h-8 w-8 text-primary' />
+                      </div>
+                      <p className='text-sm text-muted-foreground'>
+                        Use the filters on the left to search for courses
+                      </p>
+                    </div>
+                  ) : coursesQuery.isLoading ? (
+                    <div className='space-y-3'>
+                      {[1, 2, 3, 4].map((i) => (
+                        <Skeleton key={i} className='h-28 w-full rounded-2xl' />
+                      ))}
+                    </div>
+                  ) : courses.length === 0 ? (
+                    <div className='flex flex-col items-center justify-center py-20 text-center'>
+                      <p className='text-sm font-medium text-foreground'>No courses found</p>
+                      <p className='mt-1 text-xs text-muted-foreground'>
+                        Try adjusting your search criteria
+                      </p>
+                    </div>
+                  ) : (
+                    <div className='grid gap-3 md:grid-cols-2'>
+                      {courses.map((course) => (
+                        <CourseResult
+                          key={course.uuid}
+                          course={course}
+                          onClick={handleResultClick}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </TabsContent>
+
+              {/* Instructors Results */}
+              <TabsContent value='instructors' className='mt-0'>
+                <div className='mb-4 flex items-center justify-between'>
+                  <div className='text-sm text-muted-foreground'>
+                    {hasInstructorFilters ? (
+                      <>
+                        Found{' '}
+                        <span className='font-semibold text-foreground'>{instructors.length}</span>{' '}
+                        {instructors.length === 1 ? 'instructor' : 'instructors'}
+                      </>
+                    ) : (
+                      'Enter search criteria to find instructors'
+                    )}
                   </div>
-                  <p className='text-sm text-muted-foreground'>
-                    Start typing to search for instructors
-                  </p>
+                  {instructors.length > 0 && (
+                    <Badge variant='secondary' className='rounded-full'>
+                      {instructors.length} results
+                    </Badge>
+                  )}
                 </div>
-              ) : instructorsQuery.isLoading ? (
-                <div className='space-y-3'>
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className='h-24 w-full rounded-2xl' />
-                  ))}
-                </div>
-              ) : instructors.length === 0 ? (
-                <div className='flex flex-col items-center justify-center py-16 text-center'>
-                  <p className='text-sm text-muted-foreground'>
-                    No instructors found for "{debouncedQuery}"
-                  </p>
-                </div>
-              ) : (
-                <div className='space-y-2'>
-                  {instructors.map((instructor) => (
-                    <InstructorResult
-                      key={instructor.uuid}
-                      instructor={instructor}
-                      onClick={handleResultClick}
-                    />
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
 
-        {/* Footer */}
-        <div className='border-t border-blue-200/40 px-6 py-4 dark:border-blue-500/25'>
-          <p className='text-xs text-slate-500 dark:text-slate-400'>
-            Tip: Use specific keywords for better results
-          </p>
+                <ScrollArea className='h-[500px] pr-4'>
+                  {!hasInstructorFilters ? (
+                    <div className='flex flex-col items-center justify-center py-20 text-center'>
+                      <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20'>
+                        <Search className='h-8 w-8 text-primary' />
+                      </div>
+                      <p className='text-sm text-muted-foreground'>
+                        Use the filters on the left to search for instructors
+                      </p>
+                    </div>
+                  ) : instructorsQuery.isLoading ? (
+                    <div className='space-y-3'>
+                      {[1, 2, 3, 4].map((i) => (
+                        <Skeleton key={i} className='h-24 w-full rounded-2xl' />
+                      ))}
+                    </div>
+                  ) : instructors.length === 0 ? (
+                    <div className='flex flex-col items-center justify-center py-20 text-center'>
+                      <p className='text-sm font-medium text-foreground'>No instructors found</p>
+                      <p className='mt-1 text-xs text-muted-foreground'>
+                        Try adjusting your search criteria
+                      </p>
+                    </div>
+                  ) : (
+                    <div className='grid gap-3 md:grid-cols-2'>
+                      {instructors.map((instructor) => (
+                        <InstructorResult
+                          key={instructor.uuid}
+                          instructor={instructor}
+                          onClick={handleResultClick}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-function CourseResult({
-  course,
-  onClick,
-}: {
-  course: Course;
-  onClick: () => void;
-}) {
+function CourseResult({ course, onClick }: { course: Course; onClick: () => void }) {
   return (
     <Link
       href={`/courses/${course.uuid}`}
       onClick={onClick}
-      className='block rounded-2xl border border-blue-200/40 bg-white p-4 transition hover:border-blue-400/60 hover:bg-blue-50/50 dark:border-blue-500/25 dark:bg-blue-950/30 dark:hover:border-blue-400/40 dark:hover:bg-blue-900/30'
+      className='block rounded-2xl border border-border bg-card p-4 transition hover:border-primary/50 hover:bg-muted'
     >
-      <div className='flex items-start justify-between gap-4'>
-        <div className='flex-1 space-y-1'>
-          <h4 className='font-semibold text-slate-900 dark:text-blue-50'>
+      <div className='flex items-start justify-between gap-3'>
+        <div className='flex-1 space-y-2'>
+          <h4 className='font-semibold leading-tight text-foreground'>
             {course.title}
           </h4>
           {course.description && (
-            <p className='line-clamp-2 text-sm text-slate-600 dark:text-slate-200'>
+            <p className='line-clamp-2 text-xs text-muted-foreground'>
               {course.description.replace(/<[^>]*>/g, '')}
             </p>
           )}
@@ -286,20 +568,20 @@ function CourseResult({
             {course.level && (
               <Badge
                 variant='outline'
-                className='rounded-full border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'
+                className='rounded-full border-primary/30 bg-primary/10 text-xs text-primary'
               >
                 {course.level}
               </Badge>
             )}
             {course.duration_weeks && (
-              <div className='flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400'>
+              <div className='flex items-center gap-1 text-xs text-muted-foreground'>
                 <Clock className='h-3 w-3' />
-                {course.duration_weeks} weeks
+                {course.duration_weeks}w
               </div>
             )}
           </div>
         </div>
-        <ArrowRight className='h-5 w-5 shrink-0 text-primary' />
+        <ArrowRight className='h-4 w-4 shrink-0 text-primary' />
       </div>
     </Link>
   );
@@ -318,25 +600,30 @@ function InstructorResult({
     <Link
       href={`/instructors/${instructor.uuid}`}
       onClick={onClick}
-      className='block rounded-2xl border border-blue-200/40 bg-white p-4 transition hover:border-blue-400/60 hover:bg-blue-50/50 dark:border-blue-500/25 dark:bg-blue-950/30 dark:hover:border-blue-400/40 dark:hover:bg-blue-900/30'
+      className='block rounded-2xl border border-border bg-card p-4 transition hover:border-primary/50 hover:bg-muted'
     >
-      <div className='flex items-center justify-between gap-4'>
-        <div className='flex items-center gap-3'>
-          <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
-            <GraduationCap className='h-6 w-6' />
+      <div className='flex items-center justify-between gap-3'>
+        <div className='flex items-start gap-3'>
+          <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
+            <GraduationCap className='h-5 w-5' />
           </div>
           <div className='space-y-1'>
-            <h4 className='font-semibold text-slate-900 dark:text-blue-50'>
+            <h4 className='font-semibold text-foreground'>
               {fullName || 'Instructor'}
             </h4>
+            {instructor.professionalHeadline && (
+              <p className='line-clamp-1 text-xs text-muted-foreground'>
+                {instructor.professionalHeadline}
+              </p>
+            )}
             {instructor.bio && (
-              <p className='line-clamp-1 text-sm text-slate-600 dark:text-slate-200'>
+              <p className='line-clamp-1 text-xs text-muted-foreground'>
                 {instructor.bio}
               </p>
             )}
           </div>
         </div>
-        <ArrowRight className='h-5 w-5 shrink-0 text-primary' />
+        <ArrowRight className='h-4 w-4 shrink-0 text-primary' />
       </div>
     </Link>
   );
