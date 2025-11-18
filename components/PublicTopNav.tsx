@@ -30,6 +30,9 @@ export function PublicTopNav() {
           <Link className='transition hover:text-primary focus-visible:text-primary' href='/classes'>
             Classes
           </Link>
+          <Link className='transition hover:text-primary focus-visible:text-primary' href='/instructors'>
+            Instructors
+          </Link>
           <Link className='transition hover:text-primary focus-visible:text-primary' href='/#product'>
             Product
           </Link>
