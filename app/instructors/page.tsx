@@ -4,7 +4,7 @@ import { PublicTopNav } from '@/components/PublicTopNav';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getAllInstructorsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { searchInstructorsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Instructor } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Globe, MapPin, Sparkles } from 'lucide-react';
@@ -89,26 +89,34 @@ function InstructorGridSkeleton() {
 
 export default function PublicInstructorsPage() {
   const instructorsQuery = useQuery(
-    getAllInstructorsOptions({
-      query: { pageable: { page: 0, size: PAGE_SIZE } },
+    searchInstructorsOptions({
+      query: {
+        pageable: { page: 0, size: PAGE_SIZE },
+        searchParams: {
+          admin_verified: true,
+          is_profile_complete: true,
+        },
+      },
     })
   );
 
-  const instructors = instructorsQuery.data?.data?.data?.content ?? [];
-  const total = instructorsQuery.data?.data?.data?.metadata?.total_elements ?? instructors.length;
+  const instructors = (instructorsQuery.data?.data?.content as Instructor[] | undefined) ?? [];
+  const total = instructorsQuery.data?.data?.totalElements ?? instructors.length;
 
   return (
     <div className='min-h-screen bg-background text-foreground'>
       <PublicTopNav />
 
       <main className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
-        <header className='space-y-3'>
-          <div className='inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary'>
+        <header className='space-y-6 rounded-[36px] border border-blue-200/40 bg-white/80 p-8 shadow-xl shadow-blue-200/30 backdrop-blur-sm dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20 lg:p-12'>
+          <div className='inline-flex items-center gap-2 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-blue-600 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'>
             Instructors
           </div>
-          <div className='space-y-2'>
-            <h1 className='text-3xl font-semibold sm:text-4xl'>Available instructors</h1>
-            <p className='max-w-3xl text-base text-muted-foreground'>
+          <div className='space-y-4'>
+            <h1 className='text-3xl font-semibold text-slate-900 dark:text-blue-50 sm:text-4xl'>
+              Available instructors
+            </h1>
+            <p className='max-w-3xl text-base text-slate-600 dark:text-slate-200'>
               Browse instructors verified on Elimika and reach out to partner on classes and training
               programs.
             </p>

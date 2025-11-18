@@ -57,10 +57,10 @@ export default function Home() {
             <div className='flex flex-col items-center gap-4 sm:flex-row'>
               <LoginButton />
               <Link
-                href='/classes'
+                href='/courses'
                 className='inline-flex items-center justify-center gap-2 rounded-full border border-primary/50 bg-primary/10 px-7 py-3 text-sm font-semibold text-primary shadow hover:border-primary/70'
               >
-                Browse classes <ArrowRight className='h-4 w-4' />
+                Browse courses <ArrowRight className='h-4 w-4' />
               </Link>
               <Link
                 href='#product'
