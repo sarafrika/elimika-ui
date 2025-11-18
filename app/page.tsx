@@ -3,6 +3,7 @@ import { PublicTopNav } from '@/components/PublicTopNav';
 import { BrandPill } from '@/components/ui/brand-pill';
 import { ArrowRight, BookOpenCheck, GraduationCap, LayoutDashboard, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const currentYear = new Date().getFullYear();
 
