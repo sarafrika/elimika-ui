@@ -1,10 +1,10 @@
 import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
 import { updateUserMutation } from '@/services/client/@tanstack/react-query.gen';
-import { zApiResponsePagedDtoUser, zUser } from '@/services/client/zod.gen';
+import { zApiResponsePagedDtoUser, type zUser } from '@/services/client/zod.gen';
 import type { Options, UpdateUserData } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 const userListResponseSchema = zApiResponsePagedDtoUser.extend({
   data: zApiResponsePagedDtoUser.shape.data.default({ content: [] }),

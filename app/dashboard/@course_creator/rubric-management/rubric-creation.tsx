@@ -23,13 +23,13 @@ import { useCourseCreator } from '../../../../context/course-creator-context';
 import { CustomLoadingState } from '../_components/loading-state';
 import {
   CriteriaDialog,
-  RubricCriteriaFormValues,
-  RubricDetailsFormValues,
+  type RubricCriteriaFormValues,
+  type RubricDetailsFormValues,
   RubricDialog,
-  RubricScoringFormValues,
+  type RubricScoringFormValues,
   ScoringDialog,
   ScoringLevelDialog,
-  ScoringLevelFormValues,
+  type ScoringLevelFormValues,
   Visibility,
 } from '../_components/rubric-management-form';
 import { useRubricsWithCriteriaAndScoring } from './rubric-chaining';
@@ -230,7 +230,7 @@ export default function RubricsCreationPage() {
     setDeleteScoringLevelModalOpen(true);
   };
 
-  const handleAskDeleteCriteriaScoring = (rubricId: string, cell: any) => {
+  const handleAskDeleteCriteriaScoring = (rubricId: string, _cell: any) => {
     setRubricToDelete(rubricId);
     // setCriterionToDelete(criterionId);
     // setScoringToDelete(scoringId);
@@ -458,8 +458,7 @@ export default function RubricsCreationPage() {
         </div>
       )}
 
-      <>
-        {rubricsDataIsFetched && rubrics.length >= 1 && (
+      {rubricsDataIsFetched && rubrics.length >= 1 && (
           <div className='space-y-6'>
             {rubrics.map(item => {
               const rubric = item.rubric;
@@ -489,7 +488,6 @@ export default function RubricsCreationPage() {
             })}
           </div>
         )}
-      </>
 
       {/* Create and edit components modals */}
       {isCreateModalOpen && (

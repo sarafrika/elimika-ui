@@ -37,7 +37,7 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
   });
 
   const courses = courseQueries.map(q => q.data?.data ?? null);
-  // @ts-ignore
+  // @ts-expect-error
   const instructors = instructorQueries.map(q => q.data?.data ?? null);
 
   const classesWithCourseAndInstructor = classes.map((cls: any, i: number) => ({

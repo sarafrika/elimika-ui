@@ -11,7 +11,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CourseCard } from '../../../_components/course-card';
 
-const sidebarNavItems = [
+const _sidebarNavItems = [
   {
     title: 'Drafts',
     href: '/dashboard/courses/drafts',
@@ -24,9 +24,9 @@ const sidebarNavItems = [
 
 export default function CourseMangementPage() {
   const router = useRouter();
-  const pathname = usePathname();
+  const _pathname = usePathname();
 
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [_selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 

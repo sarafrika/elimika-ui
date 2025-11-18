@@ -22,13 +22,13 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import CustomLoader from '../../../../../../components/custom-loader';
-import ImageSelector, { ImageType } from '../../../../../../components/image-selector';
+import ImageSelector, { type ImageType } from '../../../../../../components/image-selector';
 import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { useTrainingCenter } from '../../../../../../context/training-center-provide';
 import { queryClient } from '../../../../../../lib/query-client';
 import { profilePicSvg } from '../../../../../../lib/utils';
-import { updateOrganisation, updateUser, User } from '../../../../../../services/client';
+import { updateOrganisation, updateUser, type User } from '../../../../../../services/client';
 import { zOrganisation } from '../../../../../../services/client/zod.gen';
 
 const trainingCenterSchema = zOrganisation
@@ -70,15 +70,15 @@ export default function TrainingCenterForm() {
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
   const [profilePic, setProfilePic] = useState<ImageType>({
-    url: userProfile!.profile_image_url ?? profilePicSvg,
+    url: userProfile?.profile_image_url ?? profilePicSvg,
   });
 
   const form = useForm<TrainingCenterFormValues>({
     resolver: zodResolver(trainingCenterSchema),
     defaultValues: {
       ...(organisation ?? {}),
-      contactPersonEmail: userProfile!.email,
-      contactPersonPhone: userProfile!.phone_number,
+      contactPersonEmail: userProfile?.email,
+      contactPersonPhone: userProfile?.phone_number,
       active: true,
     },
   });
@@ -115,7 +115,7 @@ export default function TrainingCenterForm() {
         try {
           const updateResponse = await updateOrganisation({
             path: {
-              uuid: organisation!.uuid!,
+              uuid: organisation?.uuid!,
             },
             body: orgData,
           });
@@ -127,10 +127,10 @@ export default function TrainingCenterForm() {
             return;
           }
 
-          if (!userProfile!.phone_number) {
+          if (!userProfile?.phone_number) {
             await updateUser({
               path: {
-                uuid: userProfile!.uuid!,
+                uuid: userProfile?.uuid!,
               },
               body: {
                 ...(userProfile as User),
@@ -142,7 +142,7 @@ export default function TrainingCenterForm() {
           disableEditing();
           queryClient.invalidateQueries({ queryKey: ['organization'] });
           toast.success('Saved successfully');
-        } catch (error) {
+        } catch (_error) {
           toast.error('Unable to save your organisation details right now. Please try again.');
         } finally {
           setIsSaving(false);

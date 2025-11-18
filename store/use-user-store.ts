@@ -29,12 +29,8 @@ export const useLegacyUserStore = () => {
     isLoading: profile?.isLoading || false,
     error: null,
     setUser: () => {
-      // User data is now managed by TanStack Query
-      console.warn('setUser is deprecated. Use profile.invalidateQuery() instead');
     },
     setDomains: () => {
-      // Domains are now derived from user data
-      console.warn('setDomains is deprecated. Domains are derived from user profile');
     },
     setActiveDomain,
     clearUser: () => {

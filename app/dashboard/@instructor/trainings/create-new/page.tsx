@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
-import { AcademicPeriodForm, ClassData } from './academic-period-form';
+import { AcademicPeriodForm, type ClassData } from './academic-period-form';
 import ClassDetailsForm from './class-details-form';
 import { ResourcesForm } from './resources-form';
 import { ReviewPublishForm } from './review-class-form';
@@ -35,7 +35,7 @@ const steps = [
 export default function ClassCreationPage() {
   const searchParams = useSearchParams();
   const classId = searchParams.get('id');
-  const [createdClassId, setCreatedClassId] = useState<string | null>(null);
+  const [createdClassId, _setCreatedClassId] = useState<string | null>(null);
   const resolveId = classId ? (classId as string) : (createdClassId as string);
 
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -98,15 +98,15 @@ export default function ClassCreationPage() {
     }
   };
 
-  const progress = ((currentStep + 1) / steps.length) * 100;
+  const _progress = ((currentStep + 1) / steps.length) * 100;
 
   const handleComplete = (status: 'draft' | 'published') => {
-    const finalClassData = {
+    const _finalClassData = {
       status,
     } as ClassData;
   };
 
-  const [createRecurrenceData, setCreateRecurrenceData] = useState<any>(null);
+  const [_createRecurrenceData, _setCreateRecurrenceData] = useState<any>(null);
 
   const [scheduleSummary, setScheduleSummary] = useState({
     totalSkills: 0,

@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminDataTable } from '@/components/admin/data-table/data-table';
-import { AdminDataTableColumn } from '@/components/admin/data-table/types';
+import type { AdminDataTableColumn } from '@/components/admin/data-table/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import {
   getUsersByOrganisationAndDomainOptions,
   getUsersByOrganisationOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { User } from '@/services/client';
+import type { User } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import Link from 'next/link';

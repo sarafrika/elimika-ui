@@ -14,7 +14,7 @@ export function toCamelCase(str: string): string {
   return (
     str
       // Replace underscores, hyphens, and spaces with a special delimiter
-      .replace(/[\s_\-]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
+      .replace(/[\s_-]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
       // Handle PascalCase conversion
       .replace(/^([A-Z])/, match => match.toLowerCase())
       // Ensure first character is lowercase

@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../../../../components/ui/table';
-import { Course, getAllCourses } from '../../../../../services/client';
+import { type Course, getAllCourses } from '../../../../../services/client';
 
 export default function Courses({
   user_uuid,

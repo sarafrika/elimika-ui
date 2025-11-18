@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminDataTable } from '@/components/admin/data-table/data-table';
-import { AdminDataTableColumn } from '@/components/admin/data-table/types';
+import type { AdminDataTableColumn } from '@/components/admin/data-table/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +22,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useTrainingCenter } from '@/context/training-center-provide';
 import { useUserProfile } from '@/context/profile-context';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
-import { cn } from '@/lib/utils';
 import {
   deleteOrganisationMutation,
   getDashboardStatisticsOptions,
@@ -32,7 +31,7 @@ import {
   search2Options,
   updateOrganisationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { Organisation, TrainingBranch, User } from '@/services/client';
+import type { Organisation, TrainingBranch, User } from '@/services/client';
 import { useAdminActivityFeed } from '@/services/admin';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
@@ -40,7 +39,6 @@ import { format } from 'date-fns';
 import {
   AlertCircle,
   Building2,
-  Check,
   Compass,
   GitBranch,
   Globe2,

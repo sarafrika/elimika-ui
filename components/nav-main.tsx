@@ -1,7 +1,7 @@
 'use client';
 
-import { markActiveMenuItem, MenuItem } from '@/lib/menu';
-import { UserDomain } from '@/lib/types';
+import { markActiveMenuItem, type MenuItem } from '@/lib/menu';
+import type { UserDomain } from '@/lib/types';
 import Link from 'next/link';
 import { useState } from 'react';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from './ui/sidebar';
@@ -52,8 +52,7 @@ function MenuItemWithAccordion({ item, isAdmin }: { item: MenuItem; isAdmin: boo
           {/* Nested Items */}
           {isOpen && (
             <SidebarMenu className='border-border/60 ml-4 border-l pl-4'>
-              {item.items!
-                .filter(child => (child.requiresAdmin ? isAdmin : true))
+              {item.items?.filter(child => (child.requiresAdmin ? isAdmin : true))
                 .map((child, index) => (
                   <MenuItemWithAccordion key={index} item={child} isAdmin={isAdmin} />
                 ))}

@@ -11,7 +11,7 @@ export default function LoginButton() {
   const router = useRouter();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  if (user && user.email) {
+  if (user?.email) {
     return <Button onClick={() => router.push('/dashboard/overview')}>Go to Dashboard</Button>;
   }
 

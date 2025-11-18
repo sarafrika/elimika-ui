@@ -181,7 +181,7 @@ export function SimpleEditor({
   showToolbar = true,
 }: SimpleEditorProps) {
   const isMobile = useIsMobile();
-  const windowSize = useWindowSize();
+  const _windowSize = useWindowSize();
   const [mobileView, setMobileView] = React.useState<'main' | 'highlighter' | 'link'>('main');
   const toolbarRef = React.useRef<HTMLDivElement>(null);
 
@@ -231,7 +231,7 @@ export function SimpleEditor({
 
   React.useEffect(() => {
     if (editor && value !== undefined && value !== editor.getHTML()) {
-      //@ts-ignore
+      //@ts-expect-error
       editor.commands.setContent(value, false);
     }
   }, [value, editor]);

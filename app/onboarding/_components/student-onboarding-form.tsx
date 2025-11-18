@@ -81,7 +81,7 @@ export function StudentOnboardingForm() {
       await user.invalidateQuery?.();
 
       toast.success('Student account created successfully!');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create student account. Please try again.');
       setIsSubmitting(false);
     } finally {

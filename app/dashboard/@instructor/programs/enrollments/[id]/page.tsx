@@ -16,7 +16,7 @@ import { useEffect } from 'react';
 export default function ProgramEnrollmentPage() {
   const params = useParams();
   const programId = params?.id as string;
-  const qc = useQueryClient();
+  const _qc = useQueryClient();
   const user = useUserProfile();
 
   const { data, isLoading, isFetching } = useQuery(

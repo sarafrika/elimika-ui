@@ -496,6 +496,12 @@ import type {
   AddInstructorSkillData,
   AddInstructorSkillResponses,
   AddInstructorSkillErrors,
+  GetInstructorReviewsData,
+  GetInstructorReviewsResponses,
+  GetInstructorReviewsErrors,
+  SubmitInstructorReviewData,
+  SubmitInstructorReviewResponses,
+  SubmitInstructorReviewErrors,
   GetInstructorMembershipsData,
   GetInstructorMembershipsResponses,
   GetInstructorMembershipsErrors,
@@ -523,12 +529,18 @@ import type {
   VerifyDocumentData,
   VerifyDocumentResponses,
   VerifyDocumentErrors,
+  UploadInstructorDocumentData,
+  UploadInstructorDocumentResponses,
+  UploadInstructorDocumentErrors,
   CreateAvailabilitySlotData,
   CreateAvailabilitySlotResponses,
   CreateAvailabilitySlotErrors,
   SetAvailabilityPatternsData,
   SetAvailabilityPatternsResponses,
   SetAvailabilityPatternsErrors,
+  BookInstructorSlotData,
+  BookInstructorSlotResponses,
+  BookInstructorSlotErrors,
   BlockTimeData,
   BlockTimeResponses,
   BlockTimeErrors,
@@ -604,6 +616,9 @@ import type {
   AddLessonContentData,
   AddLessonContentResponses,
   AddLessonContentErrors,
+  UploadLessonMediaData,
+  UploadLessonMediaResponses,
+  UploadLessonMediaErrors,
   ReorderLessonContentData,
   ReorderLessonContentResponses,
   ReorderLessonContentErrors,
@@ -691,6 +706,9 @@ import type {
   CreateCertificateData,
   CreateCertificateResponses,
   CreateCertificateErrors,
+  UploadCertificatePdfData,
+  UploadCertificatePdfResponses,
+  UploadCertificatePdfErrors,
   RevokeCertificateData,
   RevokeCertificateResponses,
   RevokeCertificateErrors,
@@ -952,6 +970,9 @@ import type {
   GetPendingInvitationsForEmailData,
   GetPendingInvitationsForEmailResponses,
   GetPendingInvitationsForEmailErrors,
+  GetInstructorRatingSummaryData,
+  GetInstructorRatingSummaryResponses,
+  GetInstructorRatingSummaryErrors,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityResponses,
   ClearInstructorAvailabilityErrors,
@@ -1114,6 +1135,9 @@ import type {
   CheckClassSchedulingConflictsData,
   CheckClassSchedulingConflictsResponses,
   CheckClassSchedulingConflictsErrors,
+  GetEnrollmentsForClassData,
+  GetEnrollmentsForClassResponses,
+  GetEnrollmentsForClassErrors,
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForOrganisationResponses,
   GetClassDefinitionsForOrganisationErrors,
@@ -1343,6 +1367,8 @@ import {
   createInstructorResponseTransformer,
   getInstructorSkillsResponseTransformer,
   addInstructorSkillResponseTransformer,
+  getInstructorReviewsResponseTransformer,
+  submitInstructorReviewResponseTransformer,
   getInstructorMembershipsResponseTransformer,
   addInstructorMembershipResponseTransformer,
   getInstructorExperienceResponseTransformer,
@@ -1352,6 +1378,7 @@ import {
   getInstructorDocumentsResponseTransformer,
   addInstructorDocumentResponseTransformer,
   verifyDocumentResponseTransformer,
+  uploadInstructorDocumentResponseTransformer,
   createAvailabilitySlotResponseTransformer,
   createLinkResponseTransformer,
   enrollStudentResponseTransformer,
@@ -1377,6 +1404,7 @@ import {
   addCourseLessonResponseTransformer,
   getLessonContentResponseTransformer,
   addLessonContentResponseTransformer,
+  uploadLessonMediaResponseTransformer,
   getCourseAssessmentsResponseTransformer,
   addCourseAssessmentResponseTransformer,
   getAllCourseCreatorsResponseTransformer,
@@ -1404,6 +1432,7 @@ import {
   createClassRecurrencePatternResponseTransformer,
   getAllCertificatesResponseTransformer,
   createCertificateResponseTransformer,
+  uploadCertificatePdfResponseTransformer,
   generateCertificateUrlResponseTransformer,
   getCertificateTemplatesResponseTransformer,
   createCertificateTemplateResponseTransformer,
@@ -1468,6 +1497,7 @@ import {
   getInvitationByTokenResponseTransformer,
   previewInvitationResponseTransformer,
   getPendingInvitationsForEmailResponseTransformer,
+  getInstructorRatingSummaryResponseTransformer,
   getInstructorAvailabilityResponseTransformer,
   searchAvailabilityResponseTransformer,
   getAvailabilityForDateResponseTransformer,
@@ -1508,6 +1538,7 @@ import {
   getByClassResponseTransformer,
   previewRecurringClassScheduleResponseTransformer,
   checkClassSchedulingConflictsResponseTransformer,
+  getEnrollmentsForClassResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
   getClassDefinitionsForCourseResponseTransformer,
@@ -6363,6 +6394,71 @@ export const addInstructorSkill = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get reviews for an instructor
+ * Returns all reviews left for the specified instructor.
+ */
+export const getInstructorReviews = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorReviewsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorReviewsResponses,
+    GetInstructorReviewsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorReviewsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/reviews',
+    ...options,
+  });
+};
+
+/**
+ * Submit a review for an instructor
+ * Allows a student to leave a review for an instructor, scoped to a specific enrollment.
+ *
+ * Frontend clients should:
+ * - Use the student's enrollment UUID and the instructor UUID for the class they attended.
+ * - Enforce that each enrollment can create at most one review for a given instructor.
+ *
+ */
+export const submitInstructorReview = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitInstructorReviewData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitInstructorReviewResponses,
+    SubmitInstructorReviewErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitInstructorReviewResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/reviews',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get instructor memberships
  * Retrieves all membership records for a specific instructor
  */
@@ -6631,6 +6727,48 @@ export const verifyDocument = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Upload instructor document file
+ * Uploads a PDF document for an instructor and creates a document record.
+ *
+ * **Use cases:**
+ * - Uploading certificates, licenses, and other professional credentials.
+ * - Attaching supporting documents to education, experience, or membership records.
+ *
+ * **File requirements:**
+ * - Must be a PDF file (`application/pdf`).
+ * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by instructor UUID.
+ *
+ */
+export const uploadInstructorDocument = <ThrowOnError extends boolean = false>(
+  options: Options<UploadInstructorDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadInstructorDocumentResponses,
+    UploadInstructorDocumentErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadInstructorDocumentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/documents/upload',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Create a new availability slot
  * Creates a single availability slot for an instructor
  */
@@ -6701,6 +6839,46 @@ export const setAvailabilityPatterns = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/instructors/{instructorUuid}/availability/patterns',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Book an instructor for a private session
+ * Allows a student to book an instructor for a one-on-one session outside publicly scheduled classes.
+ *
+ * **Flow:**
+ * - The frontend first uses the `/available` endpoint to show free slots.
+ * - Once a slot is selected, the client calls this endpoint with start/end times and an optional purpose.
+ * - The service verifies the instructor is available, then blocks the slot so it is not offered again.
+ *
+ * This endpoint does not create enrollments or class definitions; it simply reserves the instructor's time.
+ * Other modules (e.g., Timetabling, Commerce) can listen for bookings and create paid sessions if needed.
+ *
+ */
+export const bookInstructorSlot = <ThrowOnError extends boolean = false>(
+  options: Options<BookInstructorSlotData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    BookInstructorSlotResponses,
+    BookInstructorSlotErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability/book',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7581,6 +7759,51 @@ export const addLessonContent = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Upload media for lesson content
+ * Uploads a media file (PDF, image, audio, video) for a specific lesson and creates a LessonContent record.
+ *
+ * **Use cases:**
+ * - Course creators attaching PDFs, videos, or audio during course content authoring.
+ * - Rich text editors (e.g. Tiptap) uploading inline images and receiving a public URL to embed in HTML.
+ *
+ * **File handling:**
+ * - Files are stored via the platform StorageService under the `course_materials` folder, partitioned by course and lesson UUID.
+ * - The returned LessonContentDTO will have `file_url`, `mime_type`, and `file_size_bytes` populated.
+ *
+ * To use this for a rich text editor image upload, call this endpoint with an `image` content type
+ * and then embed the returned `file_url` in the editor HTML.
+ *
+ */
+export const uploadLessonMedia = <ThrowOnError extends boolean = false>(
+  options: Options<UploadLessonMediaData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadLessonMediaResponses,
+    UploadLessonMediaErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadLessonMediaResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content/upload',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Reorder lesson content
  * Updates the display order of content items within a lesson.
  */
@@ -8060,7 +8283,7 @@ export const createCategory = <ThrowOnError extends boolean = false>(
 
 /**
  * Complete checkout
- * Performs the full Medusa checkout flow including customer association and payment selection
+ * Performs the full checkout flow including customer association and payment selection
  */
 export const completeCheckout = <ThrowOnError extends boolean = false>(
   options: Options<CompleteCheckoutData, ThrowOnError>
@@ -8092,7 +8315,7 @@ export const completeCheckout = <ThrowOnError extends boolean = false>(
 
 /**
  * Create a new cart
- * Initialises a new cart in Medusa that can be used for checkout flows
+ * Initialises a new cart that can be used for checkout flows
  */
 export const createCart = <ThrowOnError extends boolean = false>(
   options: Options<CreateCartData, ThrowOnError>
@@ -8124,7 +8347,7 @@ export const createCart = <ThrowOnError extends boolean = false>(
 
 /**
  * Select payment session
- * Locks the cart to a particular Medusa payment provider
+ * Locks the cart to a particular payment provider
  */
 export const selectPaymentSession = <ThrowOnError extends boolean = false>(
   options: Options<SelectPaymentSessionData, ThrowOnError>
@@ -8184,7 +8407,7 @@ export const addItem = <ThrowOnError extends boolean = false>(
 
 /**
  * Complete cart
- * Finalises the cart in Medusa and creates an order
+ * Finalises the cart and creates an order
  */
 export const completeCart = <ThrowOnError extends boolean = false>(
   options: Options<CompleteCartData, ThrowOnError>
@@ -8443,6 +8666,47 @@ export const createCertificate = <ThrowOnError extends boolean = false>(
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Upload certificate PDF
+ * Uploads an externally generated certificate PDF file for an existing certificate record and updates its download URL.
+ *
+ * **File requirements:**
+ * - Must be a PDF (`application/pdf`).
+ * - Stored via the platform StorageService under the `certificates` folder.
+ *
+ * Frontend clients should call this after a certificate record exists, then use the returned `certificate_url`
+ * to power download links in student dashboards and admin UIs.
+ *
+ */
+export const uploadCertificatePdf = <ThrowOnError extends boolean = false>(
+  options: Options<UploadCertificatePdfData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadCertificatePdfResponses,
+    UploadCertificatePdfErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadCertificatePdfResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/certificates/{uuid}/upload',
+    ...options,
+    headers: {
+      'Content-Type': null,
       ...options.headers,
     },
   });
@@ -9090,7 +9354,7 @@ export const markAttendance = <ThrowOnError extends boolean = false>(
 
 /**
  * Retrieve cart details
- * Fetches the latest cart representation from Medusa
+ * Fetches the latest cart representation
  */
 export const getCart = <ThrowOnError extends boolean = false>(
   options: Options<GetCartData, ThrowOnError>
@@ -10945,6 +11209,34 @@ export const getPendingInvitationsForEmail = <ThrowOnError extends boolean = fal
 };
 
 /**
+ * Get instructor rating summary
+ * Returns average rating and total review count for an instructor.
+ */
+export const getInstructorRatingSummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorRatingSummaryData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorRatingSummaryResponses,
+    GetInstructorRatingSummaryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorRatingSummaryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/reviews/summary',
+    ...options,
+  });
+};
+
+/**
  * Clear all availability for an instructor
  * Removes all availability slots and patterns for an instructor. Use with caution.
  */
@@ -12530,7 +12822,7 @@ export const getRootCategories = <ThrowOnError extends boolean = false>(
 
 /**
  * Get order details
- * Retrieves an order from Medusa to support order tracking
+ * Retrieves an order to support order tracking
  */
 export const getOrder = <ThrowOnError extends boolean = false>(
   options: Options<GetOrderData, ThrowOnError>
@@ -12682,6 +12974,33 @@ export const checkClassSchedulingConflicts = <ThrowOnError extends boolean = fal
       },
     ],
     url: '/api/v1/classes/{uuid}/schedule/conflicts',
+    ...options,
+  });
+};
+
+/**
+ * List enrollments for a class definition across all scheduled instances
+ */
+export const getEnrollmentsForClass = <ThrowOnError extends boolean = false>(
+  options: Options<GetEnrollmentsForClassData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetEnrollmentsForClassResponses,
+    GetEnrollmentsForClassErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getEnrollmentsForClassResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/{uuid}/enrollments',
     ...options,
   });
 };

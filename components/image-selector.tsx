@@ -1,4 +1,4 @@
-import { RefObject, SyntheticEvent, useState } from 'react';
+import type { RefObject, SyntheticEvent, } from 'react';
 import { Input } from './ui/input';
 
 export type ImageType = {

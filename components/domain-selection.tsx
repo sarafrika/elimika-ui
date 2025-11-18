@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserDomain } from '@/lib/types';
+import type { UserDomain } from '@/lib/types';
 import { BookOpen, GraduationCap, Sparkles, Users } from 'lucide-react';
 import { BrandPill } from '@/components/ui/brand-pill';
 import { useState } from 'react';

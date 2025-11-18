@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminDataTable, AdminDataTableColumn } from '@/components/admin/data-table';
+import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { AdminCourse, useAdminCourses, useUpdateAdminCourse } from '@/services/admin';
+import { type AdminCourse, useAdminCourses, useUpdateAdminCourse } from '@/services/admin';
 import { zCourse } from '@/services/client/zod.gen';
 import { format } from 'date-fns';
 import { Award, BookOpen, Loader2, Rocket } from 'lucide-react';

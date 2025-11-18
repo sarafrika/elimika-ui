@@ -1,12 +1,9 @@
 import {
   Award,
-  BadgeDollarSign,
   Bell,
-  BellIcon,
   BoltIcon,
   Book,
   BookOpen,
-  Briefcase,
   Building,
   Building2,
   Calendar,
@@ -23,7 +20,6 @@ import {
   LibraryIcon,
   LucideBookUser,
   Mails,
-  MessageCircle,
   PlusCircle,
   School,
   Settings,
@@ -31,14 +27,13 @@ import {
   Sparkles,
   Star,
   UserCircle,
-  UserCog,
   UserIcon,
   Users,
   UsersIcon,
   Wallet,
 } from 'lucide-react';
-import { ComponentType } from 'react';
-import { UserDomain } from './types';
+import type { ComponentType } from 'react';
+import type { UserDomain } from './types';
 
 export type MenuItem = {
   title: string;

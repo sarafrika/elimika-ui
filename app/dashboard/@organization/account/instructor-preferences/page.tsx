@@ -98,7 +98,7 @@ export default function InstructorPreferencesPage() {
     name: 'preferences',
   });
 
-  const onSubmit = (data: InstructorPrefsFormValues) => {
+  const onSubmit = (_data: InstructorPrefsFormValues) => {
     // TODO: Implement submission logic
     //console.log(data);
   };

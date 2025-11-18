@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 
 export default function useSecureImageUrl(secureUrl: string | null) {
   const session = useSession();
-  const [imageUrl, setImageUrl] = useState<string | null>();
+  const [imageUrl, _setImageUrl] = useState<string | null>();
   useEffect(() => {
     if (secureUrl && session.data) {
     }
-  }, [session]);
+  }, [session, secureUrl]);
 
   return imageUrl;
 }

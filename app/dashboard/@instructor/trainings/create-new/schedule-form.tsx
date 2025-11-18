@@ -22,7 +22,7 @@ interface ScheduleFormProps {
   }) => void;
 }
 
-const instructors = ['Fetch org. instructors'];
+const _instructors = ['Fetch org. instructors'];
 
 export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: ScheduleFormProps) {
   const { data: cLessons } = useQuery({
@@ -97,7 +97,7 @@ export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: Schedule
   useEffect(() => {
     if (!onSummaryChange) return;
 
-    const newSummary = {
+    const _newSummary = {
       totalSkills,
       totalLessons: totalContents ?? 0,
       totalHours,

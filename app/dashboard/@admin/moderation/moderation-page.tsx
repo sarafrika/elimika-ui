@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminDataTable, AdminDataTableColumn } from '@/components/admin/data-table';
+import { AdminDataTable, type AdminDataTableColumn } from '@/components/admin/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,8 +9,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  ModerationQueueItem,
-  ModerationQueueParams,
+  type ModerationQueueItem,
+  type ModerationQueueParams,
   useModerationAction,
   useModerationQueue,
 } from '@/services/admin';
@@ -242,7 +242,7 @@ function ModerationDetailSheet({ item, open, onOpenChange, listParams }: Moderat
 
   useEffect(() => {
     form.reset({ reason: '' });
-  }, [item, form]);
+  }, [form]);
 
   const handleAction = (action: 'approve' | 'dismiss') => {
     if (!item?.uuid) return;

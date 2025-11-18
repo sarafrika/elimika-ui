@@ -15,7 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Award, CheckCircle, FileText, LockIcon, Unlock, Upload, Users } from 'lucide-react';
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { useInstructor } from '../../../../context/instructor-context';
 import { sampleWallet, SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
 
@@ -197,7 +198,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
       return;
     }
 
-    const application: any = {
+    const _application: any = {
       id: `app-${Date.now()}`,
       applicantId: currentUser.id,
       applicantName: currentUser.name,
@@ -220,7 +221,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
     });
   };
 
-  const handleUnlockFunds = (applicationId: string) => {
+  const _handleUnlockFunds = (applicationId: string) => {
     // Simulate unlocking funds after course completion
     if (wallet) {
       const application = instructorApplications?.find(a => a.id === applicationId);
@@ -250,7 +251,7 @@ const InstructorFundView: React.FC<Props> = ({ currentUser, wallet, setWallet })
 
   return (
     <div className='w-full space-y-6'>
-      <SkillsFundWalletCard wallet={sampleWallet} user={instructor} role='Instructor' />
+      <SkillsFundWalletCard wallet={sampleWallet} user={instructor} />
 
       {/* Quick Stats */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>

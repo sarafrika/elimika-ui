@@ -2,7 +2,7 @@
 import DashboardTopBar from '@/components/dashboard-top-bar';
 import { useDashboardView } from '@/components/dashboard-view-context';
 import DomainAccessGate from '@/components/profile/domain-access-gate';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export default function DashboardMainContent({ children }: { children: ReactNode }) {
   useDashboardView();

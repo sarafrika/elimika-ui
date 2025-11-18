@@ -10,8 +10,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import AvailabilityManager from './components/availability-manager';
 import {
-  AvailabilityData,
-  ClassScheduleItem,
+  type AvailabilityData,
+  type ClassScheduleItem,
   convertToCalendarEvents,
   transformAvailabilityArray,
 } from './components/types';

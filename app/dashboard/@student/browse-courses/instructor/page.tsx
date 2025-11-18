@@ -3,10 +3,11 @@
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, Users } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
 import useSearchTrainingInstructors from '../../../../../hooks/use-search-training-instructors';
-import { ClassData } from '../../../@instructor/trainings/create-new/academic-period-form';
+import type { ClassData } from '../../../@instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../_components/instructor-directory';
 import { ManageBookings } from '../../../_components/manage-bookings';
 
@@ -121,12 +122,12 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   }, [replaceBreadcrumbs]);
 
 
-  const handleBookingComplete = (newBooking: Booking) => {
+  const handleBookingComplete = (_newBooking: Booking) => {
     // setBookings((prev: any) => [...prev, newBooking]);
     setActiveTab('bookings');
   };
 
-  const handleBookingUpdate = (updatedBooking: Booking) => {
+  const handleBookingUpdate = (_updatedBooking: Booking) => {
     // setBookings((prev: any) =>
     //     prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
     // );

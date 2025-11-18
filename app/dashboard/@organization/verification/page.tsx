@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminDataTable } from '@/components/admin/data-table/data-table';
-import { AdminDataTableColumn } from '@/components/admin/data-table/types';
+import type { AdminDataTableColumn } from '@/components/admin/data-table/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import {
   isOrganisationVerifiedOptions,
   moderateOrganisationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { Organisation } from '@/services/client';
+import type { Organisation } from '@/services/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Loader2, ShieldAlert, ShieldCheck, ShieldQuestion, Workflow } from 'lucide-react';

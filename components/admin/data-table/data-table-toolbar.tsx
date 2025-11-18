@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminDataTableFilter, AdminDataTableSearch } from './types';
+import type { AdminDataTableFilter, AdminDataTableSearch } from './types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

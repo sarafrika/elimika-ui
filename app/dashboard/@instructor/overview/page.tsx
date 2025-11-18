@@ -11,7 +11,6 @@ import {
   CalendarClock,
   CheckCircle2,
   ClipboardList,
-  GraduationCap,
   Shield,
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';

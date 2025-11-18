@@ -3,11 +3,11 @@ import { fetchClient } from '@/services/api/fetch-client';
 import {
   zApiResponsePagedDtoTrainingBranch,
   zApiResponsePagedDtoUser,
-  zUser,
+  type zUser,
 } from '@/services/client/zod.gen';
 import type { TrainingBranch } from '@/services/client/types.gen';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 const branchListResponseSchema = zApiResponsePagedDtoTrainingBranch.extend({
   data: zApiResponsePagedDtoTrainingBranch.shape.data.default({ content: [] }),

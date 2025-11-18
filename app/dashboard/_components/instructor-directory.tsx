@@ -15,10 +15,11 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { DollarSign, Filter, MapPin, Search, Star, X } from 'lucide-react';
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { InstructorCard } from '../@student/_components/instructor-card';
 import { InstructorProfileModal } from '../@student/_components/instructor-profile-modal';
-import { Booking, Instructor } from '../@student/browse-courses/instructor/page';
+import type { Booking, Instructor } from '../@student/browse-courses/instructor/page';
 
 type Props = {
   instructors: any[];
@@ -69,7 +70,7 @@ export const InstructorDirectory: React.FC<Props> = ({
     'specialization4',
     'specialization5',
   ] as any;
-  const allCourses = [...new Set(instructors?.flatMap(i => i.courses))] as any;
+  const _allCourses = [...new Set(instructors?.flatMap(i => i.courses))] as any;
 
   // Filter instructors based on criteria
   const filteredInstructors = instructors?.filter(instructor => {
@@ -103,9 +104,9 @@ export const InstructorDirectory: React.FC<Props> = ({
 
     // Experience
     if (
-      // @ts-ignore
+      // @ts-expect-error
       instructor.total_experience_years < filters.experience[0] ||
-      // @ts-ignore
+      // @ts-expect-error
       instructor.total_experience_years > filters.experience[1]
     ) {
       return false;
@@ -252,7 +253,7 @@ export const InstructorDirectory: React.FC<Props> = ({
               <Slider
                 value={[filters.minRating]}
                 onValueChange={
-                  value => setFilters({ ...filters })
+                  _value => setFilters({ ...filters })
                   // setFilters({ ...filters, minRating: value[0] })
                 }
                 max={5}

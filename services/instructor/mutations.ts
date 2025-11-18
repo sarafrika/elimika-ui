@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateInstructorProfile } from './actions';
-import { Instructor } from '@/lib/types/instructor';
+import type { Instructor } from '@/lib/types/instructor';
 
 export const useUpdateInstructorProfile = () => {
   const queryClient = useQueryClient();

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
-import ImageSelector, { ImageType } from '@/components/image-selector';
+import ImageSelector, { type ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
@@ -95,7 +95,7 @@ export default function CourseCreatorProfile() {
   });
 
   const domainBadges =
-    // @ts-ignore
+    // @ts-expect-error
     user?.data?.user_domain?.map((domain: any) =>
       domain
         .split('_')
@@ -147,12 +147,12 @@ export default function CourseCreatorProfile() {
     });
   }, [form, profile, user?.data]);
 
-  const updateCourseCreator = useMutation(updateUserMutation());
-  const uploadProfileImage = useMutation(uploadProfileImageMutation());
+  const _updateCourseCreator = useMutation(updateUserMutation());
+  const _uploadProfileImage = useMutation(uploadProfileImageMutation());
 
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, _setSubmitting] = useState(false);
 
-  function onSubmit(updatedProfileData: GeneralProfileFormValues) {}
+  function onSubmit(_updatedProfileData: GeneralProfileFormValues) {}
 
   return (
     <ProfileFormShell

@@ -1,4 +1,4 @@
-import { Course, CourseCreator } from '@/services/client';
+import type { Course, CourseCreator } from '@/services/client';
 
 export interface CourseCreatorAssignment {
   organisationUuid?: string;

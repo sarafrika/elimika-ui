@@ -56,7 +56,7 @@ export function AdminBranchesContent() {
   useEffect(() => {
     setSelectedBranch(null);
     setBranchUserPage(0);
-  }, [activeOrgUuid]);
+  }, []);
 
   const branchUsersParams =
     activeOrgUuid && selectedBranch?.uuid

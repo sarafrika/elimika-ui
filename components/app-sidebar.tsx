@@ -13,11 +13,11 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import menu from '@/lib/menu';
-import { UserDomain } from '@/lib/types';
+import type { UserDomain } from '@/lib/types';
 import { LibraryBigIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import * as React from 'react';
+import type * as React from 'react';
 import { useTrainingCenter } from '../context/training-center-provide';
 import { useUserProfile } from '../context/profile-context';
 import { NavMain } from './nav-main';

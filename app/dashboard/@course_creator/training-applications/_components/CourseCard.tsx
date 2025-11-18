@@ -1,6 +1,6 @@
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
-import { Course } from '@/services/client';
+import type { Course } from '@/services/client';
 import { BadgeCheckIcon, Trash2 } from 'lucide-react';
 
 interface CourseCardProps {

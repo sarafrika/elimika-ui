@@ -46,7 +46,7 @@ import { useEffect, useState } from 'react';
 import { momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-const localizer = momentLocalizer(moment);
+const _localizer = momentLocalizer(moment);
 
 export default function ClassPreviewPage() {
   const router = useRouter();
@@ -99,7 +99,7 @@ export default function ClassPreviewPage() {
   const { instructorInfo } = useInstructorInfo({
     instructorUuid: classData?.default_instructor_uuid as string,
   });
-  // @ts-ignore
+  // @ts-expect-error
   const instructor = instructorInfo?.data;
 
   const {
@@ -129,7 +129,7 @@ export default function ClassPreviewPage() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) { }
+    } catch (_err) { }
   };
 
   const shareToSocial = (platform: string) => {

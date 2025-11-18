@@ -137,7 +137,7 @@ export function RuleFormDialog({ open, onOpenChange, mode, rule }: RuleFormDialo
       description: values.description || null,
       effective_from: values.effective_from || null,
       effective_to: values.effective_to || null,
-      payload: values.payload && values.payload.trim() ? JSON.parse(values.payload) : {},
+      payload: values.payload?.trim() ? JSON.parse(values.payload) : {},
     };
 
     if (mode === 'create') {

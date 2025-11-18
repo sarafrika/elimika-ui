@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 
 import {
   AlertDialog,
@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/card';
 import Spinner from '@/components/ui/spinner';
 import {
-  ProfileFormConfirmationOptions,
+  type ProfileFormConfirmationOptions,
   ProfileFormModeContext,
   useProfileFormMode,
 } from '@/context/profile-form-mode-context';

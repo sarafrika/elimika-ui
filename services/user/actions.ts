@@ -31,7 +31,7 @@ export const getUserByEmail = async (email: string) => {
   const resp = await fetchClient.GET('/api/v1/users/search', {
     params: {
       query: {
-        // @ts-ignore
+        // @ts-expect-error
         page: 0,
         size: 1,
         email_eq: email,
@@ -47,5 +47,5 @@ export const getUserByEmail = async (email: string) => {
     throw new Error('User not found');
   }
 
-  return resp.data.data?.content![0];
+  return resp.data.data?.content?.[0];
 };

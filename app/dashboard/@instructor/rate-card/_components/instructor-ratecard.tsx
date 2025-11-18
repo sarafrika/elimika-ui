@@ -189,7 +189,7 @@ const RATE_CARDS_DATA = {
 };
 
 export function InstructorRateCard() {
-  const instructorData = useInstructor();
+  const _instructorData = useInstructor();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [editingCard, setEditingCard] = useState<any>(null);

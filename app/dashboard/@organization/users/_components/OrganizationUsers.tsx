@@ -12,7 +12,7 @@ import {
 } from '../../../../../components/ui/table';
 import UserBadge from '../../../../../components/user-badge';
 import { useTrainingCenter } from '../../../../../context/training-center-provide';
-import { getUsersByOrganisation, User } from '../../../../../services/client';
+import { getUsersByOrganisation, type User } from '../../../../../services/client';
 import { InviteForm } from '../../invites/_components/InviteForm';
 
 export default function OrganizationUsers() {
@@ -23,7 +23,7 @@ export default function OrganizationUsers() {
     queryFn: () =>
       getUsersByOrganisation({
         path: {
-          uuid: trainingCenter!.uuid!,
+          uuid: trainingCenter?.uuid!,
         },
         query: {
           pageable: {
@@ -50,7 +50,7 @@ export default function OrganizationUsers() {
       <div className='flex items-end justify-between'>
         <div>
           <h1 className='text-2xl font-bold'>Manage Users</h1>
-          <p>A list of all the users under {trainingCenter!.name} organisation.</p>
+          <p>A list of all the users under {trainingCenter?.name} organisation.</p>
         </div>
         <InviteForm>
           <Button>Invite User</Button>

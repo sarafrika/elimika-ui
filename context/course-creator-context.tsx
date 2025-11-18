@@ -6,12 +6,12 @@ import {
   calculateTrainingRequirementSummary,
 } from '@/lib/course-creator/utils';
 import {
-  CourseCreatorDashboardData,
+  type CourseCreatorDashboardData,
   emptyCourseCreatorDashboardData,
 } from '@/lib/types/course-creator';
-import { Course } from '@/services/client';
+import type { Course } from '@/services/client';
 import { useRouter } from 'next/navigation';
-import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useMemo } from 'react';
 import { useUserProfile } from './profile-context';
 
 type CourseCreatorContextValue = {

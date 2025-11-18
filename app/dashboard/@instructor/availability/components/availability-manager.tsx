@@ -27,10 +27,10 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Spinner from '../../../../../components/ui/spinner';
-import { ClassData } from '../../trainings/create-new/academic-period-form';
+import type { ClassData } from '../../trainings/create-new/academic-period-form';
 import { AvailabilityBooking } from './availability-booking';
 import { MonthlyAvailabilityGrid } from './monthly-availability-grid';
-import { AvailabilityData } from './types';
+import type { AvailabilityData } from './types';
 import { WeeklyAvailabilityGrid } from './weekly-availability-grid';
 import { YearlyAvailabilityGrid } from './yearly-availability-grid';
 
@@ -72,11 +72,11 @@ export default function AvailabilityManager({
   const [workingHours, setWorkingHours] = useState(availabilitySettings?.workingHours);
 
   const getStatusInfo = () => {
-    const totalSlots = availabilityData?.slots?.length;
+    const _totalSlots = availabilityData?.slots?.length;
     const availableSlots = availabilityData?.slots?.filter(
       slot => slot.is_available === true
     ).length;
-    const blockedSlots = availabilityData?.slots?.filter(
+    const _blockedSlots = availabilityData?.slots?.filter(
       slot => slot.custom_pattern === 'BLOCKED_TIME_SLOT'
     ).length;
     // update booked slots
@@ -129,7 +129,7 @@ export default function AvailabilityManager({
           },
         }
       );
-    } catch (error) {
+    } catch (_error) {
       toast.error('An error occured');
     }
   };
@@ -137,7 +137,7 @@ export default function AvailabilityManager({
   // mutations
   // const weeklyAvailabilityMutation = useMutation(setInstructorWeeklyAvailabilityMutation())
   const handleWeeklyAvailability = () => {
-    const payload = {
+    const _payload = {
       instructor_uuid: user?.instructor?.uuid as string,
       day_of_week: 1,
       start_time: workingHours?.start,
@@ -399,7 +399,7 @@ export default function AvailabilityManager({
         <CardContent>
           <AvailabilityBooking
             availabilityData={availabilityData}
-            onBookingRequest={slotId => {
+            onBookingRequest={_slotId => {
               // Handle booking request
               // console.log('Booking requested for slot:', slotId);
             }}

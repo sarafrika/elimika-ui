@@ -123,7 +123,7 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
 
   const toggleDay = (dayIndex: number) => {
     const day = availabilityFields[dayIndex];
-    // @ts-ignore
+    // @ts-expect-error
     update(dayIndex, { ...day, enabled: !day.enabled });
   };
 
@@ -166,7 +166,7 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
   };
 
 
-  const handleNextStep = () => {
+  const _handleNextStep = () => {
     onNext({
       response: null,
       payload: { ...recurrence, data },

@@ -47,7 +47,7 @@ export function useReverseGeocode(lat: number, lon: number): ReverseGeocodeResul
 
         setAddressComponents(data.address || null);
         setDisplayName(data.display_name || null);
-      } catch (err) {
+      } catch (_err) {
         setError('Error retrieving address');
         setAddressComponents(null);
         setDisplayName(null);

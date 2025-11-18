@@ -165,6 +165,8 @@ import {
   createInstructor,
   getInstructorSkills,
   addInstructorSkill,
+  getInstructorReviews,
+  submitInstructorReview,
   getInstructorMemberships,
   addInstructorMembership,
   getInstructorExperience,
@@ -174,8 +176,10 @@ import {
   getInstructorDocuments,
   addInstructorDocument,
   verifyDocument,
+  uploadInstructorDocument,
   createAvailabilitySlot,
   setAvailabilityPatterns,
+  bookInstructorSlot,
   blockTime,
   createLink,
   enrollStudent,
@@ -201,6 +205,7 @@ import {
   addCourseLesson,
   getLessonContent,
   addLessonContent,
+  uploadLessonMedia,
   reorderLessonContent,
   getCourseAssessments,
   addCourseAssessment,
@@ -230,6 +235,7 @@ import {
   createClassRecurrencePattern,
   getAllCertificates,
   createCertificate,
+  uploadCertificatePdf,
   revokeCertificate,
   generateCertificateUrl,
   getCertificateTemplates,
@@ -317,6 +323,7 @@ import {
   getInvitationByToken,
   previewInvitation,
   getPendingInvitationsForEmail,
+  getInstructorRatingSummary,
   clearInstructorAvailability,
   getInstructorAvailability,
   searchAvailability,
@@ -371,6 +378,7 @@ import {
   getByClass,
   previewRecurringClassSchedule,
   checkClassSchedulingConflicts,
+  getEnrollmentsForClass,
   getClassDefinitionsForOrganisation,
   getClassDefinitionsForInstructor,
   getClassDefinitionsForCourse,
@@ -837,6 +845,10 @@ import type {
   AddInstructorSkillData,
   AddInstructorSkillError,
   AddInstructorSkillResponse,
+  GetInstructorReviewsData,
+  SubmitInstructorReviewData,
+  SubmitInstructorReviewError,
+  SubmitInstructorReviewResponse,
   GetInstructorMembershipsData,
   GetInstructorMembershipsError,
   GetInstructorMembershipsResponse,
@@ -860,12 +872,18 @@ import type {
   VerifyDocumentData,
   VerifyDocumentError,
   VerifyDocumentResponse,
+  UploadInstructorDocumentData,
+  UploadInstructorDocumentError,
+  UploadInstructorDocumentResponse,
   CreateAvailabilitySlotData,
   CreateAvailabilitySlotError,
   CreateAvailabilitySlotResponse,
   SetAvailabilityPatternsData,
   SetAvailabilityPatternsError,
   SetAvailabilityPatternsResponse,
+  BookInstructorSlotData,
+  BookInstructorSlotError,
+  BookInstructorSlotResponse,
   BlockTimeData,
   BlockTimeError,
   BlockTimeResponse,
@@ -937,6 +955,9 @@ import type {
   AddLessonContentData,
   AddLessonContentError,
   AddLessonContentResponse,
+  UploadLessonMediaData,
+  UploadLessonMediaError,
+  UploadLessonMediaResponse,
   ReorderLessonContentData,
   ReorderLessonContentError,
   ReorderLessonContentResponse,
@@ -1018,6 +1039,9 @@ import type {
   CreateCertificateData,
   CreateCertificateError,
   CreateCertificateResponse,
+  UploadCertificatePdfData,
+  UploadCertificatePdfError,
+  UploadCertificatePdfResponse,
   RevokeCertificateData,
   RevokeCertificateError,
   RevokeCertificateResponse,
@@ -1223,6 +1247,7 @@ import type {
   GetInvitationByTokenData,
   PreviewInvitationData,
   GetPendingInvitationsForEmailData,
+  GetInstructorRatingSummaryData,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityError,
   ClearInstructorAvailabilityResponse,
@@ -1327,6 +1352,7 @@ import type {
   GetByClassData,
   PreviewRecurringClassScheduleData,
   CheckClassSchedulingConflictsData,
+  GetEnrollmentsForClassData,
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForInstructorData,
   GetClassDefinitionsForCourseData,
@@ -7317,6 +7343,88 @@ export const addInstructorSkillMutation = (
   return mutationOptions;
 };
 
+export const getInstructorReviewsQueryKey = (options: Options<GetInstructorReviewsData>) =>
+  createQueryKey('getInstructorReviews', options);
+
+/**
+ * Get reviews for an instructor
+ * Returns all reviews left for the specified instructor.
+ */
+export const getInstructorReviewsOptions = (options: Options<GetInstructorReviewsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorReviews({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorReviewsQueryKey(options),
+  });
+};
+
+export const submitInstructorReviewQueryKey = (options: Options<SubmitInstructorReviewData>) =>
+  createQueryKey('submitInstructorReview', options);
+
+/**
+ * Submit a review for an instructor
+ * Allows a student to leave a review for an instructor, scoped to a specific enrollment.
+ *
+ * Frontend clients should:
+ * - Use the student's enrollment UUID and the instructor UUID for the class they attended.
+ * - Enforce that each enrollment can create at most one review for a given instructor.
+ *
+ */
+export const submitInstructorReviewOptions = (options: Options<SubmitInstructorReviewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitInstructorReview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitInstructorReviewQueryKey(options),
+  });
+};
+
+/**
+ * Submit a review for an instructor
+ * Allows a student to leave a review for an instructor, scoped to a specific enrollment.
+ *
+ * Frontend clients should:
+ * - Use the student's enrollment UUID and the instructor UUID for the class they attended.
+ * - Enforce that each enrollment can create at most one review for a given instructor.
+ *
+ */
+export const submitInstructorReviewMutation = (
+  options?: Partial<Options<SubmitInstructorReviewData>>
+): UseMutationOptions<
+  SubmitInstructorReviewResponse,
+  SubmitInstructorReviewError,
+  Options<SubmitInstructorReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitInstructorReviewResponse,
+    SubmitInstructorReviewError,
+    Options<SubmitInstructorReviewData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitInstructorReview({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getInstructorMembershipsQueryKey = (options: Options<GetInstructorMembershipsData>) =>
   createQueryKey('getInstructorMemberships', options);
 
@@ -7752,6 +7860,74 @@ export const verifyDocumentMutation = (
   return mutationOptions;
 };
 
+export const uploadInstructorDocumentQueryKey = (options: Options<UploadInstructorDocumentData>) =>
+  createQueryKey('uploadInstructorDocument', options);
+
+/**
+ * Upload instructor document file
+ * Uploads a PDF document for an instructor and creates a document record.
+ *
+ * **Use cases:**
+ * - Uploading certificates, licenses, and other professional credentials.
+ * - Attaching supporting documents to education, experience, or membership records.
+ *
+ * **File requirements:**
+ * - Must be a PDF file (`application/pdf`).
+ * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by instructor UUID.
+ *
+ */
+export const uploadInstructorDocumentOptions = (options: Options<UploadInstructorDocumentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadInstructorDocument({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadInstructorDocumentQueryKey(options),
+  });
+};
+
+/**
+ * Upload instructor document file
+ * Uploads a PDF document for an instructor and creates a document record.
+ *
+ * **Use cases:**
+ * - Uploading certificates, licenses, and other professional credentials.
+ * - Attaching supporting documents to education, experience, or membership records.
+ *
+ * **File requirements:**
+ * - Must be a PDF file (`application/pdf`).
+ * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by instructor UUID.
+ *
+ */
+export const uploadInstructorDocumentMutation = (
+  options?: Partial<Options<UploadInstructorDocumentData>>
+): UseMutationOptions<
+  UploadInstructorDocumentResponse,
+  UploadInstructorDocumentError,
+  Options<UploadInstructorDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadInstructorDocumentResponse,
+    UploadInstructorDocumentError,
+    Options<UploadInstructorDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadInstructorDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const createAvailabilitySlotQueryKey = (options: Options<CreateAvailabilitySlotData>) =>
   createQueryKey('createAvailabilitySlot', options);
 
@@ -7874,6 +8050,74 @@ export const setAvailabilityPatternsMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await setAvailabilityPatterns({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const bookInstructorSlotQueryKey = (options: Options<BookInstructorSlotData>) =>
+  createQueryKey('bookInstructorSlot', options);
+
+/**
+ * Book an instructor for a private session
+ * Allows a student to book an instructor for a one-on-one session outside publicly scheduled classes.
+ *
+ * **Flow:**
+ * - The frontend first uses the `/available` endpoint to show free slots.
+ * - Once a slot is selected, the client calls this endpoint with start/end times and an optional purpose.
+ * - The service verifies the instructor is available, then blocks the slot so it is not offered again.
+ *
+ * This endpoint does not create enrollments or class definitions; it simply reserves the instructor's time.
+ * Other modules (e.g., Timetabling, Commerce) can listen for bookings and create paid sessions if needed.
+ *
+ */
+export const bookInstructorSlotOptions = (options: Options<BookInstructorSlotData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await bookInstructorSlot({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: bookInstructorSlotQueryKey(options),
+  });
+};
+
+/**
+ * Book an instructor for a private session
+ * Allows a student to book an instructor for a one-on-one session outside publicly scheduled classes.
+ *
+ * **Flow:**
+ * - The frontend first uses the `/available` endpoint to show free slots.
+ * - Once a slot is selected, the client calls this endpoint with start/end times and an optional purpose.
+ * - The service verifies the instructor is available, then blocks the slot so it is not offered again.
+ *
+ * This endpoint does not create enrollments or class definitions; it simply reserves the instructor's time.
+ * Other modules (e.g., Timetabling, Commerce) can listen for bookings and create paid sessions if needed.
+ *
+ */
+export const bookInstructorSlotMutation = (
+  options?: Partial<Options<BookInstructorSlotData>>
+): UseMutationOptions<
+  BookInstructorSlotResponse,
+  BookInstructorSlotError,
+  Options<BookInstructorSlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    BookInstructorSlotResponse,
+    BookInstructorSlotError,
+    Options<BookInstructorSlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await bookInstructorSlot({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9486,6 +9730,80 @@ export const addLessonContentMutation = (
   return mutationOptions;
 };
 
+export const uploadLessonMediaQueryKey = (options: Options<UploadLessonMediaData>) =>
+  createQueryKey('uploadLessonMedia', options);
+
+/**
+ * Upload media for lesson content
+ * Uploads a media file (PDF, image, audio, video) for a specific lesson and creates a LessonContent record.
+ *
+ * **Use cases:**
+ * - Course creators attaching PDFs, videos, or audio during course content authoring.
+ * - Rich text editors (e.g. Tiptap) uploading inline images and receiving a public URL to embed in HTML.
+ *
+ * **File handling:**
+ * - Files are stored via the platform StorageService under the `course_materials` folder, partitioned by course and lesson UUID.
+ * - The returned LessonContentDTO will have `file_url`, `mime_type`, and `file_size_bytes` populated.
+ *
+ * To use this for a rich text editor image upload, call this endpoint with an `image` content type
+ * and then embed the returned `file_url` in the editor HTML.
+ *
+ */
+export const uploadLessonMediaOptions = (options: Options<UploadLessonMediaData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadLessonMedia({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadLessonMediaQueryKey(options),
+  });
+};
+
+/**
+ * Upload media for lesson content
+ * Uploads a media file (PDF, image, audio, video) for a specific lesson and creates a LessonContent record.
+ *
+ * **Use cases:**
+ * - Course creators attaching PDFs, videos, or audio during course content authoring.
+ * - Rich text editors (e.g. Tiptap) uploading inline images and receiving a public URL to embed in HTML.
+ *
+ * **File handling:**
+ * - Files are stored via the platform StorageService under the `course_materials` folder, partitioned by course and lesson UUID.
+ * - The returned LessonContentDTO will have `file_url`, `mime_type`, and `file_size_bytes` populated.
+ *
+ * To use this for a rich text editor image upload, call this endpoint with an `image` content type
+ * and then embed the returned `file_url` in the editor HTML.
+ *
+ */
+export const uploadLessonMediaMutation = (
+  options?: Partial<Options<UploadLessonMediaData>>
+): UseMutationOptions<
+  UploadLessonMediaResponse,
+  UploadLessonMediaError,
+  Options<UploadLessonMediaData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadLessonMediaResponse,
+    UploadLessonMediaError,
+    Options<UploadLessonMediaData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadLessonMedia({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const reorderLessonContentQueryKey = (options: Options<ReorderLessonContentData>) =>
   createQueryKey('reorderLessonContent', options);
 
@@ -10351,7 +10669,7 @@ export const completeCheckoutQueryKey = (options: Options<CompleteCheckoutData>)
 
 /**
  * Complete checkout
- * Performs the full Medusa checkout flow including customer association and payment selection
+ * Performs the full checkout flow including customer association and payment selection
  */
 export const completeCheckoutOptions = (options: Options<CompleteCheckoutData>) => {
   return queryOptions({
@@ -10370,7 +10688,7 @@ export const completeCheckoutOptions = (options: Options<CompleteCheckoutData>) 
 
 /**
  * Complete checkout
- * Performs the full Medusa checkout flow including customer association and payment selection
+ * Performs the full checkout flow including customer association and payment selection
  */
 export const completeCheckoutMutation = (
   options?: Partial<Options<CompleteCheckoutData>>
@@ -10401,7 +10719,7 @@ export const createCartQueryKey = (options: Options<CreateCartData>) =>
 
 /**
  * Create a new cart
- * Initialises a new cart in Medusa that can be used for checkout flows
+ * Initialises a new cart that can be used for checkout flows
  */
 export const createCartOptions = (options: Options<CreateCartData>) => {
   return queryOptions({
@@ -10420,7 +10738,7 @@ export const createCartOptions = (options: Options<CreateCartData>) => {
 
 /**
  * Create a new cart
- * Initialises a new cart in Medusa that can be used for checkout flows
+ * Initialises a new cart that can be used for checkout flows
  */
 export const createCartMutation = (
   options?: Partial<Options<CreateCartData>>
@@ -10447,7 +10765,7 @@ export const selectPaymentSessionQueryKey = (options: Options<SelectPaymentSessi
 
 /**
  * Select payment session
- * Locks the cart to a particular Medusa payment provider
+ * Locks the cart to a particular payment provider
  */
 export const selectPaymentSessionOptions = (options: Options<SelectPaymentSessionData>) => {
   return queryOptions({
@@ -10466,7 +10784,7 @@ export const selectPaymentSessionOptions = (options: Options<SelectPaymentSessio
 
 /**
  * Select payment session
- * Locks the cart to a particular Medusa payment provider
+ * Locks the cart to a particular payment provider
  */
 export const selectPaymentSessionMutation = (
   options?: Partial<Options<SelectPaymentSessionData>>
@@ -10539,7 +10857,7 @@ export const completeCartQueryKey = (options: Options<CompleteCartData>) =>
 
 /**
  * Complete cart
- * Finalises the cart in Medusa and creates an order
+ * Finalises the cart and creates an order
  */
 export const completeCartOptions = (options: Options<CompleteCartData>) => {
   return queryOptions({
@@ -10558,7 +10876,7 @@ export const completeCartOptions = (options: Options<CompleteCartData>) => {
 
 /**
  * Complete cart
- * Finalises the cart in Medusa and creates an order
+ * Finalises the cart and creates an order
  */
 export const completeCartMutation = (
   options?: Partial<Options<CompleteCartData>>
@@ -10925,6 +11243,72 @@ export const createCertificateMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createCertificate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const uploadCertificatePdfQueryKey = (options: Options<UploadCertificatePdfData>) =>
+  createQueryKey('uploadCertificatePdf', options);
+
+/**
+ * Upload certificate PDF
+ * Uploads an externally generated certificate PDF file for an existing certificate record and updates its download URL.
+ *
+ * **File requirements:**
+ * - Must be a PDF (`application/pdf`).
+ * - Stored via the platform StorageService under the `certificates` folder.
+ *
+ * Frontend clients should call this after a certificate record exists, then use the returned `certificate_url`
+ * to power download links in student dashboards and admin UIs.
+ *
+ */
+export const uploadCertificatePdfOptions = (options: Options<UploadCertificatePdfData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadCertificatePdf({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadCertificatePdfQueryKey(options),
+  });
+};
+
+/**
+ * Upload certificate PDF
+ * Uploads an externally generated certificate PDF file for an existing certificate record and updates its download URL.
+ *
+ * **File requirements:**
+ * - Must be a PDF (`application/pdf`).
+ * - Stored via the platform StorageService under the `certificates` folder.
+ *
+ * Frontend clients should call this after a certificate record exists, then use the returned `certificate_url`
+ * to power download links in student dashboards and admin UIs.
+ *
+ */
+export const uploadCertificatePdfMutation = (
+  options?: Partial<Options<UploadCertificatePdfData>>
+): UseMutationOptions<
+  UploadCertificatePdfResponse,
+  UploadCertificatePdfError,
+  Options<UploadCertificatePdfData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadCertificatePdfResponse,
+    UploadCertificatePdfError,
+    Options<UploadCertificatePdfData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadCertificatePdf({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12013,7 +12397,7 @@ export const getCartQueryKey = (options: Options<GetCartData>) =>
 
 /**
  * Retrieve cart details
- * Fetches the latest cart representation from Medusa
+ * Fetches the latest cart representation
  */
 export const getCartOptions = (options: Options<GetCartData>) => {
   return queryOptions({
@@ -15122,6 +15506,31 @@ export const getPendingInvitationsForEmailOptions = (
   });
 };
 
+export const getInstructorRatingSummaryQueryKey = (
+  options: Options<GetInstructorRatingSummaryData>
+) => createQueryKey('getInstructorRatingSummary', options);
+
+/**
+ * Get instructor rating summary
+ * Returns average rating and total review count for an instructor.
+ */
+export const getInstructorRatingSummaryOptions = (
+  options: Options<GetInstructorRatingSummaryData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorRatingSummary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorRatingSummaryQueryKey(options),
+  });
+};
+
 /**
  * Clear all availability for an instructor
  * Removes all availability slots and patterns for an instructor. Use with caution.
@@ -17732,7 +18141,7 @@ export const getOrderQueryKey = (options: Options<GetOrderData>) =>
 
 /**
  * Get order details
- * Retrieves an order from Medusa to support order tracking
+ * Retrieves an order to support order tracking
  */
 export const getOrderOptions = (options: Options<GetOrderData>) => {
   return queryOptions({
@@ -17858,6 +18267,27 @@ export const checkClassSchedulingConflictsOptions = (
       return data;
     },
     queryKey: checkClassSchedulingConflictsQueryKey(options),
+  });
+};
+
+export const getEnrollmentsForClassQueryKey = (options: Options<GetEnrollmentsForClassData>) =>
+  createQueryKey('getEnrollmentsForClass', options);
+
+/**
+ * List enrollments for a class definition across all scheduled instances
+ */
+export const getEnrollmentsForClassOptions = (options: Options<GetEnrollmentsForClassData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollmentsForClass({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentsForClassQueryKey(options),
   });
 };
 

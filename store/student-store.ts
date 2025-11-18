@@ -1,5 +1,5 @@
 import { search } from '@/services/api/actions';
-import { Student } from '@/services/api/schema';
+import type { Student } from '@/services/api/schema';
 import { useSession } from 'next-auth/react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -12,7 +12,7 @@ export type StudentStoreType = {
 
 export const useStudentStore = create<StudentStoreType>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       student: null,
       loading: false,
       getStudent: async () => {
@@ -23,7 +23,7 @@ export const useStudentStore = create<StudentStoreType>()(
             user_uuid_eq: session.data?.user.uuid,
           })) as Student[];
           set({ loading: false, student: studentResults[0] });
-        } catch (e) {
+        } catch (_e) {
           return undefined;
         }
       },

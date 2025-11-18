@@ -3,7 +3,7 @@
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import ErrorPage from '@/components/ErrorPage';
 import { Badge } from '@/components/ui/badge';
-import { Instructor } from '@/services/api/schema';
+import type { Instructor } from '@/services/api/schema';
 import {
   deleteInstructorMutation,
   getAllInstructorsOptions,
@@ -32,7 +32,7 @@ export default function InstructorsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [instructorStatuses, setInstructorStatuses] = useState<Map<string, string>>(new Map());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const router = useRouter();
+  const _router = useRouter();
   const qc = useQueryClient();
 
   // Mock status data - in real app this would come from API
@@ -64,7 +64,7 @@ export default function InstructorsPage() {
           },
         }
       );
-    } catch (error) {}
+    } catch (_error) {}
   };
 
   const handleRejectInstructor = async (instructor: Instructor) => {
@@ -80,7 +80,7 @@ export default function InstructorsPage() {
           },
         }
       );
-    } catch (error) {}
+    } catch (_error) {}
   };
 
   const getStatusBadge = (instructorId: string) => {
@@ -125,7 +125,7 @@ export default function InstructorsPage() {
     deleteInstructor.mutate(
       { path: { uuid: deletingId as string } },
       {
-        onSuccess: data => {
+        onSuccess: _data => {
           toast.success('Instructor deleted successfully');
           qc.invalidateQueries({
             queryKey: getAllInstructorsQueryKey({ query: { pageable: {} } }),

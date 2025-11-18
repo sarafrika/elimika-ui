@@ -1,8 +1,8 @@
 'use server';
 
-import { TrainingCenter } from '@/app/auth/create-account/_components/training-center-form';
-import { User } from '@/app/auth/create-account/_components/user-account-form';
-import { ApiResponse, ApiResponseWithPagination, UserDomain } from '@/lib/types';
+import type { TrainingCenter } from '@/app/auth/create-account/_components/training-center-form';
+import type { User } from '@/app/auth/create-account/_components/user-account-form';
+import type { ApiResponse, ApiResponseWithPagination, UserDomain } from '@/lib/types';
 import { getEnvironmentVariable } from '@/lib/utils';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -26,7 +26,7 @@ export async function createUser(user: User, userDomain: UserDomain, profileImag
     const response = await fetch(url, { method: 'POST', body: formData });
 
     return (await response.json()) as ApiResponse<User>;
-  } catch (error) {
+  } catch (_error) {
     throw new Error('Something went wrong while creating user');
   }
 }
@@ -45,7 +45,7 @@ export async function updateUser(user: User) {
     });
 
     return (await response.json()) as ApiResponse<User>;
-  } catch (error) {
+  } catch (_error) {
     throw new Error('Something went wrong while updating user');
   }
 }
@@ -67,7 +67,7 @@ export async function fetchUsers(page: number = 0, searchParams?: string) {
     const response = await fetch(url, { headers });
 
     return (await response.json()) as ApiResponseWithPagination<User>;
-  } catch (error) {
+  } catch (_error) {
     throw new Error('Something went wrong while fetching users. Please contact support.');
   }
 }
@@ -87,7 +87,7 @@ export async function fetchTrainingCenters(page: number, params?: string) {
     const response = await fetch(url, { headers });
 
     return (await response.json()) as ApiResponseWithPagination<TrainingCenter>;
-  } catch (error) {
+  } catch (_error) {
     throw new Error(
       'Something went wrong while fetching training centers. Please contact support.'
     );
@@ -104,7 +104,7 @@ export async function fetchTrainingCenter(trainingCenterId: string) {
     });
 
     return (await response.json()) as ApiResponse<TrainingCenter>;
-  } catch (error) {
+  } catch (_error) {
     //console.log('Error fetching training centers:', error);
     throw new Error(
       'Something went wrong while fetching training centers. Please contact support.'
@@ -118,7 +118,7 @@ export async function createOrUpdateTrainingCenter(trainingCenter: TrainingCente
     headers.set('Content-Type', 'application/json');
 
     const response = await fetch(
-      `${BASE_URL}/organisations${trainingCenter.uuid ? '/' + trainingCenter.uuid : ''}`,
+      `${BASE_URL}/organisations${trainingCenter.uuid ? `/${trainingCenter.uuid}` : ''}`,
       {
         method: trainingCenter.uuid ? 'PUT' : 'POST',
         headers,
@@ -127,7 +127,7 @@ export async function createOrUpdateTrainingCenter(trainingCenter: TrainingCente
     );
 
     return (await response.json()) as ApiResponse<TrainingCenter>;
-  } catch (error) {
+  } catch (_error) {
     //console.log('Error creating or updating training center:', error);
     throw new Error(
       'Something went wrong while persisting training center. Please contact support.'

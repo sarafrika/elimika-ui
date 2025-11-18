@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  AdminOrganisation,
+  type AdminOrganisation,
   useAdminOrganisations,
   useUnverifyAdminOrganisation,
   useUpdateAdminOrganisation,
@@ -29,7 +29,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { Building2, Loader2, MapPin, Search, Shield, ShieldOff } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { useForm, type UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
 

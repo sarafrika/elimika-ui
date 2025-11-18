@@ -590,9 +590,6 @@ export const StudentSchema = {
       minLength: 0,
       pattern: '^(\\+254|0)?[17]\\d{8}$',
     },
-    primaryGuardianContact: {
-      type: 'string',
-    },
     secondaryGuardianContact: {
       type: 'string',
     },
@@ -601,6 +598,9 @@ export const StudentSchema = {
       items: {
         type: 'string',
       },
+    },
+    primaryGuardianContact: {
+      type: 'string',
     },
     created_date: {
       type: 'string',
@@ -1267,19 +1267,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1730,16 +1730,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: 2,
-      readOnly: true,
-    },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: 2,
       readOnly: true,
     },
   },
@@ -1852,13 +1852,6 @@ export const QuizQuestionOptionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    option_summary: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Comprehensive summary of the option including correctness and position.',
-      example: 'Correct answer option in position 2',
-      readOnly: true,
-    },
     option_category: {
       type: 'string',
       description:
@@ -1884,6 +1877,13 @@ export const QuizQuestionOptionSchema = {
       description:
         '**[READ-ONLY]** Status description indicating whether this option is correct or incorrect.',
       example: 'Correct Answer',
+      readOnly: true,
+    },
+    option_summary: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Comprehensive summary of the option including correctness and position.',
+      example: 'Correct answer option in position 2',
       readOnly: true,
     },
   },
@@ -2911,21 +2911,22 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
+    membership_duration_months: {
+      type: 'integer',
+      format: 'int32',
       description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: 4,
       readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     membership_period: {
       type: 'string',
@@ -2964,12 +2965,11 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    membership_duration_months: {
-      type: 'integer',
-      format: 'int32',
+    is_complete: {
+      type: 'boolean',
       description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -3125,21 +3125,6 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
-    duration_in_months: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
-      readOnly: true,
-    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
@@ -3179,6 +3164,21 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
+      readOnly: true,
+    },
+    duration_in_months: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -3310,13 +3310,6 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     is_recent_qualification: {
       type: 'boolean',
       description:
@@ -3345,6 +3338,13 @@ export const InstructorEducationSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
       example: 2020,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -5734,8 +5734,13 @@ export const ClassDefinitionSchema = {
     training_fee: 240,
     class_visibility: 'PUBLIC',
     session_format: 'GROUP',
+    default_start_time: '2025-01-15T14:00:00Z',
+    default_end_time: '2025-01-15T15:30:00Z',
     duration_minutes: 90,
     location_type: 'HYBRID',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
     max_participants: 25,
     allow_waitlist: true,
     recurrence_pattern_uuid: 'rp123456-7890-abcd-ef01-234567890abc',
@@ -5806,19 +5811,38 @@ export const ClassDefinitionSchema = {
       $ref: '#/components/schemas/SessionFormatEnum',
     },
     default_start_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** Default start time for class sessions.',
-      example: '09:00:00',
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default start date-time for class sessions (UTC).',
+      example: '2025-01-15T09:00:00Z',
     },
     default_end_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** Default end time for class sessions.',
-      example: '10:30:00',
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default end date-time for class sessions (UTC).',
+      example: '2025-01-15T10:30:00Z',
     },
     location_type: {
       $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Human-readable name for the primary class location, used for Mapbox forward/reverse geocoding (e.g., campus, room, or venue name). Required when location_type is IN_PERSON or HYBRID.',
+      example: 'Nairobi HQ – Room 101',
+      maxLength: 255,
+    },
+    location_latitude: {
+      type: 'number',
+      description:
+        '**[OPTIONAL]** Latitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
+      example: -1.292066,
+    },
+    location_longitude: {
+      type: 'number',
+      description:
+        '**[OPTIONAL]** Longitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
+      example: 36.821945,
     },
     max_participants: {
       type: 'integer',
@@ -5973,7 +5997,10 @@ export const ScheduledInstanceSchema = {
     end_time: '2024-09-15T10:30:00',
     timezone: 'UTC',
     title: 'Introduction to Java Programming',
-    location_type: 'ONLINE',
+    location_type: 'IN_PERSON',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
     max_participants: 25,
     status: 'SCHEDULED',
     cancellation_reason: null,
@@ -6029,6 +6056,22 @@ export const ScheduledInstanceSchema = {
     },
     location_type: {
       $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).',
+      example: 'Nairobi HQ – Room 101',
+    },
+    location_latitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Latitude coordinate for this scheduled instance location.',
+      example: -1.292066,
+    },
+    location_longitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Longitude coordinate for this scheduled instance location.',
+      example: 36.821945,
     },
     max_participants: {
       type: 'integer',
@@ -7463,6 +7506,195 @@ export const ApiResponseInstructorSchema = {
   },
 } as const;
 
+export const InstructorReviewSchema = {
+  type: 'object',
+  description: 'Student review and rating for an instructor, scoped to a specific enrollment.',
+  example: {
+    uuid: 'rev-1234-5678-90ab-cdef12345678',
+    instructor_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    student_uuid: 'stud-1234-5678-90ab-cdef12345678',
+    enrollment_uuid: 'enr-1234-5678-90ab-cdef12345678',
+    rating: 5,
+    headline: 'Incredible instructor!',
+    comments: 'Very clear explanations and engaging sessions.',
+    clarity_rating: 5,
+    engagement_rating: 5,
+    punctuality_rating: 4,
+    is_anonymous: false,
+    created_date: '2025-11-18T09:00:00',
+    created_by: 'student@example.com',
+    updated_date: '2025-11-18T09:00:00',
+    updated_by: 'student@example.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the review.',
+      example: 'rev-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Instructor being reviewed.',
+      example: 'inst-1234-5678-90ab-cdef12345678',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Student leaving the review.',
+      example: 'stud-1234-5678-90ab-cdef12345678',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Enrollment that this review is tied to.',
+      example: 'enr-1234-5678-90ab-cdef12345678',
+    },
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Overall rating for the instructor (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Incredible instructor!',
+      maxLength: 255,
+      minLength: 0,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'Very clear explanations and engaging sessions.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    clarity_rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Optional clarity rating (1-5).',
+      maximum: 5,
+      minimum: 1,
+    },
+    engagement_rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Optional engagement rating (1-5).',
+      maximum: 5,
+      minimum: 1,
+    },
+    punctuality_rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Optional punctuality rating (1-5).',
+      maximum: 5,
+      minimum: 1,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was created.',
+      example: '2025-11-18T09:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Created by identifier (typically the student email or system).',
+      example: 'student@example.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was last updated.',
+      example: '2025-11-18T09:00:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Updated by identifier.',
+      example: 'student@example.com',
+      readOnly: true,
+    },
+  },
+  required: ['enrollment_uuid', 'instructor_uuid', 'rating', 'student_uuid'],
+} as const;
+
+export const ApiResponseInstructorReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorReview',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const InstructorSlotBookingRequestSchema = {
+  type: 'object',
+  description: 'Request to book an available instructor time slot',
+  example: {
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    start_time: '2025-10-15T10:00:00',
+    end_time: '2025-10-15T11:00:00',
+    purpose: 'One-on-one tutoring session for Java programming',
+    student_uuid: 'stud1234-5678-90ab-cdef-123456789abc',
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the instructor to book',
+      example: 'inst1234-5678-90ab-cdef-123456789abc',
+    },
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Start date and time for the booking',
+      example: '2025-10-15T10:00:00',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** End date and time for the booking',
+      example: '2025-10-15T11:00:00',
+    },
+    purpose: {
+      type: 'string',
+      description: '**[OPTIONAL]** Purpose or note for this booking',
+      example: 'One-on-one tutoring session for Java programming',
+      maxLength: 500,
+      minLength: 0,
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** UUID of the student making the booking (can be inferred from auth context)',
+      example: 'stud1234-5678-90ab-cdef-123456789abc',
+    },
+  },
+  required: ['end_time', 'instructor_uuid', 'start_time'],
+} as const;
+
 export const GuardianStudentLinkSchema = {
   type: 'object',
   description: "Represents a guardian's access rights to a learner profile.",
@@ -7968,26 +8200,23 @@ export const CartItemResponseSchema = {
     },
     variant_id: {
       type: 'string',
-      description: 'Medusa variant identifier',
+      description: 'Variant identifier within the commerce catalog',
       example: 'variant_01HZX1Y4K8R0HVWZ4Q6CF6M1AP',
     },
     unit_price: {
-      type: 'integer',
-      format: 'int64',
-      description: 'Price per unit in the smallest currency denomination',
-      example: 250000,
+      type: 'number',
+      description: 'Price per unit with up to 4 decimal places',
+      example: 2500,
     },
     subtotal: {
-      type: 'integer',
-      format: 'int64',
-      description: 'Subtotal for the line item in the smallest currency denomination',
-      example: 250000,
+      type: 'number',
+      description: 'Subtotal for the line item with up to 4 decimal places',
+      example: 2500,
     },
     total: {
-      type: 'integer',
-      format: 'int64',
-      description: 'Total for the line item after discounts in the smallest currency denomination',
-      example: 200000,
+      type: 'number',
+      description: 'Total for the line item after discounts with up to 4 decimal places',
+      example: 2500,
     },
     metadata: {
       type: 'object',
@@ -8005,8 +8234,8 @@ export const OrderResponseSchema = {
   properties: {
     id: {
       type: 'string',
-      description: 'Unique Medusa identifier of the order',
-      example: 'order_01HZX2Z2C2MBK8C6Y8PF0YTW30',
+      description: 'Unique identifier of the order',
+      example: 'b6d7ab1b-7a21-4b3f-9e52-d6c2f5b2a9f0',
     },
     display_id: {
       type: 'string',
@@ -8015,8 +8244,8 @@ export const OrderResponseSchema = {
     },
     payment_status: {
       type: 'string',
-      description: 'Payment status reported by Medusa',
-      example: 'captured',
+      description: 'Payment status',
+      example: 'CAPTURED',
     },
     currency_code: {
       type: 'string',
@@ -8024,16 +8253,14 @@ export const OrderResponseSchema = {
       example: 'KES',
     },
     subtotal: {
-      type: 'integer',
-      format: 'int64',
-      description: 'Subtotal in the smallest currency denomination',
-      example: 100000,
+      type: 'number',
+      description: 'Subtotal with up to 4 decimal places',
+      example: 1000,
     },
     total: {
-      type: 'integer',
-      format: 'int64',
-      description: 'Total in the smallest currency denomination',
-      example: 103000,
+      type: 'number',
+      description: 'Total with up to 4 decimal places',
+      example: 1030,
     },
     created_at: {
       type: 'string',
@@ -8096,12 +8323,12 @@ export const PlatformFeeBreakdownSchema = {
 
 export const CheckoutRequestSchema = {
   type: 'object',
-  description: 'Checkout payload that orchestrates Medusa cart completion',
+  description: 'Checkout payload that orchestrates cart completion',
   properties: {
     cart_id: {
       type: 'string',
       description: 'Identifier of the cart being checked out',
-      example: 'cart_01HZX25RFMBW79S99RWQYJXWCM',
+      example: '2f6d4d1e-5f2a-4b2e-9f8d-0b7c3e9b5c1a',
     },
     customer_email: {
       type: 'string',
@@ -8133,18 +8360,48 @@ export const CartResponseSchema = {
   properties: {
     id: {
       type: 'string',
-      description: 'Unique Medusa identifier of the cart',
-      example: 'cart_01HZX25RFMBW79S99RWQYJXWCM',
+      description: 'Unique identifier of the cart',
+      example: '2f6d4d1e-5f2a-4b2e-9f8d-0b7c3e9b5c1a',
     },
-    region_id: {
+    currency_code: {
       type: 'string',
-      description: 'Region identifier the cart is scoped to',
-      example: 'reg_01HZX1W8GX9YYB01X54MB2F15C',
+      description: 'Currency code the cart is priced in',
+      example: 'USD',
     },
-    customer_id: {
+    region_code: {
       type: 'string',
-      description: 'Associated Medusa customer identifier',
-      example: 'cus_01HZX1X6QAQCCYT11S3R6G9KVN',
+      description: 'Optional region code used for pricing rules',
+      example: 'KE',
+    },
+    status: {
+      type: 'string',
+      description: 'Cart status',
+      example: 'OPEN',
+    },
+    subtotal: {
+      type: 'number',
+      description: 'Subtotal with up to 4 decimal places',
+      example: 1000,
+    },
+    tax: {
+      type: 'number',
+      description: 'Tax amount with up to 4 decimal places',
+      example: 0,
+    },
+    discount: {
+      type: 'number',
+      description: 'Discount amount with up to 4 decimal places',
+      example: 0,
+    },
+    shipping: {
+      type: 'number',
+      description: 'Shipping amount with up to 4 decimal places',
+      example: 0,
+    },
+    total: {
+      type: 'number',
+      description: 'Total with up to 4 decimal places',
+      example: 1000,
     },
     created_at: {
       type: 'string',
@@ -8173,8 +8430,8 @@ export const CartLineItemRequestSchema = {
   properties: {
     variant_id: {
       type: 'string',
-      description: 'Identifier of the Medusa product variant to add to the cart',
-      example: 'variant_01HZX1Y4K8R0HVWZ4Q6CF6M1AP',
+      description: 'Identifier of the internal product variant to add to the cart',
+      example: 'course-seat-advanced-excel',
     },
     quantity: {
       type: 'integer',
@@ -8201,29 +8458,24 @@ export const CartLineItemRequestSchema = {
 
 export const CreateCartRequestSchema = {
   type: 'object',
-  description: 'Request body for creating a new cart that synchronises with Medusa',
+  description: 'Request body for creating a new cart',
   properties: {
-    region_id: {
+    currency_code: {
       type: 'string',
-      description: 'Identifier of the Medusa region the cart belongs to',
-      example: 'reg_01HZX1W8GX9YYB01X54MB2F15C',
+      description: 'Currency code the cart is priced in',
+      example: 'USD',
     },
-    customer_id: {
+    region_code: {
       type: 'string',
-      description: 'Medusa customer identifier to associate with the cart',
-      example: 'cus_01HZX1X6QAQCCYT11S3R6G9KVN',
-    },
-    sales_channel_id: {
-      type: 'string',
-      description: 'Sales channel identifier configured in Medusa',
-      example: 'sc_01HZX20Y4D9CK3R6RHY9PRF20C',
+      description: 'Optional region code for pricing rules',
+      example: 'KE',
     },
     metadata: {
       type: 'object',
       additionalProperties: {
         type: 'object',
       },
-      description: 'Arbitrary metadata forwarded to Medusa',
+      description: 'Arbitrary metadata stored with the cart',
       example: {
         campaign: 'back-to-school',
       },
@@ -8235,7 +8487,7 @@ export const CreateCartRequestSchema = {
       },
     },
   },
-  required: ['region_id'],
+  required: ['currency_code'],
 } as const;
 
 export const SelectPaymentSessionRequestSchema = {
@@ -8244,7 +8496,7 @@ export const SelectPaymentSessionRequestSchema = {
   properties: {
     provider_id: {
       type: 'string',
-      description: "Identifier of the Medusa payment provider (e.g. 'manual', 'stripe')",
+      description: "Identifier of the payment provider (e.g. 'manual', 'stripe')",
       example: 'manual',
     },
   },
@@ -8844,25 +9096,25 @@ export const UpdateCartRequestSchema = {
     },
     customer_id: {
       type: 'string',
-      description: 'Medusa customer identifier to associate with the cart',
-      example: 'cus_01HZX1X6QAQCCYT11S3R6G9KVN',
+      description: 'Customer identifier to associate with the cart',
+      example: 'user-uuid',
     },
     shipping_address_id: {
       type: 'string',
-      description: 'Medusa shipping address identifier',
-      example: 'addr_01HZX2F2Z6E0Y0T8VJX3W6PC66',
+      description: 'Shipping address identifier',
+      example: 'address-uuid',
     },
     billing_address_id: {
       type: 'string',
-      description: 'Medusa billing address identifier',
-      example: 'addr_01HZX2F7GZ92P2X9YBQB0NQ9E3',
+      description: 'Billing address identifier',
+      example: 'address-uuid',
     },
     metadata: {
       type: 'object',
       additionalProperties: {
         type: 'object',
       },
-      description: 'Optional metadata map forwarded to Medusa',
+      description: 'Optional metadata map stored with the cart',
       example: {
         cohort: 'Q3-2024',
       },
@@ -9726,12 +9978,6 @@ export const QuizAttemptSchema = {
       example: 85,
       readOnly: true,
     },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: 1,
-      readOnly: true,
-    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -9742,6 +9988,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: 1,
       readOnly: true,
     },
   },
@@ -10370,6 +10622,76 @@ export const PagedDTOInstructorSkillSchema = {
   },
 } as const;
 
+export const ApiResponseListInstructorReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorReview',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseInstructorRatingSummarySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorRatingSummary',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const InstructorRatingSummarySchema = {
+  type: 'object',
+  description: 'Aggregate review metrics for an instructor (average rating and review count).',
+  example: {
+    instructor_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    average_rating: 4.7,
+    review_count: 12,
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the instructor.',
+      example: 'inst-1234-5678-90ab-cdef12345678',
+    },
+    average_rating: {
+      type: 'number',
+      format: 'double',
+      description:
+        'Average overall rating across all reviews (1-5). Null when there are no reviews.',
+      example: 4.7,
+    },
+    review_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Total number of reviews for this instructor.',
+      example: 12,
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOInstructorProfessionalMembershipSchema = {
   type: 'object',
   properties: {
@@ -10763,7 +11085,10 @@ export const StudentScheduleSchema = {
     start_time: '2024-09-15T09:00:00',
     end_time: '2024-09-15T10:30:00',
     timezone: 'UTC',
-    location_type: 'ONLINE',
+    location_type: 'IN_PERSON',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
     scheduling_status: 'SCHEDULED',
     enrollment_status: 'ENROLLED',
     attendance_marked_at: null,
@@ -10825,6 +11150,24 @@ export const StudentScheduleSchema = {
     },
     location_type: {
       $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable location name for the scheduled class.',
+      example: 'Nairobi HQ – Room 101',
+      readOnly: true,
+    },
+    location_latitude: {
+      type: 'number',
+      description: '**[READ-ONLY]** Latitude coordinate for the scheduled class location.',
+      example: -1.292066,
+      readOnly: true,
+    },
+    location_longitude: {
+      type: 'number',
+      description: '**[READ-ONLY]** Longitude coordinate for the scheduled class location.',
+      example: 36.821945,
+      readOnly: true,
     },
     scheduling_status: {
       $ref: '#/components/schemas/StatusEnum3',
@@ -11432,17 +11775,17 @@ export const CourseCategoryMappingSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    has_names: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if both course and category names are populated.',
-      example: true,
-      readOnly: true,
-    },
     display_text: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable text representing this course-category relationship.',
       example: 'Advanced Java Programming → Programming',
+      readOnly: true,
+    },
+    has_names: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if both course and category names are populated.',
+      example: true,
       readOnly: true,
     },
   },

@@ -117,7 +117,7 @@ export default function FeesSchedulingPage() {
     name: 'schedule',
   });
 
-  const onSubmit = (data: FeesSchedulingFormValues) => {
+  const onSubmit = (_data: FeesSchedulingFormValues) => {
     // TODO: Implement submission logic
     //console.log(data);
   };

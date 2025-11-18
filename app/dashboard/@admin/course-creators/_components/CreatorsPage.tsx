@@ -2,8 +2,8 @@
 
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import ErrorPage from '@/components/ErrorPage';
-import { Instructor } from '@/services/api/schema';
-import { CourseCreator } from '@/services/client';
+import type { Instructor } from '@/services/api/schema';
+import type { CourseCreator } from '@/services/client';
 import {
   deleteCourseCreatorMutation,
   getAllCourseCreatorsOptions,
@@ -50,12 +50,12 @@ export default function CourseCreatorsPage() {
             qc.invalidateQueries({
               queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
             });
-            // @ts-ignore
+            // @ts-expect-error
             toast.success(data?.message || 'Course creator verified successfully');
           },
         }
       );
-    } catch (error) {}
+    } catch (_error) {}
   };
 
   const handleUnverifyCourseCreator = async (courseCreator: CourseCreator) => {
@@ -67,15 +67,15 @@ export default function CourseCreatorsPage() {
             qc.invalidateQueries({
               queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
             });
-            // @ts-ignore
+            // @ts-expect-error
             toast.success(data?.message || 'Course creator verification removed successfully');
           },
         }
       );
-    } catch (error) {}
+    } catch (_error) {}
   };
 
-  const handleDeclineCourseCreator = async (courseCreator: CourseCreator) => {
+  const handleDeclineCourseCreator = async (_courseCreator: CourseCreator) => {
     toast.message('Implement reject/decline here');
   };
 

@@ -2,7 +2,7 @@
 
 import { AdminDataTablePagination } from './data-table-pagination';
 import { AdminDataTableToolbar } from './data-table-toolbar';
-import {
+import type {
   AdminDataTableColumn,
   AdminDataTableEmptyState,
   AdminDataTableFilter,
@@ -21,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface AdminDataTableProps<TData> {
   title: string;
@@ -72,7 +72,7 @@ export function AdminDataTable<TData>({
           </div>
           {headerActions ? <div className='flex items-center gap-2'>{headerActions}</div> : null}
         </div>
-        {search || (filters && filters.length) ? (
+        {search || (filters?.length) ? (
           <AdminDataTableToolbar search={search} filters={filters} />
         ) : null}
       </CardHeader>

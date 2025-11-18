@@ -267,9 +267,9 @@ export type Student = {
    * **[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.
    */
   second_guardian_mobile?: string;
-  primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
+  primaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
    */
@@ -610,13 +610,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -838,13 +838,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -897,10 +897,6 @@ export type QuizQuestionOption = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
-   */
-  readonly option_summary?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the option based on its correctness status.
    */
   readonly option_category?: string;
@@ -916,6 +912,10 @@ export type QuizQuestionOption = {
    * **[READ-ONLY]** Status description indicating whether this option is correct or incorrect.
    */
   readonly correctness_status?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
+   */
+  readonly option_summary?: string;
 };
 
 export type ApiResponseQuizQuestionOption = {
@@ -1416,14 +1416,14 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
-  readonly is_complete?: boolean;
+  readonly membership_duration_months?: number;
+  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
-  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -1446,9 +1446,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
-  readonly membership_duration_months?: number;
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1521,14 +1521,6 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of employment.
    */
   readonly formatted_duration?: string;
@@ -1553,6 +1545,14 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1613,10 +1613,6 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1633,6 +1629,10 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2852,14 +2852,26 @@ export type ClassDefinition = {
   class_visibility: ClassVisibilityEnum;
   session_format: SessionFormatEnum;
   /**
-   * **[REQUIRED]** Default start time for class sessions.
+   * **[REQUIRED]** Default start date-time for class sessions (UTC).
    */
-  default_start_time: LocalTime;
+  default_start_time: Date;
   /**
-   * **[REQUIRED]** Default end time for class sessions.
+   * **[REQUIRED]** Default end date-time for class sessions (UTC).
    */
-  default_end_time: LocalTime;
+  default_end_time: Date;
   location_type: LocationTypeEnum;
+  /**
+   * **[OPTIONAL]** Human-readable name for the primary class location, used for Mapbox forward/reverse geocoding (e.g., campus, room, or venue name). Required when location_type is IN_PERSON or HYBRID.
+   */
+  location_name?: string;
+  /**
+   * **[OPTIONAL]** Latitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.
+   */
+  location_latitude?: number;
+  /**
+   * **[OPTIONAL]** Longitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.
+   */
+  location_longitude?: number;
   /**
    * **[OPTIONAL]** Maximum number of participants allowed in the class.
    */
@@ -2965,6 +2977,18 @@ export type ScheduledInstance = {
    */
   title: string;
   location_type: LocationTypeEnum;
+  /**
+   * **[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).
+   */
+  location_name?: string;
+  /**
+   * **[OPTIONAL]** Latitude coordinate for this scheduled instance location.
+   */
+  location_latitude?: number;
+  /**
+   * **[OPTIONAL]** Longitude coordinate for this scheduled instance location.
+   */
+  location_longitude?: number;
   /**
    * **[REQUIRED]** Maximum number of participants for this session (cached from class definition).
    */
@@ -3689,6 +3713,107 @@ export type ApiResponseInstructor = {
 };
 
 /**
+ * Student review and rating for an instructor, scoped to a specific enrollment.
+ */
+export type InstructorReview = {
+  /**
+   * **[READ-ONLY]** Unique identifier for the review.
+   */
+  readonly uuid?: string;
+  /**
+   * **[REQUIRED]** Instructor being reviewed.
+   */
+  instructor_uuid: string;
+  /**
+   * **[REQUIRED]** Student leaving the review.
+   */
+  student_uuid: string;
+  /**
+   * **[REQUIRED]** Enrollment that this review is tied to.
+   */
+  enrollment_uuid: string;
+  /**
+   * Overall rating for the instructor (1-5).
+   */
+  rating: number;
+  /**
+   * Optional short headline for the review.
+   */
+  headline?: string;
+  /**
+   * Detailed feedback from the student.
+   */
+  comments?: string;
+  /**
+   * Optional clarity rating (1-5).
+   */
+  clarity_rating?: number;
+  /**
+   * Optional engagement rating (1-5).
+   */
+  engagement_rating?: number;
+  /**
+   * Optional punctuality rating (1-5).
+   */
+  punctuality_rating?: number;
+  /**
+   * Whether the review should be shown anonymously in public views.
+   */
+  is_anonymous?: boolean;
+  /**
+   * **[READ-ONLY]** Timestamp when the review was created.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Created by identifier (typically the student email or system).
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the review was last updated.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** Updated by identifier.
+   */
+  readonly updated_by?: string;
+};
+
+export type ApiResponseInstructorReview = {
+  success?: boolean;
+  data?: InstructorReview;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Request to book an available instructor time slot
+ */
+export type InstructorSlotBookingRequest = {
+  /**
+   * **[REQUIRED]** UUID of the instructor to book
+   */
+  instructor_uuid: string;
+  /**
+   * **[REQUIRED]** Start date and time for the booking
+   */
+  start_time: Date;
+  /**
+   * **[REQUIRED]** End date and time for the booking
+   */
+  end_time: Date;
+  /**
+   * **[OPTIONAL]** Purpose or note for this booking
+   */
+  purpose?: string;
+  /**
+   * **[OPTIONAL]** UUID of the student making the booking (can be inferred from auth context)
+   */
+  student_uuid?: string;
+};
+
+/**
  * Represents a guardian's access rights to a learner profile.
  */
 export type GuardianStudentLink = {
@@ -3966,21 +4091,21 @@ export type CartItemResponse = {
    */
   quantity?: number;
   /**
-   * Medusa variant identifier
+   * Variant identifier within the commerce catalog
    */
   variant_id?: string;
   /**
-   * Price per unit in the smallest currency denomination
+   * Price per unit with up to 4 decimal places
    */
-  unit_price?: bigint;
+  unit_price?: number;
   /**
-   * Subtotal for the line item in the smallest currency denomination
+   * Subtotal for the line item with up to 4 decimal places
    */
-  subtotal?: bigint;
+  subtotal?: number;
   /**
-   * Total for the line item after discounts in the smallest currency denomination
+   * Total for the line item after discounts with up to 4 decimal places
    */
-  total?: bigint;
+  total?: number;
   /**
    * Custom metadata captured for the line item
    */
@@ -3996,7 +4121,7 @@ export type CartItemResponse = {
  */
 export type OrderResponse = {
   /**
-   * Unique Medusa identifier of the order
+   * Unique identifier of the order
    */
   id?: string;
   /**
@@ -4004,7 +4129,7 @@ export type OrderResponse = {
    */
   display_id?: string;
   /**
-   * Payment status reported by Medusa
+   * Payment status
    */
   payment_status?: string;
   /**
@@ -4012,13 +4137,13 @@ export type OrderResponse = {
    */
   currency_code?: string;
   /**
-   * Subtotal in the smallest currency denomination
+   * Subtotal with up to 4 decimal places
    */
-  subtotal?: bigint;
+  subtotal?: number;
   /**
-   * Total in the smallest currency denomination
+   * Total with up to 4 decimal places
    */
-  total?: bigint;
+  total?: number;
   /**
    * Timestamp when the order was created
    */
@@ -4062,7 +4187,7 @@ export type PlatformFeeBreakdown = {
 };
 
 /**
- * Checkout payload that orchestrates Medusa cart completion
+ * Checkout payload that orchestrates cart completion
  */
 export type CheckoutRequest = {
   /**
@@ -4092,17 +4217,41 @@ export type CheckoutRequest = {
  */
 export type CartResponse = {
   /**
-   * Unique Medusa identifier of the cart
+   * Unique identifier of the cart
    */
   id?: string;
   /**
-   * Region identifier the cart is scoped to
+   * Currency code the cart is priced in
    */
-  region_id?: string;
+  currency_code?: string;
   /**
-   * Associated Medusa customer identifier
+   * Optional region code used for pricing rules
    */
-  customer_id?: string;
+  region_code?: string;
+  /**
+   * Cart status
+   */
+  status?: string;
+  /**
+   * Subtotal with up to 4 decimal places
+   */
+  subtotal?: number;
+  /**
+   * Tax amount with up to 4 decimal places
+   */
+  tax?: number;
+  /**
+   * Discount amount with up to 4 decimal places
+   */
+  discount?: number;
+  /**
+   * Shipping amount with up to 4 decimal places
+   */
+  shipping?: number;
+  /**
+   * Total with up to 4 decimal places
+   */
+  total?: number;
   /**
    * Timestamp when the cart was created
    */
@@ -4119,7 +4268,7 @@ export type CartResponse = {
  */
 export type CartLineItemRequest = {
   /**
-   * Identifier of the Medusa product variant to add to the cart
+   * Identifier of the internal product variant to add to the cart
    */
   variant_id: string;
   /**
@@ -4137,23 +4286,19 @@ export type CartLineItemRequest = {
 };
 
 /**
- * Request body for creating a new cart that synchronises with Medusa
+ * Request body for creating a new cart
  */
 export type CreateCartRequest = {
   /**
-   * Identifier of the Medusa region the cart belongs to
+   * Currency code the cart is priced in
    */
-  region_id: string;
+  currency_code: string;
   /**
-   * Medusa customer identifier to associate with the cart
+   * Optional region code for pricing rules
    */
-  customer_id?: string;
+  region_code?: string;
   /**
-   * Sales channel identifier configured in Medusa
-   */
-  sales_channel_id?: string;
-  /**
-   * Arbitrary metadata forwarded to Medusa
+   * Arbitrary metadata stored with the cart
    */
   metadata?: {
     [key: string]: {
@@ -4168,7 +4313,7 @@ export type CreateCartRequest = {
  */
 export type SelectPaymentSessionRequest = {
   /**
-   * Identifier of the Medusa payment provider (e.g. 'manual', 'stripe')
+   * Identifier of the payment provider (e.g. 'manual', 'stripe')
    */
   provider_id: string;
 };
@@ -4496,19 +4641,19 @@ export type UpdateCartRequest = {
    */
   email?: string;
   /**
-   * Medusa customer identifier to associate with the cart
+   * Customer identifier to associate with the cart
    */
   customer_id?: string;
   /**
-   * Medusa shipping address identifier
+   * Shipping address identifier
    */
   shipping_address_id?: string;
   /**
-   * Medusa billing address identifier
+   * Billing address identifier
    */
   billing_address_id?: string;
   /**
-   * Optional metadata map forwarded to Medusa
+   * Optional metadata map stored with the cart
    */
   metadata?: {
     [key: string]: {
@@ -4882,10 +5027,6 @@ export type QuizAttempt = {
    */
   readonly grade_display?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -4893,6 +5034,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   */
+  readonly time_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -5180,6 +5325,42 @@ export type PagedDtoInstructorSkill = {
   links?: PageLinks;
 };
 
+export type ApiResponseListInstructorReview = {
+  success?: boolean;
+  data?: Array<InstructorReview>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type ApiResponseInstructorRatingSummary = {
+  success?: boolean;
+  data?: InstructorRatingSummary;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Aggregate review metrics for an instructor (average rating and review count).
+ */
+export type InstructorRatingSummary = {
+  /**
+   * UUID of the instructor.
+   */
+  instructor_uuid?: string;
+  /**
+   * Average overall rating across all reviews (1-5). Null when there are no reviews.
+   */
+  average_rating?: number;
+  /**
+   * Total number of reviews for this instructor.
+   */
+  review_count?: bigint;
+};
+
 export type ApiResponsePagedDtoInstructorProfessionalMembership = {
   success?: boolean;
   data?: PagedDtoInstructorProfessionalMembership;
@@ -5368,6 +5549,18 @@ export type StudentSchedule = {
    */
   readonly timezone?: string;
   location_type?: LocationTypeEnum;
+  /**
+   * **[READ-ONLY]** Human-readable location name for the scheduled class.
+   */
+  readonly location_name?: string;
+  /**
+   * **[READ-ONLY]** Latitude coordinate for the scheduled class location.
+   */
+  readonly location_latitude?: number;
+  /**
+   * **[READ-ONLY]** Longitude coordinate for the scheduled class location.
+   */
+  readonly location_longitude?: number;
   scheduling_status?: StatusEnum3;
   enrollment_status?: StatusEnum6;
   /**
@@ -5650,13 +5843,13 @@ export type CourseCategoryMapping = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if both course and category names are populated.
-   */
-  readonly has_names?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable text representing this course-category relationship.
    */
   readonly display_text?: string;
+  /**
+   * **[READ-ONLY]** Indicates if both course and category names are populated.
+   */
+  readonly has_names?: boolean;
 };
 
 export type ApiResponsePagedDtoCourseAssessment = {
@@ -7561,7 +7754,7 @@ export type DeleteQuizResponses = {
   /**
    * Quiz deleted successfully
    */
-  204: void;
+  204: undefined;
 };
 
 export type DeleteQuizResponse = DeleteQuizResponses[keyof DeleteQuizResponses];
@@ -8245,7 +8438,7 @@ export type DeleteInstructorResponses = {
   /**
    * Instructor deleted successfully
    */
-  204: void;
+  204: undefined;
 };
 
 export type DeleteInstructorResponse = DeleteInstructorResponses[keyof DeleteInstructorResponses];
@@ -8787,7 +8980,7 @@ export type DeleteCourseResponses = {
   /**
    * Course deleted successfully
    */
-  204: void;
+  204: undefined;
 };
 
 export type DeleteCourseResponse = DeleteCourseResponses[keyof DeleteCourseResponses];
@@ -9339,7 +9532,7 @@ export type DeleteCourseCreatorResponses = {
   /**
    * Course creator deleted successfully
    */
-  204: void;
+  204: undefined;
 };
 
 export type DeleteCourseCreatorResponse =
@@ -10174,7 +10367,7 @@ export type DeleteCertificateResponses = {
   /**
    * Certificate deleted successfully
    */
-  204: void;
+  204: undefined;
 };
 
 export type DeleteCertificateResponse =
@@ -10334,7 +10527,7 @@ export type DeleteAssignmentResponses = {
   /**
    * Assignment deleted successfully
    */
-  204: void;
+  204: undefined;
 };
 
 export type DeleteAssignmentResponse = DeleteAssignmentResponses[keyof DeleteAssignmentResponses];
@@ -12430,6 +12623,72 @@ export type AddInstructorSkillResponses = {
 export type AddInstructorSkillResponse =
   AddInstructorSkillResponses[keyof AddInstructorSkillResponses];
 
+export type GetInstructorReviewsData = {
+  body?: never;
+  path: {
+    instructorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{instructorUuid}/reviews';
+};
+
+export type GetInstructorReviewsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetInstructorReviewsError =
+  GetInstructorReviewsErrors[keyof GetInstructorReviewsErrors];
+
+export type GetInstructorReviewsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListInstructorReview;
+};
+
+export type GetInstructorReviewsResponse =
+  GetInstructorReviewsResponses[keyof GetInstructorReviewsResponses];
+
+export type SubmitInstructorReviewData = {
+  body: InstructorReview;
+  path: {
+    instructorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{instructorUuid}/reviews';
+};
+
+export type SubmitInstructorReviewErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SubmitInstructorReviewError =
+  SubmitInstructorReviewErrors[keyof SubmitInstructorReviewErrors];
+
+export type SubmitInstructorReviewResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInstructorReview;
+};
+
+export type SubmitInstructorReviewResponse =
+  SubmitInstructorReviewResponses[keyof SubmitInstructorReviewResponses];
+
 export type GetInstructorMembershipsData = {
   body?: never;
   path: {
@@ -12733,6 +12992,49 @@ export type VerifyDocumentResponses = {
 
 export type VerifyDocumentResponse = VerifyDocumentResponses[keyof VerifyDocumentResponses];
 
+export type UploadInstructorDocumentData = {
+  body?: {
+    file: Blob | File;
+  };
+  path: {
+    instructorUuid: string;
+  };
+  query: {
+    document_type_uuid: string;
+    title?: string;
+    description?: string;
+    education_uuid?: string;
+    experience_uuid?: string;
+    membership_uuid?: string;
+    expiry_date?: Date;
+  };
+  url: '/api/v1/instructors/{instructorUuid}/documents/upload';
+};
+
+export type UploadInstructorDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadInstructorDocumentError =
+  UploadInstructorDocumentErrors[keyof UploadInstructorDocumentErrors];
+
+export type UploadInstructorDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInstructorDocument;
+};
+
+export type UploadInstructorDocumentResponse =
+  UploadInstructorDocumentResponses[keyof UploadInstructorDocumentResponses];
+
 export type CreateAvailabilitySlotData = {
   body: AvailabilitySlot;
   path: {
@@ -12819,6 +13121,45 @@ export type SetAvailabilityPatternsResponses = {
 
 export type SetAvailabilityPatternsResponse =
   SetAvailabilityPatternsResponses[keyof SetAvailabilityPatternsResponses];
+
+export type BookInstructorSlotData = {
+  body: InstructorSlotBookingRequest;
+  path: {
+    /**
+     * UUID of the instructor
+     */
+    instructorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{instructorUuid}/availability/book';
+};
+
+export type BookInstructorSlotErrors = {
+  /**
+   * Instructor not available or invalid request
+   */
+  400: ApiResponseVoid;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type BookInstructorSlotError = BookInstructorSlotErrors[keyof BookInstructorSlotErrors];
+
+export type BookInstructorSlotResponses = {
+  /**
+   * Instructor slot booked successfully
+   */
+  201: ApiResponseVoid;
+};
+
+export type BookInstructorSlotResponse =
+  BookInstructorSlotResponses[keyof BookInstructorSlotResponses];
 
 export type BlockTimeData = {
   body?: never;
@@ -12912,6 +13253,10 @@ export type EnrollStudentErrors = {
    * Invalid enrollment request or conflicts
    */
   400: ApiResponseListEnrollment;
+  /**
+   * Payment required before enrollment is permitted
+   */
+  402: ApiResponseListEnrollment;
   /**
    * Class definition or scheduled instances not found
    */
@@ -13704,6 +14049,46 @@ export type AddLessonContentResponses = {
 };
 
 export type AddLessonContentResponse = AddLessonContentResponses[keyof AddLessonContentResponses];
+
+export type UploadLessonMediaData = {
+  body?: {
+    file: Blob | File;
+  };
+  path: {
+    courseUuid: string;
+    lessonUuid: string;
+  };
+  query: {
+    content_type_uuid: string;
+    title: string;
+    description?: string;
+    is_required?: boolean;
+  };
+  url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content/upload';
+};
+
+export type UploadLessonMediaErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadLessonMediaError = UploadLessonMediaErrors[keyof UploadLessonMediaErrors];
+
+export type UploadLessonMediaResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseLessonContent;
+};
+
+export type UploadLessonMediaResponse =
+  UploadLessonMediaResponses[keyof UploadLessonMediaResponses];
 
 export type ReorderLessonContentData = {
   body: Array<string>;
@@ -14665,6 +15050,41 @@ export type CreateCertificateResponses = {
 
 export type CreateCertificateResponse =
   CreateCertificateResponses[keyof CreateCertificateResponses];
+
+export type UploadCertificatePdfData = {
+  body?: {
+    file: Blob | File;
+  };
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/certificates/{uuid}/upload';
+};
+
+export type UploadCertificatePdfErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadCertificatePdfError =
+  UploadCertificatePdfErrors[keyof UploadCertificatePdfErrors];
+
+export type UploadCertificatePdfResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCertificate;
+};
+
+export type UploadCertificatePdfResponse =
+  UploadCertificatePdfResponses[keyof UploadCertificatePdfResponses];
 
 export type RevokeCertificateData = {
   body?: never;
@@ -17816,6 +18236,39 @@ export type GetPendingInvitationsForEmailResponses = {
 export type GetPendingInvitationsForEmailResponse =
   GetPendingInvitationsForEmailResponses[keyof GetPendingInvitationsForEmailResponses];
 
+export type GetInstructorRatingSummaryData = {
+  body?: never;
+  path: {
+    instructorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{instructorUuid}/reviews/summary';
+};
+
+export type GetInstructorRatingSummaryErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetInstructorRatingSummaryError =
+  GetInstructorRatingSummaryErrors[keyof GetInstructorRatingSummaryErrors];
+
+export type GetInstructorRatingSummaryResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInstructorRatingSummary;
+};
+
+export type GetInstructorRatingSummaryResponse =
+  GetInstructorRatingSummaryResponses[keyof GetInstructorRatingSummaryResponses];
+
 export type ClearInstructorAvailabilityData = {
   body?: never;
   path: {
@@ -19526,7 +19979,7 @@ export type GetOrderData = {
   body?: never;
   path: {
     /**
-     * Medusa order identifier
+     * Order identifier
      */
     orderId: string;
   };
@@ -19742,6 +20195,42 @@ export type CheckClassSchedulingConflictsResponses = {
 
 export type CheckClassSchedulingConflictsResponse =
   CheckClassSchedulingConflictsResponses[keyof CheckClassSchedulingConflictsResponses];
+
+export type GetEnrollmentsForClassData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the class definition
+     */
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{uuid}/enrollments';
+};
+
+export type GetEnrollmentsForClassErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetEnrollmentsForClassError =
+  GetEnrollmentsForClassErrors[keyof GetEnrollmentsForClassErrors];
+
+export type GetEnrollmentsForClassResponses = {
+  /**
+   * Enrollments retrieved successfully
+   */
+  200: ApiResponseListEnrollment;
+};
+
+export type GetEnrollmentsForClassResponse =
+  GetEnrollmentsForClassResponses[keyof GetEnrollmentsForClassResponses];
 
 export type GetClassDefinitionsForOrganisationData = {
   body?: never;

@@ -2,7 +2,7 @@
 
 import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
-import { InstructorSkill } from '@/services/api/schema';
+import type { InstructorSkill } from '@/services/api/schema';
 import { getInstructorSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';

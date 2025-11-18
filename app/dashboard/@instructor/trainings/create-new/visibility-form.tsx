@@ -65,7 +65,7 @@ export function VisibilityForm({
     return watchPrice * scheduleSummary?.totalLessons;
   };
 
-  const handleSubmit = (values: VisibilityFormValues) => {
+  const handleSubmit = (_values: VisibilityFormValues) => {
     onNext();
     // console.log(values, "submitted values")
   };

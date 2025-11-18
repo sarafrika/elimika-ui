@@ -1,7 +1,7 @@
-import { AllSchemaTypes } from '@/lib/types';
-import { UseMutationResult } from '@tanstack/react-query';
+import type { AllSchemaTypes } from '@/lib/types';
+import type { UseMutationResult } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { ResponseDtoVoid } from '@/services/api/schema';
+import type { ResponseDtoVoid } from '@/services/api/schema';
 
 type MutationTuple = readonly UseMutationResult<any, any, any>[];
 
@@ -9,7 +9,7 @@ export default function useMultiMutations<T extends MutationTuple>(mutations: T)
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<any[]>();
   const [datas, setDatas] = useState<AllSchemaTypes[]>();
-  const [responses, setResponses] = useState<ResponseDtoVoid[]>();
+  const [responses, _setResponses] = useState<ResponseDtoVoid[]>();
 
   //mutations.reduce((a: any, b) => console.log(b.error), []);
 

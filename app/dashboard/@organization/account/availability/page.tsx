@@ -60,7 +60,7 @@ export default function AvailabilityPage() {
     },
   });
 
-  const onSubmit = (data: AvailabilityFormValues) => {
+  const onSubmit = (_data: AvailabilityFormValues) => {
     // TODO: Implement submission logic
     //console.log(data);
   };

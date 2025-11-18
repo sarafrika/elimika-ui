@@ -12,7 +12,7 @@ import {
 } from '../../../../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../../components/ui/tabs';
 import { useTrainingCenter } from '../../../../../context/training-center-provide';
-import { getBranchInvitations, TrainingBranch } from '../../../../../services/client';
+import { getBranchInvitations, type TrainingBranch } from '../../../../../services/client';
 import { InviteForm } from '../../invites/_components/InviteForm';
 import InviteList from '../../invites/_components/InviteList';
 import Classroms from './classrooms';
@@ -70,7 +70,7 @@ export default function TabSection({ branch }: { branch: TrainingBranch }) {
                   getBranchInvitations({
                     path: {
                       branchUuid: branch.uuid!,
-                      uuid: trainingCenter!.uuid!,
+                      uuid: trainingCenter?.uuid!,
                     },
                   }),
               }}

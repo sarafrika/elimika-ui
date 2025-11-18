@@ -1,13 +1,13 @@
 'use client';
 import { AppSidebar } from '@/components/app-sidebar';
 import DashboardMainContent from '@/components/dashboard-main-content';
-import { DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
+import { type DashboardView, DashboardViewProvider } from '@/components/dashboard-view-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
-import { DashboardChildrenTypes, UserDomain } from '@/lib/types';
+import type { DashboardChildrenTypes, UserDomain } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
-import { ReactNode, useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import CustomLoader from '../../components/custom-loader';
 import { DomainSelection } from '../../components/domain-selection';
 import TrainingCenterProvider from '../../context/training-center-provide';
@@ -120,38 +120,14 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.debug('DashboardLayout render state', {
-        activeDomain,
-        selectableDomains,
-        normalizedAvailableViews,
-        hasDomainSlot: Boolean(domainSlot),
-        hasDefaultSlot: Boolean(defaultSlot),
-        userDomains,
-        pathname,
-        shouldUseDefaultSlot,
-      });
     }
   }, [
-    activeDomain,
-    selectableDomains,
-    normalizedAvailableViews,
-    domainSlot,
-    defaultSlot,
-    userDomains,
-    pathname,
-    shouldUseDefaultSlot,
   ]);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' && !domainSlot && !shouldUseDefaultSlot) {
-      // eslint-disable-next-line no-console
-      console.warn('DashboardLayout missing domain slot; falling back to default slot', {
-        activeDomain,
-        availableSlotKeys: Object.keys(dashboardProps),
-      });
     }
-  }, [activeDomain, domainSlot, dashboardProps, shouldUseDefaultSlot]);
+  }, [domainSlot, shouldUseDefaultSlot]);
 
   const currentDashboard = shouldUseDefaultSlot ? defaultSlot : (domainSlot ?? defaultSlot);
   const sidebarDomain =

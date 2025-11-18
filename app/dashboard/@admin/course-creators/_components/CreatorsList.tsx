@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { CourseCreator } from '@/services/client';
-import React from 'react';
+import type { CourseCreator } from '@/services/client';
+import type React from 'react';
 import CourseCreatorCard from './CreatorCard';
 import CourseCreatorFilters from './CreatorFilters';
 

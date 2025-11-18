@@ -13,12 +13,17 @@ import {
   createCartMutation,
   enrollStudentMutation,
   getAllActiveClassDefinitionsOptions,
-  getByClass,
   getCartOptions,
   getCartQueryKey,
   selectPaymentSessionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { CartItemResponse, CartResponse, ClassDefinition, OrderResponse } from '@/services/client';
+import {
+  type CartItemResponse,
+  type CartResponse,
+  type ClassDefinition,
+  type OrderResponse,
+  getByClass,
+} from '@/services/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CircleAlert, Clock, CreditCard, MapPin, ShieldCheck, ShoppingCart, Sparkles } from 'lucide-react';
 import { useSession } from 'next-auth/react';

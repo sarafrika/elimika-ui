@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
-import { CourseCreator } from '@/services/client';
+import type { CourseCreator } from '@/services/client';
 import { Edit, Trash2, User } from 'lucide-react';
 import CourseCreatorDetails from './CreatorDetails';
 

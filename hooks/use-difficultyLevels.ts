@@ -19,7 +19,7 @@ export function useDifficultyLevels() {
 
   const difficultyMap = useMemo(() => {
     if (!data?.data) return {};
-    // @ts-ignore
+    // @ts-expect-error
     return buildDifficultyMap(data?.data);
   }, [data]);
 

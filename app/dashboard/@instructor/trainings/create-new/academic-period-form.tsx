@@ -86,7 +86,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { useInstructor } from '../../../../../context/instructor-context';
 
-function formatToYYYYMMDD(date: Date): string {
+function _formatToYYYYMMDD(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -147,9 +147,9 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
   const instructor = useInstructor();
 
   const [continuousRegistration, setContinuousRegistration] = useState(false);
-  const updateClassMutation = useMutation(updateClassDefinitionMutation());
+  const _updateClassMutation = useMutation(updateClassDefinitionMutation());
 
-  const createClassSchdeule = useMutation(scheduleRecurringClassFromDefinitionMutation());
+  const _createClassSchdeule = useMutation(scheduleRecurringClassFromDefinitionMutation());
   const scheduleClass = useMutation(scheduleClassMutation());
 
   const onSubmit = (values: AcademicPeriodFormValues) => {
@@ -177,9 +177,9 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
           class_definition_uuid: classData?.uuid,
           instructor_uuid:
             (classData?.default_instructor_uuid as string) || (instructor?.uuid as string),
-          // @ts-ignore
+          // @ts-expect-error
           start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
-          // @ts-ignore
+          // @ts-expect-error
           end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
           timezone: 'UTC',
         },

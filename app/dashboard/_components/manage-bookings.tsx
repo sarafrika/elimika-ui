@@ -17,9 +17,10 @@ import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Clock, Eye, MapPin, Star, Video, X } from 'lucide-react';
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { Booking } from '../@student/browse-courses/instructor/page';
+import type { Booking } from '../@student/browse-courses/instructor/page';
 
 type Props = {
   bookings: any[];
@@ -35,7 +36,7 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
   const [feedbackRating, setFeedbackRating] = useState(5);
   const [feedbackComment, setFeedbackComment] = useState('');
 
-  const getInstructor = (instructorId: string) => {
+  const _getInstructor = (instructorId: string) => {
     return instructors.find(i => i.id === instructorId);
   };
 

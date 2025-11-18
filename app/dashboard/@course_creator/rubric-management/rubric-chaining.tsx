@@ -109,7 +109,7 @@ export const useRubricsWithCriteriaAndScoring = (courseCreatorUuid?: string) => 
 
     const enrichedCriteria = criteriaList.map((criteria: any) => {
       const scoringQuery = scoringQueries.find(
-        (q, idx) =>
+        (_q, idx) =>
           criteriaPairs[idx]?.criteriaUuid === criteria.uuid &&
           criteriaPairs[idx]?.rubricUuid === rubricUuid
       );

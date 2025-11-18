@@ -29,7 +29,7 @@ import { toast } from 'sonner';
 import {
   OptionDialog,
   QuestionDialog,
-  QuestionFormValues,
+  type QuestionFormValues,
 } from '../../_components/quiz-management-form';
 
 type QuestionItemProps = {

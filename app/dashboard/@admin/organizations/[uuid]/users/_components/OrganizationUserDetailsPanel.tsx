@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Mail, MapPin, Shield, User as UserIcon, UserX } from 'lucide-react';
-import { User } from '@/services/client';
+import type { User } from '@/services/client';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 

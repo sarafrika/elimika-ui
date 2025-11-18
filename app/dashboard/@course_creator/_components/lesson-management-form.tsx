@@ -60,8 +60,8 @@ import {
   X,
   Youtube,
 } from 'lucide-react';
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
-import { Control, FieldErrors, SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
+import React, { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type Control, type FieldErrors, type SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
@@ -97,7 +97,7 @@ export const CONTENT_TYPES = {
   IMAGE: 'Image',
 } as const;
 
-const contentItemSchema = z.object({
+const _contentItemSchema = z.object({
   contentType: z.enum(['AUDIO', 'VIDEO', 'TEXT', 'LINK', 'PDF', 'YOUTUBE'], {
     required_error: 'Content type is required',
   }),
@@ -186,7 +186,7 @@ interface ContentItemFormProps {
   isOnly: boolean;
 }
 
-function FormSection({ title, description, children }: FormSectionProps) {
+function _FormSection({ title, description, children }: FormSectionProps) {
   return (
     <div className='space-y-2'>
       <div>
@@ -266,7 +266,7 @@ function LessonList({
   onEditLessonContent,
   onDeleteLessonContent,
 }: LessonListProps) {
-  const getTotalDuration = (lesson: any) => {
+  const _getTotalDuration = (lesson: any) => {
     const hours = lesson.duration_hours || 0;
     const minutes = lesson.duration_minutes || 0;
     return hours * 60 + minutes;
@@ -274,7 +274,7 @@ function LessonList({
 
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(null);
 
-  const toggleLesson = (id: string) => {
+  const _toggleLesson = (id: string) => {
     setExpandedLessonId(prev => (prev === id ? null : id));
   };
 
@@ -636,9 +636,9 @@ function LessonCreationForm({
           onCancel();
         },
         onError: data => {
-          // @ts-ignore
+          // @ts-expect-error
           if (data?.error) {
-            // @ts-ignore
+            // @ts-expect-error
             const errorMessage = (data.error as string) || data?.message;
 
             if (
@@ -1626,7 +1626,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (err) { }
+    } catch (_err) { }
   };
 
   return (

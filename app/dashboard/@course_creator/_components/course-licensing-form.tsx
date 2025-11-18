@@ -23,7 +23,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import * as z from 'zod';
+import type * as z from 'zod';
 import { FormSection } from './course-creation-form';
 import { courseCreationSchema } from './course-creation-types';
 
@@ -42,7 +42,7 @@ export type CourseFormRef = {
 };
 
 export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
-  ({ showSubmitButton, initialValues, editingCourseId, successResponse }, ref) => {
+  ({ showSubmitButton, initialValues, editingCourseId, successResponse }, _ref) => {
     const form = useForm<CourseCreationFormValues>({
       resolver: zodResolver(courseCreationSchema),
       defaultValues: {
@@ -102,15 +102,15 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
         updateCourse.mutate(
           { body: editBody as any, path: { uuid: editingCourseId as string } },
           {
-            onSuccess(data, variables, context) {
+            onSuccess(data, _variables, _context) {
               const respObj = data?.data;
               const errorObj = data?.error;
 
               if (respObj) {
-                // @ts-ignore
+                // @ts-expect-error
                 toast.success(data?.data?.message);
                 // if (typeof successResponse === "function") {
-                //   // @ts-ignore
+                //   // @ts-expect-error
                 //   successResponse(data?.data)
                 // }
 
@@ -128,9 +128,9 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
                   }
                 });
                 return;
-                // @ts-ignore
+                // @ts-expect-error
               } else if (data?.message) {
-                // @ts-ignore
+                // @ts-expect-error
                 toast.error('Course updated successfully' || data.message);
                 return;
               } else {
@@ -143,7 +143,7 @@ export const CourseLicensingForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     };
 
-    const onError = (errors: any) => {
+    const onError = (_errors: any) => {
       // console.log(errors, "er")
     };
 

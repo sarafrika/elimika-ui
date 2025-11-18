@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Move all the constants here
-const affiliateCourses = [
+const _affiliateCourses = [
   {
     category: 'Music',
     items: [
@@ -49,9 +50,9 @@ const affiliateCourses = [
   { category: 'Arts', items: ['Painting', 'Sculpture', 'Drawing'] },
 ];
 
-const ageGroups = ['Kindergarten', 'Lower Primary', 'Upper Primary', 'JSS', 'Secondary', 'Adults'];
+const _ageGroups = ['Kindergarten', 'Lower Primary', 'Upper Primary', 'JSS', 'Secondary', 'Adults'];
 
-const academicPeriods = ['Term', 'Semester', 'Trimester', 'Quarters', 'Non Term'];
+const _academicPeriods = ['Term', 'Semester', 'Trimester', 'Quarters', 'Non Term'];
 
 export interface InstitutionProfileContentProps {
   uuid?: string;
@@ -61,7 +62,7 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
   const [activeTab, setActiveTab] = useState('age-branch');
 
   // Move all the state here (except contact details)
-  const [locations, setLocations] = useState([
+  const [_locations, _setLocations] = useState([
     {
       location: '',
       country: '',
@@ -73,7 +74,7 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
     },
   ]);
 
-  const [ageGroupRows, setAgeGroupRows] = useState([
+  const [_ageGroupRows, _setAgeGroupRows] = useState([
     {
       branchName: '',
       Kindergarten: false,
@@ -85,7 +86,7 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
     },
   ]);
 
-  const [branchInfo, setBranchInfo] = useState([
+  const [_branchInfo, _setBranchInfo] = useState([
     {
       branchName: '',
       courses: '',
@@ -95,11 +96,11 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
     },
   ]);
 
-  const [selectedCourses, setSelectedCourses] = useState<Record<string, boolean>>({});
-  const [availability, setAvailability] = useState<Record<string, boolean>>({});
-  const [calComLink, setCalComLink] = useState('');
-  const [academic, setAcademic] = useState({ period: '', duration: '' });
-  const [rateCard, setRateCard] = useState([
+  const [_selectedCourses, _setSelectedCourses] = useState<Record<string, boolean>>({});
+  const [_availability, _setAvailability] = useState<Record<string, boolean>>({});
+  const [_calComLink, _setCalComLink] = useState('');
+  const [_academic, _setAcademic] = useState({ period: '', duration: '' });
+  const [_rateCard, _setRateCard] = useState([
     {
       course: '',
       classType: '',
@@ -108,8 +109,8 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
     },
   ]);
 
-  const [split, setSplit] = useState({ instructor: '', organisation: '' });
-  const [instructorPrefs, setInstructorPrefs] = useState([
+  const [_split, _setSplit] = useState({ instructor: '', organisation: '' });
+  const [_instructorPrefs, _setInstructorPrefs] = useState([
     {
       course: '',
       type: '',
@@ -126,7 +127,7 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
     },
   ]);
 
-  const [schedule, setSchedule] = useState([
+  const [_schedule, _setSchedule] = useState([
     {
       course: '',
       instructor: '',
@@ -141,19 +142,19 @@ export const InstitutionProfileContent: React.FC<InstitutionProfileContentProps>
   ]);
 
   // Keep all the styling classes
-  const inputClasses =
+  const _inputClasses =
     'mt-1 block w-full rounded-md border-border shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 bg-card text-foreground';
-  const labelClasses = 'block text-sm font-medium text-muted-foreground';
+  const _labelClasses = 'block text-sm font-medium text-muted-foreground';
   const buttonPrimaryClasses =
     'inline-flex items-center justify-center rounded-md border border-transparent bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2';
   const buttonSecondaryClasses =
     'inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1';
-  const buttonDangerClasses =
+  const _buttonDangerClasses =
     'inline-flex items-center justify-center rounded-md border border-destructive bg-transparent px-3 py-1.5 text-sm font-medium text-destructive shadow-sm hover:bg-destructive hover:text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-1';
-  const cardBaseClasses = 'bg-white shadow-xl rounded-xl overflow-hidden';
+  const _cardBaseClasses = 'bg-white shadow-xl rounded-xl overflow-hidden';
   const cardContentClasses = 'p-6 sm:p-8';
-  const sectionTitleClasses = 'text-2xl font-semibold text-foreground mb-6';
-  const addMoreButtonClasses =
+  const _sectionTitleClasses = 'text-2xl font-semibold text-foreground mb-6';
+  const _addMoreButtonClasses =
     'inline-flex items-center text-sky-600 hover:text-sky-800 text-sm font-medium';
 
   const tabOrder = [

@@ -162,7 +162,7 @@ function ProgramCreationForm({
         {
           onSuccess: commonOnSuccess,
           onError: error => {
-            //@ts-ignore
+            //@ts-expect-error
             toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`);
           },
         }
@@ -173,7 +173,7 @@ function ProgramCreationForm({
         {
           onSuccess: commonOnSuccess,
           onError: error => {
-            //@ts-ignore
+            //@ts-expect-error
             toast.error(`${error?.message} - ${Object.values(error?.error)[0]}`);
           },
         }
@@ -689,7 +689,7 @@ function ProgramRequirementForm({
             toast.success(data?.message || 'Requirement added successfully');
             onCancel();
           },
-          onError: error => {
+          onError: _error => {
             // const message = error?.error?.toLowerCase?.() || '';
             // if (message.includes('duplicate key')) {
             //   toast.error('This requirement already exists or is duplicated.');

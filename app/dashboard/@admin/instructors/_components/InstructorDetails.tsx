@@ -2,7 +2,7 @@ import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Instructor } from '@/services/api/schema';
+import type { Instructor } from '@/services/api/schema';
 import {
   getInstructorEducationOptions,
   getInstructorExperienceOptions,
@@ -11,7 +11,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Award, BadgeCheckIcon, Briefcase, Globe, GraduationCap, MapPin, User } from 'lucide-react';
-import React from 'react';
+import type React from 'react';
 
 interface InstructorDetailsProps {
   instructor: Instructor;

@@ -67,7 +67,7 @@ export default function AddCourseCreatorProfileForm() {
     }
     if (user?.first_name && user?.last_name && !form.getValues('full_name')) {
       const fullName =
-        `${user.first_name}${user.middle_name ? ' ' + user.middle_name : ''} ${user.last_name}`.trim();
+        `${user.first_name}${user.middle_name ? ` ${user.middle_name}` : ''} ${user.last_name}`.trim();
       form.setValue('full_name', fullName);
     }
   }, [user?.uuid, user?.first_name, user?.middle_name, user?.last_name, form]);

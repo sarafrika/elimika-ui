@@ -78,7 +78,7 @@ export default function AvailabilitySettings() {
     },
   });
 
-  const handleSubmit = (data: AvailabilityFormValues) => {
+  const handleSubmit = (_data: AvailabilityFormValues) => {
     requestConfirmation({
       title: 'Save availability?',
       description: 'These preferences tell learners how to book you and what to expect.',

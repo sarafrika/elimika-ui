@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { getCourseCreatorDashboardData } from '@/services/course-creator/data';
 import CourseCreatorLayoutClient from './layout-client';
 

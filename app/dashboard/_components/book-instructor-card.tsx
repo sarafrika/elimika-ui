@@ -39,7 +39,7 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
   const { data } = useQuery(getInstructorAvailabilityOptions({ path: { instructorUuid: uuid } }));
   const instructorSlots = data?.data || [];
 
-  const slots = [
+  const _slots = [
     { id: 'slot1', label: 'Tuesday, Oct 10 - 9:00 AM' },
     { id: 'slot2', label: 'Wednesday, Oct 11 - 2:00 PM' },
   ];

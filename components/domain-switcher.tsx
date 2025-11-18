@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useUserProfile } from '@/context/profile-context';
-import { UserDomain } from '@/lib/types';
+import type { UserDomain } from '@/lib/types';
 import {
   GraduationCap,
   Users,
@@ -94,7 +94,7 @@ export function DomainSwitcher({ className }: DomainSwitcherProps) {
 
         toast.success(`Switched to ${domainConfig[domain].title}`, { id: 'domain-switch' });
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to switch dashboard', { id: 'domain-switch' });
     } finally {
       setIsSwitching(false);

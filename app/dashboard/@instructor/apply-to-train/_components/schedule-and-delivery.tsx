@@ -136,7 +136,7 @@ export function ScheduleAndDelivery({
     setShowInstructorSearch(false);
   };
 
-  const removeSupportTrainer = (id: string) => {
+  const _removeSupportTrainer = (id: string) => {
     const newList = supportTrainers.filter(t => t.id !== id);
     setSupportTrainers(newList);
     onDataChange({ ...data, supportTrainers: newList });

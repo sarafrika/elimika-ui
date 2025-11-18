@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Users, GraduationCap, ArrowLeft } from 'lucide-react';
 import { useUserProfile } from '@/context/profile-context';
 import { useRouter } from 'next/navigation';
-import { UserDomain } from '@/lib/types';
+import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type ProfileAccent = {

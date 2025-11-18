@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminDataTable } from '@/components/admin/data-table/data-table';
-import { AdminDataTableColumn } from '@/components/admin/data-table/types';
+import type { AdminDataTableColumn } from '@/components/admin/data-table/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import { useTrainingCenter } from '@/context/training-center-provide';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
@@ -30,10 +29,9 @@ import {
   removeUserFromBranchMutation,
   updateTrainingBranchMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { TrainingBranch, User } from '@/services/client';
+import type { TrainingBranch, User } from '@/services/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
 import { GitBranch, Loader2, MapPin, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';

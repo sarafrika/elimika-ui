@@ -36,7 +36,7 @@ export function ReviewPublishForm({
   const totalHours = scheduleSummary?.totalHours;
   const totalFee = scheduleSummary?.totalLessons;
 
-  const formatDate = (date: Date) => {
+  const _formatDate = (date: Date) => {
     return format(date, 'MMM dd, yyyy');
   };
 

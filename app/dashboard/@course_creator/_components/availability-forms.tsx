@@ -66,7 +66,7 @@ function AvailabilitySlotForm({
     defaultValues: initialValues || {},
   });
 
-  const qc = useQueryClient();
+  const _qc = useQueryClient();
   const instructor = useInstructor();
 
   // const createSlot = useMutation(createInstructorAvailabilitySlotMutation());
@@ -74,7 +74,7 @@ function AvailabilitySlotForm({
   // const deleteSlot = useMutation(deleteInstructorAvailabilitySlotMutation());
 
   const handleSubmit = async (values: AvailabilitySlotFormValues) => {
-    const payload = {
+    const _payload = {
       ...values,
       uuid: slotId as string,
       instructor_uuid: instructor?.uuid as string,

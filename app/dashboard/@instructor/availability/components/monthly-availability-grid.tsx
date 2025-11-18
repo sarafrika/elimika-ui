@@ -6,8 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, Clock, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { ClassData } from '../../trainings/create-new/academic-period-form';
-import { AvailabilityData, CalendarEvent } from './types';
+import type { ClassData } from '../../trainings/create-new/academic-period-form';
+import type { AvailabilityData, CalendarEvent } from './types';
 
 interface MonthlyAvailabilityGridProps {
   availabilityData: AvailabilityData;
@@ -23,9 +23,9 @@ export function MonthlyAvailabilityGrid({
   classes,
 }: MonthlyAvailabilityGridProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<{
+  const [_isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [_selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [_selectedSlot, setSelectedSlot] = useState<{
     day: string;
     time: string;
     date: Date;
@@ -115,7 +115,7 @@ export function MonthlyAvailabilityGrid({
     };
   };
 
-  const getDayClass = (date: Date, status: ReturnType<typeof getDayStatus>) => {
+  const getDayClass = (date: Date, _status: ReturnType<typeof getDayStatus>) => {
     const isCurrentMonth = date.getMonth() === monthData.month;
     const isToday = date.toDateString() === new Date().toDateString();
 
@@ -159,7 +159,7 @@ export function MonthlyAvailabilityGrid({
     setIsEventModalOpen(true);
   };
 
-  const getEventForSlot = (day: string, time: string, date: Date) => {
+  const _getEventForSlot = (day: string, time: string, date: Date) => {
     return availabilityData.events.find(event => {
       const eventDate = new Date(event.date);
       const isSameDate = eventDate.toDateString() === date.toDateString();
@@ -176,7 +176,7 @@ export function MonthlyAvailabilityGrid({
     });
   };
 
-  const handleSaveEvent = (eventData: CalendarEvent) => {
+  const _handleSaveEvent = (eventData: CalendarEvent) => {
     const updatedEvents = [...availabilityData.events];
     const existingIndex = updatedEvents.findIndex(e => e.id === eventData.id);
 
@@ -192,7 +192,7 @@ export function MonthlyAvailabilityGrid({
     });
   };
 
-  const handleDeleteEvent = (eventId: string) => {
+  const _handleDeleteEvent = (eventId: string) => {
     const updatedEvents = availabilityData.events.filter(e => e.id !== eventId);
     onAvailabilityUpdate({
       ...availabilityData,
@@ -200,7 +200,7 @@ export function MonthlyAvailabilityGrid({
     });
   };
 
-  const getEndTime = (startTime: string) => {
+  const _getEndTime = (startTime: string) => {
     const [hours, minutes] = startTime.split(':').map(Number);
     return `${(Number(hours) + 1).toString().padStart(2, '0')}:${minutes?.toString().padStart(2, '0')}`;
   };
@@ -288,7 +288,7 @@ export function MonthlyAvailabilityGrid({
                       {/* Event blocks and bottom indicators */}
                       {status.events.length > 0 && (
                         <div className='absolute top-6 right-1 left-1'>
-                          {status.events.slice(0, 2).map((event, idx) => (
+                          {status.events.slice(0, 2).map((event, _idx) => (
                             <div
                               key={event.id}
                               className='mb-1 truncate rounded border border-blue-200 px-1 py-0.5 text-xs text-primary'

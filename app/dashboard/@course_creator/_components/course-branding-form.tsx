@@ -8,7 +8,8 @@ import { tanstackClient } from '@/services/api/tanstack-client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
-import React, { forwardRef, useEffect, useState } from 'react';
+import type React from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -47,7 +48,7 @@ type UploadOptions = {
 };
 
 export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
-  ({ showSubmitButton, initialValues, editingCourseId, successResponse }, ref) => {
+  ({ showSubmitButton, initialValues, editingCourseId, successResponse }, _ref) => {
     const form = useForm<CourseCreationFormValues>({
       resolver: zodResolver(courseCreationSchema),
       defaultValues: {
@@ -79,8 +80,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const instructor = useInstructor();
     const courseCreatorContext = useOptionalCourseCreator();
     const courseCreatorProfile = courseCreatorContext?.profile;
-    const authorName = courseCreatorProfile?.full_name ?? instructor?.full_name ?? '';
-    const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
+    const _authorName = courseCreatorProfile?.full_name ?? instructor?.full_name ?? '';
+    const _authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
 
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
@@ -156,9 +157,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       );
     };
 
-    const updateCourse = useMutation(updateCourseMutation());
+    const _updateCourse = useMutation(updateCourseMutation());
 
-    const onSubmit = (data: CourseCreationFormValues) => {
+    const onSubmit = (_data: CourseCreationFormValues) => {
       if (!editingCourseId) return;
     };
 

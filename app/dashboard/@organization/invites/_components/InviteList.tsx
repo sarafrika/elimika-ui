@@ -1,6 +1,6 @@
 'use client';
 import { DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
-import { useMutation, useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useMutation, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { BlocksIcon, Check, SendIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../../../../../components/ui/button';
@@ -22,7 +22,7 @@ import {
 import VirticleDotsIcons from '../../../../../components/virticle-dots-icon';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { queryClient } from '../../../../../lib/query-client';
-import { ApiResponse, Invitation, resendInvitation } from '../../../../../services/client';
+import { type ApiResponse, type Invitation, resendInvitation } from '../../../../../services/client';
 import {
   acceptInvitationMutation,
   cancelInvitationMutation,
@@ -34,8 +34,8 @@ export default function InviteList({ queryOption }: { queryOption: UseQueryOptio
   const { data, error } = useQuery({ ...queryOption });
 
   let invitations: Invitation[] = [];
-  if (data && data.data && data.data.data && !error) {
-    invitations = data!.data!.data as unknown as Invitation[];
+  if (data?.data?.data && !error) {
+    invitations = data?.data?.data as unknown as Invitation[];
   }
 
   const cancelMutation = useMutation(cancelInvitationMutation());
@@ -43,11 +43,11 @@ export default function InviteList({ queryOption }: { queryOption: UseQueryOptio
     cancelMutation.mutate(
       {
         path: {
-          uuid: user!.uuid!,
+          uuid: user?.uuid!,
           invitationUuid: inviter_uuid,
         },
         query: {
-          canceller_uuid: user!.uuid!,
+          canceller_uuid: user?.uuid!,
         },
       },
       {
@@ -93,11 +93,11 @@ export default function InviteList({ queryOption }: { queryOption: UseQueryOptio
   async function resend(invitation_uuid: string) {
     const resp = await resendInvitation({
       path: {
-        uuid: user!.uuid!,
+        uuid: user?.uuid!,
         invitationUuid: invitation_uuid,
       },
       query: {
-        resender_uuid: user!.uuid!,
+        resender_uuid: user?.uuid!,
       },
     });
 
@@ -137,7 +137,7 @@ export default function InviteList({ queryOption }: { queryOption: UseQueryOptio
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className='w-56'>
-                        {invite.inviter_uuid === user!.uuid && (
+                        {invite.inviter_uuid === user?.uuid && (
                           <>
                             {invite.status !== 'CANCELLED' && (
                               <DropdownMenuCheckboxItem onClick={() => cancelInvite(invite.uuid!)}>
@@ -150,7 +150,7 @@ export default function InviteList({ queryOption }: { queryOption: UseQueryOptio
                           </>
                         )}
 
-                        {invite.inviter_uuid !== user!.uuid && (
+                        {invite.inviter_uuid !== user?.uuid && (
                           <>
                             {invite.status === 'PENDING' && (
                               <DropdownMenuItem

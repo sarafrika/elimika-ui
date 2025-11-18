@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AllSchemaTypes } from '@/lib/types';
+import type { AllSchemaTypes } from '@/lib/types';
 import { useEffect, useState } from 'react';
 
 type DataFetcher = (
@@ -62,7 +62,7 @@ export function useAppStore(
         });
       }
     }
-  }, []);
+  }, [fetcher, key, resource, store.data[key], store.setData]);
 
   return resource;
 }

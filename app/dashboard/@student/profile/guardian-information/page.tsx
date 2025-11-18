@@ -47,7 +47,7 @@ function CertificationsSettingsContent() {
   const student = useStudent();
   const updateGuardianInfo = useMutation(updateStudentMutation());
   const { data } = useQuery(getStudentByIdOptions({ path: { uuid: student?.uuid as string } }));
-  // @ts-ignore
+  // @ts-expect-error
   const studentInfo = data?.data;
 
   useEffect(() => {
@@ -117,7 +117,7 @@ function CertificationsSettingsContent() {
               },
             }
           );
-        } catch (error) {
+        } catch (_error) {
           // handled by toast inside mutation callbacks
         }
       },

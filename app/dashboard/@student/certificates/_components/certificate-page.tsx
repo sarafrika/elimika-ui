@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
 import { useStudent } from '@/context/student-context';
-import { CertificateData, certificatePDF } from '@/lib/certificate';
+import { type CertificateData, certificatePDF } from '@/lib/certificate';
 import { useQuery } from '@tanstack/react-query';
 import {
   Award,
@@ -185,9 +185,9 @@ export default function CertificatesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
-  const [viewMode, setViewMode] = useState('grid'); // grid or list
+  const [_viewMode, _setViewMode] = useState('grid'); // grid or list
 
-  const studentData = useStudent();
+  const _studentData = useStudent();
   const profile = useUserProfile();
 
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
@@ -254,7 +254,7 @@ export default function CertificatesPage() {
   const handleDownloadCertificate = (cert: CertificateData) => {
     const doc = certificatePDF(cert);
     const pdf = pdfMake.createPdf(doc);
-    pdf.download(`Elimika-${cert.id ? cert.id + '-' : ''}${new Date().getTime()}.pdf`);
+    pdf.download(`Elimika-${cert.id ? `${cert.id}-` : ''}${Date.now()}.pdf`);
   };
 
   const handleShare = (certificateId: string) => {

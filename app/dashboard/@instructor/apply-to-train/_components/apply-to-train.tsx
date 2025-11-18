@@ -36,7 +36,7 @@ export function getTotalExperienceYears(experiences: any[]): number {
 
 export function ApplyToTrain() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [selectedCourse, _setSelectedCourse] = useState<any>(null);
 
   const instructor = useInstructor();
   const { data } = useQuery(
@@ -70,7 +70,7 @@ export function ApplyToTrain() {
     setCurrentStep(stepId);
   };
 
-  const handleDataChange = (stepData: any) => {
+  const handleDataChange = (_stepData: any) => {
     // setApplicationData(prev => ({ ...prev, ...stepData }));
   };
 
@@ -161,9 +161,9 @@ export function ApplyToTrain() {
             {CurrentStepComponent && (
               <CurrentStepComponent
                 data={instructor}
-                // @ts-ignore
+                // @ts-expect-error
                 skills={instructor?.skills || []}
-                // @ts-ignore
+                // @ts-expect-error
                 education={instructor?.educations || []}
                 certifications={instructorCertifications?.data || []}
                 profile={instructorProfile}

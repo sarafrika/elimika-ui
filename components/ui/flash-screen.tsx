@@ -1,7 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Hand } from 'lucide-react';
-import React from 'react';
 
 export function FlashScreen({ className }: { className?: string }) {
   return (

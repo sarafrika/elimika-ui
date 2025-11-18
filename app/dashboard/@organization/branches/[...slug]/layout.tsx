@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Action } from './utils';
+import type { ReactNode } from 'react';
+import type { Action } from './utils';
 
 export default async function BranchManager({
   children,

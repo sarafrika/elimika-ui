@@ -1,5 +1,5 @@
 import { tanstackClient } from '@/services/api/tanstack-client';
-import React from 'react';
+import type React from 'react';
 
 type DifficultyLabelProps = {
   difficultyUuid: string;
@@ -11,7 +11,7 @@ export function DifficultyLabel({ difficultyUuid, fallback = 'Unknown' }: Diffic
     'get',
     '/api/v1/config/difficulty-levels',
     {
-      // @ts-ignore
+      // @ts-expect-error
       params: {},
     }
   );

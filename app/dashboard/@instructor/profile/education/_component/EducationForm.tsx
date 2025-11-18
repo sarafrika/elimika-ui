@@ -31,7 +31,7 @@ import Spinner from '@/components/ui/spinner';
 import { useUserProfile } from '@/context/profile-context';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
-import { InstructorEducation } from '@/services/api/schema';
+import type { InstructorEducation } from '@/services/api/schema';
 import { deleteInstructorEducation } from '@/services/client';
 import {
   addInstructorEducationMutation,
@@ -112,13 +112,13 @@ export default function EducationSettings() {
     ...defaultEducation,
     ...ed,
     year_completed: ed.year_completed?.toString(),
-    instructor_uuid: instructor!.uuid!,
+    instructor_uuid: instructor?.uuid!,
   });
 
   const form = useForm<EducationFormValues>({
     resolver: zodResolver(educationSchema),
     defaultValues: {
-      //@ts-ignore
+      //@ts-expect-error
       educations:
         instructorEducation.length > 0
           ? instructorEducation.map(passEducation)
@@ -139,8 +139,8 @@ export default function EducationSettings() {
   const saveEducations = async (data: EducationFormValues) => {
     for (const [index, ed] of data.educations.entries()) {
       const options = {
-        path: { instructorUuid: instructor!.uuid as string },
-        //@ts-ignore
+        path: { instructorUuid: instructor?.uuid as string },
+        //@ts-expect-error
         body: { ...ed, year_completed: Number(ed.year_completed) },
       };
 
@@ -187,7 +187,7 @@ export default function EducationSettings() {
       const resp = await deleteInstructorEducation({
         path: {
           educationUuid: edUUID,
-          instructorUuid: instructor!.uuid!,
+          instructorUuid: instructor?.uuid!,
         },
       });
       if (resp.error) {
@@ -201,7 +201,7 @@ export default function EducationSettings() {
   }
 
   const domainBadges =
-    // @ts-ignore
+    // @ts-expect-error
     user?.data?.user_domain?.map((domain: any) =>
       domain
         .split('_')

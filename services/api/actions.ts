@@ -1,5 +1,5 @@
 import { fetchClient } from './fetch-client';
-import { paths } from './schema';
+import type { paths } from './schema';
 
 /**
  * Generic Search function defination

@@ -1,10 +1,10 @@
 import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
 import { updateAssessmentRubricMutation } from '@/services/client/@tanstack/react-query.gen';
-import { zApiResponsePagedDtoAssessmentRubric, zAssessmentRubric } from '@/services/client/zod.gen';
+import { zApiResponsePagedDtoAssessmentRubric, type zAssessmentRubric } from '@/services/client/zod.gen';
 import type { Options, UpdateAssessmentRubricData } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 const rubricListResponseSchema = zApiResponsePagedDtoAssessmentRubric.extend({
   data: zApiResponsePagedDtoAssessmentRubric.shape.data.default({ content: [] }),
@@ -61,7 +61,7 @@ export async function fetchAdminRubrics(params: AdminRubricListParams = {}): Pro
   };
 
   const filters = buildRubricFilters(params);
-  const hasFilters = Object.keys(filters).length > 0;
+  const _hasFilters = Object.keys(filters).length > 0;
 
   const response = await fetchClient.GET('/api/v1/rubrics/search', {
     params: {

@@ -85,12 +85,12 @@ export function TrainingClassList({
   loading
 }: TrainingClassListProps) {
   const router = useRouter();
-  const instructor = useInstructor();
+  const _instructor = useInstructor();
   const { difficultyMap } = useDifficultyLevels();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, _setStatusFilter] = useState('all');
   const [activeFilter, setActiveFilter] = useState('all');
 
   // const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
@@ -121,13 +121,13 @@ export function TrainingClassList({
   const publishedClasses = classesWithCourseAndInstructor?.filter((item: any) => item.is_active);
   const draftClasses = classesWithCourseAndInstructor?.filter((item: any) => !item.is_active);
 
-  function openTimetableSchedule(uuid: string) {
+  function _openTimetableSchedule(_uuid: string) {
     // timetable
   }
-  function openRecurrentSchedule(uuid: string) {
+  function _openRecurrentSchedule(_uuid: string) {
     // recurring schedule
   }
-  function openDeleteModal(uuid: string) {
+  function _openDeleteModal(_uuid: string) {
     // delete class
   }
 

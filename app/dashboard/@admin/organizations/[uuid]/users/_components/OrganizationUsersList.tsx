@@ -1,7 +1,6 @@
 'use client';
 import { useRouter, usePathname } from 'next/navigation';
-import { User } from '@/services/client';
-import React from 'react';
+import type { User } from '@/services/client';
 import { Input } from '@/components/ui/input';
 import { Search, Filter, SortAsc, SortDesc, X } from 'lucide-react';
 import {

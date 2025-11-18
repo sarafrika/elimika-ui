@@ -132,7 +132,7 @@ export default function AddInstructorProfileForm() {
           form.setValue('longitude', position.coords.longitude);
           toast.success('Location detected successfully!');
         },
-        error => {
+        _error => {
           toast.error('Failed to get current location. Please enter manually.');
         }
       );

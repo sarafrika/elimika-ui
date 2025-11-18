@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 type BadgeTone = 'default' | 'secondary' | 'success' | 'warning' | 'destructive' | 'outline';
 

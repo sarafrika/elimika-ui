@@ -1,11 +1,10 @@
 "use client";
 
 import DomainOverviewShell from '@/components/domain-overview-shell';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCourseCreator } from '@/context/course-creator-context';
-import {
+import type {
   CourseCreatorAnalyticsSummary,
   CourseCreatorMonetizationSummary,
   CourseCreatorTrainingRequirementSummary,

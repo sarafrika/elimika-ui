@@ -3,10 +3,10 @@
 import { Check, Loader } from 'lucide-react';
 import {
   Children,
-  ComponentType,
+  type ComponentType,
   createContext,
   isValidElement,
-  ReactNode,
+  type ReactNode,
   useContext,
   useState,
 } from 'react';
@@ -89,7 +89,7 @@ export function StepperRoot({ children }: { children: ReactNode }) {
       <Tabs
         defaultValue='0'
         value={activeStep.toString()}
-        onValueChange={value => setActiveStep(parseInt(value))}
+        onValueChange={value => setActiveStep(parseInt(value, 10))}
         className='w-full'
       >
         {children}

@@ -37,7 +37,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { JSX, useState } from 'react';
+import { type JSX, useState } from 'react';
 import { CustomLoadingState } from '../@course_creator/_components/loading-state';
 
 type CourseDetailsProps = {
@@ -68,7 +68,7 @@ export default function ReusableCourseDetailsPage({
     ...getCourseCreatorByUuidOptions({ path: { uuid: courseData?.course_creator_uuid as string } }),
     enabled: !!courseData?.course_creator_uuid,
   });
-  // @ts-ignore
+  // @ts-expect-error
   const courseCreator = creator?.data;
 
   const {

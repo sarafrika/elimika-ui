@@ -3,7 +3,7 @@
 import { Button } from '../../../../../components/ui/button';
 import { Separator } from '../../../../../components/ui/separator';
 import { useTrainingCenter } from '../../../../../context/training-center-provide';
-import { getOrganizationInvitations, Invitation } from '../../../../../services/client';
+import { getOrganizationInvitations, } from '../../../../../services/client';
 import { InviteForm } from './InviteForm';
 import InviteList from './InviteList';
 
@@ -28,7 +28,7 @@ export default function InvitesPage() {
             queryKey: ['organization', 'invites'],
             queryFn: () =>
               getOrganizationInvitations({
-                path: { uuid: trainingCenter!.uuid! },
+                path: { uuid: trainingCenter?.uuid! },
               }),
             enabled: !!trainingCenter,
           }}

@@ -47,12 +47,12 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, XIcon } from 'lucide-react';
-import { forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, type ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 import {
-  CourseCreationFormValues,
+  type CourseCreationFormValues,
   courseCreationSchema,
   CURRENCIES,
   providedByOptions,
@@ -273,14 +273,14 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         updateCourseMutation(
           { body: editBody as any, uuid: editingCourseId },
           {
-            onSuccess(data, variables, context) {
+            onSuccess(data, _variables, _context) {
               const respObj = data?.data;
               const errorObj = data?.error;
 
               if (respObj) {
                 toast.success(data?.data?.message);
                 // if (typeof successResponse === "function") {
-                //   // @ts-ignore
+                //   // @ts-expect-error
                 //   successResponse(data?.data)
                 // }
 
@@ -298,9 +298,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   }
                 });
                 return;
-                // @ts-ignore
+                // @ts-expect-error
               } else if (data?.message) {
-                // @ts-ignore
+                // @ts-expect-error
                 toast.error(data.message);
                 return;
               } else {
@@ -347,7 +347,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             },
           },
           {
-            onError(error, variables, context) {
+            onError(error, _variables, _context) {
               toast.error(error?.message);
             },
             onSuccess: data => {
@@ -358,7 +358,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               });
 
               if (typeof successResponse === 'function') {
-                // @ts-ignore
+                // @ts-expect-error
                 successResponse(data?.data);
               }
             },
@@ -856,7 +856,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             {/* Show badges of selected categories */}
             <div className='flex flex-wrap gap-2'>
               {form.watch('categories').map((uuid: string, index: number) => {
-                //@ts-ignore
+                //@ts-expect-error
                 const cat = categories?.data?.content?.find((c: any) => c.uuid === uuid);
                 if (!cat) return null;
                 return (

@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Users, Building2, GraduationCap } from 'lucide-react';
 
 const accountTypes = [

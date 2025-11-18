@@ -1,5 +1,5 @@
-import { schemas } from '@/services/api/zod-client';
-import {
+import type { schemas } from '@/services/api/zod-client';
+import type {
   Course,
   CourseCreator,
   Instructor,
@@ -12,8 +12,8 @@ import {
   TrainingBranch,
   User,
 } from '@/services/client';
-import { ReactNode } from 'react';
-import { z } from 'zod';
+import type { ReactNode } from 'react';
+import type { z } from 'zod';
 
 export type UserDomain =
   | 'student'

@@ -23,7 +23,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import type { z } from 'zod';
 import LocationInput from '../../../components/locationInput';
 
 const OrganizationOnboardingSchema = zOrganisation.omit({
@@ -34,7 +34,7 @@ const OrganizationOnboardingSchema = zOrganisation.omit({
 
 type OrganizationOnboardingFormData = z.infer<typeof OrganizationOnboardingSchema>;
 
-const organizationTypes = [
+const _organizationTypes = [
   { value: 'PROFESSIONAL_INSTITUTE', label: 'Professional Institute' },
   { value: 'CERTIFICATION_BODY', label: 'Certification Body' },
   { value: 'INDUSTRY_ASSOCIATION', label: 'Industry Association' },
@@ -97,7 +97,7 @@ export function OrganizationOnboardingForm() {
 
       toast.success('Organization registered successfully!');
       router.replace('/dashboard/overview');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to register organization. Please try again.');
       setIsSubmitting(false);
     }

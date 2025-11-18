@@ -6,18 +6,18 @@ import {
   calculateTrainingRequirementSummary,
 } from '@/lib/course-creator/utils';
 import {
-  CourseCreatorDashboardData,
+  type CourseCreatorDashboardData,
   emptyCourseCreatorDashboardData,
 } from '@/lib/types/course-creator';
 import { auth } from '@/services/auth';
 import {
-  Course,
-  CourseCreator,
+  type Course,
+  type CourseCreator,
   search,
   searchCourseCreators,
   searchCourses,
-  SearchResponse,
-  User,
+  type SearchResponse,
+  type User,
 } from '@/services/client';
 
 export async function getCourseCreatorDashboardData(): Promise<CourseCreatorDashboardData> {
@@ -98,7 +98,7 @@ export async function getCourseCreatorDashboardData(): Promise<CourseCreatorDash
 
     const coursesPayload = coursesResponse?.data;
     const courses: Course[] = Array.isArray(coursesPayload?.data?.content)
-      ? (coursesPayload!.data!.content as Course[])
+      ? (coursesPayload?.data?.content as Course[])
       : [];
 
     const analytics = calculateCourseAnalytics(courses);
@@ -137,8 +137,7 @@ export async function getCourseCreatorDashboardData(): Promise<CourseCreatorDash
         organisations: organisationAssignments,
       },
     };
-  } catch (error) {
-    console.error('Failed to load course creator dashboard data', error);
+  } catch (_error) {
     return emptyCourseCreatorDashboardData;
   }
 }

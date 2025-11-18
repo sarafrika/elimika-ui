@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useCourseCreator } from '@/context/course-creator-context';
-import { Course } from '@/services/client';
+import type { Course } from '@/services/client';
 import { format } from 'date-fns';
 import { Filter, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -183,7 +183,7 @@ function CourseRow({ course }: { course: Course }) {
   );
 }
 
-function truncate(value: string, length: number) {
+function _truncate(value: string, length: number) {
   if (value.length <= length) return value;
   return `${value.slice(0, length)}…`;
 }

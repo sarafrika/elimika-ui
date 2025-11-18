@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 interface RichTextRendererProps {
   htmlString: string;
@@ -13,7 +13,7 @@ const truncateHTML = (html: string, maxLength: number): string => {
 
   if (text.length <= maxLength) return html;
 
-  const truncatedText = text.substring(0, maxLength).trim() + '...';
+  const truncatedText = `${text.substring(0, maxLength).trim()}...`;
   return `<p>${truncatedText}</p>`;
 };
 

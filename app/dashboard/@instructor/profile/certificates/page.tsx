@@ -5,7 +5,7 @@ import { useInstructor } from '@/context/instructor-context';
 import { getInstructorDocumentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Award, Eye, Medal, Star, Target, Trophy, Verified } from 'lucide-react';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '../../../../../components/ui/badge';
 import { Button } from '../../../../../components/ui/button';
@@ -67,10 +67,10 @@ export default function CertificatesPage() {
   }, [replaceBreadcrumbs]);
 
   const [activeTab, setActiveTab] = useState('verified');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedType, setSelectedType] = useState('all');
-  const [viewMode, setViewMode] = useState('grid');
+  const [searchTerm, _setSearchTerm] = useState('');
+  const [selectedCategory, _setSelectedCategory] = useState('all');
+  const [selectedType, _setSelectedType] = useState('all');
+  const [_viewMode, _setViewMode] = useState('grid');
   const [viewCertificate, setViewCertificate] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<any | null>(null);
 
@@ -110,7 +110,7 @@ export default function CertificatesPage() {
     ...getInstructorDocumentsOptions({ path: { instructorUuid: instructor?.uuid as string } }),
     enabled: !!instructor?.uuid,
   });
-  const loading = isLoading || isFetching;
+  const _loading = isLoading || isFetching;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -121,7 +121,7 @@ export default function CertificatesPage() {
     const uploadedFile = files[0];
     const fileUrl = URL.createObjectURL(uploadedFile as any);
 
-    const newCertificate: Certificate = {
+    const _newCertificate: Certificate = {
       id: Date.now(),
       name: uploadedFile?.name as any,
       fileUrl,

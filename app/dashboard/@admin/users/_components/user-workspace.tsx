@@ -17,7 +17,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import {
-  AdminUser,
+  type AdminUser,
   useAdminUsers,
   useUpdateAdminUser,
 } from '@/services/admin';
@@ -26,7 +26,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { useForm, type UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
 

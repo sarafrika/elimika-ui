@@ -1,10 +1,10 @@
 'use client';
 
-import menu, { MenuItem } from '@/lib/menu';
+import menu, { type MenuItem } from '@/lib/menu';
 import { usePathname } from 'next/navigation';
 import {
   createContext,
-  ReactNode,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -85,8 +85,7 @@ export function BreadcrumbProvider({ children }: { children: ReactNode }) {
       try {
         const parsed: BreadcrumbItem[] = JSON.parse(stored);
         setBreadcrumbs(parsed);
-      } catch (e) {
-        console.error('Failed to parse breadcrumb storage', e);
+      } catch (_e) {
       }
     }
   }, []);

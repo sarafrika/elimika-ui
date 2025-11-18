@@ -1,7 +1,5 @@
-import { AllSchemaTypes, SchemaType } from '@/lib/types';
-import { paths } from '@/services/api/schema';
-import { ClientOptions } from 'openapi-fetch';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import type { AllSchemaTypes, SchemaType } from '@/lib/types';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -50,7 +48,7 @@ export default function UserDataProvider({ children }: { children: ReactNode }) 
   const store = dataStore();
   const [data, setData] = useState<DataType | undefined>(store.data);
 
-  function configure<T>(
+  function configure<_T>(
     schema: SchemaType,
     dataFethcer: () => Promise<AllSchemaTypes | AllSchemaTypes[] | null>,
     offline: boolean
@@ -74,11 +72,9 @@ export default function UserDataProvider({ children }: { children: ReactNode }) 
   }
 
   return (
-    <>
-      <UserDataStoreContext.Provider value={{ data, configure }}>
+    <UserDataStoreContext.Provider value={{ data, configure }}>
         {children}
       </UserDataStoreContext.Provider>
-    </>
   );
 }
 
@@ -88,7 +84,7 @@ export function useUserData(
   const { data, configure } = useContext(UserDataStoreContext);
   useEffect(() => {
     if (configure) configure(...params);
-  }, [configure]);
+  }, [configure, params]);
   return data;
 }
 

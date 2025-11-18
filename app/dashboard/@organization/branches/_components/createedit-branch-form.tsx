@@ -29,7 +29,7 @@ import { useTrainingCenter } from '../../../../../context/training-center-provid
 import { queryClient } from '../../../../../lib/query-client';
 import {
   createTrainingBranch,
-  TrainingBranch,
+  type TrainingBranch,
   updateTrainingBranch,
 } from '../../../../../services/client';
 import { zTrainingBranch } from '../../../../../services/client/zod.gen';

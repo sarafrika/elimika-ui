@@ -18,7 +18,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 
-const sampleEnrollmentData = {
+const _sampleEnrollmentData = {
   success: true,
   data: {
     content: [
@@ -118,7 +118,7 @@ export default function StudentsPage({ classesWithCourseAndInstructor, loading }
       enabled: !!student.uuid,
     })),
   });
-  const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
+  const _detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
 
   return (
     <div className='space-y-6'>

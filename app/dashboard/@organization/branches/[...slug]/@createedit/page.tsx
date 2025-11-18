@@ -1,6 +1,6 @@
-import { getTrainingBranchByUuid, TrainingBranch } from '@/services/client';
+import { getTrainingBranchByUuid, type TrainingBranch } from '@/services/client';
 import CreateEditBranchform from '../../_components/createedit-branch-form';
-import { Action } from '../utils';
+import type { Action } from '../utils';
 
 export default async function CreateEdit({ params }: { params: Promise<{ slug: Action[] }> }) {
   const {
@@ -8,7 +8,7 @@ export default async function CreateEdit({ params }: { params: Promise<{ slug: A
   } = await params;
   let branch;
 
-  if (action == 'edit' && branch_uuid) {
+  if (action === 'edit' && branch_uuid) {
     const branchResp = await getTrainingBranchByUuid({
       path: {
         uuid: branch_uuid,

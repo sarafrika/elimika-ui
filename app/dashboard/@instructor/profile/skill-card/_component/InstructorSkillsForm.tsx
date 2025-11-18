@@ -26,7 +26,7 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
-import { Instructor, InstructorSkill } from '@/services/api/schema';
+import type { Instructor, InstructorSkill } from '@/services/api/schema';
 import { schemas } from '@/services/api/zod-client';
 import {
   addInstructorSkillMutation,
@@ -168,7 +168,7 @@ export default function SkillsSettings({
   };
 
   const domainBadges =
-    // @ts-ignore
+    // @ts-expect-error
     user?.user_domain?.map(domain =>
       domain
         .split('_')
@@ -176,7 +176,7 @@ export default function SkillsSettings({
         .join(' ')
     ) ?? [];
 
-  const [showSkillCard, setShowSkillCard] = useState(false);
+  const [_showSkillCard, _setShowSkillCard] = useState(false);
 
   return (
     <ProfileFormShell

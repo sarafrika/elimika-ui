@@ -18,9 +18,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { getMenuWithActivePath, MenuItem } from '@/lib/menu';
+import { getMenuWithActivePath, type MenuItem } from '@/lib/menu';
 import { usePathname } from 'next/navigation';
-import { ComponentPropsWithoutRef } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
 
 interface NavOfficeProps {
   items: MenuItem[];

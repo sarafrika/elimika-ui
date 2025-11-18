@@ -5,7 +5,7 @@ import {
   updateOrganisationMutation,
   verifyOrganisationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { zApiResponsePagedDtoOrganisation, zOrganisation } from '@/services/client/zod.gen';
+import { zApiResponsePagedDtoOrganisation, type zOrganisation } from '@/services/client/zod.gen';
 import type {
   Options,
   UnverifyOrganisationData,

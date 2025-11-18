@@ -163,7 +163,7 @@ export default function StudentProfileGeneralForm() {
                 dob: data.dob ?? '',
                 active: user?.active as boolean,
               },
-              path: { uuid: user!.uuid as string },
+              path: { uuid: user?.uuid as string },
             },
             {
               onSuccess: data => {
@@ -173,7 +173,7 @@ export default function StudentProfileGeneralForm() {
               },
             }
           );
-        } catch (error) {
+        } catch (_error) {
           // handled by toast inside mutation
         }
       },
@@ -185,7 +185,7 @@ export default function StudentProfileGeneralForm() {
     'ST';
 
   const domainBadges =
-    // @ts-ignore
+    // @ts-expect-error
     user?.user_domain?.map(domain =>
       domain
         .split('_')

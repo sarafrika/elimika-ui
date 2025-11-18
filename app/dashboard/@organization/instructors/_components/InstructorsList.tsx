@@ -2,7 +2,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../../../../components/ui/button';
 import { Card, CardContent } from '../../../../../components/ui/card';
-import { Separator } from '../../../../../components/ui/separator';
 import {
   Table,
   TableBody,
@@ -13,7 +12,7 @@ import {
 } from '../../../../../components/ui/table';
 import UserBadge from '../../../../../components/user-badge';
 import { useTrainingCenter } from '../../../../../context/training-center-provide';
-import { getUsersByOrganisationAndDomain, User } from '../../../../../services/client';
+import { getUsersByOrganisationAndDomain, type User } from '../../../../../services/client';
 import { InviteForm } from '../../invites/_components/InviteForm';
 
 export default function InstructorsList() {
@@ -24,7 +23,7 @@ export default function InstructorsList() {
     queryFn: () =>
       getUsersByOrganisationAndDomain({
         path: {
-          uuid: trainingCenter!.uuid!,
+          uuid: trainingCenter?.uuid!,
           domainName: 'instructor',
         },
       }),
@@ -46,7 +45,7 @@ export default function InstructorsList() {
       <div className='flex items-end justify-between'>
         <div>
           <h1 className='text-2xl font-bold'>Manage Instructors</h1>
-          <p>A list of all the instructors under {trainingCenter!.name}.</p>
+          <p>A list of all the instructors under {trainingCenter?.name}.</p>
         </div>
         <InviteForm>
           <Button>Invite Instructor</Button>
