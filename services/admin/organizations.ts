@@ -1,16 +1,14 @@
 import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
 import {
-  unverifyOrganisationMutation,
   updateOrganisationMutation,
-  verifyOrganisationMutation,
+  moderateOrganisationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { zApiResponsePagedDtoOrganisation, type zOrganisation } from '@/services/client/zod.gen';
 import type {
   Options,
-  UnverifyOrganisationData,
   UpdateOrganisationData,
-  VerifyOrganisationData,
+  ModerateOrganisationData,
 } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 
@@ -149,9 +147,12 @@ export function useUpdateAdminOrganisation(options?: Partial<Options<UpdateOrgan
   });
 }
 
-export function useVerifyAdminOrganisation(options?: Partial<Options<VerifyOrganisationData>>) {
+export function useVerifyAdminOrganisation(options?: Partial<Options<ModerateOrganisationData>>) {
   const queryClient = useQueryClient();
-  const baseOptions = verifyOrganisationMutation(options);
+  const baseOptions = moderateOrganisationMutation({
+    ...options,
+    query: { action: 'approve', ...(options?.query ?? {}) },
+  });
 
   return useMutation({
     ...baseOptions,
@@ -162,9 +163,12 @@ export function useVerifyAdminOrganisation(options?: Partial<Options<VerifyOrgan
   });
 }
 
-export function useUnverifyAdminOrganisation(options?: Partial<Options<UnverifyOrganisationData>>) {
+export function useUnverifyAdminOrganisation(options?: Partial<Options<ModerateOrganisationData>>) {
   const queryClient = useQueryClient();
-  const baseOptions = unverifyOrganisationMutation(options);
+  const baseOptions = moderateOrganisationMutation({
+    ...options,
+    query: { action: 'revoke', ...(options?.query ?? {}) },
+  });
 
   return useMutation({
     ...baseOptions,
