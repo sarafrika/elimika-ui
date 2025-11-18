@@ -35,15 +35,6 @@ export function PublicTopNav() {
           <Link className='transition hover:text-primary focus-visible:text-primary' href='/instructors'>
             Instructors
           </Link>
-          <Link className='transition hover:text-primary focus-visible:text-primary' href='/#product'>
-            Product
-          </Link>
-          <Link className='transition hover:text-primary focus-visible:text-primary' href='/#domains'>
-            Domains
-          </Link>
-          <Link className='transition hover:text-primary focus-visible:text-primary' href='/#powered'>
-            Powered by Sarafrika
-          </Link>
           <Link href='/classes' className='focus-visible:outline-none focus-visible:ring focus-visible:ring-primary/50'>
             <Button
               variant='default'
