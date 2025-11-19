@@ -120,14 +120,15 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       {state.notice ? (
         <Alert
           className={cn(
-            'mx-auto mb-4 w-full max-w-5xl border-yellow-500/30 bg-yellow-50 text-yellow-900 shadow-sm'
+            'mx-auto mb-4 w-full max-w-5xl border-yellow-500/30 bg-yellow-50 text-yellow-900 shadow-sm',
+            'dark:border-yellow-500/40 dark:bg-yellow-950/30 dark:text-yellow-100'
           )}
         >
-          <ShieldAlert className='col-start-1 self-start text-yellow-600' />
-          <AlertTitle className='text-xs font-semibold tracking-[0.15em] text-yellow-700 uppercase'>
+          <ShieldAlert className='col-start-1 self-start text-yellow-600 dark:text-yellow-400' />
+          <AlertTitle className='text-xs font-semibold tracking-[0.15em] text-yellow-700 uppercase dark:text-yellow-300'>
             {state.notice.title}
           </AlertTitle>
-          <AlertDescription className='text-sm text-yellow-800/80'>
+          <AlertDescription className='text-sm text-yellow-800/80 dark:text-yellow-200/80'>
             {state.notice.description}
           </AlertDescription>
         </Alert>
