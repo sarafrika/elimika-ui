@@ -7,6 +7,7 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { ProfileViewList, ProfileViewListItem } from '@/components/profile/profile-view-field';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -200,6 +201,13 @@ export default function EducationSettings() {
     toast('Education removed successfully');
   }
 
+  const formatYearRange = (startYear?: string | number, endYear?: string | number, isCurrent?: boolean) => {
+    if (!startYear) return 'Years not specified';
+    if (isCurrent) return `${startYear} - Present`;
+    if (!endYear) return `${startYear}`;
+    return `${startYear} - ${endYear}`;
+  };
+
   const domainBadges =
     // @ts-expect-error
     user?.data?.user_domain?.map((domain: any) =>
@@ -234,6 +242,26 @@ export default function EducationSettings() {
           <ProfileFormSection
             title='Qualifications'
             description='Add degrees, diplomas, and certifications you have completed or are currently pursuing.'
+            viewContent={
+              <ProfileViewList emptyMessage='No education history added yet.'>
+                {instructorEducation?.map((edu) => (
+                  <ProfileViewListItem
+                    key={edu.uuid}
+                    title={`${edu.qualification} in ${edu.field_of_study}`}
+                    subtitle={edu.school_name}
+                    description={edu.full_description}
+                    badge={edu.is_recent_qualification ? 'Current' : undefined}
+                    dateRange={formatYearRange(edu.year_started, edu.year_completed, edu.is_recent_qualification)}
+                  >
+                    {edu.certificate_number && (
+                      <div className='text-muted-foreground mt-2 text-xs'>
+                        Certificate: {edu.certificate_number}
+                      </div>
+                    )}
+                  </ProfileViewListItem>
+                ))}
+              </ProfileViewList>
+            }
             footer={
               <Button
                 type='submit'
