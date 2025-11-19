@@ -232,6 +232,7 @@ type ProfileFormSectionProps = {
   description?: ReactNode;
   icon?: ReactNode;
   children: ReactNode;
+  viewContent?: ReactNode;
   footer?: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -242,6 +243,7 @@ export function ProfileFormSection({
   description,
   icon,
   children,
+  viewContent,
   footer,
   className,
   contentClassName,
@@ -255,7 +257,7 @@ export function ProfileFormSection({
         className
       )}
     >
-      <CardHeader className='border-border/60 bg-muted/40/60 border-b'>
+      <CardHeader className='border-border/60 bg-muted/40 border-b'>
         <div className='flex items-center gap-3'>
           {icon}
           <div>
@@ -269,20 +271,21 @@ export function ProfileFormSection({
         </div>
       </CardHeader>
       <CardContent className={cn('p-6 sm:p-8', contentClassName)}>
-        <fieldset
-          disabled={!isEditing}
-          className={cn('space-y-6', !isEditing && 'pointer-events-none opacity-70')}
-        >
-          {children}
-        </fieldset>
+        {isEditing ? (
+          <fieldset className='space-y-6'>{children}</fieldset>
+        ) : viewContent ? (
+          <div className='space-y-6'>{viewContent}</div>
+        ) : (
+          <fieldset
+            disabled
+            className='pointer-events-none space-y-6 opacity-70'
+          >
+            {children}
+          </fieldset>
+        )}
       </CardContent>
-      {footer ? (
-        <CardFooter
-          className={cn(
-            'border-border/60 bg-muted/10 flex flex-col items-stretch gap-3 border-t p-6 sm:flex-row sm:justify-end',
-            !isEditing && 'pointer-events-none opacity-70'
-          )}
-        >
+      {footer && isEditing ? (
+        <CardFooter className='border-border/60 bg-muted/10 flex flex-col items-stretch gap-3 border-t p-6 sm:flex-row sm:justify-end'>
           {footer}
         </CardFooter>
       ) : null}
