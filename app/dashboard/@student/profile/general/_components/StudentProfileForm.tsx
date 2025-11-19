@@ -1,6 +1,7 @@
 'use client';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { ProfileViewField, ProfileViewGrid } from '@/components/profile/profile-view-field';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -184,6 +185,14 @@ export default function StudentProfileGeneralForm() {
     `${(user?.first_name?.[0] ?? '').toUpperCase()}${(user?.last_name?.[0] ?? '').toUpperCase()}` ||
     'ST';
 
+  const formatGender = (gender?: string | null) => {
+    if (!gender) return undefined;
+    return gender
+      .split('_')
+      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const domainBadges =
     // @ts-expect-error
     user?.user_domain?.map(domain =>
@@ -222,6 +231,22 @@ export default function StudentProfileGeneralForm() {
           <ProfileFormSection
             title='Profile photo'
             description='This image appears on your classes, bookings, and certificates.'
+            viewContent={
+              <div className='flex items-center gap-6'>
+                <Avatar className='ring-background shadow-primary/5 h-24 w-24 shadow-lg ring-4'>
+                  {profileUrl ? <AvatarImage src={profileUrl} alt='Profile photo' /> : null}
+                  <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className='text-foreground text-xl font-semibold'>
+                    {user?.first_name} {user?.middle_name} {user?.last_name}
+                  </h3>
+                  <p className='text-muted-foreground text-sm'>{user?.email}</p>
+                </div>
+              </div>
+            }
           >
             <FormField
               control={form.control}
@@ -297,6 +322,18 @@ export default function StudentProfileGeneralForm() {
           <ProfileFormSection
             title='Personal details'
             description='Core identity information linked to your learner record.'
+            viewContent={
+              <ProfileViewGrid>
+                <ProfileViewField label='First name' value={user?.first_name} />
+                <ProfileViewField label='Last name' value={user?.last_name} />
+                <ProfileViewField label='Middle name' value={user?.middle_name} />
+                <ProfileViewField label='Gender' value={formatGender(user?.gender)} />
+                <ProfileViewField
+                  label='Date of birth'
+                  value={user?.dob ? format(new Date(user.dob), 'PPP') : undefined}
+                />
+              </ProfileViewGrid>
+            }
           >
             <div className='grid gap-6 sm:grid-cols-3'>
               <FormField
@@ -408,6 +445,13 @@ export default function StudentProfileGeneralForm() {
           <ProfileFormSection
             title='Contact & access'
             description='Details we use to reach you and secure your account.'
+            viewContent={
+              <ProfileViewGrid>
+                <ProfileViewField label='Email address' value={user?.email} />
+                <ProfileViewField label='Phone number' value={user?.phone_number} />
+                <ProfileViewField label='Username' value={user?.username} />
+              </ProfileViewGrid>
+            }
             footer={
               <Button
                 type='submit'
