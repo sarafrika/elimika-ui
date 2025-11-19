@@ -500,9 +500,8 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
               >
                 <div className='flex items-center gap-3'>
                   <div
-                    className={`rounded-lg p-2 ${
-                      txn.type === 'credit' ? 'bg-green-100' : 'bg-red-100'
-                    }`}
+                    className={`rounded-lg p-2 ${txn.type === 'credit' ? 'bg-green-100' : 'bg-red-100'
+                      }`}
                   >
                     {txn.type === 'credit' ? (
                       <TrendingUp className='h-4 w-4 text-green-600' />

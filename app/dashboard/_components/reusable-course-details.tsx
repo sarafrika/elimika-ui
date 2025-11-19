@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
@@ -207,7 +206,7 @@ export default function ReusableCourseDetailsPage({
               </div>
               <div className='flex items-center gap-1'>
                 <Users className='h-4 w-4' />
-                <span>{courseData?.class_limit} enrolled</span>
+                <span>{courseData?.class_limit} class limit</span>
               </div>
               <div className='flex items-center gap-1'>
                 <Clock className='h-4 w-4' />
@@ -257,13 +256,16 @@ export default function ReusableCourseDetailsPage({
                 {/* Pricing */}
                 <div className='mb-4 text-center'>
                   <div className='mb-2 flex items-center justify-center gap-2'>
-                    <span className='text-primary text-2xl font-bold'>KES {courseData?.price}</span>
-                    {courseData?.price && (
+                    <span className='text-primary text-2xl font-bold'>KES {courseData?.minimum_training_fee}</span>
+                    {courseData?.minimum_training_fee && (
                       <span className='text-muted-foreground text-lg line-through'>
-                        KES {courseData?.price}
+                        KES {courseData?.minimum_training_fee}
                       </span>
                     )}
                   </div>
+                  <p className='text-muted-foreground text-sm'>
+                    (minimum training fee (per hour per head))
+                  </p>
                 </div>
 
                 {/* Action Buttons */}
@@ -289,17 +291,17 @@ export default function ReusableCourseDetailsPage({
                 </div>
 
                 {/* Course Progress */}
-                <div className='mt-6 bg-blue-200'>
+                {/* <div className='mt-6'>
                   <div className='mb-2 flex items-center justify-between'>
                     <span className='text-sm'>Course Progress</span>
                     <span className='text-sm'>
-                      {/* {completedSkills}/{courseData.skills.length} skills */}
+                      {completedSkills}/{courseData.skills.length} skills
                       7/8 skills
                     </span>
                   </div>
                   <Progress value={25} className='mb-2' />
                   <p className='text-muted-foreground text-xs'>{Math.round(25)}% Complete</p>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           </div>
@@ -384,11 +386,10 @@ export default function ReusableCourseDetailsPage({
                 <CardHeader className='flex flex-row items-center space-y-0'>
                   <div className='flex flex-1 items-center gap-3'>
                     <div
-                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${
-                        skill?.lesson?.active
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
+                      className={`flex min-h-8 min-w-8 items-center justify-center rounded-full ${skill?.lesson?.active
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-muted text-muted-foreground'
+                        }`}
                     >
                       {skill?.lesson?.active ? (
                         <CheckCircle className='h-4 w-4' />
@@ -402,7 +403,7 @@ export default function ReusableCourseDetailsPage({
                         <HTMLTextPreview htmlContent={skill?.lesson?.description as string} />
                       </div>
                       <p className='text-muted-foreground text-sm'>
-                        {skill?.lesson?.duration_display}
+                        {/* {skill?.lesson?.duration_display} */}
                       </p>
                     </div>
                   </div>

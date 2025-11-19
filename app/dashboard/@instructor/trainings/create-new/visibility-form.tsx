@@ -15,12 +15,12 @@ import { Input } from '@/components/ui/input';
 
 import { ChevronLeft, DollarSign, Globe, Lock, Users } from 'lucide-react';
 
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Label } from '../../../../../components/ui/label';
-import { RadioGroup, RadioGroupItem } from '../../../../../components/ui/radio-group';
-import { Switch } from '../../../../../components/ui/switch';
 
 interface VisibilityFormProps {
   data: Partial<any>;
@@ -206,7 +206,7 @@ export function VisibilityForm({
               <FormDescription>From instructor&apos;s availability settings</FormDescription>
 
               {/* Pricing Summary */}
-              <Card className='mt-4 bg-gray-50'>
+              <Card className='mt-4'>
                 <CardContent className='p-4'>
                   <h4 className='mb-2 font-medium'>Pricing Summary</h4>
                   <div className='space-y-2 text-sm'>
@@ -242,7 +242,7 @@ export function VisibilityForm({
         )} */}
 
         {/* Summary */}
-        <div className='rounded-lg bg-gray-50 p-4'>
+        <Card className='rounded-lg p-4'>
           <h4 className='mb-2 font-medium'>Access Summary</h4>
           <div className='grid grid-cols-1 gap-4 text-sm md:grid-cols-2'>
             <div>
@@ -273,7 +273,7 @@ export function VisibilityForm({
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Footer Buttons */}
         <div className='flex justify-between'>

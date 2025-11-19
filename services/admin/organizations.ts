@@ -1,15 +1,15 @@
 import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
 import {
-  updateOrganisationMutation,
   moderateOrganisationMutation,
+  updateOrganisationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { zApiResponsePagedDtoOrganisation, type zOrganisation } from '@/services/client/zod.gen';
 import type {
+  ModerateOrganisationData,
   Options,
   UpdateOrganisationData,
-  ModerateOrganisationData,
 } from '@/services/client/types.gen';
+import { zApiResponsePagedDtoOrganisation, type zOrganisation } from '@/services/client/zod.gen';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 
 const organisationListResponseSchema = zApiResponsePagedDtoOrganisation.extend({
@@ -74,20 +74,20 @@ export async function fetchAdminOrganisations(
 
   const response = hasFilters
     ? await fetchClient.GET('/api/v1/organisations/search', {
-        params: {
-          query: {
-            searchParams: filters,
-            pageable,
-          },
+      params: {
+        query: {
+          searchParams: filters,
+          pageable,
         },
-      })
+      },
+    })
     : await fetchClient.GET('/api/v1/organisations', {
-        params: {
-          query: {
-            pageable,
-          },
+      params: {
+        query: {
+          pageable,
         },
-      });
+      },
+    });
 
   if (response.error) {
     throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch organisations');

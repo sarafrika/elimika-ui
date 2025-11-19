@@ -139,15 +139,15 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
     <div className='p-2'>
       <div className='group relative flex flex-row items-start gap-3'>
         {/* Index on the left */}
-        <div className='mt-1 w-8 flex-shrink-0 text-center font-semibold text-gray-700 dark:text-gray-300'>
+        <div className='mt-1 w-8 flex-shrink-0 text-center font-semibold'>
           {qIndex + 1}.
         </div>
 
         {/* Question text & points */}
         {!isLoading && (
           <div className='flex w-full flex-col gap-1'>
-            <p className='font-medium text-gray-800 dark:text-gray-100'>{question.question_text}</p>
-            <p className='text-sm font-bold text-gray-600 dark:text-gray-400'>
+            <p className='font-medium'>{question.question_text}</p>
+            <p className='text-sm font-bold'>
               Points: {question.points_display}
             </p>
 
@@ -203,9 +203,8 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
               {options.map((option: any, index: number) => (
                 <TableRow
                   key={option.uuid}
-                  className={`group transition-colors ${
-                    option.is_correct ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-muted'
-                  }`}
+                  className={`group transition-colors ${option.is_correct ? ' hover:bg-green-100 hover:text-black' : 'hover:bg-muted'
+                    }`}
                 >
                   <TableCell className='text-center'>{index + 1}</TableCell>
                   <TableCell>{option.option_text}</TableCell>

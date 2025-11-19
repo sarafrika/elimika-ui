@@ -267,9 +267,9 @@ export type Student = {
    * **[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.
    */
   second_guardian_mobile?: string;
+  primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
-  primaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
    */
@@ -1294,13 +1294,13 @@ export type Instructor = {
    */
   readonly is_profile_complete?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
-   */
-  readonly has_location_coordinates?: boolean;
-  /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   */
+  readonly has_location_coordinates?: boolean;
 };
 
 /**
@@ -1416,14 +1416,14 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string;
+  /**
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
   membership_status?: MembershipStatusEnum;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
-   */
-  readonly formatted_duration?: string;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -1521,6 +1521,10 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration of employment.
    */
   readonly formatted_duration?: string;
@@ -1545,10 +1549,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number;
   /**
    * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
@@ -1750,6 +1750,11 @@ export type InstructorDocument = {
    */
   readonly is_expired?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the document has an expiry date configured.
+   */
+  readonly has_expiry_date?: boolean;
+  verification_status?: VerificationStatusEnum;
+  /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
   readonly file_size_formatted?: string;
@@ -1761,11 +1766,6 @@ export type InstructorDocument = {
    * **[READ-ONLY]** Indicates if the document is pending verification.
    */
   readonly is_pending_verification?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the document has an expiry date configured.
-   */
-  readonly has_expiry_date?: boolean;
-  verification_status?: VerificationStatusEnum;
 };
 
 export type ApiResponseInstructorDocument = {
@@ -5023,9 +5023,9 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
-  readonly grade_display?: string;
+  readonly time_display?: string;
   /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
@@ -5035,9 +5035,9 @@ export type QuizAttempt = {
    */
   readonly performance_summary?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   * **[READ-ONLY]** Formatted display of the grade information.
    */
-  readonly time_display?: string;
+  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -5154,10 +5154,6 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
@@ -5169,6 +5165,10 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
 };
 
 export type ApiResponseListCourse = {
@@ -5770,10 +5770,6 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
@@ -5785,6 +5781,10 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -5843,13 +5843,13 @@ export type CourseCategoryMapping = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable text representing this course-category relationship.
-   */
-  readonly display_text?: string;
-  /**
    * **[READ-ONLY]** Indicates if both course and category names are populated.
    */
   readonly has_names?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable text representing this course-category relationship.
+   */
+  readonly display_text?: string;
 };
 
 export type ApiResponsePagedDtoCourseAssessment = {
@@ -7754,7 +7754,7 @@ export type DeleteQuizResponses = {
   /**
    * Quiz deleted successfully
    */
-  204: undefined;
+  204: void;
 };
 
 export type DeleteQuizResponse = DeleteQuizResponses[keyof DeleteQuizResponses];
@@ -8438,7 +8438,7 @@ export type DeleteInstructorResponses = {
   /**
    * Instructor deleted successfully
    */
-  204: undefined;
+  204: void;
 };
 
 export type DeleteInstructorResponse = DeleteInstructorResponses[keyof DeleteInstructorResponses];
@@ -8980,7 +8980,7 @@ export type DeleteCourseResponses = {
   /**
    * Course deleted successfully
    */
-  204: undefined;
+  204: void;
 };
 
 export type DeleteCourseResponse = DeleteCourseResponses[keyof DeleteCourseResponses];
@@ -9532,7 +9532,7 @@ export type DeleteCourseCreatorResponses = {
   /**
    * Course creator deleted successfully
    */
-  204: undefined;
+  204: void;
 };
 
 export type DeleteCourseCreatorResponse =
@@ -10367,7 +10367,7 @@ export type DeleteCertificateResponses = {
   /**
    * Certificate deleted successfully
    */
-  204: undefined;
+  204: void;
 };
 
 export type DeleteCertificateResponse =
@@ -10527,7 +10527,7 @@ export type DeleteAssignmentResponses = {
   /**
    * Assignment deleted successfully
    */
-  204: undefined;
+  204: void;
 };
 
 export type DeleteAssignmentResponse = DeleteAssignmentResponses[keyof DeleteAssignmentResponses];

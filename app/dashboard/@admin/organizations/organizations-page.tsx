@@ -30,8 +30,8 @@ import { format } from 'date-fns';
 import { Building2, Loader2, MapPin, Search, Shield, ShieldOff } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
-import { z } from 'zod';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 const organisationFormSchema = z.object({
   name: zOrganisation.shape.name,
@@ -199,9 +199,8 @@ function OrganisationListPanel({
       <button
         key={org.uuid ?? org.name}
         type='button'
-        className={`w-full rounded-2xl border p-4 text-left transition hover:border-primary/40 hover:bg-primary/5 ${
-          selectedOrganisationId === org.uuid ? 'border-primary bg-primary/5' : 'border-border/60 bg-card'
-        }`}
+        className={`w-full rounded-2xl border p-4 text-left transition hover:border-primary/40 hover:bg-primary/5 ${selectedOrganisationId === org.uuid ? 'border-primary bg-primary/5' : 'border-border/60 bg-card'
+          }`}
         onClick={() => onSelect(org)}
       >
         <div className='flex items-start justify-between gap-3'>
@@ -671,10 +670,10 @@ function OrganisationBranchesCard({ organisationUuid, variant = 'default' }: Org
   const { data, isLoading } = useAdminBranches(
     organisationUuid
       ? {
-          organizationUuid: organisationUuid,
-          page: 0,
-          size: 5,
-        }
+        organizationUuid: organisationUuid,
+        page: 0,
+        size: 5,
+      }
       : null
   );
 
@@ -700,33 +699,33 @@ function OrganisationBranchesCard({ organisationUuid, variant = 'default' }: Org
       <div className='mt-4 space-y-3'>
         {isLoading
           ? Array.from({ length: 3 }).map((_, index) => (
-              <div key={`branch-skeleton-${index}`} className='rounded-xl border border-dashed border-border/60 p-3'>
-                <Skeleton className='h-4 w-32' />
-                <Skeleton className='mt-2 h-3 w-20' />
-              </div>
-            ))
+            <div key={`branch-skeleton-${index}`} className='rounded-xl border border-dashed border-border/60 p-3'>
+              <Skeleton className='h-4 w-32' />
+              <Skeleton className='mt-2 h-3 w-20' />
+            </div>
+          ))
           : branches.length > 0
             ? branches.map((branch, index) => (
-                <div key={branch.uuid ?? `${branch.branch_name ?? 'branch'}-${index}`} className='rounded-xl border border-dashed border-border/60 p-3'>
-                  <div className='flex items-center justify-between gap-3'>
-                    <div>
-                      <p className='font-medium leading-tight'>{branch.branch_name ?? 'Unnamed branch'}</p>
-                      <p className='text-muted-foreground text-xs'>
-                        {branch.location ?? branch.branch_code ?? 'Location not provided'}
-                      </p>
-                    </div>
-                    <Badge variant={branch.active ? 'secondary' : 'outline'} className='text-xs'>
-                      {branch.active ? 'Active' : 'Inactive'}
-                    </Badge>
+              <div key={branch.uuid ?? `${branch.branch_name ?? 'branch'}-${index}`} className='rounded-xl border border-dashed border-border/60 p-3'>
+                <div className='flex items-center justify-between gap-3'>
+                  <div>
+                    <p className='font-medium leading-tight'>{branch.branch_name ?? 'Unnamed branch'}</p>
+                    <p className='text-muted-foreground text-xs'>
+                      {branch.location ?? branch.branch_code ?? 'Location not provided'}
+                    </p>
                   </div>
-                  {branch.branch_code ? (
-                    <p className='text-muted-foreground mt-2 text-xs'>Code: {branch.branch_code}</p>
-                  ) : null}
+                  <Badge variant={branch.active ? 'secondary' : 'outline'} className='text-xs'>
+                    {branch.active ? 'Active' : 'Inactive'}
+                  </Badge>
                 </div>
-              ))
+                {branch.branch_code ? (
+                  <p className='text-muted-foreground mt-2 text-xs'>Code: {branch.branch_code}</p>
+                ) : null}
+              </div>
+            ))
             : (
-                <p className='text-muted-foreground text-sm'>No branches registered yet.</p>
-              )}
+              <p className='text-muted-foreground text-sm'>No branches registered yet.</p>
+            )}
       </div>
     </div>
   );

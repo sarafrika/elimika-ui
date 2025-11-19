@@ -101,7 +101,7 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
 
     return {
       id: item.uuid,
-      title: item.title,
+      title: item.title.toUpperCase(), // convert to uppercase
       type: 'booked',
       startTime: getTimeString(start),
       endTime: getTimeString(end),
