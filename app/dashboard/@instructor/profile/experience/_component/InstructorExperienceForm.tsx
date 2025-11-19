@@ -7,6 +7,7 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { ProfileViewList, ProfileViewListItem } from '@/components/profile/profile-view-field';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -204,6 +205,18 @@ export default function ProfessionalExperienceSettings() {
     toast('Experience removed successfully');
   }
 
+  const formatDateRange = (startDate?: string, endDate?: string, isCurrent?: boolean) => {
+    const formatMonthYear = (dateStr?: string) => {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    };
+
+    const start = formatMonthYear(startDate);
+    const end = isCurrent ? 'Present' : formatMonthYear(endDate);
+    return `${start} - ${end}`;
+  };
+
   const domainBadges =
     // @ts-expect-error
     user?.data?.user_domain?.map((domain: any) =>
@@ -238,6 +251,20 @@ export default function ProfessionalExperienceSettings() {
           <ProfileFormSection
             title='Experience history'
             description='Share the roles and teaching engagements that show your track record.'
+            viewContent={
+              <ProfileViewList emptyMessage='No professional experience added yet.'>
+                {instructorExperience?.map((exp) => (
+                  <ProfileViewListItem
+                    key={exp.uuid}
+                    title={exp.position || 'Position not specified'}
+                    subtitle={exp.organization_name}
+                    description={exp.responsibilities}
+                    badge={exp.is_current_position ? 'Current' : undefined}
+                    dateRange={formatDateRange(exp.start_date, exp.end_date, exp.is_current_position)}
+                  />
+                ))}
+              </ProfileViewList>
+            }
             footer={
               <Button
                 type='submit'
