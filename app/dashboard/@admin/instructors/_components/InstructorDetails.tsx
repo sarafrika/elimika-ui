@@ -230,14 +230,14 @@ export default function InstructorDetails({
             <div className='grid grid-cols-2 justify-between gap-4'>
               {/* @ts-ignore */}
               {membership?.data?.content?.map((body: any, index) => (
-                <div key={index} className='rounded-lg border bg-white p-4 shadow-sm'>
+                <div key={index} className='rounded-lg border bg-card p-4 shadow-sm'>
                   <div className='mb-2 flex items-center gap-4'>
                     <Badge variant='outline' className='text-xs'>
                       {body?.organization_name || 'N/A'}
                     </Badge>
                     <span
                       className={`text-xs font-medium ${
-                        body?.is_active ? 'text-green-600' : 'text-red-500'
+                        body?.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}
                     >
                       {body?.is_active ? 'Active' : 'Inactive'}
