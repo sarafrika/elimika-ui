@@ -147,26 +147,6 @@ export default function InstructorDetails({
                 </p>
               </div>
             </div>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Nationality</p>
-                <p className='text-sm'>Not specified</p>
-              </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Religion</p>
-                <p className='text-sm'>Not specified</p>
-              </div>
-            </div>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Languages</p>
-                <p className='text-sm'>Not specified</p>
-              </div>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Marital status</p>
-                <p className='text-sm'>Not specified</p>
-              </div>
-            </div>
             <Separator />
             <div>
               <p className='text-muted-foreground text-sm font-medium'>Permanent address</p>
