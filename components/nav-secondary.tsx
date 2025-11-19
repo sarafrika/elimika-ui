@@ -5,11 +5,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { getMenuWithActivePath, MenuItem } from '@/lib/menu';
+import { getMenuWithActivePath, type MenuItem } from '@/lib/menu';
 import { useUserStore } from '@/store/use-user-store';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ComponentPropsWithoutRef } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
 
 interface NavSecondaryProps {
   items: MenuItem[];

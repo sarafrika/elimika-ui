@@ -90,7 +90,7 @@ export default function AddStudentProfileForm() {
       // Small delay to allow context to update
       await new Promise(resolve => setTimeout(resolve, 300));
       router.replace('/dashboard/overview');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create student profile. Please try again.');
       setIsSubmitting(false);
     }

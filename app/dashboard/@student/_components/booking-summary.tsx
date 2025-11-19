@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { AlertCircle, Calendar, Clock, DollarSign, MapPin, Video } from 'lucide-react';
-import React, { useState } from 'react';
-import { Booking } from '../browse-courses/instructor/page';
+import type React from 'react';
+import { useState } from 'react';
+import type { Booking } from '../browse-courses/instructor/page';
 import { BookingConfirmation } from './booking-confirmation';
 import { PaymentModal } from './payment-modal';
 

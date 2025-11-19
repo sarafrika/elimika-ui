@@ -1,7 +1,7 @@
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CourseCreator } from '@/services/client';
+import type { CourseCreator } from '@/services/client';
 import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { BadgeCheckIcon, Globe, MapPin, User } from 'lucide-react';

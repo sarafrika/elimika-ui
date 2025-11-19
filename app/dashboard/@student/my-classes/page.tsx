@@ -12,8 +12,8 @@ import { CustomLoadingState } from '../../@course_creator/_components/loading-st
 import EnrollCourseCard from '../../_components/enroll-course-card';
 
 export default function MyClassesPage() {
-  const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const _router = useRouter();
+  const [_selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const student = useStudent();

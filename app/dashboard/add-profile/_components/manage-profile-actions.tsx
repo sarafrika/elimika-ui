@@ -26,7 +26,7 @@ import {
 import { useMutation } from '@tanstack/react-query';
 import { AlertTriangle, BookOpen, GraduationCap, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { UserDomain } from '@/lib/types';
+import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type RemovableDomain = 'student' | 'instructor' | 'course_creator';

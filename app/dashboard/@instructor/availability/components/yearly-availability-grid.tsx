@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Calendar, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { AvailabilityData, AvailabilitySlot } from './types';
+import type { AvailabilityData, AvailabilitySlot } from './types';
 
 interface YearlyAvailabilityGridProps {
   availabilityData: AvailabilityData;
@@ -64,7 +64,7 @@ export function YearlyAvailabilityGrid({
   };
 
   const getMonthClass = (month: number) => {
-    const status = getMonthStatus(month);
+    const _status = getMonthStatus(month);
     const currentMonth = new Date().getMonth();
     const currentYearCheck = new Date().getFullYear();
     const isCurrentMonth = month === currentMonth && currentYear === currentYearCheck;

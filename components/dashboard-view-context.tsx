@@ -1,7 +1,7 @@
 'use client';
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useUserProfile } from '../context/profile-context';
-import { UserDomain } from '../lib/types';
+import type { UserDomain } from '../lib/types';
 import { getDashboardStorageKey } from '../lib/utils';
 
 export const AvailableViews = [

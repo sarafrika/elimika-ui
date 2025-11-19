@@ -2,8 +2,8 @@
 
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import {
-  ProfileSummaryMeta,
-  ProfileSummarySection,
+  type ProfileSummaryMeta,
+  type ProfileSummarySection,
   ProfileSummaryView,
 } from '@/components/profile/profile-summary-view';
 import { Badge } from '@/components/ui/badge';

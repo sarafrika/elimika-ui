@@ -72,7 +72,7 @@ const EnrollmentPage = () => {
             toast.success(data?.message || 'Student enrolled successfully');
           },
           onError: data => {
-            // @ts-ignore
+            // @ts-expect-error
             toast.error(data?.error as string);
             setOpenEnrollModal(false);
           },

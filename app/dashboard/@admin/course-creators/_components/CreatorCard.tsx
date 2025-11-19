@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
-import { CourseCreator } from '@/services/client';
+import type { CourseCreator } from '@/services/client';
 import { BadgeCheckIcon, Trash2 } from 'lucide-react';
-import React from 'react';
+import type React from 'react';
 
 interface CourseCreatorCardProps {
   courseCreator: CourseCreator;

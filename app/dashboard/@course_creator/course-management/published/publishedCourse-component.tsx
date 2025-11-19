@@ -167,8 +167,7 @@ export default function PublishedCoursesComponent({
             </TableHeader>
 
             <TableBody className=''>
-              <>
-                {publishedCourses?.map((course: any) => (
+              {publishedCourses?.map((course: any) => (
                   <TableRow key={course.uuid}>
                     <TableHead>
                       <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
@@ -235,7 +234,6 @@ export default function PublishedCoursesComponent({
                     </TableCell>
                   </TableRow>
                 ))}
-              </>
             </TableBody>
           </Table>
         </Card>

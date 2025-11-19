@@ -7,7 +7,7 @@ import {
   TableRow,
 } from '../../../../components/ui/table';
 import UserBadge from '../../../../components/user-badge';
-import { User } from '../../../../services/client';
+import type { User } from '../../../../services/client';
 
 export default function UsersList({ users }: { users: User[] }) {
   return (

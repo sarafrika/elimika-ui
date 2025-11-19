@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
-import { Instructor } from '@/services/api/schema';
+import type { Instructor } from '@/services/api/schema';
 import { BadgeCheckIcon, Trash2 } from 'lucide-react';
-import React from 'react';
+import type React from 'react';
 
 interface InstructorCardProps {
   instructor: Instructor;

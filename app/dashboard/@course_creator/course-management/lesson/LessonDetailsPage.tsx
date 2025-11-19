@@ -36,14 +36,14 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { TLessonContentItem } from '../../_components/instructor-type';
+import type { TLessonContentItem } from '../../_components/instructor-type';
 import {
-  ContentType,
+  type ContentType,
   getContentTypeIcon,
   LessonContentDialog,
 } from '../../_components/lesson-management-form';
 import { CustomLoadingState } from '../../_components/loading-state';
-import { QuestionDialog, QuizDialog, QuizFormValues } from '../../_components/quiz-management-form';
+import { QuestionDialog, QuizDialog, type QuizFormValues } from '../../_components/quiz-management-form';
 import QuizQuestions from './quizQuestions';
 
 const LessonDetailsPage = () => {
@@ -59,7 +59,7 @@ const LessonDetailsPage = () => {
       path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
     })
   );
-  // @ts-ignore
+  // @ts-expect-error
   const lesson = data?.data;
 
   useEffect(() => {
@@ -102,7 +102,7 @@ const LessonDetailsPage = () => {
   const [editingContent, setEditingContent] = useState<TLessonContentItem | null>(null);
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
 
-  const handleAddLessonContent = (lesson: any) => {
+  const handleAddLessonContent = (_lesson: any) => {
     setOpenContentModal(true);
   };
 
@@ -111,7 +111,7 @@ const LessonDetailsPage = () => {
     setEditingContent(item);
   };
 
-  const handleDeleteContent = (courseId: any, lessonId: any, contentId: any) => {
+  const handleDeleteContent = (_courseId: any, _lessonId: any, contentId: any) => {
     setEditingContentId(contentId);
     setOpenDeleteContentModal(true);
   };
@@ -141,7 +141,7 @@ const LessonDetailsPage = () => {
           },
         }
       );
-    } catch (err) { }
+    } catch (_err) { }
   };
 
   // Quiz management
@@ -172,7 +172,7 @@ const LessonDetailsPage = () => {
   const [editingQuizData, setEditingQuizData] = useState<QuizFormValues | null>(null);
 
   const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
-  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [_editingLessonId, setEditingLessonId] = useState<string | null>(null);
 
   const [openEditQuizModal, setOpenEditQuizModal] = useState(false);
   const [openDeleteQuizModal, setOpenDeleteQuizModal] = useState(false);

@@ -20,7 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
-import { AvailabilityTypeEnum, LocalTime } from '@/services/client';
+import { AvailabilityTypeEnum, type LocalTime } from '@/services/client';
 import {
   createAvailabilitySlotMutation,
   getInstructorAvailabilityQueryKey,
@@ -41,7 +41,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { CalendarEvent } from './types';
+import type { CalendarEvent } from './types';
 
 export type EventType = 'booked' | 'unavailable' | 'available' | 'reserved';
 
@@ -139,7 +139,7 @@ export function EventModal({
         notes: '',
       });
     }
-  }, [event, selectedSlot]);
+  }, [event, selectedSlot, getEndTime]);
 
   const getEndTime = (startTime: string): string => {
     const [hours, minutes] = startTime.split(':').map(Number);
@@ -192,8 +192,8 @@ export function EventModal({
       type: formData.type as EventType,
       startTime: formData.startTime!,
       endTime: formData.endTime!,
-      date: formData.date || selectedSlot!.date,
-      day: formData.day || selectedSlot!.day,
+      date: formData.date || selectedSlot?.date,
+      day: formData.day || selectedSlot?.day,
       location: formData.location,
       attendees: formData.attendees,
       isRecurring: formData.isRecurring,

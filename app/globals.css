@@ -232,7 +232,7 @@
 }
 
 .accordion-trigger-no-underline {
-  text-decoration: none !important; /* Use !important if necessary to override existing styles */
+  text-decoration: none; /* Use !important if necessary to override existing styles */
 }
 /* Hide scrollbar for all browsers */
 .scrollbar-hidden {

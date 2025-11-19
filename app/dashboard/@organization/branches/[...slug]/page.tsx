@@ -10,9 +10,9 @@ import {
   CardTitle,
 } from '../../../../../components/ui/card';
 import { Separator } from '../../../../../components/ui/separator';
-import { getTrainingBranchByUuid, TrainingBranch } from '../../../../../services/client';
+import { getTrainingBranchByUuid, type TrainingBranch } from '../../../../../services/client';
 import TabSection from '../_components/tabsection';
-import { Action } from './utils';
+import type { Action } from './utils';
 
 export default async function ViewBranch({
   params,
@@ -21,10 +21,10 @@ export default async function ViewBranch({
   params: Promise<{ slug: Action[] }>;
 }) {
   const {
-    slug: [branch_uuid, tab],
+    slug: [branch_uuid, _tab],
   } = await params;
 
-  if (branch_uuid == 'new' || branch_uuid == 'edit') {
+  if (branch_uuid === 'new' || branch_uuid === 'edit') {
     return null;
   }
 

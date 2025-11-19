@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminDataTablePagination as AdminDataTablePaginationConfig } from './types';
+import type { AdminDataTablePagination as AdminDataTablePaginationConfig } from './types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

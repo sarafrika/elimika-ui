@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useRouter } from 'next/navigation';
 
 interface ErrorPageProps {
@@ -27,7 +26,6 @@ export default function ErrorPage({
   return (
     <main
       className='flex h-full w-full flex-1 items-center justify-center bg-secondary/60 dark:bg-background'
-      role='main'
       aria-label='Error page'
     >
       <section className='flex w-full max-w-md flex-col items-center rounded-xl bg-card p-8 shadow-lg shadow-primary/10 dark:bg-card/90'>
@@ -51,7 +49,6 @@ export default function ErrorPage({
         <button
           onClick={handleAction}
           className='mt-4 rounded-lg bg-destructive px-6 py-2 font-semibold text-destructive-foreground shadow transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive/40'
-          autoFocus
         >
           {actionLabel}
         </button>

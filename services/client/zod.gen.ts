@@ -394,9 +394,9 @@ export const zStudent = z
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.'
       )
       .optional(),
-    primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
+    primaryGuardianContact: z.string().optional(),
     created_date: z
       .string()
       .datetime()
@@ -1906,17 +1906,17 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    formatted_location: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
-      )
-      .readonly()
-      .optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
+      )
+      .readonly()
+      .optional(),
+    formatted_location: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
       )
       .readonly()
       .optional(),
@@ -2125,11 +2125,6 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    formatted_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
-      .readonly()
-      .optional(),
     membership_duration_months: z
       .number()
       .int()
@@ -2139,6 +2134,11 @@ export const zInstructorProfessionalMembership = z
       .readonly()
       .optional(),
     membership_status: zMembershipStatusEnum.optional(),
+    formatted_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
+      .readonly()
+      .optional(),
     membership_period: z
       .string()
       .describe('**[READ-ONLY]** Formatted membership period showing start and end dates.')
@@ -2289,14 +2289,6 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    duration_in_months: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
-      )
-      .readonly()
-      .optional(),
     formatted_duration: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration of employment.')
@@ -2326,6 +2318,14 @@ export const zInstructorExperience = z
     calculated_years: z
       .number()
       .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
+      .readonly()
+      .optional(),
+    duration_in_months: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
+      )
       .readonly()
       .optional(),
     is_complete: z
@@ -2673,12 +2673,6 @@ export const zInstructorDocument = z
       .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
-    has_expiry_date: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has an expiry date configured.')
-      .readonly()
-      .optional(),
-    verification_status: zVerificationStatusEnum.optional(),
     file_size_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -2697,6 +2691,12 @@ export const zInstructorDocument = z
       .describe('**[READ-ONLY]** Indicates if the document is pending verification.')
       .readonly()
       .optional(),
+    has_expiry_date: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has an expiry date configured.')
+      .readonly()
+      .optional(),
+    verification_status: zVerificationStatusEnum.optional(),
   })
   .describe(
     'Document record for instructor credential verification including educational certificates, experience documents, and professional memberships'
@@ -6804,9 +6804,9 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    time_display: z
+    grade_display: z
       .string()
-      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
     attempt_category: z
@@ -6819,9 +6819,9 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
       .readonly()
       .optional(),
-    grade_display: z
+    time_display: z
       .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
       .readonly()
       .optional(),
   })
@@ -6967,6 +6967,11 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
@@ -6984,11 +6989,6 @@ export const zProgramEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
-      .readonly()
-      .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
   })
@@ -7586,6 +7586,11 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
@@ -7603,11 +7608,6 @@ export const zCourseEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
-      .readonly()
-      .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
   })
@@ -7691,16 +7691,16 @@ export const zCourseCategoryMapping = z
       )
       .readonly()
       .optional(),
-    has_names: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
-      .readonly()
-      .optional(),
     display_text: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable text representing this course-category relationship.'
       )
+      .readonly()
+      .optional(),
+    has_names: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
       .readonly()
       .optional(),
   })

@@ -1,9 +1,9 @@
 import LoginButton from '@/components/LoginButton';
-import { ThemeSwitcher } from '@/components/theme-switcher';
+import { PublicTopNav } from '@/components/PublicTopNav';
 import { BrandPill } from '@/components/ui/brand-pill';
 import { ArrowRight, BookOpenCheck, GraduationCap, LayoutDashboard, Sparkles } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const currentYear = new Date().getFullYear();
 
@@ -38,43 +38,7 @@ const sarafrikaPoints = [
 export default function Home() {
   return (
     <div className='relative min-h-screen overflow-hidden bg-background text-foreground'>
-
-      <nav className='sticky top-0 z-40 border-b border-border/60 bg-card/80 backdrop-blur'>
-        <div className='mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5'>
-          <Link href='/' className='flex items-center gap-4'>
-            <Image
-              alt='Elimika logo'
-              src='/logos/elimika/Elimika Logo Design-02.svg'
-              width={160}
-              height={48}
-              className='h-10 w-auto drop-shadow-sm dark:hidden'
-              priority
-            />
-            <Image
-              alt='Elimika logo in white'
-              src='/logos/elimika/Elimika Logo Design-02-white.svg'
-              width={160}
-              height={48}
-              className='hidden h-10 w-auto drop-shadow-sm dark:block'
-              priority
-            />
-          </Link>
-
-          <div className='flex items-center gap-4 text-sm font-medium text-muted-foreground'>
-            <Link className='transition hover:text-primary focus-visible:text-primary' href='#product'>
-              Product
-            </Link>
-            <Link className='transition hover:text-primary focus-visible:text-primary' href='#domains'>
-              Domains
-            </Link>
-            <Link className='transition hover:text-primary focus-visible:text-primary' href='#powered'>
-              Powered by Sarafrika
-            </Link>
-            <ThemeSwitcher size='icon' />
-            <LoginButton />
-          </div>
-        </div>
-      </nav>
+      <PublicTopNav />
 
       <main>
         <section className='relative overflow-hidden border-b border-border/50'>
@@ -92,6 +56,12 @@ export default function Home() {
             </p>
             <div className='flex flex-col items-center gap-4 sm:flex-row'>
               <LoginButton />
+              <Link
+                href='/courses'
+                className='inline-flex items-center justify-center gap-2 rounded-full border border-primary/50 bg-primary/10 px-7 py-3 text-sm font-semibold text-primary shadow hover:border-primary/70'
+              >
+                Browse courses <ArrowRight className='h-4 w-4' />
+              </Link>
               <Link
                 href='#product'
                 className='inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-7 py-3 text-sm font-medium text-primary shadow hover:border-primary/60 hover:text-primary'

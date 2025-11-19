@@ -101,7 +101,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
           },
         }
       );
-    } catch (err) { }
+    } catch (_err) { }
   };
 
   const draftCourses = data?.data?.content || [];
@@ -166,8 +166,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
             </TableHeader>
 
             <TableBody>
-              <>
-                {draftCourses?.map((course: any) => (
+              {draftCourses?.map((course: any) => (
                   <TableRow key={course.uuid} className=''>
                     <TableHead>
                       <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
@@ -243,7 +242,6 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                     </TableCell>
                   </TableRow>
                 ))}
-              </>
             </TableBody>
           </Table>
         </Card>

@@ -44,7 +44,7 @@ import { CustomLoadingState } from '../../../@course_creator/_components/loading
 export default function ClassDetailsPage() {
   const params = useParams();
   const classId = params?.id as string;
-  const student = useStudent();
+  const _student = useStudent();
   const { difficultyMap } = useDifficultyLevels()
 
   const { data, isLoading: classLoading } = useQuery({
@@ -69,14 +69,14 @@ export default function ClassDetailsPage() {
         isLast: true,
       },
     ]);
-  }, [replaceBreadcrumbs]);
+  }, [replaceBreadcrumbs, classData?.title, classData?.uuid]);
 
 
   const { data: instructor, isLoading: instructorLoading } = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid: classData?.default_instructor_uuid as string } }),
     enabled: !!classData?.default_instructor_uuid
   })
-  // @ts-ignore
+  // @ts-expect-error
   const classInstructor = instructor?.data
 
   const { data: course, isLoading: courseLoading } = useQuery({

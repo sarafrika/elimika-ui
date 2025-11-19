@@ -9,7 +9,12 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    domains: ['api.elimika.sarafrika.com', 'cdn.sarafrika.com', 'images.unsplash.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.elimika.sarafrika.com',
+      }
+    ],
   },
   typescript: {
     ignoreBuildErrors: true,

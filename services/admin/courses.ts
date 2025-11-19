@@ -1,10 +1,10 @@
 import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
 import { updateCourseMutation } from '@/services/client/@tanstack/react-query.gen';
-import { zApiResponsePagedDtoCourse, zCourse } from '@/services/client/zod.gen';
+import { zApiResponsePagedDtoCourse, type zCourse } from '@/services/client/zod.gen';
 import type { Options, UpdateCourseData } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 const courseListResponseSchema = zApiResponsePagedDtoCourse.extend({
   data: zApiResponsePagedDtoCourse.shape.data.default({ content: [] }),

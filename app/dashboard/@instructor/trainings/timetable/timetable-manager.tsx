@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from 'lucide-react';
 import { useState } from 'react';
 import { MonthlyAvailabilityGrid } from '../../availability/components/monthly-availability-grid';
-import { AvailabilityData } from '../../availability/components/types';
+import type { AvailabilityData } from '../../availability/components/types';
 import { WeeklyAvailabilityGrid } from '../../availability/components/weekly-availability-grid';
 
 interface AvailabilityManagerProps {
@@ -18,7 +18,7 @@ export default function TimetableManager({
   onAvailabilityUpdate,
 }: AvailabilityManagerProps) {
   const [currentTab, setCurrentTab] = useState('weekly');
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, _setIsEditing] = useState(false);
 
   return (
     <div className='space-y-6'>

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.6/schema.json",
+  "formatter": {
+    "enabled": false
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": false,
+      "suspicious": {
+        "noConsole": "error",
+        "noExplicitAny": "off"
+      },
+      "style": {
+        "noNonNullAssertion": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "off",
+        "noUnusedImports": "off",
+        "noUnusedPrivateClassMembers": "off"
+      }
+    }
+  },
+  "files": {
+    "includes": [
+      "./**/*",
+      "!node_modules",
+      "!.next",
+      "!.turbo",
+      "!build",
+      "!out",
+      "!hey-client",
+      "!app/globals.css",
+      "!next-env.d.ts",
+      "!services/api/schema.ts",
+      "!services/client/@tanstack/react-query.gen.ts"
+    ]
+  }
+}

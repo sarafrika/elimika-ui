@@ -1,4 +1,4 @@
-import React from 'react';
+
 import AccountTypeSelector from './_components/account-type-selector';
 
 const OnboardingPage = () => {

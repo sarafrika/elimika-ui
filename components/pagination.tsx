@@ -7,7 +7,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 type PaginationProps = {
   totalPages: number;

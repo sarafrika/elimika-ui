@@ -32,7 +32,7 @@ import { useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { InstructorProfessionalMembership } from '../../../../../../services/client';
+import type { InstructorProfessionalMembership } from '../../../../../../services/client';
 import {
   addInstructorMembershipMutation,
   updateInstructorMembershipMutation,
@@ -90,7 +90,7 @@ export default function ProfessionalBodySettings() {
     end_date: new Date(),
     is_active: false,
     summary: 'Active member of the tech community.',
-    instructor_uuid: instructor!.uuid!,
+    instructor_uuid: instructor?.uuid!,
   };
 
   const passMember = (mem: InstructorProfessionalMembership) => ({
@@ -132,7 +132,7 @@ export default function ProfessionalBodySettings() {
       if (memData.uuid) {
         await updateMemMutation.mutateAsync({
           path: {
-            instructorUuid: instructor!.uuid!,
+            instructorUuid: instructor?.uuid!,
             membershipUuid: memData.uuid,
           },
           body: {
@@ -144,7 +144,7 @@ export default function ProfessionalBodySettings() {
       } else {
         const resp = await addMemMutation.mutateAsync({
           path: {
-            instructorUuid: instructor!.uuid!,
+            instructorUuid: instructor?.uuid!,
           },
           body: {
             ...memData,
@@ -155,7 +155,7 @@ export default function ProfessionalBodySettings() {
 
         if (!resp.error && resp.data) {
           const memberships = form.getValues('professional_bodies');
-          //@ts-ignore
+          //@ts-expect-error
           memberships[index] = passMember(resp.data!);
           form.setValue('professional_bodies', memberships);
         }

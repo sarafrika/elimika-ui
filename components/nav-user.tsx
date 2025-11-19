@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { MenuItem } from '@/lib/menu';
+import type { MenuItem } from '@/lib/menu';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '../context/profile-context';
@@ -33,11 +33,11 @@ export function NavUser({ items }: NavUserProps) {
   const { isMobile } = useSidebar();
   // const { data: session } = useSession();
   const activeDomain =
-    user!.activeDomain ??
-    (user && user.user_domain && user.user_domain.length > 0 ? user.user_domain[0] : '');
+    user?.activeDomain ??
+    (user?.user_domain && user.user_domain.length > 0 ? user.user_domain[0] : '');
 
   const userInitials =
-    user!.full_name
+    user?.full_name
       ?.split(' ')
       ?.slice(0, 2)
       ?.map(name => name?.[0])
@@ -53,14 +53,14 @@ export function NavUser({ items }: NavUserProps) {
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground transition-colors'
             >
               <Avatar className='bg-background h-8 w-8 rounded-md border'>
-                <AvatarImage src={user!.profile_image_url ?? ''} alt={user!.full_name ?? ''} />
+                <AvatarImage src={user?.profile_image_url ?? ''} alt={user?.full_name ?? ''} />
                 <AvatarFallback className='rounded-md text-xs font-medium'>
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
               <div className='grid flex-1 text-left text-sm leading-tight'>
                 <div className='flex items-center gap-2'>
-                  <span className='truncate font-medium'>{user!.first_name}</span>
+                  <span className='truncate font-medium'>{user?.first_name}</span>
                   <Badge
                     variant='outline'
                     className='border-primary/20 text-primary h-5 px-1.5 py-0 text-[10px] font-normal capitalize'
@@ -68,7 +68,7 @@ export function NavUser({ items }: NavUserProps) {
                     {activeDomain}
                   </Badge>
                 </div>
-                <span className='text-muted-foreground truncate text-xs'>{user!.email}</span>
+                <span className='text-muted-foreground truncate text-xs'>{user?.email}</span>
               </div>
               <ChevronsUpDown className='text-muted-foreground ml-auto size-4' />
             </SidebarMenuButton>
@@ -84,14 +84,14 @@ export function NavUser({ items }: NavUserProps) {
               {/* User Info */}
               <div className='mb-4 flex items-center gap-3'>
                 <Avatar className='bg-background h-10 w-10 rounded-md border'>
-                  <AvatarImage src={user!.profile_image_url ?? ''} alt={user!.full_name ?? ''} />
+                  <AvatarImage src={user?.profile_image_url ?? ''} alt={user?.full_name ?? ''} />
                   <AvatarFallback className='rounded-md text-sm font-medium'>
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
                 <div className='flex flex-col'>
-                  <span className='text-foreground text-sm font-medium'>{user!.full_name}</span>
-                  <span className='text-muted-foreground text-xs'>{user!.email}</span>
+                  <span className='text-foreground text-sm font-medium'>{user?.full_name}</span>
+                  <span className='text-muted-foreground text-xs'>{user?.email}</span>
                 </div>
               </div>
 
@@ -135,7 +135,7 @@ export function NavUser({ items }: NavUserProps) {
 
                 <div
                   className='flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive'
-                  onClick={async () => await signOut().then(() => user!.clearProfile())}
+                  onClick={async () => await signOut().then(() => user?.clearProfile())}
                 >
                   <LogOut className='size-4' />
                   <span>Log out</span>

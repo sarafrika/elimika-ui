@@ -14,7 +14,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
-import { ApplicantTypeEnum } from '@/services/client';
+import type { ApplicantTypeEnum } from '@/services/client';
 import {
   getAllCoursesOptions,
   searchTrainingApplicationsOptions,

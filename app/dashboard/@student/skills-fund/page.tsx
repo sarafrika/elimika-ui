@@ -34,7 +34,8 @@ import {
   Upload,
   XCircle,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { useStudent } from '../../../../context/student-context';
 import { getUserByUuidOptions } from '../../../../services/client/@tanstack/react-query.gen';
 import { sampleWallet, SkillsFundWalletCard } from '../../_components/skill-fund-wallet';
@@ -235,7 +236,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
       return;
     }
 
-    const application: any = {
+    const _application: any = {
       id: `app-${Date.now()}`,
       applicantId: currentUser.id,
       applicantName: currentUser.name,
@@ -291,7 +292,7 @@ const StudentFundView: React.FC<Props> = ({ currentUser, wallet, setWallet }) =>
 
   return (
     <div className='space-y-6'>
-      <SkillsFundWalletCard wallet={sampleWallet} user={student} role='Student' />
+      <SkillsFundWalletCard wallet={sampleWallet} user={student} />
 
       {/* Quick Stats */}
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>

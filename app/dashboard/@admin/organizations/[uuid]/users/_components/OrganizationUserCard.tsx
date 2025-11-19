@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { User } from '@/services/client';
+import type { User } from '@/services/client';
 
 interface OrganizationUserCardProps {
   user: User;

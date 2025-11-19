@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { Instructor } from '@/services/api/schema';
+import type { Instructor } from '@/services/api/schema';
 import { Edit, Trash2, User } from 'lucide-react';
-import React from 'react';
+import type React from 'react';
 import Spinner from '../../../../../components/ui/spinner';
 import InstructorDetails from './InstructorDetails';
 

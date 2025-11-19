@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Course } from '@/services/client';
+import type { Course } from '@/services/client';
 import { CheckCircle, Edit, MoreVertical, Trash2, User, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import {

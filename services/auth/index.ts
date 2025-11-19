@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthConfig } from 'next-auth';
+import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Keycloak from 'next-auth/providers/keycloak';
 
 /**
@@ -20,11 +20,11 @@ function decodeJWT(token: string) {
     const jsonPayload = decodeURIComponent(
       atob(base64)
         .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .map(c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
         .join('')
     );
     return JSON.parse(jsonPayload);
-  } catch (error) {
+  } catch (_error) {
     //console.log('Error decoding JWT:', error);
     return {};
   }
@@ -56,7 +56,6 @@ const config: NextAuthConfig = {
       // Initial sign in
       if (account && user) {
         const decodedToken = decodeJWT(account.access_token!);
-        console.log(token);
         return {
           ...token,
           id: account.providerAccountId,
@@ -125,7 +124,6 @@ const config: NextAuthConfig = {
       }
 
       if (!idToken) {
-        console.warn('No ID token found for Keycloak logout - performing local logout only');
         return;
       }
 
@@ -143,8 +141,7 @@ const config: NextAuthConfig = {
           }),
         });
         //console.log('✅ Keycloak session cleared.');
-      } catch (err) {
-        console.warn('⚠️ Failed to logout Keycloak session', err);
+      } catch (_err) {
       }
     },
   },

@@ -25,7 +25,7 @@ import { useTrainingCenter } from '../../../../../../context/training-center-pro
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { queryClient } from '../../../../../../lib/query-client';
 import {
-  ApiResponse,
+  type ApiResponse,
   createTrainingBranch,
   updateTrainingBranch,
 } from '../../../../../../services/client';
@@ -88,7 +88,7 @@ export default function ManageBranch() {
     resolver: zodResolver(branchesSchema),
     defaultValues: {
       branches:
-        trainingCenter && trainingCenter.branches!.length > 0
+        trainingCenter && trainingCenter.branches?.length > 0
           ? trainingCenter.branches
           : [defaultBranch()],
     },
@@ -157,7 +157,7 @@ export default function ManageBranch() {
           toast.success('Branch details updated successfully');
           disableEditing();
           queryClient.invalidateQueries({ queryKey: ['organization'] });
-        } catch (error) {
+        } catch (_error) {
           toast.error('Unable to save branch details right now. Please try again.');
         } finally {
           setIsSaving(false);

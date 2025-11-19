@@ -3,7 +3,7 @@
 import { useInstructor } from '@/context/instructor-context';
 
 function BookingsPage() {
-  const instructor = useInstructor();
+  const _instructor = useInstructor();
   // const {data} = useQuery({})
 
   return <div>This page is under construction</div>;

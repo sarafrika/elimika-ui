@@ -1,8 +1,8 @@
 'use client';
 
 import {
-  ProfileSummaryMeta,
-  ProfileSummarySection,
+  type ProfileSummaryMeta,
+  type ProfileSummarySection,
   ProfileSummaryView,
 } from '@/components/profile/profile-summary-view';
 import { Button } from '@/components/ui/button';

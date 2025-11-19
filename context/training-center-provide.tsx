@@ -1,16 +1,16 @@
-import { TrainingCenter } from '@/lib/types';
+import type { TrainingCenter } from '@/lib/types';
 import {
-  ApiResponse,
+  type ApiResponse,
   getOrganisationByUuid,
   getTrainingBranchesByOrganisation,
   getUsersByOrganisation,
-  SearchResponse,
-  TrainingBranch,
-  User,
+  type SearchResponse,
+  type TrainingBranch,
+  type User,
 } from '@/services/client';
-import { queryOptions, useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { queryOptions, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 import CustomLoader from '../components/custom-loader';
 import { useUserProfile } from './profile-context';
 
@@ -21,19 +21,16 @@ export default function TrainingCenterProvider({ children }: { children: ReactNo
   const { data: session } = useSession();
   const userProfile = useUserProfile();
   const activeOrgId =
-    userProfile &&
-    userProfile.organisation_affiliations &&
+    userProfile?.organisation_affiliations &&
     userProfile.organisation_affiliations.length > 0
       ? (
           userProfile.organisation_affiliations.find(org => org.active) ??
-          userProfile.organisation_affiliations[0] ??
-          {}
-        ).organisationUuid
+          userProfile.organisation_affiliations[0])?.organisationUuid
       : null;
 
   const { data, isLoading } = useQuery(
     createQueryOptions(activeOrgId!, {
-      enabled: !!userProfile && !!session && !!session!.user && !!activeOrgId,
+      enabled: !!userProfile && !!session && !!session?.user && !!activeOrgId,
     })
   );
 
@@ -61,7 +58,6 @@ function createQueryOptions(
       });
 
       const orgRespData = orgResp.data as ApiResponse;
-      console.log(orgRespData);
 
       if (!orgRespData.data || orgRespData.error) {
         return null;
@@ -81,7 +77,7 @@ function createQueryOptions(
       })) as ApiResponse;
 
       const branchesData = branchesResp.data as SearchResponse;
-      if (branchesData.data && branchesData.data.content)
+      if (branchesData.data?.content)
         organizationData.branches = branchesData.data.content as unknown as TrainingBranch[];
 
       const orgUsersResp = (await getUsersByOrganisation({
@@ -94,7 +90,7 @@ function createQueryOptions(
       })) as ApiResponse;
 
       const orgUsersData = orgUsersResp.data as SearchResponse;
-      if (orgUsersData.data && orgUsersData.data.content)
+      if (orgUsersData.data?.content)
         organizationData.users = orgUsersData.data.content as unknown as User[];
 
       // TODO: get organization branches, courses, instructures and users

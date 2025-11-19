@@ -48,7 +48,7 @@ export const ClassCard = ({
     ...getInstructorByUuidOptions({ path: { uuid: default_instructor_uuid } }),
     enabled: !!default_instructor_uuid,
   });
-  // @ts-ignore
+  // @ts-expect-error
   const instructor = data?.data;
 
   const enrollStudent = useMutation(enrollStudentMutation());

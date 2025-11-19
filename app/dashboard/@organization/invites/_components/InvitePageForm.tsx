@@ -2,7 +2,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Label } from 'recharts';
-import z from 'zod';
+import type z from 'zod';
 import {
   Card,
   CardContent,

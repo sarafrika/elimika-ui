@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchInstructorProfile } from './actions';
-import { Instructor } from '@/lib/types/instructor';
+import type { Instructor } from '@/lib/types/instructor';
 
 export const useInstructorProfileQuery = (userUuid?: string) =>
   useQuery<Instructor>({

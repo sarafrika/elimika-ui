@@ -1,5 +1,5 @@
-import { Instructor } from '@/services/api/schema';
-import React from 'react';
+import type { Instructor } from '@/services/api/schema';
+import type React from 'react';
 import { Skeleton } from '../../../../../components/ui/skeleton';
 import InstructorCard from './InstructorCard';
 import InstructorFilters from './InstructorFilters';

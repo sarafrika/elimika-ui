@@ -43,7 +43,7 @@ import {
   updateRecurringClassScheduleMutation,
   updateScheduledInstanceStatusMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { LocationTypeEnum, RecurrenceTypeEnum, StatusEnum3 } from '@/services/client/types.gen';
+import { LocationTypeEnum, RecurrenceTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XIcon } from 'lucide-react';
@@ -52,7 +52,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
 
-const SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
+const _SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
 const WEEK_DAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
 
 export const classSchema = z.object({
@@ -97,9 +97,9 @@ function ClassForm({
   });
 
   const qc = useQueryClient();
-  const user = useUserProfile();
+  const _user = useUserProfile();
 
-  const [openAddRecurrenceModal, setOpenAddRecurrenceModal] = useState(false);
+  const [_openAddRecurrenceModal, setOpenAddRecurrenceModal] = useState(false);
 
   const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
 
@@ -402,7 +402,7 @@ function RecurrencForm({
   });
 
   const qc = useQueryClient();
-  const user = useUserProfile();
+  const _user = useUserProfile();
 
   const createClassRecurrence = useMutation(createClassRecurrencePatternMutation());
   const updateClassRecurrence = useMutation(updateClassRecurrencePatternMutation());
@@ -659,7 +659,7 @@ function ScheduleForm({
   });
 
   const qc = useQueryClient();
-  const user = useUserProfile();
+  const _user = useUserProfile();
 
   const createClassSchedule = useMutation(scheduleRecurringClassFromDefinitionMutation());
   const updateClassSchedule = useMutation(updateRecurringClassScheduleMutation());

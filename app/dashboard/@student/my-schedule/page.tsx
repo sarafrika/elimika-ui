@@ -8,8 +8,8 @@ import { getStudentScheduleOptions } from '@/services/client/@tanstack/react-que
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
-  AvailabilityData,
-  ClassScheduleItem,
+  type AvailabilityData,
+  type ClassScheduleItem,
   convertToCalendarEvents,
 } from '../../@instructor/availability/components/types';
 import TimetableManager from './_components/timetable-manager';
@@ -84,7 +84,7 @@ const Page = () => {
       {/* Timetable */}
       <TimetableManager
         availabilityData={availabilityData}
-        onAvailabilityUpdate={updated => { }}
+        onAvailabilityUpdate={_updated => { }}
       />
     </div>
   );

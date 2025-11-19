@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Award, BookOpen, Calendar, LayoutDashboard, Star, UserCircle, Wallet } from 'lucide-react';
 import Link from 'next/link';
-import React from 'react';
+import type React from 'react';
 
 const studentMenuItems = [
   {

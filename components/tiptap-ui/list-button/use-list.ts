@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { type Editor } from '@tiptap/react';
+import type { Editor } from '@tiptap/react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 

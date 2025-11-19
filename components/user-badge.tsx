@@ -2,7 +2,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, PhoneCall, Send, User as UserIcon } from 'lucide-react';
-import { ApiResponse, getUserByUuid, User } from '../services/client';
+import { type ApiResponse, getUserByUuid, type User } from '../services/client';
 import { Badge } from './ui/badge';
 
 export default function UserBadge({
@@ -27,9 +27,7 @@ export default function UserBadge({
 
   if (isLoading) {
     return (
-      <>
-        <Loader2 />
-      </>
+      <Loader2 />
     );
   }
 
@@ -37,7 +35,7 @@ export default function UserBadge({
     return <>No User Found</>;
   }
 
-  const user = data.data!.data as User;
+  const user = data.data?.data as User;
 
   return (
     <div className='flex items-center gap-3'>
@@ -52,8 +50,7 @@ export default function UserBadge({
       <div>
         <h6>{user.full_name}</h6>
         {showContacts && (
-          <>
-            <div className='flex gap-3'>
+          <div className='flex gap-3'>
               <Badge variant={'outline'}>
                 <PhoneCall /> {user.phone_number}
               </Badge>
@@ -61,7 +58,6 @@ export default function UserBadge({
                 <Send /> {user.email}
               </Badge>
             </div>
-          </>
         )}
       </div>
     </div>

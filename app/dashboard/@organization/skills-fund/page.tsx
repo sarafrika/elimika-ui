@@ -15,7 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Award, BarChart3, DollarSign, Download, Target, TrendingUp, Users } from 'lucide-react';
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -24,7 +25,7 @@ import {
   SelectValue,
 } from '../../../../components/ui/select';
 
-const skillsFundApplications: any[] = [
+const _skillsFundApplications: any[] = [
   {
     id: 'app-001',
     applicantId: 'student_001',
@@ -256,7 +257,7 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
       return;
     }
 
-    const contribution: any = {
+    const _contribution: any = {
       id: `contrib-${Date.now()}`,
       donorId: currentUser.id,
       donorName: currentUser.name,

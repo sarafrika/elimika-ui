@@ -2,7 +2,7 @@
 
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import ErrorPage from '@/components/ErrorPage';
-import { Course } from '@/services/client';
+import type { Course } from '@/services/client';
 import {
   deleteCourseMutation,
   getAllCourseCreatorsQueryKey,
@@ -50,15 +50,15 @@ export default function CoursesPage() {
             qc.invalidateQueries({
               queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
             });
-            // @ts-ignore
+            // @ts-expect-error
             toast.success(data?.message || 'Course creator verified successfully');
           },
         }
       );
-    } catch (error) {}
+    } catch (_error) {}
   };
 
-  const handleUnverifyCourse = async (course: Course) => {
+  const handleUnverifyCourse = async (_course: Course) => {
     // try {
     //   unVerifyCourseCreator.mutate(
     //     { path: { uuid: course.uuid! }, query: { reason: '' } },
@@ -67,7 +67,7 @@ export default function CoursesPage() {
     //         qc.invalidateQueries({
     //           queryKey: getAllCourseCreatorsQueryKey({ query: { pageable: {} } }),
     //         });
-    //         // @ts-ignore
+    //         // @ts-expect-error
     //         toast.success(data?.message || 'Course creator verification removed successfully');
     //       },
     //     }
@@ -75,7 +75,7 @@ export default function CoursesPage() {
     // } catch (error) { }
   };
 
-  const handleDeclineCourse = async (course: Course) => {
+  const handleDeclineCourse = async (_course: Course) => {
     toast.message('Implement reject/decline here');
   };
 

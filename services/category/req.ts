@@ -19,7 +19,7 @@ const getCategories = async (query?: CategoryQuery) => {
 
   const res = await fetchClient.GET('/api/v1/config/categories', {
     params: {
-      //@ts-ignore
+      //@ts-expect-error
       query: finalQuery,
     },
   });
@@ -33,7 +33,7 @@ const getCategories = async (query?: CategoryQuery) => {
 
 export const useGetCategories = (query?: CategoryQuery) => {
   // Determine whether to enable fetching (if name is provided and not empty)
-  const enabled = Boolean(query?.name && query.name.trim());
+  const enabled = Boolean(query?.name?.trim());
 
   return useQuery({
     queryKey: ['categories', query],

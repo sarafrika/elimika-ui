@@ -1,5 +1,5 @@
-import { Course, CourseTrainingRequirement } from '@/services/client';
-import {
+import type { Course, CourseTrainingRequirement } from '@/services/client';
+import type {
   CourseCreatorAnalyticsSummary,
   CourseCreatorMonetizationSummary,
   CourseCreatorTrainingRequirementSummary,

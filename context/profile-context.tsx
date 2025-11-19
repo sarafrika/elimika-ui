@@ -1,27 +1,27 @@
-import { UserDomain, UserProfileType } from '@/lib/types';
+import type { UserDomain, UserProfileType } from '@/lib/types';
 import {
-  CourseCreator,
+  type CourseCreator,
   getInstructorEducation,
   getInstructorExperience,
   getInstructorMemberships,
   getInstructorSkills,
-  Instructor,
-  InstructorEducation,
-  InstructorExperience,
-  InstructorProfessionalMembership,
-  InstructorSkill,
+  type Instructor,
+  type InstructorEducation,
+  type InstructorExperience,
+  type InstructorProfessionalMembership,
+  type InstructorSkill,
   search,
   searchCourseCreators,
   searchInstructors,
-  SearchResponse,
+  type SearchResponse,
   searchStudents,
-  Student,
-  User,
+  type Student,
+  type User,
 } from '@/services/client';
-import { queryOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
+import { queryOptions, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { getDashboardStorageKey } from '../lib/utils';
 
 type DomainTypes = UserDomain;
@@ -91,7 +91,7 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
       }
       router.replace('/');
     }
-  }, [status, dashboardStorageKey]);
+  }, [status, dashboardStorageKey, clearProfile, router.replace]);
 
   function clearProfile() {
     void qc.invalidateQueries({ queryKey: ['profile'] });
@@ -207,8 +207,7 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
             user.instructor.educations = instructorEducation.data
               .data as unknown as InstructorEducation[];
           }
-        } catch (error) {
-          console.warn('Failed to fetch instructor education:', error);
+        } catch (_error) {
         }
 
         // Add instructor experience
@@ -227,8 +226,7 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
           if (!expResp.error && expResp.data?.content && user.instructor) {
             user.instructor.experience = expResp.data.content as unknown as InstructorExperience[];
           }
-        } catch (error) {
-          console.warn('Failed to fetch instructor experience:', error);
+        } catch (_error) {
         }
 
         // Add instructor memberships
@@ -248,8 +246,7 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
             user.instructor.membership = memResp.data
               .content as unknown as InstructorProfessionalMembership[];
           }
-        } catch (error) {
-          console.warn('Failed to fetch instructor memberships:', error);
+        } catch (_error) {
         }
 
         // Add instructor skills
@@ -268,8 +265,7 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
           if (!skillsResp.error && skillsResp.data?.content && user.instructor) {
             user.instructor.skills = skillsResp.data.content as unknown as InstructorSkill[];
           }
-        } catch (error) {
-          console.warn('Failed to fetch instructor skills:', error);
+        } catch (_error) {
         }
       }
     }
@@ -297,8 +293,7 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
         if (creatorProfile) {
           user.courseCreator = creatorProfile;
         }
-      } catch (error) {
-        console.warn('Failed to fetch course creator profile:', error);
+      } catch (_error) {
       }
     }
   }

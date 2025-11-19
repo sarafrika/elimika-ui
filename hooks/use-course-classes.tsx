@@ -51,7 +51,7 @@ function useBundledClassInfo(courseUuid?: string, startDate?: any, endDate?: any
   });
 
   const courses = courseQueries.map(q => q.data?.data ?? null);
-  // @ts-ignore
+  // @ts-expect-error
   const instructors = instructorQueries.map(q => q.data?.data ?? null);
   const schedules = scheduleQueries.map(q => q.data?.data ?? null);
 

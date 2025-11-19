@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Instructor } from '@/services/api/schema';
+import type { Instructor } from '@/services/api/schema';
 import { Edit, Trash2 } from 'lucide-react';
-import React from 'react';
+import type React from 'react';
 import InstructorDetails from './InstructorDetails';
 
 interface InstructorMobileModalProps {

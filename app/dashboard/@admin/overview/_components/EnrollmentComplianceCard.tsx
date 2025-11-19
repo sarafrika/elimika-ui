@@ -28,7 +28,7 @@ export function EnrollmentComplianceCard({ metrics }: EnrollmentComplianceCardPr
       metrics.age_gate_denials_30d ||
       metrics.age_restriction_exceptions_30d ||
       metrics.missing_dob_percentage ||
-      (metrics.courses_with_exceptions && metrics.courses_with_exceptions.length));
+      (metrics.courses_with_exceptions?.length));
 
   const topCourses = metrics?.courses_with_exceptions?.slice(0, 3) ?? [];
 

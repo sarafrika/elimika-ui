@@ -21,8 +21,9 @@ import {
   Users,
   Video,
 } from 'lucide-react';
-import React, { useState } from 'react';
-import { Booking, BookingSlot } from '../browse-courses/instructor/page';
+import type React from 'react';
+import { useState } from 'react';
+import type { Booking, BookingSlot } from '../browse-courses/instructor/page';
 import { BookingCalendar } from './booking-calendar';
 import { BookingSummary } from './booking-summary';
 

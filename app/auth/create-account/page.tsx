@@ -6,10 +6,10 @@ import {
   fetchTrainingCenters,
 } from '@/app/auth/create-account/_components/actions';
 import {
-  TrainingCenter,
+  type TrainingCenter,
   TrainingCenterForm,
 } from '@/app/auth/create-account/_components/training-center-form';
-import { User, UserAccountForm } from '@/app/auth/create-account/_components/user-account-form';
+import { type User, UserAccountForm } from '@/app/auth/create-account/_components/user-account-form';
 import illustration from '@/assets/illustration.jpg';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthRealm } from '@/hooks/use-auth-realm';
-import { UserDomain } from '@/lib/types';
+import type { UserDomain } from '@/lib/types';
 import {
   AlertCircle,
   ArrowRight,

@@ -216,7 +216,7 @@ export default function LocationInput({
         }
 
         onSuggest?.({ ...data, features });
-      } catch (err) {
+      } catch (_err) {
         setError('Unable to retrieve location details.');
       } finally {
         setIsLoading(false);
@@ -225,7 +225,7 @@ export default function LocationInput({
     [onChange, onSuggest]
   );
 
-  const handleClose = useCallback(() => {
+  const _handleClose = useCallback(() => {
     setIsOpen(false);
     setSuggestions([]);
   }, []);

@@ -23,7 +23,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Clock, Filter, MapPin, Phone, Search, Video } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { AvailabilityData } from './types';
+import type { AvailabilityData } from './types';
 
 interface AvailabilityBookingProps {
   availabilityData: AvailabilityData;
@@ -86,7 +86,7 @@ export function AvailabilityBooking({
 
     if (filterTimeRange !== 'all') {
       filteredSlots = filteredSlots.filter(slot => {
-        const hour = parseInt(slot?.startTime?.split(':')[0] || '');
+        const hour = parseInt(slot?.startTime?.split(':')[0] || '', 10);
         switch (filterTimeRange) {
           case 'morning':
             return hour >= 6 && hour < 12;
@@ -139,7 +139,7 @@ export function AvailabilityBooking({
   };
 
   const getTimeRangeLabel = (time: string) => {
-    const hour = parseInt(time?.split(':')[0] || '');
+    const hour = parseInt(time?.split(':')[0] || '', 10);
     if (hour < 12) return 'Morning';
     if (hour < 17) return 'Afternoon';
     return 'Evening';
@@ -155,7 +155,7 @@ export function AvailabilityBooking({
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours as string);
+    const hour = parseInt(hours as string, 10);
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
@@ -386,7 +386,7 @@ function BookingForm({
 }) {
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours as string);
+    const hour = parseInt(hours as string, 10);
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;

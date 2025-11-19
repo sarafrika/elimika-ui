@@ -45,7 +45,7 @@ export const InstructorFormSchema = z.object({
 
   dob: z
     .union([z.date(), z.string().transform(val => new Date(val))])
-    .refine(val => !isNaN(val.getTime()), {
+    .refine(val => !Number.isNaN(val.getTime()), {
       message: 'Invalid date of birth',
     }),
 

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
-import ImageSelector, { ImageType } from '@/components/image-selector';
+import ImageSelector, { type ImageType } from '@/components/image-selector';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -94,7 +94,7 @@ export default function InstructorProfile() {
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
   const [profilePic, setProfilePic] = useState<ImageType>({
-    url: user!.profile_image_url ?? profilePicSvg,
+    url: user?.profile_image_url ?? profilePicSvg,
   });
 
   const domainBadges =
@@ -110,15 +110,15 @@ export default function InstructorProfile() {
     defaultValues: {
       user: {
         ...user,
-        dob: new Date(user!.dob ?? Date.now()),
-        profile_image_url: user!.profile_image_url ?? 'https://profilepic.jpg',
+        dob: new Date(user?.dob ?? Date.now()),
+        profile_image_url: user?.profile_image_url ?? 'https://profilepic.jpg',
       },
       instructor: {
         ...instructor,
         latitude: -1.2921,
         longitude: 36.8219,
-        full_name: `${user!.first_name} ${user!.last_name}`,
-        user_uuid: user!.uuid,
+        full_name: `${user?.first_name} ${user?.last_name}`,
+        user_uuid: user?.uuid,
         formatted_location: '-1.292100, 36.821900',
       },
     },
@@ -159,7 +159,7 @@ export default function InstructorProfile() {
           if (profilePic.file) {
             uploadProfilePicResp = await uploadProfileImage({
               path: {
-                userUuid: user!.uuid!,
+                userUuid: user?.uuid!,
               },
               body: {
                 profileImage: profilePic.file,
@@ -182,14 +182,14 @@ export default function InstructorProfile() {
           const response = await Promise.all([
             updateUser({
               path: {
-                uuid: user!.uuid!,
+                uuid: user?.uuid!,
               },
               body: {
                 ...updatedProfileData.user,
                 profile_image_url:
                   uploadProfilePicResp && !uploadProfilePicResp.error
-                    ? uploadProfilePicResp.data!.profile_image_url
-                    : user!.profile_image_url,
+                    ? uploadProfilePicResp.data?.profile_image_url
+                    : user?.profile_image_url,
               },
             }),
             manageInstructor(),
@@ -214,8 +214,8 @@ export default function InstructorProfile() {
 
           toast.success('Profile updated successfully');
           disableEditing();
-          await queryClient.invalidateQueries({ queryKey: ['profile', user!.email] });
-        } catch (error) {
+          await queryClient.invalidateQueries({ queryKey: ['profile', user?.email] });
+        } catch (_error) {
           toast.error('Unable to update your profile right now. Please try again.');
         } finally {
           setSubmitting(false);
@@ -241,11 +241,11 @@ export default function InstructorProfile() {
               <div className='flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-8'>
                 <Avatar className='ring-background shadow-primary/5 h-24 w-24 shadow-lg ring-4'>
                   <AvatarImage
-                    src={user!.profile_image_url ?? profilePic.url}
-                    alt={`${user!.first_name} ${user!.last_name}`}
+                    src={user?.profile_image_url ?? profilePic.url}
+                    alt={`${user?.first_name} ${user?.last_name}`}
                   />
                   <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
-                    {`${user!.first_name!.length > 0 ? user!.first_name![0]?.toUpperCase() : ''}${user!.last_name!.length > 0 ? user!.last_name![0]?.toUpperCase() : ''}` ||
+                    {`${user?.first_name?.length > 0 ? user?.first_name?.[0]?.toUpperCase() : ''}${user?.last_name?.length > 0 ? user?.last_name?.[0]?.toUpperCase() : ''}` ||
                       'IN'}
                   </AvatarFallback>
                 </Avatar>

@@ -13,7 +13,7 @@ import {
   User,
   MapPinned,
 } from 'lucide-react';
-import { TrainingBranch } from '@/services/client';
+import type { TrainingBranch } from '@/services/client';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useState } from 'react';

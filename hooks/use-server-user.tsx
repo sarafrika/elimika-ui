@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '../services/auth';
-import { ApiResponse, search, SearchResponse, User } from '../services/client';
+import { type ApiResponse, search, type SearchResponse, type User } from '../services/client';
 
 export default async function useServerUser() {
   const session = await auth();

@@ -28,7 +28,7 @@ export default function EnrollCourseCard({
   disableEnroll,
   variant,
 }: EnrollCourseCardProps) {
-  const router = useRouter();
+  const _router = useRouter();
   const { difficultyMap } = useDifficultyLevels();
   const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'Unknown';
 

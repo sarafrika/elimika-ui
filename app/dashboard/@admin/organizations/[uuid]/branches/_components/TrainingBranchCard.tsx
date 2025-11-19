@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { MapPin, BadgeCheckIcon, User } from 'lucide-react';
-import { TrainingBranch } from '@/services/client';
+import type { TrainingBranch } from '@/services/client';
 
 interface TrainingBranchCardProps {
   branch: TrainingBranch;

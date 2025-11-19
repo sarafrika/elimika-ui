@@ -102,7 +102,7 @@ export default function ApplyToTrain() {
     setCurrentStep(stepId);
   };
 
-  const handleDataChange = (stepData: any) => {
+  const handleDataChange = (_stepData: any) => {
     // setApplicationData(prev => ({ ...prev, ...stepData }));
   };
 
@@ -193,9 +193,9 @@ export default function ApplyToTrain() {
             {CurrentStepComponent && (
               <CurrentStepComponent
                 data={instructor}
-                // @ts-ignore
+                // @ts-expect-error
                 skills={instructor?.skills || []}
-                // @ts-ignore
+                // @ts-expect-error
                 education={instructor?.educations || []}
                 certifications={instructorCertifications?.data || []}
                 profile={instructorProfile}

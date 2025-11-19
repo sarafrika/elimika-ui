@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { type Editor } from '@tiptap/react';
+import type { Editor } from '@tiptap/react';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 
 // --- Hooks ---

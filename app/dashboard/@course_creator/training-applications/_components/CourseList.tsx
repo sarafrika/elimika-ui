@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { Course } from '@/services/client';
+import type { Course } from '@/services/client';
 import CourseCard from './CourseCard';
 import CourseFilters from './CourseFilters';
 
@@ -53,8 +53,7 @@ export default function CourseList({
             <Skeleton className='h-[100px] w-full px-4' />
           </div>
         ) : (
-          <>
-            {courses.map(course => (
+          courses.map(course => (
               <CourseCard
                 key={course.uuid}
                 course={course}
@@ -62,8 +61,7 @@ export default function CourseList({
                 onSelect={onCourseSelect}
                 onDelete={onCourseDelete}
               />
-            ))}
-          </>
+            ))
         )}
       </div>
     </div>

@@ -29,7 +29,7 @@ import { Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   deleteInstructorExperience,
-  InstructorExperience,
+  type InstructorExperience,
 } from '../../../../../../services/client';
 import {
   addInstructorExperienceMutation,
@@ -86,7 +86,7 @@ export default function ProfessionalExperienceSettings() {
     start_date: '2020-01',
     end_date: '2022-12',
     is_current_position: false,
-    instructor_uuid: instructor!.uuid!,
+    instructor_uuid: instructor?.uuid!,
   };
 
   const passExperiences = (exp: InstructorExperience) => ({
@@ -106,7 +106,7 @@ export default function ProfessionalExperienceSettings() {
   const form = useForm<ProfileExperienceFormValues>({
     resolver: zodResolver(profileExperienceSchema),
     defaultValues: {
-      //@ts-ignore
+      //@ts-expect-error
       experiences:
         instructorExperience && instructorExperience.length > 0
           ? instructorExperience.map(passExperiences)
@@ -135,7 +135,7 @@ export default function ProfessionalExperienceSettings() {
       if (exp.uuid) {
         await updateExpMutation.mutateAsync({
           path: {
-            instructorUuid: instructor!.uuid!,
+            instructorUuid: instructor?.uuid!,
             experienceUuid: exp.uuid,
           },
           body: {
@@ -147,7 +147,7 @@ export default function ProfessionalExperienceSettings() {
       } else {
         const resp = await addExpMutation.mutateAsync({
           path: {
-            instructorUuid: instructor!.uuid!,
+            instructorUuid: instructor?.uuid!,
           },
           body: {
             ...expData,
@@ -190,7 +190,7 @@ export default function ProfessionalExperienceSettings() {
     if (expUUID) {
       const resp = await deleteInstructorExperience({
         path: {
-          instructorUuid: instructor!.uuid!,
+          instructorUuid: instructor?.uuid!,
           experienceUuid: expUUID,
         },
       });
@@ -205,7 +205,7 @@ export default function ProfessionalExperienceSettings() {
   }
 
   const domainBadges =
-    // @ts-ignore
+    // @ts-expect-error
     user?.data?.user_domain?.map((domain: any) =>
       domain
         .split('_')

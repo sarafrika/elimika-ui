@@ -1,12 +1,9 @@
 import {
   Award,
-  BadgeDollarSign,
   Bell,
-  BellIcon,
   BoltIcon,
   Book,
   BookOpen,
-  Briefcase,
   Building,
   Building2,
   Calendar,
@@ -23,7 +20,6 @@ import {
   LibraryIcon,
   LucideBookUser,
   Mails,
-  MessageCircle,
   PlusCircle,
   School,
   Settings,
@@ -31,14 +27,13 @@ import {
   Sparkles,
   Star,
   UserCircle,
-  UserCog,
   UserIcon,
   Users,
   UsersIcon,
   Wallet,
 } from 'lucide-react';
-import { ComponentType } from 'react';
-import { UserDomain } from './types';
+import type { ComponentType } from 'react';
+import type { UserDomain } from './types';
 
 export type MenuItem = {
   title: string;
@@ -48,6 +43,7 @@ export type MenuItem = {
   domain?: UserDomain | null;
   launchInNewTab?: boolean;
   icon?: ComponentType<{ className?: string }>;
+  requiresAdmin?: boolean;
   user?: MenuItem[];
   admin?: MenuItem[];
   student?: MenuItem[];
@@ -397,49 +393,31 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Instructors',
-      url: '/dashboard/instructors',
-      icon: Briefcase,
-    },
-    {
-      title: 'Students',
-      url: '/dashboard/students',
-      icon: Users,
-    },
-    {
-      title: 'Course Management',
-      url: '/dashboard/course-management',
-      icon: BookOpen,
-    },
-    {
-      title: 'Invites',
-      url: '/dashboard/invites',
-      icon: Mails,
-    },
-    {
-      title: 'Classes',
-      url: '/dashboard/classes',
-      icon: ClipboardList,
-    },
-    {
       title: 'Branches',
       url: '/dashboard/branches',
       icon: Building,
     },
     {
-      title: 'Skills Fund',
-      url: '/dashboard/skills-fund',
-      icon: Wallet,
+      title: 'People',
+      url: '/dashboard/people',
+      icon: Users,
     },
     {
-      title: 'Users',
-      url: '/dashboard/users',
-      icon: UserCog,
+      title: 'Invitations',
+      url: '/dashboard/invitations',
+      icon: Mails,
     },
     {
-      title: 'Account',
-      url: '/dashboard/account',
-      icon: Settings,
+      title: 'Verification',
+      url: '/dashboard/verification',
+      icon: ShieldCheck,
+      requiresAdmin: true,
+    },
+    {
+      title: 'Audit & Activity',
+      url: '/dashboard/audit',
+      icon: ClipboardList,
+      requiresAdmin: true,
     },
   ],
   parent: [

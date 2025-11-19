@@ -16,7 +16,8 @@ import { getResourceIcon } from '@/lib/resources-icon';
 import { getCourseAssessmentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Eye, FileQuestion, Plus, Trash2, Upload } from 'lucide-react';
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { ResourceDetailsModal } from '../component/resources-details-modal';
 
 interface ResourcesFormProps {
@@ -27,8 +28,8 @@ interface ResourcesFormProps {
 
 export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
   const searchParams = new URLSearchParams(location.search);
-  const classId = searchParams.get('id');
-  const qc = useQueryClient();
+  const _classId = searchParams.get('id');
+  const _qc = useQueryClient();
 
   const [selectedResource, setSelectedResource] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -103,7 +104,7 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
     }
   };
 
-  const validateForm = () => {
+  const _validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     resources.forEach((r, i) => {
@@ -145,7 +146,7 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
 
             {lessonsWithContent?.map((skill, skillIndex) => (
               <div key={skillIndex}>
-                {skill?.content?.data?.map((c, cIndex) => {
+                {skill?.content?.data?.map((c, _cIndex) => {
                   const contentTypeName = contentTypeMap[c.content_type_uuid] || 'file';
 
                   return (

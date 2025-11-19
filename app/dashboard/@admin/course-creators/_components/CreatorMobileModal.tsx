@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CourseCreator } from '@/services/client';
+import type { CourseCreator } from '@/services/client';
 import { Edit, Trash2 } from 'lucide-react';
 import CourseCreatorDetails from './CreatorDetails';
 

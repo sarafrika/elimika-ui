@@ -1,7 +1,7 @@
 'use client';
 
 import { ProfileSectionNav } from '@/components/profile/profile-section-nav';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 const sections = [
   { label: 'General', href: '/dashboard/profile/general' },

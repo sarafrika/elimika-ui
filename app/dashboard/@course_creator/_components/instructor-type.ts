@@ -1,4 +1,4 @@
-import { CourseTrainingRequirement } from '@/services/client';
+import type { CourseTrainingRequirement } from '@/services/client';
 
 export type ICourse = {
   name?: string;

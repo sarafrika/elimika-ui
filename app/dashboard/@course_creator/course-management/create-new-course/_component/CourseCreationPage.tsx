@@ -42,16 +42,16 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AssignmentDialog, AssignmentList } from '../../../_components/assignment-management-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
-import { CourseCreationForm, CourseFormRef } from '../../../_components/course-creation-form';
+import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
 import CourseLicensingForm from '../../../_components/course-licensing-form';
-import { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
+import type { ICourse, TLesson, TLessonContentItem } from '../../../_components/instructor-type';
 import {
   AssessmentDialog,
-  ContentFormValues,
+  type ContentFormValues,
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonFormValues,
+  type LessonFormValues,
   LessonList,
 } from '../../../_components/lesson-management-form';
 import {
@@ -113,21 +113,21 @@ export default function CourseCreationPage() {
     setSelectedContent(content);
   };
 
-  const [selectedQuiz, setSelectedQuiz] = useState<any>();
+  const [_selectedQuiz, setSelectedQuiz] = useState<any>();
   const [addQuizModal, setAddQuizModal] = useState(false);
-  const openAddQuizModal = (quiz: any) => {
+  const _openAddQuizModal = (quiz: any) => {
     setSelectedQuiz(quiz);
     setAddQuizModal(true);
   };
 
   const [addAssignmentModal, setAddAssignmentModal] = useState(false);
-  const openAddAssignmentModal = (lesson: any) => {
+  const _openAddAssignmentModal = (lesson: any) => {
     setSelectedLesson(lesson);
     setAddAssignmentModal(true);
   };
 
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
-  const openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
+  const _openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
 
   // GET COURSE CONTENT TYPES
   const { data: contentTypeList } = useQuery(
@@ -177,7 +177,7 @@ export default function CourseCreationPage() {
       creator_share_percentage: c.creator_share_percentage ?? 0,
       instructor_share_percentage: c.instructor_share_percentage ?? 0,
       revenue_share_notes: c.revenue_share_notes ?? '',
-      // @ts-ignore
+      // @ts-expect-error
       training_requirements: Array.isArray(c.training_requirements)
         ? c.training_requirements.map(req => ({
           uuid: req.uuid,
@@ -211,7 +211,7 @@ export default function CourseCreationPage() {
     }),
     enabled: !!resolveId && !!selectedLesson?.uuid,
   });
-  // @ts-ignore
+  // @ts-expect-error
   const lesson = lessonData?.data;
 
   const lessonContentQueries = useQueries({
@@ -264,7 +264,7 @@ export default function CourseCreationPage() {
   //   return contentTypeList.find((type) => type.uuid === uuid)?.name || ""
   // }
 
-  const content =
+  const _content =
     lesson && lessonContent
       ? lessonContent.map((item: any) => {
         const matchedType = Array.isArray(contentTypeList?.data)
@@ -286,7 +286,7 @@ export default function CourseCreationPage() {
           value: typeName.toUpperCase() === 'TEXT' ? item?.value || '' : item?.file_url || '',
           duration:
             typeof item?.estimated_duration === 'string'
-              ? parseInt(item.estimated_duration) || 0
+              ? parseInt(item.estimated_duration, 10) || 0
               : 0,
           durationHours: item?.duration_hours || 0,
           durationMinutes: item?.duration_minutes || 0,
@@ -348,7 +348,7 @@ export default function CourseCreationPage() {
           path: { uuid: course?.data?.uuid as string },
         },
         {
-          onSuccess(data, variables, context) {
+          onSuccess(data, _variables, _context) {
             toast.success(data?.message);
             queryClient.invalidateQueries({
               queryKey: publishCourseQueryKey({ path: { uuid: course?.data?.uuid as string } }),
@@ -357,7 +357,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) { }
+    } catch (_err) { }
   };
 
   // DELETE LESSON MUTATION
@@ -382,7 +382,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) { }
+    } catch (_err) { }
   };
 
   const deleteLessonContent = useMutation(deleteLessonContentMutation());
@@ -409,7 +409,7 @@ export default function CourseCreationPage() {
           },
         }
       );
-    } catch (err) { }
+    } catch (_err) { }
   };
 
   if (creatorLoading) {

@@ -1,7 +1,7 @@
 import { getAuthToken } from '@/services/auth/get-token';
 import { pluginToken } from '@zodios/plugins';
-import createClient, { Middleware } from 'openapi-fetch';
-import { paths } from './schema';
+import createClient, { type Middleware } from 'openapi-fetch';
+import type { paths } from './schema';
 import { createApiClient } from './zod-client';
 
 const authMiddleware: Middleware = {

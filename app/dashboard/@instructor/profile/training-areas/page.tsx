@@ -64,7 +64,7 @@ export default function TrainingAreasSettings() {
     name: 'areas',
   });
 
-  const handleSubmit = (data: TrainingAreasFormValues) => {
+  const handleSubmit = (_data: TrainingAreasFormValues) => {
     requestConfirmation({
       title: 'Save training areas?',
       description: 'Learners use these interests to discover the sessions you can facilitate.',

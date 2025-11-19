@@ -1,5 +1,5 @@
 import { auth } from '../../../../services/auth';
-import { search, User } from '../../../../services/client';
+import { search, type User } from '../../../../services/client';
 import InvitesPage from './_components/InvitesPage';
 
 export default async function Invitations() {
@@ -12,7 +12,7 @@ export default async function Invitations() {
   const { data, error } = await search({
     query: {
       searchParams: {
-        email_eq: session!.user.email,
+        email_eq: session?.user.email,
       },
       pageable: {
         size: 1,

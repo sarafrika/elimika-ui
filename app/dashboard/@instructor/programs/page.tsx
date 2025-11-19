@@ -49,7 +49,7 @@ import {
   AddProgramCourseDialog,
   CreateProgramDialog,
   EditProgramDialog,
-  ProgramFormValues,
+  type ProgramFormValues,
   ProgramRequirementDialog,
 } from '../../@course_creator/_components/program-management-form';
 
@@ -64,7 +64,7 @@ export default function ClassesPage() {
   const [isEditProgramDialog, setIsEditProgramDialog] = useState(false);
 
   const [editProgramId, setEditProgramId] = useState<string | null>(null);
-  const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null);
+  const [editingRequirementId, _setEditingRequirementId] = useState<string | null>(null);
 
   const openEditProgramDialog = (id: string) => {
     setEditProgramId(id);
@@ -136,7 +136,7 @@ export default function ClassesPage() {
           },
         }
       );
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to delete program');
     }
   };
@@ -211,8 +211,7 @@ export default function ClassesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                <>
-                  {programs.map((program: any) => (
+                programs.map((program: any) => (
                     <TableRow key={program.uuid}>
                       <TableHead>
                         <Square size={20} strokeWidth={1} className='mx-auto flex self-center' />
@@ -296,8 +295,7 @@ export default function ClassesPage() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </>
+                  ))
               )}
             </TableBody>
           </Table>

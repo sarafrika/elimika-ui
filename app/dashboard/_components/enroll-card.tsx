@@ -50,7 +50,7 @@ export const EnrollmentCards = ({
     ...getInstructorByUuidOptions({ path: { uuid: default_instructor_uuid } }),
     enabled: !!default_instructor_uuid,
   });
-  // @ts-ignore
+  // @ts-expect-error
   const instructor = data?.data;
 
   const createCart = useMutation(createCartMutation());
@@ -163,7 +163,7 @@ export const EnrollmentCards = ({
                   },
                 },
                 {
-                  onSuccess: data => {
+                  onSuccess: _data => {
                     // console.log(data, "created cart data")
                     toast.success('Success!');
                   },

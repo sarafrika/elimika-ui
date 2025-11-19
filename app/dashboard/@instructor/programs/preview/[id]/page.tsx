@@ -26,7 +26,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { AddProgramCourseDialog } from '../../../../@course_creator/_components/program-management-form';
 
-const cls = {
+const _cls = {
   uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
   name: 'Advanced Java Programming - July Cohort',
   description: 'A focused class for mastering enterprise Java patterns with hands-on support.',
@@ -312,8 +312,7 @@ export default function ProgramPreviewPage() {
                   </Button>
                 </div>
               ) : (
-                <>
-                  {programCourses?.data?.map((c, i) => (
+                programCourses?.data?.map((c, i) => (
                     <div key={i} className='border-b pb-4 last:border-none last:pb-0'>
                       <div className='flex items-center justify-between'>
                         <h3 className='flex items-center gap-2 text-base font-semibold'>
@@ -337,8 +336,7 @@ export default function ProgramPreviewPage() {
                         {c?.total_duration_display}
                       </Badge>
                     </div>
-                  ))}
-                </>
+                  ))
               )}
             </div>
           </CardContent>

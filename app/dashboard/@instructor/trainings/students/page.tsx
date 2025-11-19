@@ -23,7 +23,7 @@ import { useState } from "react";
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 
-const sampleEnrollmentData = {
+const _sampleEnrollmentData = {
   success: true,
   data: {
     content: [
@@ -125,7 +125,7 @@ export default function StudentsPage({ classesWithCourseAndInstructor, loading }
       enabled: !!student.uuid,
     })),
   });
-  const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
+  const _detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data);
 
   const [selectedStudent, setSelectedStudent] = useState("Dianne Russel");
   const [grade, setGrade] = useState<number>(80);

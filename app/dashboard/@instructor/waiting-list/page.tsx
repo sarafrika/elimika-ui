@@ -23,7 +23,7 @@ export default function WaitingListPage() {
             queryFn: () =>
               getInvitationsSentByUser({
                 path: {
-                  uuid: user!.uuid!,
+                  uuid: user?.uuid!,
                 },
               }),
             enabled: !!user,

@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, } from 'node:fs';
 import { extname, relative, resolve } from 'node:path';
 
 const ROOT = resolve(process.cwd());
@@ -72,19 +72,11 @@ async function main() {
   }
 
   if (violations.length) {
-    console.error('❌ Brand color check failed. Please replace hardcoded colors with design tokens.');
-    for (const violation of violations) {
-      console.error(
-        `- ${relative(ROOT, violation.file)}: ${violation.message} (${violation.samples.join(', ')})`
-      );
-    }
+    process.stderr.write(`${JSON.stringify(violations, null, 2)}\n`);
     process.exit(1);
   }
-
-  console.log('✅ Brand color check passed.');
 }
 
-main().catch(error => {
-  console.error(error);
+main().catch(_error => {
   process.exit(1);
 });

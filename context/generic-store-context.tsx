@@ -1,5 +1,5 @@
-import { set } from 'date-fns';
-import { createContext, ReactNode, useEffect, useState } from 'react';
+
+import { createContext, type ReactNode, useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -20,7 +20,7 @@ type StoreProviderProps = {
 export function useStore(storeName: string, store: GenericStoreType) {
   return create<GenericStoreType>()(
     persist(
-      (set, get) => {
+      (set, _get) => {
         return {
           data: null,
           ...store,
@@ -49,10 +49,10 @@ export default function StoreContextProvider({ storeName, children, store }: Sto
   });
 
   useEffect(() => {
-    if (stores && stores[storeVariableName] && !stores[storeVariableName].data) {
+    if (stores?.[storeVariableName] && !stores[storeVariableName].data) {
       stores[storeVariableName].fetchData().then(() => setStores({ ...stores }));
     }
-  }, [stores]);
+  }, [stores, storeVariableName]);
 
   return <StoreContext.Provider value={stores}>{children}</StoreContext.Provider>;
 }

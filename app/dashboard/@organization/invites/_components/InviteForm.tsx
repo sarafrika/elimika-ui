@@ -14,10 +14,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import z from 'zod';
+import type z from 'zod';
 import {
   Form,
   FormControl,
@@ -63,7 +63,7 @@ export function InviteForm({
     defaultValues: {
       recipient_name: '',
       recipient_email: '',
-      inviter_uuid: userProfile!.uuid,
+      inviter_uuid: userProfile?.uuid,
     },
   });
 
@@ -77,7 +77,7 @@ export function InviteForm({
     if (branch_uuid) {
       inviteResp = await createBranchInvitation({
         path: {
-          uuid: trainingCenter!.uuid!,
+          uuid: trainingCenter?.uuid!,
           branchUuid: branch_uuid,
         },
         body: inviteData,
@@ -85,7 +85,7 @@ export function InviteForm({
     } else {
       inviteResp = await createOrganizationInvitation({
         path: {
-          uuid: trainingCenter!.uuid!,
+          uuid: trainingCenter?.uuid!,
         },
         body: inviteData,
       });

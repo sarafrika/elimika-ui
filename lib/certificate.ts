@@ -1,4 +1,4 @@
-import { TDocumentDefinitions } from 'pdfmake/interfaces';
+import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 
 export interface CertificateData {
   uuid: string;
@@ -31,8 +31,7 @@ export const certificatePDF = (certificate: CertificateData): TDocumentDefinitio
   return {
     pageSize: 'A4',
     pageMargins: [50, 70, 50, 60],
-    background: function (_, pageSize) {
-      return {
+    background: (_, pageSize) => ({
         canvas: [
           // Soft background
           {
@@ -65,8 +64,7 @@ export const certificatePDF = (certificate: CertificateData): TDocumentDefinitio
             lineColor: '#FACC15',
           },
         ],
-      };
-    },
+      }),
 
     content: [
       // Title

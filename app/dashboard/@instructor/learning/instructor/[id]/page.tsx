@@ -6,9 +6,10 @@ import { getAllInstructorsOptions } from '@/services/client/@tanstack/react-quer
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { useBreadcrumb } from '../../../../../../context/breadcrumb-provider';
-import { ClassData } from '../../../../@instructor/trainings/create-new/academic-period-form';
+import type { ClassData } from '../../../../@instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../../_components/instructor-directory';
 import { ManageBookings } from '../../../../_components/manage-bookings';
 
@@ -453,14 +454,14 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       ];
       setInstructors(sampleInstructors);
     }
-  }, [instructors?.length, setInstructors]);
+  }, [instructors?.length]);
 
-  const handleBookingComplete = (newBooking: Booking) => {
+  const handleBookingComplete = (_newBooking: Booking) => {
     // setBookings((prev: any) => [...prev, newBooking]);
     setActiveTab('bookings');
   };
 
-  const handleBookingUpdate = (updatedBooking: Booking) => {
+  const handleBookingUpdate = (_updatedBooking: Booking) => {
     // setBookings((prev: any) =>
     //     prev.map((b) => (b.id === updatedBooking.id ? updatedBooking : b))
     // );

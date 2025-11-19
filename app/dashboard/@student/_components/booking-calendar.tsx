@@ -21,8 +21,9 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarIcon, Clock, MapPin, Video, X } from 'lucide-react';
-import React, { useState } from 'react';
-import { BookingSlot } from '../browse-courses/instructor/page';
+import type React from 'react';
+import { useState } from 'react';
+import type { BookingSlot } from '../browse-courses/instructor/page';
 
 type Props = {
   instructor: any;

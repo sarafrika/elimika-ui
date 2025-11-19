@@ -5,9 +5,9 @@ import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BookOpen, ChevronLeft, ChevronRight, Clock, Edit2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { ClassData } from '../../trainings/create-new/academic-period-form';
+import type { ClassData } from '../../trainings/create-new/academic-period-form';
 import { EventModal } from './event-modal';
-import { AvailabilityData, CalendarEvent } from './types';
+import type { AvailabilityData, CalendarEvent } from './types';
 
 interface WeeklyAvailabilityGridProps {
   availabilityData: AvailabilityData;
@@ -245,7 +245,7 @@ export function WeeklyAvailabilityGrid({
     setIsEventModalOpen(true);
   };
 
-  const getEndTime = (startTime: string) => {
+  const _getEndTime = (startTime: string) => {
     const [hours, minutes] = startTime.split(':').map(Number);
     const endMinutes = Number(minutes) + 30;
     if (endMinutes >= 60) {

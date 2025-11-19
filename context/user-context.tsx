@@ -10,7 +10,7 @@ export function useUser() {
 
   return {
     ...profile,
-    updateSession: (userData: any) => {
+    updateSession: (_userData: any) => {
       // This is now handled automatically by TanStack Query
       // You can use profile.invalidateQuery() to refresh user data
       profile?.invalidateQuery?.();

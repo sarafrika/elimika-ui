@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
-import { Course } from '@/services/client';
+import type { Course } from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
   getCourseCreatorByUuidOptions,
@@ -42,7 +42,7 @@ export function TrainCourseCard({
   const { data: creator } = useQuery(
     getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } })
   );
-  // @ts-ignore
+  // @ts-expect-error
   const courseCreator = creator?.data;
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());

@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import React from 'react';
+import type React from 'react';
 
 interface ResourceDetailsModalProps {
   open: boolean;
@@ -64,7 +64,7 @@ export const ResourceDetailsModal: React.FC<ResourceDetailsModalProps> = ({
           )}
 
           {/* Description */}
-          {resource.description && resource.description.trim() && (
+          {resource.description?.trim() && (
             <div>
               <h4 className='mb-1 font-semibold text-gray-800'>Description</h4>
               <p className='text-sm text-gray-600'>{resource.description}</p>

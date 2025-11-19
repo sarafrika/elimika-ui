@@ -40,12 +40,12 @@ import { ChevronLeft, Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { FieldErrors, useFieldArray, useForm } from 'react-hook-form';
+import { type FieldErrors, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
 import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
 import {
-  ClassFormValues,
+  type ClassFormValues,
   classSchema,
   RecurrenceDialog,
 } from '../../_components/class-management-form';
@@ -72,7 +72,7 @@ export default function ClassDetailsForm({
   isLoading,
   onPrev,
 }: ClassDetailsProps) {
-  const router = useRouter();
+  const _router = useRouter();
   const instructor = useInstructor();
   const searchParams = new URLSearchParams(location.search);
   const classId = searchParams.get('id');
@@ -164,11 +164,11 @@ export default function ClassDetailsForm({
     name: 'categories',
   });
 
-  const [recurringUuid, setRecurringUuid] = useState<string | null>(null);
-  const [recurringData, setRecurringData] = useState<any | null>(null);
+  const [_recurringUuid, setRecurringUuid] = useState<string | null>(null);
+  const [_recurringData, setRecurringData] = useState<any | null>(null);
   const [openAddRecurrenceModal, setOpenAddRecurrenceModal] = useState(false);
 
-  const [editingRecurrenceId, setEditingRecurrenceId] = useState<string | null>(null);
+  const [editingRecurrenceId, _setEditingRecurrenceId] = useState<string | null>(null);
   const { data: recurrenceData, isLoading: recurrenceLoading } = useQuery({
     ...getClassRecurrencePatternOptions({
       path: { uuid: classData?.recurrence_pattern_uuid as string },
@@ -179,7 +179,7 @@ export default function ClassDetailsForm({
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
 
-  const handleError = (errors: FieldErrors) => {
+  const handleError = (_errors: FieldErrors) => {
     toast.error('Form validation errors');
   };
 
@@ -246,7 +246,7 @@ export default function ClassDetailsForm({
 
   const courseBannerMutation = tanstackClient.useMutation('post', '/api/v1/courses/{uuid}/banner');
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-  const [uploadedUrls, setUploadedUrls] = useState<{
+  const [_uploadedUrls, setUploadedUrls] = useState<{
     class_banner?: string;
   }>({});
   const handleFileUpload = async (
@@ -259,7 +259,7 @@ export default function ClassDetailsForm({
     try {
       const schema = z.object({ [key]: z.instanceof(File) });
       schema.parse({ [key]: file });
-    } catch (err) {
+    } catch (_err) {
       toast.error('Invalid file type.');
       return;
     }
@@ -311,7 +311,7 @@ export default function ClassDetailsForm({
         is_active: classData.is_active,
       });
     }
-  }, [classData, courses?.data?.content, programs?.data?.content, form, bannerPreview]);
+  }, [classData, courses?.data?.content, form]);
 
   return (
     <main className=''>
