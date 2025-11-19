@@ -28,6 +28,7 @@ import {
   School,
   Settings,
   ShieldCheck,
+  Sparkles,
   Star,
   UserCircle,
   UserCog,
@@ -354,19 +355,24 @@ export default {
       icon: LayoutDashboard,
     },
     {
-      title: 'Course Creators',
-      url: '/dashboard/course-creators',
-      icon: PlusCircle,
+      title: 'Users',
+      url: '/dashboard/users',
+      icon: UsersIcon,
     },
     {
-      title: 'Courses',
-      url: '/dashboard/courses',
-      icon: BookOpen,
+      title: 'Students',
+      url: '/dashboard/students',
+      icon: School,
     },
     {
       title: 'Instructors',
       url: '/dashboard/instructors',
-      icon: Users,
+      icon: GraduationCap,
+    },
+    {
+      title: 'Course Creators',
+      url: '/dashboard/course-creators',
+      icon: Sparkles,
     },
     {
       title: 'Organizations',
@@ -374,39 +380,14 @@ export default {
       icon: Building2,
     },
     {
-      title: 'Users',
-      url: '/dashboard/users',
-      icon: UsersIcon,
-    },
-    {
-      title: 'Rubrics',
-      url: '/dashboard/rubrics',
-      icon: ClipboardList,
-    },
-    {
-      title: 'Moderation',
-      url: '/dashboard/moderation',
+      title: 'Administrators',
+      url: '/dashboard/administrators',
       icon: ShieldCheck,
     },
     {
-      title: 'Clases and Schedules',
-      url: '/dashboard/classes',
-      icon: School,
-    },
-    {
-      title: 'Transactions',
-      url: '/dashboard/transactions',
-      icon: BadgeDollarSign,
-    },
-    {
-      title: 'Notifications',
-      url: '/dashboard/notifications',
-      icon: BellIcon,
-    },
-    {
-      title: 'Help & Support',
-      url: '/dashboard/support',
-      icon: MessageCircle,
+      title: 'System Config',
+      url: '/dashboard/system-config',
+      icon: Settings,
     },
   ],
   organisation_user: [
@@ -459,6 +440,28 @@ export default {
       title: 'Account',
       url: '/dashboard/account',
       icon: Settings,
+    },
+  ],
+  parent: [
+    {
+      title: 'Overview',
+      url: '/dashboard/overview',
+      icon: LayoutDashboard,
+    },
+    {
+      title: 'Attendance',
+      url: '/dashboard/attendance',
+      icon: CalendarClock,
+    },
+    {
+      title: 'Notifications',
+      url: '/dashboard/notifications',
+      icon: Bell,
+    },
+    {
+      title: 'Billing',
+      url: '/dashboard/billing',
+      icon: DollarSign,
     },
   ],
 } as Menu;

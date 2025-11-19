@@ -74,6 +74,7 @@ export function AppSidebar({
             pathname={pathname}
           />
         </SidebarGroupContent>
+
         {/* Secondary menu */}
         <NavSecondary items={menu?.secondary ?? []} className='mt-auto' />
       </SidebarContent>

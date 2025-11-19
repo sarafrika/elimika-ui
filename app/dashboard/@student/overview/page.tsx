@@ -1,282 +1,203 @@
-'use client';
+"use client";
 
+import DomainOverviewShell from '@/components/domain-overview-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  ArrowRight,
-  CheckCircle2,
-  FileText,
-  GraduationCap,
-  Info,
-  Search,
-  ThumbsUp,
-} from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { ArrowRight, BookOpenCheck, CheckCircle2, FileText, GraduationCap, Search, ThumbsUp } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
+const approvalStages = [
+  {
+    title: 'Profile submitted',
+    description: 'We have received your registration details.',
+    icon: FileText,
+  },
+  {
+    title: 'Under review',
+    description: 'Our team is validating guardian contacts and date of birth.',
+    icon: Search,
+  },
+  {
+    title: 'Approved',
+    description: 'You can now access classes and required documents.',
+    icon: ThumbsUp,
+  },
+  {
+    title: 'Enrolled',
+    description: 'Your timetable and learning resources unlock automatically.',
+    icon: GraduationCap,
+  },
+] as const;
+
+const submittedDetails = {
+  name: 'John Doe',
+  phone: '0712345678',
+  email: 'john.doe@example.com',
+  guardianName: 'Jane Doe',
+  guardianPhone: '+254 700 000 001',
+  hasGuardian: true,
+};
+
 export default function StudentOverviewPage() {
-  // TODO: Replace this with actual data from the backend
-  const isProfileComplete = false; // This will determine which view to show
-  const currentStageIndex: number = 1; // Example: 1 = "Under Review", only used if profile is complete
-
-  const approvalStages = [
-    {
-      title: 'Profile Submitted',
-      description: 'Your profile has been submitted for review.',
-      icon: FileText,
-      tooltip: 'We have received your registration details.',
-    },
-    {
-      title: 'Under Review',
-      description: 'Your application is being reviewed by our team.',
-      icon: Search,
-      tooltip: 'Our team is checking your information.',
-    },
-    {
-      title: 'Approved',
-      description: 'Congratulations! You have been approved.',
-      icon: ThumbsUp,
-      tooltip: 'You are approved and ready for enrollment.',
-    },
-    {
-      title: 'Enrolled',
-      description: 'You are now officially enrolled and can start learning.',
-      icon: GraduationCap,
-      tooltip: 'Welcome! You are now a student.',
-    },
-  ];
-
   const { data: session } = useSession();
-
-  // Data for when profile is complete
+  const isProfileComplete = false;
+  const currentStageIndex = 1;
   const currentStage = approvalStages[currentStageIndex];
   const progressPercent = ((currentStageIndex + 1) / approvalStages.length) * 100;
-  const nextStage = approvalStages[currentStageIndex + 1];
 
-  // Mock data for submitted details dialog
-  const submittedDetails = {
-    name: 'John Doe',
-    phone: '0712345678',
-    email: 'john.doe@example.com',
-    guardianName: 'Jane Doe',
-    guardianPhone: '+254700000001',
-    hasGuardian: true,
-  };
+  const profileCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Profile completion</CardTitle>
+        <CardDescription>
+          {isProfileComplete
+            ? 'Your application is complete while we finish verification.'
+            : 'Finish your profile so we can review and enrol you.'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className='space-y-4'>
+        <div className='flex items-center justify-between text-sm font-medium'>
+          <span>Steps completed</span>
+          <span>{currentStageIndex + 1} / {approvalStages.length}</span>
+        </div>
+        <Progress value={progressPercent} className='h-2' />
+        <div className='rounded-2xl border border-border/60 bg-muted/40 p-4'>
+          <p className='text-sm font-semibold text-foreground'>{currentStage.title}</p>
+          <p className='text-muted-foreground text-sm'>{currentStage.description}</p>
+        </div>
+        <Button asChild className='w-full'>
+          <Link prefetch href='/dashboard/profile/general'>
+            {isProfileComplete ? 'View student profile' : 'Complete my profile'}
+            <ArrowRight className='ml-2 h-4 w-4' />
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
 
-  if (isProfileComplete && !currentStage) {
-    return <p>Invalid approval stage.</p>;
-  }
+  const guardianCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Submitted details</CardTitle>
+        <CardDescription>Review the contact information you supplied.</CardDescription>
+      </CardHeader>
+      <CardContent className='space-y-3 text-sm'>
+        <DetailRow label='Student name' value={submittedDetails.name} />
+        <DetailRow label='Mobile number' value={submittedDetails.phone} />
+        <DetailRow label='Email address' value={submittedDetails.email} />
+        {submittedDetails.hasGuardian ? (
+          <div className='rounded-2xl border border-dashed border-border/60 p-3'>
+            <DetailRow label='Guardian name' value={submittedDetails.guardianName} />
+            <DetailRow label='Guardian mobile' value={submittedDetails.guardianPhone} />
+          </div>
+        ) : null}
+        <Button variant='ghost' asChild className='w-full justify-start px-0 text-sm'>
+          <Link prefetch href='/dashboard/profile/guardian'>Edit guardian details</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  const approvalTimeline = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Approval timeline</CardTitle>
+        <CardDescription>Monitor each stage of your onboarding journey.</CardDescription>
+      </CardHeader>
+      <CardContent className='space-y-4'>
+        {approvalStages.map((stage, idx) => {
+          const isCompleted = idx < currentStageIndex;
+          const isCurrent = idx === currentStageIndex;
+          const Icon = stage.icon;
+
+          return (
+            <div key={stage.title} className='flex items-start gap-3 rounded-2xl border border-border/60 p-3'>
+              <div
+                className={`mt-1 flex size-9 items-center justify-center rounded-full border ${
+                  isCompleted
+                    ? 'border-emerald-500 bg-emerald-500 text-white'
+                    : isCurrent
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-muted text-muted-foreground'
+                }`}
+              >
+                {isCompleted ? <CheckCircle2 className='h-4 w-4' /> : <Icon className='h-4 w-4' />}
+              </div>
+              <div className='space-y-1 text-sm'>
+                <p className='font-semibold text-foreground'>{stage.title}</p>
+                <p className='text-muted-foreground text-xs'>{stage.description}</p>
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+
+  const enrollmentCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Ready for enrolment?</CardTitle>
+        <CardDescription>Upload proof-of-age documents or request assistance.</CardDescription>
+      </CardHeader>
+      <CardContent className='flex flex-col gap-3 text-sm'>
+        <Badge variant='outline' className='w-fit'>
+          <BookOpenCheck className='mr-1 h-3.5 w-3.5' />
+          Required: national ID or birth certificate
+        </Badge>
+        <p className='text-muted-foreground'>
+          Uploading a valid document unlocks seats in classes that enforce age restrictions.
+        </p>
+        <div className='flex flex-wrap gap-2'>
+          <Button size='sm'>Upload documents</Button>
+          <Button variant='outline' size='sm'>
+            Talk to support
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <div className='mx-auto w-full max-w-4xl space-y-8 px-4 py-8'>
-      {/* Welcome Header */}
-      <div className='space-y-1'>
-        <h1 className='text-3xl font-bold tracking-tight'>
-          Welcome, <span className='text-primary'>{session?.user?.name ?? 'Student'}</span>
-        </h1>
-        <p className='text-muted-foreground'>
-          Here&apos;s a quick overview of your <span className='text-primary'>Student</span> journey
-          with us.
-        </p>
-      </div>
+    <DomainOverviewShell
+      domainLabel='Student workspace'
+      title={`Welcome, ${session?.user?.name ?? 'Student'}`}
+      subtitle='Track your approvals, manage guardian contacts, and unlock enrolment in one place.'
+      badge={{
+        label: isProfileComplete ? 'Profile complete' : 'Profile incomplete',
+        tone: isProfileComplete ? 'success' : 'warning',
+      }}
+      actions={
+        <Button asChild variant='outline'>
+          <Link prefetch href='/dashboard/profile/general'>
+            View profile
+          </Link>
+        </Button>
+      }
+      leftColumn={
+        <>
+          {profileCard}
+          {guardianCard}
+        </>
+      }
+      rightColumn={
+        <>
+          {approvalTimeline}
+          {enrollmentCard}
+        </>
+      }
+    />
+  );
+}
 
-      {/* Application Status Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Application Status</CardTitle>
-          <CardDescription>
-            {isProfileComplete
-              ? 'Track your registration and approval progress below.'
-              : 'Your first step is to complete your student profile.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='pt-2'>
-          {isProfileComplete ? (
-            currentStage && (
-              <div className='space-y-6'>
-                {/* Horizontal Stepper */}
-                <div className='flex w-full flex-col items-center gap-2'>
-                  <Dialog>
-                    <div className='no-scrollbar flex w-full items-start justify-between gap-2 overflow-x-auto text-center'>
-                      {approvalStages.map((stage, idx) => {
-                        const isCompleted = idx < currentStageIndex;
-                        const isCurrent = idx === currentStageIndex;
-                        const isFirstStage = idx === 0;
-                        const StepIcon = stage.icon;
-
-                        const stepContent = (
-                          <div
-                            className='group relative flex min-w-0 flex-col items-center'
-                            style={{ minWidth: 90 }}
-                          >
-                            <div
-                              className={`mb-2 flex size-10 items-center justify-center rounded-full border-2 shadow-sm transition-all duration-300 ${
-                                isCompleted
-                                  ? 'border-green-500 bg-green-500 text-white'
-                                  : isCurrent
-                                    ? 'bg-primary/90 text-primary-foreground border-primary'
-                                    : 'bg-muted text-muted-foreground border-muted'
-                              }`}
-                              aria-label={stage.tooltip}
-                            >
-                              {isCompleted ? (
-                                <CheckCircle2 className='h-5 w-5' />
-                              ) : (
-                                <StepIcon className='h-5 w-5' />
-                              )}
-                            </div>
-                            <span
-                              className={`text-xs font-medium ${isCurrent ? 'text-primary' : 'text-muted-foreground'}`}
-                            >
-                              {stage.title}
-                            </span>
-                          </div>
-                        );
-
-                        if (isFirstStage) {
-                          return (
-                            <DialogTrigger asChild key={stage.title}>
-                              <button className='text-left'>{stepContent}</button>
-                            </DialogTrigger>
-                          );
-                        }
-
-                        return (
-                          <div key={stage.title} className='flex-1'>
-                            {stepContent}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Submitted Details</DialogTitle>
-                        <DialogDescription>
-                          This is the information you provided during registration.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className='mt-2 space-y-3 text-sm'>
-                        <div className='flex justify-between'>
-                          <span className='font-medium'>Student name:</span>
-                          <span>{submittedDetails.name}</span>
-                        </div>
-                        <div className='flex justify-between'>
-                          <span className='font-medium'>Mobile No.:</span>
-                          <span>{submittedDetails.phone}</span>
-                        </div>
-                        <div className='flex justify-between'>
-                          <span className='font-medium'>Email Address:</span>
-                          <span>{submittedDetails.email}</span>
-                        </div>
-                        {submittedDetails.hasGuardian && (
-                          <>
-                            <hr className='my-2' />
-                            <div className='flex justify-between'>
-                              <span className='font-medium'>Guardian name:</span>
-                              <span>{submittedDetails.guardianName}</span>
-                            </div>
-                            <div className='flex justify-between'>
-                              <span className='font-medium'>Guardian Mobile No.:</span>
-                              <span>{submittedDetails.guardianPhone}</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button>Close</Button>
-                        </DialogClose>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Progress Bar */}
-                  <div className='bg-muted relative mt-1 h-1.5 w-full rounded-full'>
-                    <div
-                      className='bg-primary absolute h-1.5 rounded-full transition-all duration-500'
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Current Stage Details */}
-                <div className='bg-muted/50 flex flex-col items-center justify-center gap-3 rounded-lg p-6 text-center'>
-                  <div className='flex items-center gap-3'>
-                    <div
-                      className={`flex items-center justify-center rounded-full border bg-white p-3 shadow-sm`}
-                    >
-                      <currentStage.icon
-                        className={`h-7 w-7 ${currentStageIndex > 0 ? 'text-green-600' : 'text-primary'}`}
-                      />
-                    </div>
-                    <div>
-                      <div className='flex items-center gap-2 text-xl font-semibold'>
-                        {currentStage.title}
-                        <Badge
-                          variant={
-                            currentStageIndex === 0
-                              ? 'destructive'
-                              : currentStageIndex < approvalStages.length - 1
-                                ? 'default'
-                                : 'success'
-                          }
-                          className='ml-1'
-                        >
-                          {currentStageIndex === 0
-                            ? 'Action Required'
-                            : currentStageIndex < approvalStages.length - 1
-                              ? 'In Progress'
-                              : 'Completed'}
-                        </Badge>
-                      </div>
-                      <p className='text-muted-foreground text-left text-sm'>
-                        {currentStage.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  {nextStage && (
-                    <div className='border-primary/40 text-primary mt-2 flex items-center gap-2 rounded-md border-l-4 bg-white p-2 text-xs'>
-                      <Info className='h-4 w-4' />
-                      <span className='font-semibold'>What&apos;s next?</span>
-                      <span className='text-muted-foreground'>{nextStage.description}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          ) : (
-            <div className='bg-muted/40 flex flex-col items-center justify-center gap-4 rounded-lg p-8 text-center'>
-              <div className='border-primary bg-primary/10 flex size-16 items-center justify-center rounded-full border-2 border-dashed'>
-                <FileText className='text-primary h-8 w-8' />
-              </div>
-              <div className='space-y-1'>
-                <h3 className='text-xl font-semibold'>Profile Update Required</h3>
-                <p className='text-muted-foreground mx-auto max-w-sm'>
-                  Your application can&apos;t be reviewed until your profile is complete. Please add
-                  your educational background, skills, and other required information.
-                </p>
-              </div>
-              <Button asChild className='mt-2'>
-                <Link prefetch href='/dashboard/profile/general'>
-                  Update Profile Now <ArrowRight className='ml-2 h-4 w-4' />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className='flex items-center justify-between gap-4'>
+      <span className='text-muted-foreground text-xs uppercase'>{label}</span>
+      <span className='text-foreground text-sm font-semibold'>{value}</span>
     </div>
   );
 }

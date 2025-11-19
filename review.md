@@ -32,3 +32,8 @@
 -- link to invite students
 
 ## Students
+
+## Parents / Guardians
+
+- Hook real attendance/announcement feed into the guardian dashboard panels.
+- Capture AgeRestrictionException payloads from enrollment flows to feed the guardian enrollment notice component.

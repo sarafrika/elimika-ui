@@ -75,7 +75,7 @@ export function CourseCard({
     >
       <div className='relative'>
         {/* Course Image */}
-        <div className='from-primary/20 to-primary/5 relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg bg-gradient-to-br'>
+        <div className='relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg bg-muted'>
           {course?.banner_url ? (
             <Image
               src={course?.banner_url}

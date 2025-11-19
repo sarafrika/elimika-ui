@@ -3,7 +3,7 @@ import AccountTypeSelector from './_components/account-type-selector';
 
 const OnboardingPage = () => {
   return (
-    <div className='from-background via-primary/5 to-primary/10 dark:from-background dark:via-primary/10 dark:to-primary/20 flex min-h-screen items-center justify-center bg-gradient-to-br p-4'>
+    <div className='flex min-h-screen items-center justify-center bg-background p-4 dark:bg-background'>
       <div className='w-full max-w-6xl'>
         <div className='mb-12 text-center'>
           <h1 className='text-foreground mb-4 text-4xl font-bold'>Welcome to Elimika!</h1>

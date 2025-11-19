@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/select';
 import {
   BookOpen,
-  Calendar,
   Clock,
   EyeIcon,
   LucideFileWarning,
@@ -30,7 +29,7 @@ import {
   Play,
   Search,
   SlidersHorizontal,
-  Users,
+  Users
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -230,12 +229,12 @@ export function TrainingClassList({
           const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'N/A';
 
           return (
-            <div key={cls.uuid} className='group cursor-pointer border border-border/100 rounded-2xl'>
-              <div className='relative h-full max-w-[380px] rounded-2xl p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl'>
-                <div className='h-full overflow-hidden rounded-2xl'>
+            <div key={cls.uuid} className='group cursor-pointer'>
+              <div className='relative h-full max-w-[380px] rounded-2xl border border-primary/40 bg-card p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl'>
+                <div className='h-full overflow-hidden rounded-2xl bg-white'>
                   {/* Image Header */}
                   <div className='relative h-48 overflow-hidden'>
-                    <div className='absolute inset-0 z-10 bg-gradient-to-br from-blue-400/20 via-cyan-400/20 to-indigo-500/20' />
+                    <div className='absolute inset-0 z-10 bg-primary/10' />
                     <Image
                       src={
                         (cls?.course?.thumbnail_url as string) ||
@@ -352,8 +351,8 @@ export function TrainingClassList({
                     </div>
 
                     {/* Instructor */}
-                    <div className='flex items-center gap-2 rounded-lg border border-border-100/50 p-2.5'>
-                      <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 text-sm text-white shadow-md'>
+                    <div className='flex items-center gap-2 rounded-lg border border-blue-100/50 bg-muted p-2.5'>
+                      <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground shadow-md'>
                         {cls?.instructor?.full_name?.charAt(0)}
                       </div>
                       <div className='min-w-0 flex-1'>
@@ -400,9 +399,7 @@ export function TrainingClassList({
                       </div>
                       <div className='h-2 overflow-hidden rounded-full bg-blue-100'>
                         <div
-                          className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80
-                            ? 'bg-gradient-to-r from-orange-400 to-red-500'
-                            : 'bg-gradient-to-r from-blue-400 to-indigo-500'
+                          className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80 ? 'bg-warning' : 'bg-primary'
                             }`}
                           style={{ width: `${enrollmentPercentage}%` }}
                         />
@@ -414,7 +411,7 @@ export function TrainingClassList({
                       <div className='flex items-center gap-1.5'>
                         <span className='text-lg'>KES {cls?.training_fee || 'N/A'}</span>
                       </div>
-                      <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
+                      {/* <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
                         <Calendar className='h-3.5 w-3.5' />
                         <span>
                           Starts{' '}
@@ -424,7 +421,7 @@ export function TrainingClassList({
                           })}{' '}
                           {cls?.default_start_time}{' '}
                         </span>
-                      </div>
+                      </div> */}
                     </div>
 
                     <div className='flex flex-row items-center justify-between' >

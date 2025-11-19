@@ -805,7 +805,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
   };
 
   return (
-    <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+    <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
       <div className='flex flex-row items-center justify-between'>
         <div className='space-y-1'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>

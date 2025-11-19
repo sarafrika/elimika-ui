@@ -98,7 +98,7 @@ export default function TrainingsPage({ classesWithCourseAndInstructor, loading 
       </div>
 
       <TrainingClassList
-        onEdit={id => router.push(`/dashboard/trainings/create-new?id=${id}`)}
+        onEdit={(id: any) => router.push(`/dashboard/trainings/create-new?id=${id}`)}
         onDelete={openDeleteModal}
         onOpenTimetable={openTimetableSchedule}
         onOpenRecurring={openRecurrentSchedule}

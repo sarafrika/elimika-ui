@@ -8,6 +8,8 @@ import {
   deleteTrainingBranch,
   getTrainingBranchByUuid,
   updateTrainingBranch,
+  getRule,
+  updateRule,
   deleteStudent,
   getStudentById,
   updateStudent,
@@ -115,6 +117,8 @@ import {
   checkStudentConflict,
   scheduleClass,
   checkInstructorConflict,
+  listRules,
+  createRule,
   getAllStudents,
   createStudent,
   getAllAssessmentRubrics,
@@ -161,6 +165,8 @@ import {
   createInstructor,
   getInstructorSkills,
   addInstructorSkill,
+  getInstructorReviews,
+  submitInstructorReview,
   getInstructorMemberships,
   addInstructorMembership,
   getInstructorExperience,
@@ -170,9 +176,12 @@ import {
   getInstructorDocuments,
   addInstructorDocument,
   verifyDocument,
+  uploadInstructorDocument,
   createAvailabilitySlot,
   setAvailabilityPatterns,
+  bookInstructorSlot,
   blockTime,
+  createLink,
   enrollStudent,
   getAllCourses,
   createCourse,
@@ -196,6 +205,7 @@ import {
   addCourseLesson,
   getLessonContent,
   addLessonContent,
+  uploadLessonMedia,
   reorderLessonContent,
   getCourseAssessments,
   addCourseAssessment,
@@ -225,6 +235,7 @@ import {
   createClassRecurrencePattern,
   getAllCertificates,
   createCertificate,
+  uploadCertificatePdf,
   revokeCertificate,
   generateCertificateUrl,
   getCertificateTemplates,
@@ -237,8 +248,7 @@ import {
   returnSubmission,
   gradeSubmission,
   assignAdminDomain,
-  verifyOrganisation,
-  unverifyOrganisation,
+  moderateOrganisation,
   verifyInstructor,
   unverifyInstructor,
   listAll,
@@ -313,6 +323,7 @@ import {
   getInvitationByToken,
   previewInvitation,
   getPendingInvitationsForEmail,
+  getInstructorRatingSummary,
   clearInstructorAvailability,
   getInstructorAvailability,
   searchAvailability,
@@ -325,6 +336,8 @@ import {
   searchExperience,
   searchEducation,
   searchDocuments,
+  getStudentDashboard,
+  getMyStudents,
   cancelEnrollment,
   getEnrollment,
   getStudentSchedule,
@@ -365,6 +378,7 @@ import {
   getByClass,
   previewRecurringClassSchedule,
   checkClassSchedulingConflicts,
+  getEnrollmentsForClass,
   getClassDefinitionsForOrganisation,
   getClassDefinitionsForInstructor,
   getClassDefinitionsForCourse,
@@ -392,10 +406,13 @@ import {
   getAdminEligibleUsers,
   getAdminUsers,
   isOrganisationVerified,
+  getPendingOrganisations,
   isInstructorVerified,
   getDashboardStatistics,
+  getDashboardActivity,
   cancelInvitation,
   cleanupOldInvitations,
+  revokeLink,
   dissociateRubric,
   dissociateRubricByContext,
   removeCategoryFromCourse,
@@ -422,6 +439,10 @@ import type {
   UpdateTrainingBranchData,
   UpdateTrainingBranchError,
   UpdateTrainingBranchResponse,
+  GetRuleData,
+  UpdateRuleData,
+  UpdateRuleError,
+  UpdateRuleResponse,
   DeleteStudentData,
   DeleteStudentError,
   DeleteStudentResponse,
@@ -688,6 +709,12 @@ import type {
   CheckInstructorConflictData,
   CheckInstructorConflictError,
   CheckInstructorConflictResponse,
+  ListRulesData,
+  ListRulesError,
+  ListRulesResponse,
+  CreateRuleData,
+  CreateRuleError,
+  CreateRuleResponse,
   GetAllStudentsData,
   GetAllStudentsError,
   GetAllStudentsResponse,
@@ -818,6 +845,10 @@ import type {
   AddInstructorSkillData,
   AddInstructorSkillError,
   AddInstructorSkillResponse,
+  GetInstructorReviewsData,
+  SubmitInstructorReviewData,
+  SubmitInstructorReviewError,
+  SubmitInstructorReviewResponse,
   GetInstructorMembershipsData,
   GetInstructorMembershipsError,
   GetInstructorMembershipsResponse,
@@ -841,15 +872,24 @@ import type {
   VerifyDocumentData,
   VerifyDocumentError,
   VerifyDocumentResponse,
+  UploadInstructorDocumentData,
+  UploadInstructorDocumentError,
+  UploadInstructorDocumentResponse,
   CreateAvailabilitySlotData,
   CreateAvailabilitySlotError,
   CreateAvailabilitySlotResponse,
   SetAvailabilityPatternsData,
   SetAvailabilityPatternsError,
   SetAvailabilityPatternsResponse,
+  BookInstructorSlotData,
+  BookInstructorSlotError,
+  BookInstructorSlotResponse,
   BlockTimeData,
   BlockTimeError,
   BlockTimeResponse,
+  CreateLinkData,
+  CreateLinkError,
+  CreateLinkResponse,
   EnrollStudentData,
   EnrollStudentError,
   EnrollStudentResponse,
@@ -915,6 +955,9 @@ import type {
   AddLessonContentData,
   AddLessonContentError,
   AddLessonContentResponse,
+  UploadLessonMediaData,
+  UploadLessonMediaError,
+  UploadLessonMediaResponse,
   ReorderLessonContentData,
   ReorderLessonContentError,
   ReorderLessonContentResponse,
@@ -996,6 +1039,9 @@ import type {
   CreateCertificateData,
   CreateCertificateError,
   CreateCertificateResponse,
+  UploadCertificatePdfData,
+  UploadCertificatePdfError,
+  UploadCertificatePdfResponse,
   RevokeCertificateData,
   RevokeCertificateError,
   RevokeCertificateResponse,
@@ -1032,12 +1078,9 @@ import type {
   AssignAdminDomainData,
   AssignAdminDomainError,
   AssignAdminDomainResponse,
-  VerifyOrganisationData,
-  VerifyOrganisationError,
-  VerifyOrganisationResponse,
-  UnverifyOrganisationData,
-  UnverifyOrganisationError,
-  UnverifyOrganisationResponse,
+  ModerateOrganisationData,
+  ModerateOrganisationError,
+  ModerateOrganisationResponse,
   VerifyInstructorData,
   VerifyInstructorError,
   VerifyInstructorResponse,
@@ -1204,6 +1247,7 @@ import type {
   GetInvitationByTokenData,
   PreviewInvitationData,
   GetPendingInvitationsForEmailData,
+  GetInstructorRatingSummaryData,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityError,
   ClearInstructorAvailabilityResponse,
@@ -1234,6 +1278,8 @@ import type {
   SearchDocumentsData,
   SearchDocumentsError,
   SearchDocumentsResponse,
+  GetStudentDashboardData,
+  GetMyStudentsData,
   CancelEnrollmentData,
   CancelEnrollmentError,
   CancelEnrollmentResponse,
@@ -1306,6 +1352,7 @@ import type {
   GetByClassData,
   PreviewRecurringClassScheduleData,
   CheckClassSchedulingConflictsData,
+  GetEnrollmentsForClassData,
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForInstructorData,
   GetClassDefinitionsForCourseData,
@@ -1349,14 +1396,23 @@ import type {
   GetAdminUsersError,
   GetAdminUsersResponse,
   IsOrganisationVerifiedData,
+  GetPendingOrganisationsData,
+  GetPendingOrganisationsError,
+  GetPendingOrganisationsResponse,
   IsInstructorVerifiedData,
   GetDashboardStatisticsData,
+  GetDashboardActivityData,
+  GetDashboardActivityError,
+  GetDashboardActivityResponse,
   CancelInvitationData,
   CancelInvitationError,
   CancelInvitationResponse,
   CleanupOldInvitationsData,
   CleanupOldInvitationsError,
   CleanupOldInvitationsResponse,
+  RevokeLinkData,
+  RevokeLinkError,
+  RevokeLinkResponse,
   DissociateRubricData,
   DissociateRubricError,
   DissociateRubricResponse,
@@ -1543,6 +1599,51 @@ export const updateTrainingBranchMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateTrainingBranch({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getRuleQueryKey = (options: Options<GetRuleData>) =>
+  createQueryKey('getRule', options);
+
+/**
+ * Fetch rule
+ * Fetches a single rule by its UUID
+ */
+export const getRuleOptions = (options: Options<GetRuleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRuleQueryKey(options),
+  });
+};
+
+/**
+ * Update rule
+ */
+export const updateRuleMutation = (
+  options?: Partial<Options<UpdateRuleData>>
+): UseMutationOptions<UpdateRuleResponse, UpdateRuleError, Options<UpdateRuleData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateRuleResponse,
+    UpdateRuleError,
+    Options<UpdateRuleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateRule({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -4636,6 +4737,117 @@ export const checkInstructorConflictMutation = (
   return mutationOptions;
 };
 
+export const listRulesQueryKey = (options: Options<ListRulesData>) =>
+  createQueryKey('listRules', options);
+
+/**
+ * List rules
+ * Returns paginated list of system rules with optional filters
+ */
+export const listRulesOptions = (options: Options<ListRulesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listRules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listRulesQueryKey(options),
+  });
+};
+
+export const listRulesInfiniteQueryKey = (
+  options: Options<ListRulesData>
+): QueryKey<Options<ListRulesData>> => createQueryKey('listRules', options, true);
+
+/**
+ * List rules
+ * Returns paginated list of system rules with optional filters
+ */
+export const listRulesInfiniteOptions = (options: Options<ListRulesData>) => {
+  return infiniteQueryOptions<
+    ListRulesResponse,
+    ListRulesError,
+    InfiniteData<ListRulesResponse>,
+    QueryKey<Options<ListRulesData>>,
+    number | Pick<QueryKey<Options<ListRulesData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListRulesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listRules({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listRulesInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const createRuleQueryKey = (options: Options<CreateRuleData>) =>
+  createQueryKey('createRule', options);
+
+/**
+ * Create rule
+ */
+export const createRuleOptions = (options: Options<CreateRuleData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createRule({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createRuleQueryKey(options),
+  });
+};
+
+/**
+ * Create rule
+ */
+export const createRuleMutation = (
+  options?: Partial<Options<CreateRuleData>>
+): UseMutationOptions<CreateRuleResponse, CreateRuleError, Options<CreateRuleData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateRuleResponse,
+    CreateRuleError,
+    Options<CreateRuleData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createRule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAllStudentsQueryKey = (options: Options<GetAllStudentsData>) =>
   createQueryKey('getAllStudents', options);
 
@@ -7131,6 +7343,88 @@ export const addInstructorSkillMutation = (
   return mutationOptions;
 };
 
+export const getInstructorReviewsQueryKey = (options: Options<GetInstructorReviewsData>) =>
+  createQueryKey('getInstructorReviews', options);
+
+/**
+ * Get reviews for an instructor
+ * Returns all reviews left for the specified instructor.
+ */
+export const getInstructorReviewsOptions = (options: Options<GetInstructorReviewsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorReviews({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorReviewsQueryKey(options),
+  });
+};
+
+export const submitInstructorReviewQueryKey = (options: Options<SubmitInstructorReviewData>) =>
+  createQueryKey('submitInstructorReview', options);
+
+/**
+ * Submit a review for an instructor
+ * Allows a student to leave a review for an instructor, scoped to a specific enrollment.
+ *
+ * Frontend clients should:
+ * - Use the student's enrollment UUID and the instructor UUID for the class they attended.
+ * - Enforce that each enrollment can create at most one review for a given instructor.
+ *
+ */
+export const submitInstructorReviewOptions = (options: Options<SubmitInstructorReviewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitInstructorReview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitInstructorReviewQueryKey(options),
+  });
+};
+
+/**
+ * Submit a review for an instructor
+ * Allows a student to leave a review for an instructor, scoped to a specific enrollment.
+ *
+ * Frontend clients should:
+ * - Use the student's enrollment UUID and the instructor UUID for the class they attended.
+ * - Enforce that each enrollment can create at most one review for a given instructor.
+ *
+ */
+export const submitInstructorReviewMutation = (
+  options?: Partial<Options<SubmitInstructorReviewData>>
+): UseMutationOptions<
+  SubmitInstructorReviewResponse,
+  SubmitInstructorReviewError,
+  Options<SubmitInstructorReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitInstructorReviewResponse,
+    SubmitInstructorReviewError,
+    Options<SubmitInstructorReviewData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitInstructorReview({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getInstructorMembershipsQueryKey = (options: Options<GetInstructorMembershipsData>) =>
   createQueryKey('getInstructorMemberships', options);
 
@@ -7566,6 +7860,74 @@ export const verifyDocumentMutation = (
   return mutationOptions;
 };
 
+export const uploadInstructorDocumentQueryKey = (options: Options<UploadInstructorDocumentData>) =>
+  createQueryKey('uploadInstructorDocument', options);
+
+/**
+ * Upload instructor document file
+ * Uploads a PDF document for an instructor and creates a document record.
+ *
+ * **Use cases:**
+ * - Uploading certificates, licenses, and other professional credentials.
+ * - Attaching supporting documents to education, experience, or membership records.
+ *
+ * **File requirements:**
+ * - Must be a PDF file (`application/pdf`).
+ * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by instructor UUID.
+ *
+ */
+export const uploadInstructorDocumentOptions = (options: Options<UploadInstructorDocumentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadInstructorDocument({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadInstructorDocumentQueryKey(options),
+  });
+};
+
+/**
+ * Upload instructor document file
+ * Uploads a PDF document for an instructor and creates a document record.
+ *
+ * **Use cases:**
+ * - Uploading certificates, licenses, and other professional credentials.
+ * - Attaching supporting documents to education, experience, or membership records.
+ *
+ * **File requirements:**
+ * - Must be a PDF file (`application/pdf`).
+ * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by instructor UUID.
+ *
+ */
+export const uploadInstructorDocumentMutation = (
+  options?: Partial<Options<UploadInstructorDocumentData>>
+): UseMutationOptions<
+  UploadInstructorDocumentResponse,
+  UploadInstructorDocumentError,
+  Options<UploadInstructorDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadInstructorDocumentResponse,
+    UploadInstructorDocumentError,
+    Options<UploadInstructorDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadInstructorDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const createAvailabilitySlotQueryKey = (options: Options<CreateAvailabilitySlotData>) =>
   createQueryKey('createAvailabilitySlot', options);
 
@@ -7698,6 +8060,74 @@ export const setAvailabilityPatternsMutation = (
   return mutationOptions;
 };
 
+export const bookInstructorSlotQueryKey = (options: Options<BookInstructorSlotData>) =>
+  createQueryKey('bookInstructorSlot', options);
+
+/**
+ * Book an instructor for a private session
+ * Allows a student to book an instructor for a one-on-one session outside publicly scheduled classes.
+ *
+ * **Flow:**
+ * - The frontend first uses the `/available` endpoint to show free slots.
+ * - Once a slot is selected, the client calls this endpoint with start/end times and an optional purpose.
+ * - The service verifies the instructor is available, then blocks the slot so it is not offered again.
+ *
+ * This endpoint does not create enrollments or class definitions; it simply reserves the instructor's time.
+ * Other modules (e.g., Timetabling, Commerce) can listen for bookings and create paid sessions if needed.
+ *
+ */
+export const bookInstructorSlotOptions = (options: Options<BookInstructorSlotData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await bookInstructorSlot({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: bookInstructorSlotQueryKey(options),
+  });
+};
+
+/**
+ * Book an instructor for a private session
+ * Allows a student to book an instructor for a one-on-one session outside publicly scheduled classes.
+ *
+ * **Flow:**
+ * - The frontend first uses the `/available` endpoint to show free slots.
+ * - Once a slot is selected, the client calls this endpoint with start/end times and an optional purpose.
+ * - The service verifies the instructor is available, then blocks the slot so it is not offered again.
+ *
+ * This endpoint does not create enrollments or class definitions; it simply reserves the instructor's time.
+ * Other modules (e.g., Timetabling, Commerce) can listen for bookings and create paid sessions if needed.
+ *
+ */
+export const bookInstructorSlotMutation = (
+  options?: Partial<Options<BookInstructorSlotData>>
+): UseMutationOptions<
+  BookInstructorSlotResponse,
+  BookInstructorSlotError,
+  Options<BookInstructorSlotData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    BookInstructorSlotResponse,
+    BookInstructorSlotError,
+    Options<BookInstructorSlotData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await bookInstructorSlot({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const blockTimeQueryKey = (options: Options<BlockTimeData>) =>
   createQueryKey('blockTime', options);
 
@@ -7818,6 +8248,52 @@ export const blockTimeMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await blockTime({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const createLinkQueryKey = (options: Options<CreateLinkData>) =>
+  createQueryKey('createLink', options);
+
+/**
+ * Link a guardian to a learner
+ * Grants a guardian/parent access to monitor a learner using their own credentials.
+ */
+export const createLinkOptions = (options: Options<CreateLinkData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createLink({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createLinkQueryKey(options),
+  });
+};
+
+/**
+ * Link a guardian to a learner
+ * Grants a guardian/parent access to monitor a learner using their own credentials.
+ */
+export const createLinkMutation = (
+  options?: Partial<Options<CreateLinkData>>
+): UseMutationOptions<CreateLinkResponse, CreateLinkError, Options<CreateLinkData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateLinkResponse,
+    CreateLinkError,
+    Options<CreateLinkData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createLink({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -9254,6 +9730,80 @@ export const addLessonContentMutation = (
   return mutationOptions;
 };
 
+export const uploadLessonMediaQueryKey = (options: Options<UploadLessonMediaData>) =>
+  createQueryKey('uploadLessonMedia', options);
+
+/**
+ * Upload media for lesson content
+ * Uploads a media file (PDF, image, audio, video) for a specific lesson and creates a LessonContent record.
+ *
+ * **Use cases:**
+ * - Course creators attaching PDFs, videos, or audio during course content authoring.
+ * - Rich text editors (e.g. Tiptap) uploading inline images and receiving a public URL to embed in HTML.
+ *
+ * **File handling:**
+ * - Files are stored via the platform StorageService under the `course_materials` folder, partitioned by course and lesson UUID.
+ * - The returned LessonContentDTO will have `file_url`, `mime_type`, and `file_size_bytes` populated.
+ *
+ * To use this for a rich text editor image upload, call this endpoint with an `image` content type
+ * and then embed the returned `file_url` in the editor HTML.
+ *
+ */
+export const uploadLessonMediaOptions = (options: Options<UploadLessonMediaData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadLessonMedia({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadLessonMediaQueryKey(options),
+  });
+};
+
+/**
+ * Upload media for lesson content
+ * Uploads a media file (PDF, image, audio, video) for a specific lesson and creates a LessonContent record.
+ *
+ * **Use cases:**
+ * - Course creators attaching PDFs, videos, or audio during course content authoring.
+ * - Rich text editors (e.g. Tiptap) uploading inline images and receiving a public URL to embed in HTML.
+ *
+ * **File handling:**
+ * - Files are stored via the platform StorageService under the `course_materials` folder, partitioned by course and lesson UUID.
+ * - The returned LessonContentDTO will have `file_url`, `mime_type`, and `file_size_bytes` populated.
+ *
+ * To use this for a rich text editor image upload, call this endpoint with an `image` content type
+ * and then embed the returned `file_url` in the editor HTML.
+ *
+ */
+export const uploadLessonMediaMutation = (
+  options?: Partial<Options<UploadLessonMediaData>>
+): UseMutationOptions<
+  UploadLessonMediaResponse,
+  UploadLessonMediaError,
+  Options<UploadLessonMediaData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadLessonMediaResponse,
+    UploadLessonMediaError,
+    Options<UploadLessonMediaData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadLessonMedia({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const reorderLessonContentQueryKey = (options: Options<ReorderLessonContentData>) =>
   createQueryKey('reorderLessonContent', options);
 
@@ -10119,7 +10669,7 @@ export const completeCheckoutQueryKey = (options: Options<CompleteCheckoutData>)
 
 /**
  * Complete checkout
- * Performs the full Medusa checkout flow including customer association and payment selection
+ * Performs the full checkout flow including customer association and payment selection
  */
 export const completeCheckoutOptions = (options: Options<CompleteCheckoutData>) => {
   return queryOptions({
@@ -10138,7 +10688,7 @@ export const completeCheckoutOptions = (options: Options<CompleteCheckoutData>) 
 
 /**
  * Complete checkout
- * Performs the full Medusa checkout flow including customer association and payment selection
+ * Performs the full checkout flow including customer association and payment selection
  */
 export const completeCheckoutMutation = (
   options?: Partial<Options<CompleteCheckoutData>>
@@ -10169,7 +10719,7 @@ export const createCartQueryKey = (options: Options<CreateCartData>) =>
 
 /**
  * Create a new cart
- * Initialises a new cart in Medusa that can be used for checkout flows
+ * Initialises a new cart that can be used for checkout flows
  */
 export const createCartOptions = (options: Options<CreateCartData>) => {
   return queryOptions({
@@ -10188,7 +10738,7 @@ export const createCartOptions = (options: Options<CreateCartData>) => {
 
 /**
  * Create a new cart
- * Initialises a new cart in Medusa that can be used for checkout flows
+ * Initialises a new cart that can be used for checkout flows
  */
 export const createCartMutation = (
   options?: Partial<Options<CreateCartData>>
@@ -10215,7 +10765,7 @@ export const selectPaymentSessionQueryKey = (options: Options<SelectPaymentSessi
 
 /**
  * Select payment session
- * Locks the cart to a particular Medusa payment provider
+ * Locks the cart to a particular payment provider
  */
 export const selectPaymentSessionOptions = (options: Options<SelectPaymentSessionData>) => {
   return queryOptions({
@@ -10234,7 +10784,7 @@ export const selectPaymentSessionOptions = (options: Options<SelectPaymentSessio
 
 /**
  * Select payment session
- * Locks the cart to a particular Medusa payment provider
+ * Locks the cart to a particular payment provider
  */
 export const selectPaymentSessionMutation = (
   options?: Partial<Options<SelectPaymentSessionData>>
@@ -10307,7 +10857,7 @@ export const completeCartQueryKey = (options: Options<CompleteCartData>) =>
 
 /**
  * Complete cart
- * Finalises the cart in Medusa and creates an order
+ * Finalises the cart and creates an order
  */
 export const completeCartOptions = (options: Options<CompleteCartData>) => {
   return queryOptions({
@@ -10326,7 +10876,7 @@ export const completeCartOptions = (options: Options<CompleteCartData>) => {
 
 /**
  * Complete cart
- * Finalises the cart in Medusa and creates an order
+ * Finalises the cart and creates an order
  */
 export const completeCartMutation = (
   options?: Partial<Options<CompleteCartData>>
@@ -10693,6 +11243,72 @@ export const createCertificateMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createCertificate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const uploadCertificatePdfQueryKey = (options: Options<UploadCertificatePdfData>) =>
+  createQueryKey('uploadCertificatePdf', options);
+
+/**
+ * Upload certificate PDF
+ * Uploads an externally generated certificate PDF file for an existing certificate record and updates its download URL.
+ *
+ * **File requirements:**
+ * - Must be a PDF (`application/pdf`).
+ * - Stored via the platform StorageService under the `certificates` folder.
+ *
+ * Frontend clients should call this after a certificate record exists, then use the returned `certificate_url`
+ * to power download links in student dashboards and admin UIs.
+ *
+ */
+export const uploadCertificatePdfOptions = (options: Options<UploadCertificatePdfData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadCertificatePdf({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadCertificatePdfQueryKey(options),
+  });
+};
+
+/**
+ * Upload certificate PDF
+ * Uploads an externally generated certificate PDF file for an existing certificate record and updates its download URL.
+ *
+ * **File requirements:**
+ * - Must be a PDF (`application/pdf`).
+ * - Stored via the platform StorageService under the `certificates` folder.
+ *
+ * Frontend clients should call this after a certificate record exists, then use the returned `certificate_url`
+ * to power download links in student dashboards and admin UIs.
+ *
+ */
+export const uploadCertificatePdfMutation = (
+  options?: Partial<Options<UploadCertificatePdfData>>
+): UseMutationOptions<
+  UploadCertificatePdfResponse,
+  UploadCertificatePdfError,
+  Options<UploadCertificatePdfData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadCertificatePdfResponse,
+    UploadCertificatePdfError,
+    Options<UploadCertificatePdfData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadCertificatePdf({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -11351,17 +11967,17 @@ export const assignAdminDomainMutation = (
   return mutationOptions;
 };
 
-export const verifyOrganisationQueryKey = (options: Options<VerifyOrganisationData>) =>
-  createQueryKey('verifyOrganisation', options);
+export const moderateOrganisationQueryKey = (options: Options<ModerateOrganisationData>) =>
+  createQueryKey('moderateOrganisation', options);
 
 /**
- * Verify an organization
- * Verifies/approves an organization by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified organizations gain access to additional platform features and display verification badges.
+ * Moderate organization verification
+ * Handles organization approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
  */
-export const verifyOrganisationOptions = (options: Options<VerifyOrganisationData>) => {
+export const moderateOrganisationOptions = (options: Options<ModerateOrganisationData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await verifyOrganisation({
+      const { data } = await moderateOrganisation({
         ...options,
         ...queryKey[0],
         signal,
@@ -11369,78 +11985,28 @@ export const verifyOrganisationOptions = (options: Options<VerifyOrganisationDat
       });
       return data;
     },
-    queryKey: verifyOrganisationQueryKey(options),
+    queryKey: moderateOrganisationQueryKey(options),
   });
 };
 
 /**
- * Verify an organization
- * Verifies/approves an organization by setting the admin_verified flag to true. Only system administrators can perform this operation. Verified organizations gain access to additional platform features and display verification badges.
+ * Moderate organization verification
+ * Handles organization approval workflows using a single endpoint. Supports approving, rejecting, or revoking admin verification status.
  */
-export const verifyOrganisationMutation = (
-  options?: Partial<Options<VerifyOrganisationData>>
+export const moderateOrganisationMutation = (
+  options?: Partial<Options<ModerateOrganisationData>>
 ): UseMutationOptions<
-  VerifyOrganisationResponse,
-  VerifyOrganisationError,
-  Options<VerifyOrganisationData>
+  ModerateOrganisationResponse,
+  ModerateOrganisationError,
+  Options<ModerateOrganisationData>
 > => {
   const mutationOptions: UseMutationOptions<
-    VerifyOrganisationResponse,
-    VerifyOrganisationError,
-    Options<VerifyOrganisationData>
+    ModerateOrganisationResponse,
+    ModerateOrganisationError,
+    Options<ModerateOrganisationData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await verifyOrganisation({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const unverifyOrganisationQueryKey = (options: Options<UnverifyOrganisationData>) =>
-  createQueryKey('unverifyOrganisation', options);
-
-/**
- * Remove verification from an organization
- * Removes verification from an organization by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
- */
-export const unverifyOrganisationOptions = (options: Options<UnverifyOrganisationData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await unverifyOrganisation({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: unverifyOrganisationQueryKey(options),
-  });
-};
-
-/**
- * Remove verification from an organization
- * Removes verification from an organization by setting the admin_verified flag to false. Only system administrators can perform this operation. This may revoke access to certain platform features.
- */
-export const unverifyOrganisationMutation = (
-  options?: Partial<Options<UnverifyOrganisationData>>
-): UseMutationOptions<
-  UnverifyOrganisationResponse,
-  UnverifyOrganisationError,
-  Options<UnverifyOrganisationData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UnverifyOrganisationResponse,
-    UnverifyOrganisationError,
-    Options<UnverifyOrganisationData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await unverifyOrganisation({
+      const { data } = await moderateOrganisation({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -11831,7 +12397,7 @@ export const getCartQueryKey = (options: Options<GetCartData>) =>
 
 /**
  * Retrieve cart details
- * Fetches the latest cart representation from Medusa
+ * Fetches the latest cart representation
  */
 export const getCartOptions = (options: Options<GetCartData>) => {
   return queryOptions({
@@ -14940,6 +15506,31 @@ export const getPendingInvitationsForEmailOptions = (
   });
 };
 
+export const getInstructorRatingSummaryQueryKey = (
+  options: Options<GetInstructorRatingSummaryData>
+) => createQueryKey('getInstructorRatingSummary', options);
+
+/**
+ * Get instructor rating summary
+ * Returns average rating and total review count for an instructor.
+ */
+export const getInstructorRatingSummaryOptions = (
+  options: Options<GetInstructorRatingSummaryData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorRatingSummary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorRatingSummaryQueryKey(options),
+  });
+};
+
 /**
  * Clear all availability for an instructor
  * Removes all availability slots and patterns for an instructor. Use with caution.
@@ -15908,6 +16499,48 @@ export const searchDocumentsInfiniteOptions = (options: Options<SearchDocumentsD
       queryKey: searchDocumentsInfiniteQueryKey(options),
     }
   );
+};
+
+export const getStudentDashboardQueryKey = (options: Options<GetStudentDashboardData>) =>
+  createQueryKey('getStudentDashboard', options);
+
+/**
+ * Fetch learner dashboard for guardian access
+ */
+export const getStudentDashboardOptions = (options: Options<GetStudentDashboardData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentDashboard({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentDashboardQueryKey(options),
+  });
+};
+
+export const getMyStudentsQueryKey = (options?: Options<GetMyStudentsData>) =>
+  createQueryKey('getMyStudents', options);
+
+/**
+ * List guardian-linked students
+ */
+export const getMyStudentsOptions = (options?: Options<GetMyStudentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMyStudents({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMyStudentsQueryKey(options),
+  });
 };
 
 /**
@@ -17508,7 +18141,7 @@ export const getOrderQueryKey = (options: Options<GetOrderData>) =>
 
 /**
  * Get order details
- * Retrieves an order from Medusa to support order tracking
+ * Retrieves an order to support order tracking
  */
 export const getOrderOptions = (options: Options<GetOrderData>) => {
   return queryOptions({
@@ -17634,6 +18267,27 @@ export const checkClassSchedulingConflictsOptions = (
       return data;
     },
     queryKey: checkClassSchedulingConflictsQueryKey(options),
+  });
+};
+
+export const getEnrollmentsForClassQueryKey = (options: Options<GetEnrollmentsForClassData>) =>
+  createQueryKey('getEnrollmentsForClass', options);
+
+/**
+ * List enrollments for a class definition across all scheduled instances
+ */
+export const getEnrollmentsForClassOptions = (options: Options<GetEnrollmentsForClassData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollmentsForClass({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentsForClassQueryKey(options),
   });
 };
 
@@ -18718,6 +19372,77 @@ export const isOrganisationVerifiedOptions = (options: Options<IsOrganisationVer
   });
 };
 
+export const getPendingOrganisationsQueryKey = (options: Options<GetPendingOrganisationsData>) =>
+  createQueryKey('getPendingOrganisations', options);
+
+/**
+ * Get pending organization approvals
+ * Retrieves a paginated list of organizations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
+ */
+export const getPendingOrganisationsOptions = (options: Options<GetPendingOrganisationsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPendingOrganisations({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPendingOrganisationsQueryKey(options),
+  });
+};
+
+export const getPendingOrganisationsInfiniteQueryKey = (
+  options: Options<GetPendingOrganisationsData>
+): QueryKey<Options<GetPendingOrganisationsData>> =>
+  createQueryKey('getPendingOrganisations', options, true);
+
+/**
+ * Get pending organization approvals
+ * Retrieves a paginated list of organizations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
+ */
+export const getPendingOrganisationsInfiniteOptions = (
+  options: Options<GetPendingOrganisationsData>
+) => {
+  return infiniteQueryOptions<
+    GetPendingOrganisationsResponse,
+    GetPendingOrganisationsError,
+    InfiniteData<GetPendingOrganisationsResponse>,
+    QueryKey<Options<GetPendingOrganisationsData>>,
+    | number
+    | Pick<QueryKey<Options<GetPendingOrganisationsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetPendingOrganisationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getPendingOrganisations({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getPendingOrganisationsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const isInstructorVerifiedQueryKey = (options: Options<IsInstructorVerifiedData>) =>
   createQueryKey('isInstructorVerified', options);
 
@@ -18760,6 +19485,75 @@ export const getDashboardStatisticsOptions = (options?: Options<GetDashboardStat
     },
     queryKey: getDashboardStatisticsQueryKey(options),
   });
+};
+
+export const getDashboardActivityQueryKey = (options: Options<GetDashboardActivityData>) =>
+  createQueryKey('getDashboardActivity', options);
+
+/**
+ * Get admin dashboard activity feed
+ * Retrieves a paginated list of recent administrative actions captured by the request audit trail.
+ */
+export const getDashboardActivityOptions = (options: Options<GetDashboardActivityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getDashboardActivity({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getDashboardActivityQueryKey(options),
+  });
+};
+
+export const getDashboardActivityInfiniteQueryKey = (
+  options: Options<GetDashboardActivityData>
+): QueryKey<Options<GetDashboardActivityData>> =>
+  createQueryKey('getDashboardActivity', options, true);
+
+/**
+ * Get admin dashboard activity feed
+ * Retrieves a paginated list of recent administrative actions captured by the request audit trail.
+ */
+export const getDashboardActivityInfiniteOptions = (options: Options<GetDashboardActivityData>) => {
+  return infiniteQueryOptions<
+    GetDashboardActivityResponse,
+    GetDashboardActivityError,
+    InfiniteData<GetDashboardActivityResponse>,
+    QueryKey<Options<GetDashboardActivityData>>,
+    | number
+    | Pick<QueryKey<Options<GetDashboardActivityData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetDashboardActivityData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getDashboardActivity({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getDashboardActivityInfiniteQueryKey(options),
+    }
+  );
 };
 
 /**
@@ -18808,6 +19602,29 @@ export const cleanupOldInvitationsMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await cleanupOldInvitations({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Revoke guardian access
+ */
+export const revokeLinkMutation = (
+  options?: Partial<Options<RevokeLinkData>>
+): UseMutationOptions<RevokeLinkResponse, RevokeLinkError, Options<RevokeLinkData>> => {
+  const mutationOptions: UseMutationOptions<
+    RevokeLinkResponse,
+    RevokeLinkError,
+    Options<RevokeLinkData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await revokeLink({
         ...options,
         ...localOptions,
         throwOnError: true,

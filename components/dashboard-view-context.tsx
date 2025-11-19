@@ -4,7 +4,14 @@ import { useUserProfile } from '../context/profile-context';
 import { UserDomain } from '../lib/types';
 import { getDashboardStorageKey } from '../lib/utils';
 
-export const AvailableViews = ['student', 'admin', 'instructor', 'course_creator', 'organization'];
+export const AvailableViews = [
+  'student',
+  'admin',
+  'parent',
+  'instructor',
+  'course_creator',
+  'organization',
+] as const;
 const dashboardViews = [...AvailableViews] as const;
 export type DashboardView = (typeof dashboardViews)[number];
 

@@ -50,7 +50,7 @@ export function ReviewPublishForm({
       </div>
 
       {/* Class Preview Card */}
-      <Card className='border-2 bg-gradient-to-r from-blue-50 to-indigo-50'>
+      <Card className='border-2 bg-card'>
         <CardHeader>
           <div className='flex items-start justify-between'>
             <div className='flex-1'>

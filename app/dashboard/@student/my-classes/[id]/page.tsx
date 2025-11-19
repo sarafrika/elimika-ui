@@ -545,7 +545,7 @@ export default function ClassDetailsPage() {
                     <Play className="w-20 h-20 text-white opacity-50" />
                   </div>
 
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-4">
                     <div className="flex items-center gap-4">
                       <Button
                         size="sm"

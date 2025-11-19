@@ -84,7 +84,7 @@ export function TrainCourseCard({
     <div className='group cursor-pointer rounded-lg border-[1px] border-gray-400 bg-white transition-all hover:-translate-y-1 hover:shadow-lg'>
       <div className='relative'>
         {/* Course Image */}
-        <div className='from-primary/20 to-primary/5 relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg bg-gradient-to-br'>
+        <div className='relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg bg-muted'>
           {course?.banner_url ? (
             <Image
               src={course?.banner_url}

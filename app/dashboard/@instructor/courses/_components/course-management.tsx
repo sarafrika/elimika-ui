@@ -103,7 +103,10 @@ export default function CourseMangementPage() {
   const applyToTrain = useMutation(submitTrainingApplicationMutation());
   const handleApplyToTrain = (data: {
     notes: string;
-    rate_per_hour_per_head: number;
+    private_individual_rate: number;
+    private_group_rate: number;
+    public_individual_rate: number;
+    public_group_rate: number;
     rate_currency: string;
   }) => {
     if (!applyingCourseId) return;
@@ -113,9 +116,14 @@ export default function CourseMangementPage() {
         body: {
           applicant_type: profile?.activeDomain as ApplicantTypeEnum,
           applicant_uuid: instructor?.uuid as string,
+          rate_card: {
+            currency: data?.rate_currency,
+            private_individual_rate: data?.private_individual_rate,
+            private_group_rate: data?.private_group_rate,
+            public_individual_rate: data?.public_individual_rate,
+            public_group_rate: data?.public_group_rate,
+          },
           application_notes: data?.notes,
-          rate_per_hour_per_head: data?.rate_per_hour_per_head,
-          rate_currency: data?.rate_currency
         },
         path: { courseUuid: applyingCourseId },
       },
@@ -211,6 +219,7 @@ export default function CourseMangementPage() {
               handleReapplyToTrain={() => {
                 setApplyModal(true);
                 setApplyingCourseId(course?.uuid as string);
+                setApplyingCourse(course as any)
               }}
             />
           ))}

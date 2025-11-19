@@ -239,7 +239,7 @@ export default function ReusableCourseDetailsPage({
             <Card>
               <CardContent className='p-6'>
                 {/* Course Image/Video */}
-                <div className='from-primary/20 to-primary/5 mb-4 flex h-48 w-full items-center justify-center rounded-lg bg-gradient-to-br'>
+                <div className='mb-4 flex h-48 w-full items-center justify-center rounded-lg bg-muted'>
                   {courseData?.intro_video_url ? (
                     <div className='relative h-full w-full'>
                       <div className='absolute inset-0 flex items-center justify-center'>

@@ -378,6 +378,144 @@ export const ApiResponseTrainingBranchSchema = {
   },
 } as const;
 
+export const JsonNodeSchema = {
+  type: 'object',
+} as const;
+
+export const SystemRuleRequestSchema = {
+  type: 'object',
+  properties: {
+    category: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    key: {
+      type: 'string',
+      description: 'Unique key within the category',
+      example: 'student.onboarding.age_gate',
+      maxLength: 128,
+      minLength: 0,
+    },
+    scope: {
+      $ref: '#/components/schemas/ScopeEnum',
+    },
+    scopeReference: {
+      type: 'string',
+      description: 'Optional reference identifier for the scope (tenant UUID, country code, etc.)',
+      maxLength: 128,
+      minLength: 0,
+    },
+    priority: {
+      type: 'integer',
+      format: 'int32',
+      default: '0',
+      description: 'Priority used when multiple rules match',
+    },
+    status: {
+      $ref: '#/components/schemas/SchemaEnum2',
+    },
+    valueType: {
+      $ref: '#/components/schemas/ValueTypeEnum',
+    },
+    valuePayload: {
+      $ref: '#/components/schemas/JsonNode',
+      description: 'Rule payload describing configuration',
+    },
+    conditions: {
+      $ref: '#/components/schemas/JsonNode',
+      description: 'Optional JSON condition block',
+    },
+    effectiveFrom: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Start of the effective window. Defaults to now if omitted.',
+    },
+    effectiveTo: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Optional end of the effective window',
+    },
+  },
+  required: ['category', 'key', 'valuePayload'],
+} as const;
+
+export const ApiResponseSystemRuleResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SystemRuleResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const SystemRuleResponseSchema = {
+  type: 'object',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    category: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    key: {
+      type: 'string',
+    },
+    scope: {
+      $ref: '#/components/schemas/ScopeEnum',
+    },
+    scopeReference: {
+      type: 'string',
+    },
+    priority: {
+      type: 'integer',
+      format: 'int32',
+    },
+    status: {
+      $ref: '#/components/schemas/SchemaEnum2',
+    },
+    valueType: {
+      $ref: '#/components/schemas/ValueTypeEnum',
+    },
+    valuePayload: {
+      $ref: '#/components/schemas/JsonNode',
+    },
+    conditions: {
+      $ref: '#/components/schemas/JsonNode',
+    },
+    effectiveFrom: {
+      type: 'string',
+      format: 'date-time',
+    },
+    effectiveTo: {
+      type: 'string',
+      format: 'date-time',
+    },
+    createdDate: {
+      type: 'string',
+      format: 'date-time',
+    },
+    createdBy: {
+      type: 'string',
+    },
+    updatedDate: {
+      type: 'string',
+      format: 'date-time',
+    },
+    updatedBy: {
+      type: 'string',
+    },
+  },
+} as const;
+
 export const StudentSchema = {
   type: 'object',
   description:
@@ -409,6 +547,14 @@ export const StudentSchema = {
       description:
         '**[REQUIRED]** Reference to the base user account UUID. Links student profile to user authentication and personal details.',
       example: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    },
+    demographic_tag: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Demographic tag used for growth controls (e.g., youth_female, adult).',
+      example: 'youth_female',
+      maxLength: 64,
+      minLength: 0,
     },
     first_guardian_name: {
       type: 'string',
@@ -447,14 +593,14 @@ export const StudentSchema = {
     primaryGuardianContact: {
       type: 'string',
     },
+    secondaryGuardianContact: {
+      type: 'string',
+    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
-    },
-    secondaryGuardianContact: {
-      type: 'string',
     },
     created_date: {
       type: 'string',
@@ -1121,19 +1267,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1326,7 +1472,7 @@ export const QuizSchema = {
       example: 'l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl',
     },
     scope: {
-      $ref: '#/components/schemas/ScopeEnum',
+      $ref: '#/components/schemas/ScopeEnum2',
     },
     class_definition_uuid: {
       type: 'string',
@@ -1839,7 +1985,7 @@ export const TrainingProgramSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum',
+      $ref: '#/components/schemas/SchemaEnum4',
     },
     prerequisites: {
       type: 'string',
@@ -2510,18 +2656,18 @@ export const InstructorSchema = {
       example: true,
       readOnly: true,
     },
-    has_location_coordinates: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
-      example: true,
-      readOnly: true,
-    },
     formatted_location: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
+      readOnly: true,
+    },
+    has_location_coordinates: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
+      example: true,
       readOnly: true,
     },
   },
@@ -2765,17 +2911,18 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: 4,
+      readOnly: true,
+    },
+    membership_duration_months: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
     membership_status: {
@@ -2818,12 +2965,11 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    membership_duration_months: {
-      type: 'integer',
-      format: 'int32',
+    is_complete: {
+      type: 'boolean',
       description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -2979,13 +3125,6 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     duration_in_months: {
       type: 'integer',
       format: 'int32',
@@ -3033,6 +3172,13 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -3164,13 +3310,6 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
     is_recent_qualification: {
       type: 'boolean',
       description:
@@ -3199,6 +3338,13 @@ export const InstructorEducationSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
       example: 2020,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+      example: true,
       readOnly: true,
     },
   },
@@ -3450,6 +3596,15 @@ export const InstructorDocumentSchema = {
       example: false,
       readOnly: true,
     },
+    has_expiry_date: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the document has an expiry date configured.',
+      example: true,
+      readOnly: true,
+    },
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum',
+    },
     file_size_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted file size.',
@@ -3469,15 +3624,6 @@ export const InstructorDocumentSchema = {
       description: '**[READ-ONLY]** Indicates if the document is pending verification.',
       example: false,
       readOnly: true,
-    },
-    has_expiry_date: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the document has an expiry date configured.',
-      example: true,
-      readOnly: true,
-    },
-    verification_status: {
-      $ref: '#/components/schemas/VerificationStatusEnum',
     },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
@@ -3946,7 +4092,7 @@ export const CourseSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum',
+      $ref: '#/components/schemas/SchemaEnum4',
     },
     active: {
       type: 'boolean',
@@ -5586,8 +5732,15 @@ export const ClassDefinitionSchema = {
     organisation_uuid: 'org12345-6789-abcd-ef01-234567890abc',
     course_uuid: 'course123-4567-89ab-cdef-123456789abc',
     training_fee: 240,
+    class_visibility: 'PUBLIC',
+    session_format: 'GROUP',
+    default_start_time: '2025-01-15T14:00:00Z',
+    default_end_time: '2025-01-15T15:30:00Z',
     duration_minutes: 90,
     location_type: 'HYBRID',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
     max_participants: 25,
     allow_waitlist: true,
     recurrence_pattern_uuid: 'rp123456-7890-abcd-ef01-234567890abc',
@@ -5651,20 +5804,45 @@ export const ClassDefinitionSchema = {
       example: 220,
       minimum: 0,
     },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
     default_start_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** Default start time for class sessions.',
-      example: '09:00:00',
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default start date-time for class sessions (UTC).',
+      example: '2025-01-15T09:00:00Z',
     },
     default_end_time: {
-      format: 'time',
-      $ref: '#/components/schemas/LocalTime',
-      description: '**[REQUIRED]** Default end time for class sessions.',
-      example: '10:30:00',
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default end date-time for class sessions (UTC).',
+      example: '2025-01-15T10:30:00Z',
     },
     location_type: {
       $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Human-readable name for the primary class location, used for Mapbox forward/reverse geocoding (e.g., campus, room, or venue name). Required when location_type is IN_PERSON or HYBRID.',
+      example: 'Nairobi HQ – Room 101',
+      maxLength: 255,
+    },
+    location_latitude: {
+      type: 'number',
+      description:
+        '**[OPTIONAL]** Latitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
+      example: -1.292066,
+    },
+    location_longitude: {
+      type: 'number',
+      description:
+        '**[OPTIONAL]** Longitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
+      example: 36.821945,
     },
     max_participants: {
       type: 'integer',
@@ -5758,10 +5936,12 @@ export const ClassDefinitionSchema = {
     },
   },
   required: [
+    'class_visibility',
     'default_end_time',
     'default_instructor_uuid',
     'default_start_time',
     'location_type',
+    'session_format',
     'title',
   ],
 } as const;
@@ -5817,7 +5997,10 @@ export const ScheduledInstanceSchema = {
     end_time: '2024-09-15T10:30:00',
     timezone: 'UTC',
     title: 'Introduction to Java Programming',
-    location_type: 'ONLINE',
+    location_type: 'IN_PERSON',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
     max_participants: 25,
     status: 'SCHEDULED',
     cancellation_reason: null,
@@ -5873,6 +6056,22 @@ export const ScheduledInstanceSchema = {
     },
     location_type: {
       $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).',
+      example: 'Nairobi HQ – Room 101',
+    },
+    location_latitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Latitude coordinate for this scheduled instance location.',
+      example: -1.292066,
+    },
+    location_longitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Longitude coordinate for this scheduled instance location.',
+      example: 36.821945,
     },
     max_participants: {
       type: 'integer',
@@ -6558,7 +6757,7 @@ export const AssignmentSchema = {
       example: 'l1e2s3s4-5o6n-7u8u-9i10-abcdefghijkl',
     },
     scope: {
-      $ref: '#/components/schemas/ScopeEnum',
+      $ref: '#/components/schemas/ScopeEnum2',
     },
     class_definition_uuid: {
       type: 'string',
@@ -7307,6 +7506,276 @@ export const ApiResponseInstructorSchema = {
   },
 } as const;
 
+export const InstructorReviewSchema = {
+  type: 'object',
+  description: 'Student review and rating for an instructor, scoped to a specific enrollment.',
+  example: {
+    uuid: 'rev-1234-5678-90ab-cdef12345678',
+    instructor_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    student_uuid: 'stud-1234-5678-90ab-cdef12345678',
+    enrollment_uuid: 'enr-1234-5678-90ab-cdef12345678',
+    rating: 5,
+    headline: 'Incredible instructor!',
+    comments: 'Very clear explanations and engaging sessions.',
+    clarity_rating: 5,
+    engagement_rating: 5,
+    punctuality_rating: 4,
+    is_anonymous: false,
+    created_date: '2025-11-18T09:00:00',
+    created_by: 'student@example.com',
+    updated_date: '2025-11-18T09:00:00',
+    updated_by: 'student@example.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier for the review.',
+      example: 'rev-1234-5678-90ab-cdef12345678',
+      readOnly: true,
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Instructor being reviewed.',
+      example: 'inst-1234-5678-90ab-cdef12345678',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Student leaving the review.',
+      example: 'stud-1234-5678-90ab-cdef12345678',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Enrollment that this review is tied to.',
+      example: 'enr-1234-5678-90ab-cdef12345678',
+    },
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Overall rating for the instructor (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Incredible instructor!',
+      maxLength: 255,
+      minLength: 0,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'Very clear explanations and engaging sessions.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    clarity_rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Optional clarity rating (1-5).',
+      maximum: 5,
+      minimum: 1,
+    },
+    engagement_rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Optional engagement rating (1-5).',
+      maximum: 5,
+      minimum: 1,
+    },
+    punctuality_rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Optional punctuality rating (1-5).',
+      maximum: 5,
+      minimum: 1,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was created.',
+      example: '2025-11-18T09:00:00',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Created by identifier (typically the student email or system).',
+      example: 'student@example.com',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** Timestamp when the review was last updated.',
+      example: '2025-11-18T09:00:00',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      description: '**[READ-ONLY]** Updated by identifier.',
+      example: 'student@example.com',
+      readOnly: true,
+    },
+  },
+  required: ['enrollment_uuid', 'instructor_uuid', 'rating', 'student_uuid'],
+} as const;
+
+export const ApiResponseInstructorReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorReview',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const InstructorSlotBookingRequestSchema = {
+  type: 'object',
+  description: 'Request to book an available instructor time slot',
+  example: {
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    start_time: '2025-10-15T10:00:00',
+    end_time: '2025-10-15T11:00:00',
+    purpose: 'One-on-one tutoring session for Java programming',
+    student_uuid: 'stud1234-5678-90ab-cdef-123456789abc',
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the instructor to book',
+      example: 'inst1234-5678-90ab-cdef-123456789abc',
+    },
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Start date and time for the booking',
+      example: '2025-10-15T10:00:00',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** End date and time for the booking',
+      example: '2025-10-15T11:00:00',
+    },
+    purpose: {
+      type: 'string',
+      description: '**[OPTIONAL]** Purpose or note for this booking',
+      example: 'One-on-one tutoring session for Java programming',
+      maxLength: 500,
+      minLength: 0,
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** UUID of the student making the booking (can be inferred from auth context)',
+      example: 'stud1234-5678-90ab-cdef-123456789abc',
+    },
+  },
+  required: ['end_time', 'instructor_uuid', 'start_time'],
+} as const;
+
+export const GuardianStudentLinkSchema = {
+  type: 'object',
+  description: "Represents a guardian's access rights to a learner profile.",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    studentUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    guardianUserUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    studentName: {
+      type: 'string',
+    },
+    guardianDisplayName: {
+      type: 'string',
+    },
+    relationshipType: {
+      $ref: '#/components/schemas/RelationshipTypeEnum',
+    },
+    shareScope: {
+      $ref: '#/components/schemas/ShareScopeEnum',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum5',
+    },
+    primaryGuardian: {
+      type: 'boolean',
+    },
+    linkedDate: {
+      type: 'string',
+      format: 'date-time',
+    },
+    revokedDate: {
+      type: 'string',
+      format: 'date-time',
+    },
+    notes: {
+      type: 'string',
+    },
+  },
+} as const;
+
+export const GuardianStudentLinkRequestSchema = {
+  type: 'object',
+  description: 'Request payload to link a guardian/parent to a learner profile.',
+  properties: {
+    studentUuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID for the student profile to be monitored',
+    },
+    guardianUserUuid: {
+      type: 'string',
+      format: 'uuid',
+      description: "UUID for the guardian's user account",
+    },
+    relationshipType: {
+      $ref: '#/components/schemas/RelationshipTypeEnum',
+    },
+    shareScope: {
+      $ref: '#/components/schemas/ShareScopeEnum',
+    },
+    isPrimary: {
+      type: 'boolean',
+      default: 'false',
+      description: 'Marks this guardian as the primary contact',
+    },
+    notes: {
+      type: 'string',
+      description: 'Optional note shown in audits or invitation emails',
+    },
+  },
+  required: ['guardianUserUuid', 'relationshipType', 'shareScope', 'studentUuid'],
+} as const;
+
 export const EnrollmentRequestSchema = {
   type: 'object',
   description: 'Request to enroll a student in a scheduled class instance',
@@ -7389,7 +7858,7 @@ export const EnrollmentSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     attendance_marked_at: {
       type: 'string',
@@ -7444,16 +7913,16 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    status_description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
-      example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
       example: false,
+      readOnly: true,
+    },
+    status_description: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
+      example: 'Student is enrolled in the class',
       readOnly: true,
     },
   },
@@ -7484,8 +7953,13 @@ export const CourseTrainingApplicationRequestSchema = {
   example: {
     applicant_type: 'instructor',
     applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
-    rate_per_hour_per_head: 2500,
-    rate_currency: 'KES',
+    rate_card: {
+      currency: 'KES',
+      private_individual_rate: 3500,
+      private_group_rate: 2800,
+      public_individual_rate: 3000,
+      public_group_rate: 2400,
+    },
     application_notes: 'I hold the vendor certification required for this course.',
   },
   properties: {
@@ -7497,20 +7971,9 @@ export const CourseTrainingApplicationRequestSchema = {
       format: 'uuid',
       description: '**[REQUIRED]** UUID of the instructor or organisation applying.',
     },
-    rate_per_hour_per_head: {
-      type: 'number',
-      description:
-        '**[REQUIRED]** Proposed compensation per trainee per hour for delivering this course.',
-      example: 2500,
-      minimum: 0,
-    },
-    rate_currency: {
-      type: 'string',
-      description:
-        '**[OPTIONAL]** ISO 4217 currency code drawn from the platform approved list. Defaults to the platform currency when omitted.',
-      example: 'KES',
-      maxLength: 3,
-      pattern: '^[A-Za-z]{3}$',
+    rate_card: {
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description: '**[REQUIRED]** Instructor rate card across privacy/session segments.',
     },
     application_notes: {
       type: 'string',
@@ -7519,7 +7982,51 @@ export const CourseTrainingApplicationRequestSchema = {
       minLength: 0,
     },
   },
-  required: ['applicant_type', 'applicant_uuid', 'rate_per_hour_per_head'],
+  required: ['applicant_type', 'applicant_uuid', 'rate_card'],
+} as const;
+
+export const CourseTrainingRateCardSchema = {
+  type: 'object',
+  properties: {
+    currency: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.',
+      example: 'KES',
+      maxLength: 3,
+      pattern: '^[A-Za-z]{3}$',
+    },
+    private_individual_rate: {
+      type: 'number',
+      description: 'Private 1:1 session rate per learner per hour.',
+      example: 3500,
+      minimum: 0,
+    },
+    private_group_rate: {
+      type: 'number',
+      description: 'Private group session rate per learner per hour.',
+      example: 2800,
+      minimum: 0,
+    },
+    public_individual_rate: {
+      type: 'number',
+      description: 'Public individual rate per learner per hour.',
+      example: 3000,
+      minimum: 0,
+    },
+    public_group_rate: {
+      type: 'number',
+      description: 'Public group rate per learner per hour.',
+      example: 2400,
+      minimum: 0,
+    },
+  },
+  required: [
+    'private_group_rate',
+    'private_individual_rate',
+    'public_group_rate',
+    'public_individual_rate',
+  ],
 } as const;
 
 export const ApiResponseCourseTrainingApplicationSchema = {
@@ -7549,8 +8056,13 @@ export const CourseTrainingApplicationSchema = {
     applicant_type: 'instructor',
     applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
     status: 'pending',
-    rate_per_hour_per_head: 2500,
-    rate_currency: 'KES',
+    rate_card: {
+      currency: 'KES',
+      private_individual_rate: 3500,
+      private_group_rate: 2800,
+      public_individual_rate: 3000,
+      public_group_rate: 2400,
+    },
     application_notes: 'I have delivered similar courses for 5 years.',
     review_notes: null,
     reviewed_by: null,
@@ -7568,7 +8080,7 @@ export const CourseTrainingApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum6',
+      $ref: '#/components/schemas/StatusEnum7',
     },
     application_notes: {
       type: 'string',
@@ -7602,17 +8114,9 @@ export const CourseTrainingApplicationSchema = {
       description: '**[READ-ONLY]** UUID of the applicant (Instructor or Organisation).',
       readOnly: true,
     },
-    rate_per_hour_per_head: {
-      type: 'number',
-      description: '**[READ-ONLY]** Instructor or organisation rate charged per trainee per hour.',
-      example: 2500,
-      readOnly: true,
-    },
-    rate_currency: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** ISO 4217 currency code for the proposed rate (managed by platform configuration).',
-      example: 'KES',
+    rate_card: {
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description: '**[READ-ONLY]** Approved rate card for this application.',
       readOnly: true,
     },
     created_date: {
@@ -7696,8 +8200,23 @@ export const CartItemResponseSchema = {
     },
     variant_id: {
       type: 'string',
-      description: 'Medusa variant identifier',
+      description: 'Variant identifier within the commerce catalog',
       example: 'variant_01HZX1Y4K8R0HVWZ4Q6CF6M1AP',
+    },
+    unit_price: {
+      type: 'number',
+      description: 'Price per unit with up to 4 decimal places',
+      example: 2500,
+    },
+    subtotal: {
+      type: 'number',
+      description: 'Subtotal for the line item with up to 4 decimal places',
+      example: 2500,
+    },
+    total: {
+      type: 'number',
+      description: 'Total for the line item after discounts with up to 4 decimal places',
+      example: 2500,
     },
     metadata: {
       type: 'object',
@@ -7715,8 +8234,8 @@ export const OrderResponseSchema = {
   properties: {
     id: {
       type: 'string',
-      description: 'Unique Medusa identifier of the order',
-      example: 'order_01HZX2Z2C2MBK8C6Y8PF0YTW30',
+      description: 'Unique identifier of the order',
+      example: 'b6d7ab1b-7a21-4b3f-9e52-d6c2f5b2a9f0',
     },
     display_id: {
       type: 'string',
@@ -7725,14 +8244,33 @@ export const OrderResponseSchema = {
     },
     payment_status: {
       type: 'string',
-      description: 'Payment status reported by Medusa',
-      example: 'captured',
+      description: 'Payment status',
+      example: 'CAPTURED',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'Currency code associated to the order totals',
+      example: 'KES',
+    },
+    subtotal: {
+      type: 'number',
+      description: 'Subtotal with up to 4 decimal places',
+      example: 1000,
+    },
+    total: {
+      type: 'number',
+      description: 'Total with up to 4 decimal places',
+      example: 1030,
     },
     created_at: {
       type: 'string',
       format: 'date-time',
       description: 'Timestamp when the order was created',
       example: '2024-07-20T09:55:00Z',
+    },
+    platform_fee: {
+      $ref: '#/components/schemas/PlatformFeeBreakdown',
+      description: 'Platform fee breakdown applied to this order',
     },
     items: {
       type: 'array',
@@ -7743,14 +8281,54 @@ export const OrderResponseSchema = {
   },
 } as const;
 
+export const PlatformFeeBreakdownSchema = {
+  type: 'object',
+  description: 'Computed platform fee details applied to an order',
+  properties: {
+    amount: {
+      type: 'number',
+      description: 'Fee amount in major currency units after adjustments',
+      example: 15.5,
+    },
+    currency: {
+      type: 'string',
+      description: 'Currency code the fee is denominated in',
+      example: 'USD',
+    },
+    mode: {
+      $ref: '#/components/schemas/ModeEnum',
+    },
+    rate: {
+      type: 'number',
+      description: 'Percentage rate applied when mode is PERCENTAGE',
+      example: 2.5,
+    },
+    baseAmount: {
+      type: 'number',
+      description: 'Order total used to compute the platform fee',
+      example: 620,
+    },
+    ruleUuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Identifier of the rule that produced the fee',
+    },
+    evaluatedAt: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Timestamp when the fee was evaluated',
+    },
+  },
+} as const;
+
 export const CheckoutRequestSchema = {
   type: 'object',
-  description: 'Checkout payload that orchestrates Medusa cart completion',
+  description: 'Checkout payload that orchestrates cart completion',
   properties: {
     cart_id: {
       type: 'string',
       description: 'Identifier of the cart being checked out',
-      example: 'cart_01HZX25RFMBW79S99RWQYJXWCM',
+      example: '2f6d4d1e-5f2a-4b2e-9f8d-0b7c3e9b5c1a',
     },
     customer_email: {
       type: 'string',
@@ -7782,18 +8360,48 @@ export const CartResponseSchema = {
   properties: {
     id: {
       type: 'string',
-      description: 'Unique Medusa identifier of the cart',
-      example: 'cart_01HZX25RFMBW79S99RWQYJXWCM',
+      description: 'Unique identifier of the cart',
+      example: '2f6d4d1e-5f2a-4b2e-9f8d-0b7c3e9b5c1a',
     },
-    region_id: {
+    currency_code: {
       type: 'string',
-      description: 'Region identifier the cart is scoped to',
-      example: 'reg_01HZX1W8GX9YYB01X54MB2F15C',
+      description: 'Currency code the cart is priced in',
+      example: 'USD',
     },
-    customer_id: {
+    region_code: {
       type: 'string',
-      description: 'Associated Medusa customer identifier',
-      example: 'cus_01HZX1X6QAQCCYT11S3R6G9KVN',
+      description: 'Optional region code used for pricing rules',
+      example: 'KE',
+    },
+    status: {
+      type: 'string',
+      description: 'Cart status',
+      example: 'OPEN',
+    },
+    subtotal: {
+      type: 'number',
+      description: 'Subtotal with up to 4 decimal places',
+      example: 1000,
+    },
+    tax: {
+      type: 'number',
+      description: 'Tax amount with up to 4 decimal places',
+      example: 0,
+    },
+    discount: {
+      type: 'number',
+      description: 'Discount amount with up to 4 decimal places',
+      example: 0,
+    },
+    shipping: {
+      type: 'number',
+      description: 'Shipping amount with up to 4 decimal places',
+      example: 0,
+    },
+    total: {
+      type: 'number',
+      description: 'Total with up to 4 decimal places',
+      example: 1000,
     },
     created_at: {
       type: 'string',
@@ -7822,8 +8430,8 @@ export const CartLineItemRequestSchema = {
   properties: {
     variant_id: {
       type: 'string',
-      description: 'Identifier of the Medusa product variant to add to the cart',
-      example: 'variant_01HZX1Y4K8R0HVWZ4Q6CF6M1AP',
+      description: 'Identifier of the internal product variant to add to the cart',
+      example: 'course-seat-advanced-excel',
     },
     quantity: {
       type: 'integer',
@@ -7850,29 +8458,24 @@ export const CartLineItemRequestSchema = {
 
 export const CreateCartRequestSchema = {
   type: 'object',
-  description: 'Request body for creating a new cart that synchronises with Medusa',
+  description: 'Request body for creating a new cart',
   properties: {
-    region_id: {
+    currency_code: {
       type: 'string',
-      description: 'Identifier of the Medusa region the cart belongs to',
-      example: 'reg_01HZX1W8GX9YYB01X54MB2F15C',
+      description: 'Currency code the cart is priced in',
+      example: 'USD',
     },
-    customer_id: {
+    region_code: {
       type: 'string',
-      description: 'Medusa customer identifier to associate with the cart',
-      example: 'cus_01HZX1X6QAQCCYT11S3R6G9KVN',
-    },
-    sales_channel_id: {
-      type: 'string',
-      description: 'Sales channel identifier configured in Medusa',
-      example: 'sc_01HZX20Y4D9CK3R6RHY9PRF20C',
+      description: 'Optional region code for pricing rules',
+      example: 'KE',
     },
     metadata: {
       type: 'object',
       additionalProperties: {
         type: 'object',
       },
-      description: 'Arbitrary metadata forwarded to Medusa',
+      description: 'Arbitrary metadata stored with the cart',
       example: {
         campaign: 'back-to-school',
       },
@@ -7884,7 +8487,7 @@ export const CreateCartRequestSchema = {
       },
     },
   },
-  required: ['region_id'],
+  required: ['currency_code'],
 } as const;
 
 export const SelectPaymentSessionRequestSchema = {
@@ -7893,7 +8496,7 @@ export const SelectPaymentSessionRequestSchema = {
   properties: {
     provider_id: {
       type: 'string',
-      description: "Identifier of the Medusa payment provider (e.g. 'manual', 'stripe')",
+      description: "Identifier of the payment provider (e.g. 'manual', 'stripe')",
       example: 'manual',
     },
   },
@@ -8293,7 +8896,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum8',
     },
     score: {
       type: 'number',
@@ -8405,7 +9008,7 @@ export const AdminDomainAssignmentRequestSchema = {
   description: 'Admin domain assignment request containing domain type, reason, and effective date',
   properties: {
     domain_name: {
-      $ref: '#/components/schemas/SchemaEnum2',
+      $ref: '#/components/schemas/SchemaEnum5',
     },
     assignment_type: {
       $ref: '#/components/schemas/AssignmentTypeEnum',
@@ -8493,25 +9096,25 @@ export const UpdateCartRequestSchema = {
     },
     customer_id: {
       type: 'string',
-      description: 'Medusa customer identifier to associate with the cart',
-      example: 'cus_01HZX1X6QAQCCYT11S3R6G9KVN',
+      description: 'Customer identifier to associate with the cart',
+      example: 'user-uuid',
     },
     shipping_address_id: {
       type: 'string',
-      description: 'Medusa shipping address identifier',
-      example: 'addr_01HZX2F2Z6E0Y0T8VJX3W6PC66',
+      description: 'Shipping address identifier',
+      example: 'address-uuid',
     },
     billing_address_id: {
       type: 'string',
-      description: 'Medusa billing address identifier',
-      example: 'addr_01HZX2F7GZ92P2X9YBQB0NQ9E3',
+      description: 'Billing address identifier',
+      example: 'address-uuid',
     },
     metadata: {
       type: 'object',
       additionalProperties: {
         type: 'object',
       },
-      description: 'Optional metadata map forwarded to Medusa',
+      description: 'Optional metadata map stored with the cart',
       example: {
         cohort: 'Q3-2024',
       },
@@ -8657,6 +9260,42 @@ export const PagedDTOTrainingBranchSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/TrainingBranch',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOSystemRuleResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOSystemRuleResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOSystemRuleResponseSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SystemRuleResponse',
       },
     },
     metadata: {
@@ -9294,7 +9933,7 @@ export const QuizAttemptSchema = {
       example: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     created_date: {
       type: 'string',
@@ -9563,7 +10202,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum9',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     progress_percentage: {
       type: 'number',
@@ -9621,12 +10260,6 @@ export const ProgramEnrollmentSchema = {
       example: '100.00% Complete',
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -9639,6 +10272,12 @@ export const ProgramEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed program with final grade of 87.25',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
       readOnly: true,
     },
   },
@@ -9983,6 +10622,76 @@ export const PagedDTOInstructorSkillSchema = {
   },
 } as const;
 
+export const ApiResponseListInstructorReviewSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorReview',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const ApiResponseInstructorRatingSummarySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorRatingSummary',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const InstructorRatingSummarySchema = {
+  type: 'object',
+  description: 'Aggregate review metrics for an instructor (average rating and review count).',
+  example: {
+    instructor_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    average_rating: 4.7,
+    review_count: 12,
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the instructor.',
+      example: 'inst-1234-5678-90ab-cdef12345678',
+    },
+    average_rating: {
+      type: 'number',
+      format: 'double',
+      description:
+        'Average overall rating across all reviews (1-5). Null when there are no reviews.',
+      example: 4.7,
+    },
+    review_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Total number of reviews for this instructor.',
+      example: 12,
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOInstructorProfessionalMembershipSchema = {
   type: 'object',
   properties: {
@@ -10190,6 +10899,141 @@ export const PagedDTOInstructorDocumentSchema = {
   },
 } as const;
 
+export const GuardianStudentDashboardDTOSchema = {
+  type: 'object',
+  properties: {
+    studentUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    studentName: {
+      type: 'string',
+    },
+    shareScope: {
+      $ref: '#/components/schemas/ShareScopeEnum',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum5',
+    },
+    courseProgress: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LearnerCourseProgressView',
+      },
+    },
+    programProgress: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LearnerProgramProgressView',
+      },
+    },
+  },
+} as const;
+
+export const LearnerCourseProgressViewSchema = {
+  type: 'object',
+  properties: {
+    enrollmentUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    courseUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    courseName: {
+      type: 'string',
+    },
+    status: {
+      type: 'string',
+    },
+    progressPercentage: {
+      type: 'number',
+    },
+    updatedDate: {
+      type: 'string',
+      format: 'date-time',
+    },
+  },
+} as const;
+
+export const LearnerProgramProgressViewSchema = {
+  type: 'object',
+  properties: {
+    enrollmentUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    programUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    programName: {
+      type: 'string',
+    },
+    status: {
+      type: 'string',
+    },
+    progressPercentage: {
+      type: 'number',
+    },
+    updatedDate: {
+      type: 'string',
+      format: 'date-time',
+    },
+  },
+} as const;
+
+export const ApiResponseListGuardianStudentSummaryDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/GuardianStudentSummaryDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const GuardianStudentSummaryDTOSchema = {
+  type: 'object',
+  properties: {
+    linkUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    studentUuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    studentName: {
+      type: 'string',
+    },
+    relationshipType: {
+      $ref: '#/components/schemas/RelationshipTypeEnum',
+    },
+    shareScope: {
+      $ref: '#/components/schemas/ShareScopeEnum',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum5',
+    },
+    primaryGuardian: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
 export const ApiResponseEnrollmentSchema = {
   type: 'object',
   properties: {
@@ -10241,7 +11085,10 @@ export const StudentScheduleSchema = {
     start_time: '2024-09-15T09:00:00',
     end_time: '2024-09-15T10:30:00',
     timezone: 'UTC',
-    location_type: 'ONLINE',
+    location_type: 'IN_PERSON',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
     scheduling_status: 'SCHEDULED',
     enrollment_status: 'ENROLLED',
     attendance_marked_at: null,
@@ -10304,11 +11151,29 @@ export const StudentScheduleSchema = {
     location_type: {
       $ref: '#/components/schemas/LocationTypeEnum',
     },
+    location_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable location name for the scheduled class.',
+      example: 'Nairobi HQ – Room 101',
+      readOnly: true,
+    },
+    location_latitude: {
+      type: 'number',
+      description: '**[READ-ONLY]** Latitude coordinate for the scheduled class location.',
+      example: -1.292066,
+      readOnly: true,
+    },
+    location_longitude: {
+      type: 'number',
+      description: '**[READ-ONLY]** Longitude coordinate for the scheduled class location.',
+      example: 36.821945,
+      readOnly: true,
+    },
     scheduling_status: {
       $ref: '#/components/schemas/StatusEnum3',
     },
     enrollment_status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     attendance_marked_at: {
       type: 'string',
@@ -10424,7 +11289,7 @@ export const ApiResponseListContentStatusSchema = {
     data: {
       type: 'array',
       items: {
-        $ref: '#/components/schemas/SchemaEnum',
+        $ref: '#/components/schemas/SchemaEnum4',
       },
     },
     message: {
@@ -10712,7 +11577,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum9',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     progress_percentage: {
       type: 'number',
@@ -10770,12 +11635,6 @@ export const CourseEnrollmentSchema = {
       example: '100.00% Complete',
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -10788,6 +11647,12 @@ export const CourseEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed with final grade of 85.50',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
       readOnly: true,
     },
   },
@@ -11784,6 +12649,107 @@ export const UserMetricsSchema = {
   },
 } as const;
 
+export const AdminActivityEventSchema = {
+  type: 'object',
+  description: 'Represents a recent administrative action recorded by the platform',
+  properties: {
+    event_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Unique identifier for the activity event',
+    },
+    occurred_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the activity occurred (UTC)',
+    },
+    summary: {
+      type: 'string',
+      description: 'Human-readable summary of the activity',
+    },
+    http_method: {
+      type: 'string',
+      description: 'HTTP method invoked by the admin request',
+    },
+    endpoint: {
+      type: 'string',
+      description: 'Endpoint path that was called',
+    },
+    query: {
+      type: 'string',
+      description: 'Query string (if any) that accompanied the request',
+    },
+    response_status: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Response status returned for the request',
+    },
+    processing_time_ms: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Processing time in milliseconds for the request',
+    },
+    actor_name: {
+      type: 'string',
+      description: 'Administrator who performed the action (full name if available)',
+    },
+    actor_email: {
+      type: 'string',
+      description: 'Email address of the administrator who performed the action',
+    },
+    actor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the administrator, if authenticated',
+    },
+    actor_domains: {
+      type: 'string',
+      description:
+        'Comma-separated list of domains attached to the administrator during the request',
+    },
+    request_id: {
+      type: 'string',
+      description: 'Unique request identifier captured by the audit trail',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOAdminActivityEventSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOAdminActivityEvent',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOAdminActivityEventSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AdminActivityEvent',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const AfricanPhoneNumberSchema = {
   format: 'phone',
   description: 'Valid African phone number in international or local format',
@@ -11879,10 +12845,25 @@ export const SocialMediaUrlSchema = {
 
 export const SchemaEnumSchema = {
   type: 'string',
-  enum: ['draft', 'in_review', 'published', 'archived'],
+  enum: ['PLATFORM_FEE', 'AGE_GATE', 'ENROLLMENT_GUARD', 'CUSTOM'],
 } as const;
 
 export const SchemaEnum2Schema = {
+  type: 'string',
+  enum: ['DRAFT', 'ACTIVE', 'INACTIVE'],
+} as const;
+
+export const SchemaEnum3Schema = {
+  type: 'string',
+  enum: ['approve', 'reject', 'revoke'],
+} as const;
+
+export const SchemaEnum4Schema = {
+  type: 'string',
+  enum: ['draft', 'in_review', 'published', 'archived'],
+} as const;
+
+export const SchemaEnum5Schema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;
@@ -11907,6 +12888,20 @@ export const UserDomainEnumSchema = {
   readOnly: true,
 } as const;
 
+export const ScopeEnumSchema = {
+  type: 'string',
+  default: 'GLOBAL',
+  description: 'Scope the rule applies to',
+  enum: ['GLOBAL', 'TENANT', 'REGION', 'DEMOGRAPHIC', 'SEGMENT'],
+} as const;
+
+export const ValueTypeEnumSchema = {
+  type: 'string',
+  default: 'JSON',
+  description: 'Payload interpretation hint',
+  enum: ['JSON', 'DECIMAL', 'INTEGER', 'BOOLEAN', 'STRING'],
+} as const;
+
 export const StatusEnumSchema = {
   type: 'string',
   description: '**[REQUIRED]** Rubric publication status in the content workflow.',
@@ -11921,7 +12916,7 @@ export const WeightUnitEnumSchema = {
   example: 'percentage',
 } as const;
 
-export const ScopeEnumSchema = {
+export const ScopeEnum2Schema = {
   type: 'string',
   description:
     '**[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.',
@@ -12028,6 +13023,21 @@ export const ProvidedByEnumSchema = {
   example: 'organisation',
 } as const;
 
+export const ClassVisibilityEnumSchema = {
+  type: 'string',
+  description: '**[REQUIRED]** Visibility of the class when offerings are published.',
+  enum: ['PUBLIC', 'PRIVATE'],
+  example: 'PUBLIC',
+} as const;
+
+export const SessionFormatEnumSchema = {
+  type: 'string',
+  description:
+    '**[REQUIRED]** Session format indicating whether the delivery targets an individual learner or group.',
+  enum: ['INDIVIDUAL', 'GROUP'],
+  example: 'GROUP',
+} as const;
+
 export const LocationTypeEnumSchema = {
   type: 'string',
   description: '**[REQUIRED]** Default delivery format for the class.',
@@ -12079,7 +13089,22 @@ export const StatusEnum4Schema = {
   readOnly: true,
 } as const;
 
+export const RelationshipTypeEnumSchema = {
+  type: 'string',
+  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
+} as const;
+
+export const ShareScopeEnumSchema = {
+  type: 'string',
+  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
+} as const;
+
 export const StatusEnum5Schema = {
+  type: 'string',
+  enum: ['PENDING', 'ACTIVE', 'REVOKED'],
+} as const;
+
+export const StatusEnum6Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
@@ -12092,11 +13117,18 @@ export const ApplicantTypeEnumSchema = {
   enum: ['instructor', 'organisation'],
 } as const;
 
-export const StatusEnum6Schema = {
+export const StatusEnum7Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected'],
   readOnly: true,
+} as const;
+
+export const ModeEnumSchema = {
+  type: 'string',
+  description: 'How the platform fee was configured',
+  enum: ['PERCENTAGE', 'FLAT'],
+  example: 'PERCENTAGE',
 } as const;
 
 export const ReleaseStrategyEnumSchema = {
@@ -12107,7 +13139,7 @@ export const ReleaseStrategyEnumSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum7Schema = {
+export const StatusEnum8Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -12121,14 +13153,14 @@ export const AssignmentTypeEnumSchema = {
   example: 'global',
 } as const;
 
-export const StatusEnum8Schema = {
+export const StatusEnum9Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the quiz attempt.',
   enum: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'],
   example: 'GRADED',
 } as const;
 
-export const StatusEnum9Schema = {
+export const StatusEnum10Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],

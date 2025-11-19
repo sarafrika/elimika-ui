@@ -1,18 +1,8 @@
 import { toNumber } from '@/lib/metrics';
 import { fetchClient } from '@/services/api/fetch-client';
-import {
-  unverifyOrganisationMutation,
-  updateOrganisationMutation,
-  verifyOrganisationMutation,
-} from '@/services/client/@tanstack/react-query.gen';
 import { zApiResponsePagedDtoOrganisation, zOrganisation } from '@/services/client/zod.gen';
-import type {
-  Options,
-  UnverifyOrganisationData,
-  UpdateOrganisationData,
-  VerifyOrganisationData,
-} from '@/services/client/types.gen';
-import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
+import z from 'zod';
 
 const organisationListResponseSchema = zApiResponsePagedDtoOrganisation.extend({
   data: zApiResponsePagedDtoOrganisation.shape.data.default({ content: [] }),
@@ -76,23 +66,23 @@ export async function fetchAdminOrganisations(
 
   const response = hasFilters
     ? await fetchClient.GET('/api/v1/organisations/search', {
-        params: {
-          query: {
-            searchParams: filters,
-            pageable,
-          },
+      params: {
+        query: {
+          searchParams: filters,
+          pageable,
         },
-      })
+      },
+    })
     : await fetchClient.GET('/api/v1/organisations', {
-        params: {
-          query: {
-            pageable,
-          },
+      params: {
+        query: {
+          pageable,
         },
-      });
+      },
+    });
 
   if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch organisations');
+    // throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch organisations');
   }
 
   const parsed = organisationListResponseSchema.parse(response.data ?? {});
@@ -136,41 +126,41 @@ export function useAdminOrganisations(
   });
 }
 
-export function useUpdateAdminOrganisation(options?: Partial<Options<UpdateOrganisationData>>) {
-  const queryClient = useQueryClient();
-  const baseOptions = updateOrganisationMutation(options);
+// export function useUpdateAdminOrganisation(options?: Partial<Options<UpdateOrganisationData>>) {
+//   const queryClient = useQueryClient();
+//   const baseOptions = updateOrganisationMutation(options);
 
-  return useMutation({
-    ...baseOptions,
-    onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-organisations'] });
-      baseOptions.onSuccess?.(data, variables, context);
-    },
-  });
-}
+//   return useMutation({
+//     ...baseOptions,
+//     onSuccess: (data, variables, context) => {
+//       queryClient.invalidateQueries({ queryKey: ['admin-organisations'] });
+//       baseOptions.onSuccess?.(data, variables, context);
+//     },
+//   });
+// }
 
-export function useVerifyAdminOrganisation(options?: Partial<Options<VerifyOrganisationData>>) {
-  const queryClient = useQueryClient();
-  const baseOptions = verifyOrganisationMutation(options);
+// export function useVerifyAdminOrganisation(options?: Partial<Options<VerifyOrganisationData>>) {
+// const queryClient = useQueryClient();
+// const baseOptions = verifyOrganisationMutation(options);
 
-  return useMutation({
-    ...baseOptions,
-    onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-organisations'] });
-      baseOptions.onSuccess?.(data, variables, context);
-    },
-  });
-}
+// return useMutation({
+// ...baseOptions,
+// onSuccess: (data, variables, context) => {
+//   queryClient.invalidateQueries({ queryKey: ['admin-organisations'] });
+//   baseOptions.onSuccess?.(data, variables, context);
+// },
+// });
+// }
 
-export function useUnverifyAdminOrganisation(options?: Partial<Options<UnverifyOrganisationData>>) {
-  const queryClient = useQueryClient();
-  const baseOptions = unverifyOrganisationMutation(options);
+// export function useUnverifyAdminOrganisation(options?: Partial<Options<UnverifyOrganisationData>>) {
+// const queryClient = useQueryClient();
+// const baseOptions = unverifyOrganisationMutation(options);
 
-  return useMutation({
-    ...baseOptions,
-    onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-organisations'] });
-      baseOptions.onSuccess?.(data, variables, context);
-    },
-  });
-}
+// return useMutation({
+// ...baseOptions,
+// onSuccess: (data, variables, context) => {
+//   queryClient.invalidateQueries({ queryKey: ['admin-organisations'] });
+//   baseOptions.onSuccess?.(data, variables, context);
+// },
+// });
+// }

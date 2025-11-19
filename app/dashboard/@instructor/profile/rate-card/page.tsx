@@ -1,25 +1,21 @@
 'use client';
 
-import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
-import { Button } from '@/components/ui/button';
+import { ProfileFormShell } from '@/components/profile/profile-form-layout';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import Spinner from '@/components/ui/spinner';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
 import { useProfileFormMode } from '@/context/profile-form-mode-context';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { getAllCoursesOptions, searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
 import * as z from 'zod';
+
 
 const availabilitySchema = z.object({
   calComLink: z.string().url().optional().or(z.literal('')),
@@ -70,27 +66,39 @@ export default function AvailabilitySettings() {
   const user = useUserProfile();
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
-  const form = useForm<AvailabilityFormValues>({
-    resolver: zodResolver(availabilitySchema),
-    defaultValues: {
-      calComLink: '',
-      rates: {},
-    },
+  const size = 20;
+  const [page, setPage] = useState(0);
+
+  const {
+    data: allCourses,
+  } = useQuery(getAllCoursesOptions({ query: { pageable: { page, size, sort: [] } } }));
+
+  const { data: appliedCourses } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: user?.instructor?.uuid as string } },
+    }),
+    enabled: !!user?.instructor?.uuid,
   });
 
-  const handleSubmit = (data: AvailabilityFormValues) => {
-    requestConfirmation({
-      title: 'Save availability?',
-      description: 'These preferences tell learners how to book you and what to expect.',
-      confirmLabel: 'Save availability',
-      cancelLabel: 'Keep editing',
-      onConfirm: async () => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        toast.success('Availability saved');
-        disableEditing();
-      },
-    });
-  };
+  const combinedCourses = React.useMemo(() => {
+    if (!allCourses?.data?.content || !appliedCourses?.data?.content) return [];
+    const appliedMap = new Map(
+      appliedCourses.data.content.map((app: any) => [app.course_uuid, app])
+    );
+
+    return allCourses.data.content.map((course: any) => ({
+      ...course,
+      application: appliedMap.get(course.uuid) || null,
+    }));
+  }, [allCourses, appliedCourses]);
+
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+
+  useEffect(() => {
+    if (combinedCourses.length > 0 && !selectedCourse) {
+      setSelectedCourse(combinedCourses[0]);
+    }
+  }, [combinedCourses, selectedCourse]);
 
   const domainBadges =
     (user?.user_domain as string[] | undefined)?.map(domain =>
@@ -100,6 +108,20 @@ export default function AvailabilitySettings() {
         .join(' ')
     ) ?? [];
 
+  const labelMap: Record<string, string> = {
+    private_individual_rate: "Private Individual",
+    private_group_rate: "Private Group",
+    public_individual_rate: "Public Individual",
+    public_group_rate: "Public Group",
+  };
+
+  const iconMap: Record<string, string> = {
+    private_individual_rate: "👤",
+    private_group_rate: "👥",
+    public_individual_rate: "👤",
+    public_group_rate: "👥",
+  };
+
   return (
     <ProfileFormShell
       eyebrow='Instructor'
@@ -107,71 +129,93 @@ export default function AvailabilitySettings() {
       description='Define the hourly rates you offer.'
       badges={domainBadges}
     >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-          <ProfileFormSection
-            title='Class types & hourly rates'
-            description='Set clear pricing for the formats you support so learners can book with confidence.'
-            footer={
-              <Button type='submit' className='min-w-36' disabled={!isEditing || isConfirming}>
-                {isConfirming ? (
-                  <span className='flex items-center gap-2'>
-                    <Spinner className='h-4 w-4' />
-                    Saving…
-                  </span>
-                ) : (
-                  'Save changes'
-                )}
-              </Button>
-            }
-          >
-            <div className='space-y-6'>
-              {classTypes.map(ct => (
-                <div key={ct.type} className='bg-muted/30 rounded-lg border p-4'>
-                  <h3 className='mb-1 text-lg font-semibold'>{ct.type}</h3>
-                  <p className='text-muted-foreground mb-4 text-sm'>{ct.description}</p>
-                  <div className='space-y-4'>
-                    {ct.methods.map(method => (
-                      <FormField
-                        key={method.key}
-                        control={form.control}
-                        name={`rates.${method.key as keyof AvailabilityFormValues['rates']}`}
-                        render={({ field }) => (
-                          <FormItem className='bg-background flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between'>
-                            <FormLabel className='font-medium'>
-                              {method.name === 'In-Person' ? '🏢' : '💻'} {method.name} rate (per
-                              hour)
-                            </FormLabel>
-                            <div className='flex items-center gap-2'>
-                              <FormControl>
-                                <Input
-                                  type='number'
-                                  min='0'
-                                  step='0.01'
-                                  placeholder='e.g., 50.00'
-                                  className='w-32 text-right'
-                                  {...field}
-                                  onChange={e =>
-                                    field.onChange(
-                                      e.target.value ? parseFloat(e.target.value) : undefined
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                              <span className='text-muted-foreground text-sm'>USD</span>
-                            </div>
-                            <FormMessage className='sm:absolute sm:right-4 sm:bottom-[-20px]' />
-                          </FormItem>
-                        )}
-                      />
-                    ))}
+      <div className="space-y-6">
+
+        {/* Course Selector */}
+        <div className="bg-muted/30 rounded-lg border p-4">
+          <h3 className="mb-1 text-lg font-semibold">Select Course</h3>
+          <p className="text-muted-foreground mb-4 text-sm">
+            Choose a course to view its rate card.
+          </p>
+
+          <div className="max-w-sm">
+            <Select
+              value={selectedCourse?.uuid || ""}
+              onValueChange={(value) => {
+                const course = combinedCourses.find((c: any) => c.uuid === value);
+                setSelectedCourse(course || null);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a Course" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {combinedCourses.map((course: any) => (
+                  <SelectItem key={course.uuid} value={course.uuid}>
+                    {course.title || course.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Rate Card */}
+        {selectedCourse && (
+          <div className="rounded-xl border bg-gradient-to-b from-muted/20 to-muted p-6 shadow-sm">
+
+            <h3 className="mb-4 text-xl font-semibold flex items-center gap-2">
+              <span className="text-base">📘</span>
+              Rate Card — {selectedCourse.title || selectedCourse.name}
+            </h3>
+
+            {!selectedCourse.application?.rate_card ? (
+              <p className="text-muted-foreground text-sm italic">
+                No rate card available for this course.
+              </p>
+            ) : (
+              (() => {
+                const rateCard = selectedCourse.application.rate_card;
+
+                return (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {Object.entries(rateCard).map(([key, value]) => {
+                      if (key === "currency") return null;
+
+                      const label = labelMap[key] || key;
+                      const icon = iconMap[key] || "💼";
+
+                      return (
+                        <div
+                          key={key}
+                          className="rounded-lg border bg-background p-4 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-xl">{icon}</span>
+                            <span className="font-semibold text-sm">{label}</span>
+                          </div>
+
+                          <div className="mt-2">
+                            <span className="text-2xl font-bold">
+                              {value} {rateCard.currency}
+                            </span>
+                            <span className="text-muted-foreground ml-1 text-xs">
+                              per hour per head
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-              ))}
-            </div>
-          </ProfileFormSection>
-        </form>
-      </Form>
+                );
+              })()
+            )}
+          </div>
+        )}
+
+      </div>
+
     </ProfileFormShell>
   );
 }

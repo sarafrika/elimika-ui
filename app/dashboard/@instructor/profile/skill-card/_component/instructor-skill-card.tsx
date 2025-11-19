@@ -27,7 +27,7 @@ interface InstructorSkillCardProps {
 
 export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({ instructor, skills }) => {
   return (
-    <Card className='rounded-[12px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-4 shadow-xl shadow-blue-200/40 transition hover:shadow-lg dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+    <Card className='rounded-[12px] border border-blue-200/40 bg-card p-4 shadow-xl shadow-blue-200/40 transition hover:shadow-lg dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
       <CardHeader className='flex flex-row items-center gap-4 p-0'>
         <Avatar className='h-14 w-14'>
           <AvatarImage src={instructor.profile_image_url} alt={instructor.full_name} />

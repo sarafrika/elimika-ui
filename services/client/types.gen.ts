@@ -168,6 +168,73 @@ export type ApiResponseTrainingBranch = {
   };
 };
 
+export type JsonNode = {
+  [key: string]: unknown;
+};
+
+export type SystemRuleRequest = {
+  category: SchemaEnum;
+  /**
+   * Unique key within the category
+   */
+  key: string;
+  scope?: ScopeEnum;
+  /**
+   * Optional reference identifier for the scope (tenant UUID, country code, etc.)
+   */
+  scopeReference?: string;
+  /**
+   * Priority used when multiple rules match
+   */
+  priority?: number;
+  status?: SchemaEnum2;
+  valueType?: ValueTypeEnum;
+  /**
+   * Rule payload describing configuration
+   */
+  valuePayload: JsonNode;
+  /**
+   * Optional JSON condition block
+   */
+  conditions?: JsonNode;
+  /**
+   * Start of the effective window. Defaults to now if omitted.
+   */
+  effectiveFrom?: Date;
+  /**
+   * Optional end of the effective window
+   */
+  effectiveTo?: Date;
+};
+
+export type ApiResponseSystemRuleResponse = {
+  success?: boolean;
+  data?: SystemRuleResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type SystemRuleResponse = {
+  uuid?: string;
+  category?: SchemaEnum;
+  key?: string;
+  scope?: ScopeEnum;
+  scopeReference?: string;
+  priority?: number;
+  status?: SchemaEnum2;
+  valueType?: ValueTypeEnum;
+  valuePayload?: JsonNode;
+  conditions?: JsonNode;
+  effectiveFrom?: Date;
+  effectiveTo?: Date;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+};
+
 /**
  * Student profile information including guardian contacts and academic details. Links to a base user account.
  */
@@ -180,6 +247,10 @@ export type Student = {
    * **[REQUIRED]** Reference to the base user account UUID. Links student profile to user authentication and personal details.
    */
   user_uuid: string;
+  /**
+   * **[OPTIONAL]** Demographic tag used for growth controls (e.g., youth_female, adult).
+   */
+  demographic_tag?: string;
   /**
    * **[OPTIONAL]** Full name of the primary guardian/parent. This is the main emergency contact for the student.
    */
@@ -197,8 +268,8 @@ export type Student = {
    */
   second_guardian_mobile?: string;
   primaryGuardianContact?: string;
-  allGuardianContacts?: Array<string>;
   secondaryGuardianContact?: string;
+  allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
    */
@@ -539,13 +610,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -632,7 +703,7 @@ export type Quiz = {
    * **[REQUIRED]** Reference to the lesson UUID that contains this quiz.
    */
   lesson_uuid: string;
-  scope?: ScopeEnum;
+  scope?: ScopeEnum2;
   /**
    * **[OPTIONAL]** Reference to the class definition that owns this quiz when scope is CLASS_CLONE.
    */
@@ -884,7 +955,7 @@ export type TrainingProgram = {
    * **[OPTIONAL]** Learning objectives and goals students will achieve upon program completion.
    */
   objectives?: string;
-  status: SchemaEnum;
+  status: SchemaEnum4;
   /**
    * **[OPTIONAL]** Required knowledge and skills students should have before starting this program.
    */
@@ -1223,13 +1294,13 @@ export type Instructor = {
    */
   readonly is_profile_complete?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
-   */
-  readonly has_location_coordinates?: boolean;
-  /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   */
+  readonly has_location_coordinates?: boolean;
 };
 
 /**
@@ -1345,13 +1416,13 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -1375,9 +1446,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
-  readonly membership_duration_months?: number;
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1450,10 +1521,6 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
@@ -1482,6 +1549,10 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1542,10 +1613,6 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1562,6 +1629,10 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -1679,6 +1750,11 @@ export type InstructorDocument = {
    */
   readonly is_expired?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the document has an expiry date configured.
+   */
+  readonly has_expiry_date?: boolean;
+  verification_status?: VerificationStatusEnum;
+  /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
   readonly file_size_formatted?: string;
@@ -1690,11 +1766,6 @@ export type InstructorDocument = {
    * **[READ-ONLY]** Indicates if the document is pending verification.
    */
   readonly is_pending_verification?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the document has an expiry date configured.
-   */
-  readonly has_expiry_date?: boolean;
-  verification_status?: VerificationStatusEnum;
 };
 
 export type ApiResponseInstructorDocument = {
@@ -1905,7 +1976,7 @@ export type Course = {
    * **[OPTIONAL]** URL to course banner image for detailed course pages.
    */
   banner_url?: string;
-  status: SchemaEnum;
+  status: SchemaEnum4;
   /**
    * **[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.
    */
@@ -2778,15 +2849,29 @@ export type ClassDefinition = {
    * **[OPTIONAL]** Training fee charged for sessions created from this class definition. Must meet the course minimum training fee when a course is linked.
    */
   training_fee?: number;
+  class_visibility: ClassVisibilityEnum;
+  session_format: SessionFormatEnum;
   /**
-   * **[REQUIRED]** Default start time for class sessions.
+   * **[REQUIRED]** Default start date-time for class sessions (UTC).
    */
-  default_start_time: LocalTime;
+  default_start_time: Date;
   /**
-   * **[REQUIRED]** Default end time for class sessions.
+   * **[REQUIRED]** Default end date-time for class sessions (UTC).
    */
-  default_end_time: LocalTime;
+  default_end_time: Date;
   location_type: LocationTypeEnum;
+  /**
+   * **[OPTIONAL]** Human-readable name for the primary class location, used for Mapbox forward/reverse geocoding (e.g., campus, room, or venue name). Required when location_type is IN_PERSON or HYBRID.
+   */
+  location_name?: string;
+  /**
+   * **[OPTIONAL]** Latitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.
+   */
+  location_latitude?: number;
+  /**
+   * **[OPTIONAL]** Longitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.
+   */
+  location_longitude?: number;
   /**
    * **[OPTIONAL]** Maximum number of participants allowed in the class.
    */
@@ -2892,6 +2977,18 @@ export type ScheduledInstance = {
    */
   title: string;
   location_type: LocationTypeEnum;
+  /**
+   * **[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).
+   */
+  location_name?: string;
+  /**
+   * **[OPTIONAL]** Latitude coordinate for this scheduled instance location.
+   */
+  location_latitude?: number;
+  /**
+   * **[OPTIONAL]** Longitude coordinate for this scheduled instance location.
+   */
+  location_longitude?: number;
   /**
    * **[REQUIRED]** Maximum number of participants for this session (cached from class definition).
    */
@@ -3225,7 +3322,7 @@ export type Assignment = {
    * **[REQUIRED]** Reference to the lesson UUID this assignment belongs to.
    */
   lesson_uuid: string;
-  scope?: ScopeEnum;
+  scope?: ScopeEnum2;
   /**
    * **[OPTIONAL]** Reference to the class definition that owns this assignment when scope is CLASS_CLONE.
    */
@@ -3616,6 +3713,149 @@ export type ApiResponseInstructor = {
 };
 
 /**
+ * Student review and rating for an instructor, scoped to a specific enrollment.
+ */
+export type InstructorReview = {
+  /**
+   * **[READ-ONLY]** Unique identifier for the review.
+   */
+  readonly uuid?: string;
+  /**
+   * **[REQUIRED]** Instructor being reviewed.
+   */
+  instructor_uuid: string;
+  /**
+   * **[REQUIRED]** Student leaving the review.
+   */
+  student_uuid: string;
+  /**
+   * **[REQUIRED]** Enrollment that this review is tied to.
+   */
+  enrollment_uuid: string;
+  /**
+   * Overall rating for the instructor (1-5).
+   */
+  rating: number;
+  /**
+   * Optional short headline for the review.
+   */
+  headline?: string;
+  /**
+   * Detailed feedback from the student.
+   */
+  comments?: string;
+  /**
+   * Optional clarity rating (1-5).
+   */
+  clarity_rating?: number;
+  /**
+   * Optional engagement rating (1-5).
+   */
+  engagement_rating?: number;
+  /**
+   * Optional punctuality rating (1-5).
+   */
+  punctuality_rating?: number;
+  /**
+   * Whether the review should be shown anonymously in public views.
+   */
+  is_anonymous?: boolean;
+  /**
+   * **[READ-ONLY]** Timestamp when the review was created.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Created by identifier (typically the student email or system).
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the review was last updated.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** Updated by identifier.
+   */
+  readonly updated_by?: string;
+};
+
+export type ApiResponseInstructorReview = {
+  success?: boolean;
+  data?: InstructorReview;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Request to book an available instructor time slot
+ */
+export type InstructorSlotBookingRequest = {
+  /**
+   * **[REQUIRED]** UUID of the instructor to book
+   */
+  instructor_uuid: string;
+  /**
+   * **[REQUIRED]** Start date and time for the booking
+   */
+  start_time: Date;
+  /**
+   * **[REQUIRED]** End date and time for the booking
+   */
+  end_time: Date;
+  /**
+   * **[OPTIONAL]** Purpose or note for this booking
+   */
+  purpose?: string;
+  /**
+   * **[OPTIONAL]** UUID of the student making the booking (can be inferred from auth context)
+   */
+  student_uuid?: string;
+};
+
+/**
+ * Represents a guardian's access rights to a learner profile.
+ */
+export type GuardianStudentLink = {
+  uuid?: string;
+  studentUuid?: string;
+  guardianUserUuid?: string;
+  studentName?: string;
+  guardianDisplayName?: string;
+  relationshipType?: RelationshipTypeEnum;
+  shareScope?: ShareScopeEnum;
+  status?: StatusEnum5;
+  primaryGuardian?: boolean;
+  linkedDate?: Date;
+  revokedDate?: Date;
+  notes?: string;
+};
+
+/**
+ * Request payload to link a guardian/parent to a learner profile.
+ */
+export type GuardianStudentLinkRequest = {
+  /**
+   * UUID for the student profile to be monitored
+   */
+  studentUuid: string;
+  /**
+   * UUID for the guardian's user account
+   */
+  guardianUserUuid: string;
+  relationshipType: RelationshipTypeEnum;
+  shareScope: ShareScopeEnum;
+  /**
+   * Marks this guardian as the primary contact
+   */
+  isPrimary?: boolean;
+  /**
+   * Optional note shown in audits or invitation emails
+   */
+  notes?: string;
+};
+
+/**
  * Request to enroll a student in a scheduled class instance
  */
 export type EnrollmentRequest = {
@@ -3654,7 +3894,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum5;
+  status?: StatusEnum6;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -3688,13 +3928,13 @@ export type Enrollment = {
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
-   */
-  readonly status_description?: string;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   */
+  readonly status_description?: string;
 };
 
 export type ApiResponse = {
@@ -3718,17 +3958,36 @@ export type CourseTrainingApplicationRequest = {
    */
   applicant_uuid: string;
   /**
-   * **[REQUIRED]** Proposed compensation per trainee per hour for delivering this course.
+   * **[REQUIRED]** Instructor rate card across privacy/session segments.
    */
-  rate_per_hour_per_head: number;
-  /**
-   * **[OPTIONAL]** ISO 4217 currency code drawn from the platform approved list. Defaults to the platform currency when omitted.
-   */
-  rate_currency?: string;
+  rate_card: CourseTrainingRateCard;
   /**
    * Optional notes to help the course creator evaluate the request.
    */
   application_notes?: string;
+};
+
+export type CourseTrainingRateCard = {
+  /**
+   * **[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.
+   */
+  currency?: string;
+  /**
+   * Private 1:1 session rate per learner per hour.
+   */
+  private_individual_rate: number;
+  /**
+   * Private group session rate per learner per hour.
+   */
+  private_group_rate: number;
+  /**
+   * Public individual rate per learner per hour.
+   */
+  public_individual_rate: number;
+  /**
+   * Public group rate per learner per hour.
+   */
+  public_group_rate: number;
 };
 
 export type ApiResponseCourseTrainingApplication = {
@@ -3748,7 +4007,7 @@ export type CourseTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum6;
+  status?: StatusEnum7;
   /**
    * Submission notes provided by the applicant.
    */
@@ -3775,13 +4034,9 @@ export type CourseTrainingApplication = {
    */
   readonly applicant_uuid?: string;
   /**
-   * **[READ-ONLY]** Instructor or organisation rate charged per trainee per hour.
+   * **[READ-ONLY]** Approved rate card for this application.
    */
-  readonly rate_per_hour_per_head?: number;
-  /**
-   * **[READ-ONLY]** ISO 4217 currency code for the proposed rate (managed by platform configuration).
-   */
-  readonly rate_currency?: string;
+  rate_card?: CourseTrainingRateCard;
   /**
    * **[READ-ONLY]** When the application was submitted.
    */
@@ -3836,9 +4091,21 @@ export type CartItemResponse = {
    */
   quantity?: number;
   /**
-   * Medusa variant identifier
+   * Variant identifier within the commerce catalog
    */
   variant_id?: string;
+  /**
+   * Price per unit with up to 4 decimal places
+   */
+  unit_price?: number;
+  /**
+   * Subtotal for the line item with up to 4 decimal places
+   */
+  subtotal?: number;
+  /**
+   * Total for the line item after discounts with up to 4 decimal places
+   */
+  total?: number;
   /**
    * Custom metadata captured for the line item
    */
@@ -3854,7 +4121,7 @@ export type CartItemResponse = {
  */
 export type OrderResponse = {
   /**
-   * Unique Medusa identifier of the order
+   * Unique identifier of the order
    */
   id?: string;
   /**
@@ -3862,18 +4129,65 @@ export type OrderResponse = {
    */
   display_id?: string;
   /**
-   * Payment status reported by Medusa
+   * Payment status
    */
   payment_status?: string;
+  /**
+   * Currency code associated to the order totals
+   */
+  currency_code?: string;
+  /**
+   * Subtotal with up to 4 decimal places
+   */
+  subtotal?: number;
+  /**
+   * Total with up to 4 decimal places
+   */
+  total?: number;
   /**
    * Timestamp when the order was created
    */
   created_at?: Date;
+  /**
+   * Platform fee breakdown applied to this order
+   */
+  platform_fee?: PlatformFeeBreakdown;
   items?: Array<CartItemResponse>;
 };
 
 /**
- * Checkout payload that orchestrates Medusa cart completion
+ * Computed platform fee details applied to an order
+ */
+export type PlatformFeeBreakdown = {
+  /**
+   * Fee amount in major currency units after adjustments
+   */
+  amount?: number;
+  /**
+   * Currency code the fee is denominated in
+   */
+  currency?: string;
+  mode?: ModeEnum;
+  /**
+   * Percentage rate applied when mode is PERCENTAGE
+   */
+  rate?: number;
+  /**
+   * Order total used to compute the platform fee
+   */
+  baseAmount?: number;
+  /**
+   * Identifier of the rule that produced the fee
+   */
+  ruleUuid?: string;
+  /**
+   * Timestamp when the fee was evaluated
+   */
+  evaluatedAt?: Date;
+};
+
+/**
+ * Checkout payload that orchestrates cart completion
  */
 export type CheckoutRequest = {
   /**
@@ -3903,17 +4217,41 @@ export type CheckoutRequest = {
  */
 export type CartResponse = {
   /**
-   * Unique Medusa identifier of the cart
+   * Unique identifier of the cart
    */
   id?: string;
   /**
-   * Region identifier the cart is scoped to
+   * Currency code the cart is priced in
    */
-  region_id?: string;
+  currency_code?: string;
   /**
-   * Associated Medusa customer identifier
+   * Optional region code used for pricing rules
    */
-  customer_id?: string;
+  region_code?: string;
+  /**
+   * Cart status
+   */
+  status?: string;
+  /**
+   * Subtotal with up to 4 decimal places
+   */
+  subtotal?: number;
+  /**
+   * Tax amount with up to 4 decimal places
+   */
+  tax?: number;
+  /**
+   * Discount amount with up to 4 decimal places
+   */
+  discount?: number;
+  /**
+   * Shipping amount with up to 4 decimal places
+   */
+  shipping?: number;
+  /**
+   * Total with up to 4 decimal places
+   */
+  total?: number;
   /**
    * Timestamp when the cart was created
    */
@@ -3930,7 +4268,7 @@ export type CartResponse = {
  */
 export type CartLineItemRequest = {
   /**
-   * Identifier of the Medusa product variant to add to the cart
+   * Identifier of the internal product variant to add to the cart
    */
   variant_id: string;
   /**
@@ -3948,23 +4286,19 @@ export type CartLineItemRequest = {
 };
 
 /**
- * Request body for creating a new cart that synchronises with Medusa
+ * Request body for creating a new cart
  */
 export type CreateCartRequest = {
   /**
-   * Identifier of the Medusa region the cart belongs to
+   * Currency code the cart is priced in
    */
-  region_id: string;
+  currency_code: string;
   /**
-   * Medusa customer identifier to associate with the cart
+   * Optional region code for pricing rules
    */
-  customer_id?: string;
+  region_code?: string;
   /**
-   * Sales channel identifier configured in Medusa
-   */
-  sales_channel_id?: string;
-  /**
-   * Arbitrary metadata forwarded to Medusa
+   * Arbitrary metadata stored with the cart
    */
   metadata?: {
     [key: string]: {
@@ -3979,7 +4313,7 @@ export type CreateCartRequest = {
  */
 export type SelectPaymentSessionRequest = {
   /**
-   * Identifier of the Medusa payment provider (e.g. 'manual', 'stripe')
+   * Identifier of the payment provider (e.g. 'manual', 'stripe')
    */
   provider_id: string;
 };
@@ -4185,7 +4519,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum7;
+  status: StatusEnum8;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -4252,7 +4586,7 @@ export type AssignmentSubmission = {
  * Admin domain assignment request containing domain type, reason, and effective date
  */
 export type AdminDomainAssignmentRequest = {
-  domain_name: SchemaEnum2;
+  domain_name: SchemaEnum5;
   assignment_type: AssignmentTypeEnum;
   /**
    * Reason for assigning admin privileges
@@ -4307,19 +4641,19 @@ export type UpdateCartRequest = {
    */
   email?: string;
   /**
-   * Medusa customer identifier to associate with the cart
+   * Customer identifier to associate with the cart
    */
   customer_id?: string;
   /**
-   * Medusa shipping address identifier
+   * Shipping address identifier
    */
   shipping_address_id?: string;
   /**
-   * Medusa billing address identifier
+   * Billing address identifier
    */
   billing_address_id?: string;
   /**
-   * Optional metadata map forwarded to Medusa
+   * Optional metadata map stored with the cart
    */
   metadata?: {
     [key: string]: {
@@ -4379,6 +4713,21 @@ export type ApiResponsePagedDtoTrainingBranch = {
 
 export type PagedDtoTrainingBranch = {
   content?: Array<TrainingBranch>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoSystemRuleResponse = {
+  success?: boolean;
+  data?: PagedDtoSystemRuleResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoSystemRuleResponse = {
+  content?: Array<SystemRuleResponse>;
   metadata?: PageMetadata;
   links?: PageLinks;
 };
@@ -4652,7 +5001,7 @@ export type QuizAttempt = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum8;
+  status: StatusEnum9;
   /**
    * **[READ-ONLY]** Timestamp when the attempt was created. Automatically set by the system.
    */
@@ -4775,7 +5124,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum9;
+  status: StatusEnum10;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -4809,10 +5158,6 @@ export type ProgramEnrollment = {
    */
   readonly progress_display?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
   readonly enrollment_duration?: string;
@@ -4820,6 +5165,10 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
 };
 
 export type ApiResponseListCourse = {
@@ -4976,6 +5325,42 @@ export type PagedDtoInstructorSkill = {
   links?: PageLinks;
 };
 
+export type ApiResponseListInstructorReview = {
+  success?: boolean;
+  data?: Array<InstructorReview>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type ApiResponseInstructorRatingSummary = {
+  success?: boolean;
+  data?: InstructorRatingSummary;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Aggregate review metrics for an instructor (average rating and review count).
+ */
+export type InstructorRatingSummary = {
+  /**
+   * UUID of the instructor.
+   */
+  instructor_uuid?: string;
+  /**
+   * Average overall rating across all reviews (1-5). Null when there are no reviews.
+   */
+  average_rating?: number;
+  /**
+   * Total number of reviews for this instructor.
+   */
+  review_count?: bigint;
+};
+
 export type ApiResponsePagedDtoInstructorProfessionalMembership = {
   success?: boolean;
   data?: PagedDtoInstructorProfessionalMembership;
@@ -5063,6 +5448,52 @@ export type PagedDtoInstructorDocument = {
   links?: PageLinks;
 };
 
+export type GuardianStudentDashboardDto = {
+  studentUuid?: string;
+  studentName?: string;
+  shareScope?: ShareScopeEnum;
+  status?: StatusEnum5;
+  courseProgress?: Array<LearnerCourseProgressView>;
+  programProgress?: Array<LearnerProgramProgressView>;
+};
+
+export type LearnerCourseProgressView = {
+  enrollmentUuid?: string;
+  courseUuid?: string;
+  courseName?: string;
+  status?: string;
+  progressPercentage?: number;
+  updatedDate?: Date;
+};
+
+export type LearnerProgramProgressView = {
+  enrollmentUuid?: string;
+  programUuid?: string;
+  programName?: string;
+  status?: string;
+  progressPercentage?: number;
+  updatedDate?: Date;
+};
+
+export type ApiResponseListGuardianStudentSummaryDto = {
+  success?: boolean;
+  data?: Array<GuardianStudentSummaryDto>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type GuardianStudentSummaryDto = {
+  linkUuid?: string;
+  studentUuid?: string;
+  studentName?: string;
+  relationshipType?: RelationshipTypeEnum;
+  shareScope?: ShareScopeEnum;
+  status?: StatusEnum5;
+  primaryGuardian?: boolean;
+};
+
 export type ApiResponseEnrollment = {
   success?: boolean;
   data?: Enrollment;
@@ -5118,8 +5549,20 @@ export type StudentSchedule = {
    */
   readonly timezone?: string;
   location_type?: LocationTypeEnum;
+  /**
+   * **[READ-ONLY]** Human-readable location name for the scheduled class.
+   */
+  readonly location_name?: string;
+  /**
+   * **[READ-ONLY]** Latitude coordinate for the scheduled class location.
+   */
+  readonly location_latitude?: number;
+  /**
+   * **[READ-ONLY]** Longitude coordinate for the scheduled class location.
+   */
+  readonly location_longitude?: number;
   scheduling_status?: StatusEnum3;
-  enrollment_status?: StatusEnum5;
+  enrollment_status?: StatusEnum6;
   /**
    * **[READ-ONLY]** Timestamp when attendance was marked (if applicable).
    */
@@ -5173,7 +5616,7 @@ export type PagedDtoCourse = {
 
 export type ApiResponseListContentStatus = {
   success?: boolean;
-  data?: Array<SchemaEnum>;
+  data?: Array<SchemaEnum4>;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -5297,7 +5740,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum9;
+  status: StatusEnum10;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -5331,10 +5774,6 @@ export type CourseEnrollment = {
    */
   readonly progress_display?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
   readonly enrollment_duration?: string;
@@ -5342,6 +5781,10 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -5794,6 +6237,79 @@ export type UserMetrics = {
 };
 
 /**
+ * Represents a recent administrative action recorded by the platform
+ */
+export type AdminActivityEvent = {
+  /**
+   * Unique identifier for the activity event
+   */
+  event_uuid?: string;
+  /**
+   * When the activity occurred (UTC)
+   */
+  occurred_at?: Date;
+  /**
+   * Human-readable summary of the activity
+   */
+  summary?: string;
+  /**
+   * HTTP method invoked by the admin request
+   */
+  http_method?: string;
+  /**
+   * Endpoint path that was called
+   */
+  endpoint?: string;
+  /**
+   * Query string (if any) that accompanied the request
+   */
+  query?: string;
+  /**
+   * Response status returned for the request
+   */
+  response_status?: number;
+  /**
+   * Processing time in milliseconds for the request
+   */
+  processing_time_ms?: bigint;
+  /**
+   * Administrator who performed the action (full name if available)
+   */
+  actor_name?: string;
+  /**
+   * Email address of the administrator who performed the action
+   */
+  actor_email?: string;
+  /**
+   * UUID of the administrator, if authenticated
+   */
+  actor_uuid?: string;
+  /**
+   * Comma-separated list of domains attached to the administrator during the request
+   */
+  actor_domains?: string;
+  /**
+   * Unique request identifier captured by the audit trail
+   */
+  request_id?: string;
+};
+
+export type ApiResponsePagedDtoAdminActivityEvent = {
+  success?: boolean;
+  data?: PagedDtoAdminActivityEvent;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoAdminActivityEvent = {
+  content?: Array<AdminActivityEvent>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+/**
  * Valid African phone number in international or local format
  */
 export type AfricanPhoneNumber = unknown;
@@ -5859,20 +6375,45 @@ export type DocumentUrl = unknown;
 export type SocialMediaUrl = unknown;
 
 export const SchemaEnum = {
+  PLATFORM_FEE: 'PLATFORM_FEE',
+  AGE_GATE: 'AGE_GATE',
+  ENROLLMENT_GUARD: 'ENROLLMENT_GUARD',
+  CUSTOM: 'CUSTOM',
+} as const;
+
+export type SchemaEnum = (typeof SchemaEnum)[keyof typeof SchemaEnum];
+
+export const SchemaEnum2 = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+} as const;
+
+export type SchemaEnum2 = (typeof SchemaEnum2)[keyof typeof SchemaEnum2];
+
+export const SchemaEnum3 = {
+  APPROVE: 'approve',
+  REJECT: 'reject',
+  REVOKE: 'revoke',
+} as const;
+
+export type SchemaEnum3 = (typeof SchemaEnum3)[keyof typeof SchemaEnum3];
+
+export const SchemaEnum4 = {
   DRAFT: 'draft',
   IN_REVIEW: 'in_review',
   PUBLISHED: 'published',
   ARCHIVED: 'archived',
 } as const;
 
-export type SchemaEnum = (typeof SchemaEnum)[keyof typeof SchemaEnum];
+export type SchemaEnum4 = (typeof SchemaEnum4)[keyof typeof SchemaEnum4];
 
-export const SchemaEnum2 = {
+export const SchemaEnum5 = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum2 = (typeof SchemaEnum2)[keyof typeof SchemaEnum2];
+export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -5906,6 +6447,38 @@ export const UserDomainEnum = {
 export type UserDomainEnum = (typeof UserDomainEnum)[keyof typeof UserDomainEnum];
 
 /**
+ * Scope the rule applies to
+ */
+export const ScopeEnum = {
+  GLOBAL: 'GLOBAL',
+  TENANT: 'TENANT',
+  REGION: 'REGION',
+  DEMOGRAPHIC: 'DEMOGRAPHIC',
+  SEGMENT: 'SEGMENT',
+} as const;
+
+/**
+ * Scope the rule applies to
+ */
+export type ScopeEnum = (typeof ScopeEnum)[keyof typeof ScopeEnum];
+
+/**
+ * Payload interpretation hint
+ */
+export const ValueTypeEnum = {
+  JSON: 'JSON',
+  DECIMAL: 'DECIMAL',
+  INTEGER: 'INTEGER',
+  BOOLEAN: 'BOOLEAN',
+  STRING: 'STRING',
+} as const;
+
+/**
+ * Payload interpretation hint
+ */
+export type ValueTypeEnum = (typeof ValueTypeEnum)[keyof typeof ValueTypeEnum];
+
+/**
  * **[REQUIRED]** Rubric publication status in the content workflow.
  */
 export const StatusEnum = {
@@ -5937,7 +6510,7 @@ export type WeightUnitEnum = (typeof WeightUnitEnum)[keyof typeof WeightUnitEnum
 /**
  * **[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.
  */
-export const ScopeEnum = {
+export const ScopeEnum2 = {
   COURSE_TEMPLATE: 'COURSE_TEMPLATE',
   CLASS_CLONE: 'CLASS_CLONE',
 } as const;
@@ -5945,7 +6518,7 @@ export const ScopeEnum = {
 /**
  * **[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.
  */
-export type ScopeEnum = (typeof ScopeEnum)[keyof typeof ScopeEnum];
+export type ScopeEnum2 = (typeof ScopeEnum2)[keyof typeof ScopeEnum2];
 
 /**
  * **[REQUIRED]** Type of question determining the answer format and validation.
@@ -6134,6 +6707,32 @@ export const ProvidedByEnum = {
 export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum];
 
 /**
+ * **[REQUIRED]** Visibility of the class when offerings are published.
+ */
+export const ClassVisibilityEnum = {
+  PUBLIC: 'PUBLIC',
+  PRIVATE: 'PRIVATE',
+} as const;
+
+/**
+ * **[REQUIRED]** Visibility of the class when offerings are published.
+ */
+export type ClassVisibilityEnum = (typeof ClassVisibilityEnum)[keyof typeof ClassVisibilityEnum];
+
+/**
+ * **[REQUIRED]** Session format indicating whether the delivery targets an individual learner or group.
+ */
+export const SessionFormatEnum = {
+  INDIVIDUAL: 'INDIVIDUAL',
+  GROUP: 'GROUP',
+} as const;
+
+/**
+ * **[REQUIRED]** Session format indicating whether the delivery targets an individual learner or group.
+ */
+export type SessionFormatEnum = (typeof SessionFormatEnum)[keyof typeof SessionFormatEnum];
+
+/**
  * **[REQUIRED]** Default delivery format for the class.
  */
 export const LocationTypeEnum = {
@@ -6223,10 +6822,34 @@ export const StatusEnum4 = {
  */
 export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
 
+export const RelationshipTypeEnum = {
+  PARENT: 'PARENT',
+  GUARDIAN: 'GUARDIAN',
+  SPONSOR: 'SPONSOR',
+} as const;
+
+export type RelationshipTypeEnum = (typeof RelationshipTypeEnum)[keyof typeof RelationshipTypeEnum];
+
+export const ShareScopeEnum = {
+  FULL: 'FULL',
+  ACADEMICS: 'ACADEMICS',
+  ATTENDANCE: 'ATTENDANCE',
+} as const;
+
+export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
+
+export const StatusEnum5 = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  REVOKED: 'REVOKED',
+} as const;
+
+export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum5 = {
+export const StatusEnum6 = {
   ENROLLED: 'ENROLLED',
   ATTENDED: 'ATTENDED',
   ABSENT: 'ABSENT',
@@ -6236,7 +6859,7 @@ export const StatusEnum5 = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
 
 /**
  * **[REQUIRED]** Applicant type initiating the request.
@@ -6254,7 +6877,7 @@ export type ApplicantTypeEnum = (typeof ApplicantTypeEnum)[keyof typeof Applican
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum6 = {
+export const StatusEnum7 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -6263,7 +6886,20 @@ export const StatusEnum6 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+
+/**
+ * How the platform fee was configured
+ */
+export const ModeEnum = {
+  PERCENTAGE: 'PERCENTAGE',
+  FLAT: 'FLAT',
+} as const;
+
+/**
+ * How the platform fee was configured
+ */
+export type ModeEnum = (typeof ModeEnum)[keyof typeof ModeEnum];
 
 /**
  * **[REQUIRED]** Strategy describing how this class schedule derives from the template.
@@ -6282,7 +6918,7 @@ export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof Rele
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum7 = {
+export const StatusEnum8 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -6293,7 +6929,7 @@ export const StatusEnum7 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
 /**
  * Type of assignment - global or organization-specific
@@ -6311,7 +6947,7 @@ export type AssignmentTypeEnum = (typeof AssignmentTypeEnum)[keyof typeof Assign
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const StatusEnum8 = {
+export const StatusEnum9 = {
   IN_PROGRESS: 'IN_PROGRESS',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
@@ -6320,12 +6956,12 @@ export const StatusEnum8 = {
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum9 = {
+export const StatusEnum10 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -6335,7 +6971,7 @@ export const StatusEnum9 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
 /**
  * Display name of the role/domain being offered
@@ -6560,6 +7196,68 @@ export type UpdateTrainingBranchResponses = {
 
 export type UpdateTrainingBranchResponse =
   UpdateTrainingBranchResponses[keyof UpdateTrainingBranchResponses];
+
+export type GetRuleData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/system-rules/{uuid}';
+};
+
+export type GetRuleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetRuleError = GetRuleErrors[keyof GetRuleErrors];
+
+export type GetRuleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSystemRuleResponse;
+};
+
+export type GetRuleResponse = GetRuleResponses[keyof GetRuleResponses];
+
+export type UpdateRuleData = {
+  body: SystemRuleRequest;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/system-rules/{uuid}';
+};
+
+export type UpdateRuleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateRuleError = UpdateRuleErrors[keyof UpdateRuleErrors];
+
+export type UpdateRuleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSystemRuleResponse;
+};
+
+export type UpdateRuleResponse = UpdateRuleResponses[keyof UpdateRuleResponses];
 
 export type DeleteStudentData = {
   body?: never;
@@ -10232,6 +10930,68 @@ export type CheckInstructorConflictResponses = {
 export type CheckInstructorConflictResponse =
   CheckInstructorConflictResponses[keyof CheckInstructorConflictResponses];
 
+export type ListRulesData = {
+  body?: never;
+  path?: never;
+  query: {
+    category?: SchemaEnum;
+    status?: SchemaEnum2;
+    pageable: Pageable;
+  };
+  url: '/api/v1/system-rules';
+};
+
+export type ListRulesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListRulesError = ListRulesErrors[keyof ListRulesErrors];
+
+export type ListRulesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoSystemRuleResponse;
+};
+
+export type ListRulesResponse = ListRulesResponses[keyof ListRulesResponses];
+
+export type CreateRuleData = {
+  body: SystemRuleRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/system-rules';
+};
+
+export type CreateRuleErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateRuleError = CreateRuleErrors[keyof CreateRuleErrors];
+
+export type CreateRuleResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSystemRuleResponse;
+};
+
+export type CreateRuleResponse = CreateRuleResponses[keyof CreateRuleResponses];
+
 export type GetAllStudentsData = {
   body?: never;
   path?: never;
@@ -11863,6 +12623,72 @@ export type AddInstructorSkillResponses = {
 export type AddInstructorSkillResponse =
   AddInstructorSkillResponses[keyof AddInstructorSkillResponses];
 
+export type GetInstructorReviewsData = {
+  body?: never;
+  path: {
+    instructorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{instructorUuid}/reviews';
+};
+
+export type GetInstructorReviewsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetInstructorReviewsError =
+  GetInstructorReviewsErrors[keyof GetInstructorReviewsErrors];
+
+export type GetInstructorReviewsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListInstructorReview;
+};
+
+export type GetInstructorReviewsResponse =
+  GetInstructorReviewsResponses[keyof GetInstructorReviewsResponses];
+
+export type SubmitInstructorReviewData = {
+  body: InstructorReview;
+  path: {
+    instructorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{instructorUuid}/reviews';
+};
+
+export type SubmitInstructorReviewErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SubmitInstructorReviewError =
+  SubmitInstructorReviewErrors[keyof SubmitInstructorReviewErrors];
+
+export type SubmitInstructorReviewResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInstructorReview;
+};
+
+export type SubmitInstructorReviewResponse =
+  SubmitInstructorReviewResponses[keyof SubmitInstructorReviewResponses];
+
 export type GetInstructorMembershipsData = {
   body?: never;
   path: {
@@ -12166,6 +12992,49 @@ export type VerifyDocumentResponses = {
 
 export type VerifyDocumentResponse = VerifyDocumentResponses[keyof VerifyDocumentResponses];
 
+export type UploadInstructorDocumentData = {
+  body?: {
+    file: Blob | File;
+  };
+  path: {
+    instructorUuid: string;
+  };
+  query: {
+    document_type_uuid: string;
+    title?: string;
+    description?: string;
+    education_uuid?: string;
+    experience_uuid?: string;
+    membership_uuid?: string;
+    expiry_date?: Date;
+  };
+  url: '/api/v1/instructors/{instructorUuid}/documents/upload';
+};
+
+export type UploadInstructorDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadInstructorDocumentError =
+  UploadInstructorDocumentErrors[keyof UploadInstructorDocumentErrors];
+
+export type UploadInstructorDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInstructorDocument;
+};
+
+export type UploadInstructorDocumentResponse =
+  UploadInstructorDocumentResponses[keyof UploadInstructorDocumentResponses];
+
 export type CreateAvailabilitySlotData = {
   body: AvailabilitySlot;
   path: {
@@ -12253,6 +13122,45 @@ export type SetAvailabilityPatternsResponses = {
 export type SetAvailabilityPatternsResponse =
   SetAvailabilityPatternsResponses[keyof SetAvailabilityPatternsResponses];
 
+export type BookInstructorSlotData = {
+  body: InstructorSlotBookingRequest;
+  path: {
+    /**
+     * UUID of the instructor
+     */
+    instructorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{instructorUuid}/availability/book';
+};
+
+export type BookInstructorSlotErrors = {
+  /**
+   * Instructor not available or invalid request
+   */
+  400: ApiResponseVoid;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type BookInstructorSlotError = BookInstructorSlotErrors[keyof BookInstructorSlotErrors];
+
+export type BookInstructorSlotResponses = {
+  /**
+   * Instructor slot booked successfully
+   */
+  201: ApiResponseVoid;
+};
+
+export type BookInstructorSlotResponse =
+  BookInstructorSlotResponses[keyof BookInstructorSlotResponses];
+
 export type BlockTimeData = {
   body?: never;
   path: {
@@ -12304,6 +13212,35 @@ export type BlockTimeResponses = {
 
 export type BlockTimeResponse = BlockTimeResponses[keyof BlockTimeResponses];
 
+export type CreateLinkData = {
+  body: GuardianStudentLinkRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/guardians/links';
+};
+
+export type CreateLinkErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateLinkError = CreateLinkErrors[keyof CreateLinkErrors];
+
+export type CreateLinkResponses = {
+  /**
+   * Guardian link created
+   */
+  201: GuardianStudentLink;
+};
+
+export type CreateLinkResponse = CreateLinkResponses[keyof CreateLinkResponses];
+
 export type EnrollStudentData = {
   body: EnrollmentRequest;
   path?: never;
@@ -12316,6 +13253,10 @@ export type EnrollStudentErrors = {
    * Invalid enrollment request or conflicts
    */
   400: ApiResponseListEnrollment;
+  /**
+   * Payment required before enrollment is permitted
+   */
+  402: ApiResponseListEnrollment;
   /**
    * Class definition or scheduled instances not found
    */
@@ -13108,6 +14049,46 @@ export type AddLessonContentResponses = {
 };
 
 export type AddLessonContentResponse = AddLessonContentResponses[keyof AddLessonContentResponses];
+
+export type UploadLessonMediaData = {
+  body?: {
+    file: Blob | File;
+  };
+  path: {
+    courseUuid: string;
+    lessonUuid: string;
+  };
+  query: {
+    content_type_uuid: string;
+    title: string;
+    description?: string;
+    is_required?: boolean;
+  };
+  url: '/api/v1/courses/{courseUuid}/lessons/{lessonUuid}/content/upload';
+};
+
+export type UploadLessonMediaErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadLessonMediaError = UploadLessonMediaErrors[keyof UploadLessonMediaErrors];
+
+export type UploadLessonMediaResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseLessonContent;
+};
+
+export type UploadLessonMediaResponse =
+  UploadLessonMediaResponses[keyof UploadLessonMediaResponses];
 
 export type ReorderLessonContentData = {
   body: Array<string>;
@@ -14070,6 +15051,41 @@ export type CreateCertificateResponses = {
 export type CreateCertificateResponse =
   CreateCertificateResponses[keyof CreateCertificateResponses];
 
+export type UploadCertificatePdfData = {
+  body?: {
+    file: Blob | File;
+  };
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/certificates/{uuid}/upload';
+};
+
+export type UploadCertificatePdfErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadCertificatePdfError =
+  UploadCertificatePdfErrors[keyof UploadCertificatePdfErrors];
+
+export type UploadCertificatePdfResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCertificate;
+};
+
+export type UploadCertificatePdfResponse =
+  UploadCertificatePdfResponses[keyof UploadCertificatePdfResponses];
+
 export type RevokeCertificateData = {
   body?: never;
   path: {
@@ -14494,24 +15510,32 @@ export type AssignAdminDomainResponses = {
 export type AssignAdminDomainResponse =
   AssignAdminDomainResponses[keyof AssignAdminDomainResponses];
 
-export type VerifyOrganisationData = {
+export type ModerateOrganisationData = {
   body?: never;
   path: {
     /**
-     * UUID of the organization to verify. Must be an existing organization identifier.
+     * UUID of the organization to moderate. Must be an existing organization identifier.
      */
     uuid: string;
   };
-  query?: {
+  query: {
     /**
-     * Optional reason for verification
+     * Moderation action to perform
+     */
+    action: SchemaEnum3;
+    /**
+     * Optional reason for the chosen moderation action
      */
     reason?: string;
   };
-  url: '/api/v1/admin/organizations/{uuid}/verify';
+  url: '/api/v1/admin/organizations/{uuid}/moderate';
 };
 
-export type VerifyOrganisationErrors = {
+export type ModerateOrganisationErrors = {
+  /**
+   * Invalid moderation action supplied
+   */
+  400: ApiResponseOrganisation;
   /**
    * Insufficient privileges - system admin required
    */
@@ -14526,62 +15550,18 @@ export type VerifyOrganisationErrors = {
   500: ResponseDtoVoid;
 };
 
-export type VerifyOrganisationError = VerifyOrganisationErrors[keyof VerifyOrganisationErrors];
+export type ModerateOrganisationError =
+  ModerateOrganisationErrors[keyof ModerateOrganisationErrors];
 
-export type VerifyOrganisationResponses = {
+export type ModerateOrganisationResponses = {
   /**
-   * Organization verified successfully
+   * Organization moderation completed successfully
    */
   200: ApiResponseOrganisation;
 };
 
-export type VerifyOrganisationResponse =
-  VerifyOrganisationResponses[keyof VerifyOrganisationResponses];
-
-export type UnverifyOrganisationData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the organization to remove verification from. Must be an existing organization identifier.
-     */
-    uuid: string;
-  };
-  query?: {
-    /**
-     * Optional reason for removing verification
-     */
-    reason?: string;
-  };
-  url: '/api/v1/admin/organizations/{uuid}/unverify';
-};
-
-export type UnverifyOrganisationErrors = {
-  /**
-   * Insufficient privileges - system admin required
-   */
-  403: ApiResponseOrganisation;
-  /**
-   * Organization not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type UnverifyOrganisationError =
-  UnverifyOrganisationErrors[keyof UnverifyOrganisationErrors];
-
-export type UnverifyOrganisationResponses = {
-  /**
-   * Organization verification removed successfully
-   */
-  200: ApiResponseOrganisation;
-};
-
-export type UnverifyOrganisationResponse =
-  UnverifyOrganisationResponses[keyof UnverifyOrganisationResponses];
+export type ModerateOrganisationResponse =
+  ModerateOrganisationResponses[keyof ModerateOrganisationResponses];
 
 export type VerifyInstructorData = {
   body?: never;
@@ -15933,7 +16913,7 @@ export type GetRubricsByStatusData = {
     /**
      * Content status to filter by
      */
-    status: SchemaEnum;
+    status: SchemaEnum4;
   };
   query: {
     pageable: Pageable;
@@ -17256,6 +18236,39 @@ export type GetPendingInvitationsForEmailResponses = {
 export type GetPendingInvitationsForEmailResponse =
   GetPendingInvitationsForEmailResponses[keyof GetPendingInvitationsForEmailResponses];
 
+export type GetInstructorRatingSummaryData = {
+  body?: never;
+  path: {
+    instructorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{instructorUuid}/reviews/summary';
+};
+
+export type GetInstructorRatingSummaryErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetInstructorRatingSummaryError =
+  GetInstructorRatingSummaryErrors[keyof GetInstructorRatingSummaryErrors];
+
+export type GetInstructorRatingSummaryResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInstructorRatingSummary;
+};
+
+export type GetInstructorRatingSummaryResponse =
+  GetInstructorRatingSummaryResponses[keyof GetInstructorRatingSummaryResponses];
+
 export type ClearInstructorAvailabilityData = {
   body?: never;
   path: {
@@ -17722,6 +18735,67 @@ export type SearchDocumentsResponses = {
 };
 
 export type SearchDocumentsResponse = SearchDocumentsResponses[keyof SearchDocumentsResponses];
+
+export type GetStudentDashboardData = {
+  body?: never;
+  path: {
+    studentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/guardians/students/{studentUuid}/dashboard';
+};
+
+export type GetStudentDashboardErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetStudentDashboardError = GetStudentDashboardErrors[keyof GetStudentDashboardErrors];
+
+export type GetStudentDashboardResponses = {
+  /**
+   * Dashboard data ready
+   */
+  200: GuardianStudentDashboardDto;
+};
+
+export type GetStudentDashboardResponse =
+  GetStudentDashboardResponses[keyof GetStudentDashboardResponses];
+
+export type GetMyStudentsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/guardians/me/students';
+};
+
+export type GetMyStudentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetMyStudentsError = GetMyStudentsErrors[keyof GetMyStudentsErrors];
+
+export type GetMyStudentsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListGuardianStudentSummaryDto;
+};
+
+export type GetMyStudentsResponse = GetMyStudentsResponses[keyof GetMyStudentsResponses];
 
 export type CancelEnrollmentData = {
   body?: never;
@@ -18905,7 +19979,7 @@ export type GetOrderData = {
   body?: never;
   path: {
     /**
-     * Medusa order identifier
+     * Order identifier
      */
     orderId: string;
   };
@@ -19121,6 +20195,42 @@ export type CheckClassSchedulingConflictsResponses = {
 
 export type CheckClassSchedulingConflictsResponse =
   CheckClassSchedulingConflictsResponses[keyof CheckClassSchedulingConflictsResponses];
+
+export type GetEnrollmentsForClassData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the class definition
+     */
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/{uuid}/enrollments';
+};
+
+export type GetEnrollmentsForClassErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetEnrollmentsForClassError =
+  GetEnrollmentsForClassErrors[keyof GetEnrollmentsForClassErrors];
+
+export type GetEnrollmentsForClassResponses = {
+  /**
+   * Enrollments retrieved successfully
+   */
+  200: ApiResponseListEnrollment;
+};
+
+export type GetEnrollmentsForClassResponse =
+  GetEnrollmentsForClassResponses[keyof GetEnrollmentsForClassResponses];
 
 export type GetClassDefinitionsForOrganisationData = {
   body?: never;
@@ -20070,6 +21180,39 @@ export type IsOrganisationVerifiedResponses = {
 export type IsOrganisationVerifiedResponse =
   IsOrganisationVerifiedResponses[keyof IsOrganisationVerifiedResponses];
 
+export type GetPendingOrganisationsData = {
+  body?: never;
+  path?: never;
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/organizations/pending';
+};
+
+export type GetPendingOrganisationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetPendingOrganisationsError =
+  GetPendingOrganisationsErrors[keyof GetPendingOrganisationsErrors];
+
+export type GetPendingOrganisationsResponses = {
+  /**
+   * Pending organizations retrieved successfully
+   */
+  200: ApiResponsePagedDtoOrganisation;
+};
+
+export type GetPendingOrganisationsResponse =
+  GetPendingOrganisationsResponses[keyof GetPendingOrganisationsResponses];
+
 export type IsInstructorVerifiedData = {
   body?: never;
   path: {
@@ -20140,6 +21283,39 @@ export type GetDashboardStatisticsResponses = {
 
 export type GetDashboardStatisticsResponse =
   GetDashboardStatisticsResponses[keyof GetDashboardStatisticsResponses];
+
+export type GetDashboardActivityData = {
+  body?: never;
+  path?: never;
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/dashboard/activity-feed';
+};
+
+export type GetDashboardActivityErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetDashboardActivityError =
+  GetDashboardActivityErrors[keyof GetDashboardActivityErrors];
+
+export type GetDashboardActivityResponses = {
+  /**
+   * Dashboard activity retrieved successfully
+   */
+  200: ApiResponsePagedDtoAdminActivityEvent;
+};
+
+export type GetDashboardActivityResponse =
+  GetDashboardActivityResponses[keyof GetDashboardActivityResponses];
 
 export type CancelInvitationData = {
   body?: never;
@@ -20223,6 +21399,39 @@ export type CleanupOldInvitationsResponses = {
 
 export type CleanupOldInvitationsResponse =
   CleanupOldInvitationsResponses[keyof CleanupOldInvitationsResponses];
+
+export type RevokeLinkData = {
+  body?: never;
+  path: {
+    linkUuid: string;
+  };
+  query?: {
+    reason?: string;
+  };
+  url: '/api/v1/guardians/links/{linkUuid}';
+};
+
+export type RevokeLinkErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RevokeLinkError = RevokeLinkErrors[keyof RevokeLinkErrors];
+
+export type RevokeLinkResponses = {
+  /**
+   * Guardian access revoked
+   */
+  200: ApiResponseVoid;
+};
+
+export type RevokeLinkResponse = RevokeLinkResponses[keyof RevokeLinkResponses];
 
 export type DissociateRubricData = {
   body?: never;
@@ -20350,7 +21559,7 @@ export type RemoveAdminDomainData = {
     /**
      * Domain name to remove
      */
-    domain: SchemaEnum2;
+    domain: SchemaEnum5;
   };
   query?: {
     /**

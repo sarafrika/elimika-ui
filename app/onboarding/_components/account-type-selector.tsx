@@ -90,7 +90,7 @@ export default function AccountTypeSelector() {
             </div>
 
             {/* Decorative gradient overlay */}
-            <div className='from-primary pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-5' />
+            <div className='pointer-events-none absolute inset-0 rounded-3xl bg-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-20' />
           </Link>
         );
       })}

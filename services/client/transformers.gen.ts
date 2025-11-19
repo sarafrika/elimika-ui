@@ -5,6 +5,8 @@ import type {
   UpdateUserResponse,
   GetTrainingBranchByUuidResponse,
   UpdateTrainingBranchResponse,
+  GetRuleResponse,
+  UpdateRuleResponse,
   GetStudentByIdResponse,
   UpdateStudentResponse,
   GetAssessmentRubricByUuidResponse,
@@ -71,6 +73,8 @@ import type {
   GetAllTrainingBranchesResponse,
   CreateTrainingBranchResponse,
   ScheduleClassResponse,
+  ListRulesResponse,
+  CreateRuleResponse,
   GetAllStudentsResponse,
   CreateStudentResponse,
   GetAllAssessmentRubricsResponse,
@@ -109,6 +113,8 @@ import type {
   CreateInstructorResponse,
   GetInstructorSkillsResponse,
   AddInstructorSkillResponse,
+  GetInstructorReviewsResponse,
+  SubmitInstructorReviewResponse,
   GetInstructorMembershipsResponse,
   AddInstructorMembershipResponse,
   GetInstructorExperienceResponse,
@@ -118,7 +124,9 @@ import type {
   GetInstructorDocumentsResponse,
   AddInstructorDocumentResponse,
   VerifyDocumentResponse,
+  UploadInstructorDocumentResponse,
   CreateAvailabilitySlotResponse,
+  CreateLinkResponse,
   EnrollStudentResponse,
   GetAllCoursesResponse,
   CreateCourseResponse,
@@ -142,6 +150,7 @@ import type {
   AddCourseLessonResponse,
   GetLessonContentResponse,
   AddLessonContentResponse,
+  UploadLessonMediaResponse,
   GetCourseAssessmentsResponse,
   AddCourseAssessmentResponse,
   GetAllCourseCreatorsResponse,
@@ -169,6 +178,7 @@ import type {
   CreateClassRecurrencePatternResponse,
   GetAllCertificatesResponse,
   CreateCertificateResponse,
+  UploadCertificatePdfResponse,
   GenerateCertificateUrlResponse,
   GetCertificateTemplatesResponse,
   CreateCertificateTemplateResponse,
@@ -180,8 +190,7 @@ import type {
   ReturnSubmissionResponse,
   GradeSubmissionResponse,
   AssignAdminDomainResponse,
-  VerifyOrganisationResponse,
-  UnverifyOrganisationResponse,
+  ModerateOrganisationResponse,
   VerifyInstructorResponse,
   UnverifyInstructorResponse,
   GetCartResponse,
@@ -234,6 +243,7 @@ import type {
   GetInvitationByTokenResponse,
   PreviewInvitationResponse,
   GetPendingInvitationsForEmailResponse,
+  GetInstructorRatingSummaryResponse,
   GetInstructorAvailabilityResponse,
   SearchAvailabilityResponse,
   GetAvailabilityForDateResponse,
@@ -244,6 +254,7 @@ import type {
   SearchExperienceResponse,
   SearchEducationResponse,
   SearchDocumentsResponse,
+  GetStudentDashboardResponse,
   GetEnrollmentResponse,
   GetStudentScheduleResponse,
   GetEnrollmentsForInstanceResponse,
@@ -273,6 +284,7 @@ import type {
   GetByClassResponse,
   PreviewRecurringClassScheduleResponse,
   CheckClassSchedulingConflictsResponse,
+  GetEnrollmentsForClassResponse,
   GetClassDefinitionsForOrganisationResponse,
   GetClassDefinitionsForInstructorResponse,
   GetClassDefinitionsForCourseResponse,
@@ -294,7 +306,9 @@ import type {
   GetOrganizationAdminUsersResponse,
   GetAdminEligibleUsersResponse,
   GetAdminUsersResponse,
+  GetPendingOrganisationsResponse,
   GetDashboardStatisticsResponse,
+  GetDashboardActivityResponse,
   RemoveAdminDomainResponse,
 } from './types.gen';
 
@@ -374,6 +388,39 @@ export const updateTrainingBranchResponseTransformer = async (
   data: any
 ): Promise<UpdateTrainingBranchResponse> => {
   data = apiResponseTrainingBranchSchemaResponseTransformer(data);
+  return data;
+};
+
+const systemRuleResponseSchemaResponseTransformer = (data: any) => {
+  if (data.effectiveFrom) {
+    data.effectiveFrom = new Date(data.effectiveFrom);
+  }
+  if (data.effectiveTo) {
+    data.effectiveTo = new Date(data.effectiveTo);
+  }
+  if (data.createdDate) {
+    data.createdDate = new Date(data.createdDate);
+  }
+  if (data.updatedDate) {
+    data.updatedDate = new Date(data.updatedDate);
+  }
+  return data;
+};
+
+const apiResponseSystemRuleResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = systemRuleResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getRuleResponseTransformer = async (data: any): Promise<GetRuleResponse> => {
+  data = apiResponseSystemRuleResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateRuleResponseTransformer = async (data: any): Promise<UpdateRuleResponse> => {
+  data = apiResponseSystemRuleResponseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -1298,6 +1345,8 @@ export const updateCatalogItemResponseTransformer = async (
 };
 
 const classDefinitionSchemaResponseTransformer = (data: any) => {
+  data.default_start_time = new Date(data.default_start_time);
+  data.default_end_time = new Date(data.default_end_time);
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
   }
@@ -1597,6 +1646,35 @@ export const scheduleClassResponseTransformer = async (
   data: any
 ): Promise<ScheduleClassResponse> => {
   data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoSystemRuleResponseSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return systemRuleResponseSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoSystemRuleResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoSystemRuleResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listRulesResponseTransformer = async (data: any): Promise<ListRulesResponse> => {
+  data = apiResponsePagedDtoSystemRuleResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createRuleResponseTransformer = async (data: any): Promise<CreateRuleResponse> => {
+  data = apiResponseSystemRuleResponseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2154,6 +2232,46 @@ export const addInstructorSkillResponseTransformer = async (
   return data;
 };
 
+const instructorReviewSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseListInstructorReviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return instructorReviewSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getInstructorReviewsResponseTransformer = async (
+  data: any
+): Promise<GetInstructorReviewsResponse> => {
+  data = apiResponseListInstructorReviewSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseInstructorReviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = instructorReviewSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const submitInstructorReviewResponseTransformer = async (
+  data: any
+): Promise<SubmitInstructorReviewResponse> => {
+  data = apiResponseInstructorReviewSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoInstructorProfessionalMembershipSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -2275,10 +2393,32 @@ export const verifyDocumentResponseTransformer = async (
   return data;
 };
 
+export const uploadInstructorDocumentResponseTransformer = async (
+  data: any
+): Promise<UploadInstructorDocumentResponse> => {
+  data = apiResponseInstructorDocumentSchemaResponseTransformer(data);
+  return data;
+};
+
 export const createAvailabilitySlotResponseTransformer = async (
   data: any
 ): Promise<CreateAvailabilitySlotResponse> => {
   data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
+  return data;
+};
+
+const guardianStudentLinkSchemaResponseTransformer = (data: any) => {
+  if (data.linkedDate) {
+    data.linkedDate = new Date(data.linkedDate);
+  }
+  if (data.revokedDate) {
+    data.revokedDate = new Date(data.revokedDate);
+  }
+  return data;
+};
+
+export const createLinkResponseTransformer = async (data: any): Promise<CreateLinkResponse> => {
+  data = guardianStudentLinkSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2606,6 +2746,13 @@ export const addLessonContentResponseTransformer = async (
   return data;
 };
 
+export const uploadLessonMediaResponseTransformer = async (
+  data: any
+): Promise<UploadLessonMediaResponse> => {
+  data = apiResponseLessonContentSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoCourseAssessmentSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -2808,9 +2955,19 @@ export const createCategoryResponseTransformer = async (
   return data;
 };
 
+const platformFeeBreakdownSchemaResponseTransformer = (data: any) => {
+  if (data.evaluatedAt) {
+    data.evaluatedAt = new Date(data.evaluatedAt);
+  }
+  return data;
+};
+
 const orderResponseSchemaResponseTransformer = (data: any) => {
   if (data.created_at) {
     data.created_at = new Date(data.created_at);
+  }
+  if (data.platform_fee) {
+    data.platform_fee = platformFeeBreakdownSchemaResponseTransformer(data.platform_fee);
   }
   return data;
 };
@@ -2996,6 +3153,13 @@ export const createCertificateResponseTransformer = async (
   return data;
 };
 
+export const uploadCertificatePdfResponseTransformer = async (
+  data: any
+): Promise<UploadCertificatePdfResponse> => {
+  data = apiResponseCertificateSchemaResponseTransformer(data);
+  return data;
+};
+
 export const generateCertificateUrlResponseTransformer = async (
   data: any
 ): Promise<GenerateCertificateUrlResponse> => {
@@ -3134,16 +3298,9 @@ export const assignAdminDomainResponseTransformer = async (
   return data;
 };
 
-export const verifyOrganisationResponseTransformer = async (
+export const moderateOrganisationResponseTransformer = async (
   data: any
-): Promise<VerifyOrganisationResponse> => {
-  data = apiResponseOrganisationSchemaResponseTransformer(data);
-  return data;
-};
-
-export const unverifyOrganisationResponseTransformer = async (
-  data: any
-): Promise<UnverifyOrganisationResponse> => {
+): Promise<ModerateOrganisationResponse> => {
   data = apiResponseOrganisationSchemaResponseTransformer(data);
   return data;
 };
@@ -3672,6 +3829,27 @@ export const getPendingInvitationsForEmailResponseTransformer = async (
   return data;
 };
 
+const instructorRatingSummarySchemaResponseTransformer = (data: any) => {
+  if (data.review_count) {
+    data.review_count = BigInt(data.review_count.toString());
+  }
+  return data;
+};
+
+const apiResponseInstructorRatingSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = instructorRatingSummarySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getInstructorRatingSummaryResponseTransformer = async (
+  data: any
+): Promise<GetInstructorRatingSummaryResponse> => {
+  data = apiResponseInstructorRatingSummarySchemaResponseTransformer(data);
+  return data;
+};
+
 const apiResponseListAvailabilitySlotSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = data.data.map((item: any) => {
@@ -3784,6 +3962,41 @@ export const searchDocumentsResponseTransformer = async (
   data: any
 ): Promise<SearchDocumentsResponse> => {
   data = apiResponsePagedDtoInstructorDocumentSchemaResponseTransformer(data);
+  return data;
+};
+
+const learnerCourseProgressViewSchemaResponseTransformer = (data: any) => {
+  if (data.updatedDate) {
+    data.updatedDate = new Date(data.updatedDate);
+  }
+  return data;
+};
+
+const learnerProgramProgressViewSchemaResponseTransformer = (data: any) => {
+  if (data.updatedDate) {
+    data.updatedDate = new Date(data.updatedDate);
+  }
+  return data;
+};
+
+const guardianStudentDashboardDtoSchemaResponseTransformer = (data: any) => {
+  if (data.courseProgress) {
+    data.courseProgress = data.courseProgress.map((item: any) => {
+      return learnerCourseProgressViewSchemaResponseTransformer(item);
+    });
+  }
+  if (data.programProgress) {
+    data.programProgress = data.programProgress.map((item: any) => {
+      return learnerProgramProgressViewSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getStudentDashboardResponseTransformer = async (
+  data: any
+): Promise<GetStudentDashboardResponse> => {
+  data = guardianStudentDashboardDtoSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4104,6 +4317,13 @@ export const checkClassSchedulingConflictsResponseTransformer = async (
   return data;
 };
 
+export const getEnrollmentsForClassResponseTransformer = async (
+  data: any
+): Promise<GetEnrollmentsForClassResponse> => {
+  data = apiResponseListEnrollmentSchemaResponseTransformer(data);
+  return data;
+};
+
 const apiResponseListClassDefinitionSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = data.data.map((item: any) => {
@@ -4294,6 +4514,13 @@ export const getAdminUsersResponseTransformer = async (
   data: any
 ): Promise<GetAdminUsersResponse> => {
   data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getPendingOrganisationsResponseTransformer = async (
+  data: any
+): Promise<GetPendingOrganisationsResponse> => {
+  data = apiResponsePagedDtoOrganisationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4556,6 +4783,42 @@ export const getDashboardStatisticsResponseTransformer = async (
   data: any
 ): Promise<GetDashboardStatisticsResponse> => {
   data = apiResponseAdminDashboardStatsSchemaResponseTransformer(data);
+  return data;
+};
+
+const adminActivityEventSchemaResponseTransformer = (data: any) => {
+  if (data.occurred_at) {
+    data.occurred_at = new Date(data.occurred_at);
+  }
+  if (data.processing_time_ms) {
+    data.processing_time_ms = BigInt(data.processing_time_ms.toString());
+  }
+  return data;
+};
+
+const pagedDtoAdminActivityEventSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return adminActivityEventSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoAdminActivityEventSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoAdminActivityEventSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getDashboardActivityResponseTransformer = async (
+  data: any
+): Promise<GetDashboardActivityResponse> => {
+  data = apiResponsePagedDtoAdminActivityEventSchemaResponseTransformer(data);
   return data;
 };
 

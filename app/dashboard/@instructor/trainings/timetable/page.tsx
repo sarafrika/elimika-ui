@@ -33,14 +33,17 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
   const { data: timetable } = useQuery({
     ...getInstructorScheduleOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: { start: '2024-09-10' as any, end: '2025-11-11' as any },
+      query: { start: '2024-09-10' as any, end: '2026-11-11' as any },
     }),
     enabled: !!instructor?.uuid,
   });
 
+  const instructorSchedule = timetable?.data ?? []
+
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
     slots: transformedSlots as any,
-    events: [],
+    // events: [],
+    events: convertToCalendarEvents(instructorSchedule as ClassScheduleItem[]),
     settings: {
       timezone: 'UTC',
       autoAcceptBookings: false,

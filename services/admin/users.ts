@@ -15,9 +15,6 @@ export type AdminUser = z.infer<typeof zUser>;
 export interface AdminUserListParams {
   page?: number;
   size?: number;
-  search?: string;
-  status?: 'all' | 'active' | 'inactive';
-  domain?: string;
   sortField?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -32,28 +29,6 @@ export interface AdminUserListResult {
   hasPrevious: boolean;
 }
 
-function buildUserSearchFilters(params: AdminUserListParams) {
-  const filters: Record<string, unknown> = {};
-
-  if (params.search) {
-    const query = params.search.trim();
-    filters.first_name_like = query;
-    filters.last_name_like = query;
-    filters.email_like = query;
-    filters.username_like = query;
-  }
-
-  if (params.status && params.status !== 'all') {
-    filters.active_eq = params.status === 'active';
-  }
-
-  if (params.domain && params.domain !== 'all') {
-    filters.user_domain_eq = params.domain;
-  }
-
-  return filters;
-}
-
 export async function fetchAdminUsers(params: AdminUserListParams = {}): Promise<AdminUserListResult> {
   const { page = 0, size = 20, sortField = 'created_date', sortOrder = 'desc' } = params;
   const pageable = {
@@ -62,25 +37,13 @@ export async function fetchAdminUsers(params: AdminUserListParams = {}): Promise
     sort: [`${sortField},${sortOrder}`],
   };
 
-  const searchFilters = buildUserSearchFilters(params);
-  const hasSearchFilters = Object.keys(searchFilters).length > 0;
-
-  const response = hasSearchFilters
-    ? await fetchClient.GET('/api/v1/users/search', {
-        params: {
-          query: {
-            searchParams: searchFilters,
-            pageable,
-          },
-        },
-      })
-    : await fetchClient.GET('/api/v1/users', {
-        params: {
-          query: {
-            pageable,
-          },
-        },
-      });
+  const response = await fetchClient.GET('/api/v1/users', {
+    params: {
+      query: {
+        pageable,
+      },
+    },
+  });
 
   if (response.error) {
     throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch users');
@@ -113,9 +76,6 @@ export function useAdminUsers(
   const normalizedParams: AdminUserListParams = {
     page: params.page ?? 0,
     size: params.size ?? 20,
-    search: params.search ?? '',
-    status: params.status ?? 'all',
-    domain: params.domain ?? 'all',
     sortField: params.sortField ?? 'created_date',
     sortOrder: params.sortOrder ?? 'desc',
   };

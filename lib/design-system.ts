@@ -53,7 +53,7 @@ export const elimikaDesignSystem = {
     // Form container
     form: {
       wrapper:
-        'space-y-8 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 p-6 shadow-xl shadow-blue-200/40 transition dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20 lg:p-10',
+        'space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20 lg:p-10',
     },
 
     // Form section (with sidebar title)
@@ -86,7 +86,7 @@ export const elimikaDesignSystem = {
     // Loading/Empty state
     emptyState: {
       container:
-        'flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-blue-200/40 bg-gradient-to-br from-white via-blue-50 to-blue-100/60 px-6 py-12 text-center shadow-lg shadow-blue-200/40 backdrop-blur dark:border-blue-500/25 dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:text-slate-200 dark:shadow-blue-900/20',
+        'flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-blue-200/40 bg-card px-6 py-12 text-center shadow-lg shadow-blue-200/40 backdrop-blur dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:text-slate-200 dark:shadow-blue-900/20',
       icon: 'mb-2 h-12 w-12 text-blue-400 dark:text-blue-300',
       title: 'text-lg font-semibold text-slate-900 dark:text-blue-50',
       description: 'max-w-md text-sm text-slate-600 dark:text-slate-300',
@@ -94,7 +94,7 @@ export const elimikaDesignSystem = {
 
     // Stats/Metric card
     statCard: {
-      base: 'rounded-[24px] border border-blue-200/40 bg-gradient-to-br from-white to-blue-50/60 p-6 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:from-blue-950/40 dark:to-slate-950/60',
+      base: 'rounded-[24px] border border-blue-200/40 bg-card p-6 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/40 dark:to-slate-950/60',
       label: 'text-sm font-medium text-slate-600 dark:text-slate-300',
       value: 'mt-2 text-3xl font-bold text-slate-900 dark:text-blue-50',
       change: 'mt-1 text-xs text-blue-600 dark:text-blue-300',
@@ -127,8 +127,8 @@ export const elimikaDesignSystem = {
 
   // Background gradients
   gradients: {
-    page: 'bg-gradient-to-br from-blue-100 via-white to-blue-50',
-    card: 'bg-gradient-to-br from-white via-blue-50 to-blue-100/60',
+    page: 'bg-background',
+    card: 'bg-card',
     cardDark: 'dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80',
   },
 
