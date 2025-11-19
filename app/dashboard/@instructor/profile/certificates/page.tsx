@@ -141,15 +141,15 @@ export default function CertificatesPage() {
         </p>
       </div>
 
-      <div className='rounded-md border-1 border-dashed border-gray-300 p-6 text-center transition hover:bg-gray-50'>
+      <div className='rounded-md border-1 border-dashed border-border p-6 text-center transition hover:bg-muted/50 dark:hover:bg-muted/30'>
         <input
           ref={fileInputRef}
           type='file'
           accept='.pdf,.jpg,.jpeg,.png'
           onChange={handleUpload}
-          className='mx-auto block text-sm text-gray-600 file:mr-4 file:rounded file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100'
+          className='mx-auto block text-sm text-foreground file:mr-4 file:rounded file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-950 dark:file:text-blue-300 dark:hover:file:bg-blue-900'
         />
-        <p className='mt-2 text-sm text-gray-500'>Upload PDF or image files</p>
+        <p className='mt-2 text-sm text-muted-foreground'>Upload PDF or image files</p>
       </div>
 
       <div className='container mx-auto py-8'>
