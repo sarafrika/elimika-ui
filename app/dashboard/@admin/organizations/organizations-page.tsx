@@ -19,6 +19,9 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   type AdminOrganisation,
   useAdminOrganisations,
+  useUnverifyAdminOrganisation,
+  useUpdateAdminOrganisation,
+  useVerifyAdminOrganisation,
 } from '@/services/admin';
 import { useAdminBranches } from '@/services/admin/branches';
 import { zOrganisation } from '@/services/client/zod.gen';
@@ -27,6 +30,7 @@ import { format } from 'date-fns';
 import { Building2, Loader2, MapPin, Search, Shield, ShieldOff } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 const organisationFormSchema = z.object({
@@ -304,9 +308,9 @@ interface OrganisationDetailsPanelProps {
 }
 
 function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProps) {
-  // const updateOrganisation = useUpdateAdminOrganisation();
-  // const verifyOrganisation = useVerifyAdminOrganisation();
-  // const unverifyOrganisation = useUnverifyAdminOrganisation();
+  const updateOrganisation = useUpdateAdminOrganisation();
+  const verifyOrganisation = useVerifyAdminOrganisation();
+  const unverifyOrganisation = useUnverifyAdminOrganisation();
 
   const form = useForm<OrganisationFormValues>({
     resolver: zodResolver(organisationFormSchema),
@@ -321,44 +325,44 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
   const handleSubmit = (values: OrganisationFormValues) => {
     if (!organisation?.uuid) return;
 
-    // updateOrganisation.mutate(
-    //   {
-    //     path: { uuid: organisation.uuid },
-    //     body: {
-    //       ...organisation,
-    //       ...values,
-    //     },
-    //   },
-    //   {
-    //     onSuccess: () => {
-    //       toast.success('Organisation updated');
-    //     },
-    //     onError: error => {
-    //       toast.error(error instanceof Error ? error.message : 'Failed to update organisation');
-    //     },
-    //   }
-    // );
+    updateOrganisation.mutate(
+      {
+        path: { uuid: organisation.uuid },
+        body: {
+          ...organisation,
+          ...values,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Organisation updated');
+        },
+        onError: error => {
+          toast.error(error instanceof Error ? error.message : 'Failed to update organisation');
+        },
+      }
+    );
   };
 
   const handleVerification = (action: 'verify' | 'unverify') => {
     if (!organisation?.uuid) return;
 
-    // const mutation = action === 'verify' ? verifyOrganisation : unverifyOrganisation;
+    const mutation = action === 'verify' ? verifyOrganisation : unverifyOrganisation;
 
-    // mutation.mutate(
-    //   {
-    //     path: { uuid: organisation.uuid },
-    //     query: { reason: '' },
-    //   },
-    //   {
-    //     onSuccess: () => {
-    //       toast.success(action === 'verify' ? 'Organisation verified' : 'Verification removed');
-    //     },
-    //     onError: error => {
-    //       toast.error(error instanceof Error ? error.message : 'Failed to update verification');
-    //     },
-    //   }
-    // );
+    mutation.mutate(
+      {
+        path: { uuid: organisation.uuid },
+        query: { reason: '' },
+      },
+      {
+        onSuccess: () => {
+          toast.success(action === 'verify' ? 'Organisation verified' : 'Verification removed');
+        },
+        onError: error => {
+          toast.error(error instanceof Error ? error.message : 'Failed to update verification');
+        },
+      }
+    );
   };
 
   return (
@@ -380,12 +384,10 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
           <OrganisationDetailsForm
             form={form}
             onSubmit={handleSubmit}
-            // isPending={updateOrganisation.isPending}
-            isPending={false}
+            isPending={updateOrganisation.isPending}
             organisation={organisation}
             onVerification={handleVerification}
-            // isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
-            isVerificationPending={false}
+            isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
           />
         </>
       ) : (
@@ -404,9 +406,9 @@ interface OrganisationDetailSheetProps {
 }
 
 function OrganisationDetailSheet({ organisation, open, onOpenChange }: OrganisationDetailSheetProps) {
-  // const updateOrganisation = useUpdateAdminOrganisation();
-  // const verifyOrganisation = useVerifyAdminOrganisation();
-  // const unverifyOrganisation = useUnverifyAdminOrganisation();
+  const updateOrganisation = useUpdateAdminOrganisation();
+  const verifyOrganisation = useVerifyAdminOrganisation();
+  const unverifyOrganisation = useUnverifyAdminOrganisation();
 
   const form = useForm<OrganisationFormValues>({
     resolver: zodResolver(organisationFormSchema),
@@ -421,44 +423,44 @@ function OrganisationDetailSheet({ organisation, open, onOpenChange }: Organisat
   const handleSubmit = (values: OrganisationFormValues) => {
     if (!organisation?.uuid) return;
 
-    // updateOrganisation.mutate(
-    //   {
-    //     path: { uuid: organisation.uuid },
-    //     body: {
-    //       ...organisation,
-    //       ...values,
-    //     },
-    //   },
-    //   {
-    //     onSuccess: () => {
-    //       toast.success('Organisation updated');
-    //       onOpenChange(false);
-    //     },
-    //     onError: error => {
-    //       toast.error(error instanceof Error ? error.message : 'Failed to update organisation');
-    //     },
-    //   }
-    // );
+    updateOrganisation.mutate(
+      {
+        path: { uuid: organisation.uuid },
+        body: {
+          ...organisation,
+          ...values,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Organisation updated');
+          onOpenChange(false);
+        },
+        onError: error => {
+          toast.error(error instanceof Error ? error.message : 'Failed to update organisation');
+        },
+      }
+    );
   };
 
   const handleVerification = (action: 'verify' | 'unverify') => {
     if (!organisation?.uuid) return;
-    // const mutation = action === 'verify' ? verifyOrganisation : unverifyOrganisation;
+    const mutation = action === 'verify' ? verifyOrganisation : unverifyOrganisation;
 
-    // mutation.mutate(
-    //   {
-    //     path: { uuid: organisation.uuid },
-    //     query: { reason: '' },
-    //   },
-    //   {
-    //     onSuccess: () => {
-    //       toast.success(action === 'verify' ? 'Organisation verified' : 'Verification removed');
-    //     },
-    //     onError: error => {
-    //       toast.error(error instanceof Error ? error.message : 'Failed to update verification');
-    //     },
-    //   }
-    // );
+    mutation.mutate(
+      {
+        path: { uuid: organisation.uuid },
+        query: { reason: '' },
+      },
+      {
+        onSuccess: () => {
+          toast.success(action === 'verify' ? 'Organisation verified' : 'Verification removed');
+        },
+        onError: error => {
+          toast.error(error instanceof Error ? error.message : 'Failed to update verification');
+        },
+      }
+    );
   };
 
   return (
@@ -475,12 +477,10 @@ function OrganisationDetailSheet({ organisation, open, onOpenChange }: Organisat
               <OrganisationDetailsForm
                 form={form}
                 onSubmit={handleSubmit}
-                // isPending={updateOrganisation.isPending}
-                isPending={false}
+                isPending={updateOrganisation.isPending}
                 organisation={organisation}
                 onVerification={handleVerification}
-                // isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
-                isVerificationPending={false}
+                isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
               />
             </>
           ) : (
@@ -711,17 +711,16 @@ function OrganisationBranchesCard({ organisationUuid, variant = 'default' }: Org
                   <div>
                     <p className='font-medium leading-tight'>{branch.branch_name ?? 'Unnamed branch'}</p>
                     <p className='text-muted-foreground text-xs'>
-                      {/* {branch.location ?? branch.branch_code ?? 'Location not provided'} */}
-                      Location not provided
+                      {branch.location ?? branch.branch_code ?? 'Location not provided'}
                     </p>
                   </div>
                   <Badge variant={branch.active ? 'secondary' : 'outline'} className='text-xs'>
                     {branch.active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
-                {/* {branch.branch_code ? (
-                    <p className='text-muted-foreground mt-2 text-xs'>Code: {branch.branch_code}</p>
-                  ) : null} */}
+                {branch.branch_code ? (
+                  <p className='text-muted-foreground mt-2 text-xs'>Code: {branch.branch_code}</p>
+                ) : null}
               </div>
             ))
             : (
