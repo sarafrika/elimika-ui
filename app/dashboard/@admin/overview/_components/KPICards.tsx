@@ -1,6 +1,7 @@
-import { Users, Building2, BookOpen, Shield, Activity, UserCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Users, Building2, BookOpen, Shield, Activity, UserCheck, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
 
 interface KPICardsProps {
@@ -98,9 +99,16 @@ export default function KPICards({ statistics, isLoading }: KPICardsProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{kpi.value}</div>
-            <div className='flex items-center justify-between'>
-              <p className='text-muted-foreground text-xs'>{kpi.description}</p>
+            <div className='flex items-center gap-2'>
+              <div className='text-2xl font-bold'>{kpi.value}</div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className='h-4 w-4 text-muted-foreground cursor-help' />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{kpi.description}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </CardContent>
         </Card>
