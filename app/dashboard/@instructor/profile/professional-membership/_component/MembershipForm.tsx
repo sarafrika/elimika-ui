@@ -7,6 +7,7 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { ProfileViewList, ProfileViewListItem } from '@/components/profile/profile-view-field';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -183,6 +184,17 @@ export default function ProfessionalBodySettings() {
     remove(index);
   };
 
+  const formatDateRange = (startDate?: string | Date, endDate?: string | Date, isActive?: boolean) => {
+    const formatDate = (date?: string | Date) => {
+      if (!date) return '';
+      return format(new Date(date), 'MMM yyyy');
+    };
+
+    const start = formatDate(startDate);
+    const end = isActive ? 'Present' : formatDate(endDate);
+    return `${start} - ${end}`;
+  };
+
   const domainBadges =
     user?.user_domain?.map(domain =>
       domain
@@ -216,6 +228,20 @@ export default function ProfessionalBodySettings() {
           <ProfileFormSection
             title='Associations & organisations'
             description='Add the professional bodies where you hold active or past memberships.'
+            viewContent={
+              <ProfileViewList emptyMessage='No professional memberships added yet.'>
+                {instructorMembership?.map((mem) => (
+                  <ProfileViewListItem
+                    key={mem.uuid}
+                    title={mem.organization_name || 'Organization name not specified'}
+                    subtitle={`Membership No: ${mem.membership_number}`}
+                    description={mem.summary}
+                    badge={mem.is_active ? 'Active' : undefined}
+                    dateRange={formatDateRange(mem.start_date, mem.end_date, mem.is_active)}
+                  />
+                ))}
+              </ProfileViewList>
+            }
             footer={
               <Button
                 type='submit'
