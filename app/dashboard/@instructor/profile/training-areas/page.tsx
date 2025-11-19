@@ -1,6 +1,7 @@
 'use client';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { ProfileViewList, ProfileViewListItem } from '@/components/profile/profile-view-field';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -99,6 +100,16 @@ export default function TrainingAreasSettings() {
           <ProfileFormSection
             title='Focus areas'
             description='Add or remove the disciplines you would like to facilitate.'
+            viewContent={
+              <ProfileViewList emptyMessage='No training areas added yet.'>
+                {fields.map((field) => (
+                  <ProfileViewListItem
+                    key={field.id}
+                    title={field.name || 'Training area not specified'}
+                  />
+                ))}
+              </ProfileViewList>
+            }
             footer={
               <Button type='submit' className='min-w-36' disabled={!isEditing || isConfirming}>
                 {isConfirming ? (
