@@ -1,6 +1,7 @@
 'use client';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { ProfileViewList, ProfileViewListItem } from '@/components/profile/profile-view-field';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog';
@@ -167,6 +168,14 @@ export default function SkillsSettings({
     remove(index);
   };
 
+  const formatProficiency = (level?: string) => {
+    if (!level) return undefined;
+    return level
+      .split('_')
+      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const domainBadges =
     // @ts-expect-error
     user?.user_domain?.map(domain =>
@@ -221,6 +230,19 @@ export default function SkillsSettings({
             <ProfileFormSection
               title='Professional skills'
               description='Help learners understand what you teach best and your depth of experience.'
+              viewContent={
+                <ProfileViewList emptyMessage='No skills added yet.'>
+                  {instructorSkills?.map((skill) => (
+                    <ProfileViewListItem
+                      key={skill.uuid}
+                      title={skill.skill_name || 'Skill name not specified'}
+                      subtitle={skill.summary}
+                      badge={formatProficiency(skill.proficiency_level)}
+                      description={skill.proficiency_description}
+                    />
+                  ))}
+                </ProfileViewList>
+              }
               footer={
                 <Button
                   type='submit'
