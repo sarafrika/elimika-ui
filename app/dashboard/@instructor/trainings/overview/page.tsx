@@ -1,6 +1,7 @@
 'use client';
 
 import DeleteModal from '@/components/custom-modals/delete-modal';
+import InviteStudentModal from '@/components/custom-modals/invite-student-modal';
 import { Button } from '@/components/ui/button';
 import { useInstructor } from '@/context/instructor-context';
 import {
@@ -51,6 +52,16 @@ export default function TrainingsPage({ classesWithCourseAndInstructor, loading 
     setDeleteModal(true);
   };
 
+  const [inviteStudentModal, setInviteStudentModal] = useState(false);
+  const openInviteStudentsModal = (cls: any) => {
+    setEditingClassId(cls?.uuid);
+    setInviteStudentModal(true);
+  }
+  const handleInviteStudents = (emails: string[]) => {
+    // console.log("class ID:", editingClassId, "with emails:", emails);
+    setInviteStudentModal(false);
+  }
+
   const deactivateClass = useMutation(deactivateClassDefinitionMutation());
   const confirmDelete = () => {
     deactivateClass.mutate(
@@ -87,12 +98,13 @@ export default function TrainingsPage({ classesWithCourseAndInstructor, loading 
       </div>
 
       <TrainingClassList
-        onEdit={id => router.push(`/dashboard/trainings/create-new?id=${id}`)}
+        onEdit={(id: any) => router.push(`/dashboard/trainings/create-new?id=${id}`)}
         onDelete={openDeleteModal}
         onOpenTimetable={openTimetableSchedule}
         onOpenRecurring={openRecurrentSchedule}
         classesWithCourseAndInstructor={classesWithCourseAndInstructor}
         loading={loading}
+        onInviteStudents={openInviteStudentsModal}
       />
 
       <ClassDialog
@@ -116,6 +128,13 @@ export default function TrainingsPage({ classesWithCourseAndInstructor, loading 
         editingClassId={editingClassId as string}
         onCancel={() => setTimetableModal(false)}
         status={'SCHEDULED'}
+      />
+
+      <InviteStudentModal
+        open={inviteStudentModal}
+        setOpen={setInviteStudentModal}
+        onInvite={handleInviteStudents}
+        isLoading={false}
       />
 
       <DeleteModal

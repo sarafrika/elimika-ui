@@ -39,6 +39,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Card } from '../../../../../components/ui/card';
 import { CustomEmptyState } from '../../_components/loading-state';
 
 export default function DraftCoursesComponent({ courseCreatorId }: { courseCreatorId?: string }) {
@@ -147,7 +148,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
       )}
 
       {draftCourses?.length >= 1 && (
-        <div className='overflow-hidden rounded-t-lg border border-gray-200'>
+        <Card className='overflow-hidden rounded-t-lg bg-card border-border/50 py-0 rounded-t-0'>
           <Table>
             {/* <TableCaption className='py-4'>A list of your course drafts</TableCaption> */}
             <TableHeader className=''>
@@ -243,7 +244,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                 ))}
             </TableBody>
           </Table>
-        </div>
+        </Card>
       )}
 
       {/* @ts-ignore */}

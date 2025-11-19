@@ -16,7 +16,7 @@ export default function GradesLayout({ children }: GradesLayoutProps) {
 
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
-        <div className='flex-1 lg:max-w-6xl'>{children}</div>
+        <div className='flex-1 lg:max-w-7xl mx-auto'>{children}</div>
       </div>
     </div>
   );

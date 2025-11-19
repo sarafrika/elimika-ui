@@ -136,9 +136,9 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
 
             {lessonsWithContent?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center'>
-                <FileQuestion className='mb-3 h-8 w-8 text-gray-400' />
+                <FileQuestion className='mb-3 h-8 w-8 text-muted-foreground' />
                 <h4 className='text-sm font-medium'>No Class Resources</h4>
-                <p className='text-sm text-gray-500'>
+                <p className='text-sm text-muted-foreground'>
                   This class doesn&apos;t have any resources/content yet.
                 </p>
               </div>
@@ -152,7 +152,7 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
                   return (
                     <div
                       key={c.uuid}
-                      className='flex items-center justify-between rounded-lg bg-gray-50 p-3'
+                      className='flex items-center justify-between rounded-lg gap-1 p-3'
                     >
                       <div className='flex items-center gap-3'>
                         {getResourceIcon(contentTypeName)}

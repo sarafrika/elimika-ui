@@ -46,9 +46,9 @@ export default function QuizPage() {
           ) : (
             <div className='mt-1 flex w-full flex-col gap-2 space-y-2'>
               {quizzesData?.data?.content?.map((quiz: any, i: any) => (
-                <div
+                <Card
                   key={i}
-                  className='group text-muted-foreground flex w-full cursor-default items-start justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+                  className='group text-muted-foreground flex w-full cursor-default items-start justify-between gap-4 px-4'
                 >
                   <div className='group relative flex flex-row items-start gap-3'>
                     <div className='flex w-full flex-col gap-2'>
@@ -100,7 +100,7 @@ export default function QuizPage() {
                       {expandedQuizIndexes.includes(i) && <QuizQuestions quizUuid={quiz.uuid} />}
                     </div>
                   </div>
-                </div>
+                </Card>
               ))}
 
               {quizzesData?.data?.content?.length === 0 && (

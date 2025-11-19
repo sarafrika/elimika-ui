@@ -56,7 +56,10 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
 
   const handleActionSubmit = (data: {
     notes: string;
-    rate_per_hour_per_head: number;
+    private_individual_rate: number;
+    private_group_rate: number;
+    public_individual_rate: number;
+    public_group_rate: number;
     rate_currency: string;
   }) => {
     if (!selectedUuid || !selectedAction) return;
@@ -87,7 +90,9 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
 
   const renderApplications = (filter: any) => {
     const filteredApps =
-      filter === 'all' ? applicationData : applicationData.filter(app => app.status === filter);
+      filter === 'all'
+        ? applicationData
+        : applicationData.filter(app => app.status === filter);
 
     if (filteredApps.length === 0) {
       return (
@@ -97,122 +102,137 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
       );
     }
 
-    return filteredApps.map((app: any) => (
-      <>
-        {isLoading && isFetching ? (
-          <Spinner />
-        ) : (
-          <Card
-            key={app.uuid}
-
-            className='p-0'
-          >
-            <CardContent
-              onClick={() => {
-                setSelectedInstructor(app);
-                setInstructorModalOpen(true);
-              }}
-              className='py-4 hover:bg-muted/40 cursor-pointer transition'>
-              <CardHeader className='px-0 py-4 flex flex-row items-center justify-between'>
-                <CardTitle className='text-base'>Application by {app.applicant_type}</CardTitle>
-                <span
-                  className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${app.status === 'pending'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : app.status === 'approved'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                    }`}
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {filteredApps.map((app: any) => (
+          <Card key={app.uuid} className="p-0">
+            {isLoading && isFetching ? (
+              <Spinner />
+            ) : (
+              <>
+                <CardContent
+                  onClick={() => {
+                    setSelectedInstructor(app);
+                    setInstructorModalOpen(true);
+                  }}
+                  className="py-4 hover:bg-muted/40 cursor-pointer transition"
                 >
-                  {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                </span>
-              </CardHeader>
+                  <CardHeader className="px-0 py-4 flex flex-row items-center justify-between">
+                    <CardTitle className="text-base">
+                      Application by {app.applicant_type}
+                    </CardTitle>
 
-              <div className='space-y-3 '>
-                <div className=''>
-                  <div>
-                    <p className='text-muted-foreground text-sm font-medium'>Applicant UUID</p>
-                    <p className='text-sm'>{app.applicant_uuid}</p>
+                    <span
+                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${app.status === "pending"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : app.status === "approved"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                        }`}
+                    >
+                      {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                    </span>
+                  </CardHeader>
+
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">Applicant UUID</p>
+                      <p className="text-sm">{app.applicant_uuid}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">Application Notes</p>
+                      <p className="text-sm">{app.application_notes || "No notes provided"}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">Rates (per her per head)</p>
+
+                      <div className='grid grid-cols-2'>
+                        <div>
+                          <p className="text-sm">Private - Individual: {app.rate_card.private_individual_rate} {app.rate_card.currency}</p>
+                          <p className="text-sm">Public - Individual:  {app.rate_card.public_individual_rate} {app.rate_card.currency}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm">Private - Group:  {app.rate_card.private_group_rate} {app.rate_card.currency}</p>
+                          <p className="text-sm">Public - Group:  {app.rate_card.public_group_rate} {app.rate_card.currency}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">Review Note</p>
+                      <p className="text-sm">{app.review_notes || "No review notes provided"}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">Date</p>
+                      <p className="text-sm">{new Date(app.created_date).toLocaleString()}</p>
+                    </div>
                   </div>
-                </div>
+                </CardContent>
 
-                <div>
-                  <p className='text-muted-foreground text-sm font-medium'>Application Notes</p>
-                  <p className='text-sm'>{app.application_notes || 'No notes provided'}</p>
-                </div>
+                <CardContent className="pb-4">
+                  <div className="flex justify-end gap-3 pt-2">
+                    {app.status === "pending" && (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedUuid(app.uuid);
+                            setSelectedAction("reject");
+                            setNotesModalOpen(true);
+                          }}
+                        >
+                          Reject
+                        </Button>
+                        <Button
+                          variant="default"
+                          onClick={() => {
+                            setSelectedUuid(app.uuid);
+                            setSelectedAction("approve");
+                            setNotesModalOpen(true);
+                          }}
+                        >
+                          Approve
+                        </Button>
+                      </>
+                    )}
 
-                <div>
-                  <p className='text-muted-foreground text-sm font-medium'>Date</p>
-                  <p className='text-sm'>{new Date(app.created_date).toLocaleString()}</p>
-                </div>
+                    {app.status === "approved" && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          setSelectedUuid(app.uuid);
+                          setSelectedAction("revoke");
+                          setNotesModalOpen(true);
+                        }}
+                      >
+                        Revoke
+                      </Button>
+                    )}
 
-                <Separator />
-
-                <div>
-                  <p className='text-muted-foreground text-sm font-medium'>Review Note</p>
-                  <p className='text-sm'>{app.review_notes || 'No review notes provided'}</p>
-                </div>
-              </div>
-            </CardContent>
-
-            <CardContent className='pb-4'>
-              {/* CTA Buttons */}
-              <div className='flex justify-end gap-3 pt-2'>
-                {app.status === 'pending' && (
-                  <>
-                    <Button
-                      variant='outline'
-                      onClick={() => {
-                        setSelectedUuid(app.uuid);
-                        setSelectedAction('reject');
-                        setNotesModalOpen(true);
-                      }}
-                    >
-                      Reject
-                    </Button>
-                    <Button
-                      variant='default'
-                      onClick={() => {
-                        setSelectedUuid(app.uuid);
-                        setSelectedAction('approve');
-                        setNotesModalOpen(true);
-                      }}
-                    >
-                      Approve
-                    </Button>
-                  </>
-                )}
-
-                {app.status === 'approved' && (
-                  <Button
-                    variant='destructive'
-                    onClick={() => {
-                      setSelectedUuid(app.uuid);
-                      setSelectedAction('revoke');
-                      setNotesModalOpen(true);
-                    }}
-                  >
-                    Revoke
-                  </Button>
-                )}
-
-                {app.status === 'revoked' && (
-                  <Button
-                    variant='default'
-                    onClick={() => {
-                      setSelectedUuid(app.uuid);
-                      setSelectedAction('approve');
-                      setNotesModalOpen(true);
-                    }}
-                  >
-                    Approve
-                  </Button>
-                )}
-              </div>
-            </CardContent>
+                    {app.status === "revoked" && (
+                      <Button
+                        variant="default"
+                        onClick={() => {
+                          setSelectedUuid(app.uuid);
+                          setSelectedAction("approve");
+                          setNotesModalOpen(true);
+                        }}
+                      >
+                        Approve
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </>
+            )}
           </Card>
-        )}
-      </>
-    ));
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -353,6 +373,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 ? 'Revoke Application'
                 : 'Add Notes'
         }
+        minimum_rate={''}
         description='Please enter your review notes before proceeding.'
         placeholder='Type your review notes here...'
         onSave={handleActionSubmit}

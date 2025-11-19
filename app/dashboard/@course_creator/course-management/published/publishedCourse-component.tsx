@@ -34,6 +34,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Card } from '../../../../../components/ui/card';
 
 export default function PublishedCoursesComponent({
   courseCreatorId,
@@ -131,9 +132,9 @@ export default function PublishedCoursesComponent({
 
       {!isFetched && (
         <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
-          <div className='h-20 w-full animate-pulse rounded bg-gray-200'></div>
-          <div className='h-16 w-full animate-pulse rounded bg-gray-200'></div>
-          <div className='h-12 w-full animate-pulse rounded bg-gray-200'></div>
+          <div className='h-20 w-full animate-pulse rounded bg-muted'></div>
+          <div className='h-16 w-full animate-pulse rounded bg-muted'></div>
+          <div className='h-12 w-full animate-pulse rounded bg-muted'></div>
         </div>
       )}
 
@@ -148,7 +149,7 @@ export default function PublishedCoursesComponent({
       )}
 
       {publishedCourses?.length >= 1 && (
-        <div className='overflow-hidden rounded-t-lg border border-gray-200'>
+        <Card className='overflow-hidden rounded-t-lg bg-card border-border/50 py-4 rounded-t-0'>
           <Table>
             {/* <TableCaption className='py-4'>A list of your published courses</TableCaption> */}
             <TableHeader className=''>
@@ -174,7 +175,7 @@ export default function PublishedCoursesComponent({
 
                     <TableCell className='py-2'>
                       <Image
-                        src={(course?.thumbnail_url as string) || '/illustration.png'}
+                        src={(course?.thumbnail_url as string)}
                         alt='thumbnail'
                         width={48}
                         height={48}
@@ -235,7 +236,7 @@ export default function PublishedCoursesComponent({
                 ))}
             </TableBody>
           </Table>
-        </div>
+        </Card>
       )}
 
       {/*  @ts-ignore */}

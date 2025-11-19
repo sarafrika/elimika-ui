@@ -31,8 +31,11 @@ import {
   Settings,
   User,
   Video,
-  Volume2
+  Volume2,
+  ZoomIn,
+  ZoomOut
 } from 'lucide-react';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -90,8 +93,11 @@ export default function ClassDetailsPage() {
   const loading = isAllLessonsDataLoading && courseLoading && instructorLoading && classLoading
   const firstLesson = lessonsWithContent?.[0]?.lesson;
 
-  const [expandedModules, setExpandedModules] = useState<string[]>([firstLesson?.uuid as string]);
+
+  const [isReading, setIsReading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const [expandedModules, setExpandedModules] = useState<string[]>([firstLesson?.uuid as string]);
   const [selectedLesson, setSelectedLesson] = useState<any>(firstLesson);
   const contentTypeName = contentTypeMap[selectedLesson?.content_type_uuid] || 'text';
 
@@ -127,8 +133,25 @@ export default function ClassDetailsPage() {
     setIsPlaying(false);
   };
 
+  const handleStartLesson = () => {
+    if (!selectedLesson) {
+      toast.message('Please select a lesson to start.');
+      return;
+    }
+
+    const contentTypeName = contentTypeMap[selectedLesson?.content_type_uuid];
+
+    if (contentTypeName === 'video') {
+      setIsPlaying(true);
+    } else if (contentTypeName === 'pdf' || contentTypeName === 'text') {
+      setIsReading(true);
+    } else {
+      toast.message('Lesson type not supported for viewing.');
+    }
+  }
+
   const markLessonComplete = () => {
-    toast.message("Implement mark lesson completed, unlock next lesson and update selected lesson")
+    toast.message("This feature is under development");
   }
 
   // const markLessonComplete = () => {
@@ -201,6 +224,7 @@ export default function ClassDetailsPage() {
     }
   };
 
+
   return (
     <>
       {loading ?
@@ -209,20 +233,18 @@ export default function ClassDetailsPage() {
           {/* Header */}
           <div className="border-b">
             <div className="mx-auto max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem] py-4">
-              {/* <Button variant="ghost" onClick={onBack} className="gap-2 mb-4">
-            <ChevronLeft className="w-4 h-4" />
-            Back to Courses
-          </Button> */}
-
               <div className="flex items-start justify-between gap-6">
-                <div className='h-48 w-48 bg-gray-400'>
-                  {/* <Image
-                alt=''
-                width={10}
-                height={10}
-                src={course?.data?.thumbnail_url as string}
-              /> */}
+                <div className="relative h-48 w-48 rounded-lg border border-border/100 overflow-hidden">
+                  <Image
+                    src={course?.data?.thumbnail_url as string}
+                    alt="Course thumbnail"
+                    width={48}
+                    height={48}
+                    className="object-cover w-full "
+                    priority
+                  />
                 </div>
+
                 <div className="flex-1">
                   <h1 className="text-3xl font-medium mb-2">{classData?.title}</h1>
                   <div className="mb-4 text-muted-foreground">
@@ -246,11 +268,6 @@ export default function ClassDetailsPage() {
                       <User className="w-4 h-4" />
                       <span>{classInstructor?.full_name}</span>
                     </div>
-
-                    <Button size="lg" className="gap-2">
-                      <Play className="w-5 h-5" />
-                      Start Class
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -428,7 +445,7 @@ export default function ClassDetailsPage() {
                 </div> */}
 
                     <div className="space-y-2">
-                      <Button className="w-full gap-2" size="lg">
+                      <Button onClick={handleStartLesson} className="w-full gap-2" size="lg">
                         <Play className="w-5 h-5" />
                         Start Lesson
                       </Button>
@@ -572,6 +589,71 @@ export default function ClassDetailsPage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Reading Mode Section (shown when reading) */}
+          {isReading && (contentTypeName === "pdf" || contentTypeName === "text") && (
+            <Card className="fixed inset-0 z-50 flex flex-col max-w-[98%] mx-auto my-auto">
+
+              {/* Top Bar */}
+              <div className="flex flex-col items-center p-4 border-b">
+                <div className="flex items-center gap-4">
+                  {/* Left controls */}
+                  <div className="flex items-center gap-3">
+                    <Button size="sm" variant="ghost">
+                      <ZoomIn className="w-5 h-5" />
+                    </Button>
+                    <Button size="sm" variant="ghost">
+                      <ZoomOut className="w-5 h-5" />
+                    </Button>
+                    <Button size="sm" variant="ghost">
+                      <Settings className="w-5 h-5" />
+                    </Button>
+                  </div>
+
+                  {/* Close button */}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsReading(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+
+                {/* Title + optional description */}
+                <div className="flex flex-col items-start text-start">
+                  <h2 className="text-sm font-semibold">
+                    {selectedLesson?.title}
+                  </h2>
+                  <p className="text-xs">
+                    {selectedLesson?.description}
+                  </p>
+                </div>
+              </div>
+
+
+              {/* Content Scroll Area */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="max-w-4xl mx-auto prose prose-gray">
+                  {contentTypeName === "text" && (
+                    <div dangerouslySetInnerHTML={{ __html: selectedLesson?.content_text }} />
+                  )}
+
+                  {contentTypeName === "pdf" && (
+                    <div>
+                      {/* <PDFViewer file={selectedLesson?.content_text} /> */}
+                      pdf contents will be displayed here
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Bottom Progress Bar (similar to video) */}
+              <div className="p-2 border-t">
+                {/* <Progress value={readingProgress} className="w-full h-1" /> */}
+              </div>
+            </Card>
           )}
         </div>}
 
