@@ -1,6 +1,7 @@
 'use client';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { ProfileViewField, ProfileViewGrid } from '@/components/profile/profile-view-field';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -144,6 +145,36 @@ function CertificationsSettingsContent() {
           <ProfileFormSection
             title='Emergency contacts'
             description='We reach out to these contacts for important updates and emergencies.'
+            viewContent={
+              <div className='space-y-6'>
+                <div className='space-y-4'>
+                  <h4 className='text-foreground text-sm font-semibold'>Primary Guardian</h4>
+                  <ProfileViewGrid>
+                    <ProfileViewField
+                      label='Full name'
+                      value={studentInfo?.first_guardian_name}
+                    />
+                    <ProfileViewField
+                      label='Mobile number'
+                      value={studentInfo?.first_guardian_mobile}
+                    />
+                  </ProfileViewGrid>
+                </div>
+                <div className='space-y-4'>
+                  <h4 className='text-foreground text-sm font-semibold'>Secondary Guardian</h4>
+                  <ProfileViewGrid>
+                    <ProfileViewField
+                      label='Full name'
+                      value={studentInfo?.second_guardian_name}
+                    />
+                    <ProfileViewField
+                      label='Mobile number'
+                      value={studentInfo?.second_guardian_mobile}
+                    />
+                  </ProfileViewGrid>
+                </div>
+              </div>
+            }
             footer={
               <Button
                 type='submit'

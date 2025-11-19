@@ -10,6 +10,8 @@ import * as z from 'zod';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import LocationInput from '@/components/locationInput';
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { ProfileViewField, ProfileViewGrid } from '@/components/profile/profile-view-field';
+import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -152,6 +154,14 @@ export default function CourseCreatorProfile() {
 
   const [submitting, _setSubmitting] = useState(false);
 
+  const formatGender = (gender?: string | null) => {
+    if (!gender) return undefined;
+    return gender
+      .split('_')
+      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   function onSubmit(_updatedProfileData: GeneralProfileFormValues) {}
 
   return (
@@ -166,6 +176,39 @@ export default function CourseCreatorProfile() {
           <ProfileFormSection
             title='Personal profile'
             description='Basic details that appear wherever your instructor profile is shown.'
+            viewContent={
+              <div className='space-y-6'>
+                <div className='flex items-center gap-6'>
+                  <Avatar className='ring-background shadow-primary/5 h-24 w-24 shadow-lg ring-4'>
+                    <AvatarImage
+                      src={user?.data?.profile_image_url ?? profilePicSvg}
+                      alt={`${user?.data?.first_name} ${user?.data?.last_name}`}
+                    />
+                    <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
+                      {`${user?.data?.first_name?.[0]?.toUpperCase() ?? ''}${user?.data?.last_name?.[0]?.toUpperCase() ?? ''}` || 'CC'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className='text-foreground text-xl font-semibold'>
+                      {user?.data?.first_name} {user?.data?.middle_name} {user?.data?.last_name}
+                    </h3>
+                    <p className='text-muted-foreground text-sm'>{user?.data?.email}</p>
+                  </div>
+                </div>
+
+                <ProfileViewGrid>
+                  <ProfileViewField label='First name' value={user?.data?.first_name} />
+                  <ProfileViewField label='Last name' value={user?.data?.last_name} />
+                  <ProfileViewField label='Middle name' value={user?.data?.middle_name} />
+                  <ProfileViewField label='Phone number' value={user?.data?.phone_number} />
+                  <ProfileViewField
+                    label='Date of birth'
+                    value={user?.data?.dob ? format(new Date(user.data.dob), 'PPP') : undefined}
+                  />
+                  <ProfileViewField label='Gender' value={formatGender(user?.data?.gender)} />
+                </ProfileViewGrid>
+              </div>
+            }
           >
             <div className='space-y-6'>
               <div className='flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-8'>
@@ -366,6 +409,47 @@ export default function CourseCreatorProfile() {
           <ProfileFormSection
             title='Professional summary'
             description='Introduce your expertise and help learners understand how you teach.'
+            viewContent={
+              <div className='space-y-6'>
+                <ProfileViewGrid>
+                  <ProfileViewField
+                    label='Primary location'
+                    value={profile?.location}
+                  />
+                  <ProfileViewField
+                    label='Professional headline'
+                    value={profile?.professional_headline}
+                  />
+                  <ProfileViewField
+                    label='Website or portfolio'
+                    value={
+                      profile?.website ? (
+                        <a
+                          href={profile.website}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='text-primary hover:underline'
+                        >
+                          {profile.website}
+                        </a>
+                      ) : undefined
+                    }
+                  />
+                </ProfileViewGrid>
+
+                <div className='space-y-2'>
+                  <h4 className='text-muted-foreground text-sm font-medium'>About you</h4>
+                  {profile?.bio ? (
+                    <HTMLTextPreview
+                      htmlContent={profile.bio}
+                      className='prose prose-sm dark:prose-invert max-w-none'
+                    />
+                  ) : (
+                    <p className='text-muted-foreground italic text-sm'>No biography provided</p>
+                  )}
+                </div>
+              </div>
+            }
             footer={
               <Button type='submit' className='min-w-40' disabled={submitting}>
                 {submitting ? (
