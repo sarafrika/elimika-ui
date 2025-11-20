@@ -8,15 +8,10 @@ const sections = [
   { label: 'Education', href: '/dashboard/profile/education' },
   { label: 'Experience', href: '/dashboard/profile/experience' },
   { label: 'Certificates', href: '/dashboard/profile/certificates' },
-
   {
     label: 'Professional Memberships',
     href: '/dashboard/profile/professional-membership',
   },
-  { label: 'Training Areas', href: '/dashboard/profile/training-areas' },
-  { label: 'Availability', href: '/dashboard/profile/availability' },
-  { label: 'Rate Card', href: '/dashboard/profile/rate-card' },
-  { label: 'Reviews', href: '/dashboard/profile/reviews' },
 ];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
