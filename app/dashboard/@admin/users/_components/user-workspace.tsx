@@ -58,6 +58,24 @@ const domainFilterOptions = [
   { label: 'Organisation users', value: 'organisation_user' },
 ];
 
+function formatGender(gender?: string | null): string {
+  if (!gender) return 'Not specified';
+  switch (gender) {
+    case 'MALE':
+      return 'Male';
+    case 'FEMALE':
+      return 'Female';
+    case 'OTHER':
+      return 'Other';
+    case 'PREFER_NOT_TO_SAY':
+      return 'Prefer not to say';
+    case 'UNSPECIFIED':
+      return 'Not specified';
+    default:
+      return 'Not specified';
+  }
+}
+
 export type UserFormValues = z.infer<typeof userFormSchema>;
 
 export interface AdminUserWorkspaceProps {
@@ -365,12 +383,26 @@ function UserDetailsPanel({ user, panelTitle }: UserDetailsPanelProps) {
             <h2 className='text-2xl font-semibold'>{panelTitle}</h2>
             <p className='text-muted-foreground text-sm'>Moderate profile details and access</p>
           </div>
-          <div className='flex items-start justify-between gap-4 border-b px-6 py-4'>
-            <div>
-              <p className='text-sm font-semibold'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}</p>
-              <p className='text-muted-foreground text-xs'>{user.email}</p>
+          <div className='space-y-3 border-b px-6 py-4'>
+            <div className='flex items-start justify-between gap-4'>
+              <div>
+                <p className='text-sm font-semibold'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}</p>
+                <p className='text-muted-foreground text-xs'>{user.email}</p>
+              </div>
+              <Badge variant={user.active ? 'secondary' : 'outline'}>{user.active ? 'Active' : 'Inactive'}</Badge>
             </div>
-            <Badge variant={user.active ? 'secondary' : 'outline'}>{user.active ? 'Active' : 'Inactive'}</Badge>
+            <div className='grid gap-3 text-xs sm:grid-cols-2'>
+              <div>
+                <span className='text-muted-foreground'>Date of birth:</span>{' '}
+                <span className='font-medium'>
+                  {user.dob ? format(new Date(user.dob), 'dd MMM yyyy') : 'Not provided'}
+                </span>
+              </div>
+              <div>
+                <span className='text-muted-foreground'>Gender:</span>{' '}
+                <span className='font-medium'>{formatGender(user.gender)}</span>
+              </div>
+            </div>
           </div>
           <div className='flex-1 overflow-y-auto px-6'>
             <UserDetailsForm form={form} onSubmit={handleSubmit} isPending={updateUser.isPending} user={user} />
