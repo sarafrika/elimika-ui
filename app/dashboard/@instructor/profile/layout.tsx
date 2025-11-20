@@ -13,7 +13,6 @@ const sections = [
     label: 'Professional Memberships',
     href: '/dashboard/profile/professional-membership',
   },
-  { label: 'Training Areas', href: '/dashboard/profile/training-areas' },
   { label: 'Availability', href: '/dashboard/profile/availability' },
   { label: 'Rate Card', href: '/dashboard/profile/rate-card' },
   { label: 'Reviews', href: '/dashboard/profile/reviews' },
