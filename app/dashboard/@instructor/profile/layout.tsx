@@ -15,7 +15,6 @@ const sections = [
   },
   { label: 'Availability', href: '/dashboard/profile/availability' },
   { label: 'Rate Card', href: '/dashboard/profile/rate-card' },
-  { label: 'Reviews', href: '/dashboard/profile/reviews' },
 ];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
