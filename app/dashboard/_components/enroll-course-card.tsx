@@ -40,10 +40,7 @@ export default function EnrollCourseCard({
           <div className='relative h-48 overflow-hidden'>
             <div className='absolute inset-0 z-10 bg-primary/10' />
             <Image
-              src={
-                cls?.course?.thumbnail_url ||
-                'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=600&fit=crop'
-              }
+              src={cls?.course?.thumbnail_url}
               alt={cls?.title}
               className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
               width={200}
@@ -156,9 +153,8 @@ export default function EnrollCourseCard({
                 </div>
                 <div className='h-2 overflow-hidden rounded-full bg-blue-100'>
                   <div
-                    className={`h-full transition-all duration-500 ${
-                      enrollmentPercentage >= 80 ? 'bg-warning' : 'bg-primary'
-                    }`}
+                    className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                      }`}
                     style={{ width: `${enrollmentPercentage}%` }}
                   />
                 </div>

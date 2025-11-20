@@ -172,7 +172,7 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
                         variant={selected ? 'default' : 'outline'}
                         className='w-full justify-start gap-2'
                         onClick={() => handleSlotSelect(slot)}
-                        // onClick={() => console.log(slot, "clicked slot")}
+                      // onClick={() => console.log(slot, "clicked slot")}
                       >
                         <Clock className='h-4 w-4' />
                         {getDayLabel(slot.day_of_week)} {' - '}

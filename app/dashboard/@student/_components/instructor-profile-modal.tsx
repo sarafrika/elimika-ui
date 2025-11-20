@@ -4,11 +4,15 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useStudent } from '@/context/student-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
+import { bookInstructorSlotMutation } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation } from '@tanstack/react-query';
 import {
   Award,
   BookOpen,
@@ -24,8 +28,6 @@ import {
 import type React from 'react';
 import { useState } from 'react';
 import type { Booking, BookingSlot } from '../browse-courses/instructor/page';
-import { BookingCalendar } from './booking-calendar';
-import { BookingSummary } from './booking-summary';
 
 type Props = {
   instructor: any;
@@ -38,8 +40,14 @@ export const InstructorProfileModal: React.FC<Props> = ({
   onClose,
   onBookingComplete,
 }) => {
+  const student = useStudent()
   const [showBooking, setShowBooking] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<BookingSlot[]>([]);
+
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [reason, setReason] = useState('');
+
 
   const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
     instructor?.uuid as string
@@ -59,6 +67,28 @@ export const InstructorProfileModal: React.FC<Props> = ({
     onClose();
   };
 
+  const bookInstructor = useMutation(bookInstructorSlotMutation())
+  const handleBooking = () => {
+    if (!instructor?.uuid || !student?.uuid || !startTime || !endTime) {
+      return;
+    }
+    // Convert local datetime to ISO string (UTC)
+    const utcStartTime = new Date(startTime).toISOString();
+    const utcEndTime = new Date(endTime).toISOString();
+
+    bookInstructor.mutate({
+      path: { instructorUuid: instructor.uuid },
+      body: {
+        instructor_uuid: instructor.uuid,
+        student_uuid: student.uuid,
+        start_time: utcStartTime as any,
+        end_time: utcEndTime as any,
+        purpose: reason,
+      },
+    });
+  };
+
+
   if (showBooking) {
     return (
       <Dialog open={true} onOpenChange={onClose}>
@@ -69,24 +99,62 @@ export const InstructorProfileModal: React.FC<Props> = ({
               <DialogTitle>Book Session with {instructor.full_name}</DialogTitle>
             </DialogHeader>
             <div className='mt-4 flex flex-col gap-6'>
-              {/* Left: Calendar */}
-              <div className=''>
+              <Card className="max-w-md mx-auto mt-6">
+                <CardHeader>
+                  <CardTitle>Book a Time Slot</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:space-x-4">
+                      <div className="flex flex-col">
+                        <label className="mb-1">Start Time</label>
+                        <Input
+                          type="datetime-local"
+                          value={startTime}
+                          onChange={(e) => setStartTime(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex flex-col mt-4 sm:mt-0">
+                        <label className="mb-1">End Time</label>
+                        <Input
+                          type="datetime-local"
+                          value={endTime}
+                          onChange={(e) => setEndTime(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col mt-4 sm:mt-0">
+                      <label className="mb-1">Purpose</label>
+                      <Input
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={handleBooking} className="w-full sm:w-auto">
+                    Book
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* <div className=''>
                 <BookingCalendar
                   instructor={instructor}
                   selectedSlots={selectedSlots}
                   onSlotsChange={setSelectedSlots}
                 />
-              </div>
+              </div> */}
 
-              {/* Right: Summary */}
-              <div>
+              {/* <div>
                 <BookingSummary
                   instructor={instructor}
                   selectedSlots={selectedSlots}
                   onBack={handleBackToProfile}
                   onBookingComplete={handleBookingComplete}
                 />
-              </div>
+              </div> */}
             </div>
           </ScrollArea>
         </DialogContent>
@@ -113,8 +181,8 @@ export const InstructorProfileModal: React.FC<Props> = ({
                     <div className='mb-1 flex items-center gap-2'>
                       <h2>{instructor?.full_name}</h2>
                       {/* {instructor.type === 'organization' && (
-                                                <Building className="w-5 h-5 text-muted-foreground" />
-                                            )} */}
+                         <Building className="w-5 h-5 text-muted-foreground" />
+                     )} */}
                     </div>
                     <p className='text-muted-foreground'>{instructor?.professional_headline}</p>
                   </div>
@@ -125,9 +193,9 @@ export const InstructorProfileModal: React.FC<Props> = ({
                   <div className='flex items-center gap-1'>
                     <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
                     {/* <span>
-                                            {instructor.rating.toFixed(1)} ({instructor.totalReviews}{' '}
-                                            reviews)
-                                        </span> */}
+                      {instructor.rating.toFixed(1)} ({instructor.totalReviews}{' '}
+                      reviews)
+                     </span> */}
                     <span>x reviews</span>
                   </div>
                   <div className='text-muted-foreground flex items-center gap-1'>

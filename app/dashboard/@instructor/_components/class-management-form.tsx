@@ -57,10 +57,8 @@ const WEEK_DAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRID
 
 export const classSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  sub_title: z.string().optional(),
   description: z.string().optional(),
   categories: z.string().array().optional(),
-  class_banner: z.any().optional(),
   default_instructor_uuid: z.string().optional(),
   organisation_uuid: z.string().optional(),
   training_fee: z.any().optional(),

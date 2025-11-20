@@ -92,6 +92,15 @@ function getDayOfWeek1To7(date: Date): number {
   return jsDay === 0 ? 7 : jsDay; // Convert Sunday (0) to 7
 }
 
+const getEndTime = (startTime: string): string => {
+  const [hours, minutes] = startTime.split(':').map(Number);
+  const endMinutes = Number(minutes) + 60; // Default to 1 hour duration
+  if (endMinutes >= 60) {
+    return `${(Number(hours) + 1).toString().padStart(2, '0')}:${(endMinutes - 60).toString().padStart(2, '0')}`;
+  }
+  return `${hours?.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+};
+
 export function EventModal({
   isOpen,
   onClose,
@@ -139,16 +148,7 @@ export function EventModal({
         notes: '',
       });
     }
-  }, [event, selectedSlot, getEndTime]);
-
-  const getEndTime = (startTime: string): string => {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const endMinutes = Number(minutes) + 60; // Default to 1 hour duration
-    if (endMinutes >= 60) {
-      return `${(Number(hours) + 1).toString().padStart(2, '0')}:${(endMinutes - 60).toString().padStart(2, '0')}`;
-    }
-    return `${hours?.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-  };
+  }, [event, selectedSlot]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -192,8 +192,8 @@ export function EventModal({
       type: formData.type as EventType,
       startTime: formData.startTime!,
       endTime: formData.endTime!,
-      date: formData.date || selectedSlot?.date,
-      day: formData.day || selectedSlot?.day,
+      date: formData.date || selectedSlot?.date as Date,
+      day: formData.day || selectedSlot?.day as any,
       location: formData.location,
       attendees: formData.attendees,
       isRecurring: formData.isRecurring,

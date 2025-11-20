@@ -8,11 +8,10 @@ import {
   DialogHeader,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getInstructorSkillsOptions, getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Briefcase, Building, MapPin, Star, Users, Video } from 'lucide-react';
-import { InstructorSkillCard } from '../../@instructor/profile/skill-card/_component/instructor-skill-card';
-import { sampleSkills } from '../../@instructor/profile/skill-card/_component/InstructorSkillsForm';
+import { InstructorSkillCard } from '../../@instructor/profile/skills/_component/instructor-skill-card';
 
 type Props = {
   instructor: any;
@@ -25,6 +24,12 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
     enabled: !!instructor.uuid,
   });
   const user = data?.data as any;
+
+  const { data: skills } = useQuery({
+    ...getInstructorSkillsOptions({ query: { pageable: {} }, path: { instructorUuid: instructor?.uuid as string } }),
+    enabled: !!instructor.uuid,
+  })
+  const instructorSkills = skills?.data?.content || [];
 
   return (
     <Card className='min-w-[300px] overflow-hidden transition-shadow hover:shadow-lg sm:min-w-[320px]'>
@@ -119,7 +124,7 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
 
               <DialogContent className='max-h-[85vh] max-w-2xl overflow-y-auto'>
                 <DialogHeader />
-                <InstructorSkillCard instructor={instructor} skills={sampleSkills} />
+                <InstructorSkillCard instructor={instructor} skills={instructorSkills} />
               </DialogContent>
             </Dialog>
           </div>

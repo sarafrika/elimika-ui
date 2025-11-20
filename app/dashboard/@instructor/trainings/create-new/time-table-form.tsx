@@ -39,9 +39,10 @@ const AvailabilityDaySchema = z.object({
 
 const TimetableSchema = z.object({
   location_type: z.string(),
-  location: z.string().optional(),
+  location_name: z.string().optional(),
+  location_latitude: z.any().optional().nullable(),
+  location_longitude: z.any().optional().nullable(),
   duration: z.coerce.number(),
-  timezone: z.string(),
   availability: z.array(AvailabilityDaySchema),
   // 🆕 Recurrence fields
   recurrence_type: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).default('WEEKLY'),
@@ -61,9 +62,10 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
 
   const defaultValues: TimetableFormData = {
     location_type: data?.location_type ?? '',
-    location: data?.location ?? '',
+    location_name: data?.location_name ?? '',
+    location_latitude: data?.location_latitude ?? -1.29,
+    location_longitude: data?.location_longitude ?? 36.82,
     duration: data?.duration_minutes ?? '',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     availability: daysOfWeek.map(day => ({
       day: day.full,
       enabled: false,
@@ -102,9 +104,8 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
 
       reset({
         location_type: data?.location_type ?? "",
-        location: data?.location ?? "",
+        location_name: data?.location_name ?? "",
         duration: data?.duration_minutes ?? "",
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         availability: daysOfWeek.map(day => ({
           day: day.full,
           enabled: false,
@@ -205,7 +206,7 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
             <div className='flex items-center gap-2'>
               <MapPin className='text-muted-foreground h-5 w-5' />
               <Controller
-                name='location'
+                name='location_name'
                 control={control}
                 render={({ field }) => <Input {...field} placeholder='Enter location' />}
               />
@@ -213,6 +214,38 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
           </div>
         )}
       </div>
+
+
+      {['IN_PERSON', 'HYBRID'].includes(watched.location_type) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          {/* LATITUDE */}
+          <Controller
+            name="location_latitude"
+            control={control}
+            render={({ field }) => (
+              <div className="space-y-1">
+                <Label>Latitude</Label>
+                <Input {...field} type="number" step="0.000001" placeholder="-1.292066" />
+              </div>
+            )}
+          />
+
+          {/* LONGITUDE */}
+          <Controller
+            name="location_longitude"
+            control={control}
+            render={({ field }) => (
+              <div className="space-y-1">
+                <Label>Longitude</Label>
+                <Input {...field} type="number" step="0.000001" placeholder="36.821945" />
+              </div>
+            )}
+          />
+
+        </div>
+      )}
+
 
       {/* --- Availability Days --- */}
       <Card className='space-y-4 p-4'>
@@ -243,7 +276,7 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
           )}
         />
 
-        <Controller
+        {/* <Controller
           name='timezone'
           control={control}
           render={({ field }) => (
@@ -263,7 +296,7 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
               </Select>
             </div>
           )}
-        />
+        /> */}
       </div>
 
       {/* --- Recurrence Fields --- */}
