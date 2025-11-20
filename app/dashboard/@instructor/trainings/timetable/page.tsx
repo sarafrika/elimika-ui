@@ -55,8 +55,6 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
     },
   });
 
-  console.log(availabilityData, "AD")
-
   useEffect(() => {
     const eventsFromSchedule = timetable?.data
       ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])

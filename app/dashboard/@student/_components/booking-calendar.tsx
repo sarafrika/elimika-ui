@@ -127,8 +127,6 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
     return isUnavailable || isPastDate;
   };
 
-  console.log(availableSlots, 'availableSlots');
-
   return (
     <div className='space-y-6'>
       {/* Calendar */}

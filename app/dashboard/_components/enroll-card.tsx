@@ -60,7 +60,7 @@ export const EnrollmentCards = ({
     if (student?.uuid && uuid) {
       enrollStudent.mutate(
         {
-          body: { scheduled_instance_uuid: uuid, student_uuid: student?.uuid },
+          body: { class_definition_uuid: uuid, student_uuid: student?.uuid },
         },
         {
           onSuccess: data => {
@@ -145,9 +145,8 @@ export const EnrollmentCards = ({
               createCart.mutate(
                 {
                   body: {
-                    region_id: 'sdfsd',
-                    customer_id: 'sdfsd',
-                    sales_channel_id: 'sdfsd',
+                    region_code: 'sdfsd',
+                    currency_code: 'sdfsd',
                     metadata: {} as any,
                     items: [
                       {

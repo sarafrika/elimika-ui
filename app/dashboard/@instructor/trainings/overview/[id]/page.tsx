@@ -169,10 +169,6 @@ export default function ClassPreviewPage() {
   });
 
   const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
-  console.log(roster, "roster")
-
-
-
 
   if (isLoading || isAllLessonsDataLoading || classIsLoading) {
     return (
