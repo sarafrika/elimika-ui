@@ -1,20 +1,17 @@
 'use client';
 
-import { ProfileFormShell } from '@/components/profile/profile-form-layout';
+import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
 import { ProfileViewField, ProfileViewGrid } from '@/components/profile/profile-view-field';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseCreator } from '@/context/course-creator-context';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { profilePicSvg } from '@/lib/utils';
-import { format } from 'date-fns';
 import { useEffect } from 'react';
 
 export default function CourseCreatorGeneralPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { profile } = useCourseCreator();
-  const { isEditing } = useProfileFormMode();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -81,7 +78,7 @@ export default function CourseCreatorGeneralPage() {
             profile.bio ? (
               <HTMLTextPreview
                 htmlContent={profile.bio}
-                className='prose prose-sm max-w-none'
+                className='prose prose-sm dark:prose-invert max-w-none'
               />
             ) : (
               <p className='text-muted-foreground text-sm'>No bio added yet.</p>
@@ -93,29 +90,5 @@ export default function CourseCreatorGeneralPage() {
         </ProfileFormSection>
       </div>
     </ProfileFormShell>
-  );
-}
-
-function ProfileFormSection({
-  title,
-  description,
-  viewContent,
-  children,
-}: {
-  title: string;
-  description: string;
-  viewContent: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  const { isEditing } = useProfileFormMode();
-
-  return (
-    <div className='rounded-lg border border-blue-200/40 bg-white p-6'>
-      <div className='mb-4'>
-        <h3 className='text-lg font-semibold'>{title}</h3>
-        <p className='text-muted-foreground text-sm'>{description}</p>
-      </div>
-      {isEditing ? children : viewContent}
-    </div>
   );
 }
