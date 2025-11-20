@@ -55,21 +55,53 @@ export type ClassScheduleItem = {
   cancellation_reason?: string | null;
 };
 
+// export function transformAvailabilityArray(dataArray: any[]) {
+//   const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+//   return dataArray?.map(data => ({
+//     id: data.uuid,
+//     day: dayMap[data.day_of_week ?? 0],
+//     startTime: data.start_time?.slice(0, 5),
+//     endTime: data.end_time?.slice(0, 5),
+//     status: data.is_available ? 'available' : 'unavailable',
+//     recurring: data.availability_type === 'weekly',
+//     note: data.availability_description || '',
+//     is_available: data.is_available,
+//     custom_pattern: data.custom_pattern || '',
+//   }));
+// }
+
 export function transformAvailabilityArray(dataArray: any[]) {
   const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  return dataArray?.map(data => ({
-    id: data.uuid,
-    day: dayMap[data.day_of_week ?? 0],
-    startTime: data.start_time?.slice(0, 5),
-    endTime: data.end_time?.slice(0, 5),
-    status: data.is_available ? 'available' : 'unavailable',
-    recurring: data.availability_type === 'weekly',
-    note: data.availability_description || '',
-    is_available: data.is_available,
-    custom_pattern: data.custom_pattern || '',
-  }));
+  return dataArray?.map(data => {
+    // Determine the day
+    let day: string;
+
+    if (data.specific_date) {
+      const date = new Date(data.specific_date);
+      day = dayMap[date.getDay()] || 'Unknown';
+    } else if (data.day_of_week !== null) {
+      day = dayMap[data.day_of_week] || 'Unknown';
+    } else {
+      day = 'Unknown';
+    }
+
+    return {
+      id: data.uuid,
+      day,
+      startTime: data.start_time?.slice(0, 5),
+      endTime: data.end_time?.slice(0, 5),
+      status: data.is_available ? 'available' : 'unavailable',
+      recurring: data.availability_type === 'weekly' || data.availability_type === 'daily',
+      note: data.availability_description || '',
+      is_available: data.is_available,
+      custom_pattern: data.custom_pattern || '',
+      date: data.specific_date ? new Date(data.specific_date) : undefined,
+    };
+  });
 }
+
 
 export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarEvent[] {
   return classes.map(item => {

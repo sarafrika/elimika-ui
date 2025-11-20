@@ -1,7 +1,6 @@
 'use client';
 
 import { ProfileFormSection, ProfileFormShell } from '@/components/profile/profile-form-layout';
-import { ProfileViewList, ProfileViewListItem } from '@/components/profile/profile-view-field';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog';
@@ -31,6 +30,7 @@ import type { Instructor, InstructorSkill } from '@/services/api/schema';
 import { schemas } from '@/services/api/zod-client';
 import {
   addInstructorSkillMutation,
+  deleteInstructorSkillMutation,
   getInstructorSkillsQueryKey,
   updateInstructorSkillMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -79,23 +79,43 @@ export default function SkillsSettings({
   const user = useUserProfile();
 
   const defaultSkill: SkillType = {
-    skill_name: 'JavaScript',
-    proficiency_level: 'EXPERT',
     instructor_uuid: instructor.uuid!,
+    skill_name: '',
+    summary: '',
+    proficiency_description: '',
+    proficiency_level: 'BEGINNER',
   };
 
-  const passSkill = (skill: InstructorSkill) => ({
-    ...defaultSkill,
-    ...skill,
+
+  const passSkill = (skill: InstructorSkill): SkillType => ({
+    uuid: skill.uuid,
+    instructor_uuid: instructor.uuid!,
+    skill_name: skill.skill_name ?? '',
+    summary: skill.summary ?? '',
+    proficiency_description: skill.proficiency_description ?? '',
+
+    // IMPORTANT: normalize case
+    proficiency_level: (skill.proficiency_level ?? 'BEGINNER').toUpperCase() as any,
   });
 
   const form = useForm<SkillsFormValues>({
     resolver: zodResolver(skillsSchema),
     defaultValues: {
-      skills: instructorSkills.length ? instructorSkills.map(passSkill) : [defaultSkill],
+      skills: instructorSkills.length
+        ? instructorSkills.map(passSkill)
+        : [defaultSkill],
     },
     mode: 'onChange',
   });
+
+  useEffect(() => {
+    if (instructorSkills && instructorSkills.length > 0) {
+      form.reset({
+        skills: instructorSkills.map(passSkill),
+      });
+    }
+  }, [instructorSkills]);
+
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -104,6 +124,7 @@ export default function SkillsSettings({
 
   const addSkillMutation = useMutation(addInstructorSkillMutation());
   const updateSkillMutation = useMutation(updateInstructorSkillMutation());
+  const deleteSkillMutation = useMutation(deleteInstructorSkillMutation());
   const { errors, submitting } = useMultiMutations([addSkillMutation, updateSkillMutation]);
 
   const saveSkills = async (data: SkillsFormValues) => {
@@ -163,18 +184,29 @@ export default function SkillsSettings({
     });
   };
 
-  const handleRemove = (index: number) => {
+  const handleRemove = async (index: number) => {
     if (!isEditing) return;
-    remove(index);
+
+    const skill = form.getValues(`skills.${index}`);
+
+    if (!skill.uuid) {
+      remove(index);
+      return;
+    }
+
+    deleteSkillMutation.mutate(
+      {
+        path: { instructorUuid: instructor.uuid!, skillUuid: skill.uuid, },
+      },
+      {
+        onSuccess: () => {
+          remove(index);
+          toast.success("Skill removed");
+        },
+      }
+    );
   };
 
-  const formatProficiency = (level?: string) => {
-    if (!level) return undefined;
-    return level
-      .split('_')
-      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-      .join(' ');
-  };
 
   const domainBadges =
     // @ts-expect-error
@@ -205,7 +237,7 @@ export default function SkillsSettings({
 
             <DialogContent className='max-h-[85vh] max-w-2xl overflow-y-auto'>
               <DialogHeader />
-              <InstructorSkillCard instructor={instructor} skills={sampleSkills} />
+              <InstructorSkillCard instructor={instructor} skills={instructorSkills} />
             </DialogContent>
           </Dialog>
         </div>
@@ -230,19 +262,6 @@ export default function SkillsSettings({
             <ProfileFormSection
               title='Professional skills'
               description='Help learners understand what you teach best and your depth of experience.'
-              viewContent={
-                <ProfileViewList emptyMessage='No skills added yet.'>
-                  {instructorSkills?.map((skill) => (
-                    <ProfileViewListItem
-                      key={skill.uuid}
-                      title={skill.skill_name || 'Skill name not specified'}
-                      subtitle={skill.summary}
-                      badge={formatProficiency(skill.proficiency_level)}
-                      description={skill.proficiency_description}
-                    />
-                  ))}
-                </ProfileViewList>
-              }
               footer={
                 <Button
                   type='submit'
@@ -317,7 +336,7 @@ export default function SkillsSettings({
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Proficiency</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select value={field.value} onValueChange={field.onChange}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder='Select level' />
@@ -376,50 +395,3 @@ export default function SkillsSettings({
   );
 }
 
-export const sampleSkills: any[] = [
-  {
-    uuid: '8f2c3bde-9a5f-4b1e-9b22-7c41a2c81f6a',
-    instructor_uuid: '3d91b7a9-5e73-4f4b-b1a0-21f2a6a2cd35',
-    skill_name: 'React.js Development',
-    proficiency_level: 'ADVANCED',
-    proficiency_percentage: 85,
-    proficiency_description:
-      'Experienced in building scalable, component-based UIs using React, TypeScript, and modern state management tools.',
-    is_core_skill: true,
-    is_teaching_qualified: true,
-    skill_category: 'WEB_DEVELOPMENT',
-    market_demand: 'HIGH',
-    created_date: '2024-08-12T10:23:45Z',
-    updated_date: '2025-09-30T14:15:12Z',
-  },
-  {
-    uuid: '91ab3e4d-1e7a-4cb3-8ac5-238bb7deab92',
-    instructor_uuid: '3d91b7a9-5e73-4f4b-b1a0-21f2a6a2cd35',
-    skill_name: 'Node.js & Express',
-    proficiency_level: 'INTERMEDIATE',
-    proficiency_percentage: 70,
-    proficiency_description:
-      'Proficient in developing RESTful APIs and microservices using Node.js, Express, and MongoDB.',
-    is_core_skill: true,
-    is_teaching_qualified: true,
-    skill_category: 'BACKEND_DEVELOPMENT',
-    market_demand: 'HIGH',
-    created_date: '2023-12-15T08:40:10Z',
-    updated_date: '2025-06-01T09:12:00Z',
-  },
-  {
-    uuid: '77cf1349-230d-46fb-b4e2-f502c2b81c47',
-    instructor_uuid: '3d91b7a9-5e73-4f4b-b1a0-21f2a6a2cd35',
-    skill_name: 'UI/UX Design Principles',
-    proficiency_level: 'BEGINNER',
-    proficiency_percentage: 45,
-    proficiency_description:
-      'Basic understanding of visual hierarchy, color theory, and user-centered design processes.',
-    is_core_skill: false,
-    is_teaching_qualified: false,
-    skill_category: 'DESIGN',
-    market_demand: 'MEDIUM',
-    created_date: '2024-03-02T11:25:00Z',
-    updated_date: '2025-08-18T10:05:30Z',
-  },
-];

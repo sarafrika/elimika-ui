@@ -8,7 +8,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
 import { AcademicPeriodForm, type ClassData } from './academic-period-form';
 import ClassDetailsForm from './class-details-form';
@@ -115,14 +115,14 @@ export default function ClassCreationPage() {
     remainingMinutes: 0,
   });
 
-  const handleScheduleSummaryChange = (summary: {
+  const handleSummaryChange = useCallback((summary: {
     totalSkills: number;
     totalLessons: number;
     totalHours: number;
     remainingMinutes: number;
   }) => {
     setScheduleSummary(summary);
-  };
+  }, []);
 
   const [combinedRecurrenceData, setCombinedRecurrenceData] = useState<{
     response?: any;
@@ -168,7 +168,7 @@ export default function ClassCreationPage() {
             data={combinedData}
             onNext={nextStep}
             onPrev={prevStep}
-            onSummaryChange={handleScheduleSummaryChange} // 👈 pass down callback
+            onSummaryChange={handleSummaryChange} // 👈 pass down callback
           />
         );
       case 'visibility':

@@ -2,6 +2,8 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import {
   Table,
@@ -20,8 +22,6 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { format } from "date-fns";
 import { Search, Upload } from "lucide-react";
 import { useState } from "react";
-import { Input } from '../../../../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 
 const _sampleEnrollmentData = {
   success: true,
@@ -102,9 +102,6 @@ export default function StudentsPage({ classesWithCourseAndInstructor, loading }
     })
   );
   const students = sData?.data?.content ?? [];
-
-  // console.log(classesWithCourseAndInstructor, "CLAS")
-  // console.log(students, "STU")
 
   const studentDetailQueries = useQueries({
     queries: students.map(student => ({

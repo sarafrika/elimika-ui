@@ -32,12 +32,23 @@ export function ReviewPublishForm({
 }: ReviewPublishFormProps) {
   const instructor = useInstructor();
 
+  const startTime = new Date(data?.default_start_time);
+  const endTime = new Date(data?.default_end_time);
+
+  // Format for display
+  const formattedStart = format(startTime, 'MMM dd, yyyy • hh:mm a');
+  const formattedEnd = format(endTime, 'MMM dd, yyyy • hh:mm a');
+
   const totalLessons = scheduleSummary?.totalLessons;
   const totalHours = scheduleSummary?.totalHours;
-  const totalFee = scheduleSummary?.totalLessons;
 
-  const _formatDate = (date: Date) => {
-    return format(date, 'MMM dd, yyyy');
+  const calculateTotalFee = () => {
+    const lessonDurationHours = 2;
+    const totalHours = scheduleSummary?.totalLessons * lessonDurationHours || 0;
+
+    const enrollmentCount = data?.max_participants || 1;
+
+    return data?.training_fee * totalHours * enrollmentCount;
   };
 
   return (
@@ -100,7 +111,7 @@ export function ReviewPublishForm({
               <DollarSign className='text-muted-foreground h-4 w-4' />
               <div>
                 <div className='text-muted-foreground'>Total Cost</div>
-                <div className='font-medium'>{`${totalFee.toFixed(2)}`}</div>
+                <span>{"KES"} {calculateTotalFee().toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -146,11 +157,9 @@ export function ReviewPublishForm({
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Academic Period:</span>
-              {/* <div className='font-medium'>
-                {formatDate(data.academicPeriod.startDate)} -{' '}
-                {formatDate(data.academicPeriod.endDate)}
-              </div> */}
-              <div>From xxx - To xxx</div>
+              <div className='font-medium'>
+                {formattedStart} -{' '}{formattedEnd}
+              </div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Registration:</span>
@@ -183,7 +192,7 @@ export function ReviewPublishForm({
               <div className='font-medium'>{data?.recurrence?.days_of_week}</div>
             </div>
             <div>
-              <span className='text-muted-foreground text-sm'>Duration per session:</span>
+              <span className='text-muted-foreground text-sm'>Duration per lesson:</span>
               {/* <div className='font-medium'>{Number(totalHours) / Number(totalLessons)} hours</div> */}
               <div className='font-medium'>{Number(data?.duration_minutes) / 60} hours</div>
 
@@ -284,7 +293,7 @@ export function ReviewPublishForm({
                   <div className='text-green-600'>Total Hours</div>
                 </div>
                 <div>
-                  <div className='font-medium text-green-800'>${totalFee.toFixed(2)}</div>
+                  <span>{"KES"} {calculateTotalFee().toFixed(2)}</span>
                   <div className='text-green-600'>Total Fee</div>
                 </div>
               </div>

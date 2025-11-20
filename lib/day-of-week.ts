@@ -14,6 +14,6 @@ export const daysOfWeekOptions = Object.entries(DaysOfWeekEnum).map(([key, value
 }));
 
 export const getDayLabel = (dayNum: number) => {
-  const option = daysOfWeekOptions.find(opt => opt.id === dayNum.toString());
+  const option = daysOfWeekOptions.find((opt: any) => opt.id === dayNum?.toString());
   return option ? option.label : 'Unknown';
 };
