@@ -394,9 +394,9 @@ export const zStudent = z
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.'
       )
       .optional(),
+    primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
-    primaryGuardianContact: z.string().optional(),
     created_date: z
       .string()
       .datetime()
@@ -856,17 +856,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1210,14 +1210,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -2125,6 +2125,16 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
+    formatted_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
+      .readonly()
+      .optional(),
     membership_duration_months: z
       .number()
       .int()
@@ -2134,11 +2144,6 @@ export const zInstructorProfessionalMembership = z
       .readonly()
       .optional(),
     membership_status: zMembershipStatusEnum.optional(),
-    formatted_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
-      .readonly()
-      .optional(),
     membership_period: z
       .string()
       .describe('**[READ-ONLY]** Formatted membership period showing start and end dates.')
@@ -2163,11 +2168,6 @@ export const zInstructorProfessionalMembership = z
     is_recent_membership: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -2289,6 +2289,19 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+      .readonly()
+      .optional(),
+    duration_in_months: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
+      )
+      .readonly()
+      .optional(),
     formatted_duration: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration of employment.')
@@ -2318,19 +2331,6 @@ export const zInstructorExperience = z
     calculated_years: z
       .number()
       .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
-      .readonly()
-      .optional(),
-    duration_in_months: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
-      )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -2435,11 +2435,21 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .readonly()
+      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.'
       )
+      .readonly()
+      .optional(),
+    formatted_completion: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
     years_since_completion: z
@@ -2454,16 +2464,6 @@ export const zInstructorEducation = z
       .describe(
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
       )
-      .readonly()
-      .optional(),
-    formatted_completion: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -3807,6 +3807,152 @@ export const zCourseCreator = z
   })
   .describe('Course creator profile for users dedicated to educational content creation');
 
+export const zProficiencyLevelEnum2 = z.enum(['beginner', 'intermediate', 'advanced', 'expert']);
+
+/**
+ * Technical or creative competency declared by a course creator with proficiency metadata
+ */
+export const zCourseCreatorSkill = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    course_creator_uuid: z.string().uuid(),
+    skill_name: z.string().min(0).max(100),
+    proficiency_level: zProficiencyLevelEnum2,
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    display_name: z.string().readonly().optional(),
+    proficiency_description: z.string().readonly().optional(),
+  })
+  .describe(
+    'Technical or creative competency declared by a course creator with proficiency metadata'
+  );
+
+export const zApiResponseCourseCreatorSkill = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreatorSkill.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Membership information for industry bodies or associations that endorse the course creator
+ */
+export const zCourseCreatorProfessionalMembership = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    course_creator_uuid: z.string().uuid(),
+    organization_name: z.string().min(0).max(255),
+    membership_number: z.string().min(0).max(100).optional(),
+    start_date: z.string().date().optional(),
+    end_date: z.string().date().optional(),
+    is_active: z.boolean().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    status_label: z.string().readonly().optional(),
+  })
+  .describe(
+    'Membership information for industry bodies or associations that endorse the course creator'
+  );
+
+export const zApiResponseCourseCreatorProfessionalMembership = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreatorProfessionalMembership.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Work history and practical delivery background for course creators
+ */
+export const zCourseCreatorExperience = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    course_creator_uuid: z.string().uuid(),
+    position: z.string().min(0).max(255),
+    organization_name: z.string().min(0).max(255),
+    responsibilities: z.string().optional(),
+    years_of_experience: z.number().gte(0).lte(60).optional(),
+    start_date: z.string().date().optional(),
+    end_date: z.string().date().optional(),
+    is_current_position: z.boolean().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    tenure_label: z.string().readonly().optional(),
+  })
+  .describe('Work history and practical delivery background for course creators');
+
+export const zApiResponseCourseCreatorExperience = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreatorExperience.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Academic credentials captured for course creators
+ */
+export const zCourseCreatorEducation = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    course_creator_uuid: z.string().uuid(),
+    qualification: z.string().min(0).max(255),
+    school_name: z.string().min(0).max(255),
+    year_completed: z.number().int().gte(1950).lte(2100).optional(),
+    certificate_number: z.string().min(0).max(100).optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    is_recent_qualification: z.boolean().readonly().optional(),
+    formatted_completion: z.string().readonly().optional(),
+  })
+  .describe('Academic credentials captured for course creators');
+
+export const zApiResponseCourseCreatorEducation = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreatorEducation.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Professional certification or accreditation evidence associated with a course creator
+ */
+export const zCourseCreatorCertification = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    course_creator_uuid: z.string().uuid(),
+    certification_name: z.string().min(0).max(255),
+    issuing_organization: z.string().min(0).max(255),
+    issued_date: z.string().date().optional(),
+    expiry_date: z.string().date().optional(),
+    credential_id: z.string().min(0).max(120).optional(),
+    credential_url: z.string().min(0).max(500).optional(),
+    description: z.string().optional(),
+    is_verified: z.boolean().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    is_expired: z.boolean().readonly().optional(),
+  })
+  .describe(
+    'Professional certification or accreditation evidence associated with a course creator'
+  );
+
+export const zApiResponseCourseCreatorCertification = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreatorCertification.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 /**
  * Grading scale level with points and ordering for assessments
  */
@@ -4512,6 +4658,11 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -4527,11 +4678,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -5751,19 +5897,22 @@ export const zCourseTrainingRateCard = z.object({
       '**[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.'
     )
     .optional(),
-  private_individual_rate: z
+  private_online_rate: z
     .number()
     .gte(0)
-    .describe('Private 1:1 session rate per learner per hour.'),
-  private_group_rate: z
+    .describe('1:1 private session rate when delivered online, per learner per hour.'),
+  private_inperson_rate: z
     .number()
     .gte(0)
-    .describe('Private group session rate per learner per hour.'),
-  public_individual_rate: z
+    .describe('1:1 private session rate when delivered in person, per learner per hour.'),
+  group_online_rate: z
     .number()
     .gte(0)
-    .describe('Public individual rate per learner per hour.'),
-  public_group_rate: z.number().gte(0).describe('Public group rate per learner per hour.'),
+    .describe('Group session rate when delivered online, per learner per hour.'),
+  group_inperson_rate: z
+    .number()
+    .gte(0)
+    .describe('Group session rate when delivered in person, per learner per hour.'),
 });
 
 /**
@@ -6809,6 +6958,11 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
+    time_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .readonly()
+      .optional(),
     attempt_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
@@ -6817,11 +6971,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    time_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
       .readonly()
       .optional(),
   })
@@ -7379,14 +7528,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
     is_upcoming: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
   })
@@ -7691,16 +7840,16 @@ export const zCourseCategoryMapping = z
       )
       .readonly()
       .optional(),
+    has_names: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
+      .readonly()
+      .optional(),
     display_text: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable text representing this course-category relationship.'
       )
-      .readonly()
-      .optional(),
-    has_names: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
       .readonly()
       .optional(),
   })
@@ -7735,6 +7884,71 @@ export const zPagedDtoCourseCreator = z.object({
 export const zApiResponsePagedDtoCourseCreator = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCourseCreator.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoCourseCreatorSkill = z.object({
+  content: z.array(zCourseCreatorSkill).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCourseCreatorSkill = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCourseCreatorSkill.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoCourseCreatorProfessionalMembership = z.object({
+  content: z.array(zCourseCreatorProfessionalMembership).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCourseCreatorProfessionalMembership = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCourseCreatorProfessionalMembership.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoCourseCreatorExperience = z.object({
+  content: z.array(zCourseCreatorExperience).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCourseCreatorExperience = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCourseCreatorExperience.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoCourseCreatorEducation = z.object({
+  content: z.array(zCourseCreatorEducation).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCourseCreatorEducation = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCourseCreatorEducation.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoCourseCreatorCertification = z.object({
+  content: z.array(zCourseCreatorCertification).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCourseCreatorCertification = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCourseCreatorCertification.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -7942,6 +8156,18 @@ export const zAdminMetrics = z
   .describe('Admin-specific metrics');
 
 /**
+ * Keycloak admin event activity
+ */
+export const zKeycloakAdminEventMetrics = z
+  .object({
+    events_last_24h: z.coerce.bigint().optional(),
+    events_last_7d: z.coerce.bigint().optional(),
+    operations_last_24h: z.record(z.coerce.bigint()).optional(),
+    resource_types_last_24h: z.record(z.coerce.bigint()).optional(),
+  })
+  .describe('Keycloak admin event activity');
+
+/**
  * Detailed learning analytics
  */
 export const zLearningMetrics = z
@@ -8036,6 +8262,7 @@ export const zAdminDashboardStats = z
     content_metrics: zContentMetrics.optional(),
     system_performance: zSystemPerformance.optional(),
     admin_metrics: zAdminMetrics.optional(),
+    keycloak_admin_events: zKeycloakAdminEventMetrics.optional(),
     learning_metrics: zLearningMetrics.optional(),
     timetabling_metrics: zTimetablingMetrics.optional(),
     commerce_metrics: zCommerceMetrics.optional(),
@@ -9216,6 +9443,122 @@ export const zUpdateCourseCreatorData = z.object({
  * Course creator updated successfully
  */
 export const zUpdateCourseCreatorResponse = zCourseCreator;
+
+export const zDeleteCourseCreatorSkillData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    skillUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCourseCreatorSkillData = z.object({
+  body: zCourseCreatorSkill,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    skillUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseCreatorSkillResponse = zApiResponseCourseCreatorSkill;
+
+export const zDeleteCourseCreatorMembershipData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    membershipUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCourseCreatorMembershipData = z.object({
+  body: zCourseCreatorProfessionalMembership,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    membershipUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseCreatorMembershipResponse =
+  zApiResponseCourseCreatorProfessionalMembership;
+
+export const zDeleteCourseCreatorExperienceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    experienceUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCourseCreatorExperienceData = z.object({
+  body: zCourseCreatorExperience,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    experienceUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseCreatorExperienceResponse = zApiResponseCourseCreatorExperience;
+
+export const zDeleteCourseCreatorEducationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    educationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCourseCreatorEducationData = z.object({
+  body: zCourseCreatorEducation,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    educationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseCreatorEducationResponse = zApiResponseCourseCreatorEducation;
+
+export const zDeleteCourseCreatorCertificationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    certificationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCourseCreatorCertificationData = z.object({
+  body: zCourseCreatorCertification,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    certificationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseCreatorCertificationResponse = zApiResponseCourseCreatorCertification;
 
 export const zDeleteGradingLevelData = z.object({
   body: z.never().optional(),
@@ -11188,6 +11531,148 @@ export const zUnverifyCourseCreatorData = z.object({
  * Course creator unverified successfully
  */
 export const zUnverifyCourseCreatorResponse = zCourseCreator;
+
+export const zGetCourseCreatorSkillsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseCreatorSkillsResponse = zApiResponsePagedDtoCourseCreatorSkill;
+
+export const zAddCourseCreatorSkillData = z.object({
+  body: zCourseCreatorSkill,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCourseCreatorSkillResponse = zApiResponseCourseCreatorSkill;
+
+export const zGetCourseCreatorMembershipsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseCreatorMembershipsResponse =
+  zApiResponsePagedDtoCourseCreatorProfessionalMembership;
+
+export const zAddCourseCreatorMembershipData = z.object({
+  body: zCourseCreatorProfessionalMembership,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCourseCreatorMembershipResponse = zApiResponseCourseCreatorProfessionalMembership;
+
+export const zGetCourseCreatorExperienceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseCreatorExperienceResponse = zApiResponsePagedDtoCourseCreatorExperience;
+
+export const zAddCourseCreatorExperienceData = z.object({
+  body: zCourseCreatorExperience,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCourseCreatorExperienceResponse = zApiResponseCourseCreatorExperience;
+
+export const zGetCourseCreatorEducationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseCreatorEducationResponse = zApiResponsePagedDtoCourseCreatorEducation;
+
+export const zAddCourseCreatorEducationData = z.object({
+  body: zCourseCreatorEducation,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCourseCreatorEducationResponse = zApiResponseCourseCreatorEducation;
+
+export const zGetCourseCreatorCertificationsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseCreatorCertificationsResponse =
+  zApiResponsePagedDtoCourseCreatorCertification;
+
+export const zAddCourseCreatorCertificationData = z.object({
+  body: zCourseCreatorCertification,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCourseCreatorCertificationResponse = zApiResponseCourseCreatorCertification;
 
 export const zGetAllGradingLevelsData = z.object({
   body: z.never().optional(),
@@ -13314,6 +13799,20 @@ export const zGetUnverifiedCourseCreatorsData = z.object({
  */
 export const zGetUnverifiedCourseCreatorsResponse = zApiResponsePagedDtoCourseCreator;
 
+export const zSearchCourseCreatorSkillsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    searchParams: z.record(z.string()),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zSearchCourseCreatorSkillsResponse = zApiResponsePagedDtoCourseCreatorSkill;
+
 export const zSearchCourseCreatorsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -13328,6 +13827,49 @@ export const zSearchCourseCreatorsData = z.object({
  */
 export const zSearchCourseCreatorsResponse = zPage;
 
+export const zSearchCourseCreatorMembershipsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    searchParams: z.record(z.string()),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zSearchCourseCreatorMembershipsResponse =
+  zApiResponsePagedDtoCourseCreatorProfessionalMembership;
+
+export const zSearchCourseCreatorExperienceData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    searchParams: z.record(z.string()),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zSearchCourseCreatorExperienceResponse = zApiResponsePagedDtoCourseCreatorExperience;
+
+export const zSearchCourseCreatorEducationData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    searchParams: z.record(z.string()),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zSearchCourseCreatorEducationResponse = zApiResponsePagedDtoCourseCreatorEducation;
+
 export const zCountCourseCreatorsByVerificationStatusData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -13340,6 +13882,21 @@ export const zCountCourseCreatorsByVerificationStatusData = z.object({
  * Count retrieved successfully
  */
 export const zCountCourseCreatorsByVerificationStatusResponse = zApiResponseLong;
+
+export const zSearchCourseCreatorCertificationsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    searchParams: z.record(z.string()),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zSearchCourseCreatorCertificationsResponse =
+  zApiResponsePagedDtoCourseCreatorCertification;
 
 export const zSearchContentTypesData = z.object({
   body: z.never().optional(),

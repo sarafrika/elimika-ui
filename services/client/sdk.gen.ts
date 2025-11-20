@@ -238,6 +238,36 @@ import type {
   UpdateCourseCreatorData,
   UpdateCourseCreatorResponses,
   UpdateCourseCreatorErrors,
+  DeleteCourseCreatorSkillData,
+  DeleteCourseCreatorSkillResponses,
+  DeleteCourseCreatorSkillErrors,
+  UpdateCourseCreatorSkillData,
+  UpdateCourseCreatorSkillResponses,
+  UpdateCourseCreatorSkillErrors,
+  DeleteCourseCreatorMembershipData,
+  DeleteCourseCreatorMembershipResponses,
+  DeleteCourseCreatorMembershipErrors,
+  UpdateCourseCreatorMembershipData,
+  UpdateCourseCreatorMembershipResponses,
+  UpdateCourseCreatorMembershipErrors,
+  DeleteCourseCreatorExperienceData,
+  DeleteCourseCreatorExperienceResponses,
+  DeleteCourseCreatorExperienceErrors,
+  UpdateCourseCreatorExperienceData,
+  UpdateCourseCreatorExperienceResponses,
+  UpdateCourseCreatorExperienceErrors,
+  DeleteCourseCreatorEducationData,
+  DeleteCourseCreatorEducationResponses,
+  DeleteCourseCreatorEducationErrors,
+  UpdateCourseCreatorEducationData,
+  UpdateCourseCreatorEducationResponses,
+  UpdateCourseCreatorEducationErrors,
+  DeleteCourseCreatorCertificationData,
+  DeleteCourseCreatorCertificationResponses,
+  DeleteCourseCreatorCertificationErrors,
+  UpdateCourseCreatorCertificationData,
+  UpdateCourseCreatorCertificationResponses,
+  UpdateCourseCreatorCertificationErrors,
   DeleteGradingLevelData,
   DeleteGradingLevelResponses,
   DeleteGradingLevelErrors,
@@ -640,6 +670,36 @@ import type {
   UnverifyCourseCreatorData,
   UnverifyCourseCreatorResponses,
   UnverifyCourseCreatorErrors,
+  GetCourseCreatorSkillsData,
+  GetCourseCreatorSkillsResponses,
+  GetCourseCreatorSkillsErrors,
+  AddCourseCreatorSkillData,
+  AddCourseCreatorSkillResponses,
+  AddCourseCreatorSkillErrors,
+  GetCourseCreatorMembershipsData,
+  GetCourseCreatorMembershipsResponses,
+  GetCourseCreatorMembershipsErrors,
+  AddCourseCreatorMembershipData,
+  AddCourseCreatorMembershipResponses,
+  AddCourseCreatorMembershipErrors,
+  GetCourseCreatorExperienceData,
+  GetCourseCreatorExperienceResponses,
+  GetCourseCreatorExperienceErrors,
+  AddCourseCreatorExperienceData,
+  AddCourseCreatorExperienceResponses,
+  AddCourseCreatorExperienceErrors,
+  GetCourseCreatorEducationData,
+  GetCourseCreatorEducationResponses,
+  GetCourseCreatorEducationErrors,
+  AddCourseCreatorEducationData,
+  AddCourseCreatorEducationResponses,
+  AddCourseCreatorEducationErrors,
+  GetCourseCreatorCertificationsData,
+  GetCourseCreatorCertificationsResponses,
+  GetCourseCreatorCertificationsErrors,
+  AddCourseCreatorCertificationData,
+  AddCourseCreatorCertificationResponses,
+  AddCourseCreatorCertificationErrors,
   GetAllGradingLevelsData,
   GetAllGradingLevelsResponses,
   GetAllGradingLevelsErrors,
@@ -1093,12 +1153,27 @@ import type {
   GetUnverifiedCourseCreatorsData,
   GetUnverifiedCourseCreatorsResponses,
   GetUnverifiedCourseCreatorsErrors,
+  SearchCourseCreatorSkillsData,
+  SearchCourseCreatorSkillsResponses,
+  SearchCourseCreatorSkillsErrors,
   SearchCourseCreatorsData,
   SearchCourseCreatorsResponses,
   SearchCourseCreatorsErrors,
+  SearchCourseCreatorMembershipsData,
+  SearchCourseCreatorMembershipsResponses,
+  SearchCourseCreatorMembershipsErrors,
+  SearchCourseCreatorExperienceData,
+  SearchCourseCreatorExperienceResponses,
+  SearchCourseCreatorExperienceErrors,
+  SearchCourseCreatorEducationData,
+  SearchCourseCreatorEducationResponses,
+  SearchCourseCreatorEducationErrors,
   CountCourseCreatorsByVerificationStatusData,
   CountCourseCreatorsByVerificationStatusResponses,
   CountCourseCreatorsByVerificationStatusErrors,
+  SearchCourseCreatorCertificationsData,
+  SearchCourseCreatorCertificationsResponses,
+  SearchCourseCreatorCertificationsErrors,
   SearchContentTypesData,
   SearchContentTypesResponses,
   SearchContentTypesErrors,
@@ -1303,6 +1378,11 @@ import {
   updateCourseAssessmentResponseTransformer,
   getCourseCreatorByUuidResponseTransformer,
   updateCourseCreatorResponseTransformer,
+  updateCourseCreatorSkillResponseTransformer,
+  updateCourseCreatorMembershipResponseTransformer,
+  updateCourseCreatorExperienceResponseTransformer,
+  updateCourseCreatorEducationResponseTransformer,
+  updateCourseCreatorCertificationResponseTransformer,
   updateGradingLevelResponseTransformer,
   updateDifficultyLevelResponseTransformer,
   updateContentTypeResponseTransformer,
@@ -1411,6 +1491,16 @@ import {
   createCourseCreatorResponseTransformer,
   verifyCourseCreatorResponseTransformer,
   unverifyCourseCreatorResponseTransformer,
+  getCourseCreatorSkillsResponseTransformer,
+  addCourseCreatorSkillResponseTransformer,
+  getCourseCreatorMembershipsResponseTransformer,
+  addCourseCreatorMembershipResponseTransformer,
+  getCourseCreatorExperienceResponseTransformer,
+  addCourseCreatorExperienceResponseTransformer,
+  getCourseCreatorEducationResponseTransformer,
+  addCourseCreatorEducationResponseTransformer,
+  getCourseCreatorCertificationsResponseTransformer,
+  addCourseCreatorCertificationResponseTransformer,
   getAllGradingLevelsResponseTransformer,
   createGradingLevelResponseTransformer,
   getAllDifficultyLevelsResponseTransformer,
@@ -1525,8 +1615,13 @@ import {
   getActiveCoursesResponseTransformer,
   getVerifiedCourseCreatorsResponseTransformer,
   getUnverifiedCourseCreatorsResponseTransformer,
+  searchCourseCreatorSkillsResponseTransformer,
   searchCourseCreatorsResponseTransformer,
+  searchCourseCreatorMembershipsResponseTransformer,
+  searchCourseCreatorExperienceResponseTransformer,
+  searchCourseCreatorEducationResponseTransformer,
   countCourseCreatorsByVerificationStatusResponseTransformer,
+  searchCourseCreatorCertificationsResponseTransformer,
   searchContentTypesResponseTransformer,
   getMediaContentTypesResponseTransformer,
   getSubCategoriesResponseTransformer,
@@ -3849,6 +3944,301 @@ export const updateCourseCreator = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/course-creators/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete course creator skill
+ * Removes a skill record from a course creator profile.
+ */
+export const deleteCourseCreatorSkill = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorSkillResponses,
+    DeleteCourseCreatorSkillErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/skills/{skillUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update course creator skill
+ * Updates a recorded skill for a course creator.
+ */
+export const updateCourseCreatorSkill = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorSkillResponses,
+    UpdateCourseCreatorSkillErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorSkillResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/skills/{skillUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete membership record
+ * Deletes a course creator membership record.
+ */
+export const deleteCourseCreatorMembership = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorMembershipData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorMembershipResponses,
+    DeleteCourseCreatorMembershipErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/memberships/{membershipUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update membership record
+ * Updates a course creator professional membership.
+ */
+export const updateCourseCreatorMembership = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorMembershipData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorMembershipResponses,
+    UpdateCourseCreatorMembershipErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorMembershipResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/memberships/{membershipUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete experience record
+ * Removes a course creator experience entry.
+ */
+export const deleteCourseCreatorExperience = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorExperienceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorExperienceResponses,
+    DeleteCourseCreatorExperienceErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/experience/{experienceUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update experience
+ * Updates a recorded work experience entry for a course creator.
+ */
+export const updateCourseCreatorExperience = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorExperienceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorExperienceResponses,
+    UpdateCourseCreatorExperienceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorExperienceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/experience/{experienceUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete education record
+ * Deletes an education record from a course creator profile.
+ */
+export const deleteCourseCreatorEducation = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorEducationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorEducationResponses,
+    DeleteCourseCreatorEducationErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/education/{educationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update education record
+ * Updates an existing course creator education entry.
+ */
+export const updateCourseCreatorEducation = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorEducationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorEducationResponses,
+    UpdateCourseCreatorEducationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorEducationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/education/{educationUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete certification record
+ * Deletes a certification entry from a course creator profile.
+ */
+export const deleteCourseCreatorCertification = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorCertificationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorCertificationResponses,
+    DeleteCourseCreatorCertificationErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/certifications/{certificationUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update certification record
+ * Updates certification metadata for a course creator.
+ */
+export const updateCourseCreatorCertification = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorCertificationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorCertificationResponses,
+    UpdateCourseCreatorCertificationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorCertificationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/certifications/{certificationUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -8007,6 +8397,306 @@ export const unverifyCourseCreator = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/course-creators/{uuid}/unverify',
     ...options,
+  });
+};
+
+/**
+ * List course creator skills
+ * Retrieves all recorded skills for a specific course creator.
+ */
+export const getCourseCreatorSkills = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorSkillsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorSkillsResponses,
+    GetCourseCreatorSkillsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorSkillsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/skills',
+    ...options,
+  });
+};
+
+/**
+ * Add skill to course creator
+ * Captures a new competency for a course creator profile.
+ */
+export const addCourseCreatorSkill = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseCreatorSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseCreatorSkillResponses,
+    AddCourseCreatorSkillErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseCreatorSkillResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/skills',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get professional memberships
+ * Retrieves memberships for a specific course creator.
+ */
+export const getCourseCreatorMemberships = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorMembershipsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorMembershipsResponses,
+    GetCourseCreatorMembershipsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorMembershipsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/memberships',
+    ...options,
+  });
+};
+
+/**
+ * Add professional membership
+ * Captures an association or membership for a course creator.
+ */
+export const addCourseCreatorMembership = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseCreatorMembershipData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseCreatorMembershipResponses,
+    AddCourseCreatorMembershipErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseCreatorMembershipResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/memberships',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get experience history
+ * Retrieves professional experience entries for a course creator.
+ */
+export const getCourseCreatorExperience = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorExperienceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorExperienceResponses,
+    GetCourseCreatorExperienceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorExperienceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/experience',
+    ...options,
+  });
+};
+
+/**
+ * Add experience record
+ * Captures professional experience for a course creator.
+ */
+export const addCourseCreatorExperience = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseCreatorExperienceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseCreatorExperienceResponses,
+    AddCourseCreatorExperienceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseCreatorExperienceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/experience',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get course creator education
+ * Retrieves all education history for a course creator.
+ */
+export const getCourseCreatorEducation = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorEducationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorEducationResponses,
+    GetCourseCreatorEducationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorEducationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/education',
+    ...options,
+  });
+};
+
+/**
+ * Add education record
+ * Captures an academic qualification for a course creator.
+ */
+export const addCourseCreatorEducation = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseCreatorEducationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseCreatorEducationResponses,
+    AddCourseCreatorEducationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseCreatorEducationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/education',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get certifications
+ * Retrieves certification records for a course creator.
+ */
+export const getCourseCreatorCertifications = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorCertificationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorCertificationsResponses,
+    GetCourseCreatorCertificationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorCertificationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/certifications',
+    ...options,
+  });
+};
+
+/**
+ * Add certification record
+ * Captures a certification or accreditation held by a course creator.
+ */
+export const addCourseCreatorCertification = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseCreatorCertificationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseCreatorCertificationResponses,
+    AddCourseCreatorCertificationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseCreatorCertificationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/certifications',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -12551,6 +13241,34 @@ export const getUnverifiedCourseCreators = <ThrowOnError extends boolean = false
 };
 
 /**
+ * Search course creator skills
+ * Advanced search endpoint for course creator skills using query parameters.
+ */
+export const searchCourseCreatorSkills = <ThrowOnError extends boolean = false>(
+  options: Options<SearchCourseCreatorSkillsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchCourseCreatorSkillsResponses,
+    SearchCourseCreatorSkillsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchCourseCreatorSkillsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/skills/search',
+    ...options,
+  });
+};
+
+/**
  * Search course creators
  *  Search for course creators using flexible criteria with advanced operators.
  *
@@ -12613,6 +13331,90 @@ export const searchCourseCreators = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Search course creator memberships
+ * Advanced search endpoint for course creator memberships.
+ */
+export const searchCourseCreatorMemberships = <ThrowOnError extends boolean = false>(
+  options: Options<SearchCourseCreatorMembershipsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchCourseCreatorMembershipsResponses,
+    SearchCourseCreatorMembershipsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchCourseCreatorMembershipsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/memberships/search',
+    ...options,
+  });
+};
+
+/**
+ * Search course creator experience
+ * Advanced search endpoint for course creator experience history.
+ */
+export const searchCourseCreatorExperience = <ThrowOnError extends boolean = false>(
+  options: Options<SearchCourseCreatorExperienceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchCourseCreatorExperienceResponses,
+    SearchCourseCreatorExperienceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchCourseCreatorExperienceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/experience/search',
+    ...options,
+  });
+};
+
+/**
+ * Search course creator education
+ * Advanced search endpoint for course creator education history.
+ */
+export const searchCourseCreatorEducation = <ThrowOnError extends boolean = false>(
+  options: Options<SearchCourseCreatorEducationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchCourseCreatorEducationResponses,
+    SearchCourseCreatorEducationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchCourseCreatorEducationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/education/search',
+    ...options,
+  });
+};
+
+/**
  * Get course creator count by verification status
  * Returns the total count of course creators filtered by verification status.
  */
@@ -12636,6 +13438,34 @@ export const countCourseCreatorsByVerificationStatus = <ThrowOnError extends boo
       },
     ],
     url: '/api/v1/course-creators/count',
+    ...options,
+  });
+};
+
+/**
+ * Search course creator certifications
+ * Advanced search endpoint for course creator certifications.
+ */
+export const searchCourseCreatorCertifications = <ThrowOnError extends boolean = false>(
+  options: Options<SearchCourseCreatorCertificationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchCourseCreatorCertificationsResponses,
+    SearchCourseCreatorCertificationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchCourseCreatorCertificationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/certifications/search',
     ...options,
   });
 };

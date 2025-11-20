@@ -49,6 +49,11 @@ import type {
   UpdateCourseAssessmentResponse,
   GetCourseCreatorByUuidResponse,
   UpdateCourseCreatorResponse,
+  UpdateCourseCreatorSkillResponse,
+  UpdateCourseCreatorMembershipResponse,
+  UpdateCourseCreatorExperienceResponse,
+  UpdateCourseCreatorEducationResponse,
+  UpdateCourseCreatorCertificationResponse,
   UpdateGradingLevelResponse,
   UpdateDifficultyLevelResponse,
   UpdateContentTypeResponse,
@@ -157,6 +162,16 @@ import type {
   CreateCourseCreatorResponse,
   VerifyCourseCreatorResponse,
   UnverifyCourseCreatorResponse,
+  GetCourseCreatorSkillsResponse,
+  AddCourseCreatorSkillResponse,
+  GetCourseCreatorMembershipsResponse,
+  AddCourseCreatorMembershipResponse,
+  GetCourseCreatorExperienceResponse,
+  AddCourseCreatorExperienceResponse,
+  GetCourseCreatorEducationResponse,
+  AddCourseCreatorEducationResponse,
+  GetCourseCreatorCertificationsResponse,
+  AddCourseCreatorCertificationResponse,
   GetAllGradingLevelsResponse,
   CreateGradingLevelResponse,
   GetAllDifficultyLevelsResponse,
@@ -271,8 +286,13 @@ import type {
   GetActiveCoursesResponse,
   GetVerifiedCourseCreatorsResponse,
   GetUnverifiedCourseCreatorsResponse,
+  SearchCourseCreatorSkillsResponse,
   SearchCourseCreatorsResponse,
+  SearchCourseCreatorMembershipsResponse,
+  SearchCourseCreatorExperienceResponse,
+  SearchCourseCreatorEducationResponse,
   CountCourseCreatorsByVerificationStatusResponse,
+  SearchCourseCreatorCertificationsResponse,
   SearchContentTypesResponse,
   GetMediaContentTypesResponse,
   GetSubCategoriesResponse,
@@ -1214,6 +1234,144 @@ export const updateCourseCreatorResponseTransformer = async (
   data: any
 ): Promise<UpdateCourseCreatorResponse> => {
   data = courseCreatorSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseCreatorSkillSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseCreatorSkillSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseCreatorSkillSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateCourseCreatorSkillResponseTransformer = async (
+  data: any
+): Promise<UpdateCourseCreatorSkillResponse> => {
+  data = apiResponseCourseCreatorSkillSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseCreatorProfessionalMembershipSchemaResponseTransformer = (data: any) => {
+  if (data.start_date) {
+    data.start_date = new Date(data.start_date);
+  }
+  if (data.end_date) {
+    data.end_date = new Date(data.end_date);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseCreatorProfessionalMembershipSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseCreatorProfessionalMembershipSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateCourseCreatorMembershipResponseTransformer = async (
+  data: any
+): Promise<UpdateCourseCreatorMembershipResponse> => {
+  data = apiResponseCourseCreatorProfessionalMembershipSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseCreatorExperienceSchemaResponseTransformer = (data: any) => {
+  if (data.start_date) {
+    data.start_date = new Date(data.start_date);
+  }
+  if (data.end_date) {
+    data.end_date = new Date(data.end_date);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseCreatorExperienceSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseCreatorExperienceSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateCourseCreatorExperienceResponseTransformer = async (
+  data: any
+): Promise<UpdateCourseCreatorExperienceResponse> => {
+  data = apiResponseCourseCreatorExperienceSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseCreatorEducationSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseCreatorEducationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseCreatorEducationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateCourseCreatorEducationResponseTransformer = async (
+  data: any
+): Promise<UpdateCourseCreatorEducationResponse> => {
+  data = apiResponseCourseCreatorEducationSchemaResponseTransformer(data);
+  return data;
+};
+
+const courseCreatorCertificationSchemaResponseTransformer = (data: any) => {
+  if (data.issued_date) {
+    data.issued_date = new Date(data.issued_date);
+  }
+  if (data.expiry_date) {
+    data.expiry_date = new Date(data.expiry_date);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseCourseCreatorCertificationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseCreatorCertificationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const updateCourseCreatorCertificationResponseTransformer = async (
+  data: any
+): Promise<UpdateCourseCreatorCertificationResponse> => {
+  data = apiResponseCourseCreatorCertificationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2833,6 +2991,173 @@ export const unverifyCourseCreatorResponseTransformer = async (
   return data;
 };
 
+const pagedDtoCourseCreatorSkillSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseCreatorSkillSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseCreatorSkillSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseCreatorSkillSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseCreatorSkillsResponseTransformer = async (
+  data: any
+): Promise<GetCourseCreatorSkillsResponse> => {
+  data = apiResponsePagedDtoCourseCreatorSkillSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addCourseCreatorSkillResponseTransformer = async (
+  data: any
+): Promise<AddCourseCreatorSkillResponse> => {
+  data = apiResponseCourseCreatorSkillSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoCourseCreatorProfessionalMembershipSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseCreatorProfessionalMembershipSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseCreatorProfessionalMembershipSchemaResponseTransformer = (
+  data: any
+) => {
+  if (data.data) {
+    data.data = pagedDtoCourseCreatorProfessionalMembershipSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseCreatorMembershipsResponseTransformer = async (
+  data: any
+): Promise<GetCourseCreatorMembershipsResponse> => {
+  data = apiResponsePagedDtoCourseCreatorProfessionalMembershipSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addCourseCreatorMembershipResponseTransformer = async (
+  data: any
+): Promise<AddCourseCreatorMembershipResponse> => {
+  data = apiResponseCourseCreatorProfessionalMembershipSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoCourseCreatorExperienceSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseCreatorExperienceSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseCreatorExperienceSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseCreatorExperienceSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseCreatorExperienceResponseTransformer = async (
+  data: any
+): Promise<GetCourseCreatorExperienceResponse> => {
+  data = apiResponsePagedDtoCourseCreatorExperienceSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addCourseCreatorExperienceResponseTransformer = async (
+  data: any
+): Promise<AddCourseCreatorExperienceResponse> => {
+  data = apiResponseCourseCreatorExperienceSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoCourseCreatorEducationSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseCreatorEducationSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseCreatorEducationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseCreatorEducationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseCreatorEducationResponseTransformer = async (
+  data: any
+): Promise<GetCourseCreatorEducationResponse> => {
+  data = apiResponsePagedDtoCourseCreatorEducationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addCourseCreatorEducationResponseTransformer = async (
+  data: any
+): Promise<AddCourseCreatorEducationResponse> => {
+  data = apiResponseCourseCreatorEducationSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoCourseCreatorCertificationSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return courseCreatorCertificationSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCourseCreatorCertificationSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCourseCreatorCertificationSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseCreatorCertificationsResponseTransformer = async (
+  data: any
+): Promise<GetCourseCreatorCertificationsResponse> => {
+  data = apiResponsePagedDtoCourseCreatorCertificationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addCourseCreatorCertificationResponseTransformer = async (
+  data: any
+): Promise<AddCourseCreatorCertificationResponse> => {
+  data = apiResponseCourseCreatorCertificationSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoGradingLevelSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -4205,6 +4530,13 @@ export const getUnverifiedCourseCreatorsResponseTransformer = async (
   return data;
 };
 
+export const searchCourseCreatorSkillsResponseTransformer = async (
+  data: any
+): Promise<SearchCourseCreatorSkillsResponse> => {
+  data = apiResponsePagedDtoCourseCreatorSkillSchemaResponseTransformer(data);
+  return data;
+};
+
 export const searchCourseCreatorsResponseTransformer = async (
   data: any
 ): Promise<SearchCourseCreatorsResponse> => {
@@ -4212,10 +4544,38 @@ export const searchCourseCreatorsResponseTransformer = async (
   return data;
 };
 
+export const searchCourseCreatorMembershipsResponseTransformer = async (
+  data: any
+): Promise<SearchCourseCreatorMembershipsResponse> => {
+  data = apiResponsePagedDtoCourseCreatorProfessionalMembershipSchemaResponseTransformer(data);
+  return data;
+};
+
+export const searchCourseCreatorExperienceResponseTransformer = async (
+  data: any
+): Promise<SearchCourseCreatorExperienceResponse> => {
+  data = apiResponsePagedDtoCourseCreatorExperienceSchemaResponseTransformer(data);
+  return data;
+};
+
+export const searchCourseCreatorEducationResponseTransformer = async (
+  data: any
+): Promise<SearchCourseCreatorEducationResponse> => {
+  data = apiResponsePagedDtoCourseCreatorEducationSchemaResponseTransformer(data);
+  return data;
+};
+
 export const countCourseCreatorsByVerificationStatusResponseTransformer = async (
   data: any
 ): Promise<CountCourseCreatorsByVerificationStatusResponse> => {
   data = apiResponseLongSchemaResponseTransformer(data);
+  return data;
+};
+
+export const searchCourseCreatorCertificationsResponseTransformer = async (
+  data: any
+): Promise<SearchCourseCreatorCertificationsResponse> => {
+  data = apiResponsePagedDtoCourseCreatorCertificationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4588,6 +4948,16 @@ const adminMetricsSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
+const keycloakAdminEventMetricsSchemaResponseTransformer = (data: any) => {
+  if (data.events_last_24h) {
+    data.events_last_24h = BigInt(data.events_last_24h.toString());
+  }
+  if (data.events_last_7d) {
+    data.events_last_7d = BigInt(data.events_last_7d.toString());
+  }
+  return data;
+};
+
 const learningMetricsSchemaResponseTransformer = (data: any) => {
   if (data.total_courses) {
     data.total_courses = BigInt(data.total_courses.toString());
@@ -4749,6 +5119,11 @@ const adminDashboardStatsSchemaResponseTransformer = (data: any) => {
   }
   if (data.admin_metrics) {
     data.admin_metrics = adminMetricsSchemaResponseTransformer(data.admin_metrics);
+  }
+  if (data.keycloak_admin_events) {
+    data.keycloak_admin_events = keycloakAdminEventMetricsSchemaResponseTransformer(
+      data.keycloak_admin_events
+    );
   }
   if (data.learning_metrics) {
     data.learning_metrics = learningMetricsSchemaResponseTransformer(data.learning_metrics);

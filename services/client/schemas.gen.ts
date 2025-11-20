@@ -1267,19 +1267,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1730,16 +1730,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: 2,
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2656,18 +2656,18 @@ export const InstructorSchema = {
       example: true,
       readOnly: true,
     },
-    formatted_location: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
-      example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
     has_location_coordinates: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
+      readOnly: true,
+    },
+    formatted_location: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
+      example: '-1.292100, 36.821900',
       readOnly: true,
     },
   },
@@ -2911,6 +2911,13 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
@@ -2962,13 +2969,6 @@ export const InstructorProfessionalMembershipSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
-      example: true,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
       example: true,
       readOnly: true,
     },
@@ -3125,6 +3125,13 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     duration_in_months: {
       type: 'integer',
       format: 'int32',
@@ -3172,13 +3179,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3310,11 +3310,24 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     is_recent_qualification: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.',
       example: true,
+      readOnly: true,
+    },
+    formatted_completion: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
+      example: 2020,
       readOnly: true,
     },
     years_since_completion: {
@@ -3331,19 +3344,6 @@ export const InstructorEducationSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
-      example: true,
-      readOnly: true,
-    },
-    formatted_completion: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
-      example: 2020,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
       example: true,
       readOnly: true,
     },
@@ -3596,15 +3596,6 @@ export const InstructorDocumentSchema = {
       example: false,
       readOnly: true,
     },
-    has_expiry_date: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the document has an expiry date configured.',
-      example: true,
-      readOnly: true,
-    },
-    verification_status: {
-      $ref: '#/components/schemas/VerificationStatusEnum',
-    },
     file_size_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted file size.',
@@ -3624,6 +3615,15 @@ export const InstructorDocumentSchema = {
       description: '**[READ-ONLY]** Indicates if the document is pending verification.',
       example: false,
       readOnly: true,
+    },
+    has_expiry_date: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the document has an expiry date configured.',
+      example: true,
+      readOnly: true,
+    },
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum',
     },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
@@ -5146,6 +5146,465 @@ export const CourseCreatorSchema = {
   required: ['full_name', 'user_uuid'],
 } as const;
 
+export const CourseCreatorSkillSchema = {
+  type: 'object',
+  description:
+    'Technical or creative competency declared by a course creator with proficiency metadata',
+  example: {
+    uuid: 'skill123-4567-89ab-cdef-0123456789ab',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    skill_name: 'Instructional Design',
+    proficiency_level: 'EXPERT',
+    created_date: '2024-06-15T14:30:22',
+    created_by: 'creator@example.com',
+    updated_date: '2024-06-16T09:15:00',
+    updated_by: 'creator@example.com',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    skill_name: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+    proficiency_level: {
+      $ref: '#/components/schemas/ProficiencyLevelEnum2',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    display_name: {
+      type: 'string',
+      readOnly: true,
+    },
+    proficiency_description: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['course_creator_uuid', 'proficiency_level', 'skill_name'],
+} as const;
+
+export const ApiResponseCourseCreatorSkillSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorSkill',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CourseCreatorProfessionalMembershipSchema = {
+  type: 'object',
+  description:
+    'Membership information for industry bodies or associations that endorse the course creator',
+  example: {
+    uuid: 'memb1234-5678-abcd-ef01-234567890abc',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    organization_name: 'International Society for Technology in Education',
+    membership_number: 'ISTE-2024-991',
+    start_date: '2022-01-01',
+    end_date: null,
+    is_active: true,
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    organization_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    membership_number: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    is_active: {
+      type: 'boolean',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    status_label: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['course_creator_uuid', 'organization_name'],
+} as const;
+
+export const ApiResponseCourseCreatorProfessionalMembershipSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorProfessionalMembership',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CourseCreatorExperienceSchema = {
+  type: 'object',
+  description: 'Work history and practical delivery background for course creators',
+  example: {
+    uuid: 'exp12345-6789-abcd-ef01-234567890abc',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    position: 'Lead Content Strategist',
+    organization_name: 'Digital Learning Labs',
+    responsibilities: 'Designed blended learning experiences for enterprise teams.',
+    years_of_experience: 5.5,
+    start_date: '2019-01-01',
+    end_date: null,
+    is_current_position: true,
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    position: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    organization_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    responsibilities: {
+      type: 'string',
+    },
+    years_of_experience: {
+      type: 'number',
+      maximum: 60,
+      minimum: 0,
+    },
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    is_current_position: {
+      type: 'boolean',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    tenure_label: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['course_creator_uuid', 'organization_name', 'position'],
+} as const;
+
+export const ApiResponseCourseCreatorExperienceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorExperience',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CourseCreatorEducationSchema = {
+  type: 'object',
+  description: 'Academic credentials captured for course creators',
+  example: {
+    uuid: 'edu12345-6789-abcd-ef01-234567890abc',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    qualification: 'Master of Education',
+    school_name: 'Strathmore University',
+    year_completed: 2021,
+    certificate_number: 'MEd-2021-0099',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    qualification: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    school_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    year_completed: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 2100,
+      minimum: 1950,
+    },
+    certificate_number: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    is_recent_qualification: {
+      type: 'boolean',
+      readOnly: true,
+    },
+    formatted_completion: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['course_creator_uuid', 'qualification', 'school_name'],
+} as const;
+
+export const ApiResponseCourseCreatorEducationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorEducation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const CourseCreatorCertificationSchema = {
+  type: 'object',
+  description:
+    'Professional certification or accreditation evidence associated with a course creator',
+  example: {
+    uuid: 'cert1234-5678-abcd-ef01-234567890abc',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    certification_name: 'Adobe Captivate Specialist',
+    issuing_organization: 'Adobe',
+    issued_date: '2023-04-01',
+    expiry_date: '2025-04-01',
+    credential_id: 'ADCAP-2023-8891',
+    credential_url: 'https://verify.example.com/ADCAP-2023-8891',
+    description: 'Validated expertise in creating immersive digital learning content.',
+    is_verified: true,
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    certification_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    issuing_organization: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    issued_date: {
+      type: 'string',
+      format: 'date',
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
+    },
+    credential_id: {
+      type: 'string',
+      maxLength: 120,
+      minLength: 0,
+    },
+    credential_url: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+    },
+    is_verified: {
+      type: 'boolean',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    is_expired: {
+      type: 'boolean',
+      readOnly: true,
+    },
+  },
+  required: ['certification_name', 'course_creator_uuid', 'issuing_organization'],
+} as const;
+
+export const ApiResponseCourseCreatorCertificationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorCertification',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
 export const GradingLevelSchema = {
   type: 'object',
   description: 'Grading scale level with points and ordering for assessments',
@@ -6126,6 +6585,12 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -6143,12 +6608,6 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -7955,10 +8414,10 @@ export const CourseTrainingApplicationRequestSchema = {
     applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
     rate_card: {
       currency: 'KES',
-      private_individual_rate: 3500,
-      private_group_rate: 2800,
-      public_individual_rate: 3000,
-      public_group_rate: 2400,
+      private_online_rate: 3500,
+      private_inperson_rate: 3600,
+      group_online_rate: 2800,
+      group_inperson_rate: 3000,
     },
     application_notes: 'I hold the vendor certification required for this course.',
   },
@@ -7973,7 +8432,8 @@ export const CourseTrainingApplicationRequestSchema = {
     },
     rate_card: {
       $ref: '#/components/schemas/CourseTrainingRateCard',
-      description: '**[REQUIRED]** Instructor rate card across privacy/session segments.',
+      description:
+        '**[REQUIRED]** Instructor rate card across session format and delivery modality combinations.',
     },
     application_notes: {
       type: 'string',
@@ -7996,36 +8456,36 @@ export const CourseTrainingRateCardSchema = {
       maxLength: 3,
       pattern: '^[A-Za-z]{3}$',
     },
-    private_individual_rate: {
+    private_online_rate: {
       type: 'number',
-      description: 'Private 1:1 session rate per learner per hour.',
+      description: '1:1 private session rate when delivered online, per learner per hour.',
       example: 3500,
       minimum: 0,
     },
-    private_group_rate: {
+    private_inperson_rate: {
       type: 'number',
-      description: 'Private group session rate per learner per hour.',
+      description: '1:1 private session rate when delivered in person, per learner per hour.',
+      example: 3600,
+      minimum: 0,
+    },
+    group_online_rate: {
+      type: 'number',
+      description: 'Group session rate when delivered online, per learner per hour.',
       example: 2800,
       minimum: 0,
     },
-    public_individual_rate: {
+    group_inperson_rate: {
       type: 'number',
-      description: 'Public individual rate per learner per hour.',
+      description: 'Group session rate when delivered in person, per learner per hour.',
       example: 3000,
-      minimum: 0,
-    },
-    public_group_rate: {
-      type: 'number',
-      description: 'Public group rate per learner per hour.',
-      example: 2400,
       minimum: 0,
     },
   },
   required: [
-    'private_group_rate',
-    'private_individual_rate',
-    'public_group_rate',
-    'public_individual_rate',
+    'group_inperson_rate',
+    'group_online_rate',
+    'private_inperson_rate',
+    'private_online_rate',
   ],
 } as const;
 
@@ -8058,10 +8518,10 @@ export const CourseTrainingApplicationSchema = {
     status: 'pending',
     rate_card: {
       currency: 'KES',
-      private_individual_rate: 3500,
-      private_group_rate: 2800,
-      public_individual_rate: 3000,
-      public_group_rate: 2400,
+      private_online_rate: 3500,
+      private_inperson_rate: 3600,
+      group_online_rate: 2800,
+      group_inperson_rate: 3000,
     },
     application_notes: 'I have delivered similar courses for 5 years.',
     review_notes: null,
@@ -9972,6 +10432,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -9988,12 +10454,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
   },
@@ -10254,6 +10714,12 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
+      readOnly: true,
+    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
@@ -10272,12 +10738,6 @@ export const ProgramEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed program with final grade of 87.25',
-      readOnly: true,
-    },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
       readOnly: true,
     },
   },
@@ -11189,16 +11649,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -11629,6 +12089,12 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
+      readOnly: true,
+    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
@@ -11647,12 +12113,6 @@ export const CourseEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed with final grade of 85.50',
-      readOnly: true,
-    },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
       readOnly: true,
     },
   },
@@ -11853,6 +12313,186 @@ export const PagedDTOCourseCreatorSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/CourseCreator',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorSkillSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorSkill',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOCourseCreatorSkillSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorSkill',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorProfessionalMembershipSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorProfessionalMembership',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOCourseCreatorProfessionalMembershipSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorProfessionalMembership',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorExperienceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorExperience',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOCourseCreatorExperienceSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorExperience',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorEducationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorEducation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOCourseCreatorEducationSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorEducation',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorCertificationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorCertification',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOCourseCreatorCertificationSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorCertification',
       },
     },
     metadata: {
@@ -12302,6 +12942,10 @@ export const AdminDashboardStatsSchema = {
       $ref: '#/components/schemas/AdminMetrics',
       description: 'Admin-specific metrics',
     },
+    keycloak_admin_events: {
+      $ref: '#/components/schemas/KeycloakAdminEventMetrics',
+      description: 'Keycloak admin event telemetry',
+    },
     learning_metrics: {
       $ref: '#/components/schemas/LearningMetrics',
       description: 'Learning performance metrics',
@@ -12482,6 +13126,35 @@ export const ContentMetricsSchema = {
     average_quality_score: {
       type: 'number',
       format: 'double',
+    },
+  },
+} as const;
+
+export const KeycloakAdminEventMetricsSchema = {
+  type: 'object',
+  description: 'Keycloak admin event activity',
+  properties: {
+    events_last_24h: {
+      type: 'integer',
+      format: 'int64',
+    },
+    events_last_7d: {
+      type: 'integer',
+      format: 'int64',
+    },
+    operations_last_24h: {
+      type: 'object',
+      additionalProperties: {
+        type: 'integer',
+        format: 'int64',
+      },
+    },
+    resource_types_last_24h: {
+      type: 'object',
+      additionalProperties: {
+        type: 'integer',
+        format: 'int64',
+      },
     },
   },
 } as const;
@@ -13021,6 +13694,11 @@ export const ProvidedByEnumSchema = {
   description: '**[OPTIONAL]** Party responsible for providing this requirement.',
   enum: ['course_creator', 'instructor', 'organisation', 'student'],
   example: 'organisation',
+} as const;
+
+export const ProficiencyLevelEnum2Schema = {
+  type: 'string',
+  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
 } as const;
 
 export const ClassVisibilityEnumSchema = {

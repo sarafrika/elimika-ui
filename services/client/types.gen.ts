@@ -610,13 +610,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -838,13 +838,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1294,13 +1294,13 @@ export type Instructor = {
    */
   readonly is_profile_complete?: boolean;
   /**
-   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
-   */
-  readonly formatted_location?: string;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
+   */
+  readonly formatted_location?: string;
 };
 
 /**
@@ -1416,6 +1416,10 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
@@ -1445,10 +1449,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1521,6 +1521,10 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
@@ -1549,10 +1553,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number;
-  /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1613,9 +1613,17 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted string showing year of completion and school name.
+   */
+  readonly formatted_completion?: string;
   /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
@@ -1625,14 +1633,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
   readonly has_certificate_number?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted string showing year of completion and school name.
-   */
-  readonly formatted_completion?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -1750,11 +1750,6 @@ export type InstructorDocument = {
    */
   readonly is_expired?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the document has an expiry date configured.
-   */
-  readonly has_expiry_date?: boolean;
-  verification_status?: VerificationStatusEnum;
-  /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
   readonly file_size_formatted?: string;
@@ -1766,6 +1761,11 @@ export type InstructorDocument = {
    * **[READ-ONLY]** Indicates if the document is pending verification.
    */
   readonly is_pending_verification?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the document has an expiry date configured.
+   */
+  readonly has_expiry_date?: boolean;
+  verification_status?: VerificationStatusEnum;
 };
 
 export type ApiResponseInstructorDocument = {
@@ -2509,6 +2509,144 @@ export type CourseCreator = {
 };
 
 /**
+ * Technical or creative competency declared by a course creator with proficiency metadata
+ */
+export type CourseCreatorSkill = {
+  readonly uuid?: string;
+  course_creator_uuid: string;
+  skill_name: string;
+  proficiency_level: ProficiencyLevelEnum2;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+  readonly display_name?: string;
+  readonly proficiency_description?: string;
+};
+
+export type ApiResponseCourseCreatorSkill = {
+  success?: boolean;
+  data?: CourseCreatorSkill;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Membership information for industry bodies or associations that endorse the course creator
+ */
+export type CourseCreatorProfessionalMembership = {
+  readonly uuid?: string;
+  course_creator_uuid: string;
+  organization_name: string;
+  membership_number?: string;
+  start_date?: Date;
+  end_date?: Date;
+  is_active?: boolean;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+  readonly status_label?: string;
+};
+
+export type ApiResponseCourseCreatorProfessionalMembership = {
+  success?: boolean;
+  data?: CourseCreatorProfessionalMembership;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Work history and practical delivery background for course creators
+ */
+export type CourseCreatorExperience = {
+  readonly uuid?: string;
+  course_creator_uuid: string;
+  position: string;
+  organization_name: string;
+  responsibilities?: string;
+  years_of_experience?: number;
+  start_date?: Date;
+  end_date?: Date;
+  is_current_position?: boolean;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+  readonly tenure_label?: string;
+};
+
+export type ApiResponseCourseCreatorExperience = {
+  success?: boolean;
+  data?: CourseCreatorExperience;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Academic credentials captured for course creators
+ */
+export type CourseCreatorEducation = {
+  readonly uuid?: string;
+  course_creator_uuid: string;
+  qualification: string;
+  school_name: string;
+  year_completed?: number;
+  certificate_number?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+  readonly is_recent_qualification?: boolean;
+  readonly formatted_completion?: string;
+};
+
+export type ApiResponseCourseCreatorEducation = {
+  success?: boolean;
+  data?: CourseCreatorEducation;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Professional certification or accreditation evidence associated with a course creator
+ */
+export type CourseCreatorCertification = {
+  readonly uuid?: string;
+  course_creator_uuid: string;
+  certification_name: string;
+  issuing_organization: string;
+  issued_date?: Date;
+  expiry_date?: Date;
+  credential_id?: string;
+  credential_url?: string;
+  description?: string;
+  is_verified?: boolean;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+  readonly is_expired?: boolean;
+};
+
+export type ApiResponseCourseCreatorCertification = {
+  success?: boolean;
+  data?: CourseCreatorCertification;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
  * Grading scale level with points and ordering for assessments
  */
 export type GradingLevel = {
@@ -3019,6 +3157,10 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -3030,10 +3172,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 /**
@@ -3958,7 +4096,7 @@ export type CourseTrainingApplicationRequest = {
    */
   applicant_uuid: string;
   /**
-   * **[REQUIRED]** Instructor rate card across privacy/session segments.
+   * **[REQUIRED]** Instructor rate card across session format and delivery modality combinations.
    */
   rate_card: CourseTrainingRateCard;
   /**
@@ -3973,21 +4111,21 @@ export type CourseTrainingRateCard = {
    */
   currency?: string;
   /**
-   * Private 1:1 session rate per learner per hour.
+   * 1:1 private session rate when delivered online, per learner per hour.
    */
-  private_individual_rate: number;
+  private_online_rate: number;
   /**
-   * Private group session rate per learner per hour.
+   * 1:1 private session rate when delivered in person, per learner per hour.
    */
-  private_group_rate: number;
+  private_inperson_rate: number;
   /**
-   * Public individual rate per learner per hour.
+   * Group session rate when delivered online, per learner per hour.
    */
-  public_individual_rate: number;
+  group_online_rate: number;
   /**
-   * Public group rate per learner per hour.
+   * Group session rate when delivered in person, per learner per hour.
    */
-  public_group_rate: number;
+  group_inperson_rate: number;
 };
 
 export type ApiResponseCourseTrainingApplication = {
@@ -5023,6 +5161,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -5034,10 +5176,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -5154,6 +5292,10 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
@@ -5165,10 +5307,6 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
 };
 
 export type ApiResponseListCourse = {
@@ -5572,13 +5710,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponseLong = {
@@ -5770,6 +5908,10 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
@@ -5781,10 +5923,6 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -5878,6 +6016,81 @@ export type ApiResponsePagedDtoCourseCreator = {
 
 export type PagedDtoCourseCreator = {
   content?: Array<CourseCreator>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoCourseCreatorSkill = {
+  success?: boolean;
+  data?: PagedDtoCourseCreatorSkill;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoCourseCreatorSkill = {
+  content?: Array<CourseCreatorSkill>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoCourseCreatorProfessionalMembership = {
+  success?: boolean;
+  data?: PagedDtoCourseCreatorProfessionalMembership;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoCourseCreatorProfessionalMembership = {
+  content?: Array<CourseCreatorProfessionalMembership>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoCourseCreatorExperience = {
+  success?: boolean;
+  data?: PagedDtoCourseCreatorExperience;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoCourseCreatorExperience = {
+  content?: Array<CourseCreatorExperience>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoCourseCreatorEducation = {
+  success?: boolean;
+  data?: PagedDtoCourseCreatorEducation;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoCourseCreatorEducation = {
+  content?: Array<CourseCreatorEducation>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoCourseCreatorCertification = {
+  success?: boolean;
+  data?: PagedDtoCourseCreatorCertification;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoCourseCreatorCertification = {
+  content?: Array<CourseCreatorCertification>;
   metadata?: PageMetadata;
   links?: PageLinks;
 };
@@ -6086,6 +6299,10 @@ export type AdminDashboardStats = {
    */
   admin_metrics?: AdminMetrics;
   /**
+   * Keycloak admin event telemetry
+   */
+  keycloak_admin_events?: KeycloakAdminEventMetrics;
+  /**
    * Learning performance metrics
    */
   learning_metrics?: LearningMetrics;
@@ -6171,6 +6388,20 @@ export type ContentMetrics = {
   pending_moderation?: bigint;
   reported_content?: bigint;
   average_quality_score?: number;
+};
+
+/**
+ * Keycloak admin event activity
+ */
+export type KeycloakAdminEventMetrics = {
+  events_last_24h?: bigint;
+  events_last_7d?: bigint;
+  operations_last_24h?: {
+    [key: string]: bigint;
+  };
+  resource_types_last_24h?: {
+    [key: string]: bigint;
+  };
 };
 
 /**
@@ -6705,6 +6936,16 @@ export const ProvidedByEnum = {
  * **[OPTIONAL]** Party responsible for providing this requirement.
  */
 export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum];
+
+export const ProficiencyLevelEnum2 = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  EXPERT: 'expert',
+} as const;
+
+export type ProficiencyLevelEnum2 =
+  (typeof ProficiencyLevelEnum2)[keyof typeof ProficiencyLevelEnum2];
 
 /**
  * **[REQUIRED]** Visibility of the class when offerings are published.
@@ -9602,6 +9843,331 @@ export type UpdateCourseCreatorResponses = {
 
 export type UpdateCourseCreatorResponse =
   UpdateCourseCreatorResponses[keyof UpdateCourseCreatorResponses];
+
+export type DeleteCourseCreatorSkillData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    skillUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/skills/{skillUuid}';
+};
+
+export type DeleteCourseCreatorSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseCreatorSkillError =
+  DeleteCourseCreatorSkillErrors[keyof DeleteCourseCreatorSkillErrors];
+
+export type DeleteCourseCreatorSkillResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseCreatorSkillData = {
+  body: CourseCreatorSkill;
+  path: {
+    courseCreatorUuid: string;
+    skillUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/skills/{skillUuid}';
+};
+
+export type UpdateCourseCreatorSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseCreatorSkillError =
+  UpdateCourseCreatorSkillErrors[keyof UpdateCourseCreatorSkillErrors];
+
+export type UpdateCourseCreatorSkillResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorSkill;
+};
+
+export type UpdateCourseCreatorSkillResponse =
+  UpdateCourseCreatorSkillResponses[keyof UpdateCourseCreatorSkillResponses];
+
+export type DeleteCourseCreatorMembershipData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    membershipUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/memberships/{membershipUuid}';
+};
+
+export type DeleteCourseCreatorMembershipErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseCreatorMembershipError =
+  DeleteCourseCreatorMembershipErrors[keyof DeleteCourseCreatorMembershipErrors];
+
+export type DeleteCourseCreatorMembershipResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseCreatorMembershipData = {
+  body: CourseCreatorProfessionalMembership;
+  path: {
+    courseCreatorUuid: string;
+    membershipUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/memberships/{membershipUuid}';
+};
+
+export type UpdateCourseCreatorMembershipErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseCreatorMembershipError =
+  UpdateCourseCreatorMembershipErrors[keyof UpdateCourseCreatorMembershipErrors];
+
+export type UpdateCourseCreatorMembershipResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorProfessionalMembership;
+};
+
+export type UpdateCourseCreatorMembershipResponse =
+  UpdateCourseCreatorMembershipResponses[keyof UpdateCourseCreatorMembershipResponses];
+
+export type DeleteCourseCreatorExperienceData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    experienceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/experience/{experienceUuid}';
+};
+
+export type DeleteCourseCreatorExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseCreatorExperienceError =
+  DeleteCourseCreatorExperienceErrors[keyof DeleteCourseCreatorExperienceErrors];
+
+export type DeleteCourseCreatorExperienceResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseCreatorExperienceData = {
+  body: CourseCreatorExperience;
+  path: {
+    courseCreatorUuid: string;
+    experienceUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/experience/{experienceUuid}';
+};
+
+export type UpdateCourseCreatorExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseCreatorExperienceError =
+  UpdateCourseCreatorExperienceErrors[keyof UpdateCourseCreatorExperienceErrors];
+
+export type UpdateCourseCreatorExperienceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorExperience;
+};
+
+export type UpdateCourseCreatorExperienceResponse =
+  UpdateCourseCreatorExperienceResponses[keyof UpdateCourseCreatorExperienceResponses];
+
+export type DeleteCourseCreatorEducationData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    educationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/education/{educationUuid}';
+};
+
+export type DeleteCourseCreatorEducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseCreatorEducationError =
+  DeleteCourseCreatorEducationErrors[keyof DeleteCourseCreatorEducationErrors];
+
+export type DeleteCourseCreatorEducationResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseCreatorEducationData = {
+  body: CourseCreatorEducation;
+  path: {
+    courseCreatorUuid: string;
+    educationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/education/{educationUuid}';
+};
+
+export type UpdateCourseCreatorEducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseCreatorEducationError =
+  UpdateCourseCreatorEducationErrors[keyof UpdateCourseCreatorEducationErrors];
+
+export type UpdateCourseCreatorEducationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorEducation;
+};
+
+export type UpdateCourseCreatorEducationResponse =
+  UpdateCourseCreatorEducationResponses[keyof UpdateCourseCreatorEducationResponses];
+
+export type DeleteCourseCreatorCertificationData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    certificationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/certifications/{certificationUuid}';
+};
+
+export type DeleteCourseCreatorCertificationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseCreatorCertificationError =
+  DeleteCourseCreatorCertificationErrors[keyof DeleteCourseCreatorCertificationErrors];
+
+export type DeleteCourseCreatorCertificationResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseCreatorCertificationData = {
+  body: CourseCreatorCertification;
+  path: {
+    courseCreatorUuid: string;
+    certificationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/certifications/{certificationUuid}';
+};
+
+export type UpdateCourseCreatorCertificationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseCreatorCertificationError =
+  UpdateCourseCreatorCertificationErrors[keyof UpdateCourseCreatorCertificationErrors];
+
+export type UpdateCourseCreatorCertificationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorCertification;
+};
+
+export type UpdateCourseCreatorCertificationResponse =
+  UpdateCourseCreatorCertificationResponses[keyof UpdateCourseCreatorCertificationResponses];
 
 export type DeleteGradingLevelData = {
   body?: never;
@@ -14334,6 +14900,346 @@ export type UnverifyCourseCreatorResponses = {
 
 export type UnverifyCourseCreatorResponse =
   UnverifyCourseCreatorResponses[keyof UnverifyCourseCreatorResponses];
+
+export type GetCourseCreatorSkillsData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/{courseCreatorUuid}/skills';
+};
+
+export type GetCourseCreatorSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorSkillsError =
+  GetCourseCreatorSkillsErrors[keyof GetCourseCreatorSkillsErrors];
+
+export type GetCourseCreatorSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorSkill;
+};
+
+export type GetCourseCreatorSkillsResponse =
+  GetCourseCreatorSkillsResponses[keyof GetCourseCreatorSkillsResponses];
+
+export type AddCourseCreatorSkillData = {
+  body: CourseCreatorSkill;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/skills';
+};
+
+export type AddCourseCreatorSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseCreatorSkillError =
+  AddCourseCreatorSkillErrors[keyof AddCourseCreatorSkillErrors];
+
+export type AddCourseCreatorSkillResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorSkill;
+};
+
+export type AddCourseCreatorSkillResponse =
+  AddCourseCreatorSkillResponses[keyof AddCourseCreatorSkillResponses];
+
+export type GetCourseCreatorMembershipsData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/{courseCreatorUuid}/memberships';
+};
+
+export type GetCourseCreatorMembershipsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorMembershipsError =
+  GetCourseCreatorMembershipsErrors[keyof GetCourseCreatorMembershipsErrors];
+
+export type GetCourseCreatorMembershipsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorProfessionalMembership;
+};
+
+export type GetCourseCreatorMembershipsResponse =
+  GetCourseCreatorMembershipsResponses[keyof GetCourseCreatorMembershipsResponses];
+
+export type AddCourseCreatorMembershipData = {
+  body: CourseCreatorProfessionalMembership;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/memberships';
+};
+
+export type AddCourseCreatorMembershipErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseCreatorMembershipError =
+  AddCourseCreatorMembershipErrors[keyof AddCourseCreatorMembershipErrors];
+
+export type AddCourseCreatorMembershipResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorProfessionalMembership;
+};
+
+export type AddCourseCreatorMembershipResponse =
+  AddCourseCreatorMembershipResponses[keyof AddCourseCreatorMembershipResponses];
+
+export type GetCourseCreatorExperienceData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/{courseCreatorUuid}/experience';
+};
+
+export type GetCourseCreatorExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorExperienceError =
+  GetCourseCreatorExperienceErrors[keyof GetCourseCreatorExperienceErrors];
+
+export type GetCourseCreatorExperienceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorExperience;
+};
+
+export type GetCourseCreatorExperienceResponse =
+  GetCourseCreatorExperienceResponses[keyof GetCourseCreatorExperienceResponses];
+
+export type AddCourseCreatorExperienceData = {
+  body: CourseCreatorExperience;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/experience';
+};
+
+export type AddCourseCreatorExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseCreatorExperienceError =
+  AddCourseCreatorExperienceErrors[keyof AddCourseCreatorExperienceErrors];
+
+export type AddCourseCreatorExperienceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorExperience;
+};
+
+export type AddCourseCreatorExperienceResponse =
+  AddCourseCreatorExperienceResponses[keyof AddCourseCreatorExperienceResponses];
+
+export type GetCourseCreatorEducationData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/{courseCreatorUuid}/education';
+};
+
+export type GetCourseCreatorEducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorEducationError =
+  GetCourseCreatorEducationErrors[keyof GetCourseCreatorEducationErrors];
+
+export type GetCourseCreatorEducationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorEducation;
+};
+
+export type GetCourseCreatorEducationResponse =
+  GetCourseCreatorEducationResponses[keyof GetCourseCreatorEducationResponses];
+
+export type AddCourseCreatorEducationData = {
+  body: CourseCreatorEducation;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/education';
+};
+
+export type AddCourseCreatorEducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseCreatorEducationError =
+  AddCourseCreatorEducationErrors[keyof AddCourseCreatorEducationErrors];
+
+export type AddCourseCreatorEducationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorEducation;
+};
+
+export type AddCourseCreatorEducationResponse =
+  AddCourseCreatorEducationResponses[keyof AddCourseCreatorEducationResponses];
+
+export type GetCourseCreatorCertificationsData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/{courseCreatorUuid}/certifications';
+};
+
+export type GetCourseCreatorCertificationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorCertificationsError =
+  GetCourseCreatorCertificationsErrors[keyof GetCourseCreatorCertificationsErrors];
+
+export type GetCourseCreatorCertificationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorCertification;
+};
+
+export type GetCourseCreatorCertificationsResponse =
+  GetCourseCreatorCertificationsResponses[keyof GetCourseCreatorCertificationsResponses];
+
+export type AddCourseCreatorCertificationData = {
+  body: CourseCreatorCertification;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/certifications';
+};
+
+export type AddCourseCreatorCertificationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseCreatorCertificationError =
+  AddCourseCreatorCertificationErrors[keyof AddCourseCreatorCertificationErrors];
+
+export type AddCourseCreatorCertificationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorCertification;
+};
+
+export type AddCourseCreatorCertificationResponse =
+  AddCourseCreatorCertificationResponses[keyof AddCourseCreatorCertificationResponses];
 
 export type GetAllGradingLevelsData = {
   body?: never;
@@ -19706,6 +20612,42 @@ export type GetUnverifiedCourseCreatorsResponses = {
 export type GetUnverifiedCourseCreatorsResponse =
   GetUnverifiedCourseCreatorsResponses[keyof GetUnverifiedCourseCreatorsResponses];
 
+export type SearchCourseCreatorSkillsData = {
+  body?: never;
+  path?: never;
+  query: {
+    searchParams: {
+      [key: string]: string;
+    };
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/skills/search';
+};
+
+export type SearchCourseCreatorSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SearchCourseCreatorSkillsError =
+  SearchCourseCreatorSkillsErrors[keyof SearchCourseCreatorSkillsErrors];
+
+export type SearchCourseCreatorSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorSkill;
+};
+
+export type SearchCourseCreatorSkillsResponse =
+  SearchCourseCreatorSkillsResponses[keyof SearchCourseCreatorSkillsResponses];
+
 export type SearchCourseCreatorsData = {
   body?: never;
   path?: never;
@@ -19742,6 +20684,114 @@ export type SearchCourseCreatorsResponses = {
 export type SearchCourseCreatorsResponse =
   SearchCourseCreatorsResponses[keyof SearchCourseCreatorsResponses];
 
+export type SearchCourseCreatorMembershipsData = {
+  body?: never;
+  path?: never;
+  query: {
+    searchParams: {
+      [key: string]: string;
+    };
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/memberships/search';
+};
+
+export type SearchCourseCreatorMembershipsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SearchCourseCreatorMembershipsError =
+  SearchCourseCreatorMembershipsErrors[keyof SearchCourseCreatorMembershipsErrors];
+
+export type SearchCourseCreatorMembershipsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorProfessionalMembership;
+};
+
+export type SearchCourseCreatorMembershipsResponse =
+  SearchCourseCreatorMembershipsResponses[keyof SearchCourseCreatorMembershipsResponses];
+
+export type SearchCourseCreatorExperienceData = {
+  body?: never;
+  path?: never;
+  query: {
+    searchParams: {
+      [key: string]: string;
+    };
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/experience/search';
+};
+
+export type SearchCourseCreatorExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SearchCourseCreatorExperienceError =
+  SearchCourseCreatorExperienceErrors[keyof SearchCourseCreatorExperienceErrors];
+
+export type SearchCourseCreatorExperienceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorExperience;
+};
+
+export type SearchCourseCreatorExperienceResponse =
+  SearchCourseCreatorExperienceResponses[keyof SearchCourseCreatorExperienceResponses];
+
+export type SearchCourseCreatorEducationData = {
+  body?: never;
+  path?: never;
+  query: {
+    searchParams: {
+      [key: string]: string;
+    };
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/education/search';
+};
+
+export type SearchCourseCreatorEducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SearchCourseCreatorEducationError =
+  SearchCourseCreatorEducationErrors[keyof SearchCourseCreatorEducationErrors];
+
+export type SearchCourseCreatorEducationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorEducation;
+};
+
+export type SearchCourseCreatorEducationResponse =
+  SearchCourseCreatorEducationResponses[keyof SearchCourseCreatorEducationResponses];
+
 export type CountCourseCreatorsByVerificationStatusData = {
   body?: never;
   path?: never;
@@ -19774,6 +20824,42 @@ export type CountCourseCreatorsByVerificationStatusResponses = {
 
 export type CountCourseCreatorsByVerificationStatusResponse =
   CountCourseCreatorsByVerificationStatusResponses[keyof CountCourseCreatorsByVerificationStatusResponses];
+
+export type SearchCourseCreatorCertificationsData = {
+  body?: never;
+  path?: never;
+  query: {
+    searchParams: {
+      [key: string]: string;
+    };
+    pageable: Pageable;
+  };
+  url: '/api/v1/course-creators/certifications/search';
+};
+
+export type SearchCourseCreatorCertificationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SearchCourseCreatorCertificationsError =
+  SearchCourseCreatorCertificationsErrors[keyof SearchCourseCreatorCertificationsErrors];
+
+export type SearchCourseCreatorCertificationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCourseCreatorCertification;
+};
+
+export type SearchCourseCreatorCertificationsResponse =
+  SearchCourseCreatorCertificationsResponses[keyof SearchCourseCreatorCertificationsResponses];
 
 export type SearchContentTypesData = {
   body?: never;
