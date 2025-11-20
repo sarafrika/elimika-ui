@@ -70,7 +70,6 @@ export const InstructorProfileModal: React.FC<Props> = ({
   const bookInstructor = useMutation(bookInstructorSlotMutation())
   const handleBooking = () => {
     if (!instructor?.uuid || !student?.uuid || !startTime || !endTime) {
-      console.warn("Missing required fields");
       return;
     }
     // Convert local datetime to ISO string (UTC)

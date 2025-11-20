@@ -111,7 +111,6 @@ export default function ClassDetailsForm({
     })
   );
   const [selectedCourseProgram, setSelectedCourseProgram] = useState<any | null>(null);
-  console.log(selectedCourseProgram)
 
   useEffect(() => {
     if (!resolveId) return;

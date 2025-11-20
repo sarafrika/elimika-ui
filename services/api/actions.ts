@@ -10,7 +10,6 @@ type SearchEndpoints = {
 
 export async function search<P extends SearchEndpoints>(endpoint: P, searchParams: any) {
   const init: any = {};
-  //console.log(searchParams);
   if (searchParams) {
     init.params = {
       pageable: {
