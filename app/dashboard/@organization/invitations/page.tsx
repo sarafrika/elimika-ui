@@ -412,14 +412,14 @@ function InviteDialog({
             <div className='space-y-1'>
               <Label>Branch (optional)</Label>
               <Select
-                value={form.watch('branchUuid') ?? ''}
-                onValueChange={value => form.setValue('branchUuid', value)}
+                value={form.watch('branchUuid') ?? 'org-level'}
+                onValueChange={value => form.setValue('branchUuid', value === 'org-level' ? undefined : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder='Organisation-level invite' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value=''>Organisation-level invite</SelectItem>
+                  <SelectItem value='org-level'>Organisation-level invite</SelectItem>
                   {branches.map(branch => (
                     <SelectItem key={branch.uuid} value={branch.uuid ?? ''}>
                       {branch.branch_name}

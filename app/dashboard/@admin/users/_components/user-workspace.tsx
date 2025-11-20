@@ -557,14 +557,14 @@ function UserDetailsForm({ form, onSubmit, isPending, user }: UserDetailsFormPro
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Gender</FormLabel>
-                <Select value={field.value ?? ''} onValueChange={value => field.onChange(value || undefined)}>
+                <Select value={field.value ?? 'UNSPECIFIED'} onValueChange={value => field.onChange(value === 'UNSPECIFIED' ? undefined : value)}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select gender' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value=''>Not specified</SelectItem>
+                    <SelectItem value='UNSPECIFIED'>Not specified</SelectItem>
                     <SelectItem value='MALE'>Male</SelectItem>
                     <SelectItem value='FEMALE'>Female</SelectItem>
                     <SelectItem value='OTHER'>Other</SelectItem>
