@@ -316,6 +316,41 @@ export default function InstructorProfileOverviewPage() {
           emptyText: 'List your professional memberships for credibility.',
         };
 
+  const certificateSection: ProfileSummarySection =
+    instructor?.certifications && instructor.certifications.length > 0
+      ? {
+          title: 'Certificates',
+          description: 'Professional certifications and credentials.',
+          content: (
+            <div className='space-y-3'>
+              {instructor.certifications.map((cert, index) => {
+                const issued = toDate(cert.issued_date);
+                const expires = toDate(cert.expiry_date);
+                return (
+                  <div
+                    key={cert.uuid ?? `${cert.certification_name}-${index}`}
+                    className='border-border/50 rounded-lg border p-3'
+                  >
+                    <p className='font-medium'>{cert.certification_name}</p>
+                    <p className='text-muted-foreground text-sm'>{cert.issuing_organization}</p>
+                    {issued ? (
+                      <p className='text-muted-foreground text-xs'>
+                        Issued: {format(issued, 'MMM yyyy')}
+                        {expires ? ` • Expires: ${format(expires, 'MMM yyyy')}` : ''}
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ),
+        }
+      : {
+          title: 'Certificates',
+          description: 'Professional certifications and credentials.',
+          emptyText: 'Add certificates to build credibility.',
+        };
+
   const skillSection: ProfileSummarySection =
     instructor?.skills && instructor.skills.length > 0
       ? {
@@ -401,6 +436,7 @@ export default function InstructorProfileOverviewPage() {
         locationSection,
         educationSection,
         experienceSection,
+        certificateSection,
         membershipSection,
         skillSection,
       ]}
