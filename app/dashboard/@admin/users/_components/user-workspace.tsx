@@ -18,9 +18,10 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import {
   type AdminUser,
-  useAdminUsers,
   useUpdateAdminUser,
 } from '@/services/admin';
+import { getAllUsersOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
 import { zUser } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -84,13 +85,12 @@ export function AdminUserWorkspace({
     }
   }, [fixedDomain]);
 
-  const { data, isLoading } = useAdminUsers({
-    page,
-    size: 20,
-  });
+  const { data, isLoading } = useQuery(
+    getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
+  );
 
-  const users = useMemo(() => data?.items ?? [], [data?.items]);
-  const totalPages = Math.max(data?.totalPages ?? 1, 1);
+  const users = useMemo(() => (data?.data?.content ?? []) as AdminUser[], [data?.data?.content]);
+  const totalPages = Math.max(data?.data?.metadata?.totalPages ?? 1, 1);
 
   useEffect(() => {
     if (!selectedUserId && users.length > 0) {
@@ -99,10 +99,10 @@ export function AdminUserWorkspace({
   }, [selectedUserId, users]);
 
   useEffect(() => {
-    if (page >= (data?.totalPages ?? 1)) {
+    if (page >= totalPages) {
       setPage(0);
     }
-  }, [data?.totalPages, page]);
+  }, [totalPages, page]);
 
   const selectedUser = users.find(user => user.uuid === selectedUserId) ?? null;
   const handleSelectUser = (user: AdminUser | null) => {
