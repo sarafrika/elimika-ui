@@ -103,6 +103,8 @@ export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: Schedule
       totalHours,
       remainingMinutes,
     };
+
+    onSummaryChange(_newSummary);
   }, [totalSkills, totalContents, totalHours, remainingMinutes, onSummaryChange]);
 
   return (
@@ -200,15 +202,15 @@ export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: Schedule
           </div>
           <div>
             <span className='text-muted-foreground'>Total Hours:</span>
-            {/* <div className="font-medium">{getTotalHours().toFixed(1)}h</div> */}
             <div className='font-medium'>
-              {totalHours} hours {remainingMinutes} minutes
+              {/* {totalHours} hours {remainingMinutes} minutes */}
+              {data?.duration_formatted} hours
             </div>
           </div>
-          <div>
+          {/* <div>
             <span className='text-muted-foreground'>Available Slots:</span>
             <div className='font-medium'>{getAvailableTimeSlots()}</div>
-          </div>
+          </div> */}
         </div>
         {/* {getTotalLessons() > getAvailableTimeSlots() && (
                     <div className="mt-2 p-2 bg-yellow-100 text-yellow-800 rounded text-sm">

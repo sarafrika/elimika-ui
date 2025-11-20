@@ -23,7 +23,6 @@ import {
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
-import { tanstackClient } from '@/services/api/tanstack-client';
 import {
   createClassDefinitionMutation,
   getAllCoursesOptions,
@@ -36,13 +35,11 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, Upload, X } from 'lucide-react';
-import Image from 'next/image';
+import { ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { type FieldErrors, useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import z from 'zod';
 import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
 import {
   type ClassFormValues,
@@ -114,6 +111,7 @@ export default function ClassDetailsForm({
     })
   );
   const [selectedCourseProgram, setSelectedCourseProgram] = useState<any | null>(null);
+  console.log(selectedCourseProgram)
 
   useEffect(() => {
     if (!resolveId) return;
@@ -138,7 +136,6 @@ export default function ClassDetailsForm({
     resolver: zodResolver(classSchema),
     defaultValues: {
       title: '',
-      sub_title: '',
       description: '',
       course_uuid: '',
       categories: ['none'],
@@ -188,14 +185,21 @@ export default function ClassDetailsForm({
       ...values,
       course_uuid: values?.course_uuid || classData?.course_uuid,
       max_participants: values?.max_participants || classData?.max_participants,
-      recurrence_pattern_uuid: combinedRecurrenceData?.response?.uuid,
+      recurrence_pattern_uuid: combinedRecurrenceData?.response?.uuid || values?.recurrence_pattern_uuid,
       default_instructor_uuid: instructor?.uuid as string,
       location_type: combinedRecurrenceData?.payload?.location_type || classData?.location_type,
+      location_name: combinedRecurrenceData?.payload?.location || classData?.location_name,
+      location_latitude: -1.292066,
+      location_longitude: 36.821945,
       duration_minutes: combinedRecurrenceData?.payload?.duration || classData?.duration_minutes,
-      default_start_time: '2035-11-05T10:00:00',
-      default_end_time: '2035-12-05T12:00:00',
+      default_start_time: '2024-11-05T10:00:00',
+      default_end_time: '2024-12-05T12:00:00',
       class_time_validy: '2 months',
     };
+
+    // console.log('Submitting class details with payload:', payload);
+    // console.log(values, "Vaues")
+
 
     if (resolveId) {
       updateClassDefinition.mutate(
@@ -244,56 +248,43 @@ export default function ClassDetailsForm({
     }
   };
 
-  const courseBannerMutation = tanstackClient.useMutation('post', '/api/v1/courses/{uuid}/banner');
-  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-  const [_uploadedUrls, setUploadedUrls] = useState<{
-    class_banner?: string;
-  }>({});
-  const handleFileUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    { key, setPreview, mutation, onChange }: ClassUploadOptions
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const computeTrainingRate = () => {
+    if (!selectedCourseProgram?.application?.rate_card) return 0;
 
-    try {
-      const schema = z.object({ [key]: z.instanceof(File) });
-      schema.parse({ [key]: file });
-    } catch (_err) {
-      toast.error('Invalid file type.');
-      return;
+    const rates = selectedCourseProgram.application.rate_card;
+    const sessionFormat = form.watch("session_format"); // GROUP / PRIVATE
+    const visibility = form.watch("class_visibility");  // PUBLIC / PRIVATE
+
+    if (visibility === "PRIVATE" && sessionFormat === "PRIVATE") {
+      return rates.private_individual_rate;
+    }
+    if (visibility === "PRIVATE" && sessionFormat === "GROUP") {
+      return rates.private_group_rate;
+    }
+    if (visibility === "PUBLIC" && sessionFormat === "PRIVATE") {
+      return rates.public_individual_rate;
+    }
+    if (visibility === "PUBLIC" && sessionFormat === "GROUP") {
+      return rates.public_group_rate;
     }
 
-    const previewUrl = URL.createObjectURL(file);
-    setPreview(previewUrl);
-
-    const formData = new FormData();
-    formData.append(key, file);
-
-    mutation(
-      { body: formData, params: { path: { uuid: resolveId as string } } },
-      {
-        onSuccess: (data: any) => {
-          onChange(previewUrl);
-          toast.success(data?.message);
-
-          const urls = data?.data;
-
-          setUploadedUrls(prev => ({
-            ...prev,
-            [key]: urls?.[`${key}_url`],
-          }));
-        },
-        onError: (error: any) => {
-          if (error?.response?.status === 413) {
-            toast.error('Video file is too large. Please upload a smaller file.');
-          } else {
-            toast.error('Failed to upload file.');
-          }
-        },
-      }
-    );
+    return 0;
   };
+
+
+  useEffect(() => {
+    if (!selectedCourseProgram?.application?.rate_card) return;
+
+    const newRate = computeTrainingRate();
+
+    // Automatically set the training fee (not editable)
+    form.setValue("training_fee", newRate);
+  }, [
+    selectedCourseProgram,
+    form.watch("class_visibility"),
+    form.watch("session_format")
+  ]);
+
 
   useEffect(() => {
     if (classData && courses?.data?.content) {
@@ -312,6 +303,7 @@ export default function ClassDetailsForm({
       });
     }
   }, [classData, courses?.data?.content, form]);
+
 
   return (
     <main className=''>
@@ -345,15 +337,16 @@ export default function ClassDetailsForm({
                   <Select
                     onValueChange={value => {
                       field.onChange(value);
-
-                      const selectedCourse = approvedCourses?.find(course => course.uuid === value);
                       // const selectedProgram = programs?.data?.content?.find(
                       //   program => program.uuid === value
                       // );
-
-                      const maxParticipants = selectedCourse?.class_limit;
                       // const maxParticipants =
                       //   selectedCourse?.class_limit ?? selectedProgram?.class_limit;
+
+                      const selectedCourse = approvedCourses?.find(course => course.uuid === value);
+
+
+                      const maxParticipants = selectedCourse?.class_limit;
 
                       if (maxParticipants !== undefined) {
                         form.setValue('max_participants', maxParticipants);
@@ -431,20 +424,6 @@ export default function ClassDetailsForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name='sub_title'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subtitle/Tagline (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Brief subtitle or tagline' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {/* <div className='flex flex-col items-start gap-6 sm:flex-row'>
               <FormField
                 control={form.control}
@@ -485,83 +464,6 @@ export default function ClassDetailsForm({
               />
             </div> */}
 
-            {/* <FormField
-              control={form.control}
-              name='max_participants'
-              render={({ field }) => (
-                <FormItem className='w-full'>
-                  <FormLabel>Class Limit</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='number'
-                      placeholder='e.g. 25'
-                      {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
-
-            {/* <div className='flex flex-row items-end gap-4'>
-              <FormField
-                control={form.control}
-                name='recurrence_pattern_uuid'
-                render={({ field }) => (
-                  <FormItem className='w-full flex-1 items-center'>
-                    <FormLabel>Recurrence (Frequency)</FormLabel>
-                    {recurrenceData && <RecurringDisplay data={recurrenceData?.data} />}
-
-                    {recurringData && <RecurringDisplay data={recurrenceData} />}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {recurrenceData ? <Button
-                onClick={() => { setOpenAddRecurrenceModal(true), setEditingRecurrenceId(recurrenceData?.data?.uuid as string) }}
-                type='button'
-                className='mt-[22px] h-10'
-              >
-                Edit Recurrence
-              </Button> : <Button
-                onClick={() => setOpenAddRecurrenceModal(true)}
-                type='button'
-                className='mt-[22px] h-10'
-              >
-                Add New
-              </Button>}
-            </div> */}
-
-            {/* <FormField
-              control={form.control}
-              name='location_type'
-              render={({ field }) => (
-                <FormItem className='w-full flex-1'>
-                  <FormLabel>Location</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select location type' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(LocationTypeEnum)
-                        .map(([key, value]) => ({
-                          key,
-                          value,
-                        }))
-                        .map(option => (
-                          <SelectItem key={option.key} value={option.value}>
-                            {option.value}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
-
             <FormField
               control={form.control}
               name='description'
@@ -574,23 +476,7 @@ export default function ClassDetailsForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name='training_fee'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Training Fee (Min. rate per hour per head)</FormLabel>
-                  <FormControl>
-                    <Input type='number' min='0' step='0.01' {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Instructor-led classes must charge at least this KES{' '}
-                    {selectedCourseProgram?.minimum_training_fee}.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
 
             <div className="flex flex-col md:flex-row gap-4">
               {/* CLASS VISIBILITY */}
@@ -643,66 +529,33 @@ export default function ClassDetailsForm({
               />
             </div>
 
-
             <FormField
               control={form.control}
-              name='class_banner'
+              name="training_fee"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Class Banner</FormLabel>
+                  <FormLabel>Training Fee (Auto-calculated)</FormLabel>
                   <FormControl>
-                    <div className='relative'>
-                      <div className='relative flex h-48 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 p-6'>
-                        {bannerPreview ? (
-                          <div className='relative h-full w-full'>
-                            <Image
-                              src={bannerPreview}
-                              alt='Banner Preview'
-                              fill
-                              className='rounded-lg object-cover'
-                            />
-                            <Button
-                              type='button'
-                              size='sm'
-                              variant='destructive'
-                              className='absolute top-2 right-2 z-10'
-                              onClick={() => {
-                                setBannerPreview('');
-                                field.onChange(null);
-                              }}
-                            >
-                              <X className='h-4 w-4' />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className='pointer-events-none text-center text-gray-600'>
-                            <Upload className='mx-auto mb-2 h-12 w-12 text-gray-400' />
-                            <p className='text-sm'>Click to upload or drag and drop</p>
-                            <p className='text-xs text-gray-500'>PNG, JPG up to 10MB</p>
-                          </div>
-                        )}
-
-                        {/* Invisible file input over the entire box */}
-                        <input
-                          type='file'
-                          accept='image/*'
-                          onChange={e =>
-                            handleFileUpload(e, {
-                              key: 'banner',
-                              setPreview: setBannerPreview,
-                              mutation: courseBannerMutation.mutate,
-                              onChange: field.onChange,
-                            })
-                          }
-                          className='absolute inset-0 z-20 h-full w-full cursor-pointer opacity-0'
-                        />
-                      </div>
-                    </div>
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value}
+                      readOnly
+                      className="bg-gray-100 cursor-not-allowed"
+                    />
                   </FormControl>
+
+                  <FormDescription>
+                    Based on: <br />
+                    Visibility: <strong>{form.watch("class_visibility")}</strong> &nbsp;|&nbsp;
+                    Format: <strong>{form.watch("session_format")}</strong>
+                  </FormDescription>
+
                   <FormMessage />
                 </FormItem>
               )}
             />
+
 
             {/* Required Toggle */}
             <FormField

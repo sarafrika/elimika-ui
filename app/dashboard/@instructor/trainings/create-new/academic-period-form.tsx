@@ -171,26 +171,26 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
     //   }
     // })
 
-    scheduleClass.mutate(
-      {
-        body: {
-          class_definition_uuid: classData?.uuid,
-          instructor_uuid:
-            (classData?.default_instructor_uuid as string) || (instructor?.uuid as string),
-          // @ts-expect-error
-          start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
-          // @ts-expect-error
-          end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
-          timezone: 'UTC',
-        },
-      },
-      {
-        onSuccess: data => {
-          toast.success(data?.message);
-          onNext();
-        },
-      }
-    );
+    // scheduleClass.mutate(
+    //   {
+    //     body: {
+    //       class_definition_uuid: classData?.uuid,
+    //       instructor_uuid:
+    //         (classData?.default_instructor_uuid as string) || (instructor?.uuid as string),
+    //       // @ts-expect-error
+    //       start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
+    //       // @ts-expect-error
+    //       end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
+    //       timezone: 'UTC',
+    //     },
+    //   },
+    //   {
+    //     onSuccess: data => {
+    //       toast.success(data?.message);
+    //       onNext();
+    //     },
+    //   }
+    // );
 
     // onNext();
   };

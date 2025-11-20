@@ -7,8 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useClassRoster } from '@/hooks/use-class-roster';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useInstructorInfo } from '@/hooks/use-instructor-info';
 import { getResourceIcon } from '@/lib/resources-icon';
@@ -16,7 +25,7 @@ import {
   getClassDefinitionOptions,
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
-  getInstructorScheduleOptions,
+  getInstructorScheduleOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -40,7 +49,6 @@ import {
   Users,
 } from 'lucide-react';
 import moment from 'moment';
-import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { momentLocalizer } from 'react-big-calendar';
@@ -160,6 +168,12 @@ export default function ClassPreviewPage() {
     }),
   });
 
+  const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
+  console.log(roster, "roster")
+
+
+
+
   if (isLoading || isAllLessonsDataLoading || classIsLoading) {
     return (
       <div className='flex flex-col gap-6 space-y-2'>
@@ -272,13 +286,6 @@ export default function ClassPreviewPage() {
                 Published/Draft
               </Badge>
             </div>
-            <Image
-              src={''}
-              alt='Class cover'
-              className='h-20 w-32 rounded-lg bg-gray-300 object-cover'
-              width={32}
-              height={20}
-            />
             {/* {classData.coverImage && (
                             <Image
                                 src={""}
@@ -295,7 +302,7 @@ export default function ClassPreviewPage() {
             <div className='flex items-center gap-2'>
               <CalendarDays className='text-muted-foreground h-4 w-4' />
               <div>
-                <div className='font-medium'>{classData?.default_start_time as string}</div>
+                {/* <div className='font-medium'>{classData?.default_start_time as string}</div> */}
                 <div className='text-muted-foreground'>Start Date</div>
               </div>
             </div>
@@ -392,8 +399,8 @@ export default function ClassPreviewPage() {
                   <div>
                     <span className='text-muted-foreground text-sm'>Academic Period:</span>
                     <div className='font-medium'>
-                      {classData?.default_start_time as string} -{' '}
-                      {classData?.default_end_time as string}
+                      {/* {classData?.default_start_time as string} -{' '}
+                      {classData?.default_end_time as string} */}
                     </div>
                   </div>
                   <div>
@@ -588,39 +595,75 @@ export default function ClassPreviewPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value='students' className='space-y-4'>
+        <TabsContent value="students" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Enrolled Students</CardTitle>
             </CardHeader>
 
-            {/* {
-              "uuid": "a86051ad-709a-4792-82b6-0316c103d048",
-            "user_uuid": "9ea88844-83f3-42e2-8b6f-4b138ea09252",
-            "first_guardian_name": "Ayhomi Parent",
-            "first_guardian_mobile": "0712478085",
-            "second_guardian_name": "Ayhomi Parent",
-            "second_guardian_mobile": "0712478086",
-            "primaryGuardianContact": "Ayhomi Parent (0712478085)",
-            "allGuardianContacts": [
-            "Ayhomi Parent (0712478085)",
-            "Ayhomi Parent (0712478086)"
-            ],
-            "secondaryGuardianContact": "Ayhomi Parent (0712478086)",
-            "created_date": "2025-09-08T11:24:39.882443",
-            "created_by": "636568a2-76e0-4a02-9dcf-53bb513087bc",
-            "updated_date": "2025-09-15T17:49:15.03044",
-            "updated_by": "636568a2-76e0-4a02-9dcf-53bb513087bc"
-      }, */}
-
             <CardContent>
-              <div className='py-8 text-center'>
-                <Users className='mx-auto mb-4 h-12 w-12 text-gray-400' />
-                <h3 className='mb-2 font-medium text-gray-900'>No students enrolled yet</h3>
-                <p className='text-sm text-gray-600'>
-                  Share your registration link to start getting enrollments
-                </p>
-              </div>
+              {(!roster || roster.length === 0) ? (
+                <div className="py-8 text-center">
+                  <Users className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                  <h3 className="mb-2 font-medium text-gray-900">
+                    No students enrolled yet
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Share your registration link to start getting enrollments
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Primary Guardian</TableHead>
+                        <TableHead>Secondary Guardian</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                      {roster.map((entry, index) => {
+                        // @ts-ignore
+                        const student = entry.student?.data;
+                        const user = entry.user;
+
+                        return (
+                          <TableRow key={index}>
+                            {/* NAME */}
+                            <TableCell className="font-medium">
+                              {user?.full_name || "Unknown Student"}
+                            </TableCell>
+
+                            {/* EMAIL */}
+                            <TableCell>{user?.email || "--"}</TableCell>
+
+                            {/* PRIMARY GUARDIAN */}
+                            <TableCell>
+                              {student?.primaryGuardianContact || "--"}
+                            </TableCell>
+
+                            {/* SECONDARY GUARDIAN */}
+                            <TableCell>
+                              {student?.secondaryGuardianContact || "--"}
+                            </TableCell>
+
+                            {/* STATUS */}
+                            <TableCell>
+                              <Badge variant="success">
+                                {entry.enrollment?.status || "UNKNOWN"}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

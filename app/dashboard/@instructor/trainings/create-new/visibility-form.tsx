@@ -60,14 +60,26 @@ export function VisibilityForm({
   const watchIsFree = form.watch('isFree') ?? true;
   const watchPrice = form.watch('price') ?? 0;
 
+  // const calculateTotalFee = () => {
+  //   if (watchIsFree) return 0;
+  //   return watchPrice * scheduleSummary?.totalLessons;
+  // };
+
   const calculateTotalFee = () => {
     if (watchIsFree) return 0;
-    return watchPrice * scheduleSummary?.totalLessons;
+
+    const lessonDurationHours = 2; // each lesson is 2 hours
+    const totalHours = scheduleSummary?.totalLessons * lessonDurationHours || 0;
+
+    // rate per head per hour * total hours * number of students
+    const enrollmentCount = data?.max_participants || 1;
+
+    return watchPrice * totalHours * enrollmentCount;
   };
+
 
   const handleSubmit = (_values: VisibilityFormValues) => {
     onNext();
-    // console.log(values, "submitted values")
   };
 
   return (
@@ -204,23 +216,34 @@ export function VisibilityForm({
               </FormControl>
               <FormMessage />
               <FormDescription>From instructor&apos;s availability settings</FormDescription>
-
               {/* Pricing Summary */}
               <Card className='mt-4'>
                 <CardContent className='p-4'>
                   <h4 className='mb-2 font-medium'>Pricing Summary</h4>
                   <div className='space-y-2 text-sm'>
                     <div className='flex justify-between'>
-                      <span>Rate per lesson:</span>
-                      <span>${watchPrice.toFixed(2)}</span>
+                      <span>Rate per head per hour:</span>
+                      <span>{"KES"} {watchPrice.toFixed(2)}</span>
                     </div>
                     <div className='flex justify-between'>
-                      <span>Total lessons:</span>
+                      <span>Number of lessons:</span>
                       <span>{scheduleSummary?.totalLessons}</span>
+                    </div>
+                    <div className='flex justify-between'>
+                      <span>Hours per lesson:</span>
+                      <span>2</span>
+                    </div>
+                    <div className='flex justify-between'>
+                      <span>Total hours:</span>
+                      <span>{scheduleSummary?.totalLessons * 2}</span>
+                    </div>
+                    <div className='flex justify-between'>
+                      <span>Number of students:</span>
+                      <span>{data?.max_participants || 1}</span>
                     </div>
                     <div className='flex justify-between border-t pt-2 font-medium'>
                       <span>Total fee:</span>
-                      <span>${calculateTotalFee().toFixed(2)}</span>
+                      <span>{"KES"} {calculateTotalFee().toFixed(2)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -269,7 +292,7 @@ export function VisibilityForm({
             {!watchIsFree && (
               <div>
                 <span className='text-muted-foreground'>Total Cost:</span>
-                <div className='font-medium'>${calculateTotalFee().toFixed(2)}</div>
+                <div className='font-medium'>{"KES"} {calculateTotalFee().toFixed(2)}</div>
               </div>
             )}
           </div>

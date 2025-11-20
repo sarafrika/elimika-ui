@@ -5,29 +5,49 @@ import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { BrainCircuit, CheckCircle, Flame } from 'lucide-react';
 
-export type Skill = {
-  uuid: string;
-  instructor_uuid: string;
-  skill_name: string;
-  proficiency_level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
-  proficiency_percentage: number;
-  proficiency_description: string;
-  is_core_skill: boolean;
-  is_teaching_qualified: boolean;
-  skill_category: string;
-  market_demand: 'LOW' | 'MEDIUM' | 'HIGH';
-  created_date: string;
-  updated_date: string;
+const normalizeSkill = (skill: any) => {
+  const proficiencyMap: Record<string, number> = {
+    BEGINNER: 25,
+    INTERMEDIATE: 50,
+    ADVANCED: 75,
+    EXPERT: 90
+  };
+
+  const level = (skill.proficiency_level || '').toUpperCase();
+
+  return {
+    uuid: skill.uuid,
+    instructor_uuid: skill.instructor_uuid,
+    skill_name: skill.skill_name,
+    proficiency_level: level,
+    proficiency_description: skill.proficiency_description ?? '',
+    summary: skill.summary ?? '',
+
+    proficiency_percentage: proficiencyMap[level] ?? 50,
+    is_core_skill: true,
+    is_teaching_qualified: true,
+    skill_category: 'GENERAL',
+    market_demand: 'HIGH',
+
+    created_date: skill.created_date,
+    updated_date: skill.updated_date ?? skill.created_date,
+  };
 };
 
 interface InstructorSkillCardProps {
   instructor: any;
-  skills: Skill[];
+  skills: any[];
 }
 
-export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({ instructor, skills }) => {
+export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({
+  instructor,
+  skills
+}) => {
+  // Normalize incoming API data
+  const normalizedSkills = skills.map(normalizeSkill);
+
   return (
-    <Card className='rounded-[12px] border border-blue-200/40 bg-card p-4 shadow-xl shadow-blue-200/40 transition hover:shadow-lg dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+    <Card className='rounded-[12px] border border-blue-200/40 bg-card p-4 shadow-xl'>
       <CardHeader className='flex flex-row items-center gap-4 p-0'>
         <Avatar className='h-14 w-14'>
           <AvatarImage src={instructor.profile_image_url} alt={instructor.full_name} />
@@ -37,33 +57,37 @@ export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({ instru
         <div className='flex-1'>
           <CardTitle className='text-lg font-semibold'>{instructor.full_name}</CardTitle>
           <p className='text-muted-foreground text-sm'>{instructor.professional_headline}</p>
-          <p className='text-muted-foreground mt-1 text-xs'>Total Skills: {skills.length}</p>
+          <p className='text-muted-foreground mt-1 text-xs'>
+            Total Skills: {normalizedSkills.length}
+          </p>
         </div>
       </CardHeader>
 
       <CardContent className='space-y-4 p-1'>
-        {skills.length === 0 && (
+        {normalizedSkills.length === 0 && (
           <p className='text-muted-foreground text-sm'>No skills added yet.</p>
         )}
 
-        {skills.map(skill => (
+        {normalizedSkills.map(skill => (
           <div
             key={skill.uuid}
-            className='rounded-[20px] border border-blue-200/40 bg-white/80 p-2 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-4 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+            className='rounded-[20px] border border-blue-200/40 p-2 backdrop-blur lg:p-4'
           >
             <div className='flex items-center justify-between'>
               <div>
                 <h3 className='text-sm font-medium'>{skill.skill_name}</h3>
-                {/* <p className="text-xs text-muted-foreground capitalize">
-                  {skill.skill_category.replace(/_/g, ' ').toLowerCase()}
-                </p> */}
+                <p className='text-xs text-muted-foreground'>
+                  {skill.summary}
+                </p>
               </div>
               <Badge variant='outline' className='text-xs'>
                 {skill.proficiency_level}
               </Badge>
             </div>
 
-            {/* <p className="text-xs text-muted-foreground">{skill.proficiency_description}</p> */}
+            <p className='mt-2 text-xs text-muted-foreground'>
+              {skill.proficiency_description}
+            </p>
 
             <div className='mt-4 flex items-center gap-2 text-xs'>
               <Progress value={skill.proficiency_percentage} className='h-1.5 w-full' />
@@ -77,14 +101,17 @@ export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({ instru
                 <CheckCircle className='h-3.5 w-3.5 text-green-600' />
                 <span>{skill.is_core_skill ? 'Core Skill' : 'Supplementary'}</span>
               </div>
+
               <div className='flex items-center gap-1.5'>
                 <BrainCircuit className='h-3.5 w-3.5 text-purple-600' />
                 <span>{skill.is_teaching_qualified ? 'Qualified to Teach' : 'Not Teaching'}</span>
               </div>
+
               <div className='col-span-2 flex items-center gap-1.5'>
                 <Flame className='h-3.5 w-3.5 text-orange-500' />
                 <span>Market Demand: {skill.market_demand}</span>
               </div>
+
               <div className='text-muted-foreground col-span-2 text-[10px]'>
                 Last updated: {format(new Date(skill.updated_date), 'PPP')}
               </div>
