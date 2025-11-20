@@ -60,6 +60,7 @@
     "@udecode/plate-serializer-html": "^21.5.1",
     "@zodios/core": "^10.9.6",
     "@zodios/plugins": "^10.6.0",
+    "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
