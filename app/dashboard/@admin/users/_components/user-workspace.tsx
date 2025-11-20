@@ -235,47 +235,46 @@ function UserListPanel({
       );
     }
 
-    return filteredUsers.map(user => (
-      <button
-        key={user.uuid ?? user.email}
-        type='button'
-        className={cn(
-          'border-border/60 w-full rounded-2xl border bg-card p-4 text-left transition hover:border-primary/50 hover:bg-primary/5',
-          selectedUserId === user.uuid ? 'border-primary bg-primary/5' : undefined
-        )}
-        onClick={() => onSelect(user)}
-      >
-        <div className='flex items-start gap-3'>
-          <Avatar className='h-10 w-10'>
-            <AvatarFallback>
-              {user.first_name?.[0]}
-              {user.last_name?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          <div className='flex-1'>
-            <div className='flex items-center justify-between gap-2'>
-              <div>
-                <p className='font-semibold leading-tight'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'Unnamed user'}</p>
-                <p className='text-muted-foreground text-xs'>{user.email}</p>
+    return filteredUsers.map(user => {
+      const fullName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'N/A';
+
+      return (
+        <div
+          key={user.uuid ?? user.email}
+          className={cn(
+            'hover:bg-muted/50 cursor-pointer border-b p-4 transition-colors',
+            selectedUserId === user.uuid ? 'bg-muted' : ''
+          )}
+          onClick={() => onSelect(user)}
+        >
+          <div className='flex items-start justify-between'>
+            <div className='min-w-0 flex-1'>
+              <div className='mb-1 flex items-center gap-2'>
+                <h3 className='truncate text-sm font-medium'>{fullName}</h3>
               </div>
-              <Badge variant={user.active ? 'secondary' : 'outline'} className='text-xs'>
-                {user.active ? 'Active' : 'Inactive'}
-              </Badge>
+              <p className='text-muted-foreground mb-1 truncate text-xs'>{user.email || 'No email'}</p>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <Badge variant={user.active ? 'secondary' : 'outline'} className='text-xs'>
+                    {user.active ? 'Active' : 'Inactive'}
+                  </Badge>
+                  <span className='text-muted-foreground text-xs'>
+                    {user.created_date ? format(new Date(user.created_date), 'dd MMM yyyy') : 'N/A'}
+                  </span>
+                </div>
+              </div>
+              <div className='mt-2 flex flex-wrap gap-1.5'>
+                {(Array.isArray(user.user_domain) ? user.user_domain : user.user_domain ? [user.user_domain] : []).map(domain => (
+                  <Badge key={`${user.uuid}-${domain}`} variant='outline' className='uppercase text-[10px]'>
+                    {String(domain).replace(/_/g, ' ')}
+                  </Badge>
+                ))}
+              </div>
             </div>
-            <div className='mt-3 flex flex-wrap gap-1.5'>
-              {(Array.isArray(user.user_domain) ? user.user_domain : user.user_domain ? [user.user_domain] : []).map(domain => (
-                <Badge key={`${user.uuid}-${domain}`} variant='outline' className='uppercase text-[10px]'>
-                  {String(domain).replace(/_/g, ' ')}
-                </Badge>
-              ))}
-            </div>
-            <p className='text-muted-foreground mt-3 text-xs'>
-              Joined {user.created_date ? format(new Date(user.created_date), 'dd MMM yyyy') : '—'}
-            </p>
           </div>
         </div>
-      </button>
-    ));
+      );
+    });
   };
 
   return (
