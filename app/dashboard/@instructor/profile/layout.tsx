@@ -4,11 +4,11 @@ import { ProfileSectionNav } from '@/components/profile/profile-section-nav';
 import type { ReactNode } from 'react';
 
 const sections = [
+  { label: 'Overview', href: '/dashboard/profile', exact: true },
   { label: 'General', href: '/dashboard/profile/general' },
   { label: 'Education', href: '/dashboard/profile/education' },
   { label: 'Experience', href: '/dashboard/profile/experience' },
   { label: 'Certificates', href: '/dashboard/profile/certificates' },
-
   {
     label: 'Professional Memberships',
     href: '/dashboard/profile/professional-membership',
