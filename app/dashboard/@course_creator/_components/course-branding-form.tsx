@@ -200,12 +200,12 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                       <div>
                         <label
                           htmlFor='introVideoUpload'
-                          className='flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-blue-400/60 px-4 py-10 text-center text-blue-500 transition hover:border-blue-500 hover:bg-blue-50/50 dark:border-blue-300/30 dark:hover:border-blue-100 dark:hover:bg-blue-900/10'
+                          className='flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/40 px-4 py-10 text-center text-primary transition hover:border-primary hover:bg-primary/5 dark:hover:border-primary/80 dark:hover:bg-primary/10'
                         >
                           {/* Icon */}
                           <svg
                             xmlns='http://www.w3.org/2000/svg'
-                            className='h-12 w-12 text-blue-400 dark:text-blue-200'
+                            className='h-12 w-12 text-primary'
                             fill='none'
                             viewBox='0 0 24 24'
                             stroke='currentColor'
@@ -219,13 +219,13 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           </svg>
 
                           <p className='text-sm font-medium'>
-                            <span className='text-blue-600 dark:text-blue-200'>
+                            <span className='text-primary'>
                               Click to upload
                             </span>{' '}
                             or drag a video file here
                           </p>
 
-                          <p className='text-xs text-gray-500 dark:text-gray-400'>
+                          <p className='text-xs text-muted-foreground'>
                             MP4 up to {MAX_VIDEO_SIZE_MB}MB
                           </p>
                         </label>
@@ -283,12 +283,12 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                       <div>
                         <label
                           htmlFor='bannerUpload'
-                          className='flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-blue-400/60 px-4 py-10 text-center text-blue-500 transition hover:border-blue-500 hover:bg-blue-50/50 dark:border-blue-300/30 dark:hover:border-blue-100 dark:hover:bg-blue-900/10'
+                          className='flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/40 px-4 py-10 text-center text-primary transition hover:border-primary hover:bg-primary/5 dark:hover:border-primary/80 dark:hover:bg-primary/10'
                         >
                           {/* Icon */}
                           <svg
                             xmlns='http://www.w3.org/2000/svg'
-                            className='h-12 w-12 text-blue-400 dark:text-blue-200'
+                            className='h-12 w-12 text-primary'
                             fill='none'
                             viewBox='0 0 24 24'
                             stroke='currentColor'
@@ -302,13 +302,13 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           </svg>
 
                           <p className='text-sm font-medium'>
-                            <span className='text-blue-600 dark:text-blue-200'>
+                            <span className='text-primary'>
                               Click to upload
                             </span>{' '}
                             or drag a banner image here
                           </p>
 
-                          <p className='text-xs text-gray-500 dark:text-gray-400'>
+                          <p className='text-xs text-muted-foreground'>
                             PNG or JPG, recommended ratio 4:1
                           </p>
                         </label>
@@ -362,12 +362,12 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                       <div>
                         <label
                           htmlFor='thumbnailUpload'
-                          className='flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-blue-400/60 px-4 py-10 text-center text-blue-500 transition hover:border-blue-500 hover:bg-blue-50/50 dark:border-blue-300/30 dark:hover:border-blue-100 dark:hover:bg-blue-900/10'
+                          className='flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/40 px-4 py-10 text-center text-primary transition hover:border-primary hover:bg-primary/5 dark:hover:border-primary/80 dark:hover:bg-primary/10'
                         >
                           {/* Icon */}
                           <svg
                             xmlns='http://www.w3.org/2000/svg'
-                            className='h-12 w-12 text-blue-400 dark:text-blue-200'
+                            className='h-12 w-12 text-primary'
                             fill='none'
                             viewBox='0 0 24 24'
                             stroke='currentColor'
@@ -381,13 +381,13 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                           </svg>
 
                           <p className='text-sm font-medium'>
-                            <span className='text-blue-600 dark:text-blue-200'>
+                            <span className='text-primary'>
                               Click to upload
                             </span>{' '}
                             or drag an image here
                           </p>
 
-                          <p className='text-xs text-gray-500 dark:text-gray-400'>
+                          <p className='text-xs text-muted-foreground'>
                             PNG or JPG up to 15MB
                           </p>
                         </label>

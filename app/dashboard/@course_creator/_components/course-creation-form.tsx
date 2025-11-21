@@ -66,14 +66,12 @@ export type FormSectionProps = {
 };
 
 export const FormSection = ({ title, description, children }: FormSectionProps) => (
-  <section className='rounded-3xl border border-blue-200/40 bg-white/90 p-6 shadow-lg shadow-blue-200/40 transition lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/30'>
+  <section className='rounded-3xl border border-border bg-card p-6 shadow-lg transition lg:p-8'>
     <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10'>
       <div className='lg:w-1/3'>
-        <p className='text-xs font-semibold tracking-[0.4em] text-blue-500/80 uppercase dark:text-blue-200'>
-          Section
-        </p>
-        <h3 className='mt-2 text-lg font-semibold text-slate-900 dark:text-blue-50'>{title}</h3>
-        <p className='mt-2 text-sm text-slate-600 dark:text-slate-200'>{description}</p>
+        <p className='text-xs font-semibold tracking-[0.4em] text-primary/80 uppercase'>Section</p>
+        <h3 className='mt-2 text-lg font-semibold text-foreground'>{title}</h3>
+        <p className='mt-2 text-sm text-muted-foreground'>{description}</p>
       </div>
       <div className='lg:flex-1'>{children}</div>
     </div>
@@ -385,7 +383,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className='space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'
+          className='space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10'
         >
           {/* Course Name */}
           <FormSection

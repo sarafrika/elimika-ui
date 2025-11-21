@@ -308,7 +308,7 @@ function LessonList({
   }, [lessons, lessonContentsMap, contentTypeData]);
 
   return (
-    <div className='space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+    <div className='space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10'>
       <div className='flex flex-col items-center justify-between gap-4 md:flex-row'>
         <div className='space-y-1 self-start'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
@@ -343,7 +343,7 @@ function LessonList({
               return (
                 <div
                   key={lesson?.uuid || index}
-                  className='group relative flex flex-col gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+                  className='group relative flex flex-col gap-4 rounded-[20px] border border-border bg-card/90 p-4 shadow-xl backdrop-blur lg:p-8'
                 >
                   <div className='flex items-start gap-4'>
                     <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
@@ -386,7 +386,7 @@ function LessonList({
 
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className='text-red-600'
+                              className='text-destructive'
                               onClick={() => {
                                 if (lesson.uuid) onDeleteLesson(lesson?.uuid);
                               }}
@@ -442,20 +442,20 @@ function LessonList({
                           .map((item: any) => (
                             <div
                               key={item.uuid}
-                              className='group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-md p-4 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700'
+                              className='group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-md p-4 text-sm transition-colors hover:bg-muted/50'
                             >
                               <div className='flex flex-col gap-1'>
                                 <div className='flex items-center gap-2'>
                                   {getContentTypeIcon(item.content_type_key)}
-                                  <span className='font-medium text-gray-900 dark:text-gray-100'>
+                                  <span className='font-medium text-foreground'>
                                     {item.title}
                                   </span>
                                 </div>
-                                <div className='line-clamp-2 text-xs text-gray-600 dark:text-gray-400'>
+                                <div className='line-clamp-2 text-xs text-muted-foreground'>
                                   <RichTextRenderer htmlString={item?.description} maxChars={150} />
                                 </div>
                                 {item.content_text && (
-                                  <div className='text-xs text-gray-700 dark:text-gray-300'>
+                                  <div className='text-xs text-muted-foreground'>
                                     <RichTextRenderer
                                       htmlString={item?.content_text}
                                       maxChars={150}
@@ -467,7 +467,7 @@ function LessonList({
                                     href={item.file_url}
                                     target='_blank'
                                     rel='noopener noreferrer'
-                                    className='text-xs text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-500'
+                                    className='text-xs text-primary underline hover:text-primary/80'
                                   >
                                     View File
                                   </a>
@@ -494,7 +494,7 @@ function LessonList({
 
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
-                                    className='text-red-600'
+                                    className='text-destructive'
                                     onClick={() =>
                                       onDeleteLessonContent(courseId, item.lesson_uuid, item.uuid)
                                     }
@@ -761,7 +761,7 @@ function LessonCreationForm({
                   size='sm'
                   onClick={() => removeResource(index)}
                 >
-                  <X className='h-4 w-4 text-red-500' />
+                  <X className='h-4 w-4 text-destructive' />
                 </Button>
               </div>
 
@@ -1007,7 +1007,7 @@ function LessonEditingForm({
                   size='sm'
                   onClick={() => removeResource(index)}
                 >
-                  <X className='h-4 w-4 text-red-500' />
+                  <X className='h-4 w-4 text-destructive' />
                 </Button>
               </div>
 
@@ -1721,8 +1721,8 @@ function AssessmentCreationForm({
                       className={clsx(
                         'cursor-pointer rounded-lg border p-4 transition',
                         isSelected
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:bg-gray-50'
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border hover:bg-muted'
                       )}
                     >
                       <div
@@ -1736,11 +1736,11 @@ function AssessmentCreationForm({
                           </div>
                         </div>
                         {isSelected && (
-                          <span className='text-sm font-medium text-blue-600'>Selected</span>
+                          <span className='text-sm font-medium text-primary'>Selected</span>
                         )}
                       </div>
 
-                      <div className='flfex-row mt-2 flex items-center gap-6 text-sm text-gray-600'>
+                      <div className='flfex-row mt-2 flex items-center gap-6 text-sm text-muted-foreground'>
                         <p>
                           <strong>Type:</strong> {rubric.rubric_type}
                         </p>
@@ -1753,7 +1753,7 @@ function AssessmentCreationForm({
                       <button
                         type='button'
                         onClick={() => toggleExpand(rubric.uuid)}
-                        className='mt-3 flex items-center gap-1 text-sm text-blue-600'
+                        className='mt-3 flex items-center gap-1 text-sm text-primary'
                       >
                         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                         {isExpanded
@@ -1768,9 +1768,9 @@ function AssessmentCreationForm({
                           {criteria.map(criterion => (
                             <div
                               key={criterion.uuid}
-                              className='rounded-md border border-gray-200 bg-white p-3'
+                              className='rounded-md border border-border bg-card p-3'
                             >
-                              <div className='flex flex-row items-center gap-2 font-medium text-gray-800'>
+                              <div className='flex flex-row items-center gap-2 font-medium text-foreground'>
                                 <CircleCheckBig size={14} color='green' />{' '}
                                 {criterion.component_name}
                               </div>
@@ -1781,17 +1781,17 @@ function AssessmentCreationForm({
                               {/* Scoring levels */}
                               {criterion.scoring?.length > 0 ? (
                                 <div className='mt-2 space-y-2'>
-                                  {/* <div className="text-xs font-medium text-gray-700">Scoring Levels:</div> */}
+                                  {/* <div className="text-xs font-medium text-muted-foreground">Scoring Levels:</div> */}
                                   {/* {criterion.scoring.map((score: any) => (
                                     <div
                                       key={score.uuid}
-                                      className="border-l-4 border-blue-200 pl-3 py-1 bg-gray-50 rounded"
+                                      className="border-l-4 border-border/60 pl-3 py-1 bg-muted rounded"
                                     >
-                                      <div className="text-sm font-semibold text-gray-800">
+                                      <div className="text-sm font-semibold text-foreground">
                                         {score.performance_expectation}
                                       </div>
                                       <div className="text-xs text-muted-foreground">{score.description}</div>
-                                      <div className="text-xs text-gray-600">
+                                      <div className="text-xs text-muted-foreground">
                                         <p><strong>Score Range:</strong> {score.score_range}</p>
                                         <p><strong>Feedback Category:</strong> {score.feedback_category}</p>
                                         <p><strong>Passing:</strong> {score.is_passing_level ? 'Yes' : 'No'}</p>
@@ -1829,7 +1829,7 @@ function AssessmentCreationForm({
                   size='sm'
                   onClick={() => removeResource(index)}
                 >
-                  <X className='h-4 w-4 text-red-500' />
+                  <X className='h-4 w-4 text-destructive' />
                 </Button>
               </div>
 
@@ -2022,7 +2022,7 @@ function AssessmentList({
 
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className='text-red-600'
+                        className='text-destructive'
                         onClick={() => {
                           if (assessment.uuid) {
                             handleDelete(assessment?.uuid as string);
