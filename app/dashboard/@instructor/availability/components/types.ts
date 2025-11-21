@@ -1,14 +1,16 @@
 export type AvailabilitySlot = {
   id: string;
   day: string;
-  startTime: string;
-  endTime: string;
-  date?: Date;
+  startTime: string;      // HH:mm
+  endTime: string;        // HH:mm
+  date?: Date;            // optional specific date
   status: 'available' | 'unavailable' | 'reserved' | 'booked';
   recurring?: boolean;
   note?: string;
   is_available?: boolean;
   custom_pattern?: string;
+  startDateTime?: string; // optional ISO datetime
+  endDateTime?: string;   // optional ISO datetime
 };
 
 export type CalendarEvent = {
@@ -16,10 +18,12 @@ export type CalendarEvent = {
   title: string;
   description?: string;
   type: 'booked' | 'available' | 'unavailable' | 'reserved';
-  startTime: string;
-  endTime: string;
-  date: Date;
-  day: string;
+  startTime: string;       // HH:mm
+  endTime: string;         // HH:mm
+  startDateTime: string;   // ISO YYYY-MM-DDTHH:mm:ss
+  endDateTime: string;     // ISO YYYY-MM-DDTHH:mm:ss
+  date: Date;              // main date for event
+  day: string;             // weekday name
   location?: string;
   attendees?: number;
   isRecurring?: boolean;
@@ -55,37 +59,28 @@ export type ClassScheduleItem = {
   cancellation_reason?: string | null;
 };
 
-// export function transformAvailabilityArray(dataArray: any[]) {
-//   const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-//   return dataArray?.map(data => ({
-//     id: data.uuid,
-//     day: dayMap[data.day_of_week ?? 0],
-//     startTime: data.start_time?.slice(0, 5),
-//     endTime: data.end_time?.slice(0, 5),
-//     status: data.is_available ? 'available' : 'unavailable',
-//     recurring: data.availability_type === 'weekly',
-//     note: data.availability_description || '',
-//     is_available: data.is_available,
-//     custom_pattern: data.custom_pattern || '',
-//   }));
-// }
-
-export function transformAvailabilityArray(dataArray: any[]) {
+export function transformAvailabilityArray(dataArray: any[]): AvailabilitySlot[] {
   const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   return dataArray?.map(data => {
-    // Determine the day
     let day: string;
 
     if (data.specific_date) {
       const date = new Date(data.specific_date);
       day = dayMap[date.getDay()] || 'Unknown';
-    } else if (data.day_of_week !== null) {
+    } else if (data.day_of_week !== null && data.day_of_week !== undefined) {
       day = dayMap[data.day_of_week] || 'Unknown';
     } else {
       day = 'Unknown';
     }
+
+    const startDateTime = data.specific_date
+      ? `${new Date(data.specific_date).toISOString().slice(0, 10)}T${data.start_time?.slice(0, 5)}:00`
+      : undefined;
+
+    const endDateTime = data.specific_date
+      ? `${new Date(data.specific_date).toISOString().slice(0, 10)}T${data.end_time?.slice(0, 5)}:00`
+      : undefined;
 
     return {
       id: data.uuid,
@@ -98,27 +93,29 @@ export function transformAvailabilityArray(dataArray: any[]) {
       is_available: data.is_available,
       custom_pattern: data.custom_pattern || '',
       date: data.specific_date ? new Date(data.specific_date) : undefined,
+      startDateTime,
+      endDateTime,
     };
   });
 }
-
 
 export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarEvent[] {
   return classes.map(item => {
     const start = new Date(item.start_time);
     const end = new Date(item.end_time);
 
-    const getTimeString = (date: Date) => date.toTimeString().slice(0, 5);
-    const getDayName = (date: Date) => date.toLocaleDateString('en-US', { weekday: 'long' });
+    const startTime = start.toTimeString().slice(0, 5);
+    const endTime = end.toTimeString().slice(0, 5);
+    const startDateTime = start.toISOString().slice(0, 19);
+    const endDateTime = end.toISOString().slice(0, 19);
+    const day = start.toLocaleDateString('en-US', { weekday: 'long' });
 
-    // Optional: determine color by status (use normalized uppercase key)
     const colorMap: Record<string, string> = {
       SCHEDULED: '#1E90FF',
       CANCELLED: '#FF6B6B',
       COMPLETED: '#2ECC71',
     };
 
-    // Map incoming status strings to the allowed CalendarEvent['status'] union
     const statusMap: Record<string, CalendarEvent['status']> = {
       SCHEDULED: 'booked',
       CANCELLED: 'unavailable',
@@ -133,12 +130,14 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
 
     return {
       id: item.uuid,
-      title: item.title.toUpperCase(), // convert to uppercase
+      title: item.title.toUpperCase(),
       type: 'booked',
-      startTime: getTimeString(start),
-      endTime: getTimeString(end),
+      startTime,
+      endTime,
+      startDateTime,
+      endDateTime,
       date: new Date(start.toDateString()),
-      day: getDayName(start),
+      day,
       location: item.location_type === 'ONLINE' ? 'Online' : item.location_type,
       attendees: item.max_participants,
       isRecurring: false,

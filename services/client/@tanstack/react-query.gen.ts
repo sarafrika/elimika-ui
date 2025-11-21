@@ -79,6 +79,16 @@ import {
   deleteCourseCreator,
   getCourseCreatorByUuid,
   updateCourseCreator,
+  deleteCourseCreatorSkill,
+  updateCourseCreatorSkill,
+  deleteCourseCreatorMembership,
+  updateCourseCreatorMembership,
+  deleteCourseCreatorExperience,
+  updateCourseCreatorExperience,
+  deleteCourseCreatorEducation,
+  updateCourseCreatorEducation,
+  deleteCourseCreatorCertification,
+  updateCourseCreatorCertification,
   deleteGradingLevel,
   updateGradingLevel,
   deleteDifficultyLevel,
@@ -213,6 +223,16 @@ import {
   createCourseCreator,
   verifyCourseCreator,
   unverifyCourseCreator,
+  getCourseCreatorSkills,
+  addCourseCreatorSkill,
+  getCourseCreatorMemberships,
+  addCourseCreatorMembership,
+  getCourseCreatorExperience,
+  addCourseCreatorExperience,
+  getCourseCreatorEducation,
+  addCourseCreatorEducation,
+  getCourseCreatorCertifications,
+  addCourseCreatorCertification,
   getAllGradingLevels,
   createGradingLevel,
   getAllDifficultyLevels,
@@ -364,8 +384,13 @@ import {
   isCourseCreatorVerified,
   getVerifiedCourseCreators,
   getUnverifiedCourseCreators,
+  searchCourseCreatorSkills,
   searchCourseCreators,
+  searchCourseCreatorMemberships,
+  searchCourseCreatorExperience,
+  searchCourseCreatorEducation,
   countCourseCreatorsByVerificationStatus,
+  searchCourseCreatorCertifications,
   searchContentTypes,
   checkMimeTypeSupport,
   getMediaContentTypes,
@@ -609,6 +634,31 @@ import type {
   UpdateCourseCreatorData,
   UpdateCourseCreatorError,
   UpdateCourseCreatorResponse,
+  DeleteCourseCreatorSkillData,
+  DeleteCourseCreatorSkillError,
+  UpdateCourseCreatorSkillData,
+  UpdateCourseCreatorSkillError,
+  UpdateCourseCreatorSkillResponse,
+  DeleteCourseCreatorMembershipData,
+  DeleteCourseCreatorMembershipError,
+  UpdateCourseCreatorMembershipData,
+  UpdateCourseCreatorMembershipError,
+  UpdateCourseCreatorMembershipResponse,
+  DeleteCourseCreatorExperienceData,
+  DeleteCourseCreatorExperienceError,
+  UpdateCourseCreatorExperienceData,
+  UpdateCourseCreatorExperienceError,
+  UpdateCourseCreatorExperienceResponse,
+  DeleteCourseCreatorEducationData,
+  DeleteCourseCreatorEducationError,
+  UpdateCourseCreatorEducationData,
+  UpdateCourseCreatorEducationError,
+  UpdateCourseCreatorEducationResponse,
+  DeleteCourseCreatorCertificationData,
+  DeleteCourseCreatorCertificationError,
+  UpdateCourseCreatorCertificationData,
+  UpdateCourseCreatorCertificationError,
+  UpdateCourseCreatorCertificationResponse,
   DeleteGradingLevelData,
   DeleteGradingLevelError,
   UpdateGradingLevelData,
@@ -979,6 +1029,36 @@ import type {
   UnverifyCourseCreatorData,
   UnverifyCourseCreatorError,
   UnverifyCourseCreatorResponse,
+  GetCourseCreatorSkillsData,
+  GetCourseCreatorSkillsError,
+  GetCourseCreatorSkillsResponse,
+  AddCourseCreatorSkillData,
+  AddCourseCreatorSkillError,
+  AddCourseCreatorSkillResponse,
+  GetCourseCreatorMembershipsData,
+  GetCourseCreatorMembershipsError,
+  GetCourseCreatorMembershipsResponse,
+  AddCourseCreatorMembershipData,
+  AddCourseCreatorMembershipError,
+  AddCourseCreatorMembershipResponse,
+  GetCourseCreatorExperienceData,
+  GetCourseCreatorExperienceError,
+  GetCourseCreatorExperienceResponse,
+  AddCourseCreatorExperienceData,
+  AddCourseCreatorExperienceError,
+  AddCourseCreatorExperienceResponse,
+  GetCourseCreatorEducationData,
+  GetCourseCreatorEducationError,
+  GetCourseCreatorEducationResponse,
+  AddCourseCreatorEducationData,
+  AddCourseCreatorEducationError,
+  AddCourseCreatorEducationResponse,
+  GetCourseCreatorCertificationsData,
+  GetCourseCreatorCertificationsError,
+  GetCourseCreatorCertificationsResponse,
+  AddCourseCreatorCertificationData,
+  AddCourseCreatorCertificationError,
+  AddCourseCreatorCertificationResponse,
   GetAllGradingLevelsData,
   GetAllGradingLevelsError,
   GetAllGradingLevelsResponse,
@@ -1332,10 +1412,25 @@ import type {
   GetUnverifiedCourseCreatorsData,
   GetUnverifiedCourseCreatorsError,
   GetUnverifiedCourseCreatorsResponse,
+  SearchCourseCreatorSkillsData,
+  SearchCourseCreatorSkillsError,
+  SearchCourseCreatorSkillsResponse,
   SearchCourseCreatorsData,
   SearchCourseCreatorsError,
   SearchCourseCreatorsResponse,
+  SearchCourseCreatorMembershipsData,
+  SearchCourseCreatorMembershipsError,
+  SearchCourseCreatorMembershipsResponse,
+  SearchCourseCreatorExperienceData,
+  SearchCourseCreatorExperienceError,
+  SearchCourseCreatorExperienceResponse,
+  SearchCourseCreatorEducationData,
+  SearchCourseCreatorEducationError,
+  SearchCourseCreatorEducationResponse,
   CountCourseCreatorsByVerificationStatusData,
+  SearchCourseCreatorCertificationsData,
+  SearchCourseCreatorCertificationsError,
+  SearchCourseCreatorCertificationsResponse,
   SearchContentTypesData,
   SearchContentTypesError,
   SearchContentTypesResponse,
@@ -3487,6 +3582,286 @@ export const updateCourseCreatorMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCourseCreator({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete course creator skill
+ * Removes a skill record from a course creator profile.
+ */
+export const deleteCourseCreatorSkillMutation = (
+  options?: Partial<Options<DeleteCourseCreatorSkillData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseCreatorSkillError,
+  Options<DeleteCourseCreatorSkillData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseCreatorSkillError,
+    Options<DeleteCourseCreatorSkillData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreatorSkill({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update course creator skill
+ * Updates a recorded skill for a course creator.
+ */
+export const updateCourseCreatorSkillMutation = (
+  options?: Partial<Options<UpdateCourseCreatorSkillData>>
+): UseMutationOptions<
+  UpdateCourseCreatorSkillResponse,
+  UpdateCourseCreatorSkillError,
+  Options<UpdateCourseCreatorSkillData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorSkillResponse,
+    UpdateCourseCreatorSkillError,
+    Options<UpdateCourseCreatorSkillData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreatorSkill({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete membership record
+ * Deletes a course creator membership record.
+ */
+export const deleteCourseCreatorMembershipMutation = (
+  options?: Partial<Options<DeleteCourseCreatorMembershipData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseCreatorMembershipError,
+  Options<DeleteCourseCreatorMembershipData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseCreatorMembershipError,
+    Options<DeleteCourseCreatorMembershipData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreatorMembership({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update membership record
+ * Updates a course creator professional membership.
+ */
+export const updateCourseCreatorMembershipMutation = (
+  options?: Partial<Options<UpdateCourseCreatorMembershipData>>
+): UseMutationOptions<
+  UpdateCourseCreatorMembershipResponse,
+  UpdateCourseCreatorMembershipError,
+  Options<UpdateCourseCreatorMembershipData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorMembershipResponse,
+    UpdateCourseCreatorMembershipError,
+    Options<UpdateCourseCreatorMembershipData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreatorMembership({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete experience record
+ * Removes a course creator experience entry.
+ */
+export const deleteCourseCreatorExperienceMutation = (
+  options?: Partial<Options<DeleteCourseCreatorExperienceData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseCreatorExperienceError,
+  Options<DeleteCourseCreatorExperienceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseCreatorExperienceError,
+    Options<DeleteCourseCreatorExperienceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreatorExperience({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update experience
+ * Updates a recorded work experience entry for a course creator.
+ */
+export const updateCourseCreatorExperienceMutation = (
+  options?: Partial<Options<UpdateCourseCreatorExperienceData>>
+): UseMutationOptions<
+  UpdateCourseCreatorExperienceResponse,
+  UpdateCourseCreatorExperienceError,
+  Options<UpdateCourseCreatorExperienceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorExperienceResponse,
+    UpdateCourseCreatorExperienceError,
+    Options<UpdateCourseCreatorExperienceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreatorExperience({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete education record
+ * Deletes an education record from a course creator profile.
+ */
+export const deleteCourseCreatorEducationMutation = (
+  options?: Partial<Options<DeleteCourseCreatorEducationData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseCreatorEducationError,
+  Options<DeleteCourseCreatorEducationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseCreatorEducationError,
+    Options<DeleteCourseCreatorEducationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreatorEducation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update education record
+ * Updates an existing course creator education entry.
+ */
+export const updateCourseCreatorEducationMutation = (
+  options?: Partial<Options<UpdateCourseCreatorEducationData>>
+): UseMutationOptions<
+  UpdateCourseCreatorEducationResponse,
+  UpdateCourseCreatorEducationError,
+  Options<UpdateCourseCreatorEducationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorEducationResponse,
+    UpdateCourseCreatorEducationError,
+    Options<UpdateCourseCreatorEducationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreatorEducation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete certification record
+ * Deletes a certification entry from a course creator profile.
+ */
+export const deleteCourseCreatorCertificationMutation = (
+  options?: Partial<Options<DeleteCourseCreatorCertificationData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseCreatorCertificationError,
+  Options<DeleteCourseCreatorCertificationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseCreatorCertificationError,
+    Options<DeleteCourseCreatorCertificationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreatorCertification({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update certification record
+ * Updates certification metadata for a course creator.
+ */
+export const updateCourseCreatorCertificationMutation = (
+  options?: Partial<Options<UpdateCourseCreatorCertificationData>>
+): UseMutationOptions<
+  UpdateCourseCreatorCertificationResponse,
+  UpdateCourseCreatorCertificationError,
+  Options<UpdateCourseCreatorCertificationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorCertificationResponse,
+    UpdateCourseCreatorCertificationError,
+    Options<UpdateCourseCreatorCertificationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreatorCertification({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -10182,6 +10557,647 @@ export const unverifyCourseCreatorMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await unverifyCourseCreator({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCourseCreatorSkillsQueryKey = (options: Options<GetCourseCreatorSkillsData>) =>
+  createQueryKey('getCourseCreatorSkills', options);
+
+/**
+ * List course creator skills
+ * Retrieves all recorded skills for a specific course creator.
+ */
+export const getCourseCreatorSkillsOptions = (options: Options<GetCourseCreatorSkillsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorSkills({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorSkillsQueryKey(options),
+  });
+};
+
+export const getCourseCreatorSkillsInfiniteQueryKey = (
+  options: Options<GetCourseCreatorSkillsData>
+): QueryKey<Options<GetCourseCreatorSkillsData>> =>
+  createQueryKey('getCourseCreatorSkills', options, true);
+
+/**
+ * List course creator skills
+ * Retrieves all recorded skills for a specific course creator.
+ */
+export const getCourseCreatorSkillsInfiniteOptions = (
+  options: Options<GetCourseCreatorSkillsData>
+) => {
+  return infiniteQueryOptions<
+    GetCourseCreatorSkillsResponse,
+    GetCourseCreatorSkillsError,
+    InfiniteData<GetCourseCreatorSkillsResponse>,
+    QueryKey<Options<GetCourseCreatorSkillsData>>,
+    | number
+    | Pick<QueryKey<Options<GetCourseCreatorSkillsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorSkillsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorSkills({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorSkillsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const addCourseCreatorSkillQueryKey = (options: Options<AddCourseCreatorSkillData>) =>
+  createQueryKey('addCourseCreatorSkill', options);
+
+/**
+ * Add skill to course creator
+ * Captures a new competency for a course creator profile.
+ */
+export const addCourseCreatorSkillOptions = (options: Options<AddCourseCreatorSkillData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseCreatorSkill({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseCreatorSkillQueryKey(options),
+  });
+};
+
+/**
+ * Add skill to course creator
+ * Captures a new competency for a course creator profile.
+ */
+export const addCourseCreatorSkillMutation = (
+  options?: Partial<Options<AddCourseCreatorSkillData>>
+): UseMutationOptions<
+  AddCourseCreatorSkillResponse,
+  AddCourseCreatorSkillError,
+  Options<AddCourseCreatorSkillData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseCreatorSkillResponse,
+    AddCourseCreatorSkillError,
+    Options<AddCourseCreatorSkillData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseCreatorSkill({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCourseCreatorMembershipsQueryKey = (
+  options: Options<GetCourseCreatorMembershipsData>
+) => createQueryKey('getCourseCreatorMemberships', options);
+
+/**
+ * Get professional memberships
+ * Retrieves memberships for a specific course creator.
+ */
+export const getCourseCreatorMembershipsOptions = (
+  options: Options<GetCourseCreatorMembershipsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorMemberships({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorMembershipsQueryKey(options),
+  });
+};
+
+export const getCourseCreatorMembershipsInfiniteQueryKey = (
+  options: Options<GetCourseCreatorMembershipsData>
+): QueryKey<Options<GetCourseCreatorMembershipsData>> =>
+  createQueryKey('getCourseCreatorMemberships', options, true);
+
+/**
+ * Get professional memberships
+ * Retrieves memberships for a specific course creator.
+ */
+export const getCourseCreatorMembershipsInfiniteOptions = (
+  options: Options<GetCourseCreatorMembershipsData>
+) => {
+  return infiniteQueryOptions<
+    GetCourseCreatorMembershipsResponse,
+    GetCourseCreatorMembershipsError,
+    InfiniteData<GetCourseCreatorMembershipsResponse>,
+    QueryKey<Options<GetCourseCreatorMembershipsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetCourseCreatorMembershipsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorMembershipsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorMemberships({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorMembershipsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const addCourseCreatorMembershipQueryKey = (
+  options: Options<AddCourseCreatorMembershipData>
+) => createQueryKey('addCourseCreatorMembership', options);
+
+/**
+ * Add professional membership
+ * Captures an association or membership for a course creator.
+ */
+export const addCourseCreatorMembershipOptions = (
+  options: Options<AddCourseCreatorMembershipData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseCreatorMembership({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseCreatorMembershipQueryKey(options),
+  });
+};
+
+/**
+ * Add professional membership
+ * Captures an association or membership for a course creator.
+ */
+export const addCourseCreatorMembershipMutation = (
+  options?: Partial<Options<AddCourseCreatorMembershipData>>
+): UseMutationOptions<
+  AddCourseCreatorMembershipResponse,
+  AddCourseCreatorMembershipError,
+  Options<AddCourseCreatorMembershipData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseCreatorMembershipResponse,
+    AddCourseCreatorMembershipError,
+    Options<AddCourseCreatorMembershipData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseCreatorMembership({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCourseCreatorExperienceQueryKey = (
+  options: Options<GetCourseCreatorExperienceData>
+) => createQueryKey('getCourseCreatorExperience', options);
+
+/**
+ * Get experience history
+ * Retrieves professional experience entries for a course creator.
+ */
+export const getCourseCreatorExperienceOptions = (
+  options: Options<GetCourseCreatorExperienceData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorExperience({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorExperienceQueryKey(options),
+  });
+};
+
+export const getCourseCreatorExperienceInfiniteQueryKey = (
+  options: Options<GetCourseCreatorExperienceData>
+): QueryKey<Options<GetCourseCreatorExperienceData>> =>
+  createQueryKey('getCourseCreatorExperience', options, true);
+
+/**
+ * Get experience history
+ * Retrieves professional experience entries for a course creator.
+ */
+export const getCourseCreatorExperienceInfiniteOptions = (
+  options: Options<GetCourseCreatorExperienceData>
+) => {
+  return infiniteQueryOptions<
+    GetCourseCreatorExperienceResponse,
+    GetCourseCreatorExperienceError,
+    InfiniteData<GetCourseCreatorExperienceResponse>,
+    QueryKey<Options<GetCourseCreatorExperienceData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetCourseCreatorExperienceData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorExperienceData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorExperience({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorExperienceInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const addCourseCreatorExperienceQueryKey = (
+  options: Options<AddCourseCreatorExperienceData>
+) => createQueryKey('addCourseCreatorExperience', options);
+
+/**
+ * Add experience record
+ * Captures professional experience for a course creator.
+ */
+export const addCourseCreatorExperienceOptions = (
+  options: Options<AddCourseCreatorExperienceData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseCreatorExperience({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseCreatorExperienceQueryKey(options),
+  });
+};
+
+/**
+ * Add experience record
+ * Captures professional experience for a course creator.
+ */
+export const addCourseCreatorExperienceMutation = (
+  options?: Partial<Options<AddCourseCreatorExperienceData>>
+): UseMutationOptions<
+  AddCourseCreatorExperienceResponse,
+  AddCourseCreatorExperienceError,
+  Options<AddCourseCreatorExperienceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseCreatorExperienceResponse,
+    AddCourseCreatorExperienceError,
+    Options<AddCourseCreatorExperienceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseCreatorExperience({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCourseCreatorEducationQueryKey = (
+  options: Options<GetCourseCreatorEducationData>
+) => createQueryKey('getCourseCreatorEducation', options);
+
+/**
+ * Get course creator education
+ * Retrieves all education history for a course creator.
+ */
+export const getCourseCreatorEducationOptions = (
+  options: Options<GetCourseCreatorEducationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorEducation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorEducationQueryKey(options),
+  });
+};
+
+export const getCourseCreatorEducationInfiniteQueryKey = (
+  options: Options<GetCourseCreatorEducationData>
+): QueryKey<Options<GetCourseCreatorEducationData>> =>
+  createQueryKey('getCourseCreatorEducation', options, true);
+
+/**
+ * Get course creator education
+ * Retrieves all education history for a course creator.
+ */
+export const getCourseCreatorEducationInfiniteOptions = (
+  options: Options<GetCourseCreatorEducationData>
+) => {
+  return infiniteQueryOptions<
+    GetCourseCreatorEducationResponse,
+    GetCourseCreatorEducationError,
+    InfiniteData<GetCourseCreatorEducationResponse>,
+    QueryKey<Options<GetCourseCreatorEducationData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetCourseCreatorEducationData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorEducationData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorEducation({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorEducationInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const addCourseCreatorEducationQueryKey = (
+  options: Options<AddCourseCreatorEducationData>
+) => createQueryKey('addCourseCreatorEducation', options);
+
+/**
+ * Add education record
+ * Captures an academic qualification for a course creator.
+ */
+export const addCourseCreatorEducationOptions = (
+  options: Options<AddCourseCreatorEducationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseCreatorEducation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseCreatorEducationQueryKey(options),
+  });
+};
+
+/**
+ * Add education record
+ * Captures an academic qualification for a course creator.
+ */
+export const addCourseCreatorEducationMutation = (
+  options?: Partial<Options<AddCourseCreatorEducationData>>
+): UseMutationOptions<
+  AddCourseCreatorEducationResponse,
+  AddCourseCreatorEducationError,
+  Options<AddCourseCreatorEducationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseCreatorEducationResponse,
+    AddCourseCreatorEducationError,
+    Options<AddCourseCreatorEducationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseCreatorEducation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCourseCreatorCertificationsQueryKey = (
+  options: Options<GetCourseCreatorCertificationsData>
+) => createQueryKey('getCourseCreatorCertifications', options);
+
+/**
+ * Get certifications
+ * Retrieves certification records for a course creator.
+ */
+export const getCourseCreatorCertificationsOptions = (
+  options: Options<GetCourseCreatorCertificationsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorCertifications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorCertificationsQueryKey(options),
+  });
+};
+
+export const getCourseCreatorCertificationsInfiniteQueryKey = (
+  options: Options<GetCourseCreatorCertificationsData>
+): QueryKey<Options<GetCourseCreatorCertificationsData>> =>
+  createQueryKey('getCourseCreatorCertifications', options, true);
+
+/**
+ * Get certifications
+ * Retrieves certification records for a course creator.
+ */
+export const getCourseCreatorCertificationsInfiniteOptions = (
+  options: Options<GetCourseCreatorCertificationsData>
+) => {
+  return infiniteQueryOptions<
+    GetCourseCreatorCertificationsResponse,
+    GetCourseCreatorCertificationsError,
+    InfiniteData<GetCourseCreatorCertificationsResponse>,
+    QueryKey<Options<GetCourseCreatorCertificationsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetCourseCreatorCertificationsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetCourseCreatorCertificationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseCreatorCertifications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseCreatorCertificationsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const addCourseCreatorCertificationQueryKey = (
+  options: Options<AddCourseCreatorCertificationData>
+) => createQueryKey('addCourseCreatorCertification', options);
+
+/**
+ * Add certification record
+ * Captures a certification or accreditation held by a course creator.
+ */
+export const addCourseCreatorCertificationOptions = (
+  options: Options<AddCourseCreatorCertificationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseCreatorCertification({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseCreatorCertificationQueryKey(options),
+  });
+};
+
+/**
+ * Add certification record
+ * Captures a certification or accreditation held by a course creator.
+ */
+export const addCourseCreatorCertificationMutation = (
+  options?: Partial<Options<AddCourseCreatorCertificationData>>
+): UseMutationOptions<
+  AddCourseCreatorCertificationResponse,
+  AddCourseCreatorCertificationError,
+  Options<AddCourseCreatorCertificationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseCreatorCertificationResponse,
+    AddCourseCreatorCertificationError,
+    Options<AddCourseCreatorCertificationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseCreatorCertification({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -17725,6 +18741,83 @@ export const getUnverifiedCourseCreatorsInfiniteOptions = (
   );
 };
 
+export const searchCourseCreatorSkillsQueryKey = (
+  options: Options<SearchCourseCreatorSkillsData>
+) => createQueryKey('searchCourseCreatorSkills', options);
+
+/**
+ * Search course creator skills
+ * Advanced search endpoint for course creator skills using query parameters.
+ */
+export const searchCourseCreatorSkillsOptions = (
+  options: Options<SearchCourseCreatorSkillsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchCourseCreatorSkills({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchCourseCreatorSkillsQueryKey(options),
+  });
+};
+
+export const searchCourseCreatorSkillsInfiniteQueryKey = (
+  options: Options<SearchCourseCreatorSkillsData>
+): QueryKey<Options<SearchCourseCreatorSkillsData>> =>
+  createQueryKey('searchCourseCreatorSkills', options, true);
+
+/**
+ * Search course creator skills
+ * Advanced search endpoint for course creator skills using query parameters.
+ */
+export const searchCourseCreatorSkillsInfiniteOptions = (
+  options: Options<SearchCourseCreatorSkillsData>
+) => {
+  return infiniteQueryOptions<
+    SearchCourseCreatorSkillsResponse,
+    SearchCourseCreatorSkillsError,
+    InfiniteData<SearchCourseCreatorSkillsResponse>,
+    QueryKey<Options<SearchCourseCreatorSkillsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SearchCourseCreatorSkillsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorSkillsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorSkills({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorSkillsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const searchCourseCreatorsQueryKey = (options: Options<SearchCourseCreatorsData>) =>
   createQueryKey('searchCourseCreators', options);
 
@@ -17862,6 +18955,237 @@ export const searchCourseCreatorsInfiniteOptions = (options: Options<SearchCours
   );
 };
 
+export const searchCourseCreatorMembershipsQueryKey = (
+  options: Options<SearchCourseCreatorMembershipsData>
+) => createQueryKey('searchCourseCreatorMemberships', options);
+
+/**
+ * Search course creator memberships
+ * Advanced search endpoint for course creator memberships.
+ */
+export const searchCourseCreatorMembershipsOptions = (
+  options: Options<SearchCourseCreatorMembershipsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchCourseCreatorMemberships({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchCourseCreatorMembershipsQueryKey(options),
+  });
+};
+
+export const searchCourseCreatorMembershipsInfiniteQueryKey = (
+  options: Options<SearchCourseCreatorMembershipsData>
+): QueryKey<Options<SearchCourseCreatorMembershipsData>> =>
+  createQueryKey('searchCourseCreatorMemberships', options, true);
+
+/**
+ * Search course creator memberships
+ * Advanced search endpoint for course creator memberships.
+ */
+export const searchCourseCreatorMembershipsInfiniteOptions = (
+  options: Options<SearchCourseCreatorMembershipsData>
+) => {
+  return infiniteQueryOptions<
+    SearchCourseCreatorMembershipsResponse,
+    SearchCourseCreatorMembershipsError,
+    InfiniteData<SearchCourseCreatorMembershipsResponse>,
+    QueryKey<Options<SearchCourseCreatorMembershipsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SearchCourseCreatorMembershipsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorMembershipsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorMemberships({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorMembershipsInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const searchCourseCreatorExperienceQueryKey = (
+  options: Options<SearchCourseCreatorExperienceData>
+) => createQueryKey('searchCourseCreatorExperience', options);
+
+/**
+ * Search course creator experience
+ * Advanced search endpoint for course creator experience history.
+ */
+export const searchCourseCreatorExperienceOptions = (
+  options: Options<SearchCourseCreatorExperienceData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchCourseCreatorExperience({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchCourseCreatorExperienceQueryKey(options),
+  });
+};
+
+export const searchCourseCreatorExperienceInfiniteQueryKey = (
+  options: Options<SearchCourseCreatorExperienceData>
+): QueryKey<Options<SearchCourseCreatorExperienceData>> =>
+  createQueryKey('searchCourseCreatorExperience', options, true);
+
+/**
+ * Search course creator experience
+ * Advanced search endpoint for course creator experience history.
+ */
+export const searchCourseCreatorExperienceInfiniteOptions = (
+  options: Options<SearchCourseCreatorExperienceData>
+) => {
+  return infiniteQueryOptions<
+    SearchCourseCreatorExperienceResponse,
+    SearchCourseCreatorExperienceError,
+    InfiniteData<SearchCourseCreatorExperienceResponse>,
+    QueryKey<Options<SearchCourseCreatorExperienceData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SearchCourseCreatorExperienceData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorExperienceData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorExperience({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorExperienceInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const searchCourseCreatorEducationQueryKey = (
+  options: Options<SearchCourseCreatorEducationData>
+) => createQueryKey('searchCourseCreatorEducation', options);
+
+/**
+ * Search course creator education
+ * Advanced search endpoint for course creator education history.
+ */
+export const searchCourseCreatorEducationOptions = (
+  options: Options<SearchCourseCreatorEducationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchCourseCreatorEducation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchCourseCreatorEducationQueryKey(options),
+  });
+};
+
+export const searchCourseCreatorEducationInfiniteQueryKey = (
+  options: Options<SearchCourseCreatorEducationData>
+): QueryKey<Options<SearchCourseCreatorEducationData>> =>
+  createQueryKey('searchCourseCreatorEducation', options, true);
+
+/**
+ * Search course creator education
+ * Advanced search endpoint for course creator education history.
+ */
+export const searchCourseCreatorEducationInfiniteOptions = (
+  options: Options<SearchCourseCreatorEducationData>
+) => {
+  return infiniteQueryOptions<
+    SearchCourseCreatorEducationResponse,
+    SearchCourseCreatorEducationError,
+    InfiniteData<SearchCourseCreatorEducationResponse>,
+    QueryKey<Options<SearchCourseCreatorEducationData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SearchCourseCreatorEducationData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorEducationData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorEducation({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorEducationInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const countCourseCreatorsByVerificationStatusQueryKey = (
   options: Options<CountCourseCreatorsByVerificationStatusData>
 ) => createQueryKey('countCourseCreatorsByVerificationStatus', options);
@@ -17885,6 +19209,83 @@ export const countCourseCreatorsByVerificationStatusOptions = (
     },
     queryKey: countCourseCreatorsByVerificationStatusQueryKey(options),
   });
+};
+
+export const searchCourseCreatorCertificationsQueryKey = (
+  options: Options<SearchCourseCreatorCertificationsData>
+) => createQueryKey('searchCourseCreatorCertifications', options);
+
+/**
+ * Search course creator certifications
+ * Advanced search endpoint for course creator certifications.
+ */
+export const searchCourseCreatorCertificationsOptions = (
+  options: Options<SearchCourseCreatorCertificationsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchCourseCreatorCertifications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchCourseCreatorCertificationsQueryKey(options),
+  });
+};
+
+export const searchCourseCreatorCertificationsInfiniteQueryKey = (
+  options: Options<SearchCourseCreatorCertificationsData>
+): QueryKey<Options<SearchCourseCreatorCertificationsData>> =>
+  createQueryKey('searchCourseCreatorCertifications', options, true);
+
+/**
+ * Search course creator certifications
+ * Advanced search endpoint for course creator certifications.
+ */
+export const searchCourseCreatorCertificationsInfiniteOptions = (
+  options: Options<SearchCourseCreatorCertificationsData>
+) => {
+  return infiniteQueryOptions<
+    SearchCourseCreatorCertificationsResponse,
+    SearchCourseCreatorCertificationsError,
+    InfiniteData<SearchCourseCreatorCertificationsResponse>,
+    QueryKey<Options<SearchCourseCreatorCertificationsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<SearchCourseCreatorCertificationsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchCourseCreatorCertificationsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCourseCreatorCertifications({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCourseCreatorCertificationsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const searchContentTypesQueryKey = (options: Options<SearchContentTypesData>) =>
