@@ -103,10 +103,10 @@ export default function CourseMangementPage() {
   const applyToTrain = useMutation(submitTrainingApplicationMutation());
   const handleApplyToTrain = (data: {
     notes: string;
-    private_individual_rate: number;
-    private_group_rate: number;
-    public_individual_rate: number;
-    public_group_rate: number;
+    private_online_rate: number;
+    private_inperson_rate: number;
+    group_online_rate: number;
+    group_inperson_rate: number;
     rate_currency: string;
   }) => {
     if (!applyingCourseId) return;
@@ -118,10 +118,10 @@ export default function CourseMangementPage() {
           applicant_uuid: instructor?.uuid as string,
           rate_card: {
             currency: data?.rate_currency,
-            private_individual_rate: data?.private_individual_rate,
-            private_group_rate: data?.private_group_rate,
-            public_individual_rate: data?.public_individual_rate,
-            public_group_rate: data?.public_group_rate,
+            private_online_rate: data?.private_online_rate,
+            private_inperson_rate: data?.private_inperson_rate,
+            group_online_rate: data?.group_online_rate,
+            group_inperson_rate: data?.group_inperson_rate
           },
           application_notes: data?.notes,
         },

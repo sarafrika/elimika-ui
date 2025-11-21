@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,15 +16,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
-import { AvailabilityTypeEnum, type LocalTime } from '@/services/client';
 import {
   createAvailabilitySlotMutation,
-  getInstructorAvailabilityQueryKey,
-  getScheduledInstanceQueryKey,
-  scheduleClassMutation,
+  scheduleClassMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -40,7 +35,6 @@ import {
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import type { CalendarEvent } from './types';
 
 export type EventType = 'booked' | 'unavailable' | 'available' | 'reserved';
@@ -115,6 +109,8 @@ export function EventModal({
     type: 'available',
     startTime: '',
     endTime: '',
+    startDateTime: '',
+    endDateTime: '',
     location: '',
     attendees: 1,
     isRecurring: false,
@@ -128,27 +124,28 @@ export function EventModal({
 
   useEffect(() => {
     if (event) {
-      setFormData(event);
-    } else if (selectedSlot) {
-      const endTime = getEndTime(selectedSlot.time);
       setFormData({
-        title: '',
-        description: '',
-        type: 'available',
-        startTime: selectedSlot.time,
-        endTime: endTime,
+        ...event,
+        startDateTime: `${event.date.toISOString().slice(0, 10)}T${event.startTime}:00`,
+        endDateTime: `${event.date.toISOString().slice(0, 10)}T${event.endTime}:00`,
+      });
+    }
+    else if (selectedSlot) {
+      const isoDate = selectedSlot.date.toISOString().slice(0, 10);
+      const endTime = getEndTime(selectedSlot.time);
+
+      setFormData({
+        ...formData,
         day: selectedSlot.day,
         date: selectedSlot.date,
-        location: '',
-        attendees: 1,
-        isRecurring: false,
-        recurringDays: [],
-        status: 'booked',
-        reminders: [15],
-        notes: '',
+        startTime: selectedSlot.time,
+        endTime: endTime,
+        startDateTime: `${isoDate}T${selectedSlot.time}:00`,
+        endDateTime: `${isoDate}T${endTime}:00`,
       });
     }
   }, [event, selectedSlot]);
+
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -185,88 +182,110 @@ export function EventModal({
   const handleSave = () => {
     if (!validateForm()) return;
 
+    // Ensure required fields exist
+    const { startDateTime, endDateTime, title, type, date, location, attendees, isRecurring, recurringDays, status, reminders, notes } = formData;
+
+    if (!startDateTime || !endDateTime || !title || !type) {
+      console.error('Required fields missing');
+      return;
+    }
+
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+
+    const startClock = startDateTime?.split("T")[1]?.slice(0, 5); // HH:mm
+    const endClock = endDateTime?.split("T")[1]?.slice(0, 5);     // HH:mm
+
     const eventData: CalendarEvent = {
       id: event?.id || `event-${Date.now()}`,
-      title: formData.title!,
+      title,
       description: formData.description,
-      type: formData.type as EventType,
-      startTime: formData.startTime!,
-      endTime: formData.endTime!,
-      date: formData.date || selectedSlot?.date as Date,
-      day: formData.day || selectedSlot?.day as any,
-      location: formData.location,
-      attendees: formData.attendees,
-      isRecurring: formData.isRecurring,
-      recurringDays: formData.recurringDays,
-      status: formData.status as 'available' | 'unavailable' | 'reserved' | 'booked',
-      color: eventTypes.find(t => t.value === formData.type)?.color,
-      reminders: formData.reminders,
-      notes: formData.notes,
+      type: type as EventType,
+      startTime: startClock as any,
+      endTime: endClock as any,
+      date: start,
+      day: start.toLocaleDateString("en-US", { weekday: "long" }),
+      location,
+      attendees,
+      isRecurring,
+      recurringDays,
+      status: status as CalendarEvent['status'],
+      color: eventTypes.find(t => t.value === type)?.color,
+      reminders,
+      notes,
+      startDateTime,
+      endDateTime,
     };
 
-    const { localDate, localTime, localDateTime } = extractDateTimeParts(eventData?.date);
+    const { localDate, localTime, localDateTime } = extractDateTimeParts(eventData.date);
 
-    if (eventData?.type === 'available' || eventData?.type === 'unavailable') {
-      createAvailability.mutate(
-        {
-          body: {
-            instructor_uuid: instrucor?.uuid as string,
-            availability_type: AvailabilityTypeEnum.DAILY,
-            day_of_week: getDayOfWeek1To7(eventData?.date),
-            start_time: eventData?.startTime as LocalTime,
-            end_time: eventData?.endTime as LocalTime,
-            is_available: eventData?.type === 'available',
-            recurrence_interval: 1,
-            effective_start_date: eventData?.date,
-            effective_end_date: new Date('2026-03-15'),
-            color_code: eventData?.color,
-          },
-          path: { instructorUuid: instrucor?.uuid as string },
-        },
-        {
-          onSuccess: data => {
-            qc.invalidateQueries({
-              queryKey: getInstructorAvailabilityQueryKey({
-                path: { instructorUuid: instrucor?.uuid as string },
-              }),
-            });
-            toast.success(data?.message);
-            onClose();
-          },
-          onError: error => {
-            toast.error(error?.message);
-            onClose();
-          },
-        }
-      );
-    } else if (eventData?.type === 'booked') {
-      scheduleClass.mutate(
-        {
-          body: {
-            instructor_uuid: instrucor?.uuid as string,
-            class_definition_uuid: 'ee1c94df-ddea-410d-a1a3-c44f9068ab48',
-            start_time: localDateTime as any,
-            end_time: '2026-09-15T10:30:00' as any,
-            timezone: 'UTC',
-          },
-        },
-        {
-          onSuccess: data => {
-            qc.invalidateQueries({
-              queryKey: getScheduledInstanceQueryKey({
-                path: { instanceUuid: data?.data?.uuid as string },
-              }),
-            });
-            toast.success(data?.message);
-            onClose();
-          },
-          onError: error => {
-            toast.error(error?.message);
-            onClose();
-          },
-        }
-      );
-    }
+    // console.log(eventData, "EV DATA");
+
+    // // Availability logic
+    // if (eventData.type === 'available' || eventData.type === 'unavailable') {
+    //   createAvailability.mutate(
+    //     {
+    //       body: {
+    //         instructor_uuid: instrucor?.uuid as string,
+    //         availability_type: AvailabilityTypeEnum.DAILY,
+    //         day_of_week: getDayOfWeek1To7(eventData.date),
+    //         start_time: eventData.startTime as LocalTime,
+    //         end_time: eventData.endTime as LocalTime,
+    //         is_available: eventData.type === 'available',
+    //         recurrence_interval: 1,
+    //         effective_start_date: eventData.date,
+    //         effective_end_date: new Date('2026-03-15'),
+    //         color_code: eventData.color,
+    //       },
+    //       path: { instructorUuid: instrucor?.uuid as string },
+    //     },
+    //     {
+    //       onSuccess: data => {
+    //         qc.invalidateQueries({
+    //           queryKey: getInstructorAvailabilityQueryKey({
+    //             path: { instructorUuid: instrucor?.uuid as string },
+    //           }),
+    //         });
+    //         toast.success(data?.message);
+    //         onClose();
+    //       },
+    //       onError: error => {
+    //         toast.error(error?.message);
+    //         onClose();
+    //       },
+    //     }
+    //   );
+    // }
+
+    // // Booked logic
+    // else if (eventData.type === 'booked') {
+    //   scheduleClass.mutate(
+    //     {
+    //       body: {
+    //         instructor_uuid: instrucor?.uuid as string,
+    //         class_definition_uuid: '',
+    //         start_time: startDateTime as any,
+    //         end_time: endDateTime as any,
+    //         timezone: 'UTC',
+    //       },
+    //     },
+    //     {
+    //       onSuccess: data => {
+    //         qc.invalidateQueries({
+    //           queryKey: getScheduledInstanceQueryKey({
+    //             path: { instanceUuid: data?.data?.uuid as string },
+    //           }),
+    //         });
+    //         toast.success(data?.message);
+    //         onClose();
+    //       },
+    //       onError: error => {
+    //         toast.error(error?.message);
+    //         onClose();
+    //       },
+    //     }
+    //   );
+    // }
   };
 
   const handleDelete = () => {
@@ -359,89 +378,43 @@ export function EventModal({
           )}
 
           {/* Date & Time */}
-          <div className='space-y-4'>
-            <h4 className='flex items-center gap-2 font-medium'>
-              <Clock className='h-4 w-4' />
-              Date & Time
+          <div className="space-y-4">
+            <h4 className="flex items-center gap-2 font-medium">
+              <Clock className="h-4 w-4" />
+              Date & Time (ISO Format)
             </h4>
 
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='startTime'>Start Time *</Label>
+            <div className="grid grid-cols-2 gap-4">
+              {/* START DATETIME */}
+              <div className="space-y-2">
+                <Label>Start Date & Time *</Label>
                 <Input
-                  id='startTime'
-                  type='time'
-                  value={formData.startTime || ''}
-                  onChange={e => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                  className={errors.startTime ? 'border-red-500' : ''}
+                  type="datetime-local"
+                  value={formData.startDateTime || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      startDateTime: e.target.value,
+                    }))
+                  }
                 />
-                {errors.startTime && <p className='text-sm text-red-500'>{errors.startTime}</p>}
               </div>
 
-              <div className='space-y-2'>
-                <Label htmlFor='endTime'>End Time *</Label>
+              {/* END DATETIME */}
+              <div className="space-y-2">
+                <Label>End Date & Time *</Label>
                 <Input
-                  id='endTime'
-                  type='time'
-                  value={formData.endTime || ''}
-                  onChange={e => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                  className={errors.endTime ? 'border-red-500' : ''}
+                  type="datetime-local"
+                  value={formData.endDateTime || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      endDateTime: e.target.value,
+                    }))
+                  }
                 />
-                {errors.endTime && <p className='text-sm text-red-500'>{errors.endTime}</p>}
               </div>
             </div>
-
-            {selectedSlot && (
-              <div className='rounded-lg bg-gray-50 p-3'>
-                <p className='text-sm text-gray-600'>
-                  <Calendar className='mr-1 inline h-4 w-4' />
-                  {selectedSlot.day}, {selectedSlot.date.toLocaleDateString()}
-                </p>
-              </div>
-            )}
-
-            <div className='flex items-center gap-3'>
-              <Switch
-                id='recurring'
-                checked={formData.isRecurring || false}
-                onCheckedChange={checked =>
-                  setFormData(prev => ({ ...prev, isRecurring: checked }))
-                }
-              />
-              <Label htmlFor='recurring'>Recurring event</Label>
-            </div>
-
-            {formData.isRecurring && (
-              <div className='space-y-2 pl-6'>
-                <Label>Repeat on days:</Label>
-                <div className='flex flex-wrap gap-2'>
-                  {[
-                    'Monday',
-                    'Tuesday',
-                    'Wednesday',
-                    'Thursday',
-                    'Friday',
-                    'Saturday',
-                    'Sunday',
-                  ].map(day => (
-                    <Badge
-                      key={day}
-                      variant={formData.recurringDays?.includes(day) ? 'default' : 'outline'}
-                      className='cursor-pointer'
-                      onClick={() => {
-                        const current = formData.recurringDays || [];
-                        const updated = current.includes(day)
-                          ? current.filter(d => d !== day)
-                          : [...current, day];
-                        setFormData(prev => ({ ...prev, recurringDays: updated }));
-                      }}
-                    >
-                      {day.substring(0, 3)}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Additional Details */}

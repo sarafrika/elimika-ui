@@ -93,15 +93,47 @@ export function MonthlyAvailabilityGrid({
     });
 
     // Check for events on this day
-    const dayEvents = availabilityData.events.filter(event => {
-      const eventDate = new Date(event.date);
-      return eventDate.toDateString() === date.toDateString();
-    });
+    // const dayEvents = availabilityData.events.filter(event => {
+    //   const eventDate = new Date(event.date);
+    //   return eventDate.toDateString() === date.toDateString();
+    // });
+
+    const dayEvents = [
+      // 1️⃣ Actual calendar events
+      ...availabilityData.events
+        .filter(event => {
+          const eventDate = new Date(event.date);
+          return eventDate.toDateString() === date.toDateString();
+        }),
+
+      // 2️⃣ BLOCKED_TIME_SLOT converted into "virtual events"
+      ...availabilityData.slots
+        .filter(slot => {
+          if (slot.custom_pattern !== "BLOCKED_TIME_SLOT") return false;
+
+          if (!slot.date) return false; // safety
+
+          const slotDate = new Date(slot.date);
+          return slotDate.toDateString() === date.toDateString();
+        })
+        .map(slot => ({
+          id: slot.id,
+          title: "Reserved / Booked",
+          day: slot.day,
+          date: slot.date,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          status: "booked",               // 🔥 force booked status
+          custom_pattern: slot.custom_pattern,
+          isVirtualBlockedEvent: true     // Optional helper flag
+        }))
+    ];
+
 
     const availableSlots = daySlots.filter(slot => slot.status === 'available').length;
-    const unavailableSlots = daySlots.filter(slot => slot.status === 'unavailable').length;
+    const unavailableSlots = daySlots.filter(slot => slot.status === 'unavailable' && slot.custom_pattern === "").length;
     const bookedSlots =
-      daySlots.filter(slot => slot.status === 'booked').length +
+      daySlots.filter(slot => slot.custom_pattern === "BLOCKED_TIME_SLOT").length +
       dayClasses.length +
       dayEvents.length;
 
@@ -276,10 +308,12 @@ export function MonthlyAvailabilityGrid({
                           {status.available > 0 && (
                             <div className='h-2 w-2 rounded-full bg-green-500' />
                           )}
+
                           {status.booked > 0 && (
                             <div className='h-2 w-2 rounded-full bg-blue-500' />
                           )}
-                          {status.unavailable > 0 && (
+
+                          {status.unavailable > 0 && status.booked === 0 && (
                             <div className='h-2 w-2 rounded-full bg-red-500' />
                           )}
                         </div>
@@ -300,8 +334,15 @@ export function MonthlyAvailabilityGrid({
                               <div className='text-xs'>
                                 {event.startTime} - {event.endTime}
                               </div>
+                              {/* <div className='text-xs'>
+                                {event?.location}
+                              </div>
+                              <div className='text-xs'>
+                                {event?.attendees} attendees
+                              </div> */}
                             </div>
                           ))}
+
                           {status.events.length > 2 && (
                             <div className='text-xs font-medium text-muted-foreground'>
                               +{status.events.length - 2} more events
@@ -320,6 +361,7 @@ export function MonthlyAvailabilityGrid({
                               {status.available}
                             </Badge>
                           )}
+
                           {status.booked > 0 && (
                             <Badge
                               variant='secondary'

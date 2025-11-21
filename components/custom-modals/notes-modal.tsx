@@ -28,10 +28,10 @@ interface NotesModalProps {
   placeholder?: string;
   onSave: (data: {
     notes: string;
-    private_individual_rate: number;
-    private_group_rate: number;
-    public_individual_rate: number;
-    public_group_rate: number;
+    private_online_rate: number;
+    private_inperson_rate: number;
+    group_online_rate: number;
+    group_inperson_rate: number;
     rate_currency: string;
   }) => void;
   isLoading?: boolean;
@@ -61,27 +61,28 @@ export default function NotesModal({
   minimum_rate
 }: NotesModalProps) {
   const [notes, setNotes] = useState('');
-  const [privateIndividualRate, setPrivateIndividualRate] = useState<number | ''>(0);
-  const [privateGroupRate, setPrivateGroupRate] = useState<number | ''>(0);
-  const [publicIndividualRate, setPublicIndividualRate] = useState<number | ''>(0);
-  const [publicGroupRate, setPublicGroupRate] = useState<number | ''>(0);
+  const [privateOnlineRate, setPrivateOnlineRate] = useState<number | ''>(0);
+  const [privateInpersonRate, setPrivateInpersonRate] = useState<number | ''>(0);
+  const [groupOnlineRate, setGroupOnlineRate] = useState<number | ''>(0);
+  const [groupInpersonRate, setGroupInpersonRate] = useState<number | ''>(0);
   const [currency, setCurrency] = useState('KES');
 
   const handleSave = () => {
     onSave({
       notes,
-      private_individual_rate: Number(privateIndividualRate),
-      private_group_rate: Number(privateGroupRate),
-      public_individual_rate: Number(publicIndividualRate),
-      public_group_rate: Number(publicGroupRate),
+      private_online_rate: Number(privateOnlineRate),
+      private_inperson_rate: Number(privateInpersonRate),
+      group_online_rate: Number(groupOnlineRate),
+      group_inperson_rate: Number(groupInpersonRate),
       rate_currency: currency,
     });
 
     setNotes('');
-    setPrivateIndividualRate(0);
-    setPrivateGroupRate(0);
-    setPublicIndividualRate(0);
-    setPublicGroupRate(0);
+    setNotes('');
+    setPrivateOnlineRate(0);
+    setPrivateInpersonRate(0);
+    setGroupOnlineRate(0);
+    setGroupInpersonRate(0);
     setCurrency('KES');
   };
 
@@ -144,62 +145,54 @@ export default function NotesModal({
               <h3 className="font-semibold text-sm mb-2">Private Training Rates (Per Hour Per Head)</h3>
 
               <div className="flex gap-4">
-                {/* Private Individual */}
+                {/* Private Online */}
                 <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Individual</label>
+                  <label className="text-sm font-medium text-muted-foreground">Online</label>
                   <Input
                     type="number"
                     min={minimum_rate}
-                    value={privateIndividualRate}
-                    onChange={(e) =>
-                      setPrivateIndividualRate(e.target.value ? Number(e.target.value) : '')
-                    }
+                    value={privateOnlineRate}
+                    onChange={(e) => setPrivateOnlineRate(e.target.value ? Number(e.target.value) : '')}
                   />
                 </div>
 
-                {/* Private Group */}
+                {/* Private In-Person */}
                 <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Group</label>
+                  <label className="text-sm font-medium text-muted-foreground">In-Person</label>
                   <Input
                     type="number"
                     min={minimum_rate}
-                    value={privateGroupRate}
-                    onChange={(e) =>
-                      setPrivateGroupRate(e.target.value ? Number(e.target.value) : '')
-                    }
+                    value={privateInpersonRate}
+                    onChange={(e) => setPrivateInpersonRate(e.target.value ? Number(e.target.value) : '')}
                   />
                 </div>
               </div>
             </div>
 
-            {/* PUBLIC SECTION */}
+            {/* GROUP SECTION */}
             <div className="border rounded-md p-3 mt-4">
-              <h3 className="font-semibold text-sm mb-2">Public Training Rates (Per Hour Per Head)</h3>
+              <h3 className="font-semibold text-sm mb-2">Group Training Rates (Per Hour Per Head)</h3>
 
               <div className="flex gap-4">
-                {/* Public Individual */}
+                {/* Group Online */}
                 <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Individual</label>
+                  <label className="text-sm font-medium text-muted-foreground">Online</label>
                   <Input
                     type="number"
                     min={minimum_rate}
-                    value={publicIndividualRate}
-                    onChange={(e) =>
-                      setPublicIndividualRate(e.target.value ? Number(e.target.value) : '')
-                    }
+                    value={groupOnlineRate}
+                    onChange={(e) => setGroupOnlineRate(e.target.value ? Number(e.target.value) : '')}
                   />
                 </div>
 
-                {/* Public Group */}
+                {/* Group In-Person */}
                 <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Group</label>
+                  <label className="text-sm font-medium text-muted-foreground">In-Person</label>
                   <Input
                     type="number"
                     min={minimum_rate}
-                    value={publicGroupRate}
-                    onChange={(e) =>
-                      setPublicGroupRate(e.target.value ? Number(e.target.value) : '')
-                    }
+                    value={groupInpersonRate}
+                    onChange={(e) => setGroupInpersonRate(e.target.value ? Number(e.target.value) : '')}
                   />
                 </div>
               </div>

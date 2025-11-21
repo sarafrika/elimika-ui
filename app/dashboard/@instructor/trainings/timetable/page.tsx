@@ -26,7 +26,7 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
   const instructor = useInstructor();
   const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
 
-  const { data: availabilitySlotss, refetch } = useQuery(
+  const { data: availabilitySlots, refetch } = useQuery(
     getInstructorAvailabilityOptions({ path: { instructorUuid: user?.instructor?.uuid as string } })
   );
 
@@ -67,8 +67,8 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
   }, [timetable?.data]);
 
   useEffect(() => {
-    if (availabilitySlotss?.data) {
-      const slots = transformAvailabilityArray(availabilitySlotss.data);
+    if (availabilitySlots?.data) {
+      const slots = transformAvailabilityArray(availabilitySlots.data);
       setTransformedSlots(slots);
 
       setAvailabilityData((prev: any) => ({
@@ -76,7 +76,7 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
         slots,
       }));
     }
-  }, [availabilitySlotss?.data]);
+  }, [availabilitySlots?.data]);
 
   return (
     <TimetableManager
