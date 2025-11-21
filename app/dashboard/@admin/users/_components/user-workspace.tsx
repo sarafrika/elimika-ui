@@ -131,7 +131,7 @@ export function AdminUserWorkspace({
   };
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+    <div className='bg-background flex h-[calc(100vh-120px)] min-h-0 flex-col lg:flex-row'>
       <UserListPanel
         users={users}
         selectedUserId={selectedUserId}
@@ -278,7 +278,7 @@ function UserListPanel({
   };
 
   return (
-    <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
+    <div className='bg-background flex w-full min-h-0 flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
       <div className='space-y-2 border-b p-4'>
         <div className='flex flex-col gap-2'>
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
@@ -310,7 +310,7 @@ function UserListPanel({
         </div>
       </div>
 
-      <ScrollArea className='flex-1 px-6 py-4'>
+      <ScrollArea className='flex-1 min-h-0 px-6 py-4'>
         <div className='flex flex-col gap-4 pb-8'>{renderContent()}</div>
       </ScrollArea>
 
@@ -375,7 +375,7 @@ function UserDetailsPanel({ user, panelTitle }: UserDetailsPanelProps) {
   };
 
   return (
-    <div className='hidden flex-1 flex-col bg-card lg:flex'>
+    <div className='hidden min-h-0 flex-1 flex-col bg-card lg:flex'>
       {user ? (
         <>
           <div className='border-b p-6'>
