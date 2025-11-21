@@ -80,6 +80,20 @@ export function OrganizationOnboardingForm() {
     longitude: normalizeCoordinate(longitudeWatch),
   };
 
+  const getApiErrorMessage = (error: unknown, fallback: string) => {
+    if (!error || typeof error !== 'object') return fallback;
+    if ('message' in error && typeof (error as { message?: unknown }).message === 'string') {
+      return (error as { message: string }).message;
+    }
+    if ('error' in error && typeof (error as any).error?.message === 'string') {
+      return (error as any).error.message;
+    }
+    if ('data' in error && typeof (error as any).data?.message === 'string') {
+      return (error as any).data.message;
+    }
+    return fallback;
+  };
+
   const handleSubmit = async (data: OrganizationOnboardingFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
@@ -88,19 +102,32 @@ export function OrganizationOnboardingForm() {
 
     setIsSubmitting(true);
     try {
-      await createOrganisation({
+      const response = await createOrganisation({
         body: data,
+        // ensure API errors are surfaced
+        throwOnError: true,
       });
+
+      if (response?.error) {
+        throw new Error(response.error.message || 'Failed to register organization.');
+      }
 
       // Invalidate organization-related queries
       await queryClient.invalidateQueries({ queryKey: ['organisations', 'profile'] });
+      if (user.invalidateQuery) {
+        await user.invalidateQuery();
+      }
 
-      toast.success('Organization registered successfully!');
+      const successMessage =
+        (response as any)?.message ||
+        (response as any)?.data?.message ||
+        'Organization registered successfully!';
+      toast.success(successMessage);
       router.replace('/dashboard/overview');
-    } catch (_error) {
-      toast.error('Failed to register organization. Please try again.');
-      setIsSubmitting(false);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to register organization. Please try again.'));
     }
+    setIsSubmitting(false);
   };
 
   return (
