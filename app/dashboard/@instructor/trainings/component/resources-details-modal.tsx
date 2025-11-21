@@ -45,7 +45,7 @@ export const ResourceDetailsModal: React.FC<ResourceDetailsModalProps> = ({
               {typeName}
             </Badge>
             {resource.is_required && (
-              <Badge variant='default' className='bg-blue-600'>
+              <Badge variant='default'>
                 Required
               </Badge>
             )}
@@ -58,7 +58,7 @@ export const ResourceDetailsModal: React.FC<ResourceDetailsModalProps> = ({
           {/* Content Text (HTML) */}
           {resource.content_text && (
             <div
-              className='prose prose-sm dark:prose-invert max-w-none text-gray-800 [&_li]:ml-6 [&_li]:list-disc'
+              className='prose prose-sm dark:prose-invert max-w-none text-foreground [&_li]:ml-6 [&_li]:list-disc'
               dangerouslySetInnerHTML={{ __html: resource.content_text }}
             />
           )}
@@ -66,20 +66,20 @@ export const ResourceDetailsModal: React.FC<ResourceDetailsModalProps> = ({
           {/* Description */}
           {resource.description?.trim() && (
             <div>
-              <h4 className='mb-1 font-semibold text-gray-800'>Description</h4>
-              <p className='text-sm text-gray-600'>{resource.description}</p>
+              <h4 className='mb-1 font-semibold text-foreground'>Description</h4>
+              <p className='text-sm text-muted-foreground'>{resource.description}</p>
             </div>
           )}
 
           {/* File URL */}
           {resource.file_url && (
             <div>
-              <h4 className='mb-1 font-semibold text-gray-800'>File</h4>
+              <h4 className='mb-1 font-semibold text-foreground'>File</h4>
               <a
                 href={resource.file_url}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='text-sm break-all text-blue-600 underline'
+                className='text-sm break-all text-primary underline'
               >
                 Open File
               </a>
@@ -88,18 +88,18 @@ export const ResourceDetailsModal: React.FC<ResourceDetailsModalProps> = ({
 
           {/* File Info */}
           {resource.mime_type && (
-            <div className='text-sm text-gray-600'>
+            <div className='text-sm text-muted-foreground'>
               <strong>Type:</strong> {resource.mime_type}
             </div>
           )}
           {resource.file_size_display && (
-            <div className='text-sm text-gray-600'>
+            <div className='text-sm text-muted-foreground'>
               <strong>Size:</strong> {resource.file_size_display}
             </div>
           )}
 
           {/* Dates */}
-          <div className='space-y-1 border-t pt-3 text-xs text-gray-500'>
+          <div className='space-y-1 border-t pt-3 text-xs text-muted-foreground'>
             {createdDate && (
               <p>
                 <strong>Created:</strong> {createdDate}
