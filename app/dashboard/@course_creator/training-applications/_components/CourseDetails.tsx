@@ -76,8 +76,6 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
     enabled: !!instructorUuid
   })
   const instructorSkills = skills?.data?.content || []
-  console.log(selectedApplication, "hsdfjjhsdf ")
-
 
   const handleActionSubmit = (data: {
     notes: string;
