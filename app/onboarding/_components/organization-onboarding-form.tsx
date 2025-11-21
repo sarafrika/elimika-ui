@@ -104,18 +104,19 @@ export function OrganizationOnboardingForm() {
   };
 
   return (
-    <div className='mx-auto max-w-2xl p-6'>
-      <div className='mb-8 text-center'>
-        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-purple-100'>
-          <Building2 className='h-8 w-8 text-purple-600' />
+    <div className='mx-auto max-w-3xl space-y-8 rounded-3xl border border-border/60 bg-card/80 p-8 shadow-sm backdrop-blur-sm'>
+      <div className='text-center'>
+        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20'>
+          <Building2 className='h-8 w-8' />
         </div>
-        <h1 className='mb-2 text-3xl font-bold text-gray-900'>Organization Registration</h1>
-        <p className='text-gray-600'>Register your organization to start offering courses</p>
+        <h1 className='mb-2 text-3xl font-bold text-foreground'>Organization Registration</h1>
+        <p className='text-muted-foreground'>
+          Register your organization to start offering courses
+        </p>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-          {/* Organization Details */}
           <Card>
             <CardHeader>
               <CardTitle>Organization Details</CardTitle>
@@ -128,7 +129,7 @@ export function OrganizationOnboardingForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Organization Name <span className='text-red-500'>*</span>
+                      Organization Name <span className='text-destructive'>*</span>
                     </FormLabel>
                     <FormControl>
                       <Input placeholder='Elimika Training Institute' {...field} />
@@ -138,23 +139,6 @@ export function OrganizationOnboardingForm() {
                   </FormItem>
                 )}
               />
-
-              {/* <FormField
-                control={form.control}
-                name='code'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Organization Code (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder='ELI' {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Short code or abbreviation for your organization
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
 
               <FormField
                 control={form.control}
@@ -177,33 +161,31 @@ export function OrganizationOnboardingForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Location (Optional)</FormLabel>
-                  <FormControl>
-                    <LocationInput
-                      {...field}
-                      coordinates={watchedCoordinates}
-                      onSuggest={result => {
-                        const feature = result.features[0];
-                        const coordinates = feature?.properties?.coordinates;
-                        const contextCountry =
-                          (feature?.properties?.context as any)?.country?.name ??
-                          feature?.properties?.context?.country_name;
+                    <FormControl>
+                      <LocationInput
+                        {...field}
+                        coordinates={watchedCoordinates}
+                        onSuggest={result => {
+                          const feature = result.features[0];
+                          const coordinates = feature?.properties?.coordinates;
+                          const contextCountry =
+                            (feature?.properties?.context as any)?.country?.name ??
+                            feature?.properties?.context?.country_name;
 
-                        if (
-                          typeof coordinates?.latitude === 'number' &&
-                          typeof coordinates?.longitude === 'number'
-                        ) {
-                          form.setValue('latitude', coordinates.latitude);
-                          form.setValue('longitude', coordinates.longitude);
-                        }
-                        if (contextCountry) {
-                          form.setValue('country', contextCountry);
-                        }
-                      }}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Physical location or address of your organization
-                    </FormDescription>
+                          if (
+                            typeof coordinates?.latitude === 'number' &&
+                            typeof coordinates?.longitude === 'number'
+                          ) {
+                            form.setValue('latitude', coordinates.latitude);
+                            form.setValue('longitude', coordinates.longitude);
+                          }
+                          if (contextCountry) {
+                            form.setValue('country', contextCountry);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription>Physical location or address of your organization</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -239,8 +221,7 @@ export function OrganizationOnboardingForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Provide additional context about your organization&apos;s purpose and
-                      activities
+                      Provide additional context about your organization&apos;s purpose and activities
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -249,13 +230,15 @@ export function OrganizationOnboardingForm() {
             </CardContent>
           </Card>
 
-          <div className='rounded-lg bg-yellow-50 p-4'>
-            <h3 className='font-medium text-yellow-900'>Next Steps</h3>
-            <p className='mt-1 text-sm text-yellow-700'>
-              After registration, you&apos;ll be able to create training branches, invite
-              instructors and students, and start offering courses through your organization.
-            </p>
-          </div>
+          <Card className='border-primary/20 bg-primary/5'>
+            <CardContent className='space-y-1'>
+              <h3 className='font-medium text-foreground'>Next Steps</h3>
+              <p className='text-sm text-muted-foreground'>
+                After registration, you&apos;ll be able to create training branches, invite
+                instructors and students, and start offering courses through your organization.
+              </p>
+            </CardContent>
+          </Card>
 
           <Button type='submit' className='w-full' disabled={isSubmitting}>
             {isSubmitting ? 'Registering Organization...' : 'Complete Organization Registration'}

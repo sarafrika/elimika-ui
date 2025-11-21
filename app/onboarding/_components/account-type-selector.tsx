@@ -8,10 +8,6 @@ const accountTypes = [
     description: 'Join courses, access learning materials, and track your progress.',
     href: '/onboarding/student',
     icon: BookOpen,
-    iconColor: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    hoverBg: 'hover:bg-blue-100',
   },
   {
     id: 'instructor',
@@ -19,10 +15,6 @@ const accountTypes = [
     description: 'Create courses, manage content, and engage with your students.',
     href: '/onboarding/instructor',
     icon: Users,
-    iconColor: 'text-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
-    hoverBg: 'hover:bg-green-100',
   },
   {
     id: 'course_creator',
@@ -31,10 +23,6 @@ const accountTypes = [
       'Design and publish courses, build your content library, and share your expertise.',
     href: '/onboarding/course-creator',
     icon: GraduationCap,
-    iconColor: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    hoverBg: 'hover:bg-blue-100',
   },
   {
     id: 'organisation',
@@ -42,10 +30,6 @@ const accountTypes = [
     description: 'Manage your organization, oversee instructors, and track progress.',
     href: '/onboarding/organisation',
     icon: Building2,
-    iconColor: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200',
-    hoverBg: 'hover:bg-purple-100',
   },
 ] as const;
 
@@ -59,18 +43,16 @@ export default function AccountTypeSelector() {
           <Link
             key={type.id}
             href={type.href}
-            className={`group relative block rounded-3xl border-2 p-8 transition-all duration-300 ${type.borderColor} ${type.bgColor} ${type.hoverBg} hover:border-primary/30 focus:ring-primary/20 focus:border-primary hover:scale-[1.01] hover:shadow-xl focus:ring-4 focus:outline-none`}
+            className='group relative block rounded-3xl border border-border bg-card/80 p-8 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/60 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20'
           >
-            {/* Icon */}
             <div className='mb-6 flex justify-center'>
               <div
-                className={`rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 ${type.iconColor} group-hover:scale-110 group-hover:shadow-md`}
+                className='flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15 transition-all duration-300 group-hover:scale-110 group-hover:ring-primary/25'
               >
-                <Icon className='h-8 w-8' />
+                <Icon className='h-7 w-7' />
               </div>
             </div>
 
-            {/* Content */}
             <div className='mb-8 text-center'>
               <h3 className='text-foreground group-hover:text-primary mb-3 text-2xl font-bold transition-colors'>
                 {type.title}
@@ -78,18 +60,19 @@ export default function AccountTypeSelector() {
               <p className='text-muted-foreground text-sm leading-relaxed'>{type.description}</p>
             </div>
 
-            {/* Button */}
             <div className='flex justify-center'>
               <div
-                className={`border-border text-foreground group-hover:border-primary group-hover:bg-primary flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 text-center font-medium transition-all duration-300 group-hover:text-white`}
+                className='border-border text-foreground group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground flex w-full items-center justify-center gap-3 rounded-lg border bg-muted/60 px-6 py-3 text-center text-sm font-medium transition-all duration-300'
               >
                 Choose {type.title}
                 <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
               </div>
             </div>
 
-            {/* Decorative gradient overlay */}
-            <div className='pointer-events-none absolute inset-0 rounded-3xl bg-primary/10 opacity-0 transition-opacity duration-300 group-hover:opacity-20' />
+            <div
+              className='pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-border/60 transition duration-300 group-hover:ring-primary/40'
+              aria-hidden
+            />
           </Link>
         );
       })}
