@@ -308,16 +308,16 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
                       Course Level
                     </Label>
                     <Select
-                      value={courseFilters.level}
+                      value={courseFilters.level || 'all'}
                       onValueChange={(value) =>
-                        setCourseFilters({ ...courseFilters, level: value })
+                        setCourseFilters({ ...courseFilters, level: value === 'all' ? '' : value })
                       }
                     >
                       <SelectTrigger className='h-9 rounded-full'>
                         <SelectValue placeholder='All levels' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value=''>All levels</SelectItem>
+                        <SelectItem value='all'>All levels</SelectItem>
                         <SelectItem value='Beginner'>Beginner</SelectItem>
                         <SelectItem value='Intermediate'>Intermediate</SelectItem>
                         <SelectItem value='Advanced'>Advanced</SelectItem>

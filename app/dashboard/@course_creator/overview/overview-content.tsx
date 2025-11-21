@@ -31,7 +31,6 @@ export default function CourseCreatorOverviewContent() {
   const monetization = data.monetization;
   const trainingRequirements = data.trainingRequirements;
   const verification = data.verification;
-  const assignments = data.assignments;
 
   const headline =
     profile?.professional_headline ??
@@ -58,10 +57,6 @@ export default function CourseCreatorOverviewContent() {
       leftColumn={
         <>
           <VerificationCard verification={verification} />
-          <AssignmentsCard
-            assignmentsCount={assignments.organisations.length}
-            hasGlobal={assignments.hasGlobalAccess}
-          />
           <QuickActionsCard />
         </>
       }
@@ -241,47 +236,6 @@ function VerificationCard({ verification }: { verification: CourseCreatorVerific
           }
         />
         <DetailRow label='Live courses' value={verification.liveCourses ?? 0} />
-      </CardContent>
-    </Card>
-  );
-}
-
-function AssignmentsCard({
-  assignmentsCount,
-  hasGlobal,
-}: {
-  assignmentsCount: number;
-  hasGlobal: boolean;
-}) {
-  return (
-    <Card className='border-border/70'>
-      <CardHeader>
-        <CardTitle className='text-base font-semibold'>Assignments</CardTitle>
-        <CardDescription>
-          Manage the organisations and instructors collaborating on your learning products.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className='space-y-4 text-sm'>
-        <div className='flex items-center justify-between rounded-2xl border border-border/70 bg-muted/40 p-3'>
-          <div>
-            <p className='font-semibold text-foreground'>Active partners</p>
-            <p className='text-muted-foreground text-xs'>Organisations with live assignments</p>
-          </div>
-          <p className='text-2xl font-bold'>{assignmentsCount}</p>
-        </div>
-        <div className='rounded-2xl border border-dashed border-border/60 p-3'>
-          <p className='text-sm font-semibold text-foreground'>Global sharing</p>
-          <p className='text-muted-foreground text-xs'>
-            {hasGlobal
-              ? 'Enabled: instructors can reuse modules across branches.'
-              : 'Disabled: turn on to share modules across organisations.'}
-          </p>
-        </div>
-        <Button variant='outline' size='sm' asChild>
-          <Link prefetch href='/dashboard/course-management'>
-            Manage assignments
-          </Link>
-        </Button>
       </CardContent>
     </Card>
   );

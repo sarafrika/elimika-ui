@@ -13,7 +13,6 @@ const sections = [
     label: 'Professional Memberships',
     href: '/dashboard/profile/professional-membership',
   },
-  { label: 'Rate Card', href: '/dashboard/profile/rate-card' },
 ];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {

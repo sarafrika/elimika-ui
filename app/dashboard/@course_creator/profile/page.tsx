@@ -8,26 +8,61 @@ import {
 } from '@/components/profile/profile-summary-view';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import Spinner from '@/components/ui/spinner';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { domainBadgeClass, formatDomainLabel } from '@/lib/domain-utils';
-import { CheckCircle2, Globe, Mail, MapPin, Pencil, ShieldAlert } from 'lucide-react';
+import {
+  getCourseCreatorCertificationsOptions,
+  getCourseCreatorEducationOptions,
+  getCourseCreatorExperienceOptions,
+  getCourseCreatorMembershipsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { CheckCircle2, Globe, Mail, MapPin, Pencil, ShieldAlert, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+
+function toDate(value?: Date | string | null) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 export default function CourseCreatorProfilePage() {
   const { profile, data } = useCourseCreator();
 
+  const { data: educationData } = useQuery({
+    ...getCourseCreatorEducationOptions({
+      path: { courseCreatorUuid: profile?.uuid as string },
+    }),
+    enabled: !!profile?.uuid,
+  });
+
+  const { data: experienceData } = useQuery({
+    ...getCourseCreatorExperienceOptions({
+      path: { courseCreatorUuid: profile?.uuid as string },
+    }),
+    enabled: !!profile?.uuid,
+  });
+
+  const { data: certificationsData } = useQuery({
+    ...getCourseCreatorCertificationsOptions({
+      path: { courseCreatorUuid: profile?.uuid as string },
+    }),
+    enabled: !!profile?.uuid,
+  });
+
+  const { data: membershipsData } = useQuery({
+    ...getCourseCreatorMembershipsOptions({
+      path: { courseCreatorUuid: profile?.uuid as string },
+    }),
+    enabled: !!profile?.uuid,
+  });
+
   if (!profile) {
     return (
       <div className='mx-auto flex h-full max-w-3xl flex-col items-center justify-center gap-4 px-4 py-20 text-center'>
-        <h1 className='text-2xl font-semibold'>No creator profile found</h1>
-        <p className='text-muted-foreground text-sm'>
-          Create a course creator record during onboarding or contact support to restore access.
-        </p>
-        <Button asChild>
-          <Link prefetch href='/dashboard/overview'>
-            Return to overview
-          </Link>
-        </Button>
+        <Spinner className='h-6 w-6 text-muted-foreground' />
       </div>
     );
   }
@@ -51,6 +86,11 @@ export default function CourseCreatorProfilePage() {
     });
   }
 
+  const educations = educationData?.data?.content || [];
+  const experiences = experienceData?.data?.content || [];
+  const certifications = certificationsData?.data?.content || [];
+  const memberships = membershipsData?.data?.content || [];
+
   const sections: ProfileSummarySection[] = [
     {
       title: 'About',
@@ -72,6 +112,27 @@ export default function CourseCreatorProfilePage() {
           </div>
         </div>
       ),
+      items: [
+        {
+          label: 'Professional headline',
+          value: profile.professional_headline || undefined,
+          emptyText: 'Add a headline to showcase your expertise.',
+        },
+        {
+          label: 'Website',
+          value: profile.website ? (
+            <a
+              href={profile.website}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-primary hover:underline'
+            >
+              {profile.website}
+            </a>
+          ) : undefined,
+          emptyText: 'No website provided',
+        },
+      ],
     },
     {
       title: 'Account',
@@ -151,6 +212,160 @@ export default function CourseCreatorProfilePage() {
     },
   ];
 
+  // Add Education section
+  if (educations.length > 0) {
+    sections.push({
+      title: 'Education',
+      description: 'Highest qualifications you have added.',
+      content: (
+        <div className='space-y-3'>
+          {educations.map((education: any, index) => (
+            <div
+              key={education.uuid ?? `${education.institution}-${index}`}
+              className='border-border/50 rounded-lg border p-3'
+            >
+              <p className='font-medium'>{education.degree}</p>
+              <p className='text-muted-foreground text-sm'>{education.institution}</p>
+              {education.graduation_date ? (
+                <p className='text-muted-foreground text-xs'>
+                  Graduated: {format(new Date(education.graduation_date), 'MMM yyyy')}
+                </p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ),
+    });
+  } else {
+    sections.push({
+      title: 'Education',
+      description: 'Highest qualifications you have added.',
+      emptyText: 'Add your education background to strengthen your profile.',
+    });
+  }
+
+  // Add Experience section
+  if (experiences.length > 0) {
+    sections.push({
+      title: 'Experience',
+      description: 'Roles that demonstrate your expertise.',
+      content: (
+        <div className='space-y-3'>
+          {experiences.map((exp: any, index) => {
+            const start = toDate(exp.start_date);
+            const end = toDate(exp.end_date);
+            const range =
+              start || end
+                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
+                    exp.currently_working ? 'Present' : end ? format(end, 'MMM yyyy') : 'End?'
+                  }`
+                : null;
+            return (
+              <div
+                key={exp.uuid ?? `${exp.company_name}-${index}`}
+                className='border-border/50 rounded-lg border p-3'
+              >
+                <p className='font-medium'>{exp.job_title}</p>
+                <p className='text-muted-foreground text-sm'>{exp.company_name}</p>
+                {range ? <p className='text-muted-foreground text-xs'>{range}</p> : null}
+                {exp.description ? (
+                  <p className='text-muted-foreground mt-2 text-sm'>{exp.description}</p>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      ),
+    });
+  } else {
+    sections.push({
+      title: 'Experience',
+      description: 'Roles that demonstrate your expertise.',
+      emptyText: 'Add relevant experience from the experience tab.',
+    });
+  }
+
+  // Add Certificates section
+  if (certifications.length > 0) {
+    sections.push({
+      title: 'Certificates',
+      description: 'Professional certifications and credentials.',
+      content: (
+        <div className='space-y-3'>
+          {certifications.map((cert: any, index) => {
+            const issued = toDate(cert.issue_date);
+            const expires = toDate(cert.expiry_date);
+            return (
+              <div
+                key={cert.uuid ?? `${cert.name}-${index}`}
+                className='border-border/50 rounded-lg border p-3'
+              >
+                <p className='font-medium'>{cert.name}</p>
+                <p className='text-muted-foreground text-sm'>{cert.issuing_organization}</p>
+                {issued ? (
+                  <p className='text-muted-foreground text-xs'>
+                    Issued: {format(issued, 'MMM yyyy')}
+                    {expires ? ` • Expires: ${format(expires, 'MMM yyyy')}` : ''}
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      ),
+    });
+  } else {
+    sections.push({
+      title: 'Certificates',
+      description: 'Professional certifications and credentials.',
+      emptyText: 'Add certificates to build credibility.',
+    });
+  }
+
+  // Add Professional Memberships section
+  if (memberships.length > 0) {
+    sections.push({
+      title: 'Professional Memberships',
+      description: 'Industry organisations that recognise your work.',
+      content: (
+        <div className='space-y-3'>
+          {memberships.map((membership: any, index) => {
+            const start = toDate(membership.membership_start_date);
+            const end = toDate(membership.membership_end_date);
+            const range =
+              start || end
+                ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
+                    membership.is_active || !end ? 'Present' : format(end, 'MMM yyyy')
+                  }`
+                : null;
+            return (
+              <div
+                key={membership.uuid ?? `${membership.organization_name}-${index}`}
+                className='border-border/50 rounded-lg border p-3'
+              >
+                <p className='font-medium'>{membership.organization_name}</p>
+                {membership.membership_number ? (
+                  <p className='text-muted-foreground text-xs'>
+                    Membership #{membership.membership_number}
+                  </p>
+                ) : null}
+                {range ? (
+                  <p className='text-muted-foreground text-xs'>Duration: {range}</p>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      ),
+    });
+  } else {
+    sections.push({
+      title: 'Professional Memberships',
+      description: 'Industry organisations that recognise your work.',
+      emptyText: 'List your professional memberships for credibility.',
+    });
+  }
+
   return (
     <ProfileSummaryView
       eyebrow='Creator profile'
@@ -169,12 +384,23 @@ export default function CourseCreatorProfilePage() {
       ]}
       meta={meta}
       actions={
-        <Button variant='outline' asChild>
-          <Link prefetch href='/dashboard/profile/edit'>
-            <Pencil className='mr-2 h-4 w-4' />
-            Edit profile
-          </Link>
-        </Button>
+        <div className='flex flex-wrap gap-2'>
+          <Button variant='outline' asChild>
+            <Link prefetch href='/dashboard/profile/general'>
+              Edit general info
+            </Link>
+          </Button>
+          <Button variant='ghost' asChild>
+            <Link prefetch href='/dashboard/profile/education'>
+              Manage qualifications
+            </Link>
+          </Button>
+          <Button variant='ghost' asChild>
+            <Link prefetch href='/dashboard/profile/experience'>
+              Manage experience
+            </Link>
+          </Button>
+        </div>
       }
       sections={sections}
     />

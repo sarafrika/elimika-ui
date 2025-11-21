@@ -18,9 +18,10 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import {
   type AdminUser,
-  useAdminUsers,
   useUpdateAdminUser,
 } from '@/services/admin';
+import { getAllUsersOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
 import { zUser } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -57,6 +58,24 @@ const domainFilterOptions = [
   { label: 'Organisation users', value: 'organisation_user' },
 ];
 
+function formatGender(gender?: string | null): string {
+  if (!gender) return 'Not specified';
+  switch (gender) {
+    case 'MALE':
+      return 'Male';
+    case 'FEMALE':
+      return 'Female';
+    case 'OTHER':
+      return 'Other';
+    case 'PREFER_NOT_TO_SAY':
+      return 'Prefer not to say';
+    case 'UNSPECIFIED':
+      return 'Not specified';
+    default:
+      return 'Not specified';
+  }
+}
+
 export type UserFormValues = z.infer<typeof userFormSchema>;
 
 export interface AdminUserWorkspaceProps {
@@ -84,13 +103,12 @@ export function AdminUserWorkspace({
     }
   }, [fixedDomain]);
 
-  const { data, isLoading } = useAdminUsers({
-    page,
-    size: 20,
-  });
+  const { data, isLoading } = useQuery(
+    getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
+  );
 
-  const users = useMemo(() => data?.items ?? [], [data?.items]);
-  const totalPages = Math.max(data?.totalPages ?? 1, 1);
+  const users = useMemo(() => (data?.data?.content ?? []) as AdminUser[], [data?.data?.content]);
+  const totalPages = Math.max(data?.data?.metadata?.totalPages ?? 1, 1);
 
   useEffect(() => {
     if (!selectedUserId && users.length > 0) {
@@ -99,10 +117,10 @@ export function AdminUserWorkspace({
   }, [selectedUserId, users]);
 
   useEffect(() => {
-    if (page >= (data?.totalPages ?? 1)) {
+    if (page >= totalPages) {
       setPage(0);
     }
-  }, [data?.totalPages, page]);
+  }, [totalPages, page]);
 
   const selectedUser = users.find(user => user.uuid === selectedUserId) ?? null;
   const handleSelectUser = (user: AdminUser | null) => {
@@ -217,47 +235,46 @@ function UserListPanel({
       );
     }
 
-    return filteredUsers.map(user => (
-      <button
-        key={user.uuid ?? user.email}
-        type='button'
-        className={cn(
-          'border-border/60 w-full rounded-2xl border bg-card p-4 text-left transition hover:border-primary/50 hover:bg-primary/5',
-          selectedUserId === user.uuid ? 'border-primary bg-primary/5' : undefined
-        )}
-        onClick={() => onSelect(user)}
-      >
-        <div className='flex items-start gap-3'>
-          <Avatar className='h-10 w-10'>
-            <AvatarFallback>
-              {user.first_name?.[0]}
-              {user.last_name?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          <div className='flex-1'>
-            <div className='flex items-center justify-between gap-2'>
-              <div>
-                <p className='font-semibold leading-tight'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'Unnamed user'}</p>
-                <p className='text-muted-foreground text-xs'>{user.email}</p>
+    return filteredUsers.map(user => {
+      const fullName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'N/A';
+
+      return (
+        <div
+          key={user.uuid ?? user.email}
+          className={cn(
+            'hover:bg-muted/50 cursor-pointer border-b p-4 transition-colors',
+            selectedUserId === user.uuid ? 'bg-muted' : ''
+          )}
+          onClick={() => onSelect(user)}
+        >
+          <div className='flex items-start justify-between'>
+            <div className='min-w-0 flex-1'>
+              <div className='mb-1 flex items-center gap-2'>
+                <h3 className='truncate text-sm font-medium'>{fullName}</h3>
               </div>
-              <Badge variant={user.active ? 'secondary' : 'outline'} className='text-xs'>
-                {user.active ? 'Active' : 'Inactive'}
-              </Badge>
+              <p className='text-muted-foreground mb-1 truncate text-xs'>{user.email || 'No email'}</p>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <Badge variant={user.active ? 'secondary' : 'outline'} className='text-xs'>
+                    {user.active ? 'Active' : 'Inactive'}
+                  </Badge>
+                  <span className='text-muted-foreground text-xs'>
+                    {user.created_date ? format(new Date(user.created_date), 'dd MMM yyyy') : 'N/A'}
+                  </span>
+                </div>
+              </div>
+              <div className='mt-2 flex flex-wrap gap-1.5'>
+                {(Array.isArray(user.user_domain) ? user.user_domain : user.user_domain ? [user.user_domain] : []).map(domain => (
+                  <Badge key={`${user.uuid}-${domain}`} variant='outline' className='uppercase text-[10px]'>
+                    {String(domain).replace(/_/g, ' ')}
+                  </Badge>
+                ))}
+              </div>
             </div>
-            <div className='mt-3 flex flex-wrap gap-1.5'>
-              {(Array.isArray(user.user_domain) ? user.user_domain : user.user_domain ? [user.user_domain] : []).map(domain => (
-                <Badge key={`${user.uuid}-${domain}`} variant='outline' className='uppercase text-[10px]'>
-                  {String(domain).replace(/_/g, ' ')}
-                </Badge>
-              ))}
-            </div>
-            <p className='text-muted-foreground mt-3 text-xs'>
-              Joined {user.created_date ? format(new Date(user.created_date), 'dd MMM yyyy') : '—'}
-            </p>
           </div>
         </div>
-      </button>
-    ));
+      );
+    });
   };
 
   return (
@@ -365,12 +382,26 @@ function UserDetailsPanel({ user, panelTitle }: UserDetailsPanelProps) {
             <h2 className='text-2xl font-semibold'>{panelTitle}</h2>
             <p className='text-muted-foreground text-sm'>Moderate profile details and access</p>
           </div>
-          <div className='flex items-start justify-between gap-4 border-b px-6 py-4'>
-            <div>
-              <p className='text-sm font-semibold'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}</p>
-              <p className='text-muted-foreground text-xs'>{user.email}</p>
+          <div className='space-y-3 border-b px-6 py-4'>
+            <div className='flex items-start justify-between gap-4'>
+              <div>
+                <p className='text-sm font-semibold'>{`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}</p>
+                <p className='text-muted-foreground text-xs'>{user.email}</p>
+              </div>
+              <Badge variant={user.active ? 'secondary' : 'outline'}>{user.active ? 'Active' : 'Inactive'}</Badge>
             </div>
-            <Badge variant={user.active ? 'secondary' : 'outline'}>{user.active ? 'Active' : 'Inactive'}</Badge>
+            <div className='grid gap-3 text-xs sm:grid-cols-2'>
+              <div>
+                <span className='text-muted-foreground'>Date of birth:</span>{' '}
+                <span className='font-medium'>
+                  {user.dob ? format(new Date(user.dob), 'dd MMM yyyy') : 'Not provided'}
+                </span>
+              </div>
+              <div>
+                <span className='text-muted-foreground'>Gender:</span>{' '}
+                <span className='font-medium'>{formatGender(user.gender)}</span>
+              </div>
+            </div>
           </div>
           <div className='flex-1 overflow-y-auto px-6'>
             <UserDetailsForm form={form} onSubmit={handleSubmit} isPending={updateUser.isPending} user={user} />
@@ -557,14 +588,14 @@ function UserDetailsForm({ form, onSubmit, isPending, user }: UserDetailsFormPro
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Gender</FormLabel>
-                <Select value={field.value ?? ''} onValueChange={value => field.onChange(value || undefined)}>
+                <Select value={field.value ?? 'UNSPECIFIED'} onValueChange={value => field.onChange(value === 'UNSPECIFIED' ? undefined : value)}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder='Select gender' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value=''>Not specified</SelectItem>
+                    <SelectItem value='UNSPECIFIED'>Not specified</SelectItem>
                     <SelectItem value='MALE'>Male</SelectItem>
                     <SelectItem value='FEMALE'>Female</SelectItem>
                     <SelectItem value='OTHER'>Other</SelectItem>

@@ -285,6 +285,11 @@ export default {
       icon: ChartNoAxesCombined,
     },
     {
+      title: 'Reviews',
+      url: '/dashboard/profile/reviews',
+      icon: Star,
+    },
+    {
       title: 'Profile',
       url: '/dashboard/profile',
       icon: UserCircle,
