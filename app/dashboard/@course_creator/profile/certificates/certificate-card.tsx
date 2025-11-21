@@ -1,8 +1,9 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, Download, ExternalLink, Share2, Verified } from 'lucide-react';
-import { getCategoryColor, getTypeIcon } from './page';
+import { Award, Download, ExternalLink, Share2, ShieldCheck, Verified } from 'lucide-react';
+
+type IconType = typeof Award;
 
 type Certificate = {
   id: string;
@@ -39,7 +40,13 @@ export const CertificateCard: React.FC<CertificateCardProps> = ({
   onShare,
   onVerify,
 }) => {
-  const TypeIcon = getTypeIcon(certificate.type);
+  const typeIconMap: Record<string, IconType> = {
+    'Course Completion': Award,
+    'Professional Badge': ShieldCheck,
+    'Skill Certification': Award,
+    'Bootcamp Certificate': Award,
+  };
+  const TypeIcon = typeIconMap[certificate.type] ?? Award;
 
   return (
     <Card className='overflow-hidden transition-shadow hover:shadow-lg'>
@@ -58,18 +65,20 @@ export const CertificateCard: React.FC<CertificateCardProps> = ({
         </div>
         <div className='mt-2 flex items-center gap-2'>
           {certificate.blockchain_verified && (
-            <Badge className='bg-green-100 text-green-800'>
+            <Badge variant='success' className='gap-1'>
               <Verified className='mr-1 h-3 w-3' />
               Verified
             </Badge>
           )}
-          <Badge className={getCategoryColor(certificate.category)}>{certificate.category}</Badge>
+          <Badge variant='outline' className='gap-1 capitalize'>
+            {certificate.category}
+          </Badge>
         </div>
       </CardHeader>
 
       <CardContent className='space-y-4'>
         {/* Certificate Preview */}
-        <div className='rounded-lg border-2 border-dashed border-blue-200 bg-card p-6'>
+        <div className='rounded-lg border border-dashed border-border/60 bg-muted/40 p-6'>
           <div className='space-y-2 text-center'>
             <div className='bg-primary/20 mx-auto flex h-16 w-16 items-center justify-center rounded-full'>
               <Award className='text-primary h-8 w-8' />

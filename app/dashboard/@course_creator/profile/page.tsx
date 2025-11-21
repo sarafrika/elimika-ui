@@ -171,7 +171,7 @@ export default function CourseCreatorProfilePage() {
       description: 'Track global publishing access and organisation-specific responsibilities.',
       content: (
         <div className='space-y-3 text-sm'>
-          <div className='rounded-lg border border-dashed border-blue-200/40 bg-blue-50/60 p-3'>
+          <div className='rounded-lg border border-dashed border-border/60 bg-muted/40 p-3'>
             <p className='text-muted-foreground text-xs tracking-wide uppercase'>Marketplace</p>
             <p className='font-semibold'>
               {data.assignments.hasGlobalAccess
