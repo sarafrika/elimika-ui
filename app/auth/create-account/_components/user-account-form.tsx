@@ -105,7 +105,7 @@ export function UserAccountForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  First Name <span className='text-red-500'>*</span>
+                  First Name <span className='text-destructive'>*</span>
                 </FormLabel>
                 <FormControl>
                   <Input placeholder='John' {...field} />
@@ -130,33 +130,33 @@ export function UserAccountForm({
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name='last_name'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Last Name <span className='text-red-500'>*</span>
-              </FormLabel>
-              <FormControl>
-                <Input placeholder='Doe' {...field} />
-              </FormControl>
-              <FormMessage />
+          <FormField
+            control={form.control}
+            name='last_name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Last Name <span className='text-destructive'>*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder='Doe' {...field} />
+                </FormControl>
+                <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name='username'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Username <span className='text-red-500'>*</span>
-              </FormLabel>
-              <FormControl>
-                <Input placeholder='johndoe' {...field} />
-              </FormControl>
+          <FormField
+            control={form.control}
+            name='username'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Username <span className='text-destructive'>*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder='johndoe' {...field} />
+                </FormControl>
               <FormDescription className='text-xs'>
                 Username must be at least 3 characters long
               </FormDescription>
@@ -165,17 +165,17 @@ export function UserAccountForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name='email'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Email <span className='text-red-500'>*</span>
-              </FormLabel>
-              <FormControl>
-                <Input type='email' placeholder='john.doe@example.com' {...field} />
-              </FormControl>
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Email <span className='text-destructive'>*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input type='email' placeholder='john.doe@example.com' {...field} />
+                </FormControl>
               <FormDescription className='text-xs'>
                 We&apos;ll never share your email with anyone else.
               </FormDescription>
@@ -184,18 +184,18 @@ export function UserAccountForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name='phone_number'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Phone Number <span className='text-red-500'>*</span>
-              </FormLabel>
-              <FormControl>
-                <Input placeholder='+1234567890' {...field} />
-              </FormControl>
-              <FormMessage />
+          <FormField
+            control={form.control}
+            name='phone_number'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Phone Number <span className='text-destructive'>*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder='+1234567890' {...field} />
+                </FormControl>
+                <FormMessage />
             </FormItem>
           )}
         />
@@ -234,13 +234,13 @@ export function UserAccountForm({
               <Checkbox checked={field.value} onCheckedChange={field.onChange} />
             </FormControl>
             <div className='leading-none'>
-              <FormLabel className='text-xs text-gray-600'>
+              <FormLabel className='text-xs text-muted-foreground'>
                 I agree to the{' '}
-                <Link href='#' className='text-blue-500 hover:underline'>
+                <Link href='#' className='text-primary hover:underline'>
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href='#' className='text-blue-500 hover:underline'>
+                <Link href='#' className='text-primary hover:underline'>
                   Privacy Policy
                 </Link>
               </FormLabel>
@@ -268,9 +268,9 @@ export function UserAccountForm({
   return (
     <Form {...userAccountForm}>
       <form onSubmit={userAccountForm.handleSubmit(handleSubmit)} className='space-y-6'>
-        <div className='rounded-md border bg-white p-6'>
-          <h2 className='mb-1 text-lg font-medium'>{title}</h2>
-          <p className='mb-4 text-sm text-gray-500'>{description}</p>
+        <div className='rounded-md border border-border bg-card p-6'>
+          <h2 className='mb-1 text-lg font-medium text-foreground'>{title}</h2>
+          <p className='mb-4 text-sm text-muted-foreground'>{description}</p>
           {renderBaseAccountFormFields(userAccountForm)}
         </div>
 
@@ -280,7 +280,7 @@ export function UserAccountForm({
             <Button type='submit' disabled={isSubmitting} className='flex-1' size='lg'>
               {isSubmitting ? (
                 <div className='flex items-center gap-2'>
-                  <span className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                  <span className='h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent' />
                   Processing...
                 </div>
               ) : (

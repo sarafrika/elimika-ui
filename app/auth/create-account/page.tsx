@@ -177,11 +177,11 @@ export default function CreateAccountPage() {
   const UserTypeIcon = () => {
     switch (userDomain) {
       case 'student':
-        return <GraduationCap className='h-6 w-6 text-slate-800' />;
+        return <GraduationCap className='h-6 w-6 text-primary' />;
       case 'instructor':
-        return <Lightbulb className='h-6 w-6 text-slate-800' />;
+        return <Lightbulb className='h-6 w-6 text-primary' />;
       case 'organisation_user':
-        return <Building2 className='h-6 w-6 text-slate-800' />;
+        return <Building2 className='h-6 w-6 text-primary' />;
     }
   };
 
@@ -233,8 +233,8 @@ export default function CreateAccountPage() {
     <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100'>
-            <Check className='h-6 w-6 text-green-600' />
+          <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20'>
+            <Check className='h-6 w-6' />
           </div>
           <DialogTitle className='text-center text-xl'>Account Created Successfully</DialogTitle>
           <DialogDescription className='text-center'>
@@ -254,45 +254,45 @@ export default function CreateAccountPage() {
             <CardContent>
               <ol className='space-y-4 text-sm'>
                 <li className='flex items-start'>
-                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-white'>
+                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-primary-foreground'>
                     1
                   </div>
                   <div>
                     <p className='font-medium'>Check your inbox</p>
-                    <p className='text-xs text-gray-500'>Email should arrive within 5 minutes</p>
+                    <p className='text-xs text-muted-foreground'>Email should arrive within 5 minutes</p>
                   </div>
                 </li>
                 <li className='flex items-start'>
-                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-white'>
+                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-primary-foreground'>
                     2
                   </div>
                   <div>
                     <p className='font-medium'>Click the verification link</p>
-                    <p className='text-xs text-gray-500'>This confirms your email address</p>
+                    <p className='text-xs text-muted-foreground'>This confirms your email address</p>
                   </div>
                 </li>
                 <li className='flex items-start'>
-                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-white'>
+                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-primary-foreground'>
                     3
                   </div>
                   <div>
                     <p className='font-medium'>Set your password</p>
-                    <p className='text-xs text-gray-500'>Create a secure password when prompted</p>
+                    <p className='text-xs text-muted-foreground'>Create a secure password when prompted</p>
                   </div>
                 </li>
                 <li className='flex items-start'>
-                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-white'>
+                  <div className='bg-primary mt-0.5 mr-2 flex h-5 w-5 items-center justify-center rounded-full text-xs text-primary-foreground'>
                     4
                   </div>
                   <div>
                     <p className='font-medium'>Log in with your credentials</p>
-                    <p className='text-xs text-gray-500'>Use your email and new password</p>
+                    <p className='text-xs text-muted-foreground'>Use your email and new password</p>
                   </div>
                 </li>
               </ol>
             </CardContent>
             <CardFooter className='mt-2 flex flex-col items-start gap-2 border-t pt-4'>
-              <div className='flex w-full items-center rounded-md bg-amber-50 p-2 text-xs text-amber-600'>
+              <div className='flex w-full items-center rounded-md bg-muted p-2 text-xs text-muted-foreground'>
                 <AlertCircle className='mr-2 h-3 w-3' />
                 <span>Please check your spam folder if you don&apos;t see the email.</span>
               </div>
@@ -340,27 +340,27 @@ export default function CreateAccountPage() {
 
   const LoadingOverlay = () =>
     accountCreationStatus === 'submitting' && (
-      <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'>
-        <div className='flex flex-col items-center rounded-lg bg-white p-6 shadow-lg'>
+      <div className='fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm'>
+        <div className='flex flex-col items-center rounded-lg border border-border bg-card p-6 shadow-lg'>
           <Loader2 className='text-primary mb-4 h-8 w-8 animate-spin' />
-          <p className='text-lg font-medium'>Creating your account...</p>
-          <p className='text-sm text-gray-500'>This will only take a moment</p>
+          <p className='text-lg font-medium text-foreground'>Creating your account...</p>
+          <p className='text-sm text-muted-foreground'>This will only take a moment</p>
         </div>
       </div>
     );
 
   return (
-    <div className='min-h-screen bg-white py-14'>
+    <div className='min-h-screen bg-background py-14'>
       <div className='container mx-auto max-w-7xl px-4'>
-        <div className='flex flex-col gap-0 overflow-hidden rounded-xl border shadow-lg lg:flex-row'>
-          <div className='w-full bg-white p-6 md:p-8 lg:w-3/5'>
+        <div className='flex flex-col gap-0 overflow-hidden rounded-xl border border-border bg-card shadow-lg lg:flex-row'>
+          <div className='w-full bg-card p-6 md:p-8 lg:w-3/5'>
             <div className='mx-auto max-w-2xl'>
               <div className='mb-4'>
                 <div className='mb-1 flex items-center gap-2'>
                   <UserTypeIcon />
                   <h1 className='text-2xl font-semibold'>{UserTypeTitle()}</h1>
                 </div>
-                <p className='text-sm text-gray-600'>{UserTypeDescription()}</p>
+                <p className='text-sm text-muted-foreground'>{UserTypeDescription()}</p>
               </div>
 
               <ErrorAlert />
@@ -430,10 +430,10 @@ export default function CreateAccountPage() {
                 </TabsContent>
               </Tabs>
 
-              <div className='mt-8 text-center text-sm text-gray-500'>
+              <div className='mt-8 text-center text-sm text-muted-foreground'>
                 Already have an account?{' '}
                 <span
-                  className='cursor-pointer text-blue-500 hover:underline'
+                  className='cursor-pointer text-primary hover:underline'
                   onClick={() => signIn('keycloak')}
                 >
                   Sign in
