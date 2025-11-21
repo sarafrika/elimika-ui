@@ -186,7 +186,6 @@ export function EventModal({
     const { startDateTime, endDateTime, title, type, date, location, attendees, isRecurring, recurringDays, status, reminders, notes } = formData;
 
     if (!startDateTime || !endDateTime || !title || !type) {
-      console.error('Required fields missing');
       return;
     }
 
