@@ -246,7 +246,7 @@ function AssignmentForm({
                 <FormControl>
                   <input
                     type='datetime-local'
-                    className='w-full rounded-md border border-gray-300 px-3 py-[7px] text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-md border border-border px-3 py-[7px] text-sm focus:ring-2 focus:ring-primary focus:outline-none'
                     value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
                     onChange={e => field.onChange(new Date(e.target.value))}
                   />
@@ -481,7 +481,7 @@ function AssignmentList({
   }
 
   return (
-    <div className='space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+    <div className='space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10'>
       <div className='flex flex-row items-center justify-between'>
         <div className='space-y-1'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
@@ -511,7 +511,7 @@ function AssignmentList({
           {assignments?.map((assignment: any, index: any) => (
             <div
               key={assignment?.uuid || index}
-              className='group relative flex w-full items-start gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur transition-all lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+              className='group relative flex w-full items-start gap-4 rounded-[20px] border border-border bg-card/90 p-4 shadow-xl backdrop-blur transition-all lg:p-8'
             >
               <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
 
@@ -520,7 +520,7 @@ function AssignmentList({
                   <div className='flex w-full flex-col items-start'>
                     <div className='flex w-full flex-row items-center justify-between'>
                       <h3 className='text-lg font-medium'>{assignment?.title}</h3>
-                      <span className='mr-2 inline-flex items-center gap-2 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1 text-xs font-semibold text-blue-600 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'>
+                      <span className='mr-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-xs font-semibold text-primary'>
                         {assignment?.is_published ? 'Published' : 'Draft'}
                       </span>
                     </div>{' '}
@@ -546,7 +546,7 @@ function AssignmentList({
 
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className='text-red-600'
+                        className='text-destructive'
                         onClick={() => {
                           if (assignment.uuid) {
                             handleDeleteAssignment(assignment?.uuid as string);
@@ -586,7 +586,7 @@ function AssignmentList({
                       {assignment?.submission_types?.map((type: any, index: any) => (
                         <span
                           key={index}
-                          className='inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800'
+                          className='inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary'
                         >
                           {type.charAt(0).toUpperCase() + type.slice(1)}
                         </span>

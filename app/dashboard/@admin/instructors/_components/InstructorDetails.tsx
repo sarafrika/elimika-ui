@@ -196,11 +196,11 @@ export default function InstructorDetails({
                     </div>
                   </div>
                   {/* cert.certificate_url && (
-                                        <a
+                                    <a
                                             href={cert.certificate_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-xs text-blue-600 hover:underline"
+                                            className='text-xs text-primary hover:underline'
                                         >
                                             View Certificate
                                         </a>
