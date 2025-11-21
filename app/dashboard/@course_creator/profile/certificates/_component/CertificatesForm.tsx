@@ -34,9 +34,11 @@ import { useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { CourseCreatorCertification } from '../../../../../../services/client';
 import {
   deleteCourseCreatorCertification,
+  type CourseCreatorCertification,
+} from '../../../../../../services/client';
+import {
   addCourseCreatorCertificationMutation,
   updateCourseCreatorCertificationMutation,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
@@ -219,11 +221,10 @@ export default function CertificatesSettings() {
   };
 
   const domainBadges =
-    // @ts-expect-error
-    user?.data?.user_domain?.map((domain: any) =>
+    user?.user_domain?.map(domain =>
       domain
         .split('_')
-        .map((part: any) => part.charAt(0).toUpperCase() + part.slice(1))
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ')
     ) ?? [];
 

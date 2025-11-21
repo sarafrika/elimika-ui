@@ -33,7 +33,10 @@ import { useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { CalendarIcon, Grip, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { CourseCreatorProfessionalMembership } from '../../../../../../services/client';
+import {
+  deleteCourseCreatorMembership,
+  type CourseCreatorProfessionalMembership,
+} from '../../../../../../services/client';
 import {
   addCourseCreatorMembershipMutation,
   updateCourseCreatorMembershipMutation,
@@ -179,10 +182,30 @@ export default function ProfessionalBodySettings() {
     });
   };
 
-  const handleRemove = (index: number) => {
+  async function handleRemove(index: number) {
     if (!isEditing) return;
+    const shouldRemove = confirm('Are you sure you want to remove this membership?');
+    if (!shouldRemove) return;
+
+    const memUUID = form.getValues('professional_bodies')[index]?.uuid;
     remove(index);
-  };
+
+    if (memUUID) {
+      const resp = await deleteCourseCreatorMembership({
+        path: {
+          courseCreatorUuid: courseCreator?.uuid!,
+          membershipUuid: memUUID,
+        },
+      });
+      if (resp.error) {
+        toast.error('Unable to remove this membership right now.');
+        return;
+      }
+    }
+
+    await invalidateQuery?.();
+    toast('Membership removed successfully');
+  }
 
   const formatDateRange = (startDate?: string | Date, endDate?: string | Date, isActive?: boolean) => {
     const formatDate = (date?: string | Date) => {
