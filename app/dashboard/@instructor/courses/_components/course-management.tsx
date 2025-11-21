@@ -163,7 +163,7 @@ export default function CourseMangementPage() {
 
             <div className='flex flex-wrap gap-2'>
               <Select value={statusFilter || ''} onValueChange={setStatusFilter}>
-                <SelectTrigger className='flex-1 bg-white'>
+                <SelectTrigger className='flex-1'>
                   <Filter className='mr-2 h-4 w-4' />
                   <SelectValue placeholder='Filter by status' />
                 </SelectTrigger>

@@ -57,31 +57,31 @@ export function TrainCourseCard({
 
     switch (difficultyName?.toLowerCase()) {
       case 'beginner':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       case 'intermediate':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
       case 'advanced':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
   const renderIcon = () => {
     switch (applicationStatus) {
       case 'approved':
-        return <CheckCircle2 className="w-4 h-4 text-emerald-600" />;
+        return <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />;
       case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-600" />;
+        return <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />;
       case 'revoked':
-        return <XCircle className="w-4 h-4 text-rose-600" />;
+        return <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />;
       default:
-        return <Pencil className="w-4 h-4 text-gray-500" />;
+        return <Pencil className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
   return (
-    <div className='group cursor-pointer rounded-lg border-[1px] border-gray-400 bg-white transition-all hover:-translate-y-1 hover:shadow-lg'>
+    <div className='group cursor-pointer rounded-lg border bg-border bg-card transition-all hover:-translate-y-1 hover:shadow-lg'>
       <div className='relative'>
         {/* Course Image */}
         <div className='relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg bg-muted'>
@@ -215,12 +215,12 @@ export function TrainCourseCard({
       relative flex items-center gap-2 transition-all duration-200
       border rounded-md font-medium
       ${applicationStatus === 'pending'
-                  ? 'border-yellow-400 bg-yellow-50 text-yellow-900 hover:bg-yellow-100'
+                  ? 'border-yellow-400 bg-yellow-50 text-yellow-900 hover:bg-yellow-100 dark:border-yellow-500 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/40'
                   : applicationStatus === 'approved'
-                    ? 'border-emerald-400 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+                    ? 'border-emerald-400 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/40'
                     : applicationStatus === 'revoked'
-                      ? 'border-rose-400 bg-rose-50 text-rose-900 hover:bg-rose-100'
-                      : 'border-gray-300 bg-white text-gray-800 hover:bg-gray-50'}
+                      ? 'border-rose-400 bg-rose-50 text-rose-900 hover:bg-rose-100 dark:border-rose-500 dark:bg-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-900/40'
+                      : 'border-border bg-card text-foreground hover:bg-accent'}
       disabled:opacity-60 disabled:cursor-not-allowed
     `}
             >
@@ -237,8 +237,10 @@ export function TrainCourseCard({
                 variant="outline"
                 onClick={handleReapplyToTrain}
                 className="
-        border-sky-400 text-sky-700 
-        hover:bg-sky-50 hover:text-sky-900 
+        border-sky-400 text-sky-700
+        hover:bg-sky-50 hover:text-sky-900
+        dark:border-sky-500 dark:text-sky-400
+        dark:hover:bg-sky-900/30 dark:hover:text-sky-300
         transition-all duration-200
       "
               >
@@ -253,12 +255,12 @@ export function TrainCourseCard({
             className={`
       text-xs text-center italic transition-colors duration-200
       ${applicationStatus === 'pending'
-                ? 'text-yellow-800'
+                ? 'text-yellow-800 dark:text-yellow-400'
                 : applicationStatus === 'approved'
-                  ? 'text-emerald-800'
+                  ? 'text-emerald-800 dark:text-emerald-400'
                   : applicationStatus === 'revoked'
-                    ? 'text-rose-800'
-                    : 'text-gray-500'}
+                    ? 'text-rose-800 dark:text-rose-400'
+                    : 'text-muted-foreground'}
     `}
           >
             {applicationReviewNote || 'No review note provided'}
