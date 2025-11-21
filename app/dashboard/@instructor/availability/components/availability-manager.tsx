@@ -85,12 +85,12 @@ export default function AvailabilityManager({
     ).length;
 
     if (Number(bookedSlots) > 0) {
-      return { status: 'busy', label: 'Busy', color: 'bg-blue-500' };
+      return { status: 'busy', label: 'Busy', color: 'bg-primary' };
     } else if (Number(availableSlots) > 0) {
-      return { status: 'available', label: 'Available Now', color: 'bg-green-500' };
-    } else {
-      return { status: 'unavailable', label: 'Unavailable', color: 'bg-red-500' };
+      return { status: 'available', label: 'Available Now', color: 'bg-success' };
     }
+
+    return { status: 'unavailable', label: 'Unavailable', color: 'bg-destructive' };
   };
 
   const statusInfo = getStatusInfo();
@@ -332,11 +332,11 @@ export default function AvailabilityManager({
               {/* Color Legend */}
               <div className='flex items-center gap-4 text-sm'>
                 <div className='flex items-center gap-1'>
-                  <div className='h-3 w-3 rounded bg-green-500' />
+                  <div className='h-3 w-3 rounded bg-success' />
                   <span>Available</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                  <div className='h-3 w-3 rounded bg-red-500' />
+                  <div className='h-3 w-3 rounded bg-destructive' />
                   <span>Unavailable</span>
                 </div>
                 <div className='flex items-center gap-1'>
@@ -344,7 +344,7 @@ export default function AvailabilityManager({
                   <span>Reserved</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                  <div className='h-3 w-3 rounded bg-blue-500' />
+                  <div className='h-3 w-3 rounded bg-primary' />
                   <span>Booked</span>
                 </div>
               </div>

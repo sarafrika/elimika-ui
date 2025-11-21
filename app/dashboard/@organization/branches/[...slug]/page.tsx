@@ -55,17 +55,17 @@ export default async function ViewBranch({
               <CardContent>
                 <div className='flex flex-col'>
                   <div className='flex gap-2'>
-                    <MapPin size={32} className='text-gray-400' />
+                    <MapPin size={32} className='text-muted-foreground' />
                     <div>
-                      <span className='text-gray-400'>Location</span>
+                      <span className='text-muted-foreground'>Location</span>
                       <h5 className=''>{branch.address}</h5>
                     </div>
                   </div>
                   <div className='flex flex-col gap-2'>
                     <h4 className='flex items-center gap-2'>
-                      <UserIcon size={32} className='text-gray-400' />
+                      <UserIcon size={32} className='text-muted-foreground' />
                       <div>
-                        <span className='text-gray-400'>Point of contact</span>
+                        <span className='text-muted-foreground'>Point of contact</span>
                         <h4>{branch.poc_name}</h4>
                       </div>
                     </h4>
@@ -88,7 +88,7 @@ export default async function ViewBranch({
               <CardContent>
                 <h1 className='flex gap-3 text-3xl'>
                   <UsersIcon size={32} /> 150k
-                  <LineChart className='ms-auto text-gray-400' />
+                  <LineChart className='ms-auto text-muted-foreground' />
                 </h1>
               </CardContent>
             </Card>

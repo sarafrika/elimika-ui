@@ -351,10 +351,10 @@ export function EventModal({
                   value={formData.title || ''}
                   onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   placeholder='Enter event title...'
-                  className={errors.title ? 'border-red-500' : ''}
+                  className={errors.title ? 'border-destructive' : ''}
                 />
                 {errors.title && (
-                  <p className='flex items-center gap-1 text-sm text-red-500'>
+                  <p className='flex items-center gap-1 text-sm text-destructive'>
                     <AlertCircle className='h-3 w-3' />
                     {errors.title}
                   </p>

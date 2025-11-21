@@ -57,11 +57,11 @@ export function TrainCourseCard({
 
     switch (difficultyName?.toLowerCase()) {
       case 'beginner':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-success/10 text-success';
       case 'intermediate':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+        return 'bg-warning/10 text-warning';
       case 'advanced':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        return 'bg-destructive/10 text-destructive';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -70,15 +70,25 @@ export function TrainCourseCard({
   const renderIcon = () => {
     switch (applicationStatus) {
       case 'approved':
-        return <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />;
+        return <CheckCircle2 className="h-4 w-4 text-success" />;
       case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />;
+        return <Clock className="h-4 w-4 text-warning" />;
       case 'revoked':
-        return <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <Pencil className="w-4 h-4 text-muted-foreground" />;
+        return <Pencil className="h-4 w-4 text-muted-foreground" />;
     }
   };
+
+  const statusStyles: Record<string, string> = {
+    pending: 'border-warning/50 bg-warning/10 text-warning hover:bg-warning/15',
+    approved: 'border-success/50 bg-success/10 text-success hover:bg-success/15',
+    revoked: 'border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/15',
+  };
+
+  const actionButtonClasses =
+    statusStyles[applicationStatus as keyof typeof statusStyles] ??
+    'border-border bg-card text-foreground hover:bg-accent';
 
   return (
     <div className='group cursor-pointer rounded-lg border bg-border bg-card transition-all hover:-translate-y-1 hover:shadow-lg'>
@@ -172,7 +182,7 @@ export function TrainCourseCard({
           {/* Stats */}
           <div className='text-muted-foreground mb-4 flex items-center gap-4 text-sm'>
             <div className='flex items-center gap-1'>
-              <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
+              <Star className='h-4 w-4 fill-warning text-warning' />
               {/* <span>{course?.rating}</span> */}
               <span>{1.2}</span>
             </div>
@@ -211,18 +221,7 @@ export function TrainCourseCard({
               size="sm"
               onClick={handleQuickApply}
               disabled={!!applicationStatus && applicationStatus !== 'revoked'}
-              className={`
-      relative flex items-center gap-2 transition-all duration-200
-      border rounded-md font-medium
-      ${applicationStatus === 'pending'
-                  ? 'border-yellow-400 bg-yellow-50 text-yellow-900 hover:bg-yellow-100 dark:border-yellow-500 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/40'
-                  : applicationStatus === 'approved'
-                    ? 'border-emerald-400 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/40'
-                    : applicationStatus === 'revoked'
-                      ? 'border-rose-400 bg-rose-50 text-rose-900 hover:bg-rose-100 dark:border-rose-500 dark:bg-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-900/40'
-                      : 'border-border bg-card text-foreground hover:bg-accent'}
-      disabled:opacity-60 disabled:cursor-not-allowed
-    `}
+              className={`relative flex items-center gap-2 rounded-md border font-medium transition-all duration-200 ${actionButtonClasses} disabled:cursor-not-allowed disabled:opacity-60`}
             >
               {renderIcon()}
               {applicationStatus
@@ -236,13 +235,7 @@ export function TrainCourseCard({
                 size="sm"
                 variant="outline"
                 onClick={handleReapplyToTrain}
-                className="
-        border-sky-400 text-sky-700
-        hover:bg-sky-50 hover:text-sky-900
-        dark:border-sky-500 dark:text-sky-400
-        dark:hover:bg-sky-900/30 dark:hover:text-sky-300
-        transition-all duration-200
-      "
+                className='border-primary/50 text-primary transition-all duration-200 hover:bg-primary/10 hover:text-primary'
               >
                 <Pencil className="w-4 h-4 mr-1" />
                 Reapply to Train
@@ -255,11 +248,11 @@ export function TrainCourseCard({
             className={`
       text-xs text-center italic transition-colors duration-200
       ${applicationStatus === 'pending'
-                ? 'text-yellow-800 dark:text-yellow-400'
+                ? 'text-warning'
                 : applicationStatus === 'approved'
-                  ? 'text-emerald-800 dark:text-emerald-400'
+                  ? 'text-success'
                   : applicationStatus === 'revoked'
-                    ? 'text-rose-800 dark:text-rose-400'
+                    ? 'text-destructive'
                     : 'text-muted-foreground'}
     `}
           >

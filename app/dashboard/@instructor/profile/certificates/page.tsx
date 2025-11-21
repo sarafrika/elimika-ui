@@ -40,13 +40,13 @@ export const getTypeIcon = (type: string) => {
 export const getCategoryColor = (category: string) => {
   switch (category) {
     case 'Technology':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-primary/10 text-primary';
     case 'Business':
-      return 'bg-green-100 text-green-800';
+      return 'bg-success/10 text-success';
     case 'Design':
-      return 'bg-purple-100 text-purple-800';
+      return 'bg-accent/10 text-accent';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-muted text-muted-foreground';
   }
 };
 
@@ -147,7 +147,7 @@ export default function CertificatesPage() {
           type='file'
           accept='.pdf,.jpg,.jpeg,.png'
           onChange={handleUpload}
-          className='mx-auto block text-sm text-foreground file:mr-4 file:rounded file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-950 dark:file:text-blue-300 dark:hover:file:bg-blue-900'
+          className='mx-auto block text-sm text-foreground file:mr-4 file:rounded file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/15 dark:file:bg-primary/20 dark:file:text-primary dark:hover:file:bg-primary/25'
         />
         <p className='mt-2 text-sm text-muted-foreground'>Upload PDF or image files</p>
       </div>
@@ -174,7 +174,7 @@ export default function CertificatesPage() {
                       <div className='flex items-start justify-between'>
                         <div className='flex items-start gap-3'>
                           <div className='bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg'>
-                            <TypeIcon className='text-primary h-6 w-6' />
+                            <TypeIcon className='h-6 w-6 text-primary' />
                           </div>
                           <div>
                             <CardTitle className='text-lg'>{certificate.title}</CardTitle>
@@ -183,7 +183,7 @@ export default function CertificatesPage() {
                         </div>
                         <div className='flex items-center gap-2'>
                           {certificate.blockchain_verified && (
-                            <Badge className='bg-green-100 text-green-800'>
+                            <Badge className='bg-success/10 text-success'>
                               <Verified className='mr-1 h-3 w-3' />
                               Verified
                             </Badge>
@@ -225,8 +225,8 @@ export default function CertificatesPage() {
                   <Card key={program.id}>
                     <CardHeader>
                       <div className='flex items-start gap-3'>
-                        <div className='flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100'>
-                          <TypeIcon className='h-6 w-6 text-blue-600' />
+                        <div className='flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10'>
+                          <TypeIcon className='h-6 w-6 text-primary' />
                         </div>
                         <div>
                           <CardTitle className='text-lg'>{program.title}</CardTitle>

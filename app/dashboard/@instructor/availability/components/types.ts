@@ -111,10 +111,11 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
     const day = start.toLocaleDateString('en-US', { weekday: 'long' });
 
     const colorMap: Record<string, string> = {
-      SCHEDULED: '#1E90FF',
-      CANCELLED: '#FF6B6B',
-      COMPLETED: '#2ECC71',
+      SCHEDULED: 'hsl(var(--primary))',
+      CANCELLED: 'hsl(var(--destructive))',
+      COMPLETED: 'hsl(var(--success))',
     };
+    const defaultEventColor = 'hsl(var(--muted-foreground))';
 
     const statusMap: Record<string, CalendarEvent['status']> = {
       SCHEDULED: 'booked',
@@ -143,7 +144,7 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
       isRecurring: false,
       recurringDays: [],
       status: mappedStatus,
-      color: colorMap[statusKey] || '#888',
+      color: colorMap[statusKey] || defaultEventColor,
       reminders: [15],
       notes: item.cancellation_reason || '',
     };

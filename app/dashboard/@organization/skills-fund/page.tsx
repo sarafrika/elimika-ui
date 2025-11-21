@@ -296,8 +296,8 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-blue-100 p-2'>
-              <DollarSign className='h-5 w-5 text-blue-600' />
+            <div className='rounded-lg bg-primary/10 p-2'>
+              <DollarSign className='h-5 w-5 text-primary' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Total Contributed</p>
@@ -308,8 +308,8 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-green-100 p-2'>
-              <Users className='h-5 w-5 text-green-600' />
+            <div className='rounded-lg bg-success/10 p-2'>
+              <Users className='h-5 w-5 text-success' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Beneficiaries</p>
@@ -320,8 +320,8 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-purple-100 p-2'>
-              <Target className='h-5 w-5 text-purple-600' />
+            <div className='rounded-lg bg-accent/10 p-2'>
+              <Target className='h-5 w-5 text-accent' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Programs Supported</p>
@@ -332,8 +332,8 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
 
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-orange-100 p-2'>
-              <TrendingUp className='h-5 w-5 text-orange-600' />
+            <div className='rounded-lg bg-warning/10 p-2'>
+              <TrendingUp className='h-5 w-5 text-warning' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Avg. Utilization</p>
@@ -370,8 +370,8 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <Card className='hover:border-primary cursor-pointer border-2 p-4 transition-colors'>
             <div className='space-y-3'>
-              <div className='w-fit rounded-lg bg-blue-100 p-3'>
-                <Users className='h-6 w-6 text-blue-600' />
+              <div className='w-fit rounded-lg bg-primary/10 p-3'>
+                <Users className='h-6 w-6 text-primary' />
               </div>
               <div>
                 <h4>Fund Students</h4>
@@ -395,8 +395,8 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
 
           <Card className='hover:border-primary cursor-pointer border-2 p-4 transition-colors'>
             <div className='space-y-3'>
-              <div className='w-fit rounded-lg bg-green-100 p-3'>
-                <Award className='h-6 w-6 text-green-600' />
+              <div className='w-fit rounded-lg bg-success/10 p-3'>
+                <Award className='h-6 w-6 text-success' />
               </div>
               <div>
                 <h4>Support Instructors</h4>
@@ -420,8 +420,8 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
 
           <Card className='hover:border-primary cursor-pointer border-2 p-4 transition-colors'>
             <div className='space-y-3'>
-              <div className='w-fit rounded-lg bg-purple-100 p-3'>
-                <Target className='h-6 w-6 text-purple-600' />
+              <div className='w-fit rounded-lg bg-accent/10 p-3'>
+                <Target className='h-6 w-6 text-accent' />
               </div>
               <div>
                 <h4>Sponsor Program</h4>
@@ -508,7 +508,7 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
           <h3 className='mb-6'>Fund Allocation</h3>
 
           <div className='space-y-4'>
-            <div className='rounded-lg border border-blue-200 bg-blue-50 p-4'>
+            <div className='rounded-lg border border-primary/30 bg-primary/10 p-4'>
               <div className='mb-2 flex items-center justify-between'>
                 <span>Student Scholarships</span>
                 <span className='text-xl'>
@@ -519,13 +519,13 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
                     .toLocaleString()}
                 </span>
               </div>
-              <p className='text-sm text-blue-700'>
+              <p className='text-sm text-primary'>
                 Supporting {orgContributions.filter(c => c.targetGroup === 'students').length}{' '}
                 students
               </p>
             </div>
 
-            <div className='rounded-lg border border-green-200 bg-green-50 p-4'>
+            <div className='rounded-lg border border-success/30 bg-success/10 p-4'>
               <div className='mb-2 flex items-center justify-between'>
                 <span>Instructor Support</span>
                 <span className='text-xl'>
@@ -536,13 +536,13 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
                     .toLocaleString()}
                 </span>
               </div>
-              <p className='text-sm text-green-700'>
+              <p className='text-sm text-success'>
                 Enabling {orgContributions.filter(c => c.targetGroup === 'instructors').length}{' '}
                 training programs
               </p>
             </div>
 
-            <div className='rounded-lg border border-purple-200 bg-purple-50 p-4'>
+            <div className='rounded-lg border border-accent/30 bg-accent/10 p-4'>
               <div className='mb-2 flex items-center justify-between'>
                 <span>Specific Programs</span>
                 <span className='text-xl'>
@@ -553,7 +553,7 @@ const OrganisationFundView: React.FC<Props> = ({ currentUser, wallet, setWallet 
                     .toLocaleString()}
                 </span>
               </div>
-              <p className='text-sm text-purple-700'>
+              <p className='text-sm text-accent'>
                 Sponsoring{' '}
                 {orgContributions.filter(c => c.targetGroup === 'specific-program').length} courses
               </p>

@@ -130,7 +130,6 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                 <div className='h-[300px]'>
                   <ResponsiveContainer width='100%' height='100%'>
                     <LineChart data={userGrowthData}>
-                      <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
                       <CartesianGrid strokeDasharray='3 3' stroke={GRID_COLOR} />
                       <XAxis
                         dataKey='label'
@@ -149,6 +148,8 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                           borderRadius: 8,
                           fontSize: 13,
                           border: `1px solid ${GRID_COLOR}`,
+                          color: 'hsl(var(--foreground))',
+                          backgroundColor: 'hsl(var(--card))',
                         }}
                       />
                       <Legend />
@@ -247,7 +248,7 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                         contentStyle={{
                           borderRadius: 8,
                           fontSize: 13,
-                          border: '1px solid #e5e7eb',
+                          border: `1px solid ${GRID_COLOR}`,
                         }}
                       />
                       <Legend />

@@ -165,8 +165,11 @@ export default function StudentsPage({ classesWithCourseAndInstructor, loading }
               <li
                 key={student.name}
                 onClick={() => setSelectedStudent(student.name)}
-                className={`p-2 rounded-sm cursor-pointer flex flex-col items-start ${selectedStudent === student.name ? "bg-purple-100 text-purple-700 font-medium" : "hover:bg-gray-100"
-                  }`}
+                className={`p-2 rounded-sm cursor-pointer flex flex-col items-start ${
+                  selectedStudent === student.name
+                    ? 'bg-accent/10 text-accent font-medium'
+                    : 'hover:bg-muted/60'
+                }`}
               >
                 {student.name}
                 <span className="text-xs ml-1">Section {student.section}</span>

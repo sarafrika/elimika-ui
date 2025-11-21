@@ -83,7 +83,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
   if (isLoading) {
     return (
       <div className='flex flex-col gap-4'>
-        <div className='h-48 w-full animate-pulse rounded bg-gray-200'></div>
+        <div className='h-48 w-full animate-pulse rounded bg-muted'></div>
         <div className='flex items-center justify-center'>
           <Spinner />
         </div>

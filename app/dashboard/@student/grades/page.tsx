@@ -222,24 +222,24 @@ export default function StudentGrades() {
   });
 
   const getGradeColor = (grade: number) => {
-    if (grade >= 90) return 'text-green-600';
-    if (grade >= 80) return 'text-blue-600';
-    if (grade >= 70) return 'text-yellow-600';
-    return 'text-red-600';
+    if (grade >= 90) return 'text-success';
+    if (grade >= 80) return 'text-primary';
+    if (grade >= 70) return 'text-warning';
+    return 'text-destructive';
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/10 text-success';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary/10 text-primary';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/10 text-warning';
       case 'graded':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/10 text-success';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -304,9 +304,9 @@ export default function StudentGrades() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-muted-foreground text-sm'>Completed Courses</p>
-                  <p className='text-2xl font-bold text-green-600'>{student.completedCourses}</p>
+                  <p className='text-2xl font-bold text-success'>{student.completedCourses}</p>
                 </div>
-                <Award className='h-8 w-8 text-green-600' />
+                <Award className='h-8 w-8 text-success' />
               </div>
             </CardContent>
           </Card>
@@ -417,9 +417,9 @@ export default function StudentGrades() {
                     </div>
 
                     {course.nextAssignment && (
-                      <div className='rounded border border-blue-200 bg-blue-50 p-3'>
-                        <p className='text-sm font-medium text-blue-800'>Next Assignment:</p>
-                        <p className='text-sm text-blue-600'>{course.nextAssignment}</p>
+                      <div className='rounded border border-primary/30 bg-primary/10 p-3'>
+                        <p className='text-sm font-medium text-primary'>Next Assignment:</p>
+                        <p className='text-sm text-primary'>{course.nextAssignment}</p>
                       </div>
                     )}
 
@@ -519,7 +519,7 @@ export default function StudentGrades() {
                           )}
 
                           {isOverdue && (
-                            <div className='flex items-center gap-2 text-red-600'>
+                            <div className='flex items-center gap-2 text-destructive'>
                               <AlertTriangle className='h-4 w-4' />
                               <span className='text-sm'>This assignment is overdue</span>
                             </div>
@@ -580,7 +580,7 @@ export default function StudentGrades() {
                     </div>
                     <div className='flex items-center justify-between'>
                       <span className='text-sm'>Highest Grade</span>
-                      <span className='font-bold text-green-600'>
+                      <span className='font-bold text-success'>
                         {Math.max(...courses.map(c => c.overallGrade))}%
                       </span>
                     </div>

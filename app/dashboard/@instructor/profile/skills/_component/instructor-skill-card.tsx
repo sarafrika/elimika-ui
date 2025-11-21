@@ -47,7 +47,7 @@ export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({
   const normalizedSkills = skills.map(normalizeSkill);
 
   return (
-    <Card className='rounded-[12px] border border-blue-200/40 bg-card p-4 shadow-xl'>
+  <Card className='rounded-[12px] border border-border bg-card p-4 shadow-xl'>
       <CardHeader className='flex flex-row items-center gap-4 p-0'>
         <Avatar className='h-14 w-14'>
           <AvatarImage src={instructor.profile_image_url} alt={instructor.full_name} />
@@ -71,7 +71,7 @@ export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({
         {normalizedSkills.map(skill => (
           <div
             key={skill.uuid}
-            className='rounded-[20px] border border-blue-200/40 p-2 backdrop-blur lg:p-4'
+            className='rounded-[20px] border border-border p-2 backdrop-blur lg:p-4'
           >
             <div className='flex items-center justify-between'>
               <div>
@@ -103,7 +103,7 @@ export const InstructorSkillCard: React.FC<InstructorSkillCardProps> = ({
               </div>
 
               <div className='flex items-center gap-1.5'>
-                <BrainCircuit className='h-3.5 w-3.5 text-purple-600' />
+                <BrainCircuit className='h-3.5 w-3.5 text-accent' />
                 <span>{skill.is_teaching_qualified ? 'Qualified to Teach' : 'Not Teaching'}</span>
               </div>
 

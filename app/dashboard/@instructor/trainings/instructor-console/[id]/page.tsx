@@ -269,7 +269,7 @@ export default function ClassPreviewPage() {
                 {students.map((student) => (
                   <li key={student} className="py-2 flex items-center justify-between">
                     <span>{student}</span>
-                    <span className="text-xs text-gray-500">Active</span>
+                    <span className="text-xs text-muted-foreground">Active</span>
                   </li>
                 ))}
               </ul>
@@ -290,7 +290,7 @@ export default function ClassPreviewPage() {
               </div>
 
               {showQR && (
-                <div className="flex justify-center py-10 bg-gray-100 rounded-lg text-gray-500 text-sm">
+                <div className="flex justify-center rounded-lg bg-muted py-10 text-sm text-muted-foreground">
                   [Mock QR Scanner Placeholder]
                 </div>
               )}
@@ -301,10 +301,11 @@ export default function ClassPreviewPage() {
                     <span>{student}</span>
                     <button
                       onClick={() => toggleAttendance(student)}
-                      className={`px-3 py-1 text-xs rounded-lg ${attendance[student]
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500 hover:bg-purple-50"
-                        }`}
+                      className={`px-3 py-1 text-xs rounded-lg ${
+                        attendance[student]
+                          ? 'bg-success/10 text-success'
+                          : 'bg-muted text-muted-foreground hover:bg-accent/10'
+                      }`}
                     >
                       {attendance[student] ? "Present" : "Mark Present"}
                     </button>
@@ -320,7 +321,9 @@ export default function ClassPreviewPage() {
               <label className="text-sm font-medium text-muted-foreground mb-2 block">Upload Class Resources</label>
               <input type="file" multiple onChange={handleFileUpload} className="mb-4 text-sm" />
               <ul className="list-disc pl-5 text-sm space-y-1">
-                {uploadedFiles.length === 0 && <li className="text-gray-400">No files uploaded yet</li>}
+                {uploadedFiles.length === 0 && (
+                  <li className="text-muted-foreground">No files uploaded yet</li>
+                )}
                 {uploadedFiles.map((file, i) => (
                   <li key={i} className="text-muted-foreground hover:underline cursor-pointer">
                     {file}

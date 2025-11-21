@@ -58,19 +58,19 @@ export function CourseCard({
 
     switch (difficultyName?.toLowerCase()) {
       case 'beginner':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/10 text-success';
       case 'intermediate':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/10 text-warning';
       case 'advanced':
-        return 'bg-red-100 text-red-800';
+        return 'bg-destructive/10 text-destructive';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
   return (
     <Card
-      className='group max-w-[360px] p-0 cursor-pointer rounded-lg border-[1px] border-gray-400 transition-all hover:-translate-y-1 hover:shadow-lg'
+      className='group max-w-[360px] p-0 cursor-pointer rounded-lg border-[1px] border-border transition-all hover:-translate-y-1 hover:shadow-lg'
       onClick={handleClick}
     >
       <div className='relative'>

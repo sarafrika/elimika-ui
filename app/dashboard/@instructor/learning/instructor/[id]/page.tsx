@@ -481,8 +481,8 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card className='p-4'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-blue-100 p-2'>
-              <Users className='h-5 w-5 text-blue-600' />
+            <div className='rounded-lg bg-primary/10 p-2'>
+              <Users className='h-5 w-5 text-primary' />
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Available Instructors</p>
@@ -519,8 +519,8 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
         {/* <Card className="p-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                            <Search className="w-5 h-5 text-purple-600" />
+                        <div className='rounded-lg bg-accent/10 p-2'>
+                            <Search className='h-5 w-5 text-accent' />
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">Specializations</p>

@@ -44,13 +44,13 @@ import { CustomLoadingState } from '../@course_creator/_components/loading-state
 export const getLocationBadgeColor = (location: string) => {
   switch (location) {
     case 'ONLINE':
-      return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+      return 'bg-success/10 text-success border-success/20';
     case 'IN_PERSON':
       return 'bg-violet-500/10 text-violet-600 border-violet-500/20';
     case 'HYBRID':
       return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
     default:
-      return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
+      return 'bg-muted/40 text-muted-foreground border-muted-foreground/30';
   }
 };
 
@@ -59,11 +59,11 @@ export const getDifficultyColor = (difficulty: string) => {
     case 'beginner':
       return 'bg-green-500/70';
     case 'intermediate':
-      return 'bg-blue-500/70';
+    return 'bg-primary/70';
     case 'advanced':
-      return 'bg-purple-500/70';
+    return 'bg-accent/70';
     default:
-      return 'bg-gray-500/70';
+      return 'bg-muted-foreground/70';
   }
 };
 
@@ -261,7 +261,7 @@ export function TrainingClassList({
 
                     {isFull && (
                       <div className='absolute top-3 right-3 z-20'>
-                        <Badge className='bg-red-500/90 text-white backdrop-blur-sm'>FULL</Badge>
+                        <Badge className='bg-destructive/90 text-destructive-foreground backdrop-blur-sm'>FULL</Badge>
                       </div>
                     )}
 
@@ -309,7 +309,7 @@ export function TrainingClassList({
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => onDelete?.(cls.uuid)}
-                            className='flex w-full cursor-pointer items-center text-red-600'
+                            className='flex w-full cursor-pointer items-center text-destructive'
                           >
                             <LucideFileWarning className='mr-2 h-4 w-4' />
                             Deactivate
@@ -351,7 +351,7 @@ export function TrainingClassList({
                     </div>
 
                     {/* Instructor */}
-                    <div className='flex items-center gap-2 rounded-lg border border-blue-100/50 bg-muted p-2.5'>
+                    <div className='flex items-center gap-2 rounded-lg border border-primary/30 bg-muted p-2.5'>
                       <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground shadow-md'>
                         {cls?.instructor?.full_name?.charAt(0)}
                       </div>
@@ -362,10 +362,10 @@ export function TrainingClassList({
                     </div>
 
                     {/* Stats Grid */}
-                    <div className='grid grid-cols-2 gap-3 border-t border-border-100/50 pt-2'>
+                    <div className='grid grid-cols-2 gap-3 border-t border-border pt-2'>
                       <div className='flex items-center gap-2 text-sm'>
-                        <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100'>
-                          <Clock className='h-4 w-4 text-blue-600' />
+                        <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10'>
+                          <Clock className='h-4 w-4 text-primary' />
                         </div>
                         <div>
                           <p className='text-muted-foreground text-xs'>Duration</p>
@@ -373,8 +373,8 @@ export function TrainingClassList({
                         </div>
                       </div>
                       <div className='flex items-center gap-2 text-sm'>
-                        <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'>
-                          <Users className='h-4 w-4 text-emerald-600' />
+                        <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-success/10'>
+                          <Users className='h-4 w-4 text-success' />
                         </div>
                         <div>
                           <p className='text-muted-foreground text-xs'>Enrolled</p>
@@ -391,13 +391,13 @@ export function TrainingClassList({
                         <span className='text-muted-foreground'>Enrollment</span>
                         <span
                           className={
-                            enrollmentPercentage >= 80 ? 'text-orange-600' : 'text-blue-600'
+                            enrollmentPercentage >= 80 ? 'text-warning' : 'text-primary'
                           }
                         >
                           {enrollmentPercentage?.toFixed(0)}%
                         </span>
                       </div>
-                      <div className='h-2 overflow-hidden rounded-full bg-blue-100'>
+                      <div className='h-2 overflow-hidden rounded-full bg-primary/10'>
                         <div
                           className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80 ? 'bg-warning' : 'bg-primary'
                             }`}
@@ -407,7 +407,7 @@ export function TrainingClassList({
                     </div>
 
                     {/* Footer */}
-                    <div className='flex items-center justify-between border-t border-border-100/50 pt-2'>
+                    <div className='flex items-center justify-between border-t border-border pt-2'>
                       <div className='flex items-center gap-1.5'>
                         <span className='text-lg'>KES {cls?.training_fee || 'N/A'}</span>
                       </div>
@@ -438,8 +438,8 @@ export function TrainingClassList({
 
       {filteredClasses.length === 0 && (
         <div className='py-16 text-center'>
-          <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100'>
-            <Search className='h-8 w-8 text-blue-600' />
+          <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10'>
+            <Search className='h-8 w-8 text-primary' />
           </div>
           <h3>No classes found</h3>
           <p className='text-muted-foreground mt-2'>Try adjusting your search or filters</p>

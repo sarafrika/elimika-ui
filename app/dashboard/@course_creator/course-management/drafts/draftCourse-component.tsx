@@ -127,9 +127,9 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
 
       {!isFetched && (
         <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
-          <div className='h-20 w-full animate-pulse rounded bg-gray-200'></div>
-          <div className='h-16 w-full animate-pulse rounded bg-gray-200'></div>
-          <div className='h-12 w-full animate-pulse rounded bg-gray-200'></div>
+          <div className='h-20 w-full animate-pulse rounded bg-muted'></div>
+          <div className='h-16 w-full animate-pulse rounded bg-muted'></div>
+          <div className='h-12 w-full animate-pulse rounded bg-muted'></div>
         </div>
       )}
 

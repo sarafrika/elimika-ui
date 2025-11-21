@@ -138,7 +138,7 @@ export function ScheduleForm({ data, onNext, onPrev, onSummaryChange }: Schedule
 
           {!isAllLessonsDataLoading && lessonsWithContent?.length === 0 && (
             <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-              <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+              <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
               <h3 className='text-lg font-semibold'>No Lessons Found</h3>
               <p className='mt-1 text-sm'>There are no lessons under this course.</p>
             </div>

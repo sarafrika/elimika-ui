@@ -69,7 +69,7 @@ export default function EnrollCourseCard({
               <Button
                 size='icon'
                 variant='secondary'
-                className='absolute right-3 bottom-3 z-30 rounded-full border border-blue-200 bg-white/90 hover:bg-blue-100'
+                className='absolute right-3 bottom-3 z-30 rounded-full border border-primary/30 bg-white/90 hover:bg-primary/10'
                 onClick={e => {
                   e.stopPropagation();
                   toast.success('Implement add to cart:', cls.uuid);
@@ -81,7 +81,7 @@ export default function EnrollCourseCard({
                   viewBox='0 0 24 24'
                   strokeWidth={2}
                   stroke='currentColor'
-                  className='h-4 w-4 text-blue-600'
+                  className='h-4 w-4 text-primary'
                 >
                   <path
                     strokeLinecap='round'
@@ -97,12 +97,12 @@ export default function EnrollCourseCard({
           <div className='space-y-4 p-5'>
             <Link href={href} className='flex flex-col py-2'>
               <div className='space-y-2'>
-                <h3 className='line-clamp-2 min-h-12 transition-colors group-hover:text-blue-600'>
+                <h3 className='line-clamp-2 min-h-12 transition-colors group-hover:text-primary'>
                   {cls?.title}
                 </h3>
                 {variant === 'full' && (
                   <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-                    <BookOpen className='h-3.5 w-3.5 text-blue-500' />
+                    <BookOpen className='h-3.5 w-3.5 text-primary' />
                     <span className='line-clamp-1'>{cls?.course?.name}</span>
                   </div>
                 )}
@@ -127,13 +127,13 @@ export default function EnrollCourseCard({
 
             {/* Instructor */}
             {variant === 'full' && (
-              <div className='flex items-center gap-2 rounded-lg border border-blue-100/50 bg-muted p-2.5 dark:border-blue-900/50 dark:bg-muted/30'>
+              <div className='flex items-center gap-2 rounded-lg border border-primary/30 bg-muted p-2.5 dark:border-primary/30 dark:bg-muted/30'>
                 <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground shadow-md'>
                   {cls?.instructor?.full_name?.charAt(0)}
                 </div>
                 <div className='min-w-0 flex-1'>
-                  <p className='text-muted-foreground text-xs dark:text-gray-400'>Instructor</p>
-                  <p className='truncate text-sm text-gray-900 dark:text-gray-100'>
+                  <p className='text-muted-foreground text-xs'>Instructor</p>
+                  <p className='truncate text-sm text-foreground'>
                     {cls?.instructor?.full_name}
                   </p>
                 </div>
@@ -146,12 +146,12 @@ export default function EnrollCourseCard({
                 <div className='flex justify-between text-xs'>
                   <span className='text-muted-foreground'>Enrollment</span>
                   <span
-                    className={enrollmentPercentage >= 80 ? 'text-orange-600' : 'text-blue-600'}
+                    className={enrollmentPercentage >= 80 ? 'text-warning' : 'text-primary'}
                   >
                     {enrollmentPercentage?.toFixed(0)}%
                   </span>
                 </div>
-                <div className='h-2 overflow-hidden rounded-full bg-blue-100'>
+                <div className='h-2 overflow-hidden rounded-full bg-primary/10'>
                   <div
                     className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80 ? 'bg-warning' : 'bg-primary'
                       }`}
@@ -162,7 +162,7 @@ export default function EnrollCourseCard({
             )}
 
             {/* Footer: Enroll + Add to Cart */}
-            <div className='flex items-center justify-between border-t border-blue-100/50 pt-3'>
+            <div className='flex items-center justify-between border-t border-primary/30 pt-3'>
               {variant === 'full' ? (
                 <div className='flex items-center gap-2'>
                   <span className='text-lg font-medium'>
@@ -183,13 +183,13 @@ export default function EnrollCourseCard({
                   disabled={disableEnroll}
                   className={
                     disableEnroll
-                      ? 'flex cursor-default items-center gap-2 bg-green-600 text-white shadow-sm hover:bg-green-700'
+                      ? 'flex cursor-default items-center gap-2 bg-success text-success-foreground shadow-sm hover:bg-success/90'
                       : 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
                   }
                 >
                   {disableEnroll ? (
                     <>
-                      <CheckCircle className='h-4 w-4 text-white' />
+                      <CheckCircle className='h-4 w-4 text-success-foreground' />
                       <span>Enrolled</span>
                     </>
                   ) : (

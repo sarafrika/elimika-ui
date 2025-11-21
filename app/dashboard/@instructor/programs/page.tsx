@@ -185,7 +185,7 @@ export default function ClassesPage() {
           </Button>
         </div>
       ) : (
-        <div className='overflow-hidden rounded-t-lg border border-gray-200'>
+        <div className='overflow-hidden rounded-t-lg border border-border'>
           <Table>
             <TableCaption className='py-4'>A list of your programs</TableCaption>
             <TableHeader className='bg-muted'>

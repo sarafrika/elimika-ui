@@ -207,18 +207,18 @@ export default function ClassDetailsPage() {
   // };
 
   const getLessonIcon = (type: any['type'], completed: boolean, locked: boolean) => {
-    if (locked) return <Lock className="w-4 h-4 text-gray-400" />;
+    if (locked) return <Lock className="w-4 h-4 text-muted-foreground" />;
     if (completed) return <CheckCircle className="w-4 h-4 text-green-600" />;
 
     switch (type) {
       case 'video':
-        return <Play className="w-4 h-4 text-blue-600" />;
+        return <Play className="w-4 h-4 text-primary" />;
       case 'reading':
-        return <BookOpen className="w-4 h-4 text-purple-600" />;
+        return <BookOpen className="w-4 h-4 text-accent" />;
       case 'quiz':
-        return <FileText className="w-4 h-4 text-orange-600" />;
+        return <FileText className="w-4 h-4 text-warning" />;
       case 'assignment':
-        return <Award className="w-4 h-4 text-yellow-600" />;
+        return <Award className="w-4 h-4 text-success" />;
       default:
         return <Play className="w-4 h-4" />;
     }
@@ -339,13 +339,13 @@ export default function ClassDetailsPage() {
                                           </div>
                                         </div>
                                         {/* 
-                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3">
                                       {lesson.locked ? (
-                                        <Clock className="w-4 h-4 text-gray-400" />
+                                        <Clock className="w-4 h-4 text-muted-foreground" />
                                       ) : lesson.completed ? (
-                                        <CheckCircle className="w-5 h-5 text-green-600" />
+                                        <CheckCircle className="w-5 h-5 text-success" />
                                       ) : (
-                                        <span className="text-sm text-gray-500">{lesson.duration}</span>
+                                        <span className="text-sm text-muted-foreground">{lesson.duration}</span>
                                       )}
                                     </div> */}
                                       </button>
@@ -372,45 +372,45 @@ export default function ClassDetailsPage() {
                     <div className="flex items-center gap-3">
                       {contentTypeName === 'video' && (
                         <>
-                          <div className="p-3 bg-blue-100 rounded-lg">
-                            <Video className="w-6 h-6 text-blue-600" />
+                          <div className="rounded-lg bg-primary/10 p-3">
+                            <Video className="h-6 w-6 text-primary" />
                           </div>
                           <div>
                             <p className="font-medium">Video</p>
-                            <p className="text-sm text-gray-600">{selectedLesson?.duration}</p>
+                            <p className="text-sm text-muted-foreground">{selectedLesson?.duration}</p>
                           </div>
                         </>
                       )}
                       {(contentTypeName === 'text' || contentTypeName === 'pdf') && (
                         <>
-                          <div className="p-3 bg-purple-100 rounded-lg">
-                            <BookOpen className="w-6 h-6 text-purple-600" />
+                          <div className="rounded-lg bg-accent/10 p-3">
+                            <BookOpen className="h-6 w-6 text-accent" />
                           </div>
                           <div>
                             <p className="font-medium">Reading</p>
-                            <p className="text-sm text-gray-600">{selectedLesson?.duration}</p>
+                            <p className="text-sm text-muted-foreground">{selectedLesson?.duration}</p>
                           </div>
                         </>
                       )}
                       {contentTypeName === 'quiz' && (
                         <>
-                          <div className="p-3 bg-orange-100 rounded-lg">
-                            <FileText className="w-6 h-6 text-orange-600" />
+                          <div className="rounded-lg bg-warning/10 p-3">
+                            <FileText className="h-6 w-6 text-warning" />
                           </div>
                           <div>
                             <p className="font-medium">Quiz</p>
-                            <p className="text-sm text-gray-600">{selectedLesson?.duration}</p>
+                            <p className="text-sm text-muted-foreground">{selectedLesson?.duration}</p>
                           </div>
                         </>
                       )}
                       {contentTypeName === 'assignment' && (
                         <>
-                          <div className="p-3 bg-yellow-100 rounded-lg">
-                            <Award className="w-6 h-6 text-yellow-600" />
+                          <div className="rounded-lg bg-success/10 p-3">
+                            <Award className="h-6 w-6 text-success" />
                           </div>
                           <div>
                             <p className="font-medium">Assignment</p>
-                            <p className="text-sm text-gray-600">{selectedLesson?.duration}</p>
+                            <p className="text-sm text-muted-foreground">{selectedLesson?.duration}</p>
                           </div>
                         </>
                       )}
@@ -473,12 +473,12 @@ export default function ClassDetailsPage() {
                     <ul className="space-y-2">
                       {selectedLesson.resources.map((resource) => (
                         <li key={resource.id}>
-                          <button className="w-full flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                          <button className="w-full flex items-center justify-between p-2 rounded-lg transition-colors hover:bg-muted/60">
                             <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4 text-gray-600" />
+                              <FileText className="w-4 h-4 text-muted-foreground" />
                               <span className="text-sm">{resource.name}</span>
                             </div>
-                            <Download className="w-4 h-4 text-gray-400" />
+                            <Download className="w-4 h-4 text-muted-foreground" />
                           </button>
                         </li>
                       ))}
@@ -540,7 +540,7 @@ export default function ClassDetailsPage() {
           {isPlaying && contentTypeName === 'video' && (
             <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
               <div className="w-full max-w-6xl">
-                <div className="aspect-video bg-gray-900 relative">
+                <div className="aspect-video bg-foreground/80 relative">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Play className="w-20 h-20 text-white opacity-50" />
                   </div>

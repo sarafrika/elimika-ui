@@ -227,7 +227,7 @@ export function ReviewPublishForm({
                   </>
                 ) : (
                   <>
-                    <Lock className='h-4 w-4 text-blue-600' />
+                    <Lock className='h-4 w-4 text-primary' />
                     Private
                   </>
                 )}

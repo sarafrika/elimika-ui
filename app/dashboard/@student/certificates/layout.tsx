@@ -11,7 +11,7 @@ export default function CertificateLayout({ children }: CertificateLayoutProps) 
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>My Certificates</h2>
           <div className='text-muted-foreground'>
-            <p className='mt-1 text-gray-600'>Academic Achievements & Certifications </p>
+            <p className='mt-1 text-muted-foreground'>Academic Achievements & Certifications </p>
           </div>
         </div>
       </div>

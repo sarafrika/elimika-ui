@@ -173,7 +173,7 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
 
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className='text-red-600'
+                      className='text-destructive'
                       onClick={() => handleDeleteQuestion(question)}
                     >
                       <Trash className='mr-1 h-4 w-4' />
@@ -203,18 +203,19 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
               {options.map((option: any, index: number) => (
                 <TableRow
                   key={option.uuid}
-                  className={`group transition-colors ${option.is_correct ? ' hover:bg-green-100 hover:text-black' : 'hover:bg-muted'
-                    }`}
+                  className={`group transition-colors ${
+                    option.is_correct ? 'hover:bg-success/10 hover:text-foreground' : 'hover:bg-muted'
+                  }`}
                 >
                   <TableCell className='text-center'>{index + 1}</TableCell>
                   <TableCell>{option.option_text}</TableCell>
                   <TableCell className='text-center'>
                     {option.is_correct ? (
-                      <span className='rounded-md bg-green-100 px-2 py-1 text-xs font-semibold text-green-700'>
+                      <span className='rounded-md bg-success/10 px-2 py-1 text-xs font-semibold text-success'>
                         ✓ Correct
                       </span>
                     ) : (
-                      <span className='rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600'>
+                      <span className='rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground'>
                         —
                       </span>
                     )}
@@ -224,7 +225,7 @@ const QuestionItem = ({ quizUuid, question, qIndex, userDomain }: QuestionItemPr
                       <Button
                         variant='ghost'
                         size='icon'
-                        className='text-red-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-700'
+                        className='text-destructive opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive/80'
                         onClick={() => handleDeleteOption(option, question?.quiz_uuid)}
                       >
                         <Trash className='h-4 w-4' />

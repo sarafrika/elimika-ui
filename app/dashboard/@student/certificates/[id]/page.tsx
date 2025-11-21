@@ -88,7 +88,7 @@ const CertificatePreviewPage = () => {
     <div className='space-y-8 p-2 sm:p-4 md:p-6'>
       <div>
         <h1 className='text-2xl font-bold'>Certificate Details</h1>
-        <p className='text-gray-600'>Detailed view of your earned certificate.</p>
+        <p className='text-muted-foreground'>Detailed view of your earned certificate.</p>
       </div>
 
       <div className='grid gap-4 md:grid-cols-2'>
@@ -113,16 +113,16 @@ const CertificatePreviewPage = () => {
           </p>
           <p>
             <span className='font-medium'>Status:</span>{' '}
-            <span className='font-semibold text-green-600'>{data.validity_status}</span>
+            <span className='font-semibold text-success'>{data.validity_status}</span>
           </p>
 
           {data.revoked_at !== null ? (
             <>
-              <p className='font-semibold text-red-600'>This certificate has been revoked.</p>
+              <p className='font-semibold text-destructive'>This certificate has been revoked.</p>
               {data.revoked_reason && (
-                <p className='text-sm text-red-500'>Reason: {data.revoked_reason}</p>
+                <p className='text-sm text-destructive'>Reason: {data.revoked_reason}</p>
               )}
-              <p className='mt-2 text-gray-500'>Certificate link and download are disabled.</p>
+              <p className='mt-2 text-muted-foreground'>Certificate link and download are disabled.</p>
             </>
           ) : (
             <>
@@ -133,7 +133,7 @@ const CertificatePreviewPage = () => {
                     href={data.certificate_url}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='text-blue-600 underline'
+                    className='text-primary underline'
                   >
                     {data.certificate_number}
                   </Link>
@@ -148,7 +148,7 @@ const CertificatePreviewPage = () => {
                   download
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='mt-3 inline-block rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700'
+                  className='mt-3 inline-block rounded bg-primary px-4 py-2 text-primary-foreground transition hover:bg-primary/90'
                 >
                   Download Certificate
                 </a>
@@ -159,7 +159,7 @@ const CertificatePreviewPage = () => {
 
         <div>
           {data.revoked_at !== null ? (
-            <div className='rounded border bg-red-50 p-4 text-center text-red-500 shadow'>
+            <div className='rounded border bg-destructive/10 p-4 text-center text-destructive shadow'>
               Certificate preview is unavailable because this certificate has been revoked.
             </div>
           ) : data.certificate_url ? (
@@ -171,7 +171,7 @@ const CertificatePreviewPage = () => {
               ></iframe>
             </div>
           ) : (
-            <p className='text-gray-500'>Preview not available.</p>
+            <p className='text-muted-foreground'>Preview not available.</p>
           )}
         </div>
       </div>

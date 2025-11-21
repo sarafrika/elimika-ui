@@ -11,7 +11,7 @@ export default function GradesLayout({ children }: GradesLayoutProps) {
     <div className='space-y-8 p-4 pb-16 md:p-10'>
       <div>
         <h2 className='text-2xl font-bold tracking-tight'>My Grades</h2>
-        <p className='mt-1 text-gray-600'>Academic Performance Overview</p>
+        <p className='mt-1 text-muted-foreground'>Academic Performance Overview</p>
       </div>
 
       <Separator />

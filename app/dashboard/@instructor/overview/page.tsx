@@ -119,7 +119,7 @@ export default function InstructorOverviewPage() {
               <div
                 className={`mt-0.5 flex size-8 items-center justify-center rounded-full border ${
                   isCompleted
-                    ? 'border-emerald-500 bg-emerald-500 text-white'
+                    ? 'border-success bg-success text-success-foreground'
                     : isCurrent
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border bg-muted text-muted-foreground'

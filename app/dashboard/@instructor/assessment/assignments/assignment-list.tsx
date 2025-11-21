@@ -121,8 +121,8 @@ export default function AssignmentListPage() {
               <div className='flex items-start justify-between'>
                 <div className='flex items-start gap-3'>
                   {/* Index Circle */}
-                  <div className='mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40'>
-                    <span className='text-sm font-semibold text-blue-600 dark:text-blue-300'>
+                  <div className='mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20'>
+                    <span className='text-sm font-semibold text-primary'>
                       {index + 1}
                     </span>
                   </div>

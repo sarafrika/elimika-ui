@@ -119,6 +119,17 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
   const filteredApplications = (status: string) =>
     status === 'all' ? applicationData : applicationData.filter((a: any) => a.status === status);
 
+  const getStatusBadgeClasses = (status: string) => {
+    const styles: Record<string, string> = {
+      pending: 'bg-warning/10 text-warning',
+      approved: 'bg-success/10 text-success',
+      revoked: 'bg-destructive/10 text-destructive',
+      rejected: 'bg-destructive/10 text-destructive',
+    };
+
+    return styles[status] ?? 'bg-muted text-foreground';
+  };
+
   return (
     <div className={`space-y-6 ${className}`}>
       <Card>
@@ -166,7 +177,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                 {course?.category_names?.map((category: string, idx: number) => (
                   <span
                     key={idx}
-                    className='rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800'
+                    className='rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary'
                   >
                     {category}
                   </span>
@@ -249,12 +260,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                                 {new Date(app.created_date).toLocaleDateString()}
                               </p>
                               <span
-                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${app.status === "pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : app.status === "approved"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                  }`}
+                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeClasses(app.status)}`}
                               >
                                 {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                               </span>
@@ -291,12 +297,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                         </CardTitle>
 
                         <span
-                          className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${selectedApplication.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : selectedApplication.status === "approved"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                            }`}
+                          className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${getStatusBadgeClasses(selectedApplication.status)}`}
                         >
                           {selectedApplication.status.charAt(0).toUpperCase() + selectedApplication.status.slice(1)}
                         </span>
@@ -328,7 +329,7 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
                                 href={applicantDetails.website}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm text-blue-600 underline"
+                                className='text-sm text-primary underline'
                               >
                                 {applicantDetails.website}
                               </a>

@@ -117,7 +117,7 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
           <div className='flex w-full justify-end'>
             <Dialog>
               <DialogTrigger asChild>
-                <div className='flex cursor-pointer items-center gap-2 self-end text-end text-sm text-blue-600'>
+                <div className='flex cursor-pointer items-center gap-2 self-end text-end text-sm text-primary'>
                   View Instructor Skill Card
                 </div>
               </DialogTrigger>

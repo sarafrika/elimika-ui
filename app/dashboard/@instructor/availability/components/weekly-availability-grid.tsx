@@ -265,23 +265,23 @@ export function WeeklyAvailabilityGrid({
 
   const getSlotClass = (status: string | null, isEventSlot = false) => {
     const baseClasses =
-      'w-full h-8 border border-gray-200 rounded text-xs transition-colors cursor-pointer';
+      'w-full h-8 border border-border rounded text-xs transition-colors cursor-pointer';
 
     if (isEventSlot) {
-      return `${baseClasses} bg-blue-50 border-blue-300 hover:bg-blue-100 shadow-sm`;
+      return `${baseClasses} bg-primary/10 border-primary/40 hover:bg-primary/15 shadow-sm`;
     }
 
     switch (status) {
       case 'available':
-        return `${baseClasses} bg-green-100 border-green-300 hover:bg-green-200`;
+        return `${baseClasses} bg-success/10 border-success/30 hover:bg-success/15`;
       case 'unavailable':
-        return `${baseClasses} bg-red-100 border-red-300 hover:bg-red-200`;
+        return `${baseClasses} bg-destructive/10 border-destructive/30 hover:bg-destructive/15`;
       case 'reserved':
-        return `${baseClasses} bg-yellow-100 border-yellow-300 hover:bg-yellow-200`;
+        return `${baseClasses} bg-warning/10 border-warning/30 hover:bg-warning/20`;
       case 'booked':
-        return `${baseClasses} bg-blue-100 border-blue-300 hover:bg-blue-200`;
+        return `${baseClasses} bg-primary/15 border-primary/40 hover:bg-primary/20`;
       default:
-        return `${baseClasses} bg-gray-50 hover:bg-gray-100`;
+        return `${baseClasses} bg-muted/60 hover:bg-muted`;
     }
   };
 
@@ -522,7 +522,7 @@ export function WeeklyAvailabilityGrid({
                                   <span className='px-1 text-center text-xs font-medium'>
                                     {eventInSlot.title}
                                   </span>
-                                  <span className='mt-1 text-xs text-gray-600'>
+                                  <span className='mt-1 text-xs text-muted-foreground'>
                                     {eventInSlot.startTime} - {eventInSlot.endTime}
                                   </span>
                                 </div>
@@ -530,27 +530,27 @@ export function WeeklyAvailabilityGrid({
 
                               {/* Show availability only once (at the start) */}
                               {availabilitySlot && isAvailabilityStart && !eventInSlot && (
-                                <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-green-700'>
+                                <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-success'>
                                   Available
-                                  <span className='mt-1 text-gray-600'>
+                                  <span className='mt-1 text-muted-foreground'>
                                     {availabilitySlot.startTime} - {availabilitySlot.endTime}
                                   </span>
                                 </div>
                               )}
 
                               {unavailableSlot && isUnavailableStart && !eventInSlot && (
-                                <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-red-700'>
+                                <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-destructive'>
                                   Unavailable
-                                  <span className='mt-1 text-gray-600'>
+                                  <span className='mt-1 text-muted-foreground'>
                                     {unavailableSlot.startTime} - {unavailableSlot.endTime}
                                   </span>
                                 </div>
                               )}
 
                               {blockedSlot && isBlockedStart && (
-                                <div className="flex h-full flex-col items-center justify-center text-xs font-medium text-blue-700">
+                                <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-primary'>
                                   Reserved / Booked
-                                  <span className="mt-1 text-blue-500">
+                                  <span className='mt-1 text-primary'>
                                     {blockedSlot.startTime} - {blockedSlot.endTime}
                                   </span>
                                 </div>
@@ -567,7 +567,7 @@ export function WeeklyAvailabilityGrid({
 
                               {/* {!status && !eventInSlot && (
                                 <div className='flex items-center justify-center'>
-                                  <Plus className='h-3 w-3 text-gray-400' />
+                                  <Plus className='h-3 w-3 text-muted-foreground' />
                                 </div>
                               )} */}
                             </button>
