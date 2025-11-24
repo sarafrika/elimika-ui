@@ -63,7 +63,6 @@ export default function SkillsWalletPage() {
         <SkillsFund />
         <Employers />
         <Personas />
-        <TalentMap />
         <Testimonials />
         <FinalCta />
       </main>
@@ -242,33 +241,6 @@ function Personas() {
             </CardContent>
           </Card>
         ))}
-      </div>
-    </section>
-  );
-}
-
-function TalentMap() {
-  return (
-    <section className='grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center'>
-      <div className='space-y-4'>
-        <p className='text-sm font-semibold text-primary'>Talent Map</p>
-        <h2 className='text-3xl font-semibold sm:text-4xl'>See where your skills can take you</h2>
-        <p className='text-base text-muted-foreground'>
-          Access jobs and consultancy opportunities in your industry that match your skills profile. Benchmark your progress and unlock
-          global mobility with portable, recognized skills.
-        </p>
-      </div>
-      <div className='relative overflow-hidden rounded-[32px] border border-border/60 bg-muted/40 p-8 shadow-lg'>
-        <div className='grid gap-4 md:grid-cols-2'>
-          <div className='rounded-2xl border border-border/60 bg-background p-4 shadow-sm'>
-            <p className='text-sm font-semibold text-foreground'>Talent search</p>
-            <p className='mt-2 text-sm text-muted-foreground'>Match roles and gigs to verified skills.</p>
-          </div>
-          <div className='rounded-2xl border border-border/60 bg-background p-4 shadow-sm'>
-            <p className='text-sm font-semibold text-foreground'>Benchmarking</p>
-            <p className='mt-2 text-sm text-muted-foreground'>“You’re ahead of peers in AI skills.”</p>
-          </div>
-        </div>
       </div>
     </section>
   );
