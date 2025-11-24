@@ -20,7 +20,7 @@ import {
   type AdminUser,
   useUpdateAdminUser,
 } from '@/services/admin';
-import { getAllUsersOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAdminUsersOptions, getAllUsersOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { zUser } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -83,6 +83,7 @@ export interface AdminUserWorkspaceProps {
   fixedDomain?: string;
   emptyStateTitle?: string;
   emptyStateDescription?: string;
+  useAdminEndpoint?: boolean;
 }
 
 export function AdminUserWorkspace({
@@ -90,6 +91,7 @@ export function AdminUserWorkspace({
   fixedDomain,
   emptyStateTitle = 'No records match your filters',
   emptyStateDescription = 'Adjust search terms or filter selections to discover more entries.',
+  useAdminEndpoint = false,
 }: AdminUserWorkspaceProps) {
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -104,7 +106,14 @@ export function AdminUserWorkspace({
   }, [fixedDomain]);
 
   const { data, isLoading } = useQuery(
-    getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
+    useAdminEndpoint
+      ? getAdminUsersOptions({
+        query: {
+          filters: {},
+          pageable: { page, size: 20, sort: ['created_date,desc'] },
+        },
+      })
+      : getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
   );
 
   const users = useMemo(() => (data?.data?.content ?? []) as AdminUser[], [data?.data?.content]);
