@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, GraduationCap, CircleAlert, Layers } from 'lucide-react';
 import { useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function PublicCoursesPage() {
   const coursesQuery = useQuery({
@@ -105,6 +106,7 @@ function CourseCard({ course }: { course: Course }) {
     level,
     duration_weeks,
     is_published,
+    thumbnail_url,
   } = course;
   const courseUuid = uuid ?? '';
   const safeDescription = useMemo(
@@ -116,6 +118,18 @@ function CourseCard({ course }: { course: Course }) {
 
   return (
     <Card className='group h-full rounded-[28px] border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg'>
+      {thumbnail_url ? (
+        <div className='relative aspect-[16/9] w-full overflow-hidden rounded-t-[28px] border-b border-border/60 bg-muted'>
+          <Image
+            src={thumbnail_url}
+            alt={title ?? 'Course thumbnail'}
+            fill
+            sizes='(min-width: 1024px) 320px, 100vw'
+            className='object-cover transition duration-500 group-hover:scale-[1.03]'
+            priority={false}
+          />
+        </div>
+      ) : null}
       <CardHeader className='space-y-3'>
         <div className='flex items-start justify-between gap-3'>
           <div className='flex-1 space-y-2'>
