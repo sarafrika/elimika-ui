@@ -114,7 +114,7 @@ function CourseCard({ course }: { course: Course }) {
     price,
     is_free,
     accepts_new_enrollments,
-    created_by,
+    course_creator_name,
     thumbnail_url,
   } = course;
   const courseUuid = uuid ?? '';
@@ -194,10 +194,10 @@ function CourseCard({ course }: { course: Course }) {
               <span>{durationLabel}</span>
             </div>
           )}
-          {created_by && (
+          {course_creator_name && (
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <GraduationCap className='h-4 w-4 text-primary' />
-              <span>Created by {created_by}</span>
+              <span>Created by {course_creator_name}</span>
             </div>
           )}
           <div className='flex flex-wrap items-center gap-2 text-sm text-muted-foreground'>

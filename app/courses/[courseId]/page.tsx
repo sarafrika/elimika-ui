@@ -274,7 +274,9 @@ export default function CourseDetailPage() {
                 <div className='space-y-2'>
                   <CardTitle className='text-2xl text-foreground'>Course overview</CardTitle>
                   <CardDescription className='text-muted-foreground'>
-                    {course.created_by ? `Published by ${course.created_by}` : 'Publisher not provided'}
+                    {course.course_creator_name
+                      ? `Published by ${course.course_creator_name}`
+                      : 'Publisher not provided'}
                   </CardDescription>
                 </div>
 
@@ -335,11 +337,11 @@ export default function CourseDetailPage() {
                       ? 'Enroll now'
                       : 'Not available'}
                 </Button>
-                {course.created_by ? (
+                {course.course_creator_name ? (
                   <div className='rounded-[16px] border border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground'>
                     <div className='flex items-center gap-2'>
                       <Calendar className='h-4 w-4 text-primary' />
-                      <span>Created by {course.created_by}</span>
+                      <span>Created by {course.course_creator_name}</span>
                     </div>
                     {course.updated_date ? (
                       <div className='mt-1 text-[11px]'>
