@@ -1,14 +1,7 @@
 'use client';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -17,14 +10,15 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import type { SystemRule, UpsertSystemRuleInput } from '@/services/admin/system-config';
 import { useCreateSystemRule, useUpdateSystemRule } from '@/services/admin/system-config';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 const ruleFormSchema = z.object({
   category: z.string().min(1, 'Select a category'),
@@ -61,7 +55,7 @@ const ruleFormSchema = z.object({
     }, 'Payload must be valid JSON'),
 });
 
-type RuleFormValues = z.infer<typeof ruleFormSchema>;
+export type RuleFormValues = z.infer<typeof ruleFormSchema>;
 
 const categoryOptions = [
   { label: 'Platform fee', value: 'PLATFORM_FEE' },
@@ -69,14 +63,14 @@ const categoryOptions = [
   { label: 'Notifications', value: 'NOTIFICATIONS' },
 ];
 
-interface RuleFormDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface RuleFormProps {
   mode: 'create' | 'edit';
-  rule: SystemRule | null;
+  rule?: SystemRule | null;
+  onCancel?: () => void;
+  onSuccess?: (rule: SystemRule) => void;
 }
 
-export function RuleFormDialog({ open, onOpenChange, mode, rule }: RuleFormDialogProps) {
+export function RuleForm({ mode, rule, onCancel, onSuccess }: RuleFormProps) {
   const form = useForm<RuleFormValues>({
     resolver: zodResolver(ruleFormSchema),
     defaultValues: {
@@ -89,7 +83,7 @@ export function RuleFormDialog({ open, onOpenChange, mode, rule }: RuleFormDialo
       description: rule?.description ?? '',
       effective_from: rule?.effective_from ?? '',
       effective_to: rule?.effective_to ?? '',
-      payload: rule?.payload ? JSON.stringify(rule.payload, null, 2) : '',
+      payload: rule?.payload ? JSON.stringify(rule.payload, null, 2) : '{\n  \n}',
     },
   });
 
@@ -97,7 +91,7 @@ export function RuleFormDialog({ open, onOpenChange, mode, rule }: RuleFormDialo
   const { mutateAsync: updateRule, isPending: isUpdating } = useUpdateSystemRule();
 
   useEffect(() => {
-    if (rule && open) {
+    if (rule) {
       form.reset({
         category: rule.category,
         key: rule.key,
@@ -108,23 +102,10 @@ export function RuleFormDialog({ open, onOpenChange, mode, rule }: RuleFormDialo
         description: rule.description ?? '',
         effective_from: rule.effective_from ?? '',
         effective_to: rule.effective_to ?? '',
-        payload: rule.payload ? JSON.stringify(rule.payload, null, 2) : '',
-      });
-    } else if (open && mode === 'create') {
-      form.reset({
-        category: 'PLATFORM_FEE',
-        key: '',
-        status: 'ACTIVE',
-        priority: undefined,
-        scope_type: '',
-        scope_reference: '',
-        description: '',
-        effective_from: '',
-        effective_to: '',
-        payload: '{\n  \n}',
+        payload: rule.payload ? JSON.stringify(rule.payload, null, 2) : '{\n  \n}',
       });
     }
-  }, [rule, open, mode, form]);
+  }, [rule, form]);
 
   const handleSubmit = async (values: RuleFormValues) => {
     const transformed: UpsertSystemRuleInput = {
@@ -141,30 +122,32 @@ export function RuleFormDialog({ open, onOpenChange, mode, rule }: RuleFormDialo
     };
 
     if (mode === 'create') {
-      await createRule(transformed);
+      const created = await createRule(transformed);
+      onSuccess?.(created);
     } else if (rule?.uuid) {
-      await updateRule({ uuid: rule.uuid, payload: transformed });
+      const updated = await updateRule({ uuid: rule.uuid, payload: transformed });
+      onSuccess?.(updated);
     }
-
-    onOpenChange(false);
   };
 
   const isEdit = mode === 'edit';
   const isSubmitting = isCreating || isUpdating;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-2xl'>
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit system rule' : 'Create system rule'}</DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? 'Update mutable fields such as status, priority, and payload. Category and key are immutable.'
-              : 'Define the category, scope, and payload for the new rule before enabling it.'}
-          </DialogDescription>
-        </DialogHeader>
+    <Card className='border-border/60 shadow-sm'>
+      <CardHeader className='space-y-2'>
+        <CardTitle className='text-xl font-semibold'>
+          {isEdit ? 'Edit system rule' : 'Create system rule'}
+        </CardTitle>
+        <CardDescription>
+          {isEdit
+            ? 'Update status, priority, scope, and payload for this rule.'
+            : 'Define category, scope, and payload for a new rule.'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
             <div className='grid gap-4 md:grid-cols-2'>
               <FormField
                 control={form.control}
@@ -324,17 +307,19 @@ export function RuleFormDialog({ open, onOpenChange, mode, rule }: RuleFormDialo
               )}
             />
 
-            <div className='flex justify-end gap-2'>
-              <Button type='button' variant='ghost' onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
+            <div className='flex flex-wrap justify-end gap-2'>
+              {onCancel ? (
+                <Button type='button' variant='ghost' onClick={onCancel}>
+                  Cancel
+                </Button>
+              ) : null}
               <Button type='submit' disabled={isSubmitting}>
                 {isSubmitting ? 'Saving…' : isEdit ? 'Save changes' : 'Create rule'}
               </Button>
             </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   );
 }
