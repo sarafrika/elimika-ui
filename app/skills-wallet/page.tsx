@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { HelpSection, SkillsFundSection } from '@/components/PublicSections';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -56,11 +56,10 @@ export default function SkillsWalletPage() {
         <Hero />
         <WhatIs />
         <Features />
-        <SkillsFund />
+        <SkillsFundSection />
         <Employers />
         <Personas />
-        <Opportunities />
-        <Help />
+        <HelpSection />
         <Testimonials />
         <FinalCta />
       </main>
@@ -239,71 +238,6 @@ function Personas() {
             </CardContent>
           </Card>
         ))}
-      </div>
-    </section>
-  );
-}
-
-function Opportunities() {
-  return (
-    <section id='opportunities' className='space-y-6'>
-      <div className='space-y-2 text-center'>
-        <p className='text-xs font-semibold uppercase tracking-[0.4em] text-primary'>Opportunities</p>
-        <h2 className='text-3xl font-semibold sm:text-4xl'>Unlock jobs and learning offers</h2>
-        <p className='text-base text-muted-foreground max-w-3xl mx-auto'>
-          Access jobs and consultancy opportunities in your industry that match your verified skills profile. Supports global mobility—your skills
-          are portable and recognized locally and abroad.
-        </p>
-      </div>
-      <div className='grid gap-4 md:grid-cols-2'>
-        <Card className='rounded-[24px] border border-border/60 bg-card shadow-sm'>
-          <CardHeader>
-            <CardTitle className='text-lg font-semibold'>Job matches</CardTitle>
-            <CardDescription className='text-muted-foreground'>
-              Get notified when roles align with your verified skills and credentials.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant='outline' className='rounded-full'>
-              Search openings
-            </Button>
-          </CardContent>
-        </Card>
-        <Card className='rounded-[24px] border border-border/60 bg-card shadow-sm'>
-          <CardHeader>
-            <CardTitle className='text-lg font-semibold'>Learning offers</CardTitle>
-            <CardDescription className='text-muted-foreground'>
-              Explore scholarships, bursaries, and employer-funded upskilling programs.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant='outline' className='rounded-full'>
-              View offers
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </section>
-  );
-}
-
-function Help() {
-  return (
-    <section id='help' className='rounded-[28px] border border-border/60 bg-muted/30 p-8 shadow-sm'>
-      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
-        <div className='space-y-2'>
-          <p className='text-xs font-semibold uppercase tracking-[0.3em] text-primary'>Help</p>
-          <h3 className='text-2xl font-semibold text-foreground'>Need support?</h3>
-          <p className='text-sm text-muted-foreground'>
-            Visit our help center or reach out for guidance on building your Skills Wallet, funding, or employer access.
-          </p>
-        </div>
-        <div className='flex flex-wrap gap-3'>
-          <Button className='rounded-full px-6' variant='outline'>
-            Help center
-          </Button>
-          <Button className='rounded-full px-6'>Contact support</Button>
-        </div>
       </div>
     </section>
   );
