@@ -108,6 +108,7 @@ export function AdminUserWorkspace({
   );
 
   const users = useMemo(() => (data?.data?.content ?? []) as AdminUser[], [data?.data?.content]);
+  const activeDomainFilter = fixedDomain ?? domainFilter;
   const totalPages = Math.max(data?.data?.metadata?.totalPages ?? 1, 1);
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export function AdminUserWorkspace({
           setStatusFilter((value as typeof statusFilter) || 'all');
           setPage(0);
         }}
-        domainFilter={domainFilter}
+        domainFilter={activeDomainFilter}
         onDomainFilterChange={value => {
           setDomainFilter(value || 'all');
           setPage(0);
@@ -202,7 +203,7 @@ function UserListPanel({
   const filteredUsers = users.filter(user => {
     if (statusFilter === 'active' && !user.active) return false;
     if (statusFilter === 'inactive' && user.active) return false;
-    if (showDomainFilter && domainFilter !== 'all') {
+    if (domainFilter !== 'all') {
       const domains = Array.isArray(user.user_domain)
         ? user.user_domain
         : user.user_domain
