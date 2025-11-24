@@ -242,11 +242,18 @@ function UserListPanel({
         <div
           key={user.uuid ?? user.email}
           className={cn(
-            'hover:bg-muted/50 cursor-pointer border-b p-4 transition-colors',
-            selectedUserId === user.uuid ? 'bg-muted' : ''
+            'relative cursor-pointer rounded-2xl border p-4 transition-colors',
+            selectedUserId === user.uuid
+              ? 'border-primary bg-primary/5 ring-1 ring-primary/40 shadow-sm'
+              : 'border-border/60 bg-card hover:bg-muted/40'
           )}
           onClick={() => onSelect(user)}
         >
+          {selectedUserId === user.uuid ? (
+            <Badge variant='secondary' className='absolute right-3 top-3 text-[10px] font-semibold uppercase'>
+              Selected
+            </Badge>
+          ) : null}
           <div className='flex items-start justify-between'>
             <div className='min-w-0 flex-1'>
               <div className='mb-1 flex items-center gap-2'>

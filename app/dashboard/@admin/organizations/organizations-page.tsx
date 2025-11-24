@@ -185,10 +185,18 @@ function OrganisationListPanel({
       <button
         key={org.uuid ?? org.name}
         type='button'
-        className={`w-full rounded-2xl border p-4 text-left transition hover:border-primary/40 hover:bg-primary/5 ${selectedOrganisationId === org.uuid ? 'border-primary bg-primary/5' : 'border-border/60 bg-card'
-          }`}
+        className={`relative w-full rounded-2xl border p-4 text-left transition ${
+          selectedOrganisationId === org.uuid
+            ? 'border-primary bg-primary/5 ring-1 ring-primary/40 shadow-sm'
+            : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
+        }`}
         onClick={() => onSelect(org)}
       >
+        {selectedOrganisationId === org.uuid ? (
+          <Badge variant='secondary' className='absolute right-3 top-3 text-[10px] font-semibold uppercase'>
+            Selected
+          </Badge>
+        ) : null}
         <div className='flex items-start justify-between gap-3'>
           <div>
             <p className='font-semibold'>{org.name}</p>
