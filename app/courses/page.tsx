@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PublicTopNav } from '@/components/PublicTopNav';
-import { getPublishedCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getCourseCreatorByUuidOptions, getPublishedCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Course } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, GraduationCap, CircleAlert, Layers } from 'lucide-react';
@@ -114,8 +114,8 @@ function CourseCard({ course }: { course: Course }) {
     price,
     is_free,
     accepts_new_enrollments,
-    course_creator_name,
     thumbnail_url,
+    course_creator_uuid,
   } = course;
   const courseUuid = uuid ?? '';
   const displayTitle = title || (name as string | undefined) || 'Untitled course';
@@ -131,6 +131,11 @@ function CourseCard({ course }: { course: Course }) {
       : duration_weeks
         ? `${duration_weeks} ${duration_weeks === 1 ? 'week' : 'weeks'}`
         : null;
+  const { data: courseCreatorData } = useQuery({
+    ...getCourseCreatorByUuidOptions({ path: { uuid: course_creator_uuid as string } }),
+    enabled: Boolean(course_creator_uuid),
+  });
+  const courseCreatorName = (courseCreatorData as any)?.data?.full_name as string | undefined;
 
   return (
     <Card className='group h-full rounded-[28px] border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg'>
@@ -194,10 +199,10 @@ function CourseCard({ course }: { course: Course }) {
               <span>{durationLabel}</span>
             </div>
           )}
-          {course_creator_name && (
+          {courseCreatorName && (
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <GraduationCap className='h-4 w-4 text-primary' />
-              <span>Created by {course_creator_name}</span>
+              <span>Created by {courseCreatorName}</span>
             </div>
           )}
           <div className='flex flex-wrap items-center gap-2 text-sm text-muted-foreground'>

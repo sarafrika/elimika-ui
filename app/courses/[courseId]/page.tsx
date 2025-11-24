@@ -9,6 +9,7 @@ import { PublicTopNav } from '@/components/PublicTopNav';
 import {
   getCourseByUuidOptions,
   getCourseLessonsOptions,
+  getCourseCreatorByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Course, CourseLesson } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
@@ -54,6 +55,13 @@ export default function CourseDetailPage() {
 
   const course = useMemo(() => courseQuery.data?.data, [courseQuery.data]);
   const lessons = useMemo(() => lessonsQuery.data?.data ?? [], [lessonsQuery.data]);
+  const { data: creatorData } = useQuery({
+    ...getCourseCreatorByUuidOptions({
+      path: { uuid: course?.course_creator_uuid as string },
+    }),
+    enabled: Boolean(course?.course_creator_uuid),
+  });
+  const courseCreatorName = (creatorData as any)?.data?.full_name as string | undefined;
 
   const safeDescription = useMemo(
     () =>
@@ -274,9 +282,7 @@ export default function CourseDetailPage() {
                 <div className='space-y-2'>
                   <CardTitle className='text-2xl text-foreground'>Course overview</CardTitle>
                   <CardDescription className='text-muted-foreground'>
-                    {course.course_creator_name
-                      ? `Published by ${course.course_creator_name}`
-                      : 'Publisher not provided'}
+                    {courseCreatorName ? `Published by ${courseCreatorName}` : 'Publisher not provided'}
                   </CardDescription>
                 </div>
 
@@ -337,11 +343,11 @@ export default function CourseDetailPage() {
                       ? 'Enroll now'
                       : 'Not available'}
                 </Button>
-                {course.course_creator_name ? (
+                {courseCreatorName ? (
                   <div className='rounded-[16px] border border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground'>
                     <div className='flex items-center gap-2'>
                       <Calendar className='h-4 w-4 text-primary' />
-                      <span>Created by {course.course_creator_name}</span>
+                      <span>Created by {courseCreatorName}</span>
                     </div>
                     {course.updated_date ? (
                       <div className='mt-1 text-[11px]'>
