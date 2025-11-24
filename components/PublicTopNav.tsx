@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { SearchModal } from '@/components/search-modal';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingCart, Search, ChevronDown, BookOpen, Users } from 'lucide-react';
+import { ShoppingCart, Search, ChevronDown, BookOpen } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -56,7 +56,7 @@ export function PublicTopNav() {
           className='hidden flex-1 max-w-md items-center gap-2 rounded-full border border-border bg-background px-4 py-2.5 text-sm text-muted-foreground shadow-sm transition hover:border-primary/40 hover:bg-muted lg:flex'
         >
           <Search className='h-4 w-4' />
-          <span>Search courses, instructors...</span>
+          <span>Search courses...</span>
           <kbd className='ml-auto hidden rounded border border-border bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground lg:inline-block'>
             ⌘K
           </kbd>
@@ -86,39 +86,19 @@ export function PublicTopNav() {
                   All Courses
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link
-                  href='/instructors'
-                  className='flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-muted'
-                >
-                  <Users className='h-4 w-4 text-primary' />
-                  All Instructors
-                </Link>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           {/* Courses Link */}
-          <Link
-            href='/courses'
-            className={cn(
-              'hidden rounded-full px-4 py-2 text-sm font-medium transition hover:bg-muted hover:text-primary md:inline-flex',
-              isActive('/courses') ? 'bg-muted text-primary' : 'text-muted-foreground'
-            )}
-          >
-            Courses
-          </Link>
-
-          {/* Instructors Link */}
-          <Link
-            href='/instructors'
-            className={cn(
-              'hidden rounded-full px-4 py-2 text-sm font-medium transition hover:bg-muted hover:text-primary md:inline-flex',
-              isActive('/instructors') ? 'bg-muted text-primary' : 'text-muted-foreground'
-            )}
-          >
-            Instructors
-          </Link>
+        <Link
+          href='/courses'
+          className={cn(
+            'hidden rounded-full px-4 py-2 text-sm font-medium transition hover:bg-muted hover:text-primary md:inline-flex',
+            isActive('/courses') ? 'bg-muted text-primary' : 'text-muted-foreground'
+          )}
+        >
+          Courses
+        </Link>
 
           {/* Cart Button with Badge */}
           <Link href='/cart' className='rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2'>
@@ -157,7 +137,7 @@ export function PublicTopNav() {
           className='flex w-full items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm text-muted-foreground shadow-sm transition hover:border-primary/40 hover:bg-muted'
         >
           <Search className='h-4 w-4' />
-          <span>Search courses, instructors...</span>
+          <span>Search courses...</span>
         </button>
       </div>
 
