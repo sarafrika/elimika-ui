@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { SearchModal } from '@/components/search-modal';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingCart, Search, ChevronDown, BookOpen } from 'lucide-react';
+import { ShoppingCart, Search, ChevronDown, BookOpen, Users } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -26,6 +26,13 @@ export function PublicTopNav() {
   const cartItemCount = 0;
 
   const isActive = (path: string) => pathname === path;
+  const navLinks = [
+    { label: 'Courses', href: '/courses' },
+    { label: 'Skills Fund', href: '/skills-wallet#skills-fund' },
+    { label: 'Opportunities', href: '/skills-wallet#opportunities' },
+    { label: 'Instructors', href: '/instructors' },
+    { label: 'Help', href: '/skills-wallet#help' },
+  ];
 
   return (
     <nav className='sticky top-0 z-40 border-b border-border bg-background/80 shadow-sm backdrop-blur-md'>
@@ -86,19 +93,30 @@ export function PublicTopNav() {
                   All Courses
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href='/instructors'
+                  className='flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-muted'
+                >
+                  <Users className='h-4 w-4 text-primary' />
+                  Instructors
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Courses Link */}
-        <Link
-          href='/courses'
-          className={cn(
-            'hidden rounded-full px-4 py-2 text-sm font-medium transition hover:bg-muted hover:text-primary md:inline-flex',
-            isActive('/courses') ? 'bg-muted text-primary' : 'text-muted-foreground'
-          )}
-        >
-          Courses
-        </Link>
+          {navLinks.map(link => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                'hidden rounded-full px-4 py-2 text-sm font-medium transition hover:bg-muted hover:text-primary md:inline-flex',
+                pathname === link.href ? 'bg-muted text-primary' : 'text-muted-foreground'
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
 
           {/* Cart Button with Badge */}
           <Link href='/cart' className='rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2'>
@@ -139,6 +157,17 @@ export function PublicTopNav() {
           <Search className='h-4 w-4' />
           <span>Search courses...</span>
         </button>
+        <div className='mt-3 flex flex-wrap gap-2'>
+          {navLinks.map(link => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className='rounded-full border border-border px-3 py-1 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-primary'
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Search Modal */}

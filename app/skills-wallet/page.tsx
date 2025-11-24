@@ -27,10 +27,6 @@ const featureCards = [
     description: 'Access scholarships, bursaries, and training support directly from your wallet.',
   },
   {
-    title: 'Talent Map',
-    description: 'Benchmark your progress, see opportunities, and get matched to roles and gigs.',
-  },
-  {
     title: 'Courses',
     description: 'Spend on approved training or upskilling programs and switch careers as industries change.',
   },
@@ -63,6 +59,8 @@ export default function SkillsWalletPage() {
         <SkillsFund />
         <Employers />
         <Personas />
+        <Opportunities />
+        <Help />
         <Testimonials />
         <FinalCta />
       </main>
@@ -169,7 +167,7 @@ function Features() {
 
 function SkillsFund() {
   return (
-    <section className='rounded-[32px] border border-border/70 bg-primary/10 p-8 shadow-lg shadow-primary/10'>
+    <section id='skills-fund' className='rounded-[32px] border border-border/70 bg-primary/10 p-8 shadow-lg shadow-primary/10'>
       <div className='flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between'>
         <div className='space-y-3'>
           <p className='text-xs font-semibold uppercase tracking-[0.3em] text-primary'>Skills Fund</p>
@@ -194,7 +192,7 @@ function SkillsFund() {
 
 function Employers() {
   return (
-    <section className='grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center'>
+    <section id='employers' className='grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center'>
       <div className='relative overflow-hidden rounded-[32px] border border-border/60 bg-card shadow-lg'>
         <div className='aspect-[16/9] w-full bg-gradient-to-br from-primary/10 via-muted to-primary/5' />
         <div className='absolute inset-0 flex items-center justify-center'>
@@ -241,6 +239,71 @@ function Personas() {
             </CardContent>
           </Card>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function Opportunities() {
+  return (
+    <section id='opportunities' className='space-y-6'>
+      <div className='space-y-2 text-center'>
+        <p className='text-xs font-semibold uppercase tracking-[0.4em] text-primary'>Opportunities</p>
+        <h2 className='text-3xl font-semibold sm:text-4xl'>Unlock jobs and learning offers</h2>
+        <p className='text-base text-muted-foreground max-w-3xl mx-auto'>
+          Access jobs and consultancy opportunities that match your verified skills. Discover offers from employers and funders without
+          talent maps—just direct, relevant matches based on your profile.
+        </p>
+      </div>
+      <div className='grid gap-4 md:grid-cols-2'>
+        <Card className='rounded-[24px] border border-border/60 bg-card shadow-sm'>
+          <CardHeader>
+            <CardTitle className='text-lg font-semibold'>Job matches</CardTitle>
+            <CardDescription className='text-muted-foreground'>
+              Get notified when roles align with your verified skills and credentials.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant='outline' className='rounded-full'>
+              Search openings
+            </Button>
+          </CardContent>
+        </Card>
+        <Card className='rounded-[24px] border border-border/60 bg-card shadow-sm'>
+          <CardHeader>
+            <CardTitle className='text-lg font-semibold'>Learning offers</CardTitle>
+            <CardDescription className='text-muted-foreground'>
+              Explore scholarships, bursaries, and employer-funded upskilling programs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant='outline' className='rounded-full'>
+              View offers
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
+function Help() {
+  return (
+    <section id='help' className='rounded-[28px] border border-border/60 bg-muted/30 p-8 shadow-sm'>
+      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+        <div className='space-y-2'>
+          <p className='text-xs font-semibold uppercase tracking-[0.3em] text-primary'>Help</p>
+          <h3 className='text-2xl font-semibold text-foreground'>Need support?</h3>
+          <p className='text-sm text-muted-foreground'>
+            Visit our help center or reach out for guidance on building your Skills Wallet, funding, or employer access.
+          </p>
+        </div>
+        <div className='flex flex-wrap gap-3'>
+          <Button className='rounded-full px-6' variant='outline'>
+            Help center
+          </Button>
+          <Button className='rounded-full px-6'>Contact support</Button>
+        </div>
       </div>
     </section>
   );
