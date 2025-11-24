@@ -58,9 +58,15 @@ export default function CourseDetailPage() {
   const safeDescription = useMemo(
     () =>
       sanitizeCourseDescription(course?.description) ||
-      'Comprehensive course designed to help you develop new skills and knowledge.',
+      'No description provided yet.',
     [course?.description]
   );
+  const displayTitle =
+    (course?.title as string | undefined) || (course?.name as string | undefined) || 'Untitled course';
+  const durationLabel = formatDuration(course);
+  const categoryBadges = Array.isArray(course?.category_names) ? course?.category_names.slice(0, 3) : [];
+  const objectives = buildListFromText(course?.objectives);
+  const prerequisites = buildListFromText(course?.prerequisites);
 
   if (courseQuery.isLoading) {
     return (
@@ -128,6 +134,11 @@ export default function CourseDetailPage() {
             >
               {course.is_published ? 'Published' : 'Draft'}
             </Badge>
+            {course.status ? (
+              <Badge variant='outline' className='rounded-full'>
+                {course.status}
+              </Badge>
+            ) : null}
             {course.level && (
               <Badge
                 variant='outline'
@@ -136,11 +147,16 @@ export default function CourseDetailPage() {
                 {course.level}
               </Badge>
             )}
+            {categoryBadges.map(category => (
+              <Badge key={category} variant='secondary' className='rounded-full'>
+                {category}
+              </Badge>
+            ))}
           </div>
 
           <div className='space-y-4'>
             <h1 className='text-3xl font-semibold text-foreground sm:text-4xl lg:text-5xl'>
-              {course.title}
+              {displayTitle}
             </h1>
             <div
               className='prose max-w-none text-base text-muted-foreground dark:prose-invert'
@@ -150,22 +166,20 @@ export default function CourseDetailPage() {
 
           {/* Course Meta */}
           <div className='flex flex-wrap gap-6 pt-4'>
-            {course.duration_weeks && (
+            {durationLabel ? (
               <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                 <Clock className='h-5 w-5 text-primary' />
+                <span className='font-medium'>{durationLabel}</span>
+              </div>
+            ) : null}
+            {course.accepts_new_enrollments !== undefined ? (
+              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                <Layers className='h-5 w-5 text-primary' />
                 <span className='font-medium'>
-                  {course.duration_weeks} {course.duration_weeks === 1 ? 'week' : 'weeks'}
+                  {course.accepts_new_enrollments ? 'Accepting enrollments' : 'Enrollments closed'}
                 </span>
               </div>
-            )}
-            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-              <GraduationCap className='h-5 w-5 text-primary' />
-              <span className='font-medium'>Expert-led instruction</span>
-            </div>
-            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-              <Layers className='h-5 w-5 text-primary' />
-              <span className='font-medium'>Structured learning path</span>
-            </div>
+            ) : null}
             {lessons.length > 0 && (
               <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                 <BookMarked className='h-5 w-5 text-primary' />
@@ -190,19 +204,18 @@ export default function CourseDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className='grid gap-3 sm:grid-cols-2'>
-                  {[
-                    'Master core concepts and principles',
-                    'Apply knowledge to real-world scenarios',
-                    'Build practical skills through hands-on exercises',
-                    'Gain confidence in your abilities',
-                  ].map((item, index) => (
-                    <li key={index} className='flex items-start gap-3 text-muted-foreground'>
-                      <CheckCircle2 className='h-5 w-5 shrink-0 text-primary' />
-                      <span className='text-sm'>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                {objectives.length > 0 ? (
+                  <ul className='grid gap-3 sm:grid-cols-2'>
+                    {objectives.map((item, index) => (
+                      <li key={index} className='flex items-start gap-3 text-muted-foreground'>
+                        <CheckCircle2 className='h-5 w-5 shrink-0 text-primary' />
+                        <span className='text-sm'>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className='text-sm text-muted-foreground'>No objectives provided for this course yet.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -238,96 +251,103 @@ export default function CourseDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className='space-y-2 text-sm text-muted-foreground'>
-                  <li className='flex items-start gap-3'>
-                    <span className='mt-1 size-1.5 rounded-full bg-primary' />
-                    <span>Basic understanding of the subject matter</span>
-                  </li>
-                  <li className='flex items-start gap-3'>
-                    <span className='mt-1 size-1.5 rounded-full bg-primary' />
-                    <span>Willingness to learn and practice</span>
-                  </li>
-                  <li className='flex items-start gap-3'>
-                    <span className='mt-1 size-1.5 rounded-full bg-primary' />
-                    <span>Access to a computer and internet connection</span>
-                  </li>
-                </ul>
+                {prerequisites.length > 0 ? (
+                  <ul className='space-y-2 text-sm text-muted-foreground'>
+                    {prerequisites.map((item, index) => (
+                      <li key={index} className='flex items-start gap-3'>
+                        <span className='mt-1 size-1.5 rounded-full bg-primary' />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className='text-sm text-muted-foreground'>No prerequisites specified.</p>
+                )}
               </CardContent>
             </Card>
           </div>
 
           {/* Right Column - Enrollment Card */}
           <div className='lg:col-span-1'>
-              <Card className='sticky top-24 rounded-[28px] border border-border bg-card shadow-xl'>
-                <CardHeader className='space-y-4'>
-                  <div className='space-y-2'>
-                    <CardTitle className='text-2xl text-foreground'>
-                      Enroll in this course
-                    </CardTitle>
-                    <CardDescription className='text-muted-foreground'>
-                      Start your learning journey today
-                    </CardDescription>
-                  </div>
+            <Card className='sticky top-24 rounded-[28px] border border-border bg-card shadow-xl'>
+              <CardHeader className='space-y-4'>
+                <div className='space-y-2'>
+                  <CardTitle className='text-2xl text-foreground'>Course overview</CardTitle>
+                  <CardDescription className='text-muted-foreground'>
+                    {course.created_by ? `Published by ${course.created_by}` : 'Publisher not provided'}
+                  </CardDescription>
+                </div>
 
-                  <Separator className='bg-border' />
+                <Separator className='bg-border' />
 
                 {/* Course Info Summary */}
                 <div className='space-y-3'>
-                  {course.duration_weeks && (
+                  {durationLabel && (
                     <div className='flex items-center justify-between text-sm'>
                       <span className='text-muted-foreground'>Duration</span>
-                      <span className='font-semibold text-foreground'>
-                        {course.duration_weeks} {course.duration_weeks === 1 ? 'week' : 'weeks'}
-                      </span>
+                      <span className='font-semibold text-foreground'>{durationLabel}</span>
                     </div>
                   )}
                   {course.level && (
                     <div className='flex items-center justify-between text-sm'>
                       <span className='text-muted-foreground'>Level</span>
-                      <span className='font-semibold text-foreground'>
-                        {course.level}
-                      </span>
+                      <span className='font-semibold text-foreground'>{course.level}</span>
                     </div>
                   )}
                   {lessons.length > 0 && (
                     <div className='flex items-center justify-between text-sm'>
                       <span className='text-muted-foreground'>Lessons</span>
-                      <span className='font-semibold text-foreground'>
-                        {lessons.length}
-                      </span>
+                      <span className='font-semibold text-foreground'>{lessons.length}</span>
                     </div>
                   )}
-                  <div className='flex items-center justify-between text-sm'>
-                    <span className='text-muted-foreground'>Certificate</span>
-                    <span className='font-semibold text-foreground'>
-                      Upon completion
-                    </span>
-                  </div>
+                  {course.price !== undefined || course.is_free !== undefined ? (
+                    <div className='flex items-center justify-between text-sm'>
+                      <span className='text-muted-foreground'>Pricing</span>
+                      <span className='font-semibold text-foreground'>
+                        {course.is_free
+                          ? 'Free'
+                          : typeof course.price === 'number'
+                            ? `KES ${course.price.toLocaleString()}`
+                            : 'Not set'}
+                      </span>
+                    </div>
+                  ) : null}
+                  {course.accepts_new_enrollments !== undefined ? (
+                    <div className='flex items-center justify-between text-sm'>
+                      <span className='text-muted-foreground'>Enrollments</span>
+                      <span className='font-semibold text-foreground'>
+                        {course.accepts_new_enrollments ? 'Open' : 'Closed'}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               </CardHeader>
 
               <CardContent className='space-y-3'>
                 <Button
                   size='lg'
-                  disabled={!course.is_published}
+                  disabled={!course.is_published || course.accepts_new_enrollments === false}
                   className='w-full rounded-full bg-primary text-base font-semibold shadow-lg transition hover:bg-primary/90'
                 >
-                  {course.is_published ? 'Enroll Now' : 'Not Available'}
+                  {course.accepts_new_enrollments === false
+                    ? 'Enrollments closed'
+                    : course.is_published
+                      ? 'Enroll now'
+                      : 'Not available'}
                 </Button>
-                <Button variant='outline' size='lg' className='w-full rounded-full text-base font-medium'>
-                  Contact Instructor
-                </Button>
-
-                <div className='space-y-2 pt-4'>
-                  <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                    <Calendar className='h-4 w-4 text-primary' />
-                    <span>Flexible start dates available</span>
+                {course.created_by ? (
+                  <div className='rounded-[16px] border border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground'>
+                    <div className='flex items-center gap-2'>
+                      <Calendar className='h-4 w-4 text-primary' />
+                      <span>Created by {course.created_by}</span>
+                    </div>
+                    {course.updated_date ? (
+                      <div className='mt-1 text-[11px]'>
+                        Updated on {new Date(course.updated_date).toLocaleDateString()}
+                      </div>
+                    ) : null}
                   </div>
-                  <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                    <CheckCircle2 className='h-4 w-4 text-primary' />
-                    <span>Full lifetime access</span>
-                  </div>
-                </div>
+                ) : null}
               </CardContent>
             </Card>
           </div>
@@ -361,6 +381,46 @@ function LessonItem({ lesson, index }: { lesson: CourseLesson; index: number }) 
       </div>
     </div>
   );
+}
+
+function formatDuration(course?: Course | null) {
+  if (!course) return null;
+
+  const hasHours = typeof course.duration_hours === 'number';
+  const hasMinutes = typeof course.duration_minutes === 'number';
+
+  if (hasHours) {
+    const hours = course.duration_hours;
+    const minutes = hasMinutes && course.duration_minutes ? course.duration_minutes : 0;
+    return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
+  }
+
+  const weeks = (course as any)?.duration_weeks;
+  if (typeof weeks === 'number' && weeks > 0) {
+    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+  }
+
+  return null;
+}
+
+function buildListFromText(value?: string | null) {
+  if (!value) return [];
+
+  const plain = value
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\r?\n/g, '\n')
+    .trim();
+
+  const parts = plain
+    .split(/\n|•|-|\u2022/)
+    .map(part => part.replace(/^[\s\-•]+/, '').trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return [plain];
+  }
+
+  return parts;
 }
 
 function sanitizeCourseDescription(value?: string | null) {

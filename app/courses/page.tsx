@@ -101,20 +101,36 @@ export default function PublicCoursesPage() {
 function CourseCard({ course }: { course: Course }) {
   const {
     uuid,
+    name,
     title,
     description,
     level,
     duration_weeks,
+    duration_hours,
+    duration_minutes,
     is_published,
+    category_names,
+    status,
+    price,
+    is_free,
+    accepts_new_enrollments,
+    created_by,
     thumbnail_url,
   } = course;
   const courseUuid = uuid ?? '';
+  const displayTitle = title || (name as string | undefined) || 'Untitled course';
   const safeDescription = useMemo(
     () =>
       sanitizeCourseDescription(description) ||
-      'Comprehensive course designed to help you develop new skills and knowledge.',
+      'No description provided yet.',
     [description]
   );
+  const durationLabel =
+    typeof duration_hours === 'number' && typeof duration_minutes === 'number'
+      ? `${duration_hours}h ${duration_minutes}m`
+      : duration_weeks
+        ? `${duration_weeks} ${duration_weeks === 1 ? 'week' : 'weeks'}`
+        : null;
 
   return (
     <Card className='group h-full rounded-[28px] border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg'>
@@ -134,7 +150,7 @@ function CourseCard({ course }: { course: Course }) {
         <div className='flex items-start justify-between gap-3'>
           <div className='flex-1 space-y-2'>
             <CardTitle className='line-clamp-2 text-lg font-semibold leading-6 text-foreground'>
-              {title}
+              {displayTitle}
             </CardTitle>
             <div className='flex flex-wrap gap-2'>
               <Badge
@@ -143,6 +159,11 @@ function CourseCard({ course }: { course: Course }) {
               >
                 {is_published ? 'Published' : 'Draft'}
               </Badge>
+              {status ? (
+                <Badge variant='outline' className='rounded-full text-xs'>
+                  {status}
+                </Badge>
+              ) : null}
               {level && (
                 <Badge
                   variant='outline'
@@ -151,6 +172,12 @@ function CourseCard({ course }: { course: Course }) {
                   {level}
                 </Badge>
               )}
+              {Array.isArray(category_names) &&
+                category_names.slice(0, 2).map(category => (
+                  <Badge key={`${courseUuid}-${category}`} variant='secondary' className='rounded-full text-xs'>
+                    {category}
+                  </Badge>
+                ))}
             </div>
           </div>
         </div>
@@ -161,21 +188,36 @@ function CourseCard({ course }: { course: Course }) {
       </CardHeader>
       <CardContent className='space-y-4'>
         <div className='space-y-2.5'>
-          {duration_weeks && (
+          {durationLabel && (
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <Clock className='h-4 w-4 text-primary' />
-              <span>
-                {duration_weeks} {duration_weeks === 1 ? 'week' : 'weeks'} duration
-              </span>
+              <span>{durationLabel}</span>
             </div>
           )}
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <GraduationCap className='h-4 w-4 text-primary' />
-            <span>Expert-led instruction</span>
-          </div>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+          {created_by && (
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+              <GraduationCap className='h-4 w-4 text-primary' />
+              <span>Created by {created_by}</span>
+            </div>
+          )}
+          <div className='flex flex-wrap items-center gap-2 text-sm text-muted-foreground'>
             <Layers className='h-4 w-4 text-primary' />
-            <span>Structured learning path</span>
+            <span className='font-semibold text-foreground'>
+              {is_free
+                ? 'Free'
+                : typeof price === 'number'
+                  ? `KES ${price.toLocaleString()}`
+                  : 'Pricing not set'}
+            </span>
+            {accepts_new_enrollments === false ? (
+              <Badge variant='outline' className='text-xs'>
+                Closed
+              </Badge>
+            ) : (
+              <Badge variant='outline' className='text-xs'>
+                Enrollments open
+              </Badge>
+            )}
           </div>
         </div>
 
