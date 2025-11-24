@@ -308,11 +308,12 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
     if (!organisation?.uuid) return;
 
     const mutation = action === 'verify' ? verifyOrganisation : unverifyOrganisation;
+    const actionParam = action === 'verify' ? 'approve' : 'revoke';
 
     mutation.mutate(
       {
         path: { uuid: organisation.uuid },
-        query: { reason: '' },
+        query: { reason: '', action: actionParam },
       },
       {
         onSuccess: () => {
@@ -409,11 +410,12 @@ function OrganisationDetailSheet({ organisation, open, onOpenChange }: Organisat
   const handleVerification = (action: 'verify' | 'unverify') => {
     if (!organisation?.uuid) return;
     const mutation = action === 'verify' ? verifyOrganisation : unverifyOrganisation;
+    const actionParam = action === 'verify' ? 'approve' : 'revoke';
 
     mutation.mutate(
       {
         path: { uuid: organisation.uuid },
-        query: { reason: '' },
+        query: { reason: '', action: actionParam },
       },
       {
         onSuccess: () => {
