@@ -25,7 +25,6 @@ export function PublicTopNav() {
   // Mock cart count - in a real app, this would come from cart state/context
   const cartItemCount = 0;
 
-  const isActive = (path: string) => pathname === path;
   const navLinks = [
     { label: 'Courses', href: '/courses' },
     { label: 'Skills Fund', href: '/skills-wallet#skills-fund' },
@@ -33,6 +32,11 @@ export function PublicTopNav() {
     { label: 'Instructors', href: '/instructors' },
     { label: 'Help', href: '/skills-wallet#help' },
   ];
+
+  const isActive = (href: string) => {
+    const [path] = href.split('#');
+    return pathname === path;
+  };
 
   return (
     <nav className='sticky top-0 z-40 border-b border-border bg-background/80 shadow-sm backdrop-blur-md'>
@@ -111,7 +115,7 @@ export function PublicTopNav() {
               href={link.href}
               className={cn(
                 'hidden rounded-full px-4 py-2 text-sm font-medium transition hover:bg-muted hover:text-primary md:inline-flex',
-                pathname === link.href ? 'bg-muted text-primary' : 'text-muted-foreground'
+                isActive(link.href) ? 'bg-muted text-primary' : 'text-muted-foreground'
               )}
             >
               {link.label}

@@ -251,8 +251,8 @@ function Opportunities() {
         <p className='text-xs font-semibold uppercase tracking-[0.4em] text-primary'>Opportunities</p>
         <h2 className='text-3xl font-semibold sm:text-4xl'>Unlock jobs and learning offers</h2>
         <p className='text-base text-muted-foreground max-w-3xl mx-auto'>
-          Access jobs and consultancy opportunities that match your verified skills. Discover offers from employers and funders without
-          talent maps—just direct, relevant matches based on your profile.
+          Access jobs and consultancy opportunities in your industry that match your verified skills profile. Supports global mobility—your skills
+          are portable and recognized locally and abroad.
         </p>
       </div>
       <div className='grid gap-4 md:grid-cols-2'>
@@ -347,15 +347,7 @@ function FinalCta() {
 }
 
 function Footer() {
-  const links = [
-    'Home',
-    'About',
-    'Features',
-    'Employers',
-    'Students',
-    'Talent map',
-    'Contact',
-  ];
+  const links = ['Home', 'Courses', 'Skills Fund', 'Opportunities', 'Instructors', 'Help', 'Contact'];
   return (
     <footer className='mt-12 border-t border-border/60 bg-card/60'>
       <div className='mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10 lg:flex-row lg:items-center lg:justify-between'>
