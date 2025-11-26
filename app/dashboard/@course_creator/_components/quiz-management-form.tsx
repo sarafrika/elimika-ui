@@ -805,7 +805,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
   };
 
   return (
-    <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+    <div className='w-full space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10'>
       <div className='flex flex-row items-center justify-between'>
         <div className='space-y-1'>
           <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
@@ -833,7 +833,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
           {quizzes?.map((q: any, index: any) => (
             <div
               key={q?.uuid || index}
-              className='group relative flex w-full items-start gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur transition-all lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
+              className='group relative flex w-full items-start gap-4 rounded-[20px] border border-border bg-card/90 p-4 shadow-xl backdrop-blur transition-all lg:p-8'
             >
               <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
 
@@ -842,7 +842,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
                   <div className='flex w-full flex-col items-start'>
                     <div className='flex w-full flex-row items-center justify-between'>
                       <h3 className='text-lg font-medium'>{q.title}</h3>
-                      <span className='mr-2 inline-flex items-center gap-2 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1 text-xs font-semibold text-blue-600 dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'>
+                      <span className='mr-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-xs font-semibold text-primary'>
                         {q.status.charAt(0).toUpperCase() + q.status.slice(1)}
                       </span>
                     </div>
@@ -868,7 +868,7 @@ function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: Quiz
 
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className='text-red-600'
+                        className='text-destructive'
                         onClick={() => {
                           if (q.uuid) {
                             handleDelete(q as any);

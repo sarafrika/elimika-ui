@@ -241,13 +241,13 @@ export default function CertificatesPage() {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'Technology':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary/10 text-primary';
       case 'Business':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/10 text-success';
       case 'Design':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-accent/10 text-accent';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -310,9 +310,9 @@ export default function CertificatesPage() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-muted-foreground text-sm'>In Progress</p>
-                  <p className='text-2xl font-bold text-blue-600'>{inProgress.length}</p>
+                  <p className='text-2xl font-bold text-primary'>{inProgress.length}</p>
                 </div>
-                <Clock className='h-8 w-8 text-blue-600' />
+                <Clock className='h-8 w-8 text-primary' />
               </div>
             </CardContent>
           </Card>
@@ -415,7 +415,7 @@ export default function CertificatesPage() {
                     </CardHeader>
                     <CardContent className='space-y-4'>
                       {/* Certificate Preview */}
-                      <div className='rounded-lg border-2 border-dashed border-blue-200 bg-card p-6'>
+                      <div className='rounded-lg border-2 border-dashed border-primary/30 bg-card p-6'>
                         <div className='space-y-2 text-center'>
                           <div className='bg-primary/20 mx-auto flex h-16 w-16 items-center justify-center rounded-full'>
                             <Award className='text-primary h-8 w-8' />
@@ -531,8 +531,8 @@ export default function CertificatesPage() {
                   <Card key={program.id}>
                     <CardHeader>
                       <div className='flex items-start gap-3'>
-                        <div className='flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100'>
-                          <TypeIcon className='h-6 w-6 text-blue-600' />
+                        <div className='flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10'>
+                          <TypeIcon className='h-6 w-6 text-primary' />
                         </div>
                         <div>
                           <CardTitle className='text-lg'>{program.title}</CardTitle>

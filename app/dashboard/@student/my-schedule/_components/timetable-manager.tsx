@@ -87,7 +87,7 @@ export default function TimetableManager({
                   })}
                 </div>
               ) : (
-                <p className="mt-6 text-gray-500">No events available.</p>
+                <p className="mt-6 text-muted-foreground">No events available.</p>
               )}
             </TabsContent>
           </Tabs>
@@ -96,4 +96,3 @@ export default function TimetableManager({
     </div>
   );
 }
-

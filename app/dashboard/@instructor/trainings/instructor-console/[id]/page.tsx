@@ -308,7 +308,7 @@ export default function ClassPreviewPage() {
               </div>
 
               {showQR && (
-                <div className="flex justify-center py-10 bg-gray-100 rounded-lg text-gray-500 text-sm">
+                <div className="flex justify-center rounded-lg bg-muted py-10 text-sm text-muted-foreground">
                   [Mock QR Scanner Placeholder]
                 </div>
               )}
@@ -362,7 +362,9 @@ export default function ClassPreviewPage() {
               <label className="text-sm font-medium text-muted-foreground mb-2 block">Upload Class Resources</label>
               <input type="file" multiple onChange={handleFileUpload} className="mb-4 text-sm" />
               <ul className="list-disc pl-5 text-sm space-y-1">
-                {uploadedFiles.length === 0 && <li className="text-gray-400">No files uploaded yet</li>}
+                {uploadedFiles.length === 0 && (
+                  <li className="text-muted-foreground">No files uploaded yet</li>
+                )}
                 {uploadedFiles.map((file, i) => (
                   <li key={i} className="text-muted-foreground hover:underline cursor-pointer">
                     {file}

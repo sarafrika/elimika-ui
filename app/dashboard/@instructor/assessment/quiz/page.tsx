@@ -54,25 +54,25 @@ export default function QuizPage() {
                     <div className='flex w-full flex-col gap-2'>
                       <div className='flex items-start gap-3'>
                         <div className='flex-shrink-0'>
-                          <div className='rounded-full bg-green-100 p-1 text-green-600'>
+                          <div className='rounded-full bg-success/10 p-1 text-success'>
                             <CheckCircle className='h-5 w-5' />
                           </div>
                         </div>
                         <div className='flex w-full flex-col gap-2'>
                           {/* Quiz Title */}
-                          <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-100'>
+                          <h3 className='text-lg font-semibold text-foreground'>
                             {quiz.title}
                           </h3>
 
                           {/* Quiz Description */}
-                          <div className='text-sm text-gray-600 dark:text-gray-300'>
+                          <div className='text-sm text-muted-foreground'>
                             <RichTextRenderer
                               htmlString={(quiz?.description as string) || 'No skill provided'}
                             />
                           </div>
 
                           {/* Info Bar: Time Limit + Passing Score */}
-                          <div className='mt-1 flex flex-col text-sm text-gray-700 md:flex-row md:gap-4 dark:text-gray-300'>
+                          <div className='mt-1 flex flex-col text-sm text-muted-foreground md:flex-row md:gap-4'>
                             <span className='flex items-center gap-1'>
                               <span>📅</span> {quiz.time_limit_display}
                             </span>

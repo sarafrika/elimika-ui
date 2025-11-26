@@ -199,14 +199,14 @@ export default function ClassPreviewPage() {
           <div>
             {classData?.is_active ? (
               <>
-                <h1 className='text-2xl font-semibold text-green-700'>Active Class</h1>
+                <h1 className='text-2xl font-semibold text-success'>Active Class</h1>
                 <p className='text-muted-foreground'>
                   Your class is live and accepting new students.
                 </p>
               </>
             ) : (
               <>
-                <h1 className='text-2xl font-semibold text-gray-700'>Inactive Class</h1>
+                <h1 className='text-2xl font-semibold text-foreground'>Inactive Class</h1>
                 <p className='text-muted-foreground'>
                   This class is currently not active. Activate it to allow student enrollment.
                 </p>
@@ -228,13 +228,13 @@ export default function ClassPreviewPage() {
       {/* Status Banner */}
       <div>
         {classData?.is_active ? (
-          <Card className='border-green-200 bg-green-50'>
+          <Card className='border-success/30 bg-success/10'>
             <CardContent className='p-4'>
               <div className='flex items-center gap-3'>
-                <CheckCircle className='h-6 w-6 text-green-600' />
+                <CheckCircle className='h-6 w-6 text-success' />
                 <div>
-                  <h3 className='font-semibold text-green-800'>Class Published Successfully!</h3>
-                  <p className='text-sm text-green-700'>
+                  <h3 className='font-semibold text-success'>Class Published Successfully!</h3>
+                  <p className='text-sm text-success'>
                     Your class is now live and students can enroll. Share the registration link to
                     start getting enrollments.
                   </p>
@@ -243,12 +243,12 @@ export default function ClassPreviewPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className='border-yellow-200 bg-yellow-50'>
+          <Card className='border-warning/40 bg-warning/10'>
             <CardContent className='p-4'>
               <div className='flex items-center gap-3'>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
-                  className='h-6 w-6 text-yellow-600'
+                  className='h-6 w-6 text-warning'
                   fill='none'
                   viewBox='0 0 24 24'
                   stroke='currentColor'
@@ -261,8 +261,8 @@ export default function ClassPreviewPage() {
                   />
                 </svg>
                 <div>
-                  <h3 className='font-semibold text-yellow-800'>Class is Currently Inactive</h3>
-                  <p className='text-sm text-yellow-700'>
+                  <h3 className='font-semibold text-warning'>Class is Currently Inactive</h3>
+                  <p className='text-sm text-warning'>
                     Students cannot enroll in this class until it’s activated. You can activate it
                     from your dashboard.
                   </p>
@@ -284,7 +284,7 @@ export default function ClassPreviewPage() {
                   <RichTextRenderer maxChars={100} htmlString={classData?.description as string} />
                 </div>
               )}
-              <Badge className='mt-2 border-green-200 bg-green-100 text-green-800'>
+              <Badge className='mt-2 border-success/30 bg-success/10 text-success'>
                 Published/Draft
               </Badge>
             </div>
@@ -413,9 +413,9 @@ export default function ClassPreviewPage() {
                     <span className='text-muted-foreground text-sm'>Visibility:</span>
                     {/* <div className="flex items-center gap-2 font-medium">
                                             {classData.visibility.publicity === 'public' ? (
-                                                <Globe className="w-4 h-4 text-green-600" />
+                                                <Globe className="w-4 h-4 text-success" />
                                             ) : (
-                                                <Globe className="w-4 h-4 text-blue-600" />
+                                                <Globe className="w-4 h-4 text-primary" />
                                             )}
                                             <span className="capitalize">{classData.visibility.publicity}</span>
                                         </div> */}
@@ -445,7 +445,7 @@ export default function ClassPreviewPage() {
                                     const timeSlot = classData.timetable.timeSlots.find(ts => ts.day === dayKey);
 
                                     return (
-                                        <div key={day} className={`p-3 rounded-lg border ${isSelected ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}>
+                                        <div key={day} className={`p-3 rounded-lg border ${isSelected ? 'bg-primary/10 border-primary/30' : 'bg-muted/60'}`}>
                                             <div className="font-medium">{day}</div>
                                             {isSelected && timeSlot && (
                                                 <div className="text-xs text-muted-foreground mt-1">
@@ -629,11 +629,11 @@ export default function ClassPreviewPage() {
                 return (
                   <div
                     key={index}
-                    className='flex items-center justify-between rounded-lg bg-gray-50 p-3'
+                    className='flex items-center justify-between rounded-lg bg-muted/60 p-3'
                   >
                     <div className='flex items-center gap-3'>
-                      <div className='flex min-h-8 min-w-8 items-center justify-center rounded-full bg-blue-100'>
-                        <span className='text-sm font-medium text-blue-600'>
+                      <div className='flex min-h-8 min-w-8 items-center justify-center rounded-full bg-primary/10'>
+                        <span className='text-sm font-medium text-primary'>
                           {assessment?.assessment_type?.charAt(0)}
                         </span>
                       </div>
@@ -661,11 +661,11 @@ export default function ClassPreviewPage() {
             <CardContent>
               {(!roster || roster.length === 0) ? (
                 <div className="py-8 text-center">
-                  <Users className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                  <h3 className="mb-2 font-medium text-gray-900">
+                  <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <h3 className="mb-2 font-medium text-foreground">
                     No students enrolled yet
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Share your registration link to start getting enrollments
                   </p>
                 </div>

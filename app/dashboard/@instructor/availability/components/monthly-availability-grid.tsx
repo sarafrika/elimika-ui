@@ -152,14 +152,14 @@ export function MonthlyAvailabilityGrid({
     const isToday = date.toDateString() === new Date().toDateString();
 
     let baseClasses =
-      'h-20 p-2 border border-gray-200 rounded cursor-pointer transition-colors relative';
+      'h-20 p-2 border border-border rounded cursor-pointer transition-colors relative';
 
     if (!isCurrentMonth) {
-      baseClasses += ' bg-gray-50 text-gray-400';
+      baseClasses += ' bg-muted/60 text-muted-foreground';
     } else if (isToday) {
-      baseClasses += ' ring-2 ring-blue-500 bg-blue-50';
+      baseClasses += ' ring-2 ring-primary bg-primary/10';
     } else {
-      baseClasses += ' bg-white hover:bg-gray-50';
+      baseClasses += ' bg-card hover:bg-muted/60';
     }
 
     return baseClasses;
@@ -306,15 +306,15 @@ export function MonthlyAvailabilityGrid({
                         {/* Status Indicators */}
                         <div className='flex flex-col gap-1'>
                           {status.available > 0 && (
-                            <div className='h-2 w-2 rounded-full bg-green-500' />
+                            <div className='h-2 w-2 rounded-full bg-success' />
                           )}
 
                           {status.booked > 0 && (
-                            <div className='h-2 w-2 rounded-full bg-blue-500' />
+                            <div className='h-2 w-2 rounded-full bg-primary' />
                           )}
 
                           {status.unavailable > 0 && status.booked === 0 && (
-                            <div className='h-2 w-2 rounded-full bg-red-500' />
+                            <div className='h-2 w-2 rounded-full bg-destructive' />
                           )}
                         </div>
                       </div>
@@ -325,7 +325,7 @@ export function MonthlyAvailabilityGrid({
                           {status.events.slice(0, 2).map((event, _idx) => (
                             <div
                               key={event.id}
-                              className='mb-1 truncate rounded border border-blue-200 px-1 py-0.5 text-xs text-primary'
+                              className='mb-1 truncate rounded border border-primary/30 px-1 py-0.5 text-xs text-primary'
                             >
                               <div className='flex items-center gap-1'>
                                 <Clock className='h-2 w-2' />
@@ -356,7 +356,7 @@ export function MonthlyAvailabilityGrid({
                           {status.available > 0 && (
                             <Badge
                               variant='secondary'
-                              className='bg-green-100 px-1 py-0 text-xs text-green-700'
+                              className='bg-success/10 px-1 py-0 text-xs text-success'
                             >
                               {status.available}
                             </Badge>
@@ -365,7 +365,7 @@ export function MonthlyAvailabilityGrid({
                           {status.booked > 0 && (
                             <Badge
                               variant='secondary'
-                              className='bg-blue-100 px-1 py-0 text-xs text-blue-700'
+                              className='bg-primary/10 px-1 py-0 text-xs text-primary'
                             >
                               {status.booked}
                             </Badge>
@@ -385,7 +385,7 @@ export function MonthlyAvailabilityGrid({
                       </div>
 
                       {status.available > 0 && (
-                        <div className='text-green-600'>✓ {status.available} available slots</div>
+                        <div className='text-success'>✓ {status.available} available slots</div>
                       )}
 
                       {status.booked > 0 && (
@@ -395,11 +395,11 @@ export function MonthlyAvailabilityGrid({
                       )}
 
                       {status.unavailable > 0 && (
-                        <div className='text-red-600'>✕ {status.unavailable} unavailable</div>
+                        <div className='text-destructive'>✕ {status.unavailable} unavailable</div>
                       )}
 
                       {status.events.length > 0 && (
-                        <div className='mt-1 text-xs text-purple-600'>
+                        <div className='mt-1 text-xs text-accent'>
                           Events:{' '}
                           {status.events
                             .map(e => `${e.title} (${e.startTime}-${e.endTime})`)
@@ -408,13 +408,13 @@ export function MonthlyAvailabilityGrid({
                       )}
 
                       {status.classes.length > 0 && (
-                        <div className='mt-2 text-xs text-gray-600'>
+                        <div className='mt-2 text-xs text-muted-foreground'>
                           Classes: {status.classes.map(c => c.classTitle).join(', ')}
                         </div>
                       )}
 
                       {status.total === 0 && status.events.length === 0 && (
-                        <div className='text-gray-500'>Click to add event</div>
+                        <div className='text-muted-foreground'>Click to add event</div>
                       )}
                     </div>
                   </TooltipContent>
@@ -430,20 +430,20 @@ export function MonthlyAvailabilityGrid({
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-6 text-sm'>
             <div className='flex items-center gap-2'>
-              <div className='h-3 w-3 rounded-full bg-green-500' />
+              <div className='h-3 w-3 rounded-full bg-success' />
               <span>Available Slots</span>
             </div>
             <div className='flex items-center gap-2'>
-              <div className='h-3 w-3 rounded-full bg-blue-500' />
+              <div className='h-3 w-3 rounded-full bg-primary' />
               <span>Booked/Classes/Events</span>
             </div>
             <div className='flex items-center gap-2'>
-              <div className='h-3 w-3 rounded-full bg-red-500' />
+              <div className='h-3 w-3 rounded-full bg-destructive' />
               <span>Unavailable</span>
             </div>
           </div>
 
-          <div className='text-sm text-gray-600'>Click days to add or edit events</div>
+          <div className='text-sm text-muted-foreground'>Click days to add or edit events</div>
         </div>
       </Card>
 

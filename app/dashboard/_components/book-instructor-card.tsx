@@ -67,7 +67,10 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
       <Separator />
       <CardContent className='space-y-2 text-sm'>
         {bio && (
-          <HTMLTextPreview htmlContent={bio} className='prose prose-sm max-w-none text-gray-700' />
+          <HTMLTextPreview
+            htmlContent={bio}
+            className='prose prose-sm max-w-none text-muted-foreground'
+          />
         )}
 
         {formatted_location && <p className='text-muted-foreground'>📍 {formatted_location}</p>}
@@ -91,8 +94,8 @@ const BookInstructorCard = ({ instructor }: InstructorCardProps) => {
         <DialogContent className='sm:max-w-md md:max-w-lg'>
           <DialogTitle />
           <DialogHeader>
-            <h3 className='text-xl font-semibold text-gray-900'>Book Instuctor</h3>
-            <p className='text-sm text-gray-500'>
+            <h3 className='text-xl font-semibold text-foreground'>Book Instuctor</h3>
+            <p className='text-sm text-muted-foreground'>
               Select a time slot to book <strong>{full_name}</strong>.
             </p>
           </DialogHeader>

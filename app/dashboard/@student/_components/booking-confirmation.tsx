@@ -156,9 +156,9 @@ export const BookingConfirmation: React.FC<Props> = ({ booking, instructor, onCl
       </div>
 
       {/* Notification Info */}
-      <div className='text-muted-foreground flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs'>
-        <Mail className='mt-0.5 h-3 w-3 text-blue-600' />
-        <p className='text-blue-900'>
+      <div className='text-muted-foreground flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/10 p-3 text-xs'>
+        <Mail className='mt-0.5 h-3 w-3 text-primary' />
+        <p className='text-primary'>
           A confirmation email has been sent to your registered email address with all the session
           details and joining instructions.
         </p>

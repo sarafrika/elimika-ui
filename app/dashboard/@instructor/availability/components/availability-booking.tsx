@@ -177,18 +177,18 @@ export function AvailabilityBooking({
           <CardContent>
             <div className='grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3'>
               {nextWeekSlots.map(slot => (
-                <Card key={slot.id} className='border border-green-200 bg-green-50'>
+                <Card key={slot.id} className='border border-success/30 bg-success/10'>
                   <CardContent className='p-4'>
                     <div className='space-y-2'>
                       <div className='flex items-center justify-between'>
                         <span className='text-sm font-medium'>
                           {slot.date ? formatDate(slot.date) : slot.day}
                         </span>
-                        <Badge variant='secondary' className='bg-green-100 text-green-700'>
+                        <Badge variant='secondary' className='bg-success/10 text-success'>
                           {getTimeRangeLabel(slot.startTime)}
                         </Badge>
                       </div>
-                      <div className='flex items-center gap-2 text-sm text-gray-600'>
+                      <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                         <Clock className='h-4 w-4' />
                         <span>
                           {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
@@ -238,7 +238,7 @@ export function AvailabilityBooking({
             <div className='space-y-2'>
               <Label>Search</Label>
               <div className='relative'>
-                <Search className='absolute top-2.5 left-3 h-4 w-4 text-gray-400' />
+                <Search className='absolute top-2.5 left-3 h-4 w-4 text-muted-foreground' />
                 <Input
                   placeholder='Search by day or time...'
                   value={searchQuery}
@@ -308,7 +308,7 @@ export function AvailabilityBooking({
         </CardHeader>
         <CardContent>
           {availableSlots?.length === 0 ? (
-            <div className='py-8 text-center text-gray-500'>
+            <div className='py-8 text-center text-muted-foreground'>
               <Calendar className='mx-auto mb-4 h-12 w-12 opacity-50' />
               <p>No available slots match your criteria.</p>
               <p className='text-sm'>Try adjusting your filters or check back later.</p>
@@ -318,14 +318,14 @@ export function AvailabilityBooking({
               {availableSlots?.map(slot => (
                 <div
                   key={slot.id}
-                  className='flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50'
+                  className='flex items-center justify-between rounded-lg border p-4 hover:bg-muted/60'
                 >
                   <div className='flex items-center gap-4'>
                     <div className='flex flex-col'>
                       <span className='font-medium'>
                         {slot.date ? formatDate(slot.date) : `Every ${slot.day}`}
                       </span>
-                      <div className='flex items-center gap-2 text-sm text-gray-600'>
+                      <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                         <Clock className='h-4 w-4' />
                         <span>
                           {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
@@ -336,7 +336,7 @@ export function AvailabilityBooking({
                     <div className='flex items-center gap-2'>
                       <Badge
                         variant='outline'
-                        className='border-green-200 bg-green-50 text-green-700'
+                        className='border-success/30 bg-success/10 text-success'
                       >
                         Available
                       </Badge>
@@ -403,16 +403,16 @@ function BookingForm({
   return (
     <div className='space-y-4'>
       {/* Slot Info */}
-      <Card className='border-blue-200 bg-blue-50'>
+      <Card className='border-primary/30 bg-primary/10'>
         <CardContent className='p-4'>
           <div className='mb-2 flex items-center gap-2'>
-            <Calendar className='h-4 w-4 text-blue-600' />
+            <Calendar className='h-4 w-4 text-primary' />
             <span className='font-medium'>
               {slot.date ? formatDate(slot.date) : `Every ${slot.day}`}
             </span>
           </div>
           <div className='flex items-center gap-2'>
-            <Clock className='h-4 w-4 text-blue-600' />
+            <Clock className='h-4 w-4 text-primary' />
             <span>
               {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
             </span>

@@ -123,12 +123,12 @@ const EnrollmentPage = () => {
         setOpen={setOpenEnrollModal}
         title="Confirm Enrollment"
         description={
-          <div className="space-y-3 text-sm text-gray-700">
+          <div className='space-y-3 text-sm text-muted-foreground'>
             <p>
               You are about to <strong>enroll</strong> in the following class/program:
             </p>
 
-            <div className="rounded-md bg-gray-50 border p-3">
+            <div className='rounded-md border bg-muted/60 p-3'>
               <p><strong>Course Name:</strong> {enrollingClass?.course?.name}</p>
               <p><strong>Instructor:</strong> {enrollingClass?.instructor?.full_name}</p>
               {/* <p><strong>Schedule:</strong> {enrollingCourse?.scheduleSummary}</p> */}

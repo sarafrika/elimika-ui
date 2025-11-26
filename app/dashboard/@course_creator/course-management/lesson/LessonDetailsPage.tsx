@@ -223,15 +223,22 @@ const LessonDetailsPage = () => {
     return <CustomLoadingState subHeading='Loading skills and resources' />;
   }
 
+  const pageShellClasses =
+    'max-w-6xl space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10 dark:border-border/80 dark:bg-gradient-to-br dark:from-primary/10 dark:via-background/60 dark:to-background';
+  const contentGroupClasses =
+    'group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-[20px] border border-border bg-card/80 p-4 shadow-xl backdrop-blur lg:p-8 dark:border-border/70 dark:bg-card/70';
+  const quizCardClasses =
+    'flex w-full flex-col gap-3 rounded-2xl border border-border bg-card/80 p-4 shadow-lg dark:border-border/70 dark:bg-card/70';
+
   return (
-    <div className='max-w-6xl space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+    <div className={pageShellClasses}>
       <div className='mb-6 flex items-end justify-between'>
         <div className='flex flex-col gap-2'>
           <h1 className='text-2xl font-semibold'>{lesson?.title}</h1>
           <div className='text-muted-foreground mt-1 text-[15px]'>
             <RichTextRenderer htmlString={lesson?.description} />
           </div>
-          <div className='flex flex-row gap-6 text-sm font-normal text-gray-800'>
+          <div className='flex flex-row gap-6 text-sm font-normal text-muted-foreground'>
             <p className='flex items-center gap-2'>
               <Clock size={14} /> Duration: {lesson?.duration_display}
             </p>
@@ -270,24 +277,21 @@ const LessonDetailsPage = () => {
               const content_type_key = type?.name?.toUpperCase();
 
               return (
-                <div
-                  key={item.uuid}
-                  className='group text-muted-foreground flex cursor-default items-center justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
-                >
+                <div key={item.uuid} className={contentGroupClasses}>
                   <div className='flex flex-col gap-1'>
                     <div className='flex items-center gap-2'>
                       {getContentTypeIcon(content_type_key as ContentType)}
-                      <span className='text-base font-medium text-gray-900 dark:text-gray-100'>
+                      <span className='text-base font-medium text-foreground'>
                         {item.title}
                       </span>
                     </div>
 
-                    <div className='line-clamp-2 text-sm text-gray-600 dark:text-gray-400'>
+                    <div className='line-clamp-2 text-sm text-muted-foreground'>
                       <RichTextRenderer htmlString={item?.description} />
                     </div>
 
                     {item.content_text && (
-                      <div className='mt-2 text-sm text-gray-700 dark:text-gray-300'>
+                      <div className='mt-2 text-sm text-muted-foreground'>
                         <RichTextRenderer htmlString={item.content_text} maxChars={500} />
                       </div>
                     )}
@@ -297,7 +301,7 @@ const LessonDetailsPage = () => {
                         href={item.file_url}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='text-xs text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-500'
+                        className='text-xs text-primary underline hover:text-primary/80'
                       >
                         View File
                       </a>
@@ -327,7 +331,7 @@ const LessonDetailsPage = () => {
                         <DropdownMenuSeparator />
 
                         <DropdownMenuItem
-                          className='text-red-600'
+                          className='text-destructive'
                           onClick={() => handleDeleteContent(courseId, item.lesson_uuid, item.uuid)}
                         >
                           <Trash className='mr-1 h-4 w-4' />
@@ -385,33 +389,30 @@ const LessonDetailsPage = () => {
               {quizzesData?.data?.content
                 ?.filter((quiz: any) => quiz.lesson_uuid === lessonId)
                 ?.map((quiz: any, i: number) => (
-                  <div
-                    key={i}
-                    className='group text-muted-foreground flex w-full cursor-default items-start justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
-                  >
-                    <div className='flex w-full flex-col gap-3 rounded-2xl border border-blue-200/40 bg-white/80 p-4 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+                  <div key={i} className='group flex w-full cursor-default flex-col gap-4'>
+                    <div className={quizCardClasses}>
                       {/* Header */}
                       <div className='flex items-start gap-3'>
                         <div className='flex-shrink-0'>
-                          <div className='rounded-full bg-green-100 p-1 text-green-600'>
+                          <div className='rounded-full bg-success/10 p-1 text-success'>
                             <CheckCircle className='h-5 w-5' />
                           </div>
                         </div>
                         <div className='flex w-full flex-col gap-2'>
                           {/* Quiz Title */}
-                          <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-100'>
+                          <h3 className='text-lg font-semibold text-foreground'>
                             {quiz.title}
                           </h3>
 
                           {/* Quiz Description */}
-                          <div className='text-sm text-gray-600 dark:text-gray-300'>
+                          <div className='text-sm text-muted-foreground'>
                             <RichTextRenderer
                               htmlString={(quiz?.description as string) || 'No skill provided'}
                             />
                           </div>
 
                           {/* Info Bar: Time Limit + Passing Score */}
-                          <div className='mt-1 flex flex-col text-sm text-gray-700 md:flex-row md:gap-4 dark:text-gray-300'>
+                          <div className='mt-1 flex flex-col text-sm text-muted-foreground md:flex-row md:gap-4'>
                             <span className='flex items-center gap-1'>
                               <span>📅</span> {quiz.time_limit_display}
                             </span>
@@ -481,7 +482,7 @@ const LessonDetailsPage = () => {
 
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className='text-red-600'
+                            className='text-destructive'
                             onClick={() => handleDeleteQuiz(quiz)}
                           >
                             <Trash className='mr-1 h-4 w-4' />
@@ -535,33 +536,30 @@ const LessonDetailsPage = () => {
               {assignmentData?.data?.content
                 ?.filter((a: any) => a.lesson_uuid === lessonId)
                 ?.map((a: any, i: number) => (
-                  <div
-                    key={i}
-                    className='group text-muted-foreground flex w-full cursor-default items-start justify-between gap-4 rounded-[20px] border border-blue-200/40 bg-white/80 p-4 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-8 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'
-                  >
-                    <div className='flex w-full flex-col gap-3 rounded-2xl border border-blue-200/40 bg-white/80 p-4 shadow-lg shadow-blue-200/30 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
+                  <div key={i} className='group flex w-full cursor-default flex-col gap-4'>
+                    <div className={quizCardClasses}>
                       {/* Header */}
                       <div className='flex items-start gap-3'>
                         <div className='flex-shrink-0'>
-                          <div className='rounded-full bg-green-100 p-1 text-green-600'>
+                          <div className='rounded-full bg-success/10 p-1 text-success'>
                             <CheckCircle className='h-5 w-5' />
                           </div>
                         </div>
                         <div className='flex w-full flex-col gap-2'>
                           {/* Quiz Title */}
-                          <h3 className='text-lg font-semibold text-gray-800 dark:text-gray-100'>
+                          <h3 className='text-lg font-semibold text-foreground'>
                             {a.title}
                           </h3>
 
                           {/* Quiz Description */}
-                          <div className='text-sm text-gray-600 dark:text-gray-300'>
+                          <div className='text-sm text-muted-foreground'>
                             <RichTextRenderer
                               htmlString={(a?.description as string) || 'No skill provided'}
                             />
                           </div>
 
                           {/* Info Bar: Time Limit + Passing Score */}
-                          <div className='mt-1 flex flex-col text-sm text-gray-700 md:flex-row md:gap-4 dark:text-gray-300'>
+                          <div className='mt-1 flex flex-col text-sm text-muted-foreground md:flex-row md:gap-4'>
                             <span className='flex items-center gap-1'>
                               <span>📅</span> {a.time_limit_display}
                             </span>
@@ -593,7 +591,7 @@ const LessonDetailsPage = () => {
 
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className='text-red-600'
+                            className='text-destructive'
                             onClick={() => handleDeleteQuiz(a)}
                           >
                             <Trash className='mr-1 h-4 w-4' />

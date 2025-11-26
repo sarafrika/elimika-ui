@@ -245,12 +245,15 @@ export default function SkillsSettings({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
             {errors && errors.length > 0 && (
-              <Alert variant='destructive' className='border-red-600 bg-red-50 text-red-700'>
+              <Alert
+                variant='destructive'
+                className='border-destructive bg-destructive/10 text-destructive'
+              >
                 <AlertTitle className='font-semibold'>Unable to save your skills</AlertTitle>
                 <AlertDescription>
                   <ul className='ml-4 list-disc space-y-1 text-sm'>
                     {errors.map((error, index) => (
-                      <li key={index} className='text-red-600'>
+                      <li key={index} className='text-destructive'>
                         {error.message}
                       </li>
                     ))}
@@ -394,4 +397,3 @@ export default function SkillsSettings({
     </ProfileFormShell>
   );
 }
-

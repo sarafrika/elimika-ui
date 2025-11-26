@@ -96,25 +96,25 @@ function buildMetricCards(analytics: CourseCreatorAnalyticsSummary) {
       title: 'Total courses',
       value: analytics.totalCourses,
       description: 'Across every status',
-      icon: <Layers className='h-5 w-5 text-purple-500' />,
+      icon: <Layers className='h-5 w-5 text-primary' />,
     },
     {
       title: 'Published',
       value: analytics.publishedCourses,
       description: 'Live in marketplace',
-      icon: <CheckCircle2 className='h-5 w-5 text-emerald-500' />,
+      icon: <CheckCircle2 className='h-5 w-5 text-primary' />,
     },
     {
       title: 'In review',
       value: analytics.inReviewCourses,
       description: 'Awaiting quality checks',
-      icon: <Clock className='h-5 w-5 text-amber-500' />,
+      icon: <Clock className='h-5 w-5 text-muted-foreground' />,
     },
     {
       title: 'Drafts',
       value: analytics.draftCourses,
       description: 'Ready for your next edit',
-      icon: <Sparkles className='h-5 w-5 text-sky-500' />,
+      icon: <Sparkles className='h-5 w-5 text-muted-foreground' />,
     },
   ];
 }
@@ -124,7 +124,7 @@ function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetiz
     <Card className='border-border/70'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
-          <DollarSign className='h-5 w-5 text-purple-500' />
+          <DollarSign className='h-5 w-5 text-primary' />
           Monetization snapshot
         </CardTitle>
         <CardDescription>
@@ -181,7 +181,7 @@ function TrainingRequirementsCard({
     <Card className='border-border/70'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
-          <ListCheck className='h-5 w-5 text-purple-500' />
+          <ListCheck className='h-5 w-5 text-primary' />
           Training requirements
         </CardTitle>
         <CardDescription>
@@ -207,9 +207,9 @@ function TrainingRequirementsCard({
 
 function VerificationCard({ verification }: { verification: CourseCreatorVerificationStatus }) {
   const statusIcon = verification.adminVerified ? (
-    <ShieldCheck className='h-5 w-5 text-emerald-500' />
+    <ShieldCheck className='h-5 w-5 text-primary' />
   ) : (
-    <ShieldAlert className='h-5 w-5 text-amber-500' />
+    <ShieldAlert className='h-5 w-5 text-muted-foreground' />
   );
 
   const statusCopy = verification.adminVerified

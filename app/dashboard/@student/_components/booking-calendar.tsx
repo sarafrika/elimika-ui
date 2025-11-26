@@ -151,7 +151,7 @@ export const BookingCalendar: React.FC<Props> = ({ instructor, selectedSlots, on
               {(availableSlots?.length as number) > 0 && selectedDate && (
                 <button
                   onClick={() => setSelectedDate(undefined)}
-                  className='flex items-center gap-1 text-red-500 hover:text-red-600 focus:outline-none'
+                  className='flex items-center gap-1 text-destructive hover:text-destructive/80 focus:outline-none'
                   aria-label='Clear selected date'
                 >
                   <X className='h-4 w-4' />

@@ -1,24 +1,22 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSystemRules } from '@/services/admin/system-config';
 import type { SystemRule } from '@/services/admin/system-config';
 import { SystemRulesSummary } from './SystemRulesSummary';
 import { SystemRulesTable } from './SystemRulesTable';
 import { RuleDetailSheet } from './RuleDetailSheet';
-import { RuleFormDialog } from './RuleFormDialog';
 import { Button } from '@/components/ui/button';
 import { RefreshCcw } from 'lucide-react';
 
 export function SystemConfigContent() {
+  const router = useRouter();
   const [category, setCategory] = useState<'all' | string>('all');
   const [status, setStatus] = useState<'all' | string>('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [selectedRule, setSelectedRule] = useState<SystemRule | null>(null);
-  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
-  const [formRule, setFormRule] = useState<SystemRule | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const { data, isLoading, refetch } = useSystemRules({
     category,
@@ -28,17 +26,8 @@ export function SystemConfigContent() {
     size: 10,
   });
 
-  const openCreate = () => {
-    setFormMode('create');
-    setFormRule(null);
-    setIsFormOpen(true);
-  };
-
-  const openEdit = (rule: SystemRule) => {
-    setFormMode('edit');
-    setFormRule(rule);
-    setIsFormOpen(true);
-  };
+  const navigateToCreate = () => router.push('/dashboard/system-config/rules/new');
+  const navigateToEdit = (rule: SystemRule) => router.push(`/dashboard/system-config/rules/${rule.uuid}`);
 
   const handleSelectRule = (rule: SystemRule) => {
     setSelectedRule(rule);
@@ -67,7 +56,7 @@ export function SystemConfigContent() {
             <RefreshCcw className='h-4 w-4' />
             Refresh
           </Button>
-          <Button size='sm' onClick={openCreate}>
+          <Button size='sm' onClick={navigateToCreate}>
             Create Rule
           </Button>
         </div>
@@ -94,8 +83,8 @@ export function SystemConfigContent() {
           setPage(0);
         }}
         onSelectRule={handleSelectRule}
-        onEditRule={openEdit}
-        onCreateRule={openCreate}
+        onEditRule={navigateToEdit}
+        onCreateRule={navigateToCreate}
         onPageChange={next => setPage(next)}
       />
 
@@ -107,14 +96,7 @@ export function SystemConfigContent() {
             setSelectedRule(null);
           }
         }}
-        onEdit={openEdit}
-      />
-
-      <RuleFormDialog
-        open={isFormOpen}
-        onOpenChange={open => setIsFormOpen(open)}
-        mode={formMode}
-        rule={formRule}
+        onEdit={navigateToEdit}
       />
 
       <div className='flex justify-end'>

@@ -102,7 +102,7 @@ const AssignmentSubmissionPage = () => {
                 </SelectItem>
               ))
             ) : (
-              <div className='p-2 text-sm text-gray-500'>No assignments available</div>
+              <div className='p-2 text-sm text-muted-foreground'>No assignments available</div>
             )}
           </SelectContent>
         </Select>
@@ -130,10 +130,10 @@ const AssignmentSubmissionPage = () => {
       )}
 
       {selectedAssignment && isFetched && submissions.length > 0 && (
-        <div className='overflow-hidden rounded-lg border border-gray-200'>
+        <div className='overflow-hidden rounded-lg border border-border'>
           <Table>
             <TableCaption className='py-4'>List of student submissions</TableCaption>
-            <TableHeader className='bg-gray-100'>
+            <TableHeader className='bg-muted/60'>
               <TableRow>
                 <TableHead>Student</TableHead>
                 <TableHead>Submitted At</TableHead>

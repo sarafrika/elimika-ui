@@ -375,7 +375,7 @@ export default function ReusableCourseDetailsPage({
           <TabsContent value='skills' className='space-y-4'>
             {lessonsWithContent?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
                 <h3 className='text-lg font-semibold'>No Lessons/Resources Found</h3>
                 <p className='mt-1 text-sm'>There are no lessons under this course.</p>
               </div>
@@ -446,13 +446,13 @@ export default function ReusableCourseDetailsPage({
           </TabsContent>
 
           <TabsContent value='quizzes' className='space-y-4'>
-            <p className='bg-red-200 text-xs italic'>
+            <p className='bg-destructive/10 text-destructive text-xs italic'>
               Currently fetching all quizzes, shuold only fetch quizzes for this course
             </p>
 
             {cQuizzes?.data?.content?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
                 <h3 className='text-lg font-semibold'>No Quiz Found</h3>
                 <p className='mt-1 text-sm'>There are no quizzes under this course.</p>
               </div>
@@ -482,13 +482,13 @@ export default function ReusableCourseDetailsPage({
           </TabsContent>
 
           <TabsContent value='assignments' className='space-y-4'>
-            <p className='bg-red-200 text-xs italic'>
+            <p className='bg-destructive/10 text-destructive text-xs italic'>
               Currently fetching all assignments, shuold only fetch assignments for this course
             </p>
 
             {cAssignments?.data?.content?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
                 <h3 className='text-lg font-semibold'>No Assignment Found</h3>
                 <p className='mt-1 text-sm'>There are no assignments under this course.</p>
               </div>
@@ -537,7 +537,7 @@ export default function ReusableCourseDetailsPage({
           <TabsContent value='assessments' className='space-y-4'>
             {cAssesssment?.data?.content?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                <FileQuestion className='mb-4 h-10 w-10 text-gray-400' />
+                <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
                 <h3 className='text-lg font-semibold'>No Assessment Found</h3>
                 <p className='mt-1 text-sm'>There are no assessments under this course.</p>
               </div>

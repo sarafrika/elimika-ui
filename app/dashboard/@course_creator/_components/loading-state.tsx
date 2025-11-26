@@ -8,10 +8,10 @@ export function CourseCreatorLoadingState({
   headline?: string;
 }) {
   return (
-    <div className='flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-blue-200/40 bg-card px-6 py-12 text-center shadow-lg shadow-blue-200/40 backdrop-blur dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:text-slate-200 dark:shadow-blue-900/20'>
-      <Spinner className='h-7 w-7 text-blue-500 dark:text-blue-200' />
-      <p className='text-sm font-semibold text-slate-800 dark:text-white'>{headline}</p>
-      <p className='max-w-sm text-xs text-slate-500 dark:text-slate-300'>
+    <div className='flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-border bg-card px-6 py-12 text-center shadow-lg backdrop-blur'>
+      <Spinner className='h-7 w-7 text-primary' />
+      <p className='text-sm font-semibold text-foreground'>{headline}</p>
+      <p className='max-w-sm text-xs text-muted-foreground'>
         Fetching the latest profile, course catalogue, and analytics data tailored to your domain.
       </p>
     </div>
@@ -20,11 +20,11 @@ export function CourseCreatorLoadingState({
 
 export function CourseCreatorEmptyState() {
   return (
-    <div className='flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-blue-200/40 bg-card px-6 py-12 text-center shadow-lg shadow-blue-200/40 backdrop-blur dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:text-slate-200 dark:shadow-blue-900/20'>
-      <p className='text-sm font-semibold text-slate-800 dark:text-white'>
+    <div className='flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-border bg-card px-6 py-12 text-center shadow-lg backdrop-blur'>
+      <p className='text-sm font-semibold text-foreground'>
         Course creator profile unavailable
       </p>
-      <p className='max-w-sm text-xs text-slate-500 dark:text-slate-300'>
+      <p className='max-w-sm text-xs text-muted-foreground'>
         Switch to a domain with course creation rights or contact your administrator for access.
       </p>
     </div>
@@ -40,9 +40,9 @@ export function CustomLoadingState({
 }) {
   return (
     <div className='flex h-[240px] flex-col items-center justify-center gap-4'>
-      <Spinner className='h-7 w-7 text-blue-500 dark:text-blue-200' />
-      <p className='text-sm font-semibold text-slate-800 dark:text-white'>{headline}</p>
-      <p className='max-w-sm text-xs text-slate-500 dark:text-slate-300'>{subHeading}</p>
+      <Spinner className='h-7 w-7 text-primary' />
+      <p className='text-sm font-semibold text-foreground'>{headline}</p>
+      <p className='max-w-sm text-xs text-muted-foreground'>{subHeading}</p>
     </div>
   );
 }
@@ -55,9 +55,9 @@ export function CustomEmptyState({
   subHeading: string;
 }) {
   return (
-    <div className='flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-blue-200/40 bg-card px-6 py-12 text-center shadow-lg shadow-blue-200/40 backdrop-blur dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:text-slate-200 dark:shadow-blue-900/20'>
-      <p className='text-sm font-semibold text-slate-800 dark:text-white'>{headline}</p>
-      <p className='max-w-sm text-xs text-slate-500 dark:text-slate-300'>{subHeading}</p>
+    <div className='flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border border-border bg-card px-6 py-12 text-center shadow-lg backdrop-blur'>
+      <p className='text-sm font-semibold text-foreground'>{headline}</p>
+      <p className='max-w-sm text-xs text-muted-foreground'>{subHeading}</p>
     </div>
   );
 }

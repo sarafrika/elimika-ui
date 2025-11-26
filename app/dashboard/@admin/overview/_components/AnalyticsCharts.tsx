@@ -21,7 +21,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
 import { toNumber } from '@/lib/metrics';
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f97316', '#22d3ee'];
+const CHART_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--accent))',
+  'hsl(var(--muted-foreground))',
+  'hsl(var(--secondary))',
+  'hsl(var(--destructive))',
+  'hsl(var(--foreground))',
+];
+const AXIS_COLOR = 'hsl(var(--muted-foreground))';
+const GRID_COLOR = 'hsl(var(--border))';
 
 interface AnalyticsChartsProps {
   statistics?: AdminDashboardStats;
@@ -52,32 +61,32 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
     {
       name: 'Verified Instructors',
       value: toNumber(complianceMetrics?.verified_instructors),
-      color: COLORS[0],
+      color: CHART_COLORS[0],
     },
     {
       name: 'Pending Instructor Verifications',
       value: toNumber(complianceMetrics?.pending_instructor_verifications),
-      color: COLORS[1],
+      color: CHART_COLORS[1],
     },
     {
       name: 'Course Creators',
       value: toNumber(complianceMetrics?.total_course_creators),
-      color: COLORS[2],
+      color: CHART_COLORS[2],
     },
     {
       name: 'Verified Course Creators',
       value: toNumber(complianceMetrics?.verified_course_creators),
-      color: COLORS[3],
+      color: CHART_COLORS[3],
     },
     {
       name: 'Pending Course Creators',
       value: toNumber(complianceMetrics?.pending_course_creator_verifications),
-      color: COLORS[4],
+      color: CHART_COLORS[4],
     },
     {
       name: 'Published Courses',
       value: toNumber(learningMetrics?.published_courses),
-      color: COLORS[5],
+      color: CHART_COLORS[5],
     },
   ].filter(item => item.value > 0);
 
@@ -121,15 +130,15 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                 <div className='h-[300px]'>
                   <ResponsiveContainer width='100%' height='100%'>
                     <LineChart data={userGrowthData}>
-                      <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
+                      <CartesianGrid strokeDasharray='3 3' stroke={GRID_COLOR} />
                       <XAxis
                         dataKey='label'
-                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        tick={{ fontSize: 12, fill: AXIS_COLOR }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <YAxis
-                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        tick={{ fontSize: 12, fill: AXIS_COLOR }}
                         axisLine={false}
                         tickLine={false}
                         allowDecimals={false}
@@ -138,14 +147,16 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                         contentStyle={{
                           borderRadius: 8,
                           fontSize: 13,
-                          border: '1px solid #e5e7eb',
+                          border: `1px solid ${GRID_COLOR}`,
+                          color: 'hsl(var(--foreground))',
+                          backgroundColor: 'hsl(var(--card))',
                         }}
                       />
                       <Legend />
                       <Line
                         type='monotone'
                         dataKey='value'
-                        stroke='#3b82f6'
+                        stroke={CHART_COLORS[0]}
                         strokeWidth={2}
                         dot={{ r: 4 }}
                         activeDot={{ r: 6 }}
@@ -170,16 +181,16 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
               <>
                 <div className='h-[300px]'>
                   <ResponsiveContainer width='100%' height='100%'>
-                    <BarChart data={organizationGrowthData}>
-                      <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
+                  <BarChart data={organizationGrowthData}>
+                      <CartesianGrid strokeDasharray='3 3' stroke={GRID_COLOR} />
                       <XAxis
                         dataKey='label'
-                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        tick={{ fontSize: 12, fill: AXIS_COLOR }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <YAxis
-                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        tick={{ fontSize: 12, fill: AXIS_COLOR }}
                         axisLine={false}
                         tickLine={false}
                         allowDecimals={false}
@@ -188,13 +199,13 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                         contentStyle={{
                           borderRadius: 8,
                           fontSize: 13,
-                          border: '1px solid #e5e7eb',
+                          border: `1px solid ${GRID_COLOR}`,
                         }}
                       />
                       <Legend />
                       <Bar
                         dataKey='value'
-                        fill='#10b981'
+                        fill={CHART_COLORS[0]}
                         radius={[8, 8, 0, 0]}
                         name='Organisations'
                       />
@@ -237,7 +248,7 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                         contentStyle={{
                           borderRadius: 8,
                           fontSize: 13,
-                          border: '1px solid #e5e7eb',
+                          border: `1px solid ${GRID_COLOR}`,
                         }}
                       />
                       <Legend />

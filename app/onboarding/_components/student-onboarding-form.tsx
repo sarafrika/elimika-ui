@@ -90,13 +90,13 @@ export function StudentOnboardingForm() {
   };
 
   return (
-    <div className='mx-auto max-w-2xl p-6'>
-      <div className='mb-8 text-center'>
-        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100'>
-          <GraduationCap className='h-8 w-8 text-blue-600' />
+    <div className='mx-auto max-w-3xl space-y-8 rounded-3xl border border-border/60 bg-card/80 p-8 shadow-sm backdrop-blur-sm'>
+      <div className='text-center'>
+        <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20'>
+          <GraduationCap className='h-8 w-8' />
         </div>
-        <h1 className='mb-2 text-3xl font-bold text-gray-900'>Student Registration</h1>
-        <p className='text-gray-600'>
+        <h1 className='mb-2 text-3xl font-bold text-foreground'>Student Registration</h1>
+        <p className='text-muted-foreground'>
           Set up your student profile - all fields are optional and can be completed later
         </p>
       </div>
@@ -169,13 +169,15 @@ export function StudentOnboardingForm() {
             </CardContent>
           </Card>
 
-          <div className='rounded-lg bg-blue-50 p-4'>
-            <h3 className='font-medium text-blue-900'>Optional Setup</h3>
-            <p className='mt-1 text-sm text-blue-700'>
-              You can complete this form now or skip it and add guardian information later in your
-              profile settings. All fields are optional and can be updated anytime.
-            </p>
-          </div>
+          <Card className='bg-muted/40'>
+            <CardContent className='space-y-1'>
+              <h3 className='font-medium text-foreground'>Optional Setup</h3>
+              <p className='text-sm text-muted-foreground'>
+                You can complete this form now or skip it and add guardian information later in your
+                profile settings. All fields are optional and can be updated anytime.
+              </p>
+            </CardContent>
+          </Card>
 
           <Button type='submit' className='w-full' disabled={isSubmitting}>
             {isSubmitting ? 'Creating Account...' : 'Create Student Account'}

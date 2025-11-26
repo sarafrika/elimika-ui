@@ -54,9 +54,9 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
   return (
     <Form {...trainingCenterForm}>
       <form onSubmit={trainingCenterForm.handleSubmit(onSubmit)} className='space-y-6'>
-        <div className='rounded-md border bg-white p-6'>
-          <h2 className='mb-1 text-lg font-medium'>Training Center Details</h2>
-          <p className='mb-4 text-sm text-gray-500'>Tell us about your organization</p>
+        <div className='rounded-md border border-border bg-card p-6'>
+          <h2 className='mb-1 text-lg font-medium text-foreground'>Training Center Details</h2>
+          <p className='mb-4 text-sm text-muted-foreground'>Tell us about your organization</p>
           <div className='space-y-4'>
             <FormField
               control={trainingCenterForm.control}
@@ -64,7 +64,7 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Training Center Name <span className='text-red-500'>*</span>
+                    Training Center Name <span className='text-destructive'>*</span>
                   </FormLabel>
                   <FormControl>
                     <Input placeholder='Sarafrika University' {...field} />
@@ -80,7 +80,7 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Address <span className='text-red-500'>*</span>
+                    Address <span className='text-destructive'>*</span>
                   </FormLabel>
                   <FormControl>
                     <Input placeholder='123 Training St, City, Country' {...field} />
@@ -96,7 +96,7 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Domain <span className='text-red-500'>*</span>
+                    Domain <span className='text-destructive'>*</span>
                   </FormLabel>
                   <FormControl>
                     <Input placeholder='example.com' {...field} />
@@ -115,7 +115,7 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Description <span className='text-red-500'>*</span>
+                    Description <span className='text-destructive'>*</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea
@@ -136,7 +136,7 @@ export function TrainingCenterForm({ authRealm, isSubmitting, onSubmit }: Traini
             <Button type='submit' disabled={isSubmitting} className='flex-1' size='lg'>
               {isSubmitting ? (
                 <div className='flex items-center gap-2'>
-                  <span className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                  <span className='h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent' />
                   Processing...
                 </div>
               ) : (

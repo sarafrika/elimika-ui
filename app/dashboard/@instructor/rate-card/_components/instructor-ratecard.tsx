@@ -254,13 +254,13 @@ export function InstructorRateCard() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'published':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/10 text-success';
       case 'draft':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/10 text-warning';
       case 'paused':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -562,7 +562,7 @@ export function InstructorRateCard() {
                           .filter((f: string) => f.trim())
                           .map((feature: string, index: number) => (
                             <li key={index} className='flex items-center gap-2 text-sm'>
-                              <CheckCircle className='h-3 w-3 text-green-600' />
+                              <CheckCircle className='h-3 w-3 text-success' />
                               {feature}
                             </li>
                           ))}
@@ -627,7 +627,10 @@ export function InstructorRateCard() {
 
   return (
     <div className='min-h-screen'>
-      <div className='w-fit bg-red-500'> Needs endpoint to fetch courses instructor can train</div>
+      <div className='w-fit bg-destructive text-destructive-foreground'>
+        {' '}
+        Needs endpoint to fetch courses instructor can train
+      </div>
 
       {/* Header */}
       <div className='flex items-center justify-end self-end'>
@@ -645,11 +648,11 @@ export function InstructorRateCard() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-muted-foreground text-sm'>Total Revenue</p>
-                  <p className='text-2xl font-bold text-green-600'>
+                  <p className='text-2xl font-bold text-success'>
                     {formatCurrency(instructor.totalRevenue)}
                   </p>
                 </div>
-                <TrendingUp className='h-8 w-8 text-green-600' />
+                <TrendingUp className='h-8 w-8 text-success' />
               </div>
             </CardContent>
           </Card>
@@ -659,9 +662,9 @@ export function InstructorRateCard() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-muted-foreground text-sm'>Total Bookings</p>
-                  <p className='text-2xl font-bold text-blue-600'>{instructor.totalBookings}</p>
+                  <p className='text-2xl font-bold text-primary'>{instructor.totalBookings}</p>
                 </div>
-                <Users className='h-8 w-8 text-blue-600' />
+                <Users className='h-8 w-8 text-primary' />
               </div>
             </CardContent>
           </Card>

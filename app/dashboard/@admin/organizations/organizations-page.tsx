@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -16,18 +15,20 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
   type AdminOrganisation,
-  useAdminOrganisations,
   useUnverifyAdminOrganisation,
   useUpdateAdminOrganisation,
   useVerifyAdminOrganisation,
 } from '@/services/admin';
 import { useAdminBranches } from '@/services/admin/branches';
+import { getAllOrganisationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { zOrganisation } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Building2, Loader2, MapPin, Search, Shield, ShieldOff } from 'lucide-react';
+import { Building2, Loader2, MapPin, Shield, ShieldOff } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -42,40 +43,46 @@ const organisationFormSchema = z.object({
   country: zOrganisation.shape.country.optional(),
 });
 
-const statusOptions = [
-  { label: 'All statuses', value: 'all' },
-  { label: 'Active organisations', value: 'active' },
-  { label: 'Inactive', value: 'inactive' },
-];
-
-const verificationOptions = [
-  { label: 'All verification states', value: 'all' },
-  { label: 'Verified', value: 'verified' },
-  { label: 'Pending review', value: 'pending' },
-];
-
 type OrganisationFormValues = z.infer<typeof organisationFormSchema>;
+
+function useInvalidateOrganisationList() {
+  const queryClient = useQueryClient();
+
+  return () =>
+    queryClient.invalidateQueries({
+      predicate: query => {
+        const root = (query.queryKey?.[0] ?? {}) as { _id?: string };
+        return root._id === 'getAllOrganisations';
+      },
+    });
+}
 
 export default function AdminOrganisationsPage() {
   const [page, setPage] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'pending'>('all');
   const [selectedOrganisationId, setSelectedOrganisationId] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const pageSize = 20;
 
-  const { data, isLoading } = useAdminOrganisations({
-    page,
-    size: 20,
-    search: searchQuery,
-    status: statusFilter,
-    verification: verificationFilter,
+  const { data, isLoading } = useQuery({
+    ...getAllOrganisationsOptions({
+      query: {
+        pageable: {
+          page,
+          size: pageSize,
+        },
+      },
+    }),
   });
 
-  const organisations = useMemo(() => data?.items ?? [], [data?.items]);
-  const totalItems = data?.totalItems ?? 0;
-  const totalPages = Math.max(data?.totalPages ?? 1, 1);
+  const { items: organisations, metadata } = useMemo(() => extractPage<AdminOrganisation>(data), [data]);
+  const totalAvailable = getTotalFromMetadata(metadata);
+  const totalPages = Math.max(
+    metadata.totalPages ?? (totalAvailable > 0 ? Math.ceil(totalAvailable / pageSize) : 1),
+    1
+  );
   const verifiedCount = useMemo(() => organisations.filter(org => org.admin_verified).length, [organisations]);
+  const unverifiedCount = useMemo(() => organisations.length - verifiedCount, [organisations, verifiedCount]);
+  const inViewCount = organisations.length;
 
   useEffect(() => {
     if (!selectedOrganisationId && organisations.length > 0) {
@@ -84,10 +91,10 @@ export default function AdminOrganisationsPage() {
   }, [organisations, selectedOrganisationId]);
 
   useEffect(() => {
-    if (page >= (data?.totalPages ?? 1)) {
+    if (page >= totalPages) {
       setPage(0);
     }
-  }, [data?.totalPages, page]);
+  }, [page, totalPages]);
 
   const selectedOrganisation = organisations.find(org => org.uuid === selectedOrganisationId) ?? null;
 
@@ -104,24 +111,11 @@ export default function AdminOrganisationsPage() {
         organisations={organisations}
         selectedOrganisationId={selectedOrganisationId}
         onSelect={handleSelectOrganisation}
-        searchQuery={searchQuery}
-        onSearchChange={value => {
-          setSearchQuery(value);
-          setPage(0);
-        }}
-        statusFilter={statusFilter}
-        onStatusChange={value => {
-          setStatusFilter((value as typeof statusFilter) || 'all');
-          setPage(0);
-        }}
-        verificationFilter={verificationFilter}
-        onVerificationChange={value => {
-          setVerificationFilter((value as typeof verificationFilter) || 'all');
-          setPage(0);
-        }}
         isLoading={isLoading}
-        totalItems={totalItems}
+        inViewCount={inViewCount}
         verifiedCount={verifiedCount}
+        unverifiedCount={unverifiedCount}
+        totalAvailable={totalAvailable}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
@@ -142,15 +136,11 @@ interface OrganisationListPanelProps {
   organisations: AdminOrganisation[];
   selectedOrganisationId: string | null;
   onSelect: (organisation: AdminOrganisation) => void;
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
-  statusFilter: 'all' | 'active' | 'inactive';
-  onStatusChange: (value: string) => void;
-  verificationFilter: 'all' | 'verified' | 'pending';
-  onVerificationChange: (value: string) => void;
   isLoading: boolean;
-  totalItems: number;
+  inViewCount: number;
   verifiedCount: number;
+  unverifiedCount: number;
+  totalAvailable: number;
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -160,15 +150,11 @@ function OrganisationListPanel({
   organisations,
   selectedOrganisationId,
   onSelect,
-  searchQuery,
-  onSearchChange,
-  statusFilter,
-  onStatusChange,
-  verificationFilter,
-  onVerificationChange,
   isLoading,
-  totalItems,
+  inViewCount,
   verifiedCount,
+  unverifiedCount,
+  totalAvailable,
   page,
   totalPages,
   onPageChange,
@@ -189,7 +175,7 @@ function OrganisationListPanel({
           <Building2 className='mb-3 h-10 w-10 text-muted-foreground' />
           <p className='text-sm font-medium'>No organisations found</p>
           <p className='text-muted-foreground text-xs'>
-            Adjust search terms or verification filters to uncover additional partners.
+            Invite or onboard organisations to review them here.
           </p>
         </div>
       );
@@ -199,10 +185,18 @@ function OrganisationListPanel({
       <button
         key={org.uuid ?? org.name}
         type='button'
-        className={`w-full rounded-2xl border p-4 text-left transition hover:border-primary/40 hover:bg-primary/5 ${selectedOrganisationId === org.uuid ? 'border-primary bg-primary/5' : 'border-border/60 bg-card'
-          }`}
+        className={`relative w-full rounded-2xl border p-4 text-left transition ${
+          selectedOrganisationId === org.uuid
+            ? 'border-primary bg-primary/5 ring-1 ring-primary/40 shadow-sm'
+            : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
+        }`}
         onClick={() => onSelect(org)}
       >
+        {selectedOrganisationId === org.uuid ? (
+          <Badge variant='secondary' className='absolute right-3 top-3 text-[10px] font-semibold uppercase'>
+            Selected
+          </Badge>
+        ) : null}
         <div className='flex items-start justify-between gap-3'>
           <div>
             <p className='font-semibold'>{org.name}</p>
@@ -235,47 +229,11 @@ function OrganisationListPanel({
           Validate onboarding requests, maintain licensing metadata, and manage platform availability for every training partner.
         </p>
 
-        <div className='text-muted-foreground mt-6 flex flex-wrap gap-3 text-xs'>
-          <span className='rounded-full border px-3 py-1'>In view: {totalItems}</span>
+        <div className='text-muted-foreground mt-6 grid grid-cols-2 gap-3 text-xs sm:flex sm:flex-wrap'>
+          <span className='rounded-full border px-3 py-1'>In view: {inViewCount}</span>
           <span className='rounded-full border px-3 py-1'>Verified: {verifiedCount}</span>
-        </div>
-
-        <div className='mt-6 space-y-3'>
-          <div className='relative'>
-            <Search className='text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2' />
-            <Input
-              value={searchQuery}
-              onChange={event => onSearchChange(event.target.value)}
-              placeholder='Search by name, location, or description…'
-              className='pl-9'
-            />
-          </div>
-          <div className='flex flex-col gap-3 sm:flex-row'>
-            <Select value={statusFilter} onValueChange={onStatusChange}>
-              <SelectTrigger className='bg-background/80'>
-                <SelectValue placeholder='Status' />
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={verificationFilter} onValueChange={onVerificationChange}>
-              <SelectTrigger className='bg-background/80'>
-                <SelectValue placeholder='Verification' />
-              </SelectTrigger>
-              <SelectContent>
-                {verificationOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <span className='rounded-full border px-3 py-1'>Unverified: {unverifiedCount}</span>
+          <span className='rounded-full border px-3 py-1'>Total available: {totalAvailable}</span>
         </div>
       </div>
 
@@ -288,7 +246,7 @@ function OrganisationListPanel({
           Previous
         </Button>
         <div className='text-muted-foreground'>
-          Page {totalItems === 0 ? 0 : page + 1} / {totalPages}
+          Page {totalAvailable === 0 ? 0 : page + 1} / {totalPages}
         </div>
         <Button
           variant='ghost'
@@ -311,6 +269,7 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
   const updateOrganisation = useUpdateAdminOrganisation();
   const verifyOrganisation = useVerifyAdminOrganisation();
   const unverifyOrganisation = useUnverifyAdminOrganisation();
+  const invalidateOrganisations = useInvalidateOrganisationList();
 
   const form = useForm<OrganisationFormValues>({
     resolver: zodResolver(organisationFormSchema),
@@ -336,6 +295,7 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
       {
         onSuccess: () => {
           toast.success('Organisation updated');
+          invalidateOrganisations();
         },
         onError: error => {
           toast.error(error instanceof Error ? error.message : 'Failed to update organisation');
@@ -348,15 +308,17 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
     if (!organisation?.uuid) return;
 
     const mutation = action === 'verify' ? verifyOrganisation : unverifyOrganisation;
+    const actionParam = action === 'verify' ? 'approve' : 'revoke';
 
     mutation.mutate(
       {
         path: { uuid: organisation.uuid },
-        query: { reason: '' },
+        query: { reason: '', action: actionParam },
       },
       {
         onSuccess: () => {
           toast.success(action === 'verify' ? 'Organisation verified' : 'Verification removed');
+          invalidateOrganisations();
         },
         onError: error => {
           toast.error(error instanceof Error ? error.message : 'Failed to update verification');
@@ -409,6 +371,7 @@ function OrganisationDetailSheet({ organisation, open, onOpenChange }: Organisat
   const updateOrganisation = useUpdateAdminOrganisation();
   const verifyOrganisation = useVerifyAdminOrganisation();
   const unverifyOrganisation = useUnverifyAdminOrganisation();
+  const invalidateOrganisations = useInvalidateOrganisationList();
 
   const form = useForm<OrganisationFormValues>({
     resolver: zodResolver(organisationFormSchema),
@@ -434,6 +397,7 @@ function OrganisationDetailSheet({ organisation, open, onOpenChange }: Organisat
       {
         onSuccess: () => {
           toast.success('Organisation updated');
+          invalidateOrganisations();
           onOpenChange(false);
         },
         onError: error => {
@@ -446,15 +410,17 @@ function OrganisationDetailSheet({ organisation, open, onOpenChange }: Organisat
   const handleVerification = (action: 'verify' | 'unverify') => {
     if (!organisation?.uuid) return;
     const mutation = action === 'verify' ? verifyOrganisation : unverifyOrganisation;
+    const actionParam = action === 'verify' ? 'approve' : 'revoke';
 
     mutation.mutate(
       {
         path: { uuid: organisation.uuid },
-        query: { reason: '' },
+        query: { reason: '', action: actionParam },
       },
       {
         onSuccess: () => {
           toast.success(action === 'verify' ? 'Organisation verified' : 'Verification removed');
+          invalidateOrganisations();
         },
         onError: error => {
           toast.error(error instanceof Error ? error.message : 'Failed to update verification');

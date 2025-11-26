@@ -22,7 +22,7 @@ const ALLOW_HEX_FILES = new Set([
 
 const INCLUDED_DIRS = ['components', 'app'];
 const EXCLUDED_PATHS = new Set();
-const EXCLUDED_PREFIXES = ['app/dashboard', 'app/auth', 'app/onboarding', 'app/api'];
+const EXCLUDED_PREFIXES = ['app/api'];
 
 function collectFiles(dir) {
   const absDir = resolve(ROOT, dir);

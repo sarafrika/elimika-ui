@@ -87,19 +87,19 @@ export default function InstructorDetails({
                   <p className='text-muted-foreground text-sm font-medium'>Instructor ID:</p>
                   <p className='font-mono text-sm'>{instructor.uuid?.slice(0, 8) || 'N/A'}</p>
                 </div>
-                <div>
-                  <p className='text-muted-foreground text-sm font-medium'>Status:</p>
-                  <Badge variant={instructor?.admin_verified ? 'success' : 'secondary'}>
-                    {instructor?.admin_verified ? (
-                      <>
-                        <BadgeCheckIcon />
-                        Verified
-                      </>
-                    ) : (
-                      'Pending'
-                    )}
-                  </Badge>
-                </div>
+              <div>
+                <p className='text-muted-foreground text-sm font-medium'>Status:</p>
+                <Badge variant={instructor?.admin_verified ? 'success' : 'secondary'} className='gap-1'>
+                  {instructor?.admin_verified ? (
+                    <>
+                      <BadgeCheckIcon className='h-3.5 w-3.5' />
+                      Verified
+                    </>
+                  ) : (
+                    'Pending'
+                  )}
+                </Badge>
+              </div>
               </div>
             </div>
 
@@ -159,7 +159,7 @@ export default function InstructorDetails({
                   href={instructor.website}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='flex items-center gap-1 text-sm text-blue-600 hover:underline'
+                  className='flex items-center gap-1 text-sm text-primary hover:underline'
                 >
                   <Globe className='h-3 w-3' />
                   {instructor.website}
@@ -196,11 +196,11 @@ export default function InstructorDetails({
                     </div>
                   </div>
                   {/* cert.certificate_url && (
-                                        <a
+                                    <a
                                             href={cert.certificate_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-xs text-blue-600 hover:underline"
+                                            className='text-xs text-primary hover:underline'
                                         >
                                             View Certificate
                                         </a>
@@ -235,13 +235,9 @@ export default function InstructorDetails({
                     <Badge variant='outline' className='text-xs'>
                       {body?.organization_name || 'N/A'}
                     </Badge>
-                    <span
-                      className={`text-xs font-medium ${
-                        body?.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                      }`}
-                    >
+                    <Badge variant={body?.is_active ? 'success' : 'secondary'}>
                       {body?.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                    </Badge>
                   </div>
 
                   <div className='text-muted-foreground space-y-1 text-sm'>

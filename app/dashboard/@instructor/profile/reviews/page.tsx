@@ -63,7 +63,7 @@ export default function ReviewsPage() {
             >
               <div className='mb-2 flex items-center justify-between'>
                 <p className='font-medium'>{review.reviewer}</p>
-                <p className='text-sm text-gray-500'>{review.date}</p>
+                <p className='text-sm text-muted-foreground'>{review.date}</p>
               </div>
               <div className='mb-1 flex items-center'>
                 <p className='text-sm text-yellow-500'>
@@ -71,7 +71,7 @@ export default function ReviewsPage() {
                   {'☆'.repeat(5 - review.rating)}
                 </p>
               </div>
-              <p className='text-sm text-gray-700 dark:text-gray-300'>{review.comment}</p>
+              <p className='text-sm text-muted-foreground'>{review.comment}</p>
             </div>
           ))}
         </div>

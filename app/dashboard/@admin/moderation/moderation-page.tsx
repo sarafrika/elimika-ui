@@ -141,7 +141,7 @@ export default function ModerationPage() {
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
             <MetricCard icon={<Gavel className='h-5 w-5 text-primary' />} label='Pending reviews' value={pendingCount} />
-            <MetricCard icon={<ClipboardCheck className='h-5 w-5 text-emerald-500' />} label='Items in scope' value={totalItems} />
+            <MetricCard icon={<ClipboardCheck className='h-5 w-5 text-primary' />} label='Items in scope' value={totalItems} />
           </div>
         </div>
       </div>
@@ -329,7 +329,7 @@ function ModerationDetailSheet({ item, open, onOpenChange, listParams }: Moderat
                     <Button
                       type='button'
                       variant='outline'
-                      className='flex-1 border-emerald-400 text-emerald-600 hover:bg-emerald-50'
+                      className='flex-1'
                       disabled={moderationAction.isPending}
                       onClick={() => handleAction('approve')}
                     >

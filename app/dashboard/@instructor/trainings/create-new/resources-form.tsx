@@ -187,9 +187,9 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
           <CardContent className='space-y-3 p-4'>
             {cAssesssment?.data?.content?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg p-6 text-center'>
-                <FileQuestion className='mb-3 h-8 w-8 text-gray-400' />
+                <FileQuestion className='mb-3 h-8 w-8 text-muted-foreground' />
                 <h4 className='text-sm font-medium'>No Assessment Content</h4>
-                <p className='text-sm text-gray-500'>
+                <p className='text-sm text-muted-foreground'>
                   This class doesn&apos;t have any assessment yet.
                 </p>
               </div>
@@ -198,11 +198,11 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
             {cAssesssment?.data?.content?.map(a => (
               <div
                 key={a.uuid}
-                className='flex items-center justify-between rounded-lg bg-gray-50 p-3'
+                className='flex items-center justify-between rounded-lg bg-muted/60 p-3'
               >
                 <div className='flex items-center gap-3'>
-                  <div className='flex min-h-8 min-w-8 items-center justify-center rounded-full bg-blue-100'>
-                    <span className='text-sm font-bold text-blue-600'>
+                  <div className='flex min-h-8 min-w-8 items-center justify-center rounded-full bg-primary/10'>
+                    <span className='text-sm font-bold text-primary'>
                       {a.assessment_type.charAt(0)}
                     </span>
                   </div>
@@ -276,8 +276,8 @@ export function ResourcesForm({ data, onNext, onPrev }: ResourcesFormProps) {
                 <div className='flex flex-col gap-1.5'>
                   <Label>Upload File</Label>
                   <div className='relative rounded-lg border-2 border-dashed p-4 text-center'>
-                    <Upload className='mx-auto mb-2 h-8 w-8 text-gray-400' />
-                    <p className='text-sm text-gray-600'>Click or drag to upload</p>
+                    <Upload className='mx-auto mb-2 h-8 w-8 text-muted-foreground' />
+                    <p className='text-sm text-muted-foreground'>Click or drag to upload</p>
                     <input
                       type='file'
                       className='absolute inset-0 cursor-pointer opacity-0'

@@ -66,7 +66,7 @@ export default function CourseCreatorDetailsPanel({
         <div className='flex gap-3'>
           <Button
             onClick={() => onApprove(courseCreator)}
-            className='min-w-[110px] bg-blue-600 text-white hover:bg-blue-700'
+            className='min-w-[110px]'
           >
             <Edit className='mr-2 h-4 w-4' />
             {isApprovePending ? <Spinner /> : 'Approve Verification'}

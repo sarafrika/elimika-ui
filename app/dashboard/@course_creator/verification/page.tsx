@@ -42,7 +42,7 @@ export default function CourseCreatorVerificationPage() {
       <header className='space-y-2'>
         <div className='flex items-center gap-2'>
           {verification.adminVerified ? (
-            <Badge className='flex items-center gap-1 bg-emerald-500 text-white'>
+            <Badge className='flex items-center gap-1 bg-success text-success-foreground'>
               <Verified className='h-3.5 w-3.5' /> Verified
             </Badge>
           ) : (
@@ -105,7 +105,7 @@ export default function CourseCreatorVerificationPage() {
         <CardContent className='space-y-2 text-sm'>
           {CRITERIA.map(item => (
             <div key={item} className='flex items-start gap-2'>
-              <CheckCircle2 className='mt-0.5 h-4 w-4 text-purple-500' />
+              <CheckCircle2 className='mt-0.5 h-4 w-4 text-accent' />
               <span>{item}</span>
             </div>
           ))}
@@ -153,7 +153,7 @@ export default function CourseCreatorVerificationPage() {
 
 function StatusPill({ heading, value }: { heading: string; value: string }) {
   return (
-    <div className='rounded-lg border border-dashed border-blue-200/40 bg-blue-50/60 p-4'>
+    <div className='rounded-lg border border-dashed border-primary/25 bg-primary/10 p-4'>
       <p className='text-muted-foreground text-xs tracking-wide uppercase'>{heading}</p>
       <p className='text-sm font-semibold'>{value}</p>
     </div>

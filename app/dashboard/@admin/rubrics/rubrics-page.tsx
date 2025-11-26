@@ -142,7 +142,7 @@ export default function AdminRubricsPage() {
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
             <MetricCard icon={<ClipboardList className='h-5 w-5 text-primary' />} label='Total rubrics' value={totalItems} />
-            <MetricCard icon={<ShieldCheck className='h-5 w-5 text-emerald-500' />} label='Published' value={publishedCount} />
+            <MetricCard icon={<ShieldCheck className='h-5 w-5 text-primary' />} label='Published' value={publishedCount} />
           </div>
         </div>
         <div className='mt-6 grid gap-3 sm:grid-cols-2'>

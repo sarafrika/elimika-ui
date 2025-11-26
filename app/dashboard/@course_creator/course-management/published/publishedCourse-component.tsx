@@ -186,7 +186,7 @@ export default function PublishedCoursesComponent({
                     <TableCell className='font-medium'>
                       <div>
                         <h1 className='max-w-[270px] truncate'>{course.name}</h1>
-                        <div className='text-muted-foreground text-xs' >
+                        <div className='text-muted-foreground text-xs'>
                           <RichTextRenderer htmlString={course?.description} maxChars={42} />
                         </div>
                       </div>
@@ -195,7 +195,7 @@ export default function PublishedCoursesComponent({
                       <div className='flex max-w-[250px] flex-wrap gap-1'>
                         {Array.isArray(course.category_names) &&
                           course.category_names.map((name: string) => (
-                            <Badge key={name} variant='default' className='capitalize rounded-full bg-blue-500' >
+                            <Badge key={name} variant='default' className='capitalize rounded-full bg-primary'>
                               {name}
                             </Badge>
                           ))}

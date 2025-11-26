@@ -308,7 +308,7 @@ export const InstructorProfileModal: React.FC<Props> = ({
                     </div>
 
                     {classesWithCourseAndInstructor?.length > 0 ? (
-                      <div className="divide-y divide-gray-100 rounded-md border border-muted-foreground">
+                      <div className="divide-y divide-border rounded-md border border-muted-foreground">
                         {classesWithCourseAndInstructor.map(course => (
                           <div
                             key={course?.uuid}
@@ -322,7 +322,7 @@ export const InstructorProfileModal: React.FC<Props> = ({
                                 <p className="text-sm text-muted-foreground">0% enrollment</p>
                               </div>
                               <div className="mt-1 flex items-start gap-2 text-sm text-muted-foreground">
-                                <BookOpen className="h-4 w-4 text-gray-500" />
+                                <BookOpen className="h-4 w-4 text-muted-foreground" />
                                 <span>{course?.course?.name}</span>
                               </div>
                             </div>
@@ -331,7 +331,7 @@ export const InstructorProfileModal: React.FC<Props> = ({
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-                        <BookOpen className="mb-3 h-8 w-8 text-gray-400" />
+                        <BookOpen className="mb-3 h-8 w-8 text-muted-foreground" />
                         <h4 className="text-lg font-medium">No Classes Available</h4>
                         <p className="mt-1 text-sm">
                           This instructor hasn’t created any classes yet.
@@ -345,7 +345,7 @@ export const InstructorProfileModal: React.FC<Props> = ({
                 <TabsContent value="reviews" className="space-y-4">
                   {Array.isArray(reviews) && reviews.length > 0 ? (
                     reviews.map((review) => (
-                      <Card key={review.id} className="hover:bg-gray-50 transition">
+                      <Card key={review.id} className="transition hover:bg-muted/60">
                         <CardContent className="flex flex-col gap-3 p-6">
                           {/* Reviewer Header */}
                           <div className="flex items-center gap-4">
@@ -358,15 +358,16 @@ export const InstructorProfileModal: React.FC<Props> = ({
 
                             <div className="flex-1">
                               <div className='flex flex-row items-center justify-between' >
-                                <p className="font-medium text-gray-900">{review.studentName}</p>
+                                <p className="font-medium text-foreground">{review.studentName}</p>
                                 <div className="flex items-center gap-0.5">
                                   {[...Array(5)].map((_, i) => (
                                     <Star
                                       key={i}
-                                      className={`h-4 w-4 ${i < review.rating
-                                        ? 'fill-yellow-500 text-yellow-500'
-                                        : 'text-gray-300'
-                                        }`}
+                                      className={`h-4 w-4 ${
+                                        i < review.rating
+                                          ? 'fill-yellow-500 text-yellow-500'
+                                          : 'text-muted-foreground'
+                                      }`}
                                     />
                                   ))}
                                 </div>
@@ -374,7 +375,7 @@ export const InstructorProfileModal: React.FC<Props> = ({
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <BookOpen className="h-4 w-4" />
                                 {review.course}
-                                <span className="text-gray-800">•</span>
+                                <span className="text-muted-foreground">•</span>
                                 <Calendar className="h-4 w-4" />
                                 {review.date.toLocaleDateString('en-US', {
                                   month: 'short',
@@ -394,7 +395,7 @@ export const InstructorProfileModal: React.FC<Props> = ({
                     ))
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-                      <Star className="mb-4 h-10 w-10 text-gray-400" />
+                      <Star className="mb-4 h-10 w-10 text-muted-foreground" />
                       <h3 className="text-lg font-semibold">No Reviews Yet</h3>
                       <p className="mt-1 text-sm">
                         This instructor hasn’t received any reviews yet.
@@ -410,8 +411,8 @@ export const InstructorProfileModal: React.FC<Props> = ({
                       <Card key={cert.id}>
                         <CardContent className='p-6'>
                           <div className='flex items-start gap-4'>
-                            <div className='rounded-lg bg-blue-100 p-3'>
-                              <Award className='h-6 w-6 text-blue-600' aria-hidden='true' />
+                            <div className='rounded-lg bg-primary/10 p-3'>
+                              <Award className='h-6 w-6 text-primary' aria-hidden='true' />
                             </div>
                             <div>
                               <h4 className='text-base font-semibold'>{cert.name}</h4>
@@ -426,7 +427,7 @@ export const InstructorProfileModal: React.FC<Props> = ({
                     ))
                   ) : (
                     <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
-                      <Award className='mb-4 h-10 w-10 text-gray-400' />
+                      <Award className='mb-4 h-10 w-10 text-muted-foreground' />
                       <h3 className='text-lg font-semibold'>No Certifications Found</h3>
                       <p className='mt-1 text-sm'>
                         You haven&apos;t earned any certifications for this course yet.
@@ -475,12 +476,12 @@ export const InstructorProfileModal: React.FC<Props> = ({
                     </div>
                   </Card>
 
-                  <Card className='mb-6 border-blue-200 bg-blue-50 p-6'>
+                  <Card className='mb-6 border-primary/30 bg-primary/10 p-6'>
                     <div className='flex gap-3'>
-                      <DollarSign className='h-5 w-5 text-blue-600' />
+                      <DollarSign className='h-5 w-5 text-primary' />
                       <div>
-                        <p className='text-blue-900'>Pricing Information</p>
-                        <p className='mt-1 text-sm text-blue-700'>
+                        <p className='text-primary'>Pricing Information</p>
+                        <p className='mt-1 text-sm text-primary'>
                           All rates are in KES/NAIRA. Custom packages and group discounts are
                           available. Contact instructor for details.
                         </p>

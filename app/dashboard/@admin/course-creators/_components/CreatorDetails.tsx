@@ -47,10 +47,10 @@ export default function CourseCreatorDetails({
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm font-medium'>Status:</p>
-                  <Badge variant={courseCreator?.admin_verified ? 'success' : 'secondary'}>
+                  <Badge variant={courseCreator?.admin_verified ? 'success' : 'secondary'} className='gap-1'>
                     {courseCreator?.admin_verified ? (
                       <>
-                        <BadgeCheckIcon />
+                        <BadgeCheckIcon className='h-3.5 w-3.5' />
                         Verified
                       </>
                     ) : (
@@ -119,7 +119,7 @@ export default function CourseCreatorDetails({
                   href={courseCreator.website}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='flex items-center gap-1 text-sm text-blue-600 hover:underline'
+                  className='flex items-center gap-1 text-sm text-primary hover:underline'
                 >
                   <Globe className='h-3 w-3' />
                   {courseCreator.website}

@@ -122,7 +122,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
               Add Scoring Level
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDeleteRubric(rubric.uuid)} className='text-red-600'>
+            <DropdownMenuItem onClick={() => onDeleteRubric(rubric.uuid)} className='text-destructive'>
               <TrashIcon className='mr-2 h-4 w-4' />
               Delete Rubric
             </DropdownMenuItem>
@@ -156,17 +156,17 @@ const RubricTable: React.FC<RubricTableProps> = ({
                         <div className='absolute top-1 right-1 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
                           <button
                             onClick={() => onEditScoringLevel(rubric.uuid, level)}
-                            className='bg-opacity-80 hover:bg-opacity-100 rounded-md bg-white p-1 transition'
+                            className='rounded-md bg-card/80 p-1 transition hover:bg-card'
                             title='Edit'
                           >
-                            <PencilIcon className='h-4 w-4 text-gray-800' />
+                            <PencilIcon className='h-4 w-4 text-foreground' />
                           </button>
                           <button
                             onClick={() => onDeleteScoringLevel(rubric.uuid, level.uuid)}
-                            className='bg-opacity-80 hover:bg-opacity-100 rounded-md bg-white p-1 transition'
+                            className='rounded-md bg-card/80 p-1 transition hover:bg-card'
                             title='Delete'
                           >
-                            <TrashIcon className='h-4 w-4 text-red-600' />
+                            <TrashIcon className='h-4 w-4 text-destructive' />
                           </button>
                         </div>
                       </TableHead>
@@ -210,7 +210,7 @@ const RubricTable: React.FC<RubricTableProps> = ({
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => onDeleteCriterion(rubric.uuid, crit.uuid)}
-                              className='text-red-600'
+                              className='text-destructive'
                             >
                               <TrashIcon className='mr-2 h-4 w-4' />
                               Delete Criterion

@@ -20,7 +20,7 @@ import {
   type AdminUser,
   useUpdateAdminUser,
 } from '@/services/admin';
-import { getAllUsersOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAdminUsersOptions, getAllUsersOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { zUser } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -83,6 +83,7 @@ export interface AdminUserWorkspaceProps {
   fixedDomain?: string;
   emptyStateTitle?: string;
   emptyStateDescription?: string;
+  useAdminEndpoint?: boolean;
 }
 
 export function AdminUserWorkspace({
@@ -90,6 +91,7 @@ export function AdminUserWorkspace({
   fixedDomain,
   emptyStateTitle = 'No records match your filters',
   emptyStateDescription = 'Adjust search terms or filter selections to discover more entries.',
+  useAdminEndpoint = false,
 }: AdminUserWorkspaceProps) {
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -104,10 +106,18 @@ export function AdminUserWorkspace({
   }, [fixedDomain]);
 
   const { data, isLoading } = useQuery(
-    getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
+    useAdminEndpoint
+      ? getAdminUsersOptions({
+        query: {
+          filters: {},
+          pageable: { page, size: 20, sort: ['created_date,desc'] },
+        },
+      })
+      : getAllUsersOptions({ query: { pageable: { page, size: 20, sort: ['created_date,desc'] } } })
   );
 
   const users = useMemo(() => (data?.data?.content ?? []) as AdminUser[], [data?.data?.content]);
+  const activeDomainFilter = fixedDomain ?? domainFilter;
   const totalPages = Math.max(data?.data?.metadata?.totalPages ?? 1, 1);
 
   useEffect(() => {
@@ -131,7 +141,7 @@ export function AdminUserWorkspace({
   };
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+    <div className='bg-background flex h-[calc(100vh-120px)] min-h-0 flex-col lg:flex-row'>
       <UserListPanel
         users={users}
         selectedUserId={selectedUserId}
@@ -141,7 +151,7 @@ export function AdminUserWorkspace({
           setStatusFilter((value as typeof statusFilter) || 'all');
           setPage(0);
         }}
-        domainFilter={domainFilter}
+        domainFilter={activeDomainFilter}
         onDomainFilterChange={value => {
           setDomainFilter(value || 'all');
           setPage(0);
@@ -202,7 +212,7 @@ function UserListPanel({
   const filteredUsers = users.filter(user => {
     if (statusFilter === 'active' && !user.active) return false;
     if (statusFilter === 'inactive' && user.active) return false;
-    if (showDomainFilter && domainFilter !== 'all') {
+    if (domainFilter !== 'all') {
       const domains = Array.isArray(user.user_domain)
         ? user.user_domain
         : user.user_domain
@@ -242,11 +252,18 @@ function UserListPanel({
         <div
           key={user.uuid ?? user.email}
           className={cn(
-            'hover:bg-muted/50 cursor-pointer border-b p-4 transition-colors',
-            selectedUserId === user.uuid ? 'bg-muted' : ''
+            'relative cursor-pointer rounded-2xl border p-4 transition-colors',
+            selectedUserId === user.uuid
+              ? 'border-primary bg-primary/5 ring-1 ring-primary/40 shadow-sm'
+              : 'border-border/60 bg-card hover:bg-muted/40'
           )}
           onClick={() => onSelect(user)}
         >
+          {selectedUserId === user.uuid ? (
+            <Badge variant='secondary' className='absolute right-3 top-3 text-[10px] font-semibold uppercase'>
+              Selected
+            </Badge>
+          ) : null}
           <div className='flex items-start justify-between'>
             <div className='min-w-0 flex-1'>
               <div className='mb-1 flex items-center gap-2'>
@@ -278,7 +295,7 @@ function UserListPanel({
   };
 
   return (
-    <div className='bg-background flex w-full flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
+    <div className='bg-background flex w-full min-h-0 flex-col border-b lg:w-80 lg:border-r lg:border-b-0'>
       <div className='space-y-2 border-b p-4'>
         <div className='flex flex-col gap-2'>
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
@@ -310,7 +327,7 @@ function UserListPanel({
         </div>
       </div>
 
-      <ScrollArea className='flex-1 px-6 py-4'>
+      <ScrollArea className='flex-1 min-h-0 px-6 py-4'>
         <div className='flex flex-col gap-4 pb-8'>{renderContent()}</div>
       </ScrollArea>
 
@@ -375,7 +392,7 @@ function UserDetailsPanel({ user, panelTitle }: UserDetailsPanelProps) {
   };
 
   return (
-    <div className='hidden flex-1 flex-col bg-card lg:flex'>
+    <div className='hidden min-h-0 flex-1 flex-col bg-card lg:flex'>
       {user ? (
         <>
           <div className='border-b p-6'>

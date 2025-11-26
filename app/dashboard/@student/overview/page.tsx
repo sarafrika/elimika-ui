@@ -118,7 +118,7 @@ export default function StudentOverviewPage() {
               <div
                 className={`mt-1 flex size-9 items-center justify-center rounded-full border ${
                   isCompleted
-                    ? 'border-emerald-500 bg-emerald-500 text-white'
+                    ? 'border-success bg-success text-success-foreground'
                     : isCurrent
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border bg-muted text-muted-foreground'

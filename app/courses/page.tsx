@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PublicTopNav } from '@/components/PublicTopNav';
-import { getPublishedCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getCourseCreatorByUuidOptions, getPublishedCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Course } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, GraduationCap, CircleAlert, Layers } from 'lucide-react';
 import { useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function PublicCoursesPage() {
   const coursesQuery = useQuery({
@@ -100,27 +101,61 @@ export default function PublicCoursesPage() {
 function CourseCard({ course }: { course: Course }) {
   const {
     uuid,
+    name,
     title,
     description,
     level,
     duration_weeks,
+    duration_hours,
+    duration_minutes,
     is_published,
+    category_names,
+    status,
+    price,
+    is_free,
+    accepts_new_enrollments,
+    thumbnail_url,
+    course_creator_uuid,
   } = course;
   const courseUuid = uuid ?? '';
+  const displayTitle = title || (name as string | undefined) || 'Untitled course';
   const safeDescription = useMemo(
     () =>
       sanitizeCourseDescription(description) ||
-      'Comprehensive course designed to help you develop new skills and knowledge.',
+      'No description provided yet.',
     [description]
   );
+  const durationLabel =
+    typeof duration_hours === 'number' && typeof duration_minutes === 'number'
+      ? `${duration_hours}h ${duration_minutes}m`
+      : duration_weeks
+        ? `${duration_weeks} ${duration_weeks === 1 ? 'week' : 'weeks'}`
+        : null;
+  const { data: courseCreatorData } = useQuery({
+    ...getCourseCreatorByUuidOptions({ path: { uuid: course_creator_uuid as string } }),
+    enabled: Boolean(course_creator_uuid),
+  });
+  const courseCreatorName = (courseCreatorData as any)?.data?.full_name as string | undefined;
 
   return (
     <Card className='group h-full rounded-[28px] border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg'>
+      {thumbnail_url ? (
+        <div className='relative aspect-[16/9] w-full overflow-hidden rounded-t-[28px] border-b border-border/60 bg-muted'>
+          <Image
+            src={thumbnail_url}
+            alt={title ?? 'Course thumbnail'}
+            fill
+            sizes='(min-width: 1024px) 320px, 100vw'
+            className='object-cover transition duration-500 group-hover:scale-[1.03]'
+            priority={false}
+          />
+        </div>
+      ) : null}
       <CardHeader className='space-y-3'>
         <div className='flex items-start justify-between gap-3'>
           <div className='flex-1 space-y-2'>
             <CardTitle className='line-clamp-2 text-lg font-semibold leading-6 text-foreground'>
-              {title}
+              {displayTitle}
             </CardTitle>
             <div className='flex flex-wrap gap-2'>
               <Badge
@@ -129,6 +164,11 @@ function CourseCard({ course }: { course: Course }) {
               >
                 {is_published ? 'Published' : 'Draft'}
               </Badge>
+              {status ? (
+                <Badge variant='outline' className='rounded-full text-xs'>
+                  {status}
+                </Badge>
+              ) : null}
               {level && (
                 <Badge
                   variant='outline'
@@ -137,6 +177,12 @@ function CourseCard({ course }: { course: Course }) {
                   {level}
                 </Badge>
               )}
+              {Array.isArray(category_names) &&
+                category_names.slice(0, 2).map(category => (
+                  <Badge key={`${courseUuid}-${category}`} variant='secondary' className='rounded-full text-xs'>
+                    {category}
+                  </Badge>
+                ))}
             </div>
           </div>
         </div>
@@ -147,21 +193,36 @@ function CourseCard({ course }: { course: Course }) {
       </CardHeader>
       <CardContent className='space-y-4'>
         <div className='space-y-2.5'>
-          {duration_weeks && (
+          {durationLabel && (
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <Clock className='h-4 w-4 text-primary' />
-              <span>
-                {duration_weeks} {duration_weeks === 1 ? 'week' : 'weeks'} duration
-              </span>
+              <span>{durationLabel}</span>
             </div>
           )}
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <GraduationCap className='h-4 w-4 text-primary' />
-            <span>Expert-led instruction</span>
-          </div>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+          {courseCreatorName && (
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+              <GraduationCap className='h-4 w-4 text-primary' />
+              <span>Created by {courseCreatorName}</span>
+            </div>
+          )}
+          <div className='flex flex-wrap items-center gap-2 text-sm text-muted-foreground'>
             <Layers className='h-4 w-4 text-primary' />
-            <span>Structured learning path</span>
+            <span className='font-semibold text-foreground'>
+              {is_free
+                ? 'Free'
+                : typeof price === 'number'
+                  ? `KES ${price.toLocaleString()}`
+                  : 'Pricing not set'}
+            </span>
+            {accepts_new_enrollments === false ? (
+              <Badge variant='outline' className='text-xs'>
+                Closed
+              </Badge>
+            ) : (
+              <Badge variant='outline' className='text-xs'>
+                Enrollments open
+              </Badge>
+            )}
           </div>
         </div>
 

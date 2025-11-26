@@ -683,7 +683,7 @@ function ScoringLevelForm({
           name='color_code'
           render={({ field }) => (
             <FormItem className='w-full'>
-              <FormLabel className='mb-1 block text-sm font-medium text-gray-700'>
+              <FormLabel className='mb-1 block text-sm font-medium text-foreground'>
                 Color Code
               </FormLabel>
               <div className='flex items-center gap-4'>
@@ -691,7 +691,7 @@ function ScoringLevelForm({
                   <Input
                     type='color'
                     {...field}
-                    className='h-12 w-12 cursor-pointer rounded-md border border-gray-300 p-0'
+                    className='h-12 w-12 cursor-pointer rounded-md border border-border p-0'
                     onChange={e => {
                       field.onChange(e);
                     }}
@@ -699,8 +699,8 @@ function ScoringLevelForm({
                 </FormControl>
 
                 {/* Hex Value Display */}
-                <span className='font-mono text-sm text-gray-700'>
-                  {field.value?.toUpperCase() || '#FFFFFF'}
+                <span className='font-mono text-sm text-muted-foreground'>
+                  {field.value?.toUpperCase() || 'N/A'}
                 </span>
               </div>
               <FormMessage />

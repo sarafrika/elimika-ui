@@ -18,7 +18,7 @@ interface Props {
 
 export default function ClassScheduleList({ schedules }: Props) {
   if (!schedules || schedules.length === 0) {
-    return <p className='text-gray-500 italic'>No scheduled classes.</p>;
+    return <p className='text-muted-foreground italic'>No scheduled classes.</p>;
   }
 
   return (
@@ -26,21 +26,21 @@ export default function ClassScheduleList({ schedules }: Props) {
       {schedules.map(item => (
         <li
           key={item.uuid}
-          className='rounded-lg border bg-white p-4 shadow-sm transition-all hover:shadow-md'
+          className='rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'
         >
           <div className='flex items-center justify-between'>
             <h3 className='text-lg font-semibold'>{item.title}</h3>
             <span
               className={`rounded px-2 py-1 text-sm ${
                 item.status === 'SCHEDULED'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-200 text-gray-600'
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
               {item.status}
             </span>
           </div>
-          <div className='mt-2 text-sm text-gray-700'>
+          <div className='mt-2 text-sm text-muted-foreground'>
             <p>
               <strong>Date:</strong> {moment(item.start_time).format('dddd, MMMM Do YYYY')}
             </p>
@@ -53,7 +53,7 @@ export default function ClassScheduleList({ schedules }: Props) {
           </div>
           {item.can_be_cancelled && (
             <div className='mt-3'>
-              <button className='text-sm text-red-600 hover:underline'>Cancel Class</button>
+              <button className='text-sm text-destructive hover:underline'>Cancel Class</button>
             </div>
           )}
         </li>

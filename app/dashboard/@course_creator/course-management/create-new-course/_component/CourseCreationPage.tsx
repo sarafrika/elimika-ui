@@ -129,6 +129,9 @@ export default function CourseCreationPage() {
   const [addAssessmentModalOpen, setAddAssessmentModalOpen] = useState(false);
   const _openAddAssessmentModal = () => setAddAssessmentModalOpen(true);
 
+  const sectionContainerClasses =
+    'w-full space-y-8 rounded-[32px] border border-border bg-card p-6 shadow-xl transition lg:p-10 dark:border-border/80 dark:bg-gradient-to-br dark:from-primary/10 dark:via-background/60 dark:to-background';
+
   // GET COURSE CONTENT TYPES
   const { data: contentTypeList } = useQuery(
     getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } })
@@ -426,18 +429,15 @@ export default function CourseCreationPage() {
 
   return (
     <div className='relative overflow-hidden'>
-      <div className='absolute top-20 left-[-6rem] h-72 w-72 rounded-full bg-blue-400/20 blur-3xl'></div>
-      <div className='absolute right-[-4rem] bottom-[-4rem] h-80 w-80 rounded-full bg-indigo-400/20 blur-3xl'></div>
-
       <div className='relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-12 lg:px-6 lg:py-16'>
-        <header className='rounded-[36px] border border-blue-200/40 bg-white/80 p-8 shadow-xl shadow-blue-200/30 backdrop-blur lg:p-12 dark:border-blue-500/25 dark:bg-blue-950/40 dark:shadow-blue-900/20'>
-          <span className='inline-flex items-center gap-2 rounded-full border border-blue-400/40 bg-blue-500/10 px-4 py-1 text-xs font-semibold tracking-[0.4em] text-blue-600 uppercase dark:border-blue-500/40 dark:bg-blue-900/40 dark:text-blue-100'>
+        <header className='rounded-[36px] border border-border bg-card/90 p-8 shadow-xl backdrop-blur lg:p-12'>
+          <span className='inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-xs font-semibold tracking-[0.4em] text-primary uppercase'>
             Course creator studio
           </span>
-          <h1 className='mt-4 text-3xl font-semibold text-slate-900 sm:text-4xl dark:text-white'>
+          <h1 className='mt-4 text-3xl font-semibold text-foreground sm:text-4xl'>
             Design learning experiences that match your vision
           </h1>
-          <p className='mt-3 max-w-2xl text-sm text-slate-600 sm:text-base dark:text-slate-300'>
+          <p className='mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base'>
             Outline your course blueprint, orchestrate lessons, and refine assessments with
             guardrails that echo the Elimika brand.
           </p>
@@ -589,7 +589,7 @@ export default function CourseCreationPage() {
             nextButtonText='Continue to Quizzes'
             previousButtonText='Back to Skills & Resources'
           >
-            <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+            <div className={sectionContainerClasses}>
               <div className='flex flex-row items-center justify-between'>
                 <div className='space-y-1'>
                   <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
@@ -677,7 +677,7 @@ export default function CourseCreationPage() {
             nextButtonText='Continue to Course Licensing'
             previousButtonText='Back to Asessment'
           >
-            <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+            <div className={sectionContainerClasses}>
               <div className='flex flex-row items-center justify-between'>
                 <div className='space-y-1'>
                   <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
@@ -704,7 +704,7 @@ export default function CourseCreationPage() {
             nextButtonText='Continue to Review'
             previousButtonText='Back to Branding'
           >
-            <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+            <div className={sectionContainerClasses}>
               <div className='flex flex-row items-center justify-between'>
                 <div className='space-y-1'>
                   <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
@@ -737,7 +737,7 @@ export default function CourseCreationPage() {
             }
           >
             {course ? (
-              <div className='w-full space-y-8 rounded-[32px] border border-blue-200/40 bg-card p-6 shadow-xl shadow-blue-200/40 transition lg:p-10 dark:border-blue-500/25 dark:bg-gradient-to-br dark:from-blue-950/60 dark:via-blue-900/40 dark:to-slate-950/80 dark:shadow-blue-900/20'>
+              <div className={sectionContainerClasses}>
                 {/* Pricing Section */}
                 <div className='flex flex-row items-center justify-between'>
                   <div className='space-y-1'>
@@ -765,7 +765,7 @@ export default function CourseCreationPage() {
                       alt='upload-banner'
                       width={128}
                       height={128}
-                      className='mb-8 max-h-[250px] w-full bg-stone-300 text-sm'
+                      className='mb-8 max-h-[250px] w-full bg-muted text-sm'
                     />
                   </div>
 
@@ -808,7 +808,7 @@ export default function CourseCreationPage() {
                     {course?.data?.category_names?.map((category: string, idx: number) => (
                       <span
                         key={idx}
-                        className='rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-primary'
+                        className='rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary'
                       >
                         {category}
                       </span>
@@ -829,7 +829,7 @@ export default function CourseCreationPage() {
                         <div key={i} className='flex flex-row gap-2'>
                           <div>
                             <span className='min-h-4 min-w-4'>
-                              <CheckCircle className='mt-1 h-4 w-4 text-green-500' />
+                              <CheckCircle className='mt-1 h-4 w-4 text-success' />
                             </span>
                           </div>
                           <div className='flex flex-col gap-2'>
@@ -856,7 +856,9 @@ export default function CourseCreationPage() {
               </div>
             ) : (
               <div className='flex h-48 flex-col items-center justify-center text-center'>
-                <p className='mb-4 text-gray-500'>Please complete the course details first</p>
+                <p className='mb-4 text-muted-foreground'>
+                  Please complete the course details first
+                </p>
               </div>
             )}
           </StepperContent>

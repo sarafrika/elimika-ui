@@ -120,7 +120,7 @@ export function VisibilityForm({
                       <RadioGroupItem value='private' id='private' />
                       <div className='flex-1'>
                         <div className='flex items-center gap-2'>
-                          <Lock className='h-4 w-4 text-blue-600' />
+                          <Lock className='h-4 w-4 text-primary' />
                           <Label htmlFor='private' className='font-medium'>
                             Private
                           </Label>
@@ -274,7 +274,7 @@ export function VisibilityForm({
                 {form.getValues('publicity') === 'public' ? (
                   <Globe className='h-3 w-3 text-green-600' />
                 ) : (
-                  <Lock className='h-3 w-3 text-blue-600' />
+                  <Lock className='h-3 w-3 text-primary' />
                 )}
                 {form.getValues('publicity')}
               </div>
