@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import {
@@ -158,15 +159,20 @@ export default function ClassPreviewPage() {
     }
   };
 
-  const { data: timetable } = useQuery({
+  const [startDate, setStartDate] = useState<string>("2026-11-02");
+  const [endDate, setEndDate] = useState<string>("2026-12-19");
+
+  const { data: timetable, isLoading: timetableIsLoading } = useQuery({
     ...getInstructorScheduleOptions({
       path: { instructorUuid: classData?.default_instructor_uuid as string },
       query: {
-        start: '2026-11-02' as any,
-        end: '2026-12-19' as any,
+        start: startDate as any,
+        end: endDate as any,
       },
     }),
+    enabled: !!classData?.default_instructor_uuid && !!startDate && !!endDate,
   });
+
 
   const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
 
@@ -451,60 +457,109 @@ export default function ClassPreviewPage() {
                                 })}
                             </div> */}
 
-              <Card>
-                {timetable?.data?.map(s => {
-                  const isCancelled = s?.status === 'CANCELLED';
-                  const isActive = s?.is_currently_active;
-                  const isPast = s?.time_range
-                    ? new Date(s.time_range) < new Date()
-                    : false;
+              <div className="flex gap-4 mb-4">
+                {/* Start Date */}
+                <div className="flex flex-col w-full">
+                  <Label className="text-sm font-medium">Start Date</Label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
 
-                  return (
-                    <div
-                      key={s.uuid}
-                      className={`mb-4 flex items-center justify-between rounded p-4 shadow-sm ${isCancelled ? 'bg-red-100' : 'bg-card'
-                        }`}
-                    >
-                      <div>
-                        <p className='font-semibold'>
-                          {s?.title} - {s?.location_type}
-                        </p>
-                        {/* <p>{s?.start_time as any} - {s.end_time as any}</p> */}
-                        <p>{s?.time_range}</p>
-                        <p>{s?.max_participants} Participants</p>
-                        <p>
-                          {s?.status} - {s?.cancellation_reason}
-                        </p>
-                      </div>
+                {/* End Date */}
+                <div className="flex flex-col w-full">
+                  <Label className="text-sm font-medium">End Date</Label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
 
-                      {/* Active / Not Active Badge */}
-                      <div className="flex gap-2">
-                        {/* ACTIVE / NOT ACTIVE */}
-                        <span
-                          className={`rounded-full px-3 py-1 text-sm font-medium ${
-                            isActive
-                              ? 'bg-success text-success-foreground'
-                              : 'bg-destructive text-destructive-foreground'
-                          }`}
+              {timetableIsLoading ? <div className="space-y-4 p-4">
+                <div className="h-16 w-full bg-muted animate-pulse rounded" />
+                <div className="h-16 w-full bg-muted animate-pulse rounded" />
+                <div className="h-16 w-full bg-muted animate-pulse rounded" />
+              </div> :
+                <Card className="overflow-hidden">
+                  <div className="divide-y">
+                    {timetable?.data?.map((s) => {
+                      const isCancelled = s?.status === "CANCELLED";
+                      const isActive = s?.is_currently_active;
+                      const isPast = s?.time_range ? new Date(s.time_range) < new Date() : false;
+
+                      return (
+                        <div
+                          key={s.uuid}
+                          className={`p-5 flex items-start justify-between gap-6 transition-all hover:bg-muted/50 ${isCancelled ? "opacity-60" : ""
+                            }`}
                         >
-                          {isActive ? 'Active' : 'Not active'}
-                        </span>
+                          {/* LEFT SIDE: MAIN DETAILS */}
+                          <div className="space-y-2 flex-1">
+                            {/* Title */}
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-base">{s?.title}</h3>
 
-                        {/* OCCURRED / UPCOMING */}
-                        <span
-                          className={`rounded-full px-3 py-1 text-sm font-medium ${
-                            isPast
-                              ? 'bg-muted text-foreground'
-                              : 'bg-primary text-primary-foreground'
-                          }`}
-                        >
-                          {isPast ? 'Occurred' : 'Upcoming'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </Card>
+                              {isCancelled && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Cancelled
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* Time Range */}
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Clock className="h-4 w-4" />
+                              <span>{s?.time_range}</span>
+                            </div>
+
+                            {/* Location */}
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground capitalize">
+                              <MapPin className="h-4 w-4" />
+                              <span>{s?.location_type?.toLowerCase()}</span>
+                            </div>
+
+                            {/* Participants */}
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                              <span>{s?.max_participants} participants</span>
+                            </div>
+
+                            {/* Cancellation reason */}
+                            {s?.cancellation_reason && (
+                              <p className="text-sm text-red-600">
+                                <span className="font-medium">Reason:</span> {s.cancellation_reason}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* RIGHT SIDE: STATUS COLUMN */}
+                          <div className="flex flex-col items-end gap-2 w-32 shrink-0">
+                            <Badge
+                              className={`w-full justify-center ${isActive ? "bg-green-600 hover:bg-green-700" : "bg-zinc-500"
+                                } text-white`}
+                            >
+                              {isActive ? "Active" : "Inactive"}
+                            </Badge>
+
+                            <Badge
+                              className={`w-full justify-center ${isPast ? "bg-zinc-700" : "bg-blue-600 hover:bg-blue-700"
+                                } text-white`}
+                            >
+                              {isPast ? "Occurred" : "Upcoming"}
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              }
             </CardContent>
           </Card>
         </TabsContent>

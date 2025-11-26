@@ -35,7 +35,6 @@ const Page = () => {
     }),
     enabled: !!student?.uuid,
   });
-
   const enrollments = enrollmentsData?.data ?? [];
 
   const availabilityData: AvailabilityData = {

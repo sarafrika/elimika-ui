@@ -12,9 +12,12 @@ import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
   getInstructorScheduleOptions,
+  markAttendanceMutation,
+  previewRecurringClassScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
+  Calendar1Icon,
   CheckCircle,
   Clock,
   Copy,
@@ -28,6 +31,7 @@ import {
 } from 'lucide-react';
 
 import { SidebarMenuButton } from '@/components/ui/sidebar';
+import { useClassRoster } from '@/hooks/use-class-roster';
 import { BarChart2, Camera, Search, Upload, UserCheck } from "lucide-react";
 import moment from 'moment';
 import { useParams, useRouter } from 'next/navigation';
@@ -102,17 +106,6 @@ export default function ClassPreviewPage() {
   );
   const [copied, setCopied] = useState(false);
 
-  // const totalLessons = classData.schedule.skills.reduce((acc, skill) => acc + skill.lessons.length, 0);
-  // const totalHours = classData.schedule.skills.reduce((total, skill) => {
-  //     return total + skill.lessons.reduce((skillTotal, lesson) => {
-  //         return skillTotal + (parseInt(lesson.duration) || 0);
-  //     }, 0);
-  // }, 0) / 60;
-
-  // const totalFee = classData?.visibility.isFree ? 0 : classData.visibility.price * totalLessons;
-  const totalFee = 499.99;
-  const totalAssignments = cAssesssment?.data?.content?.length || 0;
-
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -153,16 +146,16 @@ export default function ClassPreviewPage() {
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [showQR, setShowQR] = useState(false);
 
-  const students = [
-    "Dianne Russel",
-    "Eleanor Pena",
-    "Jacob Jones",
-    "Brooklyn Simmons",
-    "Leslie Alexander",
-    "Floyd Miles",
-    "Theresa Webb",
-    "Wade Warren",
-  ];
+  const markAttendance = useMutation(markAttendanceMutation())
+  const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
+
+  const { data: classSchedule } = useQuery({
+    ...previewRecurringClassScheduleOptions({ path: { uuid: classId as string }, query: { startDate: '2024-11-01' as any, endDate: '2026-12-31' as any } }),
+    enabled: !!classId,
+  })
+
+  // console.log(classSchedule?.data, "class schedule!!")
+  // console.log(roster, "cllass roster!!", rosterLoading)
 
   const activityLog = [
     { name: "Dianne Russel", action: "Checked in via QR", time: "8:35 AM" },
@@ -218,6 +211,7 @@ export default function ClassPreviewPage() {
           <div className="space-y-2">
             {[
               { id: "roster", label: "Class Roster", icon: UserCheck },
+              { id: "schedule", label: "Class Schedule", icon: Calendar1Icon },
               { id: "attendance", label: "Attendance", icon: Clock },
               { id: "resources", label: "Resources", icon: Upload },
               { id: "activity", label: "Activity Log", icon: FileText },
@@ -247,6 +241,7 @@ export default function ClassPreviewPage() {
         <main className="flex-1 p-6 overflow-y-auto">
           <h1 className="text-xl font-bold mb-4">
             {activeTab === "roster" && "📋 Class Roster"}
+            {activeTab === "schedule" && "📋 Class Schedule"}
             {activeTab === "attendance" && "🕒 Attendance Tracking"}
             {activeTab === "resources" && "📁 Resource Distribution"}
             {activeTab === "activity" && "📜 Activity Log"}
@@ -266,13 +261,36 @@ export default function ClassPreviewPage() {
                 />
               </div>
               <ul className="divide-y">
-                {students.map((student) => (
-                  <li key={student} className="py-2 flex items-center justify-between">
-                    <span>{student}</span>
-                    <span className="text-xs text-muted-foreground">Active</span>
+                {roster?.map((entry: any) => (
+                  <li key={entry?.user?.uuid} className="py-2 flex items-center justify-between">
+                    <span>{entry?.user?.full_name}</span>
+                    <span className="text-xs text-gray-500">
+                      {entry?.enrollment?.status === "ENROLLED" ? "Active" : "Inactive"}
+                    </span>
                   </li>
                 ))}
               </ul>
+
+            </Card>
+          )}
+
+
+          {/* CLASS SCHEDULE */}
+          {activeTab === "schedule" && (
+            <Card className="p-5 rounded-xl shadow-sm border border-border/100">
+              <div className="relative flex flex-row items-center mb-3">
+                <Search size={18} className="absolute left-3 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search learner"
+                  className="pl-10 pr-3 py-2 border rounded-lg w-full text-sm"
+                />
+              </div>
+
+              <ul className="divide-y">
+                class schedule in order
+              </ul>
+
             </Card>
           )}
 
@@ -296,22 +314,45 @@ export default function ClassPreviewPage() {
               )}
 
               <div className="divide-y">
-                {students.map((student) => (
-                  <div key={student} className="py-2 flex items-center justify-between">
-                    <span>{student}</span>
-                    <button
-                      onClick={() => toggleAttendance(student)}
-                      className={`px-3 py-1 text-xs rounded-lg ${
-                        attendance[student]
-                          ? 'bg-success/10 text-success'
-                          : 'bg-muted text-muted-foreground hover:bg-accent/10'
-                      }`}
+                {roster.map((entry: any) => {
+                  const enrollmentUuid = entry?.enrollment?.uuid;
+                  const fullName = entry?.user?.full_name;
+                  const isAttendanceMarked = entry?.enrollment?.is_attendance_marked;
+                  const isPresent = attendance[enrollmentUuid] ?? isAttendanceMarked;
+
+                  return (
+                    <div
+                      key={enrollmentUuid}
+                      className="py-2 flex items-center justify-between"
                     >
-                      {attendance[student] ? "Present" : "Mark Present"}
-                    </button>
-                  </div>
-                ))}
+                      <span>{fullName}</span>
+
+                      <button
+                        onClick={() => {
+                          markAttendance.mutate(
+                            {
+                              path: { enrollmentUuid },
+                              query: { attended: true },
+                            },
+                            {
+                              onSuccess: () => {
+                                toggleAttendance(enrollmentUuid);
+                              },
+                            }
+                          );
+                        }}
+                        className={`px-3 py-1 text-xs rounded-lg ${isPresent
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-500 hover:bg-purple-50"
+                          }`}
+                      >
+                        {isPresent ? "Present" : "Mark Present"}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
+
             </Card>
           )}
 

@@ -40,6 +40,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
+import PDFViewer from '../../_components/pdf-viewer';
 
 export default function ClassDetailsPage() {
   const params = useParams();
@@ -642,8 +643,7 @@ export default function ClassDetailsPage() {
 
                   {contentTypeName === "pdf" && (
                     <div>
-                      {/* <PDFViewer file={selectedLesson?.content_text} /> */}
-                      pdf contents will be displayed here
+                      <PDFViewer file={selectedLesson?.content_text} />
                     </div>
                   )}
                 </div>

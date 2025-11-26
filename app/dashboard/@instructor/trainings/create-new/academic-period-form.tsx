@@ -73,6 +73,7 @@ import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
 
+import { useInstructor } from '@/context/instructor-context';
 import {
   scheduleClassMutation,
   scheduleRecurringClassFromDefinitionMutation,
@@ -80,34 +81,15 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useInstructor } from '../../../../../context/instructor-context';
 
-function _formatToYYYYMMDD(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
-function convertToCustomDateTimeString(
-  dateInput: string | Date,
-  time = '09:00:00' // default time
-): string {
-  const date = new Date(dateInput);
-
-  // Extract date components in UTC
-  const yyyy = date.getUTCFullYear();
-  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(date.getUTCDate()).padStart(2, '0');
-
-  // Combine with provided time
-  return `${yyyy}-${mm}-${dd}T${time}`;
-}
+const formatDateOnly = (date: Date | string) => {
+  const d = new Date(date);
+  return d.toISOString().split('T')[0]; // → "2025-02-01"
+};
 
 interface AcademicFormProps {
   onNext: () => void;
@@ -118,12 +100,12 @@ interface AcademicFormProps {
 
 const academicPeriodSchema = z.object({
   academicPeriod: z.object({
-    startDate: z.date({ required_error: 'Start date is required' }),
-    endDate: z.date({ required_error: 'End date is required' }),
+    startDate: z.any({ required_error: 'Start date is required' }),
+    endDate: z.any({ required_error: 'End date is required' }),
   }),
   registrationPeriod: z.object({
-    startDate: z.date({ required_error: 'Registration start date is required' }),
-    endDate: z.date().optional(),
+    startDate: z.any({ required_error: 'Registration start date is required' }),
+    endDate: z.any().optional(),
   }),
 });
 
@@ -144,16 +126,39 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
     },
   });
 
+  // Convert string → Date safely
+  const toDate = (value?: string | Date | null) => {
+    if (!value) return undefined;
+    return value instanceof Date ? value : new Date(value);
+  };
+
+  useEffect(() => {
+    if (!classData) return;
+
+    form.reset({
+      academicPeriod: {
+        startDate: toDate(classData?.default_start_time) ?? new Date(),
+        endDate: toDate(classData?.default_end_time) ?? new Date(),
+      },
+      registrationPeriod: {
+        startDate: toDate(classData?.registrationPeriod?.startDate) ?? new Date(),
+        endDate: toDate(classData?.registrationPeriod?.endDate),
+      },
+    });
+  }, [classData]);
+
+
   const instructor = useInstructor();
 
   const [continuousRegistration, setContinuousRegistration] = useState(false);
   const _updateClassMutation = useMutation(updateClassDefinitionMutation());
 
-  const _createClassSchdeule = useMutation(scheduleRecurringClassFromDefinitionMutation());
+  const createClassSchdeule = useMutation(scheduleRecurringClassFromDefinitionMutation());
   const scheduleClass = useMutation(scheduleClassMutation());
 
   const onSubmit = (values: AcademicPeriodFormValues) => {
-    // if (!classId) return;
+    if (!classId) return;
+
     // updateClassMutation.mutate({
     //   body: {
     //     ...classData,
@@ -170,6 +175,23 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
     //     // onNext();
     //   }
     // })
+
+    createClassSchdeule.mutate(
+      {
+        path: { uuid: classId as string },
+        query: {
+          startDate: formatDateOnly(values.academicPeriod.startDate) as any,
+          endDate: formatDateOnly(values.academicPeriod.endDate) as any,
+        },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          onNext();
+        },
+      }
+    );
+
 
     // scheduleClass.mutate(
     //   {

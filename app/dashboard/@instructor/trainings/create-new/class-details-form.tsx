@@ -2,7 +2,6 @@
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -31,7 +30,7 @@ import {
   getClassRecurrencePatternOptions,
   searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
-  updateClassDefinitionMutation,
+  updateClassDefinitionMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -47,20 +46,24 @@ import {
   RecurrenceDialog,
 } from '../../_components/class-management-form';
 
-type ClassUploadOptions = {
-  key: 'banner';
-  setPreview: (value: string | null) => void;
-  mutation: any;
-  onChange: (value: string | null) => void;
-};
-
 interface ClassDetailsProps {
   handleNextStep: () => void;
   onPrev: () => void;
   classData: any;
+  createdClassId: string | null;
+  setCreatedClassId: (id: string) => void;
   combinedRecurrenceData: any;
   isLoading: boolean;
 }
+
+function toDateTimeLocal(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60000);
+  return localDate.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+}
+
 
 export default function ClassDetailsForm({
   handleNextStep,
@@ -182,22 +185,28 @@ export default function ClassDetailsForm({
   const handleSubmit = async (values: ClassFormValues) => {
     const payload = {
       ...values,
-      course_uuid: values?.course_uuid || classData?.course_uuid,
-      max_participants: values?.max_participants || classData?.max_participants,
+      course_uuid: values.course_uuid || classData?.course_uuid,
+      max_participants: values.max_participants || classData?.max_participants,
       recurrence_pattern_uuid: combinedRecurrenceData?.response?.uuid || values?.recurrence_pattern_uuid,
-      default_instructor_uuid: instructor?.uuid as string,
-      location_type: combinedRecurrenceData?.payload?.location_type || classData?.location_type,
-      location_name: combinedRecurrenceData?.payload?.location || classData?.location_name,
-      location_latitude: -1.292066,
-      location_longitude: 36.821945,
-      duration_minutes: combinedRecurrenceData?.payload?.duration || classData?.duration_minutes,
-      default_start_time: '2024-11-05T10:00:00',
-      default_end_time: '2024-12-05T12:00:00',
-      class_time_validy: '2 months',
-    };
 
-    // console.log('Submitting class details with payload:', payload);
-    // console.log(values, "Vaues")
+      default_instructor_uuid: instructor?.uuid,
+
+      location_type: combinedRecurrenceData?.payload?.location_type || classData?.location_type,
+      location_name: combinedRecurrenceData?.payload?.location_name || classData?.location_name,
+      location_latitude: combinedRecurrenceData?.payload?.location_latitude || classData?.location_latitude,
+      location_longitude: combinedRecurrenceData?.payload?.location_longitude || classData?.location_longitude,
+
+      duration_minutes: combinedRecurrenceData?.payload?.duration || classData?.duration_minutes,
+
+      // 👇 REMOVE HARDCODED VALUES
+      default_start_time: values.default_start_time || classData?.default_start_time || null,
+      default_end_time: values.default_end_time || classData?.default_end_time || null,
+
+      class_time_validity: `${Math.ceil(
+        (new Date(values.default_end_time).getTime() - new Date(values.default_start_time).getTime()) /
+        (1000 * 60 * 60 * 24 * 30)
+      )} months`,
+    };
 
 
     if (resolveId) {
@@ -216,7 +225,7 @@ export default function ClassDetailsForm({
               }),
             });
             toast.success(data?.message);
-            // router.push('/dashboard/trainings');
+
             handleNextStep();
           },
           onError: (error: any) => {
@@ -236,7 +245,7 @@ export default function ClassDetailsForm({
             });
             toast.success(data?.message);
             setCreatedClassId(data?.data?.uuid as string);
-            // router.push('/dashboard/trainings');
+
             handleNextStep();
           },
           onError: (error: any) => {
@@ -255,16 +264,16 @@ export default function ClassDetailsForm({
     const visibility = form.watch("class_visibility");  // PUBLIC / PRIVATE
 
     if (visibility === "PRIVATE" && sessionFormat === "PRIVATE") {
-      return rates.private_individual_rate;
+      return rates.private_inperson_rate;
     }
     if (visibility === "PRIVATE" && sessionFormat === "GROUP") {
-      return rates.private_group_rate;
+      return rates.private_online_rate;
     }
     if (visibility === "PUBLIC" && sessionFormat === "PRIVATE") {
-      return rates.public_individual_rate;
+      return rates.group_inperson_rate;
     }
     if (visibility === "PUBLIC" && sessionFormat === "GROUP") {
-      return rates.public_group_rate;
+      return rates.group_online_rate;
     }
 
     return 0;
@@ -273,10 +282,7 @@ export default function ClassDetailsForm({
 
   useEffect(() => {
     if (!selectedCourseProgram?.application?.rate_card) return;
-
     const newRate = computeTrainingRate();
-
-    // Automatically set the training fee (not editable)
     form.setValue("training_fee", newRate);
   }, [
     selectedCourseProgram,
@@ -284,39 +290,31 @@ export default function ClassDetailsForm({
     form.watch("session_format")
   ]);
 
-
   useEffect(() => {
-    if (classData && courses?.data?.content) {
-      form.reset({
-        title: classData.title ?? '',
-        description: classData.description ?? '',
-        course_uuid: classData.course_uuid ?? '',
-        training_fee: classData?.training_fee ?? 0,
-        organisation_uuid: classData.organisation_uuid ?? '',
-        default_start_time: classData.default_start_time ?? '',
-        default_end_time: classData.default_end_time ?? '',
-        max_participants: classData.max_participants ?? 0,
-        recurrence_pattern_uuid: classData.recurrence_pattern_uuid ?? '',
-        location_type: classData.location_type ?? '',
-        is_active: classData.is_active,
-      });
-    }
-  }, [classData, courses?.data?.content, form]);
+    if (!classData || !approvedCourses?.length) return;
 
+    form.reset({
+      title: classData.title ?? '',
+      description: classData.description ?? '',
+      course_uuid: classData.course_uuid ?? '',
+      categories: classData.categories ?? ['none'],
+      organisation_uuid: classData.organisation_uuid ?? '',
+
+      default_start_time: toDateTimeLocal(classData.default_start_time),
+      default_end_time: toDateTimeLocal(classData.default_end_time),
+
+      training_fee: classData.training_fee ?? 0,
+      max_participants: classData.max_participants ?? 0,
+      recurrence_pattern_uuid: classData.recurrence_pattern_uuid ?? '',
+      location_type: classData.location_type ?? '',
+      class_visibility: classData.class_visibility ?? 'PUBLIC',
+      session_format: classData.session_format ?? 'GROUP',
+      is_active: classData.is_active ?? false,
+    });
+  }, [classData, approvedCourses, form]);
 
   return (
     <main className=''>
-      {/* <div className='mb-10 block lg:flex lg:items-start lg:space-x-4'>
-        <div className='w-full'>
-          <h3 className='text-2xl leading-none font-semibold tracking-tight'>
-            Class Detials
-          </h3>
-          <p className='text-muted-foreground mt-1 text-sm'>
-            Basic information about your class
-          </p>
-        </div>
-      </div> */}
-
       {isLoading ? (
         <div className='mx-auto items-center justify-center'>
           <CustomLoadingState subHeading='Fetching your class details' />
@@ -423,46 +421,6 @@ export default function ClassDetailsForm({
               )}
             />
 
-            {/* <div className='flex flex-col items-start gap-6 sm:flex-row'>
-              <FormField
-                control={form.control}
-                name='default_start_time'
-                render={({ field }) => (
-                  <FormItem className='w-full'>
-                    <FormLabel>Start Time</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='time'
-                        step='60'
-                        {...field}
-                        onChange={e => field.onChange(e.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='default_end_time'
-                render={({ field }) => (
-                  <FormItem className='w-full'>
-                    <FormLabel>End Time</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='time'
-                        step='60'
-                        {...field}
-                        onChange={e => field.onChange(e.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div> */}
-
             <FormField
               control={form.control}
               name='description'
@@ -528,6 +486,43 @@ export default function ClassDetailsForm({
               />
             </div>
 
+            <div className='flex flex-col items-start gap-6 sm:flex-row'>
+              <FormField
+                control={form.control}
+                name='default_start_time'
+                render={({ field }) => (
+                  <FormItem className='w-full'>
+                    <FormLabel>Start Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='datetime-local'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='default_end_time'
+                render={({ field }) => (
+                  <FormItem className='w-full'>
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='datetime-local'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+
             <FormField
               control={form.control}
               name="training_fee"
@@ -557,7 +552,7 @@ export default function ClassDetailsForm({
 
 
             {/* Required Toggle */}
-            <FormField
+            {/* <FormField
               control={form.control}
               name='is_active'
               render={({ field }) => (
@@ -572,7 +567,7 @@ export default function ClassDetailsForm({
                   </div>
                 </FormItem>
               )}
-            />
+            /> */}
 
             <div className='flex justify-between gap-2 pt-6'>
               <Button variant='outline' onClick={onPrev}>
