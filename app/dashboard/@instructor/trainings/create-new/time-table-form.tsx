@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 
@@ -18,6 +18,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { createClassRecurrencePatternMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useEffect } from 'react';
+import MapboxSearchInput from '../component/mapbox-search-input';
 
 interface TimetableFormProps {
   classId: string;
@@ -44,7 +45,7 @@ const TimetableSchema = z.object({
   location_longitude: z.any().optional().nullable(),
   duration: z.coerce.number(),
   availability: z.array(AvailabilityDaySchema),
-  // 🆕 Recurrence fields
+  // Recurrence fields
   recurrence_type: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).default('WEEKLY'),
   interval_value: z.coerce.number().min(1).default(1),
   end_date: z.string().optional(),
@@ -105,20 +106,28 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
       reset({
         location_type: data?.location_type ?? "",
         location_name: data?.location_name ?? "",
+        location_latitude: data?.location_latitude ?? null,
+        location_longitude: data?.location_longitude ?? null,
+
         duration: data?.duration_minutes ?? "",
-        availability: daysOfWeek.map(day => ({
-          day: day.full,
-          enabled: false,
-          slots: [],
-        })),
+
+        availability: data?.availability?.length
+          ? data.availability
+          : daysOfWeek.map(day => ({
+            day: day.full,
+            enabled: false,
+            slots: [],
+          })),
+
         recurrence_type: recurrence?.recurrence_type || "WEEKLY",
         interval_value: recurrence?.interval_value || 1,
-        day_of_month: null,
+        day_of_month: recurrence?.day_of_month ?? null,
         end_date: recurrenceEndDate || "2026-12-31",
         occurrence_count: recurrence?.occurrence_count || 0,
       });
     }
   }, [data, reset]);
+
 
   const createTimetable = useMutation(createClassRecurrencePatternMutation());
 
@@ -146,7 +155,6 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
     };
 
     if (classId) {
-      // ✅ FIXED: pass the actual data forward
       onNext({
         response: null,
         payload,
@@ -164,14 +172,6 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
         }
       );
     }
-  };
-
-
-  const _handleNextStep = () => {
-    onNext({
-      response: null,
-      payload: { ...recurrence, data },
-    });
   };
 
   const watched = watch();
@@ -199,18 +199,21 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
           />
         </div>
 
-        {/* --- Location --- */}
         {['IN_PERSON', 'HYBRID'].includes(watched.location_type) && (
-          <div className='flex-1 space-y-2'>
-            <Label>Location *</Label>
-            <div className='flex items-center gap-2'>
-              <MapPin className='text-muted-foreground h-5 w-5' />
-              <Controller
-                name='location_name'
-                control={control}
-                render={({ field }) => <Input {...field} placeholder='Enter location' />}
-              />
-            </div>
+          <div className="space-y-3">
+            <Label>Search Location</Label>
+
+            <MapboxSearchInput
+              onSelect={(place: any) => {
+                setValue("location_name", place.name);
+                setValue("location_latitude", place.latitude);
+                setValue("location_longitude", place.longitude);
+              }}
+            />
+
+            <p className="text-xs text-muted-foreground">
+              Selecting a location auto-fills coordinates.
+            </p>
           </div>
         )}
       </div>
@@ -246,7 +249,6 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
         </div>
       )}
 
-
       {/* --- Availability Days --- */}
       <Card className='space-y-4 p-4'>
         <h3 className='font-medium'>Days & Time Slots</h3>
@@ -275,28 +277,6 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
             </div>
           )}
         />
-
-        {/* <Controller
-          name='timezone'
-          control={control}
-          render={({ field }) => (
-            <div className='space-y-1'>
-              <Label>Timezone</Label>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className='w-full'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timezones.map(tz => (
-                    <SelectItem key={tz} value={tz}>
-                      {tz}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        /> */}
       </div>
 
       {/* --- Recurrence Fields --- */}
@@ -363,10 +343,6 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
 
       <div className='flex justify-end gap-4'>
         <Button type='submit'>Save & Continue</Button>
-
-        {/* <Button type='button' variant='outline' onClick={handleNextStep}>
-          Next
-        </Button> */}
       </div>
     </form>
   );
@@ -380,16 +356,4 @@ const daysOfWeek = [
   { id: 'friday', label: 'Fri', full: 'FRIDAY' },
   { id: 'saturday', label: 'Sat', full: 'SATURDAY' },
   { id: 'sunday', label: 'Sun', full: 'SUNDAY' },
-];
-
-const timezones = [
-  'America/New_York',
-  'America/Chicago',
-  'America/Denver',
-  'America/Los_Angeles',
-  'Europe/London',
-  'Europe/Paris',
-  'Asia/Tokyo',
-  'Asia/Shanghai',
-  'Australia/Sydney',
 ];

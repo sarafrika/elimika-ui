@@ -35,7 +35,7 @@ const steps = [
 export default function ClassCreationPage() {
   const searchParams = useSearchParams();
   const classId = searchParams.get('id');
-  const [createdClassId, _setCreatedClassId] = useState<string | null>(null);
+  const [createdClassId, setCreatedClassId] = useState<string | null>(null);
   const resolveId = classId ? (classId as string) : (createdClassId as string);
 
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -149,6 +149,8 @@ export default function ClassCreationPage() {
             isLoading={isLoading}
             handleNextStep={nextStep}
             onPrev={prevStep}
+            createdClassId={createdClassId}
+            setCreatedClassId={setCreatedClassId}
             classData={combinedData}
             combinedRecurrenceData={combinedRecurrenceData}
           />
@@ -195,6 +197,7 @@ export default function ClassCreationPage() {
         return (
           <ReviewPublishForm
             data={combinedData as any}
+            classId={resolveId as string}
             onComplete={handleComplete}
             onPrev={prevStep}
             scheduleSummary={scheduleSummary}

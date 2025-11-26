@@ -90,7 +90,6 @@ export default function TimetableManager({
                 <p className="mt-6 text-gray-500">No events available.</p>
               )}
             </TabsContent>
-
           </Tabs>
         </CardContent>
       </Card>

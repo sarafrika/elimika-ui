@@ -2,6 +2,7 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useInstructor } from '@/context/instructor-context';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
   BookOpen,
@@ -16,9 +17,13 @@ import {
   MapPin,
   Users,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { getClassDefinitionQueryKey, getClassDefinitionsForInstructorQueryKey, updateClassDefinitionMutation } from '../../../../../services/client/@tanstack/react-query.gen';
 
 interface ReviewPublishFormProps {
   data: Partial<any>;
+  classId: string;
   onComplete: (status: 'draft' | 'published') => void;
   onPrev: () => void;
   scheduleSummary: any;
@@ -26,10 +31,13 @@ interface ReviewPublishFormProps {
 
 export function ReviewPublishForm({
   data,
+  classId,
   onComplete,
   onPrev,
   scheduleSummary,
 }: ReviewPublishFormProps) {
+  const qc = useQueryClient()
+  const router = useRouter()
   const instructor = useInstructor();
 
   const startTime = new Date(data?.default_start_time);
@@ -50,6 +58,51 @@ export function ReviewPublishForm({
 
     return data?.training_fee * totalHours * enrollmentCount;
   };
+
+  const updateClassDefinition = useMutation(updateClassDefinitionMutation());
+
+  const handlePublishClass = async () => {
+    if (!classId) {
+      toast.error("Cannot publish a class that hasn't been created yet.");
+      return;
+    }
+
+    if (!data) {
+      toast.error("Class data is not available.");
+      return;
+    }
+
+    const payload = {
+      ...data,
+      is_active: true,
+    };
+
+    updateClassDefinition.mutate(
+      { path: { uuid: classId }, body: payload as any },
+      {
+        onSuccess: (data) => {
+          qc.invalidateQueries({
+            queryKey: getClassDefinitionsForInstructorQueryKey({
+              path: { instructorUuid: instructor?.uuid as string },
+            }),
+          });
+          qc.invalidateQueries({
+            queryKey: getClassDefinitionQueryKey({
+              path: { uuid: classId as string },
+            }),
+          });
+
+          toast.success("Class published successfully!");
+          router.push('/dashboard/trainings')
+        },
+        onError: (error: any) => {
+          toast.error(JSON.stringify(error?.error || "Failed to publish class"));
+        },
+      }
+    );
+  };
+
+
 
   return (
     <div className='space-y-6'>
@@ -157,7 +210,7 @@ export function ReviewPublishForm({
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Academic Period:</span>
-              <div className='font-medium'>
+              <div className='text-sm'>
                 {formattedStart} -{' '}{formattedEnd}
               </div>
             </div>
@@ -241,7 +294,7 @@ export function ReviewPublishForm({
             <div>
               <span className='text-muted-foreground text-sm'>Pricing:</span>
               <div className='font-medium'>
-                {/* {`$${data.visibility.price}/lesson (Total: $${totalFee.toFixed(2)})`} */}
+                {`KES ${data.training_fee}/lesson (Total: KES ${calculateTotalFee().toFixed(2)})`}
               </div>
             </div>
           </CardContent>
@@ -258,11 +311,11 @@ export function ReviewPublishForm({
           <CardContent className='space-y-3'>
             <div>
               <span className='text-muted-foreground text-sm'>Course Resources:</span>
-              <div className='font-medium'>3 (Auto-filled)</div>
+              <div className='font-medium'>{"~ "}{totalLessons} (Auto-filled)</div>
             </div>
             <div>
               <span className='text-muted-foreground text-sm'>Course Assessments:</span>
-              <div className='font-medium'>2 (Auto-filled)</div>
+              <div className='font-medium'>0 (Auto-filled)</div>
             </div>
           </CardContent>
         </Card>
@@ -312,7 +365,7 @@ export function ReviewPublishForm({
           <Button variant='outline' onClick={() => onComplete('draft')}>
             Save as Draft
           </Button>
-          <Button onClick={() => onComplete('published')} className='gap-2'>
+          <Button onClick={handlePublishClass} className='gap-2'>
             <CheckCircle className='h-4 w-4' />
             Publish Class
           </Button>
