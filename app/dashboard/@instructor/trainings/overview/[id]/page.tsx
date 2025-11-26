@@ -532,7 +532,7 @@ export default function ClassPreviewPage() {
 
                             {/* Cancellation reason */}
                             {s?.cancellation_reason && (
-                              <p className="text-sm text-red-600">
+                              <p className="text-sm">
                                 <span className="font-medium">Reason:</span> {s.cancellation_reason}
                               </p>
                             )}

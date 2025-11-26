@@ -264,7 +264,7 @@ export default function ClassPreviewPage() {
                 {roster?.map((entry: any) => (
                   <li key={entry?.user?.uuid} className="py-2 flex items-center justify-between">
                     <span>{entry?.user?.full_name}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {entry?.enrollment?.status === "ENROLLED" ? "Active" : "Inactive"}
                     </span>
                   </li>
@@ -342,8 +342,8 @@ export default function ClassPreviewPage() {
                           );
                         }}
                         className={`px-3 py-1 text-xs rounded-lg ${isPresent
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500 hover:bg-purple-50"
+                          ? " text-muted-foreground"
+                          : "text-text-muted-foreground"
                           }`}
                       >
                         {isPresent ? "Present" : "Mark Present"}
