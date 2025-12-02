@@ -8,8 +8,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -18,6 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useInstructor } from '@/context/instructor-context';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import { getEnrollmentsForClassOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQueries } from '@tanstack/react-query';
 import {
   BookOpen,
   Clock,
@@ -35,10 +41,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import RichTextRenderer from '../../../components/editors/richTextRenders';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { useInstructor } from '../../../context/instructor-context';
-import { useDifficultyLevels } from '../../../hooks/use-difficultyLevels';
 import { CustomLoadingState } from '../@course_creator/_components/loading-state';
 
 export const getLocationBadgeColor = (location: string) => {
@@ -59,9 +61,9 @@ export const getDifficultyColor = (difficulty: string) => {
     case 'beginner':
       return 'bg-green-500/70';
     case 'intermediate':
-    return 'bg-primary/70';
+      return 'bg-primary/70';
     case 'advanced':
-    return 'bg-accent/70';
+      return 'bg-accent/70';
     default:
       return 'bg-muted-foreground/70';
   }
@@ -95,10 +97,6 @@ export function TrainingClassList({
   const [statusFilter, _setStatusFilter] = useState('all');
   const [activeFilter, setActiveFilter] = useState('all');
 
-  // const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
-  //   instructor?.uuid as string
-  // );
-
   const filteredClasses = classesWithCourseAndInstructor?.filter((cls: any) => {
     const matchesSearch =
       cls.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -123,15 +121,16 @@ export function TrainingClassList({
   const publishedClasses = classesWithCourseAndInstructor?.filter((item: any) => item.is_active);
   const draftClasses = classesWithCourseAndInstructor?.filter((item: any) => !item.is_active);
 
-  function _openTimetableSchedule(_uuid: string) {
-    // timetable
-  }
-  function _openRecurrentSchedule(_uuid: string) {
-    // recurring schedule
-  }
-  function _openDeleteModal(_uuid: string) {
-    // delete class
-  }
+  // 1. Prepare all roster hooks BEFORE rendering
+  const enrollmentQueries = useQueries({
+    queries: filteredClasses.map((cls: any) => ({
+      ...getEnrollmentsForClassOptions({
+        path: { uuid: cls.uuid }
+      }),
+      queryKey: ['class-enrollments', cls.uuid], // ensure unique
+      enabled: !!cls.uuid,
+    })),
+  });
 
   if (loading) {
     return <CustomLoadingState subHeading='Loading training classes information' />;
@@ -202,16 +201,6 @@ export function TrainingClassList({
             </SelectContent>
           </Select>
 
-          {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[150px] bg-white/80">
-                                <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="available">Available</SelectItem>
-                                <SelectItem value="full">Full</SelectItem>
-                            </SelectContent>
-                        </Select> */}
           <div className='flex items-center gap-2'>
             <Badge variant='outline' className='gap-1 px-3 py-1.5'>
               <BookOpen className='h-3.5 w-3.5' />
@@ -223,15 +212,25 @@ export function TrainingClassList({
 
       {/* Classes Grid */}
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
-        {filteredClasses.map((cls: any) => {
-          const enrollmentPercentage = (cls.current_enrollments / cls.max_participants) * 100;
+        {filteredClasses.map((cls: any, index: any) => {
           const isFull = cls.current_enrollments >= cls.max_participants;
           const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'N/A';
 
+          const enrollmentQuery = enrollmentQueries[index];
+          // @ts-ignore
+          const enrollmentData = enrollmentQuery?.data?.data || [];
+
+          const uniqueStudentIds = new Set(
+            enrollmentData.map((e: any) => e.student_uuid)
+          );
+          const enrolledCount = uniqueStudentIds.size;
+          const max = cls.max_participants;
+          const enrolledPercentage = (enrolledCount / max) * 100;
+
           return (
             <div key={cls.uuid} className='group cursor-pointer'>
-              <div className='relative h-full max-w-[380px] rounded-2xl border border-primary/40 bg-card p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl'>
-                <div className='h-full overflow-hidden rounded-2xl bg-white'>
+              <div className='relative h-full max-w-[380px] rounded-2xl border border-primary/40 bg-card dark:bg-inherit p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl'>
+                <div className='h-full overflow-hidden rounded-2xl'>
                   {/* Image Header */}
                   <div className='relative h-48 overflow-hidden'>
                     <div className='absolute inset-0 z-10 bg-primary/10' />
@@ -292,20 +291,6 @@ export function TrainingClassList({
                             <PenIcon className='mr-2 h-4 w-4' />
                             Edit Class
                           </DropdownMenuItem>
-                          {/* <DropdownMenuItem
-                            onClick={() => onOpenTimetable?.(cls.uuid)}
-                            className='flex w-full cursor-pointer items-center'
-                          >
-                            <Calendar className='mr-2 h-4 w-4' />
-                            Timetable Schedule
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onOpenRecurring?.(cls.uuid)}
-                            className='flex w-full cursor-pointer items-center'
-                          >
-                            <Calendar className='mr-2 h-4 w-4' />
-                            Schedule Recurring
-                          </DropdownMenuItem> */}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => onDelete?.(cls.uuid)}
@@ -379,7 +364,7 @@ export function TrainingClassList({
                         <div>
                           <p className='text-muted-foreground text-xs'>Enrolled</p>
                           <p className='text-sm'>
-                            {cls?.current_enrollments || 'N?A'}/{cls?.max_participants}
+                            {enrolledCount}/{cls?.max_participants}
                           </p>
                         </div>
                       </div>
@@ -391,17 +376,17 @@ export function TrainingClassList({
                         <span className='text-muted-foreground'>Enrollment</span>
                         <span
                           className={
-                            enrollmentPercentage >= 80 ? 'text-warning' : 'text-primary'
+                            enrolledPercentage >= 80 ? 'text-warning' : 'text-primary'
                           }
                         >
-                          {enrollmentPercentage?.toFixed(0)}%
+                          {enrolledPercentage?.toFixed(0)}%
                         </span>
                       </div>
                       <div className='h-2 overflow-hidden rounded-full bg-primary/10'>
                         <div
-                          className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                          className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
                             }`}
-                          style={{ width: `${enrollmentPercentage}%` }}
+                          style={{ width: `${enrolledPercentage}%` }}
                         />
                       </div>
                     </div>
@@ -411,17 +396,6 @@ export function TrainingClassList({
                       <div className='flex items-center gap-1.5'>
                         <span className='text-lg'>KES {cls?.training_fee || 'N/A'}</span>
                       </div>
-                      {/* <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-                        <Calendar className='h-3.5 w-3.5' />
-                        <span>
-                          Starts{' '}
-                          {new Date(cls?.start_date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })}{' '}
-                          {cls?.default_start_time}{' '}
-                        </span>
-                      </div> */}
                     </div>
 
                     <div className='flex flex-row items-center justify-between' >

@@ -3,7 +3,7 @@
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
-  getInstructorAvailabilityOptions,
+  getInstructorCalendarOptions,
   getInstructorScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
@@ -13,7 +13,6 @@ import {
   type AvailabilityData,
   type ClassScheduleItem,
   convertToCalendarEvents,
-  transformAvailabilityArray,
 } from './components/types';
 
 const Page = () => {
@@ -22,7 +21,7 @@ const Page = () => {
   const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
 
   const { data: availabilitySlotss, refetch } = useQuery(
-    getInstructorAvailabilityOptions({ path: { instructorUuid: user?.instructor?.uuid as string } })
+    getInstructorCalendarOptions({ path: { instructorUuid: user?.instructor?.uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } })
   );
 
   const { data: timetable } = useQuery({
@@ -34,25 +33,17 @@ const Page = () => {
   });
 
   useEffect(() => {
-    const slots = availabilitySlotss?.data
-      ? transformAvailabilityArray(availabilitySlotss.data)
-      : [];
-
     const eventsFromSchedule = timetable?.data
       ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
       : [];
 
     setAvailabilityData((prev: any) => ({
       ...prev,
-      slots,
       events: eventsFromSchedule, // optionally: [...calendarEvents, ...eventsFromSchedule]
     }));
-
-    setTransformedSlots(slots);
   }, [availabilitySlotss?.data, timetable?.data]);
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
-    slots: transformedSlots as any,
     events: [],
     settings: {
       timezone: 'UTC',
@@ -65,17 +56,6 @@ const Page = () => {
     },
   });
 
-  useEffect(() => {
-    if (availabilitySlotss?.data) {
-      const slots = transformAvailabilityArray(availabilitySlotss.data);
-      setTransformedSlots(slots);
-
-      setAvailabilityData((prev: any) => ({
-        ...prev,
-        slots,
-      }));
-    }
-  }, [availabilitySlotss?.data]);
 
   return (
     <AvailabilityManager

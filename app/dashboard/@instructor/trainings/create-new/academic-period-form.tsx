@@ -73,11 +73,8 @@ import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
 
-import { useInstructor } from '@/context/instructor-context';
 import {
-  scheduleClassMutation,
-  scheduleRecurringClassFromDefinitionMutation,
-  updateClassDefinitionMutation,
+  scheduleRecurringClassFromDefinitionMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -147,34 +144,12 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
     });
   }, [classData]);
 
-
-  const instructor = useInstructor();
-
   const [continuousRegistration, setContinuousRegistration] = useState(false);
-  const _updateClassMutation = useMutation(updateClassDefinitionMutation());
 
   const createClassSchdeule = useMutation(scheduleRecurringClassFromDefinitionMutation());
-  const scheduleClass = useMutation(scheduleClassMutation());
 
   const onSubmit = (values: AcademicPeriodFormValues) => {
     if (!classId) return;
-
-    // updateClassMutation.mutate({
-    //   body: {
-    //     ...classData,
-    //     default_start_time: "2025-11-02",
-    //     default_end_time: "2025-12-19"
-    //     // default_start_time: new Date(values?.academicPeriod?.startDate),
-    //     // default_end_time: new Date(values?.academicPeriod?.endDate)
-    //     // registration_start_period: values?.registrationPeriod?.startDate
-    //     // registration_end_period: values?.registrationPeriod?.endDate
-    //   },
-    //   path: { uuid: classId }
-    // }, {
-    //   onSuccess: () => {
-    //     // onNext();
-    //   }
-    // })
 
     createClassSchdeule.mutate(
       {
@@ -191,30 +166,6 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
         },
       }
     );
-
-
-    // scheduleClass.mutate(
-    //   {
-    //     body: {
-    //       class_definition_uuid: classData?.uuid,
-    //       instructor_uuid:
-    //         (classData?.default_instructor_uuid as string) || (instructor?.uuid as string),
-    //       // @ts-expect-error
-    //       start_time: convertToCustomDateTimeString(values?.academicPeriod?.startDate, '09:00:00'),
-    //       // @ts-expect-error
-    //       end_time: convertToCustomDateTimeString(values?.academicPeriod?.endDate, '10:30:00'),
-    //       timezone: 'UTC',
-    //     },
-    //   },
-    //   {
-    //     onSuccess: data => {
-    //       toast.success(data?.message);
-    //       onNext();
-    //     },
-    //   }
-    // );
-
-    // onNext();
   };
 
   const onError = (errors: any) => {

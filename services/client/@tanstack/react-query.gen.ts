@@ -57,9 +57,6 @@ import {
   updateInstructorEducation,
   deleteInstructorDocument,
   updateInstructorDocument,
-  deleteAvailabilitySlot,
-  getAvailabilitySlot,
-  updateAvailabilitySlot,
   deleteCourse,
   getCourseByUuid,
   updateCourse,
@@ -187,9 +184,7 @@ import {
   addInstructorDocument,
   verifyDocument,
   uploadInstructorDocument,
-  createAvailabilitySlot,
   setAvailabilityPatterns,
-  bookInstructorSlot,
   blockTime,
   createLink,
   enrollStudent,
@@ -344,12 +339,8 @@ import {
   previewInvitation,
   getPendingInvitationsForEmail,
   getInstructorRatingSummary,
-  clearInstructorAvailability,
-  getInstructorAvailability,
-  searchAvailability,
-  getAvailabilityForDate,
   checkAvailability,
-  findAvailableSlots,
+  getInstructorCalendar,
   searchSkills,
   searchInstructors,
   searchMemberships,
@@ -401,8 +392,6 @@ import {
   listCatalogItems,
   getByCourse,
   getByClass,
-  previewRecurringClassSchedule,
-  checkClassSchedulingConflicts,
   getEnrollmentsForClass,
   getClassDefinitionsForOrganisation,
   getClassDefinitionsForInstructor,
@@ -437,6 +426,7 @@ import {
   getDashboardActivity,
   cancelInvitation,
   cleanupOldInvitations,
+  clearInstructorAvailability,
   revokeLink,
   dissociateRubric,
   dissociateRubricByContext,
@@ -581,13 +571,6 @@ import type {
   UpdateInstructorDocumentData,
   UpdateInstructorDocumentError,
   UpdateInstructorDocumentResponse,
-  DeleteAvailabilitySlotData,
-  DeleteAvailabilitySlotError,
-  DeleteAvailabilitySlotResponse,
-  GetAvailabilitySlotData,
-  UpdateAvailabilitySlotData,
-  UpdateAvailabilitySlotError,
-  UpdateAvailabilitySlotResponse,
   DeleteCourseData,
   DeleteCourseError,
   DeleteCourseResponse,
@@ -925,15 +908,9 @@ import type {
   UploadInstructorDocumentData,
   UploadInstructorDocumentError,
   UploadInstructorDocumentResponse,
-  CreateAvailabilitySlotData,
-  CreateAvailabilitySlotError,
-  CreateAvailabilitySlotResponse,
   SetAvailabilityPatternsData,
   SetAvailabilityPatternsError,
   SetAvailabilityPatternsResponse,
-  BookInstructorSlotData,
-  BookInstructorSlotError,
-  BookInstructorSlotResponse,
   BlockTimeData,
   BlockTimeError,
   BlockTimeResponse,
@@ -1328,18 +1305,10 @@ import type {
   PreviewInvitationData,
   GetPendingInvitationsForEmailData,
   GetInstructorRatingSummaryData,
-  ClearInstructorAvailabilityData,
-  ClearInstructorAvailabilityError,
-  ClearInstructorAvailabilityResponse,
-  GetInstructorAvailabilityData,
-  SearchAvailabilityData,
-  SearchAvailabilityError,
-  SearchAvailabilityResponse,
-  GetAvailabilityForDateData,
   CheckAvailabilityData,
   CheckAvailabilityError,
   CheckAvailabilityResponse,
-  FindAvailableSlotsData,
+  GetInstructorCalendarData,
   SearchSkillsData,
   SearchSkillsError,
   SearchSkillsResponse,
@@ -1445,8 +1414,6 @@ import type {
   ListCatalogItemsData,
   GetByCourseData,
   GetByClassData,
-  PreviewRecurringClassScheduleData,
-  CheckClassSchedulingConflictsData,
   GetEnrollmentsForClassData,
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForInstructorData,
@@ -1505,6 +1472,9 @@ import type {
   CleanupOldInvitationsData,
   CleanupOldInvitationsError,
   CleanupOldInvitationsResponse,
+  ClearInstructorAvailabilityData,
+  ClearInstructorAvailabilityError,
+  ClearInstructorAvailabilityResponse,
   RevokeLinkData,
   RevokeLinkError,
   RevokeLinkResponse,
@@ -2975,84 +2945,6 @@ export const updateInstructorDocumentMutation = (
 };
 
 /**
- * Delete an availability slot
- * Removes a specific availability slot
- */
-export const deleteAvailabilitySlotMutation = (
-  options?: Partial<Options<DeleteAvailabilitySlotData>>
-): UseMutationOptions<
-  DeleteAvailabilitySlotResponse,
-  DeleteAvailabilitySlotError,
-  Options<DeleteAvailabilitySlotData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteAvailabilitySlotResponse,
-    DeleteAvailabilitySlotError,
-    Options<DeleteAvailabilitySlotData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await deleteAvailabilitySlot({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getAvailabilitySlotQueryKey = (options: Options<GetAvailabilitySlotData>) =>
-  createQueryKey('getAvailabilitySlot', options);
-
-/**
- * Get a specific availability slot
- * Retrieves a single availability slot by its UUID
- */
-export const getAvailabilitySlotOptions = (options: Options<GetAvailabilitySlotData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getAvailabilitySlot({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAvailabilitySlotQueryKey(options),
-  });
-};
-
-/**
- * Update an availability slot
- * Updates an existing availability slot
- */
-export const updateAvailabilitySlotMutation = (
-  options?: Partial<Options<UpdateAvailabilitySlotData>>
-): UseMutationOptions<
-  UpdateAvailabilitySlotResponse,
-  UpdateAvailabilitySlotError,
-  Options<UpdateAvailabilitySlotData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateAvailabilitySlotResponse,
-    UpdateAvailabilitySlotError,
-    Options<UpdateAvailabilitySlotData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await updateAvailabilitySlot({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
  * Delete course
  * Permanently removes a course, its category associations, and all associated data.
  */
@@ -4108,7 +4000,7 @@ export const updateCategoryMutation = (
 
 /**
  * Update catalog mapping
- * Updates Medusa identifiers or status for an existing mapping
+ * Updates internal variant identifiers or status for an existing mapping
  */
 export const updateCatalogItemMutation = (
   options?: Partial<Options<UpdateCatalogItemData>>
@@ -8303,56 +8195,6 @@ export const uploadInstructorDocumentMutation = (
   return mutationOptions;
 };
 
-export const createAvailabilitySlotQueryKey = (options: Options<CreateAvailabilitySlotData>) =>
-  createQueryKey('createAvailabilitySlot', options);
-
-/**
- * Create a new availability slot
- * Creates a single availability slot for an instructor
- */
-export const createAvailabilitySlotOptions = (options: Options<CreateAvailabilitySlotData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await createAvailabilitySlot({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: createAvailabilitySlotQueryKey(options),
-  });
-};
-
-/**
- * Create a new availability slot
- * Creates a single availability slot for an instructor
- */
-export const createAvailabilitySlotMutation = (
-  options?: Partial<Options<CreateAvailabilitySlotData>>
-): UseMutationOptions<
-  CreateAvailabilitySlotResponse,
-  CreateAvailabilitySlotError,
-  Options<CreateAvailabilitySlotData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateAvailabilitySlotResponse,
-    CreateAvailabilitySlotError,
-    Options<CreateAvailabilitySlotData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await createAvailabilitySlot({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const setAvailabilityPatternsQueryKey = (options: Options<SetAvailabilityPatternsData>) =>
   createQueryKey('setAvailabilityPatterns', options);
 
@@ -8425,74 +8267,6 @@ export const setAvailabilityPatternsMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await setAvailabilityPatterns({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const bookInstructorSlotQueryKey = (options: Options<BookInstructorSlotData>) =>
-  createQueryKey('bookInstructorSlot', options);
-
-/**
- * Book an instructor for a private session
- * Allows a student to book an instructor for a one-on-one session outside publicly scheduled classes.
- *
- * **Flow:**
- * - The frontend first uses the `/available` endpoint to show free slots.
- * - Once a slot is selected, the client calls this endpoint with start/end times and an optional purpose.
- * - The service verifies the instructor is available, then blocks the slot so it is not offered again.
- *
- * This endpoint does not create enrollments or class definitions; it simply reserves the instructor's time.
- * Other modules (e.g., Timetabling, Commerce) can listen for bookings and create paid sessions if needed.
- *
- */
-export const bookInstructorSlotOptions = (options: Options<BookInstructorSlotData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await bookInstructorSlot({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: bookInstructorSlotQueryKey(options),
-  });
-};
-
-/**
- * Book an instructor for a private session
- * Allows a student to book an instructor for a one-on-one session outside publicly scheduled classes.
- *
- * **Flow:**
- * - The frontend first uses the `/available` endpoint to show free slots.
- * - Once a slot is selected, the client calls this endpoint with start/end times and an optional purpose.
- * - The service verifies the instructor is available, then blocks the slot so it is not offered again.
- *
- * This endpoint does not create enrollments or class definitions; it simply reserves the instructor's time.
- * Other modules (e.g., Timetabling, Commerce) can listen for bookings and create paid sessions if needed.
- *
- */
-export const bookInstructorSlotMutation = (
-  options?: Partial<Options<BookInstructorSlotData>>
-): UseMutationOptions<
-  BookInstructorSlotResponse,
-  BookInstructorSlotError,
-  Options<BookInstructorSlotData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    BookInstructorSlotResponse,
-    BookInstructorSlotError,
-    Options<BookInstructorSlotData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await bookInstructorSlot({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -16547,207 +16321,6 @@ export const getInstructorRatingSummaryOptions = (
   });
 };
 
-/**
- * Clear all availability for an instructor
- * Removes all availability slots and patterns for an instructor. Use with caution.
- */
-export const clearInstructorAvailabilityMutation = (
-  options?: Partial<Options<ClearInstructorAvailabilityData>>
-): UseMutationOptions<
-  ClearInstructorAvailabilityResponse,
-  ClearInstructorAvailabilityError,
-  Options<ClearInstructorAvailabilityData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ClearInstructorAvailabilityResponse,
-    ClearInstructorAvailabilityError,
-    Options<ClearInstructorAvailabilityData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await clearInstructorAvailability({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getInstructorAvailabilityQueryKey = (
-  options: Options<GetInstructorAvailabilityData>
-) => createQueryKey('getInstructorAvailability', options);
-
-/**
- * Get all availability for an instructor
- * Retrieves all availability slots for a specific instructor, including all patterns and blocked times
- */
-export const getInstructorAvailabilityOptions = (
-  options: Options<GetInstructorAvailabilityData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getInstructorAvailability({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getInstructorAvailabilityQueryKey(options),
-  });
-};
-
-export const searchAvailabilityQueryKey = (options: Options<SearchAvailabilityData>) =>
-  createQueryKey('searchAvailability', options);
-
-/**
- * Search availability slots with flexible filtering
- *  Search and filter availability slots using dynamic query parameters.
- *
- * **Supported filter operators:**
- * - `_eq` - equals (e.g., `is_available=true`)
- * - `_ne` or `_noteq` - not equals (e.g., `availability_type_ne=DAILY`)
- * - `_like` - contains (for strings, e.g., `custom_pattern_like=BLOCK`)
- * - `_gt` - greater than (e.g., `day_of_week_gt=3`)
- * - `_gte` - greater than or equal (e.g., `start_time_gte=09:00:00`)
- * - `_lt` - less than (e.g., `day_of_month_lt=15`)
- * - `_lte` - less than or equal (e.g., `end_time_lte=17:00:00`)
- * - `_in` - in list (comma-separated, e.g., `availability_type_in=WEEKLY,MONTHLY`)
- *
- * **Example queries:**
- * - Get all available slots: `?is_available=true`
- * - Get blocked times: `?is_available=false`
- * - Get weekly patterns for Monday: `?availability_type=WEEKLY&day_of_week=1`
- * - Get slots with specific color: `?color_code=#FF6B6B`
- * - Get slots by date range: `?specific_date_gte=2024-01-01&specific_date_lte=2024-12-31`
- * - Combined: `?is_available=false&color_code_like=FF6B`
- *
- * **Pagination:** Use standard Spring pagination parameters:
- * - `page` - page number (0-indexed)
- * - `size` - page size
- * - `sort` - sorting (e.g., `start_time,asc` or `specific_date,desc`)
- *
- * **Examples:**
- * - `/search?is_available=true&page=0&size=20&sort=start_time,asc`
- * - `/search?availability_type_in=WEEKLY,MONTHLY&day_of_week_gte=1&day_of_week_lte=5`
- * - `/search?is_available=false&specific_date_gte=2024-10-01`
- *
- */
-export const searchAvailabilityOptions = (options: Options<SearchAvailabilityData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchAvailability({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: searchAvailabilityQueryKey(options),
-  });
-};
-
-export const searchAvailabilityInfiniteQueryKey = (
-  options: Options<SearchAvailabilityData>
-): QueryKey<Options<SearchAvailabilityData>> => createQueryKey('searchAvailability', options, true);
-
-/**
- * Search availability slots with flexible filtering
- *  Search and filter availability slots using dynamic query parameters.
- *
- * **Supported filter operators:**
- * - `_eq` - equals (e.g., `is_available=true`)
- * - `_ne` or `_noteq` - not equals (e.g., `availability_type_ne=DAILY`)
- * - `_like` - contains (for strings, e.g., `custom_pattern_like=BLOCK`)
- * - `_gt` - greater than (e.g., `day_of_week_gt=3`)
- * - `_gte` - greater than or equal (e.g., `start_time_gte=09:00:00`)
- * - `_lt` - less than (e.g., `day_of_month_lt=15`)
- * - `_lte` - less than or equal (e.g., `end_time_lte=17:00:00`)
- * - `_in` - in list (comma-separated, e.g., `availability_type_in=WEEKLY,MONTHLY`)
- *
- * **Example queries:**
- * - Get all available slots: `?is_available=true`
- * - Get blocked times: `?is_available=false`
- * - Get weekly patterns for Monday: `?availability_type=WEEKLY&day_of_week=1`
- * - Get slots with specific color: `?color_code=#FF6B6B`
- * - Get slots by date range: `?specific_date_gte=2024-01-01&specific_date_lte=2024-12-31`
- * - Combined: `?is_available=false&color_code_like=FF6B`
- *
- * **Pagination:** Use standard Spring pagination parameters:
- * - `page` - page number (0-indexed)
- * - `size` - page size
- * - `sort` - sorting (e.g., `start_time,asc` or `specific_date,desc`)
- *
- * **Examples:**
- * - `/search?is_available=true&page=0&size=20&sort=start_time,asc`
- * - `/search?availability_type_in=WEEKLY,MONTHLY&day_of_week_gte=1&day_of_week_lte=5`
- * - `/search?is_available=false&specific_date_gte=2024-10-01`
- *
- */
-export const searchAvailabilityInfiniteOptions = (options: Options<SearchAvailabilityData>) => {
-  return infiniteQueryOptions<
-    SearchAvailabilityResponse,
-    SearchAvailabilityError,
-    InfiniteData<SearchAvailabilityResponse>,
-    QueryKey<Options<SearchAvailabilityData>>,
-    | number
-    | Pick<QueryKey<Options<SearchAvailabilityData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<SearchAvailabilityData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  'pageable.page': pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await searchAvailability({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: searchAvailabilityInfiniteQueryKey(options),
-    }
-  );
-};
-
-export const getAvailabilityForDateQueryKey = (options: Options<GetAvailabilityForDateData>) =>
-  createQueryKey('getAvailabilityForDate', options);
-
-/**
- * Get availability for a specific date
- * Retrieves all availability slots (including from patterns) for an instructor on a specific date
- */
-export const getAvailabilityForDateOptions = (options: Options<GetAvailabilityForDateData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getAvailabilityForDate({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAvailabilityForDateQueryKey(options),
-  });
-};
-
 export const checkAvailabilityQueryKey = (options: Options<CheckAvailabilityData>) =>
   createQueryKey('checkAvailability', options);
 
@@ -16755,13 +16328,7 @@ export const checkAvailabilityQueryKey = (options: Options<CheckAvailabilityData
  * Check if instructor is available during a time period
  * Checks whether an instructor is available for the entire specified time period.
  *
- * Returns true only if the instructor is available for the ENTIRE duration.
- * This considers:
- * - All availability patterns
- * - Blocked time slots
- * - Existing bookings (if integrated with scheduling)
- *
- * Useful for validating booking requests before creating them.
+ * Returns true unless a blocked slot overlaps the requested window.
  *
  */
 export const checkAvailabilityOptions = (options: Options<CheckAvailabilityData>) => {
@@ -16787,13 +16354,7 @@ export const checkAvailabilityInfiniteQueryKey = (
  * Check if instructor is available during a time period
  * Checks whether an instructor is available for the entire specified time period.
  *
- * Returns true only if the instructor is available for the ENTIRE duration.
- * This considers:
- * - All availability patterns
- * - Blocked time slots
- * - Existing bookings (if integrated with scheduling)
- *
- * Useful for validating booking requests before creating them.
+ * Returns true unless a blocked slot overlaps the requested window.
  *
  */
 export const checkAvailabilityInfiniteOptions = (options: Options<CheckAvailabilityData>) => {
@@ -16833,25 +16394,17 @@ export const checkAvailabilityInfiniteOptions = (options: Options<CheckAvailabil
   );
 };
 
-export const findAvailableSlotsQueryKey = (options: Options<FindAvailableSlotsData>) =>
-  createQueryKey('findAvailableSlots', options);
+export const getInstructorCalendarQueryKey = (options: Options<GetInstructorCalendarData>) =>
+  createQueryKey('getInstructorCalendar', options);
 
 /**
- * Find available slots within a date range
- * Finds all available time slots for an instructor within a specified date range.
- *
- * This is useful for scheduling systems that need to:
- * - Show available booking slots
- * - Find the next available time
- * - Display a calendar of availability
- *
- * Only returns slots where isAvailable = true (excludes blocked times).
- *
+ * Get merged instructor calendar
+ * Returns a merged feed of availability slots, blocked time, and scheduled instances for the instructor within a date range.
  */
-export const findAvailableSlotsOptions = (options: Options<FindAvailableSlotsData>) => {
+export const getInstructorCalendarOptions = (options: Options<GetInstructorCalendarData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await findAvailableSlots({
+      const { data } = await getInstructorCalendar({
         ...options,
         ...queryKey[0],
         signal,
@@ -16859,7 +16412,7 @@ export const findAvailableSlotsOptions = (options: Options<FindAvailableSlotsDat
       });
       return data;
     },
-    queryKey: findAvailableSlotsQueryKey(options),
+    queryKey: getInstructorCalendarQueryKey(options),
   });
 };
 
@@ -19623,54 +19176,6 @@ export const getByClassOptions = (options: Options<GetByClassData>) => {
   });
 };
 
-export const previewRecurringClassScheduleQueryKey = (
-  options: Options<PreviewRecurringClassScheduleData>
-) => createQueryKey('previewRecurringClassSchedule', options);
-
-/**
- * Preview recurring schedule without creating instances
- */
-export const previewRecurringClassScheduleOptions = (
-  options: Options<PreviewRecurringClassScheduleData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await previewRecurringClassSchedule({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: previewRecurringClassScheduleQueryKey(options),
-  });
-};
-
-export const checkClassSchedulingConflictsQueryKey = (
-  options: Options<CheckClassSchedulingConflictsData>
-) => createQueryKey('checkClassSchedulingConflicts', options);
-
-/**
- * Check for scheduling conflicts
- */
-export const checkClassSchedulingConflictsOptions = (
-  options: Options<CheckClassSchedulingConflictsData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await checkClassSchedulingConflicts({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: checkClassSchedulingConflictsQueryKey(options),
-  });
-};
-
 export const getEnrollmentsForClassQueryKey = (options: Options<GetEnrollmentsForClassData>) =>
   createQueryKey('getEnrollmentsForClass', options);
 
@@ -21003,6 +20508,34 @@ export const cleanupOldInvitationsMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await cleanupOldInvitations({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Clear all availability for an instructor
+ * Removes all availability slots and patterns for an instructor. Use with caution.
+ */
+export const clearInstructorAvailabilityMutation = (
+  options?: Partial<Options<ClearInstructorAvailabilityData>>
+): UseMutationOptions<
+  ClearInstructorAvailabilityResponse,
+  ClearInstructorAvailabilityError,
+  Options<ClearInstructorAvailabilityData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ClearInstructorAvailabilityResponse,
+    ClearInstructorAvailabilityError,
+    Options<ClearInstructorAvailabilityData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await clearInstructorAvailability({
         ...options,
         ...localOptions,
         throwOnError: true,

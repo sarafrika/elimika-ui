@@ -192,7 +192,7 @@ export default function ClassDetailsForm({
       default_instructor_uuid: instructor?.uuid,
 
       location_type: combinedRecurrenceData?.payload?.location_type || classData?.location_type,
-      location_name: combinedRecurrenceData?.payload?.location_name || classData?.location_name,
+      location_name: combinedRecurrenceData?.payload?.location_name || classData?.location_name || "Nairobi Class 1",
       location_latitude: combinedRecurrenceData?.payload?.location_latitude || classData?.location_latitude,
       location_longitude: combinedRecurrenceData?.payload?.location_longitude || classData?.location_longitude,
 

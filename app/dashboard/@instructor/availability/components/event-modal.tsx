@@ -19,7 +19,6 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
 import {
-  createAvailabilitySlotMutation,
   scheduleClassMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -31,13 +30,11 @@ import {
   Coffee,
   Copy,
   MapPin,
-  Trash2,
-  Users,
+  Trash2
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { CalendarEvent } from './types';
 
-export type EventType = 'booked' | 'unavailable' | 'available' | 'reserved';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -51,13 +48,34 @@ interface EventModalProps {
   onSave: (event: CalendarEvent) => void;
   onDelete?: (eventId: string) => void;
 }
+export type EventType = "BLOCKED" | "AVAILABILITY" | "SCHEDULED_INSTANCE";
 
-const eventTypes = [
-  { value: 'booked', label: 'Class', icon: BookOpen, color: 'bg-blue-500' },
-  { value: 'unavailable', label: 'Unavailable', icon: Coffee, color: 'bg-orange-500' },
-  { value: 'available', label: 'Available', icon: Calendar, color: 'bg-green-500' },
-  { value: 'reserved', label: 'Reserved', icon: Users, color: 'bg-yellow-500' },
-];
+const eventTypes: {
+  value: EventType;
+  label: string;
+  icon: any;
+  color: string;
+}[] = [
+    {
+      value: "SCHEDULED_INSTANCE",
+      label: "Class",
+      icon: BookOpen,
+      color: "bg-blue-500",
+    },
+    {
+      value: "BLOCKED",
+      label: "Unavailable",
+      icon: Coffee,
+      color: "bg-orange-500",
+    },
+    {
+      value: "AVAILABILITY",
+      label: "Available",
+      icon: Calendar,
+      color: "bg-green-500",
+    },
+  ];
+
 
 function extractDateTimeParts(date: Date) {
   const pad = (num: number) => String(num).padStart(2, '0');
@@ -81,14 +99,9 @@ function extractDateTimeParts(date: Date) {
   };
 }
 
-function getDayOfWeek1To7(date: Date): number {
-  const jsDay = date.getDay(); // 0 (Sun) - 6 (Sat)
-  return jsDay === 0 ? 7 : jsDay; // Convert Sunday (0) to 7
-}
-
 const getEndTime = (startTime: string): string => {
   const [hours, minutes] = startTime.split(':').map(Number);
-  const endMinutes = Number(minutes) + 60; // Default to 1 hour duration
+  const endMinutes = Number(minutes) + 60;
   if (endMinutes >= 60) {
     return `${(Number(hours) + 1).toString().padStart(2, '0')}:${(endMinutes - 60).toString().padStart(2, '0')}`;
   }
@@ -106,7 +119,7 @@ export function EventModal({
   const [formData, setFormData] = useState<Partial<CalendarEvent>>({
     title: '',
     description: '',
-    type: 'available',
+    entry_type: 'AVAILABILITY',
     startTime: '',
     endTime: '',
     startDateTime: '',
@@ -115,7 +128,7 @@ export function EventModal({
     attendees: 1,
     isRecurring: false,
     recurringDays: [],
-    status: 'booked',
+    status: 'SCHEDULED',
     reminders: [15],
     notes: '',
   });
@@ -177,15 +190,15 @@ export function EventModal({
   const instrucor = useInstructor();
   const qc = useQueryClient();
   const scheduleClass = useMutation(scheduleClassMutation());
-  const createAvailability = useMutation(createAvailabilitySlotMutation());
+  // const createAvailability = useMutation(createAvailabilitySlotMutation());
 
   const handleSave = () => {
     if (!validateForm()) return;
 
     // Ensure required fields exist
-    const { startDateTime, endDateTime, title, type, date, location, attendees, isRecurring, recurringDays, status, reminders, notes } = formData;
+    const { startDateTime, endDateTime, title, entry_type, date, location, attendees, isRecurring, recurringDays, status, reminders, notes } = formData;
 
-    if (!startDateTime || !endDateTime || !title || !type) {
+    if (!startDateTime || !endDateTime || !title || !entry_type) {
       return;
     }
 
@@ -199,7 +212,7 @@ export function EventModal({
       id: event?.id || `event-${Date.now()}`,
       title,
       description: formData.description,
-      type: type as EventType,
+      entry_type: entry_type as any,
       startTime: startClock as any,
       endTime: endClock as any,
       date: start,
@@ -209,7 +222,7 @@ export function EventModal({
       isRecurring,
       recurringDays,
       status: status as CalendarEvent['status'],
-      color: eventTypes.find(t => t.value === type)?.color,
+      color: eventTypes.find(t => t.value === entry_type)?.color,
       reminders,
       notes,
       startDateTime,
@@ -217,8 +230,6 @@ export function EventModal({
     };
 
     const { localDate, localTime, localDateTime } = extractDateTimeParts(eventData.date);
-
-    // console.log(eventData, "EV DATA");
 
     // // Availability logic
     // if (eventData.type === 'available' || eventData.type === 'unavailable') {
@@ -305,7 +316,7 @@ export function EventModal({
     }
   };
 
-  const selectedEventType = eventTypes.find(t => t.value === formData.type);
+  const selectedEventType = eventTypes.find(t => t.value === formData.entry_type);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -320,7 +331,7 @@ export function EventModal({
         <div className='my-4 w-full space-y-2'>
           <Label htmlFor='type'>Event Type</Label>
           <Select
-            value={formData.type}
+            value={formData.entry_type}
             onValueChange={value => setFormData(prev => ({ ...prev, type: value as EventType }))}
           >
             <SelectTrigger className='w-full'>
@@ -342,7 +353,7 @@ export function EventModal({
 
         <div className='space-y-6'>
           {/* Basic Information */}
-          {selectedEventType?.value === 'booked' && (
+          {selectedEventType?.value === 'BLOCKED' && (
             <div className='space-y-4'>
               <div className='space-y-2'>
                 <Label htmlFor='title'>Event Title *</Label>
@@ -417,7 +428,7 @@ export function EventModal({
           </div>
 
           {/* Additional Details */}
-          {selectedEventType?.value === 'booked' && (
+          {selectedEventType?.value === 'AVAILABILITY' && (
             <div className='space-y-4'>
               <Separator />
 

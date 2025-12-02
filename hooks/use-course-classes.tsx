@@ -3,8 +3,8 @@ import {
   getClassDefinitionsForCourseOptions,
   getCourseByUuidOptions,
   getInstructorByUuidOptions,
+  getInstructorCalendarOptions,
   getStudentScheduleOptions,
-  previewRecurringClassScheduleOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
 function useBundledClassInfo(courseUuid?: string, startDate?: any, endDate?: any, student?: any) {
@@ -42,11 +42,8 @@ function useBundledClassInfo(courseUuid?: string, startDate?: any, endDate?: any
   const scheduleQueries = useQueries({
     queries:
       classes.map((cls: any) => ({
-        ...previewRecurringClassScheduleOptions({
-          path: { uuid: cls.uuid },
-          query: { startDate, endDate },
-        }),
-        enabled: !!cls.uuid && !!startDate && !!endDate,
+        ...getInstructorCalendarOptions({ path: { instructorUuid: cls?.default_instructor_uuid as string }, query: { start_date: startDate, end_date: endDate } }),
+        enabled: !!cls?.default_instructor_uuid && !!startDate && !!endDate,
       })) || [],
   });
 

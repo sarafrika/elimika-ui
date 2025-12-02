@@ -93,7 +93,6 @@ export default function MyClassesPage() {
               key={uuid}
               href={`/dashboard/my-classes/${uuid}`}
               cls={classDetails}
-              enrollmentPercentage={5}
               isFull={false}
               disableEnroll={true}
               handleEnroll={() => { }}

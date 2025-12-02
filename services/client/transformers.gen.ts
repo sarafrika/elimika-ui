@@ -35,8 +35,6 @@ import type {
   UpdateInstructorExperienceResponse,
   UpdateInstructorEducationResponse,
   UpdateInstructorDocumentResponse,
-  GetAvailabilitySlotResponse,
-  UpdateAvailabilitySlotResponse,
   GetCourseByUuidResponse,
   UpdateCourseResponse,
   UpdateCourseTrainingRequirementResponse,
@@ -130,7 +128,6 @@ import type {
   AddInstructorDocumentResponse,
   VerifyDocumentResponse,
   UploadInstructorDocumentResponse,
-  CreateAvailabilitySlotResponse,
   CreateLinkResponse,
   EnrollStudentResponse,
   GetAllCoursesResponse,
@@ -259,10 +256,7 @@ import type {
   PreviewInvitationResponse,
   GetPendingInvitationsForEmailResponse,
   GetInstructorRatingSummaryResponse,
-  GetInstructorAvailabilityResponse,
-  SearchAvailabilityResponse,
-  GetAvailabilityForDateResponse,
-  FindAvailableSlotsResponse,
+  GetInstructorCalendarResponse,
   SearchSkillsResponse,
   SearchInstructorsResponse,
   SearchMembershipsResponse,
@@ -302,8 +296,6 @@ import type {
   ListCatalogItemsResponse,
   GetByCourseResponse,
   GetByClassResponse,
-  PreviewRecurringClassScheduleResponse,
-  CheckClassSchedulingConflictsResponse,
   GetEnrollmentsForClassResponse,
   GetClassDefinitionsForOrganisationResponse,
   GetClassDefinitionsForInstructorResponse,
@@ -969,49 +961,6 @@ export const updateInstructorDocumentResponseTransformer = async (
   data: any
 ): Promise<UpdateInstructorDocumentResponse> => {
   data = apiResponseInstructorDocumentSchemaResponseTransformer(data);
-  return data;
-};
-
-const availabilitySlotSchemaResponseTransformer = (data: any) => {
-  if (data.specific_date) {
-    data.specific_date = new Date(data.specific_date);
-  }
-  if (data.effective_start_date) {
-    data.effective_start_date = new Date(data.effective_start_date);
-  }
-  if (data.effective_end_date) {
-    data.effective_end_date = new Date(data.effective_end_date);
-  }
-  if (data.created_date) {
-    data.created_date = new Date(data.created_date);
-  }
-  if (data.updated_date) {
-    data.updated_date = new Date(data.updated_date);
-  }
-  if (data.duration_minutes) {
-    data.duration_minutes = BigInt(data.duration_minutes.toString());
-  }
-  return data;
-};
-
-const apiResponseAvailabilitySlotSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = availabilitySlotSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const getAvailabilitySlotResponseTransformer = async (
-  data: any
-): Promise<GetAvailabilitySlotResponse> => {
-  data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
-export const updateAvailabilitySlotResponseTransformer = async (
-  data: any
-): Promise<UpdateAvailabilitySlotResponse> => {
-  data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2555,13 +2504,6 @@ export const uploadInstructorDocumentResponseTransformer = async (
   data: any
 ): Promise<UploadInstructorDocumentResponse> => {
   data = apiResponseInstructorDocumentSchemaResponseTransformer(data);
-  return data;
-};
-
-export const createAvailabilitySlotResponseTransformer = async (
-  data: any
-): Promise<CreateAvailabilitySlotResponse> => {
-  data = apiResponseAvailabilitySlotSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4175,40 +4117,29 @@ export const getInstructorRatingSummaryResponseTransformer = async (
   return data;
 };
 
-const apiResponseListAvailabilitySlotSchemaResponseTransformer = (data: any) => {
+const instructorCalendarEntrySchemaResponseTransformer = (data: any) => {
+  if (data.start_time) {
+    data.start_time = new Date(data.start_time);
+  }
+  if (data.end_time) {
+    data.end_time = new Date(data.end_time);
+  }
+  return data;
+};
+
+const apiResponseListInstructorCalendarEntrySchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = data.data.map((item: any) => {
-      return availabilitySlotSchemaResponseTransformer(item);
+      return instructorCalendarEntrySchemaResponseTransformer(item);
     });
   }
   return data;
 };
 
-export const getInstructorAvailabilityResponseTransformer = async (
+export const getInstructorCalendarResponseTransformer = async (
   data: any
-): Promise<GetInstructorAvailabilityResponse> => {
-  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
-export const searchAvailabilityResponseTransformer = async (
-  data: any
-): Promise<SearchAvailabilityResponse> => {
-  data = pageSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getAvailabilityForDateResponseTransformer = async (
-  data: any
-): Promise<GetAvailabilityForDateResponse> => {
-  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
-  return data;
-};
-
-export const findAvailableSlotsResponseTransformer = async (
-  data: any
-): Promise<FindAvailableSlotsResponse> => {
-  data = apiResponseListAvailabilitySlotSchemaResponseTransformer(data);
+): Promise<GetInstructorCalendarResponse> => {
+  data = apiResponseListInstructorCalendarEntrySchemaResponseTransformer(data);
   return data;
 };
 
@@ -4660,20 +4591,6 @@ export const getByCourseResponseTransformer = async (data: any): Promise<GetByCo
 
 export const getByClassResponseTransformer = async (data: any): Promise<GetByClassResponse> => {
   data = apiResponseCommerceCatalogItemSchemaResponseTransformer(data);
-  return data;
-};
-
-export const previewRecurringClassScheduleResponseTransformer = async (
-  data: any
-): Promise<PreviewRecurringClassScheduleResponse> => {
-  data = apiResponseListScheduledInstanceSchemaResponseTransformer(data);
-  return data;
-};
-
-export const checkClassSchedulingConflictsResponseTransformer = async (
-  data: any
-): Promise<CheckClassSchedulingConflictsResponse> => {
-  data = apiResponseListScheduledInstanceSchemaResponseTransformer(data);
   return data;
 };
 

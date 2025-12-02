@@ -154,7 +154,7 @@ export function VisibilityForm({
                     readOnly
                     min={1}
                     max={1000}
-                    className='max-w-32'
+                    className="max-w-32 bg-muted cursor-not-allowed"
                   />
                   <span className='text-muted-foreground text-sm'>students maximum</span>
                 </div>
@@ -201,15 +201,11 @@ export function VisibilityForm({
                 <div className='flex items-center gap-2'>
                   <DollarSign className='text-muted-foreground h-5 w-5' />
                   <Input
-                    type='number'
+                    type="number"
                     {...field}
                     value={field.value ?? ''}
-                    onChange={e => {
-                      const value = e.target.value;
-                      field.onChange(value === '' ? null : parseFloat(value));
-                    }}
-                    step='0.01'
-                    className='max-w-32'
+                    readOnly
+                    className="max-w-32 bg-muted cursor-not-allowed"
                   />
                   <span className='text-muted-foreground text-sm'>per lesson</span>
                 </div>

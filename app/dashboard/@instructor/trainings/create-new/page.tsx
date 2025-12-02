@@ -243,7 +243,8 @@ export default function ClassCreationPage() {
               {/* Step Circle */}
               <div className="flex flex-col items-center flex-1">
                 <div
-                  className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all
+                  onClick={() => setCurrentStep(index)}
+                  className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all cursor-pointer
               ${index === currentStep
                       ? 'border-primary bg-primary text-white'
                       : index < currentStep

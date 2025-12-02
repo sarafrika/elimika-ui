@@ -16,6 +16,27 @@ interface MonthlyAvailabilityGridProps {
   classes: ClassData[];
 }
 
+const eventColorMap = {
+  SCHEDULED_INSTANCE: {
+    border: "border-primary/40",
+    text: "text-primary",
+    icon: "text-primary",
+    bg: "bg-primary/10",
+  },
+  BLOCKED: {
+    border: "border-destructive/40",
+    text: "text-destructive",
+    icon: "text-destructive",
+    bg: "bg-destructive/10",
+  },
+  AVAILABILITY: {
+    border: "border-green-500/40",
+    text: "text-green-600",
+    icon: "text-green-600",
+    bg: "bg-green-500/10",
+  },
+};
+
 export function MonthlyAvailabilityGrid({
   availabilityData,
   onAvailabilityUpdate,
@@ -70,12 +91,13 @@ export function MonthlyAvailabilityGrid({
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
 
     // Get all slots for this day
-    const daySlots = availabilityData.slots.filter(slot => {
+    const daySlots = availabilityData.events.filter(slot => {
       if (slot.date) {
         return slot.date.toDateString() === date.toDateString();
       }
       // For recurring slots, check by day name
-      return slot.day === dayName && slot.recurring;
+      return slot.day === dayName;
+
     });
 
     // Check for scheduled classes
@@ -93,54 +115,29 @@ export function MonthlyAvailabilityGrid({
     });
 
     // Check for events on this day
-    // const dayEvents = availabilityData.events.filter(event => {
-    //   const eventDate = new Date(event.date);
-    //   return eventDate.toDateString() === date.toDateString();
-    // });
-
     const dayEvents = [
-      // 1️⃣ Actual calendar events
       ...availabilityData.events
         .filter(event => {
           const eventDate = new Date(event.date);
           return eventDate.toDateString() === date.toDateString();
         }),
-
-      // 2️⃣ BLOCKED_TIME_SLOT converted into "virtual events"
-      ...availabilityData.slots
-        .filter(slot => {
-          if (slot.custom_pattern !== "BLOCKED_TIME_SLOT") return false;
-
-          if (!slot.date) return false; // safety
-
-          const slotDate = new Date(slot.date);
-          return slotDate.toDateString() === date.toDateString();
-        })
-        .map(slot => ({
-          id: slot.id,
-          title: "Reserved / Booked",
-          day: slot.day,
-          date: slot.date,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
-          status: "booked",               // 🔥 force booked status
-          custom_pattern: slot.custom_pattern,
-          isVirtualBlockedEvent: true     // Optional helper flag
-        }))
     ];
 
+    // const availableSlots = daySlots.filter(slot => slot.status === 'SCHEDULED').length;
+    const blockedEvents = daySlots.filter(
+      slot => slot.entry_type === "BLOCKED"
+    );
 
-    const availableSlots = daySlots.filter(slot => slot.status === 'available').length;
-    const unavailableSlots = daySlots.filter(slot => slot.status === 'unavailable' && slot.custom_pattern === "").length;
-    const bookedSlots =
-      daySlots.filter(slot => slot.custom_pattern === "BLOCKED_TIME_SLOT").length +
-      dayClasses.length +
-      dayEvents.length;
+    const bookedEvents = [
+      ...daySlots.filter(
+        slot => slot.entry_type === "SCHEDULED_INSTANCE"
+      ),
+    ];
 
     return {
-      available: availableSlots,
-      unavailable: unavailableSlots,
-      booked: bookedSlots,
+      // available: availableSlots,
+      blocked: blockedEvents,
+      booked: bookedEvents,
       total: daySlots.length,
       classes: dayClasses,
       events: dayEvents,
@@ -305,43 +302,47 @@ export function MonthlyAvailabilityGrid({
 
                         {/* Status Indicators */}
                         <div className='flex flex-col gap-1'>
-                          {status.available > 0 && (
-                            <div className='h-2 w-2 rounded-full bg-success' />
+                          {status.booked.length > 0 && (
+                            <div className="h-2 w-2 rounded-full bg-primary" />
                           )}
 
-                          {status.booked > 0 && (
-                            <div className='h-2 w-2 rounded-full bg-primary' />
+                          {status.blocked.length > 0 && (
+                            <div className="h-2 w-2 rounded-full bg-destructive" />
                           )}
 
-                          {status.unavailable > 0 && status.booked === 0 && (
-                            <div className='h-2 w-2 rounded-full bg-destructive' />
-                          )}
                         </div>
                       </div>
 
                       {/* Event blocks and bottom indicators */}
                       {status.events.length > 0 && (
                         <div className='absolute top-6 right-1 left-1'>
-                          {status.events.slice(0, 2).map((event, _idx) => (
-                            <div
-                              key={event.id}
-                              className='mb-1 truncate rounded border border-primary/30 px-1 py-0.5 text-xs text-primary'
-                            >
-                              <div className='flex items-center gap-1'>
-                                <Clock className='h-2 w-2' />
-                                <span className='font-medium'>{event.title}</span>
+                          {status.events.slice(0, 2).map((event) => {
+                            const colors = eventColorMap[event?.entry_type || "SCHEDULED_INSTANCE"] ?? eventColorMap.SCHEDULED_INSTANCE;
+
+                            return (
+                              <div
+                                key={event.id}
+                                className={`mb-1 truncate rounded px-1 py-0.5 text-xs 
+        ${colors.border} ${colors.text} ${colors.bg}`}
+                              >
+                                <div className='flex items-center gap-1'>
+                                  <Clock className={`h-2 w-2 ${colors.icon}`} />
+                                  <span className='font-medium'>{event.title}</span>
+                                </div>
+
+                                <div className='text-xs'>
+                                  {event.startTime} - {event.endTime}
+                                </div>
+                                {/* <div className='text-xs'>
+                                  {event?.location}
+                                </div>
+                                <div className='text-xs'>
+                                  {event?.attendees} attendees
+                                </div> */}
                               </div>
-                              <div className='text-xs'>
-                                {event.startTime} - {event.endTime}
-                              </div>
-                              {/* <div className='text-xs'>
-                                {event?.location}
-                              </div>
-                              <div className='text-xs'>
-                                {event?.attendees} attendees
-                              </div> */}
-                            </div>
-                          ))}
+                            );
+                          })}
+
 
                           {status.events.length > 2 && (
                             <div className='text-xs font-medium text-muted-foreground'>
@@ -353,23 +354,18 @@ export function MonthlyAvailabilityGrid({
 
                       <div className='absolute right-1 bottom-1 left-1'>
                         <div className='flex justify-center gap-1'>
-                          {status.available > 0 && (
-                            <Badge
-                              variant='secondary'
-                              className='bg-success/10 px-1 py-0 text-xs text-success'
-                            >
-                              {status.available}
+                          {status.booked.length > 0 && (
+                            <Badge className='bg-primary/10 text-primary'>
+                              {status.booked.length}
                             </Badge>
                           )}
 
-                          {status.booked > 0 && (
-                            <Badge
-                              variant='secondary'
-                              className='bg-primary/10 px-1 py-0 text-xs text-primary'
-                            >
-                              {status.booked}
+                          {status.blocked.length > 0 && (
+                            <Badge className='bg-destructive/10 text-destructive'>
+                              {status.blocked.length}
                             </Badge>
                           )}
+
                         </div>
                       </div>
                     </div>
@@ -384,19 +380,18 @@ export function MonthlyAvailabilityGrid({
                         })}
                       </div>
 
-                      {status.available > 0 && (
-                        <div className='text-success'>✓ {status.available} available slots</div>
-                      )}
-
-                      {status.booked > 0 && (
+                      {status.booked.length > 0 && (
                         <div className='text-primary'>
-                          📚 {status.booked} booked/classes/events
+                          📘 {status.booked.length} booked/classes/events
                         </div>
                       )}
 
-                      {status.unavailable > 0 && (
-                        <div className='text-destructive'>✕ {status.unavailable} unavailable</div>
+                      {status.blocked.length > 0 && (
+                        <div className='text-destructive'>
+                          ⛔ {status.blocked.length} blocked slots
+                        </div>
                       )}
+
 
                       {status.events.length > 0 && (
                         <div className='mt-1 text-xs text-accent'>
@@ -430,16 +425,12 @@ export function MonthlyAvailabilityGrid({
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-6 text-sm'>
             <div className='flex items-center gap-2'>
-              <div className='h-3 w-3 rounded-full bg-success' />
-              <span>Available Slots</span>
-            </div>
-            <div className='flex items-center gap-2'>
               <div className='h-3 w-3 rounded-full bg-primary' />
-              <span>Booked/Classes/Events</span>
+              <span>Classes & Bookings</span>
             </div>
             <div className='flex items-center gap-2'>
               <div className='h-3 w-3 rounded-full bg-destructive' />
-              <span>Unavailable</span>
+              <span>Blocked/Unavailable</span>
             </div>
           </div>
 
