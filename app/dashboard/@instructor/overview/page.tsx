@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import PurchasableCatalogue from '../../_components/purchasable-catalogue';
 
 const onboardingSteps = [
   {
@@ -202,6 +203,7 @@ export default function InstructorOverviewPage() {
         <>
           {approvalPanel}
           {quickActions}
+          <PurchasableCatalogue />
         </>
       }
     />

@@ -56,6 +56,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import PurchasableCatalogue from '../../_components/purchasable-catalogue';
 
 const organisationFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -534,6 +535,7 @@ export default function OrganisationOverviewPage() {
             isActivityLoading={isActivityFeedLoading}
             activityError={activityFeedError}
           />
+          <PurchasableCatalogue />
           <CardShell
             title='Branches + people snapshot'
             subtitle='Quick glance at recent entities.'

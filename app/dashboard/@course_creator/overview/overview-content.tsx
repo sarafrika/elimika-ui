@@ -23,6 +23,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
+import PurchasableCatalogue from '../../_components/purchasable-catalogue';
 
 export default function CourseCreatorOverviewContent() {
   const { data, profile } = useCourseCreator();
@@ -65,6 +66,7 @@ export default function CourseCreatorOverviewContent() {
           <MetricsGrid metrics={metrics} />
           <MonetizationCard monetization={monetization} />
           <TrainingRequirementsCard trainingRequirements={trainingRequirements} />
+          <PurchasableCatalogue />
         </>
       }
     />
