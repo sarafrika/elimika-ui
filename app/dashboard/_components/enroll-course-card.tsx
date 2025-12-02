@@ -78,7 +78,7 @@ export default function EnrollCourseCard({
             if (cartId) {
               localStorage.setItem("cart_id", cartId);
             } else {
-              console.warn("Cart ID not found in API response:", data);
+              // console.warn("Cart ID not found in API response:", data);
             }
 
             toast.success("Class added to cart!");
