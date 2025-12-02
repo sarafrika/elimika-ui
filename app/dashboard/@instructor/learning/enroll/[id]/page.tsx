@@ -105,7 +105,6 @@ const EnrollmentPage = () => {
               href='#'
               key={cls?.uuid}
               cls={cls as any}
-              enrollmentPercentage={5}
               isFull={false}
               disableEnroll={cls?.enrollments?.length > 0}
               handleEnroll={() => {

@@ -1,18 +1,15 @@
 'use client';
 
 import { useInstructor } from '@/context/instructor-context';
-import { useUserProfile } from '@/context/profile-context';
 import {
-  getInstructorAvailabilityOptions,
-  getInstructorScheduleOptions
+  getInstructorCalendarOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import {
   type AvailabilityData,
   type ClassScheduleItem,
-  convertToCalendarEvents,
-  transformAvailabilityArray,
+  convertToCalendarEvents
 } from '../../availability/components/types';
 import TimetableManager from './timetable-manager';
 
@@ -22,18 +19,17 @@ interface TimetablePageProps {
 }
 
 const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePageProps) => {
-  const user = useUserProfile();
   const instructor = useInstructor();
   const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
 
-  const { data: availabilitySlots, refetch } = useQuery(
-    getInstructorAvailabilityOptions({ path: { instructorUuid: user?.instructor?.uuid as string } })
-  );
+  // const { data: availabilitySlots, refetch } = useQuery(
+  //   getInstructorAvailabilityOptions({ path: { instructorUuid: user?.instructor?.uuid as string } })
+  // );
 
   const { data: timetable } = useQuery({
-    ...getInstructorScheduleOptions({
+    ...getInstructorCalendarOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: { start: '2024-09-10' as any, end: '2026-11-11' as any },
+      query: { start_date: '2024-09-10' as any, end_date: '2026-11-11' as any },
     }),
     enabled: !!instructor?.uuid,
   });
@@ -41,7 +37,7 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
   const instructorSchedule = timetable?.data ?? []
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
-    slots: transformedSlots as any,
+    // slots: transformedSlots as any,
     // events: [],
     events: convertToCalendarEvents(instructorSchedule as ClassScheduleItem[]),
     settings: {
@@ -66,17 +62,17 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
     }));
   }, [timetable?.data]);
 
-  useEffect(() => {
-    if (availabilitySlots?.data) {
-      const slots = transformAvailabilityArray(availabilitySlots.data);
-      setTransformedSlots(slots);
+  // useEffect(() => {
+  //   if (availabilitySlots?.data) {
+  //     const slots = transformAvailabilityArray(availabilitySlots.data);
+  //     setTransformedSlots(slots);
 
-      setAvailabilityData((prev: any) => ({
-        ...prev,
-        slots,
-      }));
-    }
-  }, [availabilitySlots?.data]);
+  //     setAvailabilityData((prev: any) => ({
+  //       ...prev,
+  //       slots,
+  //     }));
+  //   }
+  // }, [availabilitySlots?.data]);
 
   return (
     <TimetableManager

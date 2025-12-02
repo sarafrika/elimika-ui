@@ -29,6 +29,7 @@ import {
   getInstructorScheduleOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import {
   BookOpen,
   CalendarDays,
@@ -54,6 +55,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { MonthlyAvailabilityGrid } from '../../../availability/components/monthly-availability-grid';
+import { AvailabilityData, ClassScheduleItem, convertToCalendarEvents } from '../../../availability/components/types';
 
 const _localizer = momentLocalizer(moment);
 
@@ -159,8 +162,22 @@ export default function ClassPreviewPage() {
     }
   };
 
-  const [startDate, setStartDate] = useState<string>("2026-11-02");
-  const [endDate, setEndDate] = useState<string>("2026-12-19");
+  const formatDate = (raw?: string): string => {
+    if (!raw) return '';
+    const date = new Date(raw);
+    return !isNaN(date.getTime()) ? format(date, 'yyyy-MM-dd') : '';
+  };
+
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  useEffect(() => {
+    if (classData) {
+      setStartDate(formatDate(classData?.default_start_time as any));
+      setEndDate(formatDate(classData?.default_end_time as any));
+    }
+  }, [classData]);
+
 
   const { data: timetable, isLoading: timetableIsLoading } = useQuery({
     ...getInstructorScheduleOptions({
@@ -173,8 +190,33 @@ export default function ClassPreviewPage() {
     enabled: !!classData?.default_instructor_uuid && !!startDate && !!endDate,
   });
 
+  const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
+    slots: [],
+    events: [],
+    settings: {
+      timezone: 'UTC',
+      autoAcceptBookings: false,
+      bufferTime: 15,
+      workingHours: {
+        start: '08:00',
+        end: '18:00',
+      },
+    },
+  });
 
-  const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
+  useEffect(() => {
+    const eventsFromSchedule = timetable?.data
+      ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
+      : [];
+
+    setAvailabilityData((prev: any) => ({
+      ...prev,
+      events: eventsFromSchedule,
+    }));
+  }, [timetable?.data]);
+
+
+  const { roster } = useClassRoster(classId);
 
   if (isLoading || isAllLessonsDataLoading || classIsLoading) {
     return (
@@ -351,7 +393,7 @@ export default function ClassPreviewPage() {
             </div>
             <div className='flex items-center gap-2'>
               <Users className='text-muted-foreground h-4 w-4' />
-              <span>0 / {classData?.max_participants} students</span>
+              <span>{roster?.length} / {classData?.max_participants} students</span>
             </div>
           </div>
 
@@ -437,30 +479,17 @@ export default function ClassPreviewPage() {
             <CardHeader>
               <CardTitle>Weekly Schedule</CardTitle>
             </CardHeader>
-            <CardContent>
-              {/* <div className="grid grid-cols-7 gap-2 text-center text-sm">
-                                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
-                                    const dayKey = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][index];
-                                    const isSelected = classData.timetable.selectedDays.includes(dayKey);
-                                    const timeSlot = classData.timetable.timeSlots.find(ts => ts.day === dayKey);
+            <CardContent className="space-y-6">
+              {/* Display Formatted Dates */}
+              <div className="text-sm text-muted-foreground">
+                <span className="font-medium">Academic Period: </span>
+                {/* {formattedStart} – {formattedEnd} */}
+              </div>
 
-                                    return (
-                                        <div key={day} className={`p-3 rounded-lg border ${isSelected ? 'bg-primary/10 border-primary/30' : 'bg-muted/60'}`}>
-                                            <div className="font-medium">{day}</div>
-                                            {isSelected && timeSlot && (
-                                                <div className="text-xs text-muted-foreground mt-1">
-                                                    {timeSlot.startTime} - {timeSlot.endTime}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div> */}
-
-              <div className="flex gap-4 mb-4">
-                {/* Start Date */}
-                <div className="flex flex-col w-full">
-                  <Label className="text-sm font-medium">Start Date</Label>
+              {/* Date Inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <Label className="text-sm font-medium mb-1">Start Date</Label>
                   <Input
                     type="date"
                     value={startDate}
@@ -469,9 +498,8 @@ export default function ClassPreviewPage() {
                   />
                 </div>
 
-                {/* End Date */}
-                <div className="flex flex-col w-full">
-                  <Label className="text-sm font-medium">End Date</Label>
+                <div className="flex flex-col">
+                  <Label className="text-sm font-medium mb-1">End Date</Label>
                   <Input
                     type="date"
                     value={endDate}
@@ -481,86 +509,34 @@ export default function ClassPreviewPage() {
                 </div>
               </div>
 
-              {timetableIsLoading ? <div className="space-y-4 p-4">
-                <div className="h-16 w-full bg-muted animate-pulse rounded" />
-                <div className="h-16 w-full bg-muted animate-pulse rounded" />
-                <div className="h-16 w-full bg-muted animate-pulse rounded" />
-              </div> :
-                <Card className="overflow-hidden">
-                  <div className="divide-y">
-                    {timetable?.data?.map((s) => {
-                      const isCancelled = s?.status === "CANCELLED";
-                      const isActive = s?.is_currently_active;
-                      const isPast = s?.time_range ? new Date(s.time_range) < new Date() : false;
-
-                      return (
-                        <div
-                          key={s.uuid}
-                          className={`p-5 flex items-start justify-between gap-6 transition-all hover:bg-muted/50 ${isCancelled ? "opacity-60" : ""
-                            }`}
-                        >
-                          {/* LEFT SIDE: MAIN DETAILS */}
-                          <div className="space-y-2 flex-1">
-                            {/* Title */}
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-base">{s?.title}</h3>
-
-                              {isCancelled && (
-                                <Badge variant="destructive" className="text-xs">
-                                  Cancelled
-                                </Badge>
-                              )}
-                            </div>
-
-                            {/* Time Range */}
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="h-4 w-4" />
-                              <span>{s?.time_range}</span>
-                            </div>
-
-                            {/* Location */}
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground capitalize">
-                              <MapPin className="h-4 w-4" />
-                              <span>{s?.location_type?.toLowerCase()}</span>
-                            </div>
-
-                            {/* Participants */}
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Users className="h-4 w-4" />
-                              <span>{s?.max_participants} participants</span>
-                            </div>
-
-                            {/* Cancellation reason */}
-                            {s?.cancellation_reason && (
-                              <p className="text-sm">
-                                <span className="font-medium">Reason:</span> {s.cancellation_reason}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* RIGHT SIDE: STATUS COLUMN */}
-                          <div className="flex flex-col items-end gap-2 w-32 shrink-0">
-                            <Badge
-                              className={`w-full justify-center ${isActive ? "bg-green-600 hover:bg-green-700" : "bg-zinc-500"
-                                } text-white`}
-                            >
-                              {isActive ? "Active" : "Inactive"}
-                            </Badge>
-
-                            <Badge
-                              className={`w-full justify-center ${isPast ? "bg-zinc-700" : "bg-blue-600 hover:bg-blue-700"
-                                } text-white`}
-                            >
-                              {isPast ? "Occurred" : "Upcoming"}
-                            </Badge>
-                          </div>
-                        </div>
-                      );
-                    })}
+              {/* Timetable Section */}
+              {timetableIsLoading ? (
+                <div className="space-y-4 p-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-16 w-full bg-muted animate-pulse rounded-lg" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>
+                      You have {timetable?.data?.length ?? 0} class instance
+                      {timetable?.data?.length === 1 ? '' : 's'} under this class for the academic period.
+                    </span>
                   </div>
-                </Card>
-              }
+
+                  <div className="border-t border-border pt-4">
+                    <MonthlyAvailabilityGrid
+                      availabilityData={availabilityData}
+                      onAvailabilityUpdate={() => { }}
+                      isEditing={false}
+                      classes={[]}
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
+
           </Card>
         </TabsContent>
 

@@ -11,9 +11,9 @@ import {
   getClassDefinitionOptions,
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
+  getInstructorCalendarOptions,
   getInstructorScheduleOptions,
-  markAttendanceMutation,
-  previewRecurringClassScheduleOptions,
+  markAttendanceMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -150,8 +150,8 @@ export default function ClassPreviewPage() {
   const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
 
   const { data: classSchedule } = useQuery({
-    ...previewRecurringClassScheduleOptions({ path: { uuid: classId as string }, query: { startDate: '2024-11-01' as any, endDate: '2026-12-31' as any } }),
-    enabled: !!classId,
+    ...getInstructorCalendarOptions({ path: { instructorUuid: classData?.default_instructor_uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } }),
+    enabled: !!classData?.default_instructor_uuid,
   })
 
   // console.log(classSchedule?.data, "class schedule!!")

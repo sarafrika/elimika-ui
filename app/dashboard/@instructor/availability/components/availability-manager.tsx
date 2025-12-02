@@ -10,8 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
 import {
   clearInstructorAvailabilityMutation,
-  getInstructorAvailabilityOptions,
-  getInstructorAvailabilityQueryKey,
+  getInstructorCalendarOptions,
+  getInstructorCalendarQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -63,7 +63,7 @@ export default function AvailabilityManager({
   // data points
   // const [availability, setAvailability] = useState<DayAvailability[]>([]);
   const { data: availabilitySlots, refetch } = useQuery(
-    getInstructorAvailabilityOptions({ path: { instructorUuid: user?.instructor?.uuid as string } })
+    getInstructorCalendarOptions({ path: { instructorUuid: user?.instructor?.uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } })
   );
 
   const [currentTab, setCurrentTab] = useState('weekly');
@@ -72,16 +72,16 @@ export default function AvailabilityManager({
   const [workingHours, setWorkingHours] = useState(availabilitySettings?.workingHours);
 
   const getStatusInfo = () => {
-    const _totalSlots = availabilityData?.slots?.length;
-    const availableSlots = availabilityData?.slots?.filter(
+    const _totalSlots = availabilityData?.events?.length;
+    const availableSlots = availabilityData?.events?.filter(
       slot => slot.is_available === true
     ).length;
-    const _blockedSlots = availabilityData?.slots?.filter(
-      slot => slot.custom_pattern === 'BLOCKED_TIME_SLOT'
+    const _blockedSlots = availabilityData?.events?.filter(
+      slot => slot.entry_type === 'BLOCKED'
     ).length;
     // update booked slots
-    const bookedSlots = availabilityData?.slots?.filter(
-      slot => slot.custom_pattern === 'booked'
+    const bookedSlots = availabilityData?.events?.filter(
+      slot => slot.entry_type === 'SCHEDULED_INSTANCE'
     ).length;
 
     if (Number(bookedSlots) > 0) {
@@ -122,8 +122,9 @@ export default function AvailabilityManager({
           onSuccess: data => {
             toast.success(data?.message || 'Instructor availability deleted successfully');
             qc.invalidateQueries({
-              queryKey: getInstructorAvailabilityQueryKey({
+              queryKey: getInstructorCalendarQueryKey({
                 path: { instructorUuid: user?.instructor?.uuid as string },
+                query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any }
               }),
             });
           },

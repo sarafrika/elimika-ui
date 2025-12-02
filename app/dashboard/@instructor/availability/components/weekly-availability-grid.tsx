@@ -3,10 +3,10 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { BookOpen, ChevronLeft, ChevronRight, Clock, Edit2, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Edit2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { ClassData } from '../../trainings/create-new/academic-period-form';
-import { EventModal } from './event-modal';
+import { EventModal, EventType } from './event-modal';
 import type { AvailabilityData, CalendarEvent } from './types';
 
 interface WeeklyAvailabilityGridProps {
@@ -15,6 +15,19 @@ interface WeeklyAvailabilityGridProps {
   isEditing: boolean;
   classes: ClassData[];
 }
+
+export const mapEventTypeToStatus = (entry_type: EventType) => {
+  switch (entry_type) {
+    case "AVAILABILITY":
+      return "available";          // green
+    case "BLOCKED":
+      return "unavailable";        // red
+    case "SCHEDULED_INSTANCE":
+      return "booked";             // blue (class)
+    default:
+      return null;
+  }
+};
 
 export function WeeklyAvailabilityGrid({
   availabilityData,
@@ -70,21 +83,17 @@ export function WeeklyAvailabilityGrid({
       return event.status;
     }
 
-    const slot = availabilityData.slots.find(s => {
+    const slot = availabilityData.events.find(s => {
       if (s.day !== day) return false;
       if (s.startTime !== time) return false;
 
-      // If this slot does NOT apply to the current date → ignore it
       if (!doesSlotApplyToDate(s, date)) return false;
 
       return true;
     });
 
     if (slot) {
-      if (slot.custom_pattern === "BLOCKED_TIME_SLOT") {
-        return "reserved";
-      }
-      return slot.status;
+      return mapEventTypeToStatus(slot.entry_type || "SCHEDULED_INSTANCE");
     }
 
 
@@ -115,75 +124,33 @@ export function WeeklyAvailabilityGrid({
 
   // availability slots
   const getAvailabilityForSlot = (day: string, time: string) => {
-    return availabilityData?.slots?.find((slot: any) => {
+    return availabilityData?.events?.find((slot: any) => {
       if (slot?.day?.toLowerCase() !== day.toLowerCase()) return false;
 
       const slotTime = new Date(`2000-01-01T${time}:00`);
       const start = new Date(`2000-01-01T${slot.startTime}:00`);
       const end = new Date(`2000-01-01T${slot.endTime}:00`);
 
-      return slotTime >= start && slotTime < end && slot.status === 'available';
+      return slotTime >= start && slotTime < end && slot.entry_type === "AVAILABILITY";
     });
   };
 
   const isAvailabilityStartSlot = (day: string, time: string) => {
-    return availabilityData.slots.some(
+    return availabilityData.events.some(
       (slot: any) =>
         slot?.day?.toLowerCase() === day.toLowerCase() &&
         slot?.startTime === time &&
-        slot?.status === 'available'
+        slot.entry_type === "AVAILABILITY"
     );
-  };
-
-  const getAvailabilitySpanHeight = (slot: any) => {
-    const start = new Date(`2000-01-01T${slot.startTime}:00`);
-    const end = new Date(`2000-01-01T${slot.endTime}:00`);
-    const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-
-    const slots = Math.ceil(durationMinutes / 60);
-    return slots + 1;
-  };
-
-  // unavailable slots
-  const getUnavailableForSlot = (day: string, time: string) => {
-    return availabilityData?.slots?.find((slot: any) => {
-      if (slot?.day?.toLowerCase() !== day.toLowerCase()) return false;
-
-      const slotTime = new Date(`2000-01-01T${time}:00`);
-      const start = new Date(`2000-01-01T${slot.startTime}:00`);
-      const end = new Date(`2000-01-01T${slot.endTime}:00`);
-
-      return slotTime >= start && slotTime < end && slot.status === 'unavailable' && slot.custom_pattern === "";
-    });
-  };
-
-  const isUnavailableStartSlot = (day: string, time: string) => {
-    return availabilityData.slots.some(
-      (slot: any) =>
-        slot?.day?.toLowerCase() === day.toLowerCase() &&
-        slot?.startTime === time &&
-        slot?.status === 'unavailable' && slot?.custom_pattern === ""
-    );
-  };
-
-  const getUnavailableSpanHeight = (slot: any) => {
-    const start = new Date(`2000-01-01T${slot.startTime}:00`);
-    const end = new Date(`2000-01-01T${slot.endTime}:00`);
-    const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-
-    const slots = Math.ceil(durationMinutes / 60);
-    return slots + 1;
   };
 
   // blocked slots
   function doesSlotApplyToDate(slot: any, date: Date) {
     if (slot.recurring) {
-      // Recurring → match weekday (Mon–Sun)
       const weekday = date.toLocaleDateString("en-US", { weekday: "long" });
       return weekday.toLowerCase() === slot.day.toLowerCase();
     }
 
-    // Non-recurring → match exact calendar date
     if (slot.date) {
       const slotDate = new Date(slot.date);
       return slotDate.toDateString() === date.toDateString();
@@ -193,8 +160,8 @@ export function WeeklyAvailabilityGrid({
   }
 
   const getBlockedSlot = (day: string, time: string, date: Date) => {
-    return availabilityData?.slots?.find(slot => {
-      if (slot.custom_pattern !== "BLOCKED_TIME_SLOT") return false;
+    return availabilityData?.events?.find(slot => {
+      if (slot.entry_type !== "BLOCKED") return false;
 
       if (!doesSlotApplyToDate(slot, date)) return false;
 
@@ -207,10 +174,8 @@ export function WeeklyAvailabilityGrid({
   };
 
   const isBlockedStartSlot = (day: string, time: string, date: Date) => {
-    return availabilityData.slots.some(slot => {
-      if (slot.custom_pattern !== "BLOCKED_TIME_SLOT") return false;
-
-      // 🚀 MUST match the same date rules as getBlockedSlot
+    return availabilityData.events.some(slot => {
+      if (slot.entry_type !== "BLOCKED") return false;
       if (!doesSlotApplyToDate(slot, date)) return false;
 
       return (
@@ -220,10 +185,11 @@ export function WeeklyAvailabilityGrid({
     });
   };
 
-
   // event slots
   const getEventForSlot = (day: string, time: string, date: Date) => {
     return availabilityData?.events?.find(event => {
+      if (event.entry_type !== "SCHEDULED_INSTANCE") return false;
+      if (!event.date) return false;
       const eventDate = new Date(event.date);
       const isSameDate = eventDate.toDateString() === date.toDateString();
       const isSameDay = event.day.toLowerCase() === day.toLowerCase();
@@ -448,9 +414,6 @@ export function WeeklyAvailabilityGrid({
                 const availabilitySlot = getAvailabilityForSlot(day, time);
                 const isAvailabilityStart = isAvailabilityStartSlot(day, time);
 
-                const unavailableSlot = getUnavailableForSlot(day, time);
-                const isUnavailableStart = isUnavailableStartSlot(day, time);
-
                 const blockedSlot = getBlockedSlot(day, time, date as any)
                 const isBlockedStart = isBlockedStartSlot(day, time, date as any)
 
@@ -471,7 +434,7 @@ export function WeeklyAvailabilityGrid({
                                 // ✅ Available block
                                 availabilitySlot && isAvailabilityStart
                                   ? {
-                                    height: `${getAvailabilitySpanHeight(availabilitySlot) * 36 + (getAvailabilitySpanHeight(availabilitySlot) + 0.5) * 8}px`,
+                                    height: `${getEventSpanHeight(availabilitySlot) * 32 + (getEventSpanHeight(availabilitySlot) + 0.5) * 8}px`,
                                     zIndex: 1,
                                     position: 'absolute',
                                     top: '4px',
@@ -479,40 +442,29 @@ export function WeeklyAvailabilityGrid({
                                     right: '4px',
                                     backgroundColor: 'rgba(34,197,94,0.3)', // green tint
                                   }
-                                  : // ✅ Unavailable block
-                                  unavailableSlot && isUnavailableStart
+                                  : // ✅ Classes/Bookings block
+                                  eventInSlot && isEventStart
                                     ? {
-                                      height: `${getUnavailableSpanHeight(unavailableSlot) * 36 + (getUnavailableSpanHeight(unavailableSlot) + 0.5) * 8}px`,
-                                      zIndex: 1,
+                                      height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) + 0.5) * 8}px`,
+                                      zIndex: 10,
                                       position: 'absolute',
                                       top: '1px',
                                       left: '1px',
                                       right: '4px',
-                                      backgroundColor: 'rgba(239,68,68,0.3)', // red tint
                                     }
-                                    : // ✅ Event block
-                                    eventInSlot && isEventStart
+                                    : // Blocked sllots
+                                    blockedSlot && isBlockedStart
                                       ? {
-                                        height: `${getEventSpanHeight(eventInSlot) * 36 + (getEventSpanHeight(eventInSlot) + 0.5) * 8}px`,
-                                        zIndex: 10,
-                                        position: 'absolute',
-                                        top: '1px',
-                                        left: '1px',
-                                        right: '4px',
+                                        height: `${getEventSpanHeight(blockedSlot) * 32 + (getEventSpanHeight(blockedSlot) + 0.5) * 8}px`,
+                                        zIndex: 1,
+                                        position: "absolute",
+                                        top: "1px",
+                                        left: "1px",
+                                        right: "4px",
+                                        border: "2px solid rgba(239,68,68,0.4)",
+                                        backgroundColor: "rgba(239,68,68,0.25)",
                                       }
-                                      : // Blocked/Reserved sllots
-                                      blockedSlot && isBlockedStart
-                                        ? {
-                                          height: `${getUnavailableSpanHeight(blockedSlot) * 36 + (getUnavailableSpanHeight(blockedSlot) + 0.5) * 8}px`,
-                                          zIndex: 1,
-                                          position: "absolute",
-                                          top: "1px",
-                                          left: "1px",
-                                          right: "4px",
-                                          border: "2px solid rgb(59, 130, 246, 0.25)",
-                                          backgroundColor: "rgba(59, 130, 246, 0.25)"
-                                        }
-                                        : {}
+                                      : {}
                               }
                             >
                               {/* Show event text on top */}
@@ -529,38 +481,20 @@ export function WeeklyAvailabilityGrid({
                               )}
 
                               {/* Show availability only once (at the start) */}
-                              {availabilitySlot && isAvailabilityStart && !eventInSlot && (
+                              {/* {availabilitySlot && isAvailabilityStart && !eventInSlot && (
                                 <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-success'>
                                   Available
                                   <span className='mt-1 text-muted-foreground'>
                                     {availabilitySlot.startTime} - {availabilitySlot.endTime}
                                   </span>
                                 </div>
-                              )}
-
-                              {unavailableSlot && isUnavailableStart && !eventInSlot && (
-                                <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-destructive'>
-                                  Unavailable
-                                  <span className='mt-1 text-muted-foreground'>
-                                    {unavailableSlot.startTime} - {unavailableSlot.endTime}
-                                  </span>
-                                </div>
-                              )}
+                              )} */}
 
                               {blockedSlot && isBlockedStart && (
                                 <div className='flex h-full flex-col items-center justify-center text-xs font-medium text-primary'>
-                                  Reserved / Booked
+                                  Blocked
                                   <span className='mt-1 text-primary'>
                                     {blockedSlot.startTime} - {blockedSlot.endTime}
-                                  </span>
-                                </div>
-                              )}
-
-                              {status === 'booked' && classesInSlot.length > 0 && !eventInSlot && (
-                                <div className='flex items-center justify-center'>
-                                  <BookOpen className='h-3 w-3' />
-                                  <span className='ml-1 truncate text-xs'>
-                                    {classesInSlot[0]?.classTitle.substring(0, 8)}...
                                   </span>
                                 </div>
                               )}

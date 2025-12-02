@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from 'lucide-react';
 import { useState } from 'react';
+import { DailyAvailabilityGrid } from '../../availability/components/daily-availability-grid';
 import { MonthlyAvailabilityGrid } from '../../availability/components/monthly-availability-grid';
 import type { AvailabilityData } from '../../availability/components/types';
 import { WeeklyAvailabilityGrid } from '../../availability/components/weekly-availability-grid';
@@ -34,10 +35,20 @@ export default function TimetableManager({
         </CardHeader>
         <CardContent>
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList className='grid w-full grid-cols-2'>
+            <TabsList className='grid w-full grid-cols-3'>
+              <TabsTrigger value='daily'>Daily View</TabsTrigger>
               <TabsTrigger value='weekly'>Weekly View</TabsTrigger>
               <TabsTrigger value='monthly'>Monthly View</TabsTrigger>
             </TabsList>
+
+            <TabsContent value='daily' className='mt-6'>
+              <DailyAvailabilityGrid
+                availabilityData={availabilityData}
+                onAvailabilityUpdate={onAvailabilityUpdate}
+                isEditing={isEditing}
+                classes={[]}
+              />
+            </TabsContent>
 
             <TabsContent value='weekly' className='mt-6'>
               <WeeklyAvailabilityGrid

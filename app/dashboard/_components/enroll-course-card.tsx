@@ -2,18 +2,22 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useStudent } from '@/context/student-context';
+import { useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import { addItemMutation, createCartMutation } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation } from '@tanstack/react-query';
 import { BookOpen, CheckCircle, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import AddToCartModal from '../@student/_components/addToCart-modal';
 
 interface EnrollCourseCardProps {
   cls: any;
   href: string;
   isFull: boolean;
-  enrollmentPercentage: number;
   handleEnroll: (cls: any) => void;
   disableEnroll: boolean;
   variant?: 'full' | 'minimal';
@@ -23,14 +27,87 @@ export default function EnrollCourseCard({
   cls,
   href,
   isFull,
-  enrollmentPercentage,
   handleEnroll,
   disableEnroll,
   variant,
 }: EnrollCourseCardProps) {
-  const _router = useRouter();
+  const student = useStudent()
   const { difficultyMap } = useDifficultyLevels();
   const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'Unknown';
+
+  const { roster, uniqueEnrollments, isLoading: rosterLoading } = useClassRoster(cls.uuid);
+  const enrolled = roster?.length
+  const enrolledPercentage = (enrolled / cls?.max_participants) * 100;
+
+  const savedCartId = localStorage.getItem("cart_id");
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<any>(null);
+
+  const createCart = useMutation(createCartMutation())
+  const addItemToCart = useMutation(addItemMutation())
+
+  const handleCreateCart = (classUuid: string) => {
+    if (!classUuid) return;
+
+    if (!savedCartId) {
+      createCart.mutate(
+        {
+          body: {
+            currency_code: "USD",
+            region_code: "KE",
+            metadata: {
+              campaign: "back-to-school",
+            } as any,
+            items: [
+              {
+                variant_id: "course",
+                quantity: 1,
+                metadata: {
+                  course_uuid: cls?.course?.uuid as any,
+                  class_definition_uuid: cls?.uuid as any,
+                  student_uuid: student?.uuid as any,
+                },
+              },
+            ],
+          },
+        },
+        {
+          onSuccess: (data: any) => {
+            const cartId = data?.uuid || null;
+
+            if (cartId) {
+              localStorage.setItem("cart_id", cartId);
+            } else {
+              console.warn("Cart ID not found in API response:", data);
+            }
+
+            toast.success("Class added to cart!");
+            setShowCartModal(false);
+          },
+        }
+      );
+
+      return
+    }
+
+    addItemToCart.mutate({
+      path: { cartId: savedCartId as string },
+      body: {
+        variant_id: "",
+        quantity: 1,
+        metadata: {
+          course_uuid: cls?.course?.uuid as any,
+          class_definition_uuid: cls?.uuid as any,
+          student_uuid: student?.uuid as any,
+        }
+      }
+    }, {
+      onSuccess: (data) => {
+        toast.success("Class added to cart!");
+        setShowCartModal(false);
+      }
+    })
+  };
 
   return (
     <div className='group cursor-pointer'>
@@ -61,7 +138,7 @@ export default function EnrollCourseCard({
 
             {isFull && (
               <div className='absolute top-3 right-3 z-20'>
-                <Badge className='bg-red-500/90 text-white backdrop-blur-sm'>FULL</Badge>
+                <Badge className='bg-destructive text-white backdrop-blur-sm'>FULL</Badge>
               </div>
             )}
 
@@ -72,7 +149,8 @@ export default function EnrollCourseCard({
                 className='absolute right-3 bottom-3 z-30 rounded-full border border-primary/30 bg-white/90 hover:bg-primary/10'
                 onClick={e => {
                   e.stopPropagation();
-                  toast.success('Implement add to cart:', cls.uuid);
+                  setSelectedClass(cls);
+                  setShowCartModal(true);
                 }}
               >
                 <svg
@@ -146,16 +224,16 @@ export default function EnrollCourseCard({
                 <div className='flex justify-between text-xs'>
                   <span className='text-muted-foreground'>Enrollment</span>
                   <span
-                    className={enrollmentPercentage >= 80 ? 'text-warning' : 'text-primary'}
+                    className={enrolledPercentage >= 80 ? 'text-warning' : 'text-primary'}
                   >
-                    {enrollmentPercentage?.toFixed(0)}%
+                    {enrolledPercentage?.toFixed(0)}%
                   </span>
                 </div>
                 <div className='h-2 overflow-hidden rounded-full bg-primary/10'>
                   <div
-                    className={`h-full transition-all duration-500 ${enrollmentPercentage >= 80 ? 'bg-warning' : 'bg-primary'
+                    className={`h-full transition-all duration-500 ${enrolledPercentage >= 80 ? 'bg-warning' : 'bg-primary'
                       }`}
-                    style={{ width: `${enrollmentPercentage}%` }}
+                    style={{ width: `${enrolledPercentage}%` }}
                   />
                 </div>
               </div>
@@ -201,6 +279,17 @@ export default function EnrollCourseCard({
           </div>
         </div>
       </Card>
+
+
+      <AddToCartModal
+        open={showCartModal}
+        onClose={() => setShowCartModal(false)}
+        cls={selectedClass}
+        onConfirm={() => {
+          handleCreateCart(selectedClass.uuid);
+        }}
+      />
+
     </div>
   );
 }

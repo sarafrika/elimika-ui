@@ -233,11 +233,6 @@ export default {
       icon: GraduationCap,
     },
     {
-      title: 'Availability',
-      url: '/dashboard/availability',
-      icon: Wallet,
-    },
-    {
       title: 'Bookings',
       url: '/dashboard/bookings',
       icon: CalendarClock,

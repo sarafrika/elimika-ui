@@ -172,15 +172,6 @@ import type {
   UpdateInstructorDocumentData,
   UpdateInstructorDocumentResponses,
   UpdateInstructorDocumentErrors,
-  DeleteAvailabilitySlotData,
-  DeleteAvailabilitySlotResponses,
-  DeleteAvailabilitySlotErrors,
-  GetAvailabilitySlotData,
-  GetAvailabilitySlotResponses,
-  GetAvailabilitySlotErrors,
-  UpdateAvailabilitySlotData,
-  UpdateAvailabilitySlotResponses,
-  UpdateAvailabilitySlotErrors,
   DeleteCourseData,
   DeleteCourseResponses,
   DeleteCourseErrors,
@@ -562,15 +553,9 @@ import type {
   UploadInstructorDocumentData,
   UploadInstructorDocumentResponses,
   UploadInstructorDocumentErrors,
-  CreateAvailabilitySlotData,
-  CreateAvailabilitySlotResponses,
-  CreateAvailabilitySlotErrors,
   SetAvailabilityPatternsData,
   SetAvailabilityPatternsResponses,
   SetAvailabilityPatternsErrors,
-  BookInstructorSlotData,
-  BookInstructorSlotResponses,
-  BookInstructorSlotErrors,
   BlockTimeData,
   BlockTimeResponses,
   BlockTimeErrors,
@@ -1033,24 +1018,12 @@ import type {
   GetInstructorRatingSummaryData,
   GetInstructorRatingSummaryResponses,
   GetInstructorRatingSummaryErrors,
-  ClearInstructorAvailabilityData,
-  ClearInstructorAvailabilityResponses,
-  ClearInstructorAvailabilityErrors,
-  GetInstructorAvailabilityData,
-  GetInstructorAvailabilityResponses,
-  GetInstructorAvailabilityErrors,
-  SearchAvailabilityData,
-  SearchAvailabilityResponses,
-  SearchAvailabilityErrors,
-  GetAvailabilityForDateData,
-  GetAvailabilityForDateResponses,
-  GetAvailabilityForDateErrors,
   CheckAvailabilityData,
   CheckAvailabilityResponses,
   CheckAvailabilityErrors,
-  FindAvailableSlotsData,
-  FindAvailableSlotsResponses,
-  FindAvailableSlotsErrors,
+  GetInstructorCalendarData,
+  GetInstructorCalendarResponses,
+  GetInstructorCalendarErrors,
   SearchSkillsData,
   SearchSkillsResponses,
   SearchSkillsErrors,
@@ -1204,12 +1177,6 @@ import type {
   GetByClassData,
   GetByClassResponses,
   GetByClassErrors,
-  PreviewRecurringClassScheduleData,
-  PreviewRecurringClassScheduleResponses,
-  PreviewRecurringClassScheduleErrors,
-  CheckClassSchedulingConflictsData,
-  CheckClassSchedulingConflictsResponses,
-  CheckClassSchedulingConflictsErrors,
   GetEnrollmentsForClassData,
   GetEnrollmentsForClassResponses,
   GetEnrollmentsForClassErrors,
@@ -1312,6 +1279,9 @@ import type {
   CleanupOldInvitationsData,
   CleanupOldInvitationsResponses,
   CleanupOldInvitationsErrors,
+  ClearInstructorAvailabilityData,
+  ClearInstructorAvailabilityResponses,
+  ClearInstructorAvailabilityErrors,
   RevokeLinkData,
   RevokeLinkResponses,
   RevokeLinkErrors,
@@ -1364,8 +1334,6 @@ import {
   updateInstructorExperienceResponseTransformer,
   updateInstructorEducationResponseTransformer,
   updateInstructorDocumentResponseTransformer,
-  getAvailabilitySlotResponseTransformer,
-  updateAvailabilitySlotResponseTransformer,
   getCourseByUuidResponseTransformer,
   updateCourseResponseTransformer,
   updateCourseTrainingRequirementResponseTransformer,
@@ -1459,7 +1427,6 @@ import {
   addInstructorDocumentResponseTransformer,
   verifyDocumentResponseTransformer,
   uploadInstructorDocumentResponseTransformer,
-  createAvailabilitySlotResponseTransformer,
   createLinkResponseTransformer,
   enrollStudentResponseTransformer,
   getAllCoursesResponseTransformer,
@@ -1588,10 +1555,7 @@ import {
   previewInvitationResponseTransformer,
   getPendingInvitationsForEmailResponseTransformer,
   getInstructorRatingSummaryResponseTransformer,
-  getInstructorAvailabilityResponseTransformer,
-  searchAvailabilityResponseTransformer,
-  getAvailabilityForDateResponseTransformer,
-  findAvailableSlotsResponseTransformer,
+  getInstructorCalendarResponseTransformer,
   searchSkillsResponseTransformer,
   searchInstructorsResponseTransformer,
   searchMembershipsResponseTransformer,
@@ -1631,8 +1595,6 @@ import {
   listCatalogItemsResponseTransformer,
   getByCourseResponseTransformer,
   getByClassResponseTransformer,
-  previewRecurringClassScheduleResponseTransformer,
-  checkClassSchedulingConflictsResponseTransformer,
   getEnrollmentsForClassResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
@@ -3267,93 +3229,6 @@ export const updateInstructorDocument = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Delete an availability slot
- * Removes a specific availability slot
- */
-export const deleteAvailabilitySlot = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteAvailabilitySlotData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).delete<
-    DeleteAvailabilitySlotResponses,
-    DeleteAvailabilitySlotErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/slots/{slotUuid}',
-    ...options,
-  });
-};
-
-/**
- * Get a specific availability slot
- * Retrieves a single availability slot by its UUID
- */
-export const getAvailabilitySlot = <ThrowOnError extends boolean = false>(
-  options: Options<GetAvailabilitySlotData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetAvailabilitySlotResponses,
-    GetAvailabilitySlotErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getAvailabilitySlotResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/slots/{slotUuid}',
-    ...options,
-  });
-};
-
-/**
- * Update an availability slot
- * Updates an existing availability slot
- */
-export const updateAvailabilitySlot = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateAvailabilitySlotData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).put<
-    UpdateAvailabilitySlotResponses,
-    UpdateAvailabilitySlotErrors,
-    ThrowOnError
-  >({
-    responseTransformer: updateAvailabilitySlotResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/slots/{slotUuid}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
  * Delete course
  * Permanently removes a course, its category associations, and all associated data.
  */
@@ -4513,7 +4388,7 @@ export const updateCategory = <ThrowOnError extends boolean = false>(
 
 /**
  * Update catalog mapping
- * Updates Medusa identifiers or status for an existing mapping
+ * Updates internal variant identifiers or status for an existing mapping
  */
 export const updateCatalogItem = <ThrowOnError extends boolean = false>(
   options: Options<UpdateCatalogItemData, ThrowOnError>
@@ -7159,38 +7034,6 @@ export const uploadInstructorDocument = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create a new availability slot
- * Creates a single availability slot for an instructor
- */
-export const createAvailabilitySlot = <ThrowOnError extends boolean = false>(
-  options: Options<CreateAvailabilitySlotData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    CreateAvailabilitySlotResponses,
-    CreateAvailabilitySlotErrors,
-    ThrowOnError
-  >({
-    responseTransformer: createAvailabilitySlotResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/slots',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
  * Set availability patterns
  * Sets recurring availability patterns for an instructor.
  *
@@ -7229,46 +7072,6 @@ export const setAvailabilityPatterns = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/instructors/{instructorUuid}/availability/patterns',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Book an instructor for a private session
- * Allows a student to book an instructor for a one-on-one session outside publicly scheduled classes.
- *
- * **Flow:**
- * - The frontend first uses the `/available` endpoint to show free slots.
- * - Once a slot is selected, the client calls this endpoint with start/end times and an optional purpose.
- * - The service verifies the instructor is available, then blocks the slot so it is not offered again.
- *
- * This endpoint does not create enrollments or class definitions; it simply reserves the instructor's time.
- * Other modules (e.g., Timetabling, Commerce) can listen for bookings and create paid sessions if needed.
- *
- */
-export const bookInstructorSlot = <ThrowOnError extends boolean = false>(
-  options: Options<BookInstructorSlotData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    BookInstructorSlotResponses,
-    BookInstructorSlotErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/book',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -11927,156 +11730,10 @@ export const getInstructorRatingSummary = <ThrowOnError extends boolean = false>
 };
 
 /**
- * Clear all availability for an instructor
- * Removes all availability slots and patterns for an instructor. Use with caution.
- */
-export const clearInstructorAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<ClearInstructorAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).delete<
-    ClearInstructorAvailabilityResponses,
-    ClearInstructorAvailabilityErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability',
-    ...options,
-  });
-};
-
-/**
- * Get all availability for an instructor
- * Retrieves all availability slots for a specific instructor, including all patterns and blocked times
- */
-export const getInstructorAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<GetInstructorAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetInstructorAvailabilityResponses,
-    GetInstructorAvailabilityErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getInstructorAvailabilityResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability',
-    ...options,
-  });
-};
-
-/**
- * Search availability slots with flexible filtering
- *  Search and filter availability slots using dynamic query parameters.
- *
- * **Supported filter operators:**
- * - `_eq` - equals (e.g., `is_available=true`)
- * - `_ne` or `_noteq` - not equals (e.g., `availability_type_ne=DAILY`)
- * - `_like` - contains (for strings, e.g., `custom_pattern_like=BLOCK`)
- * - `_gt` - greater than (e.g., `day_of_week_gt=3`)
- * - `_gte` - greater than or equal (e.g., `start_time_gte=09:00:00`)
- * - `_lt` - less than (e.g., `day_of_month_lt=15`)
- * - `_lte` - less than or equal (e.g., `end_time_lte=17:00:00`)
- * - `_in` - in list (comma-separated, e.g., `availability_type_in=WEEKLY,MONTHLY`)
- *
- * **Example queries:**
- * - Get all available slots: `?is_available=true`
- * - Get blocked times: `?is_available=false`
- * - Get weekly patterns for Monday: `?availability_type=WEEKLY&day_of_week=1`
- * - Get slots with specific color: `?color_code=#FF6B6B`
- * - Get slots by date range: `?specific_date_gte=2024-01-01&specific_date_lte=2024-12-31`
- * - Combined: `?is_available=false&color_code_like=FF6B`
- *
- * **Pagination:** Use standard Spring pagination parameters:
- * - `page` - page number (0-indexed)
- * - `size` - page size
- * - `sort` - sorting (e.g., `start_time,asc` or `specific_date,desc`)
- *
- * **Examples:**
- * - `/search?is_available=true&page=0&size=20&sort=start_time,asc`
- * - `/search?availability_type_in=WEEKLY,MONTHLY&day_of_week_gte=1&day_of_week_lte=5`
- * - `/search?is_available=false&specific_date_gte=2024-10-01`
- *
- */
-export const searchAvailability = <ThrowOnError extends boolean = false>(
-  options: Options<SearchAvailabilityData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    SearchAvailabilityResponses,
-    SearchAvailabilityErrors,
-    ThrowOnError
-  >({
-    responseTransformer: searchAvailabilityResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/search',
-    ...options,
-  });
-};
-
-/**
- * Get availability for a specific date
- * Retrieves all availability slots (including from patterns) for an instructor on a specific date
- */
-export const getAvailabilityForDate = <ThrowOnError extends boolean = false>(
-  options: Options<GetAvailabilityForDateData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetAvailabilityForDateResponses,
-    GetAvailabilityForDateErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getAvailabilityForDateResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/date/{date}',
-    ...options,
-  });
-};
-
-/**
  * Check if instructor is available during a time period
  * Checks whether an instructor is available for the entire specified time period.
  *
- * Returns true only if the instructor is available for the ENTIRE duration.
- * This considers:
- * - All availability patterns
- * - Blocked time slots
- * - Existing bookings (if integrated with scheduling)
- *
- * Useful for validating booking requests before creating them.
+ * Returns true unless a blocked slot overlaps the requested window.
  *
  */
 export const checkAvailability = <ThrowOnError extends boolean = false>(
@@ -12103,26 +11760,18 @@ export const checkAvailability = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Find available slots within a date range
- * Finds all available time slots for an instructor within a specified date range.
- *
- * This is useful for scheduling systems that need to:
- * - Show available booking slots
- * - Find the next available time
- * - Display a calendar of availability
- *
- * Only returns slots where isAvailable = true (excludes blocked times).
- *
+ * Get merged instructor calendar
+ * Returns a merged feed of availability slots, blocked time, and scheduled instances for the instructor within a date range.
  */
-export const findAvailableSlots = <ThrowOnError extends boolean = false>(
-  options: Options<FindAvailableSlotsData, ThrowOnError>
+export const getInstructorCalendar = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorCalendarData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).get<
-    FindAvailableSlotsResponses,
-    FindAvailableSlotsErrors,
+    GetInstructorCalendarResponses,
+    GetInstructorCalendarErrors,
     ThrowOnError
   >({
-    responseTransformer: findAvailableSlotsResponseTransformer,
+    responseTransformer: getInstructorCalendarResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -12133,7 +11782,7 @@ export const findAvailableSlots = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/available',
+    url: '/api/v1/instructors/{instructorUuid}/availability/calendar',
     ...options,
   });
 };
@@ -13755,60 +13404,6 @@ export const getByClass = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Preview recurring schedule without creating instances
- */
-export const previewRecurringClassSchedule = <ThrowOnError extends boolean = false>(
-  options: Options<PreviewRecurringClassScheduleData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    PreviewRecurringClassScheduleResponses,
-    PreviewRecurringClassScheduleErrors,
-    ThrowOnError
-  >({
-    responseTransformer: previewRecurringClassScheduleResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/{uuid}/schedule/preview',
-    ...options,
-  });
-};
-
-/**
- * Check for scheduling conflicts
- */
-export const checkClassSchedulingConflicts = <ThrowOnError extends boolean = false>(
-  options: Options<CheckClassSchedulingConflictsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    CheckClassSchedulingConflictsResponses,
-    CheckClassSchedulingConflictsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: checkClassSchedulingConflictsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/{uuid}/schedule/conflicts',
-    ...options,
-  });
-};
-
-/**
  * List enrollments for a class definition across all scheduled instances
  */
 export const getEnrollmentsForClass = <ThrowOnError extends boolean = false>(
@@ -14784,6 +14379,33 @@ export const cleanupOldInvitations = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/invitations/maintenance/cleanup',
+    ...options,
+  });
+};
+
+/**
+ * Clear all availability for an instructor
+ * Removes all availability slots and patterns for an instructor. Use with caution.
+ */
+export const clearInstructorAvailability = <ThrowOnError extends boolean = false>(
+  options: Options<ClearInstructorAvailabilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    ClearInstructorAvailabilityResponses,
+    ClearInstructorAvailabilityErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/availability',
     ...options,
   });
 };

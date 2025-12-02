@@ -2,6 +2,7 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useInstructor } from '@/context/instructor-context';
+import { getClassDefinitionQueryKey, getClassDefinitionsForInstructorQueryKey, updateClassDefinitionMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
@@ -19,7 +20,6 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { getClassDefinitionQueryKey, getClassDefinitionsForInstructorQueryKey, updateClassDefinitionMutation } from '../../../../../services/client/@tanstack/react-query.gen';
 
 interface ReviewPublishFormProps {
   data: Partial<any>;

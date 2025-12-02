@@ -205,7 +205,7 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
 
             <MapboxSearchInput
               onSelect={(place: any) => {
-                setValue("location_name", place.name);
+                // Mapbox now ONLY sets coordinates
                 setValue("location_latitude", place.latitude);
                 setValue("location_longitude", place.longitude);
               }}
@@ -218,35 +218,46 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
         )}
       </div>
 
-
       {['IN_PERSON', 'HYBRID'].includes(watched.location_type) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <>
+          {/* NEW VENUE FIELD */}
+          <div className="space-y-2 mt-4">
+            <Label>Venue *</Label>
+            <Controller
+              name="location_name"
+              control={control}
+              render={({ field }) => (
+                <Input {...field} placeholder="e.g. Nairobi Serena Hotel" />
+              )}
+            />
+          </div>
 
-          {/* LATITUDE */}
-          <Controller
-            name="location_latitude"
-            control={control}
-            render={({ field }) => (
-              <div className="space-y-1">
-                <Label>Latitude</Label>
-                <Input {...field} type="number" step="0.000001" placeholder="-1.292066" />
-              </div>
-            )}
-          />
+          <div className="hidden grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {/* LATITUDE */}
+            <Controller
+              name="location_latitude"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-1">
+                  <Label>Latitude</Label>
+                  <Input {...field} type="number" step="0.000001" placeholder="-1.292066" />
+                </div>
+              )}
+            />
 
-          {/* LONGITUDE */}
-          <Controller
-            name="location_longitude"
-            control={control}
-            render={({ field }) => (
-              <div className="space-y-1">
-                <Label>Longitude</Label>
-                <Input {...field} type="number" step="0.000001" placeholder="36.821945" />
-              </div>
-            )}
-          />
-
-        </div>
+            {/* LONGITUDE */}
+            <Controller
+              name="location_longitude"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-1">
+                  <Label>Longitude</Label>
+                  <Input {...field} type="number" step="0.000001" placeholder="36.821945" />
+                </div>
+              )}
+            />
+          </div>
+        </>
       )}
 
       {/* --- Availability Days --- */}
