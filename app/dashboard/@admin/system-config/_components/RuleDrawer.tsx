@@ -210,23 +210,30 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
   const handleSubmit = async (values: RuleFormValues) => {
     setErrorMessage(null);
 
+    const parsePriority = (input: RuleFormValues['priority']) => {
+      if (input === null || input === undefined || input === '') return undefined;
+      const numeric = typeof input === 'number' ? input : Number(input);
+      return Number.isFinite(numeric) ? numeric : undefined;
+    };
+
+    const toIsoDateTime = (value?: string | null) => {
+      if (!value) return undefined;
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+    };
+
     const payload = {
       category: values.category,
       key: values.key.trim(),
       status: values.status,
       scope: values.scope,
       scopeReference: values.scope === 'GLOBAL' ? undefined : values.scopeReference?.trim() || undefined,
-      priority:
-        values.priority === null || values.priority === undefined
-          ? undefined
-          : Number.isFinite(values.priority)
-            ? values.priority
-            : undefined,
+      priority: parsePriority(values.priority),
       valueType: values.valueType,
       valuePayload: JSON.parse(values.valuePayload),
       conditions: values.conditions?.trim() ? JSON.parse(values.conditions) : undefined,
-      effectiveFrom: values.effectiveFrom || undefined,
-      effectiveTo: values.effectiveTo || undefined,
+      effectiveFrom: toIsoDateTime(values.effectiveFrom),
+      effectiveTo: toIsoDateTime(values.effectiveTo),
     };
 
     try {
