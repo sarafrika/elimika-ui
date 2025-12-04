@@ -52,19 +52,37 @@ export interface SystemRuleListResult {
 
 const listRulesResponseSchema = zApiResponsePagedDtoSystemRuleResponse.passthrough();
 
-const systemRuleRequestSchema = z.object({
-  category: z.string(),
-  key: z.string(),
-  scope: z.string().optional(),
-  scopeReference: z.string().optional(),
-  priority: z.number().optional(),
-  status: z.string().optional(),
-  valueType: z.string().optional(),
-  valuePayload: z.record(z.any()),
-  conditions: z.record(z.any()).optional(),
-  effectiveFrom: z.string().optional(),
-  effectiveTo: z.string().optional(),
-});
+const systemRuleRequestSchema = z
+  .object({
+    category: z.string(),
+    key: z.string(),
+    scope: z.string().optional(),
+    scopeReference: z.string().optional(),
+    priority: z.number().optional(),
+    status: z.string().optional(),
+    valueType: z.string().optional(),
+    valuePayload: z.record(z.any()),
+    conditions: z.record(z.any()).optional(),
+    effectiveFrom: z.union([z.string(), z.date()]).optional(),
+    effectiveTo: z.union([z.string(), z.date()]).optional(),
+  })
+  .passthrough()
+  .transform(data => {
+    const cleaned = { ...data };
+    delete (cleaned as any).createdDate;
+    delete (cleaned as any).updatedDate;
+    delete (cleaned as any).createdBy;
+    delete (cleaned as any).updatedBy;
+
+    if (cleaned.effectiveFrom instanceof Date) {
+      cleaned.effectiveFrom = cleaned.effectiveFrom.toISOString();
+    }
+    if (cleaned.effectiveTo instanceof Date) {
+      cleaned.effectiveTo = cleaned.effectiveTo.toISOString();
+    }
+
+    return cleaned;
+  });
 
 const buildListRulesOptions = (params: SystemRuleListParams) => {
   const query: ListRulesData['query'] = {
