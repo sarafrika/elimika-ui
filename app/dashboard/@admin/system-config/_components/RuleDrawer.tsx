@@ -539,7 +539,12 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                         <FormItem>
                           <FormLabel>Effective from</FormLabel>
                           <FormControl>
-                            <Input type='datetime-local' disabled={isSubmitting} {...field} />
+                            <Input
+                              type='datetime-local'
+                              step='60'
+                              disabled={isSubmitting}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -553,7 +558,12 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                         <FormItem>
                           <FormLabel>Effective to</FormLabel>
                           <FormControl>
-                            <Input type='datetime-local' disabled={isSubmitting} {...field} />
+                            <Input
+                              type='datetime-local'
+                              step='60'
+                              disabled={isSubmitting}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
