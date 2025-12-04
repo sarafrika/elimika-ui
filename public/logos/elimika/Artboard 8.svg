@@ -5,17 +5,11 @@
       .cls-1 {
         fill: #fff;
       }
-
-      .cls-2 {
-        fill: #1a1a1a;
-      }
-
       .cls-3 {
         fill: #0061ed;
       }
     </style>
   </defs>
-  <rect class="cls-2" x="0" y="0" width="1080" height="1080"/>
   <g>
     <g>
       <path class="cls-1" d="M440.45,468.58v24.73h31.37v15.69h-31.37v26.15h35.38v16.11h-54.07v-98.79h54.07v16.11h-35.38Z"/>
