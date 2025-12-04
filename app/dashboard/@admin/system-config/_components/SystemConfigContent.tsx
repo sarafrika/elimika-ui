@@ -6,7 +6,6 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +18,6 @@ import {
   useSystemRules,
   type SystemRule,
   type SystemRuleCategory,
-  type SystemRuleScope,
   type SystemRuleStatus,
 } from '@/services/admin/system-config';
 import {
@@ -28,7 +26,6 @@ import {
   Pencil,
   Plus,
   RefreshCcw,
-  Search,
   SlidersHorizontal,
   X,
   Eye,
@@ -47,15 +44,6 @@ const statusFilters: { value: SystemRuleStatus | 'all'; label: string }[] = [
   { value: 'DRAFT', label: 'Draft' },
   { value: 'ACTIVE', label: 'Active' },
   { value: 'INACTIVE', label: 'Inactive' },
-];
-
-const scopeFilters: { value: SystemRuleScope | 'all'; label: string }[] = [
-  { value: 'all', label: 'Any scope' },
-  { value: 'GLOBAL', label: 'Global' },
-  { value: 'TENANT', label: 'Tenant' },
-  { value: 'REGION', label: 'Region' },
-  { value: 'DEMOGRAPHIC', label: 'Demographic' },
-  { value: 'SEGMENT', label: 'Segment' },
 ];
 
 const pageSizeOptions = [10, 20, 50];
@@ -96,8 +84,6 @@ export function SystemConfigContent() {
 
   const [category, setCategory] = useState<SystemRuleCategory | 'all'>('all');
   const [status, setStatus] = useState<SystemRuleStatus | 'all'>('all');
-  const [scope, setScope] = useState<SystemRuleScope | 'all'>('all');
-  const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -121,22 +107,9 @@ export function SystemConfigContent() {
 
   const rules = data?.items ?? [];
 
-  const visibleRules = useMemo(() => {
-    return rules.filter(rule => {
-      const matchesScope = scope === 'all' || rule.scope === scope;
-      const matchesSearch =
-        !search.trim() ||
-        rule.key?.toLowerCase().includes(search.trim().toLowerCase()) ||
-        rule.category?.toLowerCase().includes(search.trim().toLowerCase());
-      return matchesScope && matchesSearch;
-    });
-  }, [rules, scope, search]);
-
   const activeFilters = [
     category !== 'all' ? { label: `Category: ${category}`, onClear: () => setCategory('all') } : null,
     status !== 'all' ? { label: `Status: ${status}`, onClear: () => setStatus('all') } : null,
-    scope !== 'all' ? { label: `Scope: ${scope}`, onClear: () => setScope('all') } : null,
-    search ? { label: `Search: ${search}`, onClear: () => setSearch('') } : null,
   ].filter(Boolean) as { label: string; onClear: () => void }[];
 
   useEffect(() => {
@@ -192,8 +165,6 @@ export function SystemConfigContent() {
   const resetFilters = () => {
     setCategory('all');
     setStatus('all');
-    setScope('all');
-    setSearch('');
     setPage(0);
   };
 
@@ -240,7 +211,7 @@ export function SystemConfigContent() {
         <CardHeader className='space-y-4'>
           <div className='flex items-center gap-2 text-sm font-semibold'>
             <SlidersHorizontal className='h-4 w-4 text-muted-foreground' />
-            Filters
+            Rule list
           </div>
           <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-4'>
             <Select value={category} onValueChange={value => { setCategory(value as SystemRuleCategory | 'all'); setPage(0); }}>
@@ -268,37 +239,11 @@ export function SystemConfigContent() {
                 ))}
               </SelectContent>
             </Select>
-
-            <Select value={scope} onValueChange={value => { setScope(value as SystemRuleScope | 'all'); setPage(0); }}>
-              <SelectTrigger>
-                <SelectValue placeholder='Scope' />
-              </SelectTrigger>
-              <SelectContent>
-                {scopeFilters.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className='flex items-center gap-2 rounded-lg border px-3 py-2'>
-              <Search className='h-4 w-4 text-muted-foreground' />
-              <Input
-                value={search}
-                onChange={event => {
-                  setSearch(event.target.value);
-                  setPage(0);
-                }}
-                placeholder='Search by key…'
-                className='border-0 shadow-none focus-visible:ring-0'
-              />
-            </div>
           </div>
 
           <div className='flex flex-wrap items-center gap-2'>
             {activeFilters.length === 0 ? (
-              <p className='text-muted-foreground text-xs'>No filters applied.</p>
+              <p className='text-muted-foreground text-xs'>Listing all rules.</p>
             ) : (
               activeFilters.map(filter => (
                 <Badge key={filter.label} variant='outline' className='gap-1'>
@@ -324,7 +269,7 @@ export function SystemConfigContent() {
           <div className='flex items-center justify-between text-sm'>
             <div className='text-muted-foreground flex items-center gap-2'>
               <Filter className='h-4 w-4' />
-              Showing {visibleRules.length} of {data?.totalItems ?? rules.length} rules
+              Showing {rules.length} of {data?.totalItems ?? rules.length} rules
             </div>
             <Select
               value={pageSize.toString()}
@@ -372,12 +317,12 @@ export function SystemConfigContent() {
                         ))}
                       </TableRow>
                     ))
-                  ) : visibleRules.length === 0 ? (
+                  ) : rules.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8}>
                         <div className='flex flex-col items-center gap-2 py-10 text-center'>
                           <Filter className='h-5 w-5 text-muted-foreground' />
-                          <p className='text-sm text-muted-foreground'>No rules match the current filters.</p>
+                          <p className='text-sm text-muted-foreground'>No rules available yet.</p>
                           <Button variant='outline' size='sm' onClick={openCreate}>
                             Create first rule
                           </Button>
@@ -385,7 +330,7 @@ export function SystemConfigContent() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    visibleRules.map(rule => (
+                    rules.map(rule => (
                       <TableRow key={rule.uuid} className='cursor-pointer' onClick={() => openEdit(rule)}>
                         <TableCell className='font-semibold'>{rule.key}</TableCell>
                         <TableCell>{rule.category ?? '—'}</TableCell>
@@ -445,7 +390,7 @@ export function SystemConfigContent() {
                     </CardContent>
                   </Card>
                 ))
-              : visibleRules.map(rule => (
+              : rules.map(rule => (
                   <Card
                     key={rule.uuid}
                     className='mb-3 cursor-pointer'
