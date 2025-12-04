@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 360 1080 420">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 400 1080 320">
   <defs>
     <style>
       .cls-1 {
         fill: #fff;
       }
       .cls-3 {
-        fill: #0061ed;
+        fill: #fff;
       }
     </style>
   </defs>
