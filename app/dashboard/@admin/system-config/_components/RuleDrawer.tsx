@@ -174,6 +174,12 @@ const formatForInput = (value?: string | null) => {
   return format(parsed, "yyyy-MM-dd'T'HH:mm");
 };
 
+const splitDateTime = (value?: string | null) => {
+  if (!value) return { date: '', time: '' };
+  const [date, time] = value.split('T');
+  return { date: date ?? '', time: (time ?? '').slice(0, 5) };
+};
+
 export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }: RuleDrawerProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const isEdit = mode === 'edit';
@@ -539,12 +545,29 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                         <FormItem>
                           <FormLabel>Effective from</FormLabel>
                           <FormControl>
-                            <Input
-                              type='datetime-local'
-                              step='60'
-                              disabled={isSubmitting}
-                              {...field}
-                            />
+                            <div className='grid gap-2 sm:grid-cols-[1fr_0.9fr]'>
+                              <Input
+                                type='date'
+                                value={splitDateTime(field.value).date}
+                                onChange={event => {
+                                  const { time } = splitDateTime(field.value);
+                                  const date = event.target.value;
+                                  field.onChange(date && time ? `${date}T${time}` : date ? `${date}T00:00` : '');
+                                }}
+                                disabled={isSubmitting}
+                              />
+                              <Input
+                                type='time'
+                                step='60'
+                                value={splitDateTime(field.value).time}
+                                onChange={event => {
+                                  const { date } = splitDateTime(field.value);
+                                  const time = event.target.value;
+                                  field.onChange(date && time ? `${date}T${time}` : date ? `${date}T00:00` : '');
+                                }}
+                                disabled={isSubmitting}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -558,12 +581,29 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                         <FormItem>
                           <FormLabel>Effective to</FormLabel>
                           <FormControl>
-                            <Input
-                              type='datetime-local'
-                              step='60'
-                              disabled={isSubmitting}
-                              {...field}
-                            />
+                            <div className='grid gap-2 sm:grid-cols-[1fr_0.9fr]'>
+                              <Input
+                                type='date'
+                                value={splitDateTime(field.value).date}
+                                onChange={event => {
+                                  const { time } = splitDateTime(field.value);
+                                  const date = event.target.value;
+                                  field.onChange(date && time ? `${date}T${time}` : date ? `${date}T00:00` : '');
+                                }}
+                                disabled={isSubmitting}
+                              />
+                              <Input
+                                type='time'
+                                step='60'
+                                value={splitDateTime(field.value).time}
+                                onChange={event => {
+                                  const { date } = splitDateTime(field.value);
+                                  const time = event.target.value;
+                                  field.onChange(date && time ? `${date}T${time}` : date ? `${date}T00:00` : '');
+                                }}
+                                disabled={isSubmitting}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
