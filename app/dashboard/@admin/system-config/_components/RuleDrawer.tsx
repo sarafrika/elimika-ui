@@ -155,8 +155,8 @@ const getInitialValues = (rule?: SystemRule | null): RuleFormValues => {
     valueType: (rule?.valueType as RuleFormValues['valueType']) ?? 'JSON',
     valuePayload,
     conditions,
-    effectiveFrom: rule?.effectiveFrom ?? '',
-    effectiveTo: rule?.effectiveTo ?? '',
+    effectiveFrom: formatForInput(rule?.effectiveFrom),
+    effectiveTo: formatForInput(rule?.effectiveTo),
   };
 };
 
@@ -165,6 +165,13 @@ const formatDate = (value?: string | null) => {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return format(parsed, 'MMM d, yyyy HH:mm');
+};
+
+const formatForInput = (value?: string | null) => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return format(parsed, "yyyy-MM-dd'T'HH:mm");
 };
 
 export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }: RuleDrawerProps) {
