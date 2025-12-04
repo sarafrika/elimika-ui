@@ -8,7 +8,7 @@ import type {
   ScopeEnum,
   ValueTypeEnum,
 } from '@/services/client/types.gen';
-import { zApiResponsePagedDtoSystemRuleResponse } from '@/services/client/zod.gen';
+import { zApiResponsePagedDtoSystemRuleResponse, zSystemRuleRequest } from '@/services/client/zod.gen';
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
@@ -18,19 +18,7 @@ export type SystemRuleCategory = SchemaEnum;
 export type SystemRuleStatus = SchemaEnum2;
 export type SystemRuleScope = ScopeEnum;
 export type SystemRuleValueType = ValueTypeEnum;
-export type SystemRuleRequestPayload = {
-  category: SystemRuleCategory;
-  key: string;
-  scope?: SystemRuleScope;
-  scopeReference?: string;
-  priority?: number;
-  status?: SystemRuleStatus;
-  valueType?: SystemRuleValueType;
-  valuePayload: Record<string, any>;
-  conditions?: Record<string, any>;
-  effectiveFrom?: string;
-  effectiveTo?: string;
-};
+export type SystemRuleRequestPayload = z.input<typeof zSystemRuleRequest>;
 
 export interface SystemRuleListParams {
   page?: number;
@@ -52,27 +40,14 @@ export interface SystemRuleListResult {
 
 const listRulesResponseSchema = zApiResponsePagedDtoSystemRuleResponse.passthrough();
 
-const systemRuleRequestSchema = z
-  .object({
-    category: z.string(),
-    key: z.string(),
-    scope: z.string().optional(),
-    scopeReference: z.string().optional(),
-    priority: z.number().optional(),
-    status: z.string().optional(),
-    valueType: z.string().optional(),
-    valuePayload: z.record(z.any()),
-    conditions: z.record(z.any()).optional(),
-    effectiveFrom: z.union([z.string(), z.date()]).optional(),
-    effectiveTo: z.union([z.string(), z.date()]).optional(),
-  })
+const systemRuleRequestSchema = zSystemRuleRequest
   .passthrough()
   .transform(data => {
-    const cleaned = { ...data };
-    delete (cleaned as any).createdDate;
-    delete (cleaned as any).updatedDate;
-    delete (cleaned as any).createdBy;
-    delete (cleaned as any).updatedBy;
+    const cleaned: Record<string, unknown> = { ...data };
+    delete cleaned.createdDate;
+    delete cleaned.updatedDate;
+    delete cleaned.createdBy;
+    delete cleaned.updatedBy;
 
     if (cleaned.effectiveFrom instanceof Date) {
       cleaned.effectiveFrom = cleaned.effectiveFrom.toISOString();
