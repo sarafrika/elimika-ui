@@ -248,6 +248,9 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
       effectiveFrom: toIsoDateTime(values.effectiveFrom),
       effectiveTo: toIsoDateTime(values.effectiveTo),
     };
+    // strip any read-only fields in case of accidental carryover
+    delete (payload as any).createdDate;
+    delete (payload as any).updatedDate;
 
     try {
       if (isEdit && ruleId) {

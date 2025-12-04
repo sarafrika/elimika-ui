@@ -9,10 +9,7 @@ import type {
   SystemRuleRequest,
   ValueTypeEnum,
 } from '@/services/client/types.gen';
-import {
-  zApiResponsePagedDtoSystemRuleResponse,
-  zSystemRuleRequest,
-} from '@/services/client/zod.gen';
+import { zApiResponsePagedDtoSystemRuleResponse } from '@/services/client/zod.gen';
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
@@ -134,9 +131,8 @@ export function useCreateSystemRule(
 
   return useMutation<SystemRule | null, Error, SystemRuleRequest>({
     mutationFn: async payload => {
-      const body = zSystemRuleRequest.parse(payload);
       const { data } = await createRule({
-        body,
+        body: payload,
         throwOnError: true,
       });
       return (data as any)?.data ?? data ?? null;
@@ -162,10 +158,9 @@ export function useUpdateSystemRule(
 
   return useMutation<SystemRule | null, Error, UpdateRuleVariables>({
     mutationFn: async variables => {
-      const body = zSystemRuleRequest.parse(variables.body);
       const { data } = await updateRule({
         path: { uuid: variables.uuid },
-        body,
+        body: variables.body,
         throwOnError: true,
       });
       return (data as any)?.data ?? data ?? null;
