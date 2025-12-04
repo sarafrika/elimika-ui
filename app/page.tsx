@@ -182,13 +182,22 @@ export default function Home() {
             </div>
 
             <div className='flex flex-col items-center gap-6 rounded-[32px] border border-border/60 bg-card/80 p-8 shadow-xl shadow-black/10'>
-              <Image
-                alt='Sarafrika logo'
-                src='/logos/sarafrika/Sarafrika Logo-02.svg'
-                width={180}
-                height={48}
-                className='h-12 w-auto'
-              />
+              <div className='flex items-center justify-center gap-3'>
+                <Image
+                  alt='Sarafrika logo'
+                  src='/logos/sarafrika/Sarafrika Logo-02.svg'
+                  width={180}
+                  height={48}
+                  className='h-12 w-auto dark:hidden'
+                />
+                <Image
+                  alt='Sarafrika logo in white'
+                  src='/logos/sarafrika/Sarafrika Logo-05.svg'
+                  width={180}
+                  height={48}
+                  className='hidden h-12 w-auto dark:block'
+                />
+              </div>
               <p className='text-center text-sm text-muted-foreground'>
                 “Together, Elimika and Sarafrika celebrate African ingenuity—building a product
                 ecosystem where talent thrives, organisations transform, and learners flourish.”
