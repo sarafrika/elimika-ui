@@ -106,8 +106,8 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
       reset({
         location_type: data?.location_type ?? "",
         location_name: data?.location_name ?? "",
-        location_latitude: data?.location_latitude ?? null,
-        location_longitude: data?.location_longitude ?? null,
+        location_latitude: data?.location_latitude ?? -1.29,
+        location_longitude: data?.location_longitude ?? 36.82,
 
         duration: data?.duration_minutes ?? "",
 

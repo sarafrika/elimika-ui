@@ -252,17 +252,27 @@ export function WeeklyAvailabilityGrid({
   };
 
   const handleSlotClick = (day: string, time: string, date: Date) => {
-    // Check if there's an existing event for this slot
-    const existingEvent = getEventForSlot(day, time, date);
+    const event =
+      getEventForSlot(day, time, date) ||
+      getAvailabilityForSlot(day, time) ||
+      getBlockedSlot(day, time, date);
 
-    if (existingEvent) {
-      // Open modal to edit existing event
-      setSelectedEvent(existingEvent);
+    if (event) {
+      const hydrated: CalendarEvent = {
+        ...event,
+        day,
+        date: event.date ? new Date(event.date) : date,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        status: event.entry_type as any,
+      };
+
+      setSelectedEvent(hydrated);
       setSelectedSlot(null);
     } else {
-      // Open modal to create new event
+      const slotData = { day, time, date };
       setSelectedEvent(null);
-      setSelectedSlot({ day, time, date });
+      setSelectedSlot(slotData);
     }
 
     setIsEventModalOpen(true);

@@ -17,6 +17,7 @@ import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
   getCourseCreatorByUuidOptions,
+  getCourseLessonsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -70,6 +71,18 @@ export default function ReusableCourseDetailsPage({
   // @ts-expect-error
   const courseCreator = creator?.data;
 
+
+  // GET COURSE LESSONS
+  const { data: courseLessons, isLoading: lessonsIsLoading } = useQuery({
+    ...getCourseLessonsOptions({
+      path: { courseUuid: courseId },
+      query: { pageable: { page: 0, size: 100 } },
+    }),
+    enabled: !!courseId,
+  });
+  const lessons = courseLessons?.data?.content;
+  const lessonUuids = lessons?.map((lesson: any) => lesson.uuid) || [];
+
   const {
     data: cAssesssment,
     isLoading: assessmentLoading,
@@ -90,6 +103,10 @@ export default function ReusableCourseDetailsPage({
     ...getAllAssignmentsOptions({ query: { pageable: {} } }),
   });
 
+  const assignments = cAssignments?.data?.content;
+  const filteredAssignments =
+    assignments?.filter((assignment: any) => lessonUuids.includes(assignment.lesson_uuid)) || [];
+
   const {
     data: cQuizzes,
     isLoading: quizzesLoading,
@@ -97,6 +114,10 @@ export default function ReusableCourseDetailsPage({
   } = useQuery({
     ...getAllQuizzesOptions({ query: { pageable: {} } }),
   });
+
+  const quizzes = cQuizzes?.data?.content;
+  const filteredQuizzes =
+    quizzes?.filter((quiz: any) => lessonUuids.includes(quiz.lesson_uuid)) || [];
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -446,11 +467,7 @@ export default function ReusableCourseDetailsPage({
           </TabsContent>
 
           <TabsContent value='quizzes' className='space-y-4'>
-            <p className='bg-destructive/10 text-destructive text-xs italic'>
-              Currently fetching all quizzes, shuold only fetch quizzes for this course
-            </p>
-
-            {cQuizzes?.data?.content?.length === 0 && (
+            {filteredQuizzes?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
                 <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
                 <h3 className='text-lg font-semibold'>No Quiz Found</h3>
@@ -458,7 +475,7 @@ export default function ReusableCourseDetailsPage({
               </div>
             )}
 
-            {cQuizzes?.data?.content?.map(quiz => (
+            {filteredQuizzes?.map((quiz: any) => (
               <Card key={quiz.uuid}>
                 <CardContent className='p-6'>
                   <div className='flex items-center justify-between'>
@@ -474,7 +491,7 @@ export default function ReusableCourseDetailsPage({
                         <span>Attempts allowed: {quiz.attempts_allowed}</span>
                       </div>
                     </div>
-                    <Button>Start Quiz</Button>
+                    <Button className='cursor-not-allowed'>View Quiz</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -482,11 +499,7 @@ export default function ReusableCourseDetailsPage({
           </TabsContent>
 
           <TabsContent value='assignments' className='space-y-4'>
-            <p className='bg-destructive/10 text-destructive text-xs italic'>
-              Currently fetching all assignments, shuold only fetch assignments for this course
-            </p>
-
-            {cAssignments?.data?.content?.length === 0 && (
+            {filteredAssignments?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
                 <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
                 <h3 className='text-lg font-semibold'>No Assignment Found</h3>
@@ -494,7 +507,7 @@ export default function ReusableCourseDetailsPage({
               </div>
             )}
 
-            {cAssignments?.data?.content?.map(assignment => (
+            {filteredAssignments?.map((assignment: any) => (
               <Card key={assignment.uuid}>
                 <CardContent className='p-6'>
                   <div className='flex items-start justify-between'>
@@ -527,7 +540,7 @@ export default function ReusableCourseDetailsPage({
                         })}
                       </p>
                     </div>
-                    <Button>View Assignment</Button>
+                    <Button className='cursor-not-allowed'>View Assignment</Button>
                   </div>
                 </CardContent>
               </Card>
