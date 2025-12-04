@@ -61,13 +61,30 @@ const buildListRulesOptions = (params: SystemRuleListParams) => {
 
 const deriveListResult = (data: unknown, fallback: Required<SystemRuleListParams>): SystemRuleListResult => {
   // Use the raw response payload to avoid losing items if schemas drift
-  const payload: any = (data as any)?.data ?? data ?? {};
-  const items = Array.isArray(payload.content) ? payload.content : [];
-  const metadata = payload.metadata ?? {};
+  const base: any = (data as any)?.data ?? data ?? {};
+  const payload = base?.data ?? base; // handle possible double nesting
 
-  const page = Number.isFinite(metadata.pageNumber) ? (metadata.pageNumber as number) : fallback.page;
-  const size = Number.isFinite(metadata.pageSize) ? (metadata.pageSize as number) : fallback.size;
-  const totalItems = toNumber(metadata.totalElements, items.length);
+  const items =
+    (Array.isArray(payload?.content) && payload.content) ||
+    (Array.isArray(payload?.items) && payload.items) ||
+    (Array.isArray(base?.content) && base.content) ||
+    [];
+
+  const metadata =
+    payload?.metadata ??
+    payload?.page ??
+    base?.metadata ??
+    {};
+
+  const page =
+    Number.isFinite(metadata.pageNumber) || Number.isFinite(metadata.page)
+      ? (Number(metadata.pageNumber ?? metadata.page) as number)
+      : fallback.page;
+  const size =
+    Number.isFinite(metadata.pageSize) || Number.isFinite(metadata.size)
+      ? (Number(metadata.pageSize ?? metadata.size) as number)
+      : fallback.size;
+  const totalItems = toNumber(metadata.totalElements ?? metadata.totalItems ?? items.length, items.length);
   const totalPages =
     metadata.totalPages ??
     (totalItems > 0 && size > 0 ? Math.ceil(totalItems / size) : 0);
