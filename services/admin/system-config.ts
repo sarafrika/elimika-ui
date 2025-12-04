@@ -1,33 +1,35 @@
-import { fetchClient } from '@/services/api/fetch-client';
+import { toNumber } from '@/lib/metrics';
+import { getRuleOptions, listRulesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { createRule, updateRule } from '@/services/client/sdk.gen';
+import type {
+  SchemaEnum,
+  SchemaEnum2,
+  ScopeEnum,
+  SystemRuleRequest,
+  ValueTypeEnum,
+} from '@/services/client/types.gen';
+import {
+  zApiResponsePagedDtoSystemRuleResponse,
+  zApiResponseSystemRuleResponse,
+  zSystemRuleRequest,
+  zSystemRuleResponse,
+} from '@/services/client/zod.gen';
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query';
+import { z } from 'zod';
 
-export type SystemRuleStatus = 'ACTIVE' | 'DRAFT' | 'DISABLED' | string;
-export type SystemRuleCategory = 'PLATFORM_FEE' | 'AGE_GATE' | 'NOTIFICATIONS' | string;
-
-export interface SystemRule {
-  uuid: string;
-  key: string;
-  category: string;
-  status: SystemRuleStatus;
-  priority?: number | null;
-  scope_type?: string | null;
-  scope_reference?: string | null;
-  scope_label?: string | null;
-  description?: string | null;
-  payload?: Record<string, unknown> | null;
-  effective_from?: string | null;
-  effective_to?: string | null;
-  updated_by?: string | null;
-  updated_at?: string | null;
-  created_at?: string | null;
-}
+export type SystemRule = z.infer<typeof zSystemRuleResponse>;
+export type SystemRulePayload = z.infer<typeof zSystemRuleRequest>;
+export type SystemRuleCategory = SchemaEnum;
+export type SystemRuleStatus = SchemaEnum2;
+export type SystemRuleScope = ScopeEnum;
+export type SystemRuleValueType = ValueTypeEnum;
 
 export interface SystemRuleListParams {
   page?: number;
   size?: number;
   category?: SystemRuleCategory | 'all';
   status?: SystemRuleStatus | 'all';
-  search?: string;
+  sort?: string[];
 }
 
 export interface SystemRuleListResult {
@@ -36,200 +38,141 @@ export interface SystemRuleListResult {
   size: number;
   totalPages: number;
   totalItems: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
-const normalizeRulesPayload = (payload: unknown): SystemRule[] => {
-  if (!payload) {
-    return [];
-  }
+const listRulesResponseSchema = zApiResponsePagedDtoSystemRuleResponse.extend({
+  data: zApiResponsePagedDtoSystemRuleResponse.shape.data.default({
+    content: [],
+    metadata: {},
+  }),
+});
 
-  if (Array.isArray(payload)) {
-    return payload as SystemRule[];
-  }
+const ruleResponseSchema = zApiResponseSystemRuleResponse.extend({
+  data: zApiResponseSystemRuleResponse.shape.data.default({}),
+});
 
-  if (typeof payload === 'object') {
-    const data = payload as Record<string, unknown>;
-    if (Array.isArray(data.content)) return data.content as SystemRule[];
-    if (Array.isArray(data.items)) return data.items as SystemRule[];
-    if (Array.isArray(data.rules)) return data.rules as SystemRule[];
-  }
-
-  return [];
-};
-
-const normalizeMetadata = (payload: unknown) => {
-  if (!payload || typeof payload !== 'object') {
-    return {};
-  }
-
-  const data = payload as Record<string, unknown>;
-  if (typeof data.metadata === 'object' && data.metadata !== null) {
-    return data.metadata as Record<string, unknown>;
-  }
-
-  return data;
-};
-
-export async function fetchSystemRules(params: SystemRuleListParams = {}): Promise<SystemRuleListResult> {
-  const { page = 0, size = 10, category = 'all', status = 'all', search = '' } = params;
-
-  const response = await fetchClient.GET('/api/v1/system-rules' as any, {
-    params: {
-      query: {
-        page,
-        size,
-        category: category === 'all' ? undefined : category,
-        status: status === 'all' ? undefined : status,
-        search: search || undefined,
+const buildListRulesOptions = (params: SystemRuleListParams) =>
+  listRulesOptions({
+    query: {
+      category: params.category && params.category !== 'all' ? params.category : undefined,
+      status: params.status && params.status !== 'all' ? params.status : undefined,
+      pageable: {
+        page: params.page ?? 0,
+        size: params.size ?? 10,
+        sort: params.sort && params.sort.length > 0 ? params.sort : undefined,
       },
     },
   });
 
-  if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to load system rules');
-  }
-
-  const data = (response.data as any)?.data ?? response.data ?? {};
-  const items = normalizeRulesPayload(data);
-  const metadata = normalizeMetadata(data.metadata ?? data);
-
-  const totalItems =
-    typeof metadata.totalElements === 'number'
-      ? metadata.totalElements
-      : Array.isArray(items)
-        ? items.length
-        : 0;
-
+const deriveListResult = (data: unknown, fallback: Required<SystemRuleListParams>): SystemRuleListResult => {
+  const parsed = listRulesResponseSchema.parse(data ?? {});
+  const payload = parsed.data ?? {};
+  const items = payload.content ?? [];
+  const metadata = payload.metadata ?? {};
+  const page = metadata.pageNumber ?? fallback.page;
+  const size = metadata.pageSize ?? fallback.size;
+  const totalItems = toNumber(metadata.totalElements);
   const totalPages =
-    typeof metadata.totalPages === 'number'
-      ? metadata.totalPages
-      : totalItems > 0
-        ? Math.ceil(totalItems / size)
-        : 0;
+    metadata.totalPages ??
+    (totalItems > 0 && size > 0 ? Math.ceil(totalItems / size) : 0);
 
   return {
     items,
-    page: typeof metadata.pageNumber === 'number' ? metadata.pageNumber : page,
-    size: typeof metadata.pageSize === 'number' ? metadata.pageSize : size,
+    page,
+    size,
     totalItems,
     totalPages,
+    hasNext: metadata.hasNext ?? page < totalPages - 1,
+    hasPrevious: metadata.hasPrevious ?? page > 0,
   };
-}
-
-export const systemRulesQueryKey = (params: SystemRuleListParams) =>
-  ['system-rules', params] as const;
+};
 
 export function useSystemRules(
   params: SystemRuleListParams,
   options?: Partial<UseQueryOptions<SystemRuleListResult, Error>>
 ) {
-  const normalizedParams: SystemRuleListParams = {
+  const normalized: Required<SystemRuleListParams> = {
     page: params.page ?? 0,
     size: params.size ?? 10,
     category: params.category ?? 'all',
     status: params.status ?? 'all',
-    search: params.search ?? '',
+    sort: params.sort ?? [],
   };
 
   return useQuery({
-    queryKey: systemRulesQueryKey(normalizedParams),
-    queryFn: () => fetchSystemRules(normalizedParams),
-    staleTime: 30_000,
+    ...buildListRulesOptions(normalized),
+    select: data => deriveListResult(data, normalized),
     ...options,
   });
 }
 
-export async function fetchSystemRule(uuid: string): Promise<SystemRule> {
-  const response = await fetchClient.GET(`/api/v1/system-rules/${uuid}` as any);
-
-  if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to load rule');
-  }
-
-  return ((response.data as any)?.data ?? response.data) as SystemRule;
-}
-
-export function useSystemRule(
-  uuid: string | null,
-  options?: Partial<UseQueryOptions<SystemRule, Error>>
-) {
+export function useSystemRule(uuid: string | null, options?: Partial<UseQueryOptions<SystemRule | null, Error>>) {
   return useQuery({
-    queryKey: ['system-rule', uuid],
-    queryFn: () => {
-      if (!uuid) throw new Error('Missing rule id');
-      return fetchSystemRule(uuid);
-    },
+    ...getRuleOptions({
+      path: { uuid: uuid ?? '' },
+    }),
     enabled: Boolean(uuid),
+    select: data => {
+      const parsed = ruleResponseSchema.parse(data ?? {});
+      return (parsed.data as SystemRule | undefined) ?? null;
+    },
     ...options,
   });
-}
-
-export interface UpsertSystemRuleInput {
-  category: string;
-  key: string;
-  status: SystemRuleStatus;
-  priority?: number | null;
-  scope_type?: string | null;
-  scope_reference?: string | null;
-  description?: string | null;
-  payload: Record<string, unknown>;
-  effective_from?: string | null;
-  effective_to?: string | null;
-}
-
-async function createSystemRule(payload: UpsertSystemRuleInput): Promise<SystemRule> {
-  const response = await fetchClient.POST('/api/v1/system-rules' as any, {
-    body: payload,
-  });
-
-  if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to create rule');
-  }
-
-  return ((response.data as any)?.data ?? response.data) as SystemRule;
-}
-
-async function updateSystemRule(uuid: string, payload: Partial<UpsertSystemRuleInput>): Promise<SystemRule> {
-  const response = await fetchClient.PUT(`/api/v1/system-rules/${uuid}` as any, {
-    body: payload,
-  });
-
-  if (response.error) {
-    throw new Error(typeof response.error === 'string' ? response.error : 'Failed to update rule');
-  }
-
-  return ((response.data as any)?.data ?? response.data) as SystemRule;
 }
 
 export function useCreateSystemRule(
-  options?: UseMutationOptions<SystemRule, Error, UpsertSystemRuleInput>
+  options?: Partial<UseMutationOptions<SystemRule | null, Error, SystemRuleRequest>>
 ) {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createSystemRule,
-    onSuccess: (...args) => {
-      queryClient.invalidateQueries({ queryKey: ['system-rules'] });
-      options?.onSuccess?.(...args);
+  const { onSuccess, ...rest } = options ?? {};
+
+  return useMutation<SystemRule | null, Error, SystemRuleRequest>({
+    mutationFn: async payload => {
+      const body = zSystemRuleRequest.parse(payload);
+      const { data } = await createRule({
+        body,
+        throwOnError: true,
+      });
+      const parsed = ruleResponseSchema.parse(data ?? {});
+      return (parsed.data as SystemRule | undefined) ?? null;
     },
-    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: [{ _id: 'listRules' }] });
+      onSuccess?.(data, variables, context);
+    },
+    ...rest,
   });
 }
 
 type UpdateRuleVariables = {
   uuid: string;
-  payload: Partial<UpsertSystemRuleInput>;
+  body: SystemRuleRequest;
 };
 
 export function useUpdateSystemRule(
-  options?: UseMutationOptions<SystemRule, Error, UpdateRuleVariables>
+  options?: Partial<UseMutationOptions<SystemRule | null, Error, UpdateRuleVariables>>
 ) {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: variables => updateSystemRule(variables.uuid, variables.payload),
-    onSuccess: (...args) => {
-      queryClient.invalidateQueries({ queryKey: ['system-rules'] });
-      options?.onSuccess?.(...args);
+  const { onSuccess, ...rest } = options ?? {};
+
+  return useMutation<SystemRule | null, Error, UpdateRuleVariables>({
+    mutationFn: async variables => {
+      const body = zSystemRuleRequest.parse(variables.body);
+      const { data } = await updateRule({
+        path: { uuid: variables.uuid },
+        body,
+        throwOnError: true,
+      });
+      const parsed = ruleResponseSchema.parse(data ?? {});
+      return (parsed.data as SystemRule | undefined) ?? null;
     },
-    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: [{ _id: 'listRules' }] });
+      queryClient.invalidateQueries({ queryKey: [{ _id: 'getRule' }] });
+      onSuccess?.(data, variables, context);
+    },
+    ...rest,
   });
 }
