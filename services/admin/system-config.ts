@@ -2,6 +2,7 @@ import { toNumber } from '@/lib/metrics';
 import { getRuleOptions, listRulesOptions } from '@/services/client/@tanstack/react-query.gen';
 import { createRule, updateRule } from '@/services/client/sdk.gen';
 import type {
+  ListRulesData,
   SchemaEnum,
   SchemaEnum2,
   ScopeEnum,
@@ -54,19 +55,21 @@ const ruleResponseSchema = zApiResponseSystemRuleResponse.extend({
 });
 
 const buildListRulesOptions = (params: SystemRuleListParams) => {
-  const pageable = {
-    page: params.page ?? 0,
-    size: params.size ?? 10,
+  const query: ListRulesData['query'] = {
+    pageable: {
+      page: params.page ?? 0,
+      size: params.size ?? 10,
+      ...(params.sort && params.sort.length > 0 ? { sort: params.sort } : {}),
+    },
   };
 
-  if (params.sort && params.sort.length > 0) {
-    // @ts-expect-error generated type allows sort; keeping optional include
-    (pageable as any).sort = params.sort;
+  if (params.category && params.category !== 'all') {
+    query.category = params.category;
   }
 
-  const query: Record<string, unknown> = { pageable };
-  if (params.category && params.category !== 'all') query.category = params.category;
-  if (params.status && params.status !== 'all') query.status = params.status;
+  if (params.status && params.status !== 'all') {
+    query.status = params.status;
+  }
 
   return listRulesOptions({ query });
 };
