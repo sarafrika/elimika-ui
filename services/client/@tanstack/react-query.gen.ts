@@ -188,6 +188,7 @@ import {
   blockTime,
   createLink,
   enrollStudent,
+  joinWaitlist,
   getAllCourses,
   createCourse,
   unpublishCourse,
@@ -238,6 +239,9 @@ import {
   getAllCategories,
   createCategory,
   completeCheckout,
+  listCatalogItems,
+  createCatalogItem,
+  backfillCatalogue,
   createCart,
   selectPaymentSession,
   addItem,
@@ -389,9 +393,8 @@ import {
   searchCategories,
   getRootCategories,
   getOrder,
-  listCatalogItems,
-  getByCourse,
-  getByClass,
+  searchCatalogue,
+  resolveByCourseOrClass,
   getEnrollmentsForClass,
   getClassDefinitionsForOrganisation,
   getClassDefinitionsForInstructor,
@@ -920,6 +923,9 @@ import type {
   EnrollStudentData,
   EnrollStudentError,
   EnrollStudentResponse,
+  JoinWaitlistData,
+  JoinWaitlistError,
+  JoinWaitlistResponse,
   GetAllCoursesData,
   GetAllCoursesError,
   GetAllCoursesResponse,
@@ -1064,6 +1070,13 @@ import type {
   CompleteCheckoutData,
   CompleteCheckoutError,
   CompleteCheckoutResponse,
+  ListCatalogItemsData,
+  CreateCatalogItemData,
+  CreateCatalogItemError,
+  CreateCatalogItemResponse,
+  BackfillCatalogueData,
+  BackfillCatalogueError,
+  BackfillCatalogueResponse,
   CreateCartData,
   CreateCartError,
   CreateCartResponse,
@@ -1411,9 +1424,10 @@ import type {
   SearchCategoriesResponse,
   GetRootCategoriesData,
   GetOrderData,
-  ListCatalogItemsData,
-  GetByCourseData,
-  GetByClassData,
+  SearchCatalogueData,
+  SearchCatalogueError,
+  SearchCatalogueResponse,
+  ResolveByCourseOrClassData,
   GetEnrollmentsForClassData,
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForInstructorData,
@@ -3999,7 +4013,7 @@ export const updateCategoryMutation = (
 };
 
 /**
- * Update catalog mapping
+ * Update catalogue mapping
  * Updates internal variant identifiers or status for an existing mapping
  */
 export const updateCatalogItemMutation = (
@@ -8497,6 +8511,50 @@ export const enrollStudentMutation = (
   return mutationOptions;
 };
 
+export const joinWaitlistQueryKey = (options: Options<JoinWaitlistData>) =>
+  createQueryKey('joinWaitlist', options);
+
+/**
+ * Join class waitlist when capacity is full
+ */
+export const joinWaitlistOptions = (options: Options<JoinWaitlistData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await joinWaitlist({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: joinWaitlistQueryKey(options),
+  });
+};
+
+/**
+ * Join class waitlist when capacity is full
+ */
+export const joinWaitlistMutation = (
+  options?: Partial<Options<JoinWaitlistData>>
+): UseMutationOptions<JoinWaitlistResponse, JoinWaitlistError, Options<JoinWaitlistData>> => {
+  const mutationOptions: UseMutationOptions<
+    JoinWaitlistResponse,
+    JoinWaitlistError,
+    Options<JoinWaitlistData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await joinWaitlist({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAllCoursesQueryKey = (options: Options<GetAllCoursesData>) =>
   createQueryKey('getAllCourses', options);
 
@@ -11494,6 +11552,128 @@ export const completeCheckoutMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await completeCheckout({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listCatalogItemsQueryKey = (options?: Options<ListCatalogItemsData>) =>
+  createQueryKey('listCatalogItems', options);
+
+/**
+ * List catalogue mappings
+ * Returns catalogue items optionally filtered by active status
+ */
+export const listCatalogItemsOptions = (options?: Options<ListCatalogItemsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listCatalogItems({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listCatalogItemsQueryKey(options),
+  });
+};
+
+export const createCatalogItemQueryKey = (options: Options<CreateCatalogItemData>) =>
+  createQueryKey('createCatalogItem', options);
+
+/**
+ * Create catalogue mapping
+ * Creates a catalogue mapping for a course or class
+ */
+export const createCatalogItemOptions = (options: Options<CreateCatalogItemData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createCatalogItem({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createCatalogItemQueryKey(options),
+  });
+};
+
+/**
+ * Create catalogue mapping
+ * Creates a catalogue mapping for a course or class
+ */
+export const createCatalogItemMutation = (
+  options?: Partial<Options<CreateCatalogItemData>>
+): UseMutationOptions<
+  CreateCatalogItemResponse,
+  CreateCatalogItemError,
+  Options<CreateCatalogItemData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCatalogItemResponse,
+    CreateCatalogItemError,
+    Options<CreateCatalogItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createCatalogItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const backfillCatalogueQueryKey = (options?: Options<BackfillCatalogueData>) =>
+  createQueryKey('backfillCatalogue', options);
+
+/**
+ * Backfill catalogue
+ * Rebuilds catalogue items for all published courses/classes
+ */
+export const backfillCatalogueOptions = (options?: Options<BackfillCatalogueData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await backfillCatalogue({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: backfillCatalogueQueryKey(options),
+  });
+};
+
+/**
+ * Backfill catalogue
+ * Rebuilds catalogue items for all published courses/classes
+ */
+export const backfillCatalogueMutation = (
+  options?: Partial<Options<BackfillCatalogueData>>
+): UseMutationOptions<
+  BackfillCatalogueResponse,
+  BackfillCatalogueError,
+  Options<BackfillCatalogueData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    BackfillCatalogueResponse,
+    BackfillCatalogueError,
+    Options<BackfillCatalogueData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await backfillCatalogue({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -19112,17 +19292,26 @@ export const getOrderOptions = (options: Options<GetOrderData>) => {
   });
 };
 
-export const listCatalogItemsQueryKey = (options?: Options<ListCatalogItemsData>) =>
-  createQueryKey('listCatalogItems', options);
+export const searchCatalogueQueryKey = (options: Options<SearchCatalogueData>) =>
+  createQueryKey('searchCatalogue', options);
 
 /**
- * List catalog mappings
- * Returns catalog items optionally filtered by active status
+ * Search catalogue with flexible filters
+ * Provides the standard search interface used by other modules.
+ *
+ * **Examples:**
+ * - `publiclyVisible=true&active=true` — public, active catalogue entries
+ * - `courseUuid=<uuid>` — catalogue entries for a course
+ * - `classDefinitionUuid=<uuid>&active=true` — active class-level entries
+ * - `variantCode_like=starter` — variant codes containing `starter`
+ *
+ * Supports all comparison operators accepted by the platform-wide search builder.
+ *
  */
-export const listCatalogItemsOptions = (options?: Options<ListCatalogItemsData>) => {
+export const searchCatalogueOptions = (options: Options<SearchCatalogueData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listCatalogItems({
+      const { data } = await searchCatalogue({
         ...options,
         ...queryKey[0],
         signal,
@@ -19130,41 +19319,75 @@ export const listCatalogItemsOptions = (options?: Options<ListCatalogItemsData>)
       });
       return data;
     },
-    queryKey: listCatalogItemsQueryKey(options),
+    queryKey: searchCatalogueQueryKey(options),
   });
 };
 
-export const getByCourseQueryKey = (options: Options<GetByCourseData>) =>
-  createQueryKey('getByCourse', options);
+export const searchCatalogueInfiniteQueryKey = (
+  options: Options<SearchCatalogueData>
+): QueryKey<Options<SearchCatalogueData>> => createQueryKey('searchCatalogue', options, true);
 
 /**
- * Get catalog mapping by course
+ * Search catalogue with flexible filters
+ * Provides the standard search interface used by other modules.
+ *
+ * **Examples:**
+ * - `publiclyVisible=true&active=true` — public, active catalogue entries
+ * - `courseUuid=<uuid>` — catalogue entries for a course
+ * - `classDefinitionUuid=<uuid>&active=true` — active class-level entries
+ * - `variantCode_like=starter` — variant codes containing `starter`
+ *
+ * Supports all comparison operators accepted by the platform-wide search builder.
+ *
  */
-export const getByCourseOptions = (options: Options<GetByCourseData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getByCourse({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getByCourseQueryKey(options),
-  });
+export const searchCatalogueInfiniteOptions = (options: Options<SearchCatalogueData>) => {
+  return infiniteQueryOptions<
+    SearchCatalogueResponse,
+    SearchCatalogueError,
+    InfiniteData<SearchCatalogueResponse>,
+    QueryKey<Options<SearchCatalogueData>>,
+    number | Pick<QueryKey<Options<SearchCatalogueData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<SearchCatalogueData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCatalogue({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCatalogueInfiniteQueryKey(options),
+    }
+  );
 };
 
-export const getByClassQueryKey = (options: Options<GetByClassData>) =>
-  createQueryKey('getByClass', options);
+export const resolveByCourseOrClassQueryKey = (options?: Options<ResolveByCourseOrClassData>) =>
+  createQueryKey('resolveByCourseOrClass', options);
 
 /**
- * Get catalog mapping by class definition
+ * Resolve catalogue mapping by course or class
+ * Tries course first, then class
  */
-export const getByClassOptions = (options: Options<GetByClassData>) => {
+export const resolveByCourseOrClassOptions = (options?: Options<ResolveByCourseOrClassData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getByClass({
+      const { data } = await resolveByCourseOrClass({
         ...options,
         ...queryKey[0],
         signal,
@@ -19172,7 +19395,7 @@ export const getByClassOptions = (options: Options<GetByClassData>) => {
       });
       return data;
     },
-    queryKey: getByClassQueryKey(options),
+    queryKey: resolveByCourseOrClassQueryKey(options),
   });
 };
 

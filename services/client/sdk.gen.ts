@@ -565,6 +565,9 @@ import type {
   EnrollStudentData,
   EnrollStudentResponses,
   EnrollStudentErrors,
+  JoinWaitlistData,
+  JoinWaitlistResponses,
+  JoinWaitlistErrors,
   GetAllCoursesData,
   GetAllCoursesResponses,
   GetAllCoursesErrors,
@@ -715,6 +718,15 @@ import type {
   CompleteCheckoutData,
   CompleteCheckoutResponses,
   CompleteCheckoutErrors,
+  ListCatalogItemsData,
+  ListCatalogItemsResponses,
+  ListCatalogItemsErrors,
+  CreateCatalogItemData,
+  CreateCatalogItemResponses,
+  CreateCatalogItemErrors,
+  BackfillCatalogueData,
+  BackfillCatalogueResponses,
+  BackfillCatalogueErrors,
   CreateCartData,
   CreateCartResponses,
   CreateCartErrors,
@@ -1168,15 +1180,12 @@ import type {
   GetOrderData,
   GetOrderResponses,
   GetOrderErrors,
-  ListCatalogItemsData,
-  ListCatalogItemsResponses,
-  ListCatalogItemsErrors,
-  GetByCourseData,
-  GetByCourseResponses,
-  GetByCourseErrors,
-  GetByClassData,
-  GetByClassResponses,
-  GetByClassErrors,
+  SearchCatalogueData,
+  SearchCatalogueResponses,
+  SearchCatalogueErrors,
+  ResolveByCourseOrClassData,
+  ResolveByCourseOrClassResponses,
+  ResolveByCourseOrClassErrors,
   GetEnrollmentsForClassData,
   GetEnrollmentsForClassResponses,
   GetEnrollmentsForClassErrors,
@@ -1429,6 +1438,7 @@ import {
   uploadInstructorDocumentResponseTransformer,
   createLinkResponseTransformer,
   enrollStudentResponseTransformer,
+  joinWaitlistResponseTransformer,
   getAllCoursesResponseTransformer,
   createCourseResponseTransformer,
   unpublishCourseResponseTransformer,
@@ -1477,6 +1487,8 @@ import {
   getAllCategoriesResponseTransformer,
   createCategoryResponseTransformer,
   completeCheckoutResponseTransformer,
+  listCatalogItemsResponseTransformer,
+  createCatalogItemResponseTransformer,
   createCartResponseTransformer,
   selectPaymentSessionResponseTransformer,
   addItemResponseTransformer,
@@ -1592,9 +1604,8 @@ import {
   searchCategoriesResponseTransformer,
   getRootCategoriesResponseTransformer,
   getOrderResponseTransformer,
-  listCatalogItemsResponseTransformer,
-  getByCourseResponseTransformer,
-  getByClassResponseTransformer,
+  searchCatalogueResponseTransformer,
+  resolveByCourseOrClassResponseTransformer,
   getEnrollmentsForClassResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
@@ -4387,7 +4398,7 @@ export const updateCategory = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Update catalog mapping
+ * Update catalogue mapping
  * Updates internal variant identifiers or status for an existing mapping
  */
 export const updateCatalogItem = <ThrowOnError extends boolean = false>(
@@ -4409,7 +4420,7 @@ export const updateCatalogItem = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/commerce/catalog/{catalogUuid}',
+    url: '/api/v1/commerce/catalogue/{catalogUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7180,6 +7191,37 @@ export const enrollStudent = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Join class waitlist when capacity is full
+ */
+export const joinWaitlist = <ThrowOnError extends boolean = false>(
+  options: Options<JoinWaitlistData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    JoinWaitlistResponses,
+    JoinWaitlistErrors,
+    ThrowOnError
+  >({
+    responseTransformer: joinWaitlistResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/waitlist',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get all courses
  * Retrieves paginated list of all courses with category information and filtering support.
  */
@@ -8803,6 +8845,93 @@ export const completeCheckout = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+};
+
+/**
+ * List catalogue mappings
+ * Returns catalogue items optionally filtered by active status
+ */
+export const listCatalogItems = <ThrowOnError extends boolean = false>(
+  options?: Options<ListCatalogItemsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListCatalogItemsResponses,
+    ListCatalogItemsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listCatalogItemsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/catalogue',
+    ...options,
+  });
+};
+
+/**
+ * Create catalogue mapping
+ * Creates a catalogue mapping for a course or class
+ */
+export const createCatalogItem = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCatalogItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateCatalogItemResponses,
+    CreateCatalogItemErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createCatalogItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/catalogue',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Backfill catalogue
+ * Rebuilds catalogue items for all published courses/classes
+ */
+export const backfillCatalogue = <ThrowOnError extends boolean = false>(
+  options?: Options<BackfillCatalogueData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).post<
+    BackfillCatalogueResponses,
+    BackfillCatalogueErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/catalogue/backfill',
+    ...options,
   });
 };
 
@@ -13324,45 +13453,27 @@ export const getOrder = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * List catalog mappings
- * Returns catalog items optionally filtered by active status
+ * Search catalogue with flexible filters
+ * Provides the standard search interface used by other modules.
+ *
+ * **Examples:**
+ * - `publiclyVisible=true&active=true` — public, active catalogue entries
+ * - `courseUuid=<uuid>` — catalogue entries for a course
+ * - `classDefinitionUuid=<uuid>&active=true` — active class-level entries
+ * - `variantCode_like=starter` — variant codes containing `starter`
+ *
+ * Supports all comparison operators accepted by the platform-wide search builder.
+ *
  */
-export const listCatalogItems = <ThrowOnError extends boolean = false>(
-  options?: Options<ListCatalogItemsData, ThrowOnError>
-) => {
-  return (options?.client ?? _heyApiClient).get<
-    ListCatalogItemsResponses,
-    ListCatalogItemsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: listCatalogItemsResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/commerce/catalog',
-    ...options,
-  });
-};
-
-/**
- * Get catalog mapping by course
- */
-export const getByCourse = <ThrowOnError extends boolean = false>(
-  options: Options<GetByCourseData, ThrowOnError>
+export const searchCatalogue = <ThrowOnError extends boolean = false>(
+  options: Options<SearchCatalogueData, ThrowOnError>
 ) => {
   return (options.client ?? _heyApiClient).get<
-    GetByCourseResponses,
-    GetByCourseErrors,
+    SearchCatalogueResponses,
+    SearchCatalogueErrors,
     ThrowOnError
   >({
-    responseTransformer: getByCourseResponseTransformer,
+    responseTransformer: searchCatalogueResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -13373,34 +13484,37 @@ export const getByCourse = <ThrowOnError extends boolean = false>(
         type: 'http',
       },
     ],
-    url: '/api/v1/commerce/catalog/by-course/{courseUuid}',
+    url: '/api/v1/commerce/catalogue/search',
     ...options,
   });
 };
 
 /**
- * Get catalog mapping by class definition
+ * Resolve catalogue mapping by course or class
+ * Tries course first, then class
  */
-export const getByClass = <ThrowOnError extends boolean = false>(
-  options: Options<GetByClassData, ThrowOnError>
+export const resolveByCourseOrClass = <ThrowOnError extends boolean = false>(
+  options?: Options<ResolveByCourseOrClassData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).get<GetByClassResponses, GetByClassErrors, ThrowOnError>(
-    {
-      responseTransformer: getByClassResponseTransformer,
-      security: [
-        {
-          scheme: 'bearer',
-          type: 'http',
-        },
-        {
-          scheme: 'bearer',
-          type: 'http',
-        },
-      ],
-      url: '/api/v1/commerce/catalog/by-class/{classUuid}',
-      ...options,
-    }
-  );
+  return (options?.client ?? _heyApiClient).get<
+    ResolveByCourseOrClassResponses,
+    ResolveByCourseOrClassErrors,
+    ThrowOnError
+  >({
+    responseTransformer: resolveByCourseOrClassResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/catalogue/resolve',
+    ...options,
+  });
 };
 
 /**

@@ -102,8 +102,9 @@ export const zUser = z
       .max(20)
       .regex(/^(\+254|0)?[17]\d{8}$/)
       .describe(
-        "**[REQUIRED]** User's contact phone number. Should include country code for international numbers. Used for notifications and verification."
-      ),
+        "**[OPTIONAL]** User's contact phone number. Should include country code for international numbers when provided."
+      )
+      .optional(),
     active: z
       .boolean()
       .describe(
@@ -394,9 +395,9 @@ export const zStudent = z
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.'
       )
       .optional(),
-    allGuardianContacts: z.array(z.string()).optional(),
     primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
+    allGuardianContacts: z.array(z.string()).optional(),
     created_date: z
       .string()
       .datetime()
@@ -856,17 +857,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1459,11 +1460,6 @@ export const zTrainingProgram = z
       .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
       .readonly()
       .optional(),
-    is_free: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the program is offered for free.')
-      .readonly()
-      .optional(),
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total program duration.')
@@ -1899,10 +1895,10 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    has_location_coordinates: z
+    is_profile_complete: z
       .boolean()
       .describe(
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
       )
       .readonly()
       .optional(),
@@ -1913,10 +1909,10 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    is_profile_complete: z
+    has_location_coordinates: z
       .boolean()
       .describe(
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
       )
       .readonly()
       .optional(),
@@ -2125,9 +2121,12 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    formatted_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
+    membership_duration_months: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
+      )
       .readonly()
       .optional(),
     membership_status: zMembershipStatusEnum.optional(),
@@ -2157,12 +2156,9 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
-    membership_duration_months: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
-      )
+    formatted_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
       .readonly()
       .optional(),
     is_complete: z
@@ -2435,6 +2431,18 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
+    is_recent_qualification: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.'
+      )
+      .readonly()
+      .optional(),
+    formatted_completion: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
+      .readonly()
+      .optional(),
     years_since_completion: z
       .number()
       .int()
@@ -2447,18 +2455,6 @@ export const zInstructorEducation = z
       .describe(
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
       )
-      .readonly()
-      .optional(),
-    is_recent_qualification: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.'
-      )
-      .readonly()
-      .optional(),
-    formatted_completion: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
     is_complete: z
@@ -2992,11 +2988,6 @@ export const zCourse = z
       .describe(
         '**[READ-ONLY]** Email or username of the user who last modified this course. Used for audit trails.'
       )
-      .readonly()
-      .optional(),
-    is_free: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course is offered for free.')
       .readonly()
       .optional(),
     accepts_new_enrollments: z
@@ -4134,9 +4125,9 @@ export const zApiResponseCategory = z.object({
 });
 
 /**
- * Payload for creating or updating catalog mappings
+ * Payload for creating or updating catalogue mappings
  */
-export const zCommerceCatalogItemUpsertRequest = z
+export const zCommerceCatalogueItemUpsertRequest = z
   .object({
     course_uuid: z.string().uuid().describe('Course UUID to associate').optional(),
     class_definition_uuid: z
@@ -4151,15 +4142,19 @@ export const zCommerceCatalogItemUpsertRequest = z
       .describe('Currency code for the variant. Defaults to the platform currency when omitted.')
       .optional(),
     active: z.boolean().describe('Active flag').optional(),
+    publicly_visible: z
+      .boolean()
+      .describe('Whether the catalogue item should be visible to public storefront queries')
+      .optional(),
   })
-  .describe('Payload for creating or updating catalog mappings');
+  .describe('Payload for creating or updating catalogue mappings');
 
 /**
  * Mapping between Elimika courses/classes and internal commerce variants
  */
-export const zCommerceCatalogItem = z
+export const zCommerceCatalogueItem = z
   .object({
-    uuid: z.string().uuid().describe('Catalog item UUID').optional(),
+    uuid: z.string().uuid().describe('Catalogue item UUID').optional(),
     course_uuid: z
       .string()
       .uuid()
@@ -4174,14 +4169,18 @@ export const zCommerceCatalogItem = z
     variant_code: z.string().describe('Internal commerce variant code').optional(),
     currency_code: z.string().describe('Currency code configured for the variant').optional(),
     active: z.boolean().describe('Whether this mapping is active').optional(),
+    publicly_visible: z
+      .boolean()
+      .describe('Whether this catalogue item is visible to public storefronts')
+      .optional(),
     created_date: z.string().datetime().describe('Created timestamp').optional(),
     updated_date: z.string().datetime().describe('Last updated timestamp').optional(),
   })
   .describe('Mapping between Elimika courses/classes and internal commerce variants');
 
-export const zApiResponseCommerceCatalogItem = z.object({
+export const zApiResponseCommerceCatalogueItem = z.object({
   success: z.boolean().optional(),
-  data: zCommerceCatalogItem.optional(),
+  data: zCommerceCatalogueItem.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -4809,16 +4808,6 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    grade_letter: z
-      .string()
-      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
-      .readonly()
-      .optional(),
-    validity_status: z
-      .string()
-      .describe('**[READ-ONLY]** Current validity status of the certificate.')
-      .readonly()
-      .optional(),
     certificate_type: z
       .string()
       .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
@@ -4827,6 +4816,16 @@ export const zCertificate = z
     is_downloadable: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
+      .readonly()
+      .optional(),
+    grade_letter: z
+      .string()
+      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
+      .readonly()
+      .optional(),
+    validity_status: z
+      .string()
+      .describe('**[READ-ONLY]** Current validity status of the certificate.')
       .readonly()
       .optional(),
   })
@@ -5589,7 +5588,7 @@ export const zEnrollmentRequest = z
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
 export const zStatusEnum6 = z
-  .enum(['ENROLLED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
+  .enum(['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
   .describe('**[OPTIONAL]** Current enrollment and attendance status.');
 
 /**
@@ -5652,14 +5651,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    status_description: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
     did_attend: z
@@ -5667,9 +5666,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
-    status_description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -5847,7 +5846,7 @@ export const zCartItemResponse = z
     id: z.string().describe('Unique identifier of the line item').optional(),
     title: z.string().describe('Human friendly name of the product').optional(),
     quantity: z.number().int().describe('Quantity of the product variant').optional(),
-    variant_id: z.string().describe('Variant identifier within the commerce catalog').optional(),
+    variant_id: z.string().describe('Variant identifier within the commerce catalogue').optional(),
     unit_price: z.number().describe('Price per unit with up to 4 decimal places').optional(),
     subtotal: z
       .number()
@@ -6302,6 +6301,11 @@ export const zAssignmentSubmission = z
       )
       .readonly()
       .optional(),
+    is_graded: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
+      .readonly()
+      .optional(),
     submission_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
@@ -6322,11 +6326,6 @@ export const zAssignmentSubmission = z
     file_count_display: z
       .string()
       .describe('**[READ-ONLY]** Summary of files attached to this submission.')
-      .readonly()
-      .optional(),
-    is_graded: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
       .readonly()
       .optional(),
   })
@@ -6761,16 +6760,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    attempt_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
-      .readonly()
-      .optional(),
-    performance_summary: z
-      .string()
-      .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
     grade_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the grade information.')
@@ -6779,6 +6768,16 @@ export const zQuizAttempt = z
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .readonly()
+      .optional(),
+    attempt_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
+      .readonly()
+      .optional(),
+    performance_summary: z
+      .string()
+      .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
       .readonly()
       .optional(),
   })
@@ -6924,14 +6923,14 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
-      .readonly()
-      .optional(),
     enrollment_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -7305,6 +7304,13 @@ export const zApiResponseEnrollment = z.object({
 });
 
 /**
+ * **[READ-ONLY]** Current enrollment status for the student.
+ */
+export const zEnrollmentStatusEnum = z
+  .enum(['ENROLLED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
+  .describe('**[READ-ONLY]** Current enrollment status for the student.');
+
+/**
  * A student's view of their scheduled classes with enrollment information
  */
 export const zStudentSchedule = z
@@ -7372,7 +7378,7 @@ export const zStudentSchedule = z
       .readonly()
       .optional(),
     scheduling_status: zStatusEnum3.optional(),
-    enrollment_status: zStatusEnum6.optional(),
+    enrollment_status: zEnrollmentStatusEnum.optional(),
     attendance_marked_at: z
       .string()
       .datetime()
@@ -7591,14 +7597,14 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
-      .readonly()
-      .optional(),
     enrollment_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -7869,9 +7875,22 @@ export const zApiResponseListCategory = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-export const zApiResponseListCommerceCatalogItem = z.object({
+export const zApiResponseListCommerceCatalogueItem = z.object({
   success: z.boolean().optional(),
-  data: z.array(zCommerceCatalogItem).optional(),
+  data: z.array(zCommerceCatalogueItem).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoCommerceCatalogueItem = z.object({
+  content: z.array(zCommerceCatalogueItem).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCommerceCatalogueItem = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCommerceCatalogueItem.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -9487,7 +9506,7 @@ export const zUpdateCategoryData = z.object({
 export const zUpdateCategoryResponse = zApiResponseCategory;
 
 export const zUpdateCatalogItemData = z.object({
-  body: zCommerceCatalogItemUpsertRequest,
+  body: zCommerceCatalogueItemUpsertRequest,
   path: z.object({
     catalogUuid: z.string().uuid(),
   }),
@@ -9497,7 +9516,7 @@ export const zUpdateCatalogItemData = z.object({
 /**
  * OK
  */
-export const zUpdateCatalogItemResponse = zApiResponseCommerceCatalogItem;
+export const zUpdateCatalogItemResponse = zApiResponseCommerceCatalogueItem;
 
 export const zDeactivateClassDefinitionData = z.object({
   body: z.never().optional(),
@@ -10859,6 +10878,17 @@ export const zEnrollStudentData = z.object({
  */
 export const zEnrollStudentResponse = zApiResponseListEnrollment;
 
+export const zJoinWaitlistData = z.object({
+  body: zEnrollmentRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Student added to waitlist
+ */
+export const zJoinWaitlistResponse = zApiResponseListEnrollment;
+
 export const zGetAllCoursesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -11577,6 +11607,43 @@ export const zCompleteCheckoutData = z.object({
  * Order created
  */
 export const zCompleteCheckoutResponse = zOrderResponse;
+
+export const zListCatalogItemsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      active_only: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zListCatalogItemsResponse = zApiResponseListCommerceCatalogueItem;
+
+export const zCreateCatalogItemData = z.object({
+  body: zCommerceCatalogueItemUpsertRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateCatalogItemResponse = zApiResponseCommerceCatalogueItem;
+
+export const zBackfillCatalogueData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zBackfillCatalogueResponse = zApiResponseInteger;
 
 export const zCreateCartData = z.object({
   body: zCreateCartRequest,
@@ -13719,12 +13786,27 @@ export const zGetOrderData = z.object({
  */
 export const zGetOrderResponse = zOrderResponse;
 
-export const zListCatalogItemsData = z.object({
+export const zSearchCatalogueData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zSearchCatalogueResponse = zApiResponsePagedDtoCommerceCatalogueItem;
+
+export const zResolveByCourseOrClassData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z
     .object({
-      active_only: z.boolean().optional(),
+      course_uuid: z.string().uuid().optional(),
+      class_uuid: z.string().uuid().optional(),
     })
     .optional(),
 });
@@ -13732,33 +13814,7 @@ export const zListCatalogItemsData = z.object({
 /**
  * OK
  */
-export const zListCatalogItemsResponse = zApiResponseListCommerceCatalogItem;
-
-export const zGetByCourseData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    courseUuid: z.string().uuid(),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * OK
- */
-export const zGetByCourseResponse = zApiResponseCommerceCatalogItem;
-
-export const zGetByClassData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    classUuid: z.string().uuid(),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * OK
- */
-export const zGetByClassResponse = zApiResponseCommerceCatalogItem;
+export const zResolveByCourseOrClassResponse = zApiResponseCommerceCatalogueItem;
 
 export const zGetEnrollmentsForClassData = z.object({
   body: z.never().optional(),

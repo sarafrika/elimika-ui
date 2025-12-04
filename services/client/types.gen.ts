@@ -45,9 +45,9 @@ export type User = {
    */
   dob: Date;
   /**
-   * **[REQUIRED]** User's contact phone number. Should include country code for international numbers. Used for notifications and verification.
+   * **[OPTIONAL]** User's contact phone number. Should include country code for international numbers when provided.
    */
-  phone_number: string;
+  phone_number?: string;
   /**
    * **[REQUIRED]** Indicates whether the user account is active and can access the system. Inactive users cannot log in or perform any operations.
    */
@@ -267,9 +267,9 @@ export type Student = {
    * **[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.
    */
   second_guardian_mobile?: string;
-  allGuardianContacts?: Array<string>;
   primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
+  allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
    */
@@ -610,13 +610,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1005,10 +1005,6 @@ export type TrainingProgram = {
    */
   readonly program_type?: string;
   /**
-   * **[READ-ONLY]** Indicates if the program is offered for free.
-   */
-  readonly is_free?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable format of total program duration.
    */
   readonly total_duration_display?: string;
@@ -1290,17 +1286,17 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
-  readonly has_location_coordinates?: boolean;
+  readonly is_profile_complete?: boolean;
   /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
   /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
-  readonly is_profile_complete?: boolean;
+  readonly has_location_coordinates?: boolean;
 };
 
 /**
@@ -1416,9 +1412,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
-  readonly formatted_duration?: string;
+  readonly membership_duration_months?: number;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -1442,9 +1438,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
-  readonly membership_duration_months?: number;
+  readonly formatted_duration?: string;
   /**
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
@@ -1613,6 +1609,14 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
+   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
+   */
+  readonly is_recent_qualification?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted string showing year of completion and school name.
+   */
+  readonly formatted_completion?: string;
+  /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
   readonly years_since_completion?: number;
@@ -1621,14 +1625,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
   readonly has_certificate_number?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
-   */
-  readonly is_recent_qualification?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted string showing year of completion and school name.
-   */
-  readonly formatted_completion?: string;
   /**
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
@@ -1894,10 +1890,6 @@ export type Course = {
    * **[READ-ONLY]** Email or username of the user who last modified this course. Used for audit trails.
    */
   readonly updated_by?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the course is offered for free.
-   */
-  readonly is_free?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
@@ -2764,9 +2756,9 @@ export type ApiResponseCategory = {
 };
 
 /**
- * Payload for creating or updating catalog mappings
+ * Payload for creating or updating catalogue mappings
  */
-export type CommerceCatalogItemUpsertRequest = {
+export type CommerceCatalogueItemUpsertRequest = {
   /**
    * Course UUID to associate
    */
@@ -2791,11 +2783,15 @@ export type CommerceCatalogItemUpsertRequest = {
    * Active flag
    */
   active?: boolean;
+  /**
+   * Whether the catalogue item should be visible to public storefront queries
+   */
+  publicly_visible?: boolean;
 };
 
-export type ApiResponseCommerceCatalogItem = {
+export type ApiResponseCommerceCatalogueItem = {
   success?: boolean;
-  data?: CommerceCatalogItem;
+  data?: CommerceCatalogueItem;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -2805,9 +2801,9 @@ export type ApiResponseCommerceCatalogItem = {
 /**
  * Mapping between Elimika courses/classes and internal commerce variants
  */
-export type CommerceCatalogItem = {
+export type CommerceCatalogueItem = {
   /**
-   * Catalog item UUID
+   * Catalogue item UUID
    */
   uuid?: string;
   /**
@@ -2834,6 +2830,10 @@ export type CommerceCatalogItem = {
    * Whether this mapping is active
    */
   active?: boolean;
+  /**
+   * Whether this catalogue item is visible to public storefronts
+   */
+  publicly_visible?: boolean;
   /**
    * Created timestamp
    */
@@ -3251,14 +3251,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Letter grade representation of the final grade.
-   */
-  readonly grade_letter?: string;
-  /**
-   * **[READ-ONLY]** Current validity status of the certificate.
-   */
-  readonly validity_status?: string;
-  /**
    * **[READ-ONLY]** Type of certificate based on completion achievement.
    */
   readonly certificate_type?: string;
@@ -3266,6 +3258,14 @@ export type Certificate = {
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
+  /**
+   * **[READ-ONLY]** Letter grade representation of the final grade.
+   */
+  readonly grade_letter?: string;
+  /**
+   * **[READ-ONLY]** Current validity status of the certificate.
+   */
+  readonly validity_status?: string;
 };
 
 export type ApiResponseCertificate = {
@@ -3921,21 +3921,21 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   */
+  readonly status_description?: string;
   /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
-  readonly status_description?: string;
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4092,7 +4092,7 @@ export type CartItemResponse = {
    */
   quantity?: number;
   /**
-   * Variant identifier within the commerce catalog
+   * Variant identifier within the commerce catalogue
    */
   variant_id?: string;
   /**
@@ -4562,6 +4562,10 @@ export type AssignmentSubmission = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
+   */
+  readonly is_graded?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the submission based on its content type.
    */
   readonly submission_category?: string;
@@ -4577,10 +4581,6 @@ export type AssignmentSubmission = {
    * **[READ-ONLY]** Summary of files attached to this submission.
    */
   readonly file_count_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
-   */
-  readonly is_graded?: boolean;
 };
 
 /**
@@ -5024,14 +5024,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
-   */
-  readonly attempt_category?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
-   */
-  readonly performance_summary?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
   readonly grade_display?: string;
@@ -5039,6 +5031,14 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
+   */
+  readonly attempt_category?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
+   */
+  readonly performance_summary?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -5155,13 +5155,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -5604,7 +5604,7 @@ export type StudentSchedule = {
    */
   readonly location_longitude?: number;
   scheduling_status?: StatusEnum3;
-  enrollment_status?: StatusEnum6;
+  enrollment_status?: EnrollmentStatusEnum;
   /**
    * **[READ-ONLY]** Timestamp when attendance was marked (if applicable).
    */
@@ -5812,13 +5812,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -6071,13 +6071,28 @@ export type ApiResponseListCategory = {
   };
 };
 
-export type ApiResponseListCommerceCatalogItem = {
+export type ApiResponseListCommerceCatalogueItem = {
   success?: boolean;
-  data?: Array<CommerceCatalogItem>;
+  data?: Array<CommerceCatalogueItem>;
   message?: string;
   error?: {
     [key: string]: unknown;
   };
+};
+
+export type ApiResponsePagedDtoCommerceCatalogueItem = {
+  success?: boolean;
+  data?: PagedDtoCommerceCatalogueItem;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoCommerceCatalogueItem = {
+  content?: Array<CommerceCatalogueItem>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
 };
 
 export type ApiResponseListClassQuizSchedule = {
@@ -6981,6 +6996,7 @@ export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
  */
 export const StatusEnum6 = {
   ENROLLED: 'ENROLLED',
+  WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
   ABSENT: 'ABSENT',
   CANCELLED: 'CANCELLED',
@@ -7146,6 +7162,21 @@ export const AvailabilityTypeEnum = {
  * Availability type when the entry is derived from availability patterns
  */
 export type AvailabilityTypeEnum = (typeof AvailabilityTypeEnum)[keyof typeof AvailabilityTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current enrollment status for the student.
+ */
+export const EnrollmentStatusEnum = {
+  ENROLLED: 'ENROLLED',
+  ATTENDED: 'ATTENDED',
+  ABSENT: 'ABSENT',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current enrollment status for the student.
+ */
+export type EnrollmentStatusEnum = (typeof EnrollmentStatusEnum)[keyof typeof EnrollmentStatusEnum];
 
 export type DeleteUserData = {
   body?: never;
@@ -10250,12 +10281,12 @@ export type UpdateCategoryResponses = {
 export type UpdateCategoryResponse = UpdateCategoryResponses[keyof UpdateCategoryResponses];
 
 export type UpdateCatalogItemData = {
-  body: CommerceCatalogItemUpsertRequest;
+  body: CommerceCatalogueItemUpsertRequest;
   path: {
     catalogUuid: string;
   };
   query?: never;
-  url: '/api/v1/commerce/catalog/{catalogUuid}';
+  url: '/api/v1/commerce/catalogue/{catalogUuid}';
 };
 
 export type UpdateCatalogItemErrors = {
@@ -10275,7 +10306,7 @@ export type UpdateCatalogItemResponses = {
   /**
    * OK
    */
-  200: ApiResponseCommerceCatalogItem;
+  200: ApiResponseCommerceCatalogueItem;
 };
 
 export type UpdateCatalogItemResponse =
@@ -13564,6 +13595,39 @@ export type EnrollStudentResponses = {
 
 export type EnrollStudentResponse = EnrollStudentResponses[keyof EnrollStudentResponses];
 
+export type JoinWaitlistData = {
+  body: EnrollmentRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/enrollment/waitlist';
+};
+
+export type JoinWaitlistErrors = {
+  /**
+   * Waitlist disabled or class has available seats
+   */
+  400: ApiResponseListEnrollment;
+  /**
+   * Class or scheduled instances not found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type JoinWaitlistError = JoinWaitlistErrors[keyof JoinWaitlistErrors];
+
+export type JoinWaitlistResponses = {
+  /**
+   * Student added to waitlist
+   */
+  201: ApiResponseListEnrollment;
+};
+
+export type JoinWaitlistResponse = JoinWaitlistResponses[keyof JoinWaitlistResponses];
+
 export type GetAllCoursesData = {
   body?: never;
   path?: never;
@@ -15262,6 +15326,97 @@ export type CompleteCheckoutResponses = {
 };
 
 export type CompleteCheckoutResponse = CompleteCheckoutResponses[keyof CompleteCheckoutResponses];
+
+export type ListCatalogItemsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    active_only?: boolean;
+  };
+  url: '/api/v1/commerce/catalogue';
+};
+
+export type ListCatalogItemsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListCatalogItemsError = ListCatalogItemsErrors[keyof ListCatalogItemsErrors];
+
+export type ListCatalogItemsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCommerceCatalogueItem;
+};
+
+export type ListCatalogItemsResponse = ListCatalogItemsResponses[keyof ListCatalogItemsResponses];
+
+export type CreateCatalogItemData = {
+  body: CommerceCatalogueItemUpsertRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/commerce/catalogue';
+};
+
+export type CreateCatalogItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateCatalogItemError = CreateCatalogItemErrors[keyof CreateCatalogItemErrors];
+
+export type CreateCatalogItemResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCommerceCatalogueItem;
+};
+
+export type CreateCatalogItemResponse =
+  CreateCatalogItemResponses[keyof CreateCatalogItemResponses];
+
+export type BackfillCatalogueData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/commerce/catalogue/backfill';
+};
+
+export type BackfillCatalogueErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type BackfillCatalogueError = BackfillCatalogueErrors[keyof BackfillCatalogueErrors];
+
+export type BackfillCatalogueResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseInteger;
+};
+
+export type BackfillCatalogueResponse =
+  BackfillCatalogueResponses[keyof BackfillCatalogueResponses];
 
 export type CreateCartData = {
   body: CreateCartRequest;
@@ -20657,16 +20812,54 @@ export type GetOrderResponses = {
 
 export type GetOrderResponse = GetOrderResponses[keyof GetOrderResponses];
 
-export type ListCatalogItemsData = {
+export type SearchCatalogueData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Optional search parameters for filtering
+     */
+    searchParams: {
+      [key: string]: unknown;
+    };
+    pageable: Pageable;
+  };
+  url: '/api/v1/commerce/catalogue/search';
+};
+
+export type SearchCatalogueErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SearchCatalogueError = SearchCatalogueErrors[keyof SearchCatalogueErrors];
+
+export type SearchCatalogueResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoCommerceCatalogueItem;
+};
+
+export type SearchCatalogueResponse = SearchCatalogueResponses[keyof SearchCatalogueResponses];
+
+export type ResolveByCourseOrClassData = {
   body?: never;
   path?: never;
   query?: {
-    active_only?: boolean;
+    course_uuid?: string;
+    class_uuid?: string;
   };
-  url: '/api/v1/commerce/catalog';
+  url: '/api/v1/commerce/catalogue/resolve';
 };
 
-export type ListCatalogItemsErrors = {
+export type ResolveByCourseOrClassErrors = {
   /**
    * Not Found
    */
@@ -20677,78 +20870,18 @@ export type ListCatalogItemsErrors = {
   500: ResponseDtoVoid;
 };
 
-export type ListCatalogItemsError = ListCatalogItemsErrors[keyof ListCatalogItemsErrors];
+export type ResolveByCourseOrClassError =
+  ResolveByCourseOrClassErrors[keyof ResolveByCourseOrClassErrors];
 
-export type ListCatalogItemsResponses = {
+export type ResolveByCourseOrClassResponses = {
   /**
    * OK
    */
-  200: ApiResponseListCommerceCatalogItem;
+  200: ApiResponseCommerceCatalogueItem;
 };
 
-export type ListCatalogItemsResponse = ListCatalogItemsResponses[keyof ListCatalogItemsResponses];
-
-export type GetByCourseData = {
-  body?: never;
-  path: {
-    courseUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/commerce/catalog/by-course/{courseUuid}';
-};
-
-export type GetByCourseErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetByCourseError = GetByCourseErrors[keyof GetByCourseErrors];
-
-export type GetByCourseResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseCommerceCatalogItem;
-};
-
-export type GetByCourseResponse = GetByCourseResponses[keyof GetByCourseResponses];
-
-export type GetByClassData = {
-  body?: never;
-  path: {
-    classUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/commerce/catalog/by-class/{classUuid}';
-};
-
-export type GetByClassErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetByClassError = GetByClassErrors[keyof GetByClassErrors];
-
-export type GetByClassResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseCommerceCatalogItem;
-};
-
-export type GetByClassResponse = GetByClassResponses[keyof GetByClassResponses];
+export type ResolveByCourseOrClassResponse =
+  ResolveByCourseOrClassResponses[keyof ResolveByCourseOrClassResponses];
 
 export type GetEnrollmentsForClassData = {
   body?: never;

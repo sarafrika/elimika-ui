@@ -130,6 +130,7 @@ import type {
   UploadInstructorDocumentResponse,
   CreateLinkResponse,
   EnrollStudentResponse,
+  JoinWaitlistResponse,
   GetAllCoursesResponse,
   CreateCourseResponse,
   UnpublishCourseResponse,
@@ -178,6 +179,8 @@ import type {
   GetAllCategoriesResponse,
   CreateCategoryResponse,
   CompleteCheckoutResponse,
+  ListCatalogItemsResponse,
+  CreateCatalogItemResponse,
   CreateCartResponse,
   SelectPaymentSessionResponse,
   AddItemResponse,
@@ -293,9 +296,8 @@ import type {
   SearchCategoriesResponse,
   GetRootCategoriesResponse,
   GetOrderResponse,
-  ListCatalogItemsResponse,
-  GetByCourseResponse,
-  GetByClassResponse,
+  SearchCatalogueResponse,
+  ResolveByCourseOrClassResponse,
   GetEnrollmentsForClassResponse,
   GetClassDefinitionsForOrganisationResponse,
   GetClassDefinitionsForInstructorResponse,
@@ -1427,7 +1429,7 @@ export const updateCategoryResponseTransformer = async (
   return data;
 };
 
-const commerceCatalogItemSchemaResponseTransformer = (data: any) => {
+const commerceCatalogueItemSchemaResponseTransformer = (data: any) => {
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
   }
@@ -1437,9 +1439,9 @@ const commerceCatalogItemSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
-const apiResponseCommerceCatalogItemSchemaResponseTransformer = (data: any) => {
+const apiResponseCommerceCatalogueItemSchemaResponseTransformer = (data: any) => {
   if (data.data) {
-    data.data = commerceCatalogItemSchemaResponseTransformer(data.data);
+    data.data = commerceCatalogueItemSchemaResponseTransformer(data.data);
   }
   return data;
 };
@@ -1447,7 +1449,7 @@ const apiResponseCommerceCatalogItemSchemaResponseTransformer = (data: any) => {
 export const updateCatalogItemResponseTransformer = async (
   data: any
 ): Promise<UpdateCatalogItemResponse> => {
-  data = apiResponseCommerceCatalogItemSchemaResponseTransformer(data);
+  data = apiResponseCommerceCatalogueItemSchemaResponseTransformer(data);
   return data;
 };
 
@@ -2551,6 +2553,11 @@ export const enrollStudentResponseTransformer = async (
   return data;
 };
 
+export const joinWaitlistResponseTransformer = async (data: any): Promise<JoinWaitlistResponse> => {
+  data = apiResponseListEnrollmentSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoCourseSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -3243,6 +3250,29 @@ export const completeCheckoutResponseTransformer = async (
   data: any
 ): Promise<CompleteCheckoutResponse> => {
   data = orderResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListCommerceCatalogueItemSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return commerceCatalogueItemSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listCatalogItemsResponseTransformer = async (
+  data: any
+): Promise<ListCatalogItemsResponse> => {
+  data = apiResponseListCommerceCatalogueItemSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createCatalogItemResponseTransformer = async (
+  data: any
+): Promise<CreateCatalogItemResponse> => {
+  data = apiResponseCommerceCatalogueItemSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4568,29 +4598,36 @@ export const getOrderResponseTransformer = async (data: any): Promise<GetOrderRe
   return data;
 };
 
-const apiResponseListCommerceCatalogItemSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = data.data.map((item: any) => {
-      return commerceCatalogItemSchemaResponseTransformer(item);
+const pagedDtoCommerceCatalogueItemSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return commerceCatalogueItemSchemaResponseTransformer(item);
     });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
   }
   return data;
 };
 
-export const listCatalogItemsResponseTransformer = async (
+const apiResponsePagedDtoCommerceCatalogueItemSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCommerceCatalogueItemSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const searchCatalogueResponseTransformer = async (
   data: any
-): Promise<ListCatalogItemsResponse> => {
-  data = apiResponseListCommerceCatalogItemSchemaResponseTransformer(data);
+): Promise<SearchCatalogueResponse> => {
+  data = apiResponsePagedDtoCommerceCatalogueItemSchemaResponseTransformer(data);
   return data;
 };
 
-export const getByCourseResponseTransformer = async (data: any): Promise<GetByCourseResponse> => {
-  data = apiResponseCommerceCatalogItemSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getByClassResponseTransformer = async (data: any): Promise<GetByClassResponse> => {
-  data = apiResponseCommerceCatalogItemSchemaResponseTransformer(data);
+export const resolveByCourseOrClassResponseTransformer = async (
+  data: any
+): Promise<ResolveByCourseOrClassResponse> => {
+  data = apiResponseCommerceCatalogueItemSchemaResponseTransformer(data);
   return data;
 };
 
