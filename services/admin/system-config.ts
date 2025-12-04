@@ -53,18 +53,23 @@ const ruleResponseSchema = zApiResponseSystemRuleResponse.extend({
   data: zApiResponseSystemRuleResponse.shape.data.default({}),
 });
 
-const buildListRulesOptions = (params: SystemRuleListParams) =>
-  listRulesOptions({
-    query: {
-      category: params.category && params.category !== 'all' ? params.category : undefined,
-      status: params.status && params.status !== 'all' ? params.status : undefined,
-      pageable: {
-        page: params.page ?? 0,
-        size: params.size ?? 10,
-        sort: params.sort && params.sort.length > 0 ? params.sort : undefined,
-      },
-    },
-  });
+const buildListRulesOptions = (params: SystemRuleListParams) => {
+  const pageable = {
+    page: params.page ?? 0,
+    size: params.size ?? 10,
+  };
+
+  if (params.sort && params.sort.length > 0) {
+    // @ts-expect-error generated type allows sort; keeping optional include
+    (pageable as any).sort = params.sort;
+  }
+
+  const query: Record<string, unknown> = { pageable };
+  if (params.category && params.category !== 'all') query.category = params.category;
+  if (params.status && params.status !== 'all') query.status = params.status;
+
+  return listRulesOptions({ query });
+};
 
 const deriveListResult = (data: unknown, fallback: Required<SystemRuleListParams>): SystemRuleListResult => {
   const parsed = listRulesResponseSchema.parse(data ?? {});
