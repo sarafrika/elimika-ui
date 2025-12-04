@@ -157,7 +157,7 @@ Use only standardized utility generators like `getCardClasses()`, not custom val
   chore: update dependencies
   ```
 
-- After completing a task, commit your changes following the above format before handoff.
+- After completing a task, **always** end with a commit using the above format; do not leave a dirty working tree at handoff.
 - Subject <72 chars, body explains rationale, links issues
 - Include screenshots or videos for UI changes
 - Ensure the following pass before pushing:
