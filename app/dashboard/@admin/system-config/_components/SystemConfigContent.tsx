@@ -99,13 +99,19 @@ export function SystemConfigContent() {
   }, [replaceBreadcrumbs]);
 
   const { data, isLoading, refetch } = useSystemRules({
-    category,
-    status,
     page,
     size: pageSize,
   });
 
-  const rules = data?.items ?? [];
+  // Client-side filtering since API only supports pagination
+  const rules = useMemo(() => {
+    const allRules = data?.items ?? [];
+    return allRules.filter(rule => {
+      if (category !== 'all' && rule.category !== category) return false;
+      if (status !== 'all' && rule.status !== status) return false;
+      return true;
+    });
+  }, [data?.items, category, status]);
 
   const activeFilters = [
     category !== 'all' ? { label: `Category: ${category}`, onClear: () => setCategory('all') } : null,
@@ -184,36 +190,49 @@ export function SystemConfigContent() {
   }, [rules]);
 
   return (
-    <div className='space-y-6'>
-      <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-        <div className='space-y-1'>
-          <h1 className='text-3xl font-bold tracking-tight'>System rules</h1>
-          <p className='text-muted-foreground text-sm'>
+    <div className='space-y-8'>
+      {/* Page Header */}
+      <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+        <div className='space-y-2'>
+          <div className='flex items-center gap-3'>
+            <h1 className='text-2xl font-semibold tracking-tight text-foreground lg:text-3xl'>
+              System Rules
+            </h1>
+            <Badge variant='outline' className='rounded-full text-xs'>
+              Configuration
+            </Badge>
+          </div>
+          <p className='max-w-2xl text-sm leading-relaxed text-muted-foreground lg:text-base'>
             Govern platform policies with scoped, prioritized rules. Manage lifecycle, payloads, and audit trail.
           </p>
           {lastUpdated ? (
-            <p className='text-muted-foreground text-xs'>Last change {lastUpdated}</p>
+            <p className='text-xs text-muted-foreground'>Last change {lastUpdated}</p>
           ) : null}
         </div>
         <div className='flex flex-wrap gap-2'>
-          <Button variant='outline' size='sm' onClick={() => refetch()} className='gap-2'>
+          <Button variant='outline' size='default' onClick={() => refetch()} className='gap-2'>
             <RefreshCcw className='h-4 w-4' />
             Refresh
           </Button>
-          <Button size='sm' className='gap-2' onClick={openCreate}>
+          <Button size='default' className='gap-2 shadow-sm' onClick={openCreate}>
             <Plus className='h-4 w-4' />
             New rule
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader className='space-y-4'>
-          <div className='flex items-center gap-2 text-sm font-semibold'>
-            <SlidersHorizontal className='h-4 w-4 text-muted-foreground' />
-            Rule list
+      <Card className='shadow-md'>
+        <CardHeader className='space-y-5 border-b bg-muted/30 pb-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-2'>
+              <SlidersHorizontal className='h-5 w-5 text-primary' />
+              <h2 className='text-lg font-semibold text-foreground'>Filters & List</h2>
+            </div>
+            <div className='text-xs text-muted-foreground'>
+              {rules.length} {rules.length === 1 ? 'rule' : 'rules'} shown
+            </div>
           </div>
-          <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-4'>
+          <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-3'>
             <Select value={category} onValueChange={value => { setCategory(value as SystemRuleCategory | 'all'); setPage(0); }}>
               <SelectTrigger>
                 <SelectValue placeholder='Category' />
@@ -243,25 +262,31 @@ export function SystemConfigContent() {
 
           <div className='flex flex-wrap items-center gap-2'>
             {activeFilters.length === 0 ? (
-              <p className='text-muted-foreground text-xs'>Listing all rules.</p>
+              <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                <Filter className='h-3.5 w-3.5' />
+                <span>No active filters</span>
+              </div>
             ) : (
-              activeFilters.map(filter => (
-                <Badge key={filter.label} variant='outline' className='gap-1'>
-                  {filter.label}
-                  <button
-                    type='button'
-                    onClick={filter.onClear}
-                    aria-label={`Clear ${filter.label}`}
-                    className='rounded-full p-0.5 hover:bg-muted'
-                  >
-                    <X className='h-3 w-3' />
-                  </button>
-                </Badge>
-              ))
+              <>
+                <span className='text-xs font-medium text-muted-foreground'>Active filters:</span>
+                {activeFilters.map(filter => (
+                  <Badge key={filter.label} variant='secondary' className='gap-1.5 rounded-full'>
+                    {filter.label}
+                    <button
+                      type='button'
+                      onClick={filter.onClear}
+                      aria-label={`Clear ${filter.label}`}
+                      className='rounded-full p-0.5 transition-colors hover:bg-muted-foreground/20'
+                    >
+                      <X className='h-3 w-3' />
+                    </button>
+                  </Badge>
+                ))}
+                <Button variant='ghost' size='sm' className='h-7 text-xs' onClick={resetFilters}>
+                  Reset all
+                </Button>
+              </>
             )}
-            <Button variant='link' size='sm' className='text-xs' onClick={resetFilters}>
-              Reset
-            </Button>
           </div>
         </CardHeader>
 
@@ -292,18 +317,18 @@ export function SystemConfigContent() {
           </div>
 
           <div className='hidden md:block'>
-            <div className='overflow-x-auto rounded-xl border'>
+            <div className='overflow-hidden rounded-xl border shadow-sm'>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Key</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Scope</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Effective window</TableHead>
-                    <TableHead>Last updated</TableHead>
-                    <TableHead className='w-[64px] text-right'>Actions</TableHead>
+                  <TableRow className='bg-muted/50'>
+                    <TableHead className='font-semibold'>Key</TableHead>
+                    <TableHead className='font-semibold'>Category</TableHead>
+                    <TableHead className='font-semibold'>Scope</TableHead>
+                    <TableHead className='font-semibold'>Status</TableHead>
+                    <TableHead className='font-semibold'>Priority</TableHead>
+                    <TableHead className='font-semibold'>Effective window</TableHead>
+                    <TableHead className='font-semibold'>Last updated</TableHead>
+                    <TableHead className='w-[64px] text-right font-semibold'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -320,10 +345,20 @@ export function SystemConfigContent() {
                   ) : rules.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8}>
-                        <div className='flex flex-col items-center gap-2 py-10 text-center'>
-                          <Filter className='h-5 w-5 text-muted-foreground' />
-                          <p className='text-sm text-muted-foreground'>No rules available yet.</p>
-                          <Button variant='outline' size='sm' onClick={openCreate}>
+                        <div className='flex flex-col items-center gap-4 py-16 text-center'>
+                          <div className='rounded-full bg-muted/50 p-4'>
+                            <Filter className='h-8 w-8 text-muted-foreground' />
+                          </div>
+                          <div className='space-y-1'>
+                            <p className='text-base font-medium text-foreground'>No rules found</p>
+                            <p className='text-sm text-muted-foreground'>
+                              {activeFilters.length > 0
+                                ? 'Try adjusting your filters or create a new rule.'
+                                : 'Get started by creating your first system rule.'}
+                            </p>
+                          </div>
+                          <Button size='default' className='mt-2' onClick={openCreate}>
+                            <Plus className='mr-2 h-4 w-4' />
                             Create first rule
                           </Button>
                         </div>
@@ -331,16 +366,28 @@ export function SystemConfigContent() {
                     </TableRow>
                   ) : (
                     rules.map(rule => (
-                      <TableRow key={rule.uuid} className='cursor-pointer' onClick={() => openEdit(rule)}>
-                        <TableCell className='font-semibold'>{rule.key}</TableCell>
-                        <TableCell>{rule.category ?? '—'}</TableCell>
-                        <TableCell>{formatScope(rule)}</TableCell>
+                      <TableRow
+                        key={rule.uuid}
+                        className='cursor-pointer transition-colors hover:bg-muted/30'
+                        onClick={() => openEdit(rule)}
+                      >
+                        <TableCell className='font-semibold text-foreground'>{rule.key}</TableCell>
                         <TableCell>
-                          <Badge variant={statusBadgeVariant[rule.status ?? ''] ?? 'outline'}>
+                          <Badge variant='outline' className='rounded-full'>
+                            {rule.category ?? '—'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className='text-sm'>{formatScope(rule)}</TableCell>
+                        <TableCell>
+                          <Badge variant={statusBadgeVariant[rule.status ?? ''] ?? 'outline'} className='rounded-full'>
                             {rule.status ?? '—'}
                           </Badge>
                         </TableCell>
-                        <TableCell>{rule.priority ?? '—'}</TableCell>
+                        <TableCell>
+                          <span className='inline-flex items-center justify-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium'>
+                            {rule.priority ?? '—'}
+                          </span>
+                        </TableCell>
                         <TableCell className='text-sm text-muted-foreground'>{formatWindow(rule)}</TableCell>
                         <TableCell className='text-sm'>
                           <div className='flex flex-col gap-1'>
@@ -382,10 +429,10 @@ export function SystemConfigContent() {
           <div className='md:hidden'>
             {isLoading
               ? Array.from({ length: 3 }).map((_, index) => (
-                  <Card key={`mobile-skel-${index}`} className='mb-3'>
-                    <CardContent className='space-y-3 p-4'>
-                      <Skeleton className='h-4 w-32' />
-                      <Skeleton className='h-4 w-20' />
+                  <Card key={`mobile-skel-${index}`} className='mb-3 shadow-sm'>
+                    <CardContent className='space-y-3 p-5'>
+                      <Skeleton className='h-5 w-36' />
+                      <Skeleton className='h-4 w-24' />
                       <Skeleton className='h-4 w-full' />
                     </CardContent>
                   </Card>
@@ -393,16 +440,18 @@ export function SystemConfigContent() {
               : rules.map(rule => (
                   <Card
                     key={rule.uuid}
-                    className='mb-3 cursor-pointer'
+                    className='mb-3 cursor-pointer shadow-sm transition-all hover:shadow-md'
                     onClick={() => openEdit(rule)}
                   >
-                    <CardContent className='space-y-3 p-4'>
-                      <div className='flex items-center justify-between gap-2'>
-                        <div className='space-y-1'>
-                          <p className='text-sm font-semibold'>{rule.key}</p>
-                          <p className='text-muted-foreground text-xs'>{rule.category}</p>
+                    <CardContent className='space-y-4 p-5'>
+                      <div className='flex items-start justify-between gap-3'>
+                        <div className='space-y-1.5'>
+                          <p className='text-base font-semibold text-foreground'>{rule.key}</p>
+                          <Badge variant='outline' className='rounded-full text-xs'>
+                            {rule.category}
+                          </Badge>
                         </div>
-                        <Badge variant={statusBadgeVariant[rule.status ?? ''] ?? 'outline'}>
+                        <Badge variant={statusBadgeVariant[rule.status ?? ''] ?? 'outline'} className='rounded-full'>
                           {rule.status ?? '—'}
                         </Badge>
                       </div>
@@ -446,16 +495,22 @@ export function SystemConfigContent() {
                 ))}
           </div>
 
-          <Separator />
+          <Separator className='mt-6' />
 
-          <div className='flex flex-wrap items-center justify-between gap-3 text-sm'>
-            <div className='text-muted-foreground'>
-              Page {data ? data.page + 1 : page + 1} of {data?.totalPages ?? 1}
+          <div className='flex flex-wrap items-center justify-between gap-4 pt-2 text-sm'>
+            <div className='flex items-center gap-2 text-muted-foreground'>
+              <span className='font-medium'>
+                Page {data ? data.page + 1 : page + 1}
+              </span>
+              <span>of</span>
+              <span className='font-medium'>{data?.totalPages ?? 1}</span>
+              <span className='hidden sm:inline'>·</span>
+              <span className='hidden sm:inline'>{data?.totalItems ?? 0} total</span>
             </div>
             <div className='flex gap-2'>
               <Button
                 variant='outline'
-                size='sm'
+                size='default'
                 disabled={data ? !data.hasPrevious : page === 0}
                 onClick={() => setPage(prev => Math.max(prev - 1, 0))}
               >
@@ -463,7 +518,7 @@ export function SystemConfigContent() {
               </Button>
               <Button
                 variant='outline'
-                size='sm'
+                size='default'
                 disabled={data ? !data.hasNext : false}
                 onClick={() => setPage(prev => prev + 1)}
               >

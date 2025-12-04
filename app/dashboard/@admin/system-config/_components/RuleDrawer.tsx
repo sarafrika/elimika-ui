@@ -42,7 +42,9 @@ import {
   Eye,
   Loader2,
   Minus,
+  Pencil,
   Plus,
+  SlidersHorizontal,
   Sparkles,
 } from 'lucide-react';
 
@@ -292,21 +294,39 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent
         side='right'
-        className='w-full max-w-5xl overflow-y-auto border-l bg-background p-0 sm:max-w-4xl'
+        className='w-full max-w-6xl overflow-y-auto border-l bg-background p-0 sm:max-w-5xl'
       >
-        <SheetHeader className='sticky top-0 z-10 border-b bg-background/90 px-6 py-4 backdrop-blur'>
-          <SheetTitle className='text-xl font-semibold'>
-            {isEdit ? 'Edit system rule' : 'New system rule'}
-          </SheetTitle>
-          <SheetDescription>
-            Configure category, scope, payload, and effective window. Changes take effect after save.
-          </SheetDescription>
+        <SheetHeader className='sticky top-0 z-10 border-b bg-gradient-to-r from-background to-muted/20 px-6 py-5 shadow-sm backdrop-blur'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-primary/10 p-2'>
+              <SlidersHorizontal className='h-5 w-5 text-primary' />
+            </div>
+            <div className='flex-1'>
+              <SheetTitle className='text-xl font-semibold text-foreground'>
+                {isEdit ? 'Edit system rule' : 'Create new system rule'}
+              </SheetTitle>
+              <SheetDescription className='mt-1'>
+                Configure category, scope, payload, and effective window. Changes take effect after save.
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
-        <div className='grid gap-6 px-6 py-4 lg:grid-cols-[1.6fr_1fr]'>
+        <div className='grid gap-6 px-6 py-6 lg:grid-cols-[1.6fr_1fr]'>
+          {/* Form Section - Submission Layer */}
           <div className='space-y-6'>
+            <div className='rounded-lg border border-primary/20 bg-primary/5 p-4'>
+              <div className='flex items-center gap-2'>
+                <Pencil className='h-4 w-4 text-primary' />
+                <h3 className='text-sm font-semibold text-foreground'>Rule Configuration</h3>
+              </div>
+              <p className='mt-1 text-xs text-muted-foreground'>
+                Fill in the details below to configure your system rule
+              </p>
+            </div>
+
             {errorMessage ? (
-              <Alert variant='destructive'>
+              <Alert variant='destructive' className='shadow-sm'>
                 <AlertCircle className='h-4 w-4' />
                 <AlertTitle>Save failed</AlertTitle>
                 <AlertDescription>{errorMessage}</AlertDescription>
@@ -678,23 +698,27 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
             )}
           </div>
 
+          {/* Presentation Section - Live Preview */}
           <div className='space-y-4'>
-            <div className='rounded-xl border bg-card p-4 shadow-sm'>
+            <div className='rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-background p-4 shadow-md'>
               <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-semibold'>Rule summary</p>
-                  <p className='text-muted-foreground text-xs'>Live preview as you edit.</p>
+                <div className='flex items-center gap-2'>
+                  <Eye className='h-4 w-4 text-primary' />
+                  <div>
+                    <p className='text-sm font-semibold text-foreground'>Rule Summary</p>
+                    <p className='text-xs text-muted-foreground'>Live preview as you edit</p>
+                  </div>
                 </div>
-                <Badge variant='outline'>
+                <Badge variant='outline' className='rounded-full'>
                   {watchAll.status}
                 </Badge>
               </div>
-              <Separator className='my-3' />
-              <div className='grid gap-2 text-sm'>
+              <Separator className='my-4' />
+              <div className='grid gap-2.5 text-sm'>
                 {summaryItems.map(item => (
-                  <div key={item.label} className='flex items-center justify-between gap-3'>
-                    <span className='text-muted-foreground text-xs'>{item.label}</span>
-                    <span className='font-medium text-right'>{item.value || '—'}</span>
+                  <div key={item.label} className='flex items-center justify-between gap-3 rounded-md bg-background/60 px-2 py-1.5'>
+                    <span className='text-xs font-medium text-muted-foreground'>{item.label}</span>
+                    <span className='text-right text-sm font-semibold text-foreground'>{item.value || '—'}</span>
                   </div>
                 ))}
               </div>
@@ -711,25 +735,27 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
               </div>
             </div>
 
-            <div className='rounded-xl border bg-card p-4 shadow-sm'>
+            <div className='rounded-lg border bg-card p-4 shadow-sm'>
               <div className='flex items-center gap-2'>
-                <Code2 className='h-4 w-4 text-muted-foreground' />
-                <p className='text-sm font-semibold'>Payload preview</p>
+                <Code2 className='h-4 w-4 text-primary' />
+                <p className='text-sm font-semibold text-foreground'>Payload Preview</p>
               </div>
-              <ScrollArea className='mt-3 h-48 rounded-lg border border-dashed border-border/70 bg-muted/40 p-3'>
-                <pre className='whitespace-pre-wrap break-all font-mono text-xs'>
+              <p className='mt-1 text-xs text-muted-foreground'>JSON value structure</p>
+              <ScrollArea className='mt-3 h-48 rounded-lg border border-dashed border-border/70 bg-muted/40 p-3 shadow-inner'>
+                <pre className='whitespace-pre-wrap break-all font-mono text-xs text-foreground'>
                   {watchAll.valuePayload || '{}'}
                 </pre>
               </ScrollArea>
             </div>
 
-            <div className='rounded-xl border bg-card p-4 shadow-sm'>
+            <div className='rounded-lg border bg-card p-4 shadow-sm'>
               <div className='flex items-center gap-2'>
-                <CheckCircle2 className='h-4 w-4 text-muted-foreground' />
-                <p className='text-sm font-semibold'>Conditions</p>
+                <CheckCircle2 className='h-4 w-4 text-green' />
+                <p className='text-sm font-semibold text-foreground'>Conditions</p>
               </div>
-              <ScrollArea className='mt-3 h-32 rounded-lg border border-dashed border-border/70 bg-muted/30 p-3'>
-                <pre className='whitespace-pre-wrap break-all font-mono text-xs'>
+              <p className='mt-1 text-xs text-muted-foreground'>Optional rule constraints</p>
+              <ScrollArea className='mt-3 h-32 rounded-lg border border-dashed border-border/70 bg-muted/30 p-3 shadow-inner'>
+                <pre className='whitespace-pre-wrap break-all font-mono text-xs text-muted-foreground'>
                   {watchAll.conditions?.trim() ? watchAll.conditions : 'No conditions. Rule always applies.'}
                 </pre>
               </ScrollArea>
