@@ -226,17 +226,17 @@ export default function ClassPreviewPage() {
     const featuredImage = "/placeholder.png";
 
     return (
-        <div className="flex min-h-screen bg-gray-50 text-gray-900">
+        <div className="flex min-h-screen bg-background text-foreground">
             {/* LEFT SIDEBAR — STUDENT LIST */}
-            <aside className="w-72 bg-white border-r border-gray-200 flex flex-col">
+            <aside className="w-72 bg-card border-r border">
                 {/* Search */}
                 <div className="p-4">
                     <div className="relative">
-                        <Search className="absolute left-3 top-3 text-gray-400" />
+                        <Search className="absolute left-3 top-3 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="Search Student"
-                            className="pl-10 pr-3 py-2 border rounded-lg w-full text-sm focus:ring focus:ring-purple-200"
+                            className="pl-10 pr-3 py-2 border-input border rounded-lg w-full text-sm focus:ring focus:ring-primary/20 bg-background"
                         />
                     </div>
                 </div>
@@ -250,21 +250,29 @@ export default function ClassPreviewPage() {
                                 key={name + idx}
                                 onClick={() => {
                                     setSelectedStudent(name);
-                                    toast.message(name)
+                                    toast.message(name);
                                 }}
-                                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-left mb-1 text-sm transition-colors ${selectedStudent === name ? "bg-purple-50 text-purple-700 font-medium" : "hover:bg-gray-100"
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-left mb-1 text-sm transition-colors ${selectedStudent === name
+                                    ? "bg-muted text-primary font-medium"
+                                    : "hover:bg-muted"
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 grid place-items-center text-xs">
-                                        {name?.split(" ").map((n: string) => n?.[0]).slice(0, 2).join("")}
+                                    <div className="w-8 h-8 rounded-full bg-primary/20 text-primary grid place-items-center text-xs">
+                                        {name
+                                            ?.split(" ")
+                                            .map((n: string) => n?.[0])
+                                            .slice(0, 2)
+                                            .join("")}
                                     </div>
                                     <div className="flex flex-col text-left">
                                         <span className="text-sm">{name}</span>
-                                        <span className="text-xs text-gray-400">{(s as any)?.section ?? ""}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {(s as any)?.section ?? ""}
+                                        </span>
                                     </div>
                                 </div>
-                                <ChevronRight className="text-gray-400" />
+                                <ChevronRight className="text-muted-foreground" />
                             </button>
                         );
                     })}
@@ -273,49 +281,52 @@ export default function ClassPreviewPage() {
 
             {/* MAIN CENTER — RESOURCE / CONTENT VIEW */}
             <main className="flex-1 overflow-y-auto px-10 py-6">
-                <div className="flex items-center gap-2 text-sm text-purple-600 mb-4">
-                    <span className="font-semibold text-gray-700">Final Exam</span>
-                    <span className="text-gray-400">/</span>
-                    <span className="text-gray-500">Speed Grade</span>
+                <div className="flex items-center gap-2 text-sm text-primary mb-4">
+                    <span className="font-semibold">Final Exam</span>
+                    <span className="text-muted-foreground">/</span>
+                    <span className="text-muted-foreground">Speed Grade</span>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="bg-card rounded-xl shadow-sm border p-6">
                     {/* Assignment header */}
                     <div className="flex items-start justify-between gap-6 mb-6">
                         <div className="flex-1">
-                            <h1 className="text-2xl font-semibold">{classData?.title || course?.name || "Final Exam"}</h1>
-                            <p className="text-gray-400 text-sm mt-1">
-                                Submission Date: <span className="text-gray-700 font-medium">{"10/02/2024"}</span>
+                            <h1 className="text-2xl font-semibold">
+                                {classData?.title || course?.name || "Final Exam"}
+                            </h1>
+                            <p className="text-muted-foreground text-sm mt-1">
+                                Submission Date:{" "}
+                                <span className="text-foreground font-medium">10/02/2024</span>
                             </p>
                         </div>
 
                         <div className="w-48 text-right">
-                            <p className="text-sm text-gray-500">Assignment Point</p>
-                            <p className="font-semibold text-green-600 text-lg">{"80/100 (80%)"}</p>
+                            <p className="text-sm text-muted-foreground">Assignment Point</p>
+                            <p className="font-semibold text-green-600 text-lg">
+                                80/100 (80%)
+                            </p>
                         </div>
                     </div>
 
-                    {/* Thumbnail / preview */}
+                    {/* Thumbnail */}
                     <div className="w-full rounded-xl overflow-hidden mb-5">
-                        <img src={featuredImage} alt="Preview" className="w-full h-64 object-cover" />
+                        <img
+                            src={featuredImage}
+                            alt="Preview"
+                            className="w-full h-64 object-cover"
+                        />
                     </div>
 
                     {/* Description */}
-                    <p className="text-gray-700 leading-7 text-sm mb-6">
+                    <p className="text-foreground/80 leading-7 text-sm mb-6">
                         {classData?.description ||
                             course?.description ||
-                            "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s."}
+                            "Lorem ipsum…"}
                     </p>
 
-                    {/* Secondary content preview (video / gallery tile) */}
-                    <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                        <button
-                            onClick={() => {
-                                // open a modal or preview — wire as needed
-                                // console.log("Play content preview");
-                            }}
-                            className="text-white bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-full shadow"
-                        >
+                    {/* Secondary content */}
+                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                        <button className="text-white bg-primary hover:bg-primary/90 px-4 py-3 rounded-full shadow">
                             ▶ Play
                         </button>
                     </div>
@@ -323,50 +334,49 @@ export default function ClassPreviewPage() {
             </main>
 
             {/* RIGHT PANEL — SUBMISSION + DETAILS */}
-            <aside className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
+            <aside className="w-80 bg-card border-l border p-6 overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
-                    <p className="text-sm text-gray-500">
-                        Graded: <span className="font-semibold text-gray-700">20/50</span>
+                    <p className="text-sm text-muted-foreground">
+                        Graded:{" "}
+                        <span className="font-semibold text-foreground">20/50</span>
                     </p>
-                    <button
-                        onClick={() => {
-                            // open rubric modal — implement if you have modal component
-                            // console.log("Open rubric");
-                        }}
-                        className="text-sm text-purple-600 font-medium"
-                    >
-                        View Rubric
-                    </button>
+                    <button className="text-sm text-primary font-medium">View Rubric</button>
                 </div>
 
-                {/* Submission Card */}
+                {/* Submission card */}
                 <div className="border rounded-xl p-4 mb-6">
-                    <p className="text-gray-500 text-sm mb-2">Submission</p>
+                    <p className="text-muted-foreground text-sm mb-2">Submission</p>
 
                     <div className="mb-3 text-sm">
                         <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Due Date</span>
-                            <span className="font-medium text-gray-800">{"02/10/2024"}</span>
+                            <span className="text-muted-foreground">Due Date</span>
+                            <span className="font-medium text-foreground">02/10/2024</span>
                         </div>
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm text-gray-600">Grade</label>
+                        <label className="block text-sm text-muted-foreground">Grade</label>
                         <input
-                            className="w-full border rounded-lg px-3 py-2 mt-1 text-sm"
+                            className="w-full border-input border rounded-lg px-3 py-2 mt-1 text-sm bg-background"
                             type="number"
                             value={grade === "" ? "" : grade}
-                            onChange={(e) => setGrade(e.target.value === "" ? "" : Number(e.target.value))}
+                            onChange={(e) =>
+                                setGrade(e.target.value === "" ? "" : Number(e.target.value))
+                            }
                             placeholder="e.g. 80"
                         />
                     </div>
 
                     {/* Status */}
                     <div className="mb-4">
-                        <p className="text-gray-600 text-sm mb-2">Status</p>
+                        <p className="text-muted-foreground text-sm mb-2">Status</p>
 
                         <div className="flex items-center gap-4 text-sm">
-                            <label className={`flex items-center gap-2 cursor-pointer ${status === "Submitted" ? "text-green-700" : ""}`}>
+                            {/* Submitted */}
+                            <label
+                                className={`flex items-center gap-2 cursor-pointer ${status === "Submitted" ? "text-green-700" : ""
+                                    }`}
+                            >
                                 <input
                                     type="radio"
                                     name="status"
@@ -374,11 +384,18 @@ export default function ClassPreviewPage() {
                                     checked={status === "Submitted"}
                                     onChange={() => setStatus("Submitted")}
                                 />
-                                <span className={`w-3 h-3 rounded-full ${status === "Submitted" ? "bg-green-600" : "bg-gray-300"}`} />
+                                <span
+                                    className={`w-3 h-3 rounded-full ${status === "Submitted" ? "bg-green-600" : "bg-muted"
+                                        }`}
+                                />
                                 Submitted
                             </label>
 
-                            <label className={`flex items-center gap-2 cursor-pointer ${status === "Excused" ? "text-yellow-600" : ""}`}>
+                            {/* Excused */}
+                            <label
+                                className={`flex items-center gap-2 cursor-pointer ${status === "Excused" ? "text-yellow-600" : ""
+                                    }`}
+                            >
                                 <input
                                     type="radio"
                                     name="status"
@@ -386,11 +403,18 @@ export default function ClassPreviewPage() {
                                     checked={status === "Excused"}
                                     onChange={() => setStatus("Excused")}
                                 />
-                                <span className={`w-3 h-3 rounded-full ${status === "Excused" ? "bg-yellow-500" : "bg-gray-300"}`} />
+                                <span
+                                    className={`w-3 h-3 rounded-full ${status === "Excused" ? "bg-yellow-500" : "bg-muted"
+                                        }`}
+                                />
                                 Excused
                             </label>
 
-                            <label className={`flex items-center gap-2 cursor-pointer ${status === "Missing" ? "text-red-600" : ""}`}>
+                            {/* Missing */}
+                            <label
+                                className={`flex items-center gap-2 cursor-pointer ${status === "Missing" ? "text-destructive" : ""
+                                    }`}
+                            >
                                 <input
                                     type="radio"
                                     name="status"
@@ -398,47 +422,49 @@ export default function ClassPreviewPage() {
                                     checked={status === "Missing"}
                                     onChange={() => setStatus("Missing")}
                                 />
-                                <span className={`w-3 h-3 rounded-full ${status === "Missing" ? "bg-red-500" : "bg-gray-300"}`} />
+                                <span
+                                    className={`w-3 h-3 rounded-full ${status === "Missing" ? "bg-destructive" : "bg-muted"
+                                        }`}
+                                />
                                 Missing
                             </label>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <button onClick={handleSaveGrade} className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700">
+                        <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm hover:bg-primary/90">
                             Save Grade
                         </button>
-                        <button
-                            onClick={() => {
-                                // quick mark present for selected student
-                                if (selectedStudent) toggleAttendance(selectedStudent);
-                            }}
-                            className="text-sm px-3 py-2 rounded-lg border"
-                        >
+                        <button className="text-sm px-3 py-2 rounded-lg border">
                             Toggle Present
                         </button>
                     </div>
                 </div>
 
-                {/* Submission Details */}
+                {/* Submission details */}
                 <div>
-                    <p className="text-gray-500 text-sm mb-2">Submission Details</p>
+                    <p className="text-muted-foreground text-sm mb-2">
+                        Submission Details
+                    </p>
 
-                    <p className="text-gray-700 text-sm mb-3">
-                        <span className="font-medium">Word Count:</span> 500 Word
+                    <p className="text-sm text-foreground mb-3">
+                        <span className="font-medium">Word Count:</span> 500 Words
                     </p>
 
                     <div className="mb-3">
-                        <p className="text-gray-700 font-medium text-sm mb-2">Files Uploaded</p>
+                        <p className="text-foreground font-medium text-sm mb-2">
+                            Files Uploaded
+                        </p>
                         <ul className="text-sm space-y-2">
                             {uploadedFiles.length === 0 && (
-                                <>
-                                    <li className="text-gray-400">No files uploaded yet</li>
-                                </>
+                                <li className="text-muted-foreground">No files uploaded yet</li>
                             )}
 
                             {uploadedFiles.map((file, i) => (
-                                <li key={i} className="flex items-center gap-2 text-purple-600 cursor-pointer hover:underline">
+                                <li
+                                    key={i}
+                                    className="flex items-center gap-2 text-primary cursor-pointer hover:underline"
+                                >
                                     <FileText /> {file}
                                 </li>
                             ))}
@@ -446,30 +472,42 @@ export default function ClassPreviewPage() {
                     </div>
 
                     <div className="mb-4">
-                        <label className="text-sm font-medium text-gray-600 mb-2 block">Upload file</label>
-                        <input type="file" multiple onChange={handleFileUpload} className="text-sm" />
+                        <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                            Upload file
+                        </label>
+                        <input
+                            type="file"
+                            multiple
+                            onChange={handleFileUpload}
+                            className="text-sm"
+                        />
                     </div>
 
-                    <button className="mt-3 flex items-center gap-2 text-purple-600 text-sm font-medium">
+                    <button className="mt-3 flex items-center gap-2 text-primary text-sm font-medium">
                         <View /> View Comments (50)
                     </button>
                 </div>
 
-                {/* compact activity or quick stats */}
-                <div className="mt-8 border-t pt-4">
-                    <p className="text-xs text-gray-400 mb-2">Quick Stats</p>
+                {/* Quick Stats */}
+                <div className="mt-8 border-t border pt-4">
+                    <p className="text-xs text-muted-foreground mb-2">Quick Stats</p>
                     <div className="text-sm">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-gray-600">Enrolled</span>
-                            <span className="font-medium">{uniqueEnrollments?.length ?? students.length}</span>
+                            <span className="text-muted-foreground">Enrolled</span>
+                            <span className="font-medium text-foreground">
+                                {uniqueEnrollments?.length ?? students.length}
+                            </span>
                         </div>
+
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-gray-600">Upcoming Sessions</span>
-                            {/* <span className="font-medium">{(classSchedule?.data?.length ?? 0) > 0 ? classSchedule.data.length : 0}</span> */}
+                            <span className="text-muted-foreground">Upcoming Sessions</span>
                         </div>
+
                         <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Instructor</span>
-                            <span className="font-medium">{instructor?.fullName || instructor?.name || "—"}</span>
+                            <span className="text-muted-foreground">Instructor</span>
+                            <span className="font-medium text-foreground">
+                                {instructor?.fullName || instructor?.name || "—"}
+                            </span>
                         </div>
                     </div>
                 </div>
