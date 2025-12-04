@@ -35,7 +35,7 @@ export function PublicTopNav() {
         <Link href='/' className='flex shrink-0 items-center gap-4 transition hover:opacity-90'>
           <Image
             alt='Elimika logo'
-            src='/logos/elimika/elimika-logo-color.svg'
+            src='/logos/elimika/Artboard 2.svg'
             width={160}
             height={48}
             className='h-10 w-auto drop-shadow-sm dark:hidden'
@@ -43,7 +43,7 @@ export function PublicTopNav() {
           />
           <Image
             alt='Elimika logo in white'
-            src='/logos/elimika/elimika-logo-white.svg'
+            src='/logos/elimika/Artboard 8.svg'
             width={160}
             height={48}
             className='hidden h-10 w-auto drop-shadow-sm dark:block'

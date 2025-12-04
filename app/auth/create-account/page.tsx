@@ -453,14 +453,14 @@ export default function CreateAccountPage() {
             />
             <div className='absolute right-8 bottom-8 flex items-center'>
               <Image
-                src='/logos/elimika/elimika-logo-color.svg'
+                src='/logos/elimika/Artboard 2.svg'
                 alt='Elimika logo'
                 width={120}
                 height={40}
                 className='opacity-90 drop-shadow dark:hidden'
               />
               <Image
-                src='/logos/elimika/elimika-logo-white.svg'
+                src='/logos/elimika/Artboard 8.svg'
                 alt='Elimika logo in white'
                 width={120}
                 height={40}
