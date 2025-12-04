@@ -69,10 +69,11 @@ const buildListRulesOptions = (params: SystemRuleListParams) => {
 const deriveListResult = (data: unknown, fallback: Required<SystemRuleListParams>): SystemRuleListResult => {
   const parsed = listRulesResponseSchema.parse(data ?? {});
   const payload = parsed.data ?? {};
-  const items = payload.content ?? [];
+  const items = Array.isArray(payload.content) ? payload.content : [];
   const metadata = payload.metadata ?? {};
-  const page = metadata.pageNumber ?? fallback.page;
-  const size = metadata.pageSize ?? fallback.size;
+
+  const page = Number.isFinite(metadata.pageNumber) ? (metadata.pageNumber as number) : fallback.page;
+  const size = Number.isFinite(metadata.pageSize) ? (metadata.pageSize as number) : fallback.size;
   const totalItems = toNumber(metadata.totalElements);
   const totalPages =
     metadata.totalPages ??
