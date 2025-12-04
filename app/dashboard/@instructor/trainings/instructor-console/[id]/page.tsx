@@ -203,7 +203,7 @@ export default function ClassPreviewPage() {
 
     const handleSaveGrade = () => {
         // wire this to your API: save grade for selectedStudent/class/assignment
-        console.log("Saving grade", { classId, selectedStudent, grade, status });
+        // console.log("Saving grade", { classId, selectedStudent, grade, status });
         // You might want to call a mutation here that saves grade to backend
         // show a toast/notification on success
     };
@@ -312,7 +312,7 @@ export default function ClassPreviewPage() {
                         <button
                             onClick={() => {
                                 // open a modal or preview — wire as needed
-                                console.log("Play content preview");
+                                // console.log("Play content preview");
                             }}
                             className="text-white bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-full shadow"
                         >
@@ -331,7 +331,7 @@ export default function ClassPreviewPage() {
                     <button
                         onClick={() => {
                             // open rubric modal — implement if you have modal component
-                            console.log("Open rubric");
+                            // console.log("Open rubric");
                         }}
                         className="text-sm text-purple-600 font-medium"
                     >
