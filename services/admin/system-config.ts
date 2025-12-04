@@ -6,7 +6,6 @@ import type {
   SchemaEnum,
   SchemaEnum2,
   ScopeEnum,
-  SystemRuleRequest,
   ValueTypeEnum,
 } from '@/services/client/types.gen';
 import { zApiResponsePagedDtoSystemRuleResponse } from '@/services/client/zod.gen';
@@ -19,6 +18,19 @@ export type SystemRuleCategory = SchemaEnum;
 export type SystemRuleStatus = SchemaEnum2;
 export type SystemRuleScope = ScopeEnum;
 export type SystemRuleValueType = ValueTypeEnum;
+export type SystemRuleRequestPayload = {
+  category: SystemRuleCategory;
+  key: string;
+  scope?: SystemRuleScope;
+  scopeReference?: string;
+  priority?: number;
+  status?: SystemRuleStatus;
+  valueType?: SystemRuleValueType;
+  valuePayload: Record<string, any>;
+  conditions?: Record<string, any>;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+};
 
 export interface SystemRuleListParams {
   page?: number;
@@ -39,6 +51,20 @@ export interface SystemRuleListResult {
 }
 
 const listRulesResponseSchema = zApiResponsePagedDtoSystemRuleResponse.passthrough();
+
+const systemRuleRequestSchema = z.object({
+  category: z.string(),
+  key: z.string(),
+  scope: z.string().optional(),
+  scopeReference: z.string().optional(),
+  priority: z.number().optional(),
+  status: z.string().optional(),
+  valueType: z.string().optional(),
+  valuePayload: z.record(z.any()),
+  conditions: z.record(z.any()).optional(),
+  effectiveFrom: z.string().optional(),
+  effectiveTo: z.string().optional(),
+});
 
 const buildListRulesOptions = (params: SystemRuleListParams) => {
   const query: ListRulesData['query'] = {
@@ -124,15 +150,16 @@ export function useSystemRule(uuid: string | null, options?: Partial<UseQueryOpt
 }
 
 export function useCreateSystemRule(
-  options?: Partial<UseMutationOptions<SystemRule | null, Error, SystemRuleRequest>>
+  options?: Partial<UseMutationOptions<SystemRule | null, Error, SystemRuleRequestPayload>>
 ) {
   const queryClient = useQueryClient();
   const { onSuccess, ...rest } = options ?? {};
 
-  return useMutation<SystemRule | null, Error, SystemRuleRequest>({
+  return useMutation<SystemRule | null, Error, SystemRuleRequestPayload>({
     mutationFn: async payload => {
+      const body = systemRuleRequestSchema.parse(payload);
       const { data } = await createRule({
-        body: payload,
+        body,
         throwOnError: true,
       });
       return (data as any)?.data ?? data ?? null;
@@ -147,7 +174,7 @@ export function useCreateSystemRule(
 
 type UpdateRuleVariables = {
   uuid: string;
-  body: SystemRuleRequest;
+  body: SystemRuleRequestPayload;
 };
 
 export function useUpdateSystemRule(
@@ -158,9 +185,10 @@ export function useUpdateSystemRule(
 
   return useMutation<SystemRule | null, Error, UpdateRuleVariables>({
     mutationFn: async variables => {
+      const body = systemRuleRequestSchema.parse(variables.body);
       const { data } = await updateRule({
         path: { uuid: variables.uuid },
-        body: variables.body,
+        body,
         throwOnError: true,
       });
       return (data as any)?.data ?? data ?? null;
