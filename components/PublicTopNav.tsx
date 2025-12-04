@@ -36,17 +36,17 @@ export function PublicTopNav() {
           <Image
             alt='Elimika logo'
             src='/logos/elimika/Artboard 2.svg'
-            width={170}
-            height={48}
-            className='h-11 w-auto drop-shadow-sm dark:hidden'
+            width={190}
+            height={54}
+            className='h-12 w-auto drop-shadow-sm dark:hidden'
             priority
           />
           <Image
             alt='Elimika logo in white'
             src='/logos/elimika/Artboard 8.svg'
-            width={170}
-            height={48}
-            className='hidden h-11 w-auto drop-shadow-sm dark:block'
+            width={190}
+            height={54}
+            className='hidden h-12 w-auto drop-shadow-sm dark:block'
             priority
           />
         </Link>
