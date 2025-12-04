@@ -60,40 +60,35 @@ const buildListRulesOptions = (params: SystemRuleListParams) => {
 };
 
 const deriveListResult = (data: unknown, fallback: Required<SystemRuleListParams>): SystemRuleListResult => {
+  // Parse when possible, but fall back to raw data to avoid dropping items if the API shape drifts
+  let payload: any = {};
+
   try {
     const parsed = listRulesResponseSchema.parse(data ?? {});
-    const payload = parsed.data ?? {};
-    const items = Array.isArray(payload.content) ? payload.content : [];
-    const metadata = payload.metadata ?? {};
-
-    const page = Number.isFinite(metadata.pageNumber) ? (metadata.pageNumber as number) : fallback.page;
-    const size = Number.isFinite(metadata.pageSize) ? (metadata.pageSize as number) : fallback.size;
-    const totalItems = toNumber(metadata.totalElements);
-    const totalPages =
-      metadata.totalPages ??
-      (totalItems > 0 && size > 0 ? Math.ceil(totalItems / size) : 0);
-
-    return {
-      items,
-      page,
-      size,
-      totalItems,
-      totalPages,
-      hasNext: metadata.hasNext ?? page < totalPages - 1,
-      hasPrevious: metadata.hasPrevious ?? page > 0,
-    };
-  } catch (error) {
-    // If schema validation fails, return empty result
-    return {
-      items: [],
-      page: fallback.page,
-      size: fallback.size,
-      totalItems: 0,
-      totalPages: 0,
-      hasNext: false,
-      hasPrevious: false,
-    };
+    payload = parsed.data ?? {};
+  } catch {
+    payload = (data as any)?.data ?? data ?? {};
   }
+
+  const items = Array.isArray(payload.content) ? payload.content : [];
+  const metadata = payload.metadata ?? {};
+
+  const page = Number.isFinite(metadata.pageNumber) ? (metadata.pageNumber as number) : fallback.page;
+  const size = Number.isFinite(metadata.pageSize) ? (metadata.pageSize as number) : fallback.size;
+  const totalItems = toNumber(metadata.totalElements, items.length);
+  const totalPages =
+    metadata.totalPages ??
+    (totalItems > 0 && size > 0 ? Math.ceil(totalItems / size) : 0);
+
+  return {
+    items,
+    page,
+    size,
+    totalItems,
+    totalPages,
+    hasNext: metadata.hasNext ?? page < totalPages - 1,
+    hasPrevious: metadata.hasPrevious ?? page > 0,
+  };
 };
 
 export function useSystemRules(
