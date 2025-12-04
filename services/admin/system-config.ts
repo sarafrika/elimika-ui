@@ -11,14 +11,12 @@ import type {
 } from '@/services/client/types.gen';
 import {
   zApiResponsePagedDtoSystemRuleResponse,
-  zApiResponseSystemRuleResponse,
   zSystemRuleRequest,
-  zSystemRuleResponse,
 } from '@/services/client/zod.gen';
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
 
-export type SystemRule = z.infer<typeof zSystemRuleResponse>;
+export type SystemRule = Record<string, any>;
 export type SystemRulePayload = z.infer<typeof zSystemRuleRequest>;
 export type SystemRuleCategory = SchemaEnum;
 export type SystemRuleStatus = SchemaEnum2;
@@ -44,8 +42,6 @@ export interface SystemRuleListResult {
 }
 
 const listRulesResponseSchema = zApiResponsePagedDtoSystemRuleResponse.passthrough();
-
-const ruleResponseSchema = zApiResponseSystemRuleResponse.passthrough();
 
 const buildListRulesOptions = (params: SystemRuleListParams) => {
   const query: ListRulesData['query'] = {
@@ -125,10 +121,7 @@ export function useSystemRule(uuid: string | null, options?: Partial<UseQueryOpt
       path: { uuid: uuid ?? '' },
     }),
     enabled: Boolean(uuid),
-    select: data => {
-      const parsed = ruleResponseSchema.parse(data ?? {});
-      return (parsed.data as SystemRule | undefined) ?? null;
-    },
+    select: data => (data as any)?.data ?? data ?? null,
     ...options,
   });
 }
@@ -146,8 +139,7 @@ export function useCreateSystemRule(
         body,
         throwOnError: true,
       });
-      const parsed = ruleResponseSchema.parse(data ?? {});
-      return (parsed.data as SystemRule | undefined) ?? null;
+      return (data as any)?.data ?? data ?? null;
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: [{ _id: 'listRules' }] });
@@ -176,8 +168,7 @@ export function useUpdateSystemRule(
         body,
         throwOnError: true,
       });
-      const parsed = ruleResponseSchema.parse(data ?? {});
-      return (parsed.data as SystemRule | undefined) ?? null;
+      return (data as any)?.data ?? data ?? null;
     },
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: [{ _id: 'listRules' }] });

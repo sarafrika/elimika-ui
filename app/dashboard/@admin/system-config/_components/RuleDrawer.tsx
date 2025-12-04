@@ -466,7 +466,15 @@ export function RuleDrawer({ open, mode, ruleId, initialRule, onClose, onSaved }
                                 min={0}
                                 placeholder='0'
                                 value={field.value ?? ''}
-                                onChange={event => field.onChange(event.target.value)}
+                                onChange={event => {
+                                  const raw = event.target.value;
+                                  if (raw === '') {
+                                    field.onChange(undefined);
+                                    return;
+                                  }
+                                  const numeric = Number(raw);
+                                  field.onChange(Number.isNaN(numeric) ? raw : numeric);
+                                }}
                                 disabled={isSubmitting}
                               />
                             </FormControl>
