@@ -60,16 +60,8 @@ const buildListRulesOptions = (params: SystemRuleListParams) => {
 };
 
 const deriveListResult = (data: unknown, fallback: Required<SystemRuleListParams>): SystemRuleListResult => {
-  // Parse when possible, but fall back to raw data to avoid dropping items if the API shape drifts
-  let payload: any = {};
-
-  try {
-    const parsed = listRulesResponseSchema.parse(data ?? {});
-    payload = parsed.data ?? {};
-  } catch {
-    payload = (data as any)?.data ?? data ?? {};
-  }
-
+  // Use the raw response payload to avoid losing items if schemas drift
+  const payload: any = (data as any)?.data ?? data ?? {};
   const items = Array.isArray(payload.content) ? payload.content : [];
   const metadata = payload.metadata ?? {};
 
