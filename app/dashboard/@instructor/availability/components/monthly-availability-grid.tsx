@@ -440,13 +440,13 @@ export function MonthlyAvailabilityGrid({
 
       {/* Event Modal */}
       {/* <EventModal
-                isOpen={isEventModalOpen}
-                onClose={() => setIsEventModalOpen(false)}
-                event={selectedEvent}
-                selectedSlot={selectedSlot}
-                onSave={handleSaveEvent}
-                onDelete={handleDeleteEvent}
-            /> */}
+        isOpen={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+        event={selectedEvent}
+        selectedSlot={selectedSlot}
+        onSave={handleSaveEvent}
+        onDelete={handleDeleteEvent}
+      /> */}
     </div>
   );
 }

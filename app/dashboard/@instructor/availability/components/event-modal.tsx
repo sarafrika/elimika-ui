@@ -19,6 +19,8 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
 import {
+  blockTimeMutation,
+  getInstructorCalendarQueryKey,
   scheduleClassMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -28,11 +30,12 @@ import {
   Calendar,
   Clock,
   Coffee,
-  Copy,
   MapPin,
   Trash2
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import Spinner from '../../../../../components/ui/spinner';
 import type { CalendarEvent } from './types';
 
 
@@ -58,13 +61,13 @@ const eventTypes: {
 }[] = [
     {
       value: "SCHEDULED_INSTANCE",
-      label: "Class",
+      label: "Class Schedule Instance",
       icon: BookOpen,
       color: "bg-blue-500",
     },
     {
       value: "BLOCKED",
-      label: "Unavailable",
+      label: "Blocked/Unavailable",
       icon: Coffee,
       color: "bg-orange-500",
     },
@@ -136,50 +139,89 @@ export function EventModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (!isOpen) return;
     if (event) {
+
+      const eventDate = new Date(event.date);
+
       setFormData({
         ...event,
-        startDateTime: `${event.date.toISOString().slice(0, 10)}T${event.startTime}:00`,
-        endDateTime: `${event.date.toISOString().slice(0, 10)}T${event.endTime}:00`,
+        date: eventDate,
+        startDateTime: `${eventDate.toISOString().slice(0, 10)}T${event.startTime}:00`,
+        endDateTime: `${eventDate.toISOString().slice(0, 10)}T${event.endTime}:00`,
       });
+      return;
     }
-    else if (selectedSlot) {
-      const isoDate = selectedSlot.date.toISOString().slice(0, 10);
+
+    // If creating new event from calendar slot
+    if (selectedSlot) {
+      const iso = selectedSlot.date.toISOString().slice(0, 10);
       const endTime = getEndTime(selectedSlot.time);
 
       setFormData({
-        ...formData,
+        title: "",
+        description: "",
+        entry_type: "AVAILABILITY",
+        location: "",
+        attendees: 1,
+        isRecurring: false,
+        recurringDays: [],
+        status: "SCHEDULED",
+        reminders: [15],
+        notes: "",
         day: selectedSlot.day,
         date: selectedSlot.date,
         startTime: selectedSlot.time,
-        endTime: endTime,
-        startDateTime: `${isoDate}T${selectedSlot.time}:00`,
-        endDateTime: `${isoDate}T${endTime}:00`,
+        endTime,
+        startDateTime: `${iso}T${selectedSlot.time}:00`,
+        endDateTime: `${iso}T${endTime}:00`,
       });
+      return;
     }
-  }, [event, selectedSlot]);
 
+    // Default reset
+    setFormData({
+      title: '',
+      description: '',
+      entry_type: 'AVAILABILITY',
+      startTime: '',
+      endTime: '',
+      startDateTime: '',
+      endDateTime: '',
+      location: '',
+      attendees: 1,
+      isRecurring: false,
+      recurringDays: [],
+      status: 'SCHEDULED',
+      reminders: [15],
+      notes: '',
+    });
 
-  const validateForm = (): boolean => {
+  }, [event, selectedSlot, isOpen]);
+
+  const _validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // if (!formData.title?.trim()) {
-    //   newErrors.title = 'Title is required';
-    // }
-
-    if (!formData.startTime) {
-      newErrors.startTime = 'Start time is required';
+    if (!formData.startDateTime) {
+      newErrors.startDateTime = 'Start date & time is required';
     }
 
-    if (!formData.endTime) {
-      newErrors.endTime = 'End time is required';
+    if (!formData.endDateTime) {
+      newErrors.endDateTime = 'End date & time is required';
     }
 
-    if (formData.startTime && formData.endTime) {
-      const start = new Date(`2000-01-01T${formData.startTime}`);
-      const end = new Date(`2000-01-01T${formData.endTime}`);
+    if (formData.startDateTime && formData.endDateTime) {
+      const start = new Date(formData.startDateTime);
+      const end = new Date(formData.endDateTime);
       if (end <= start) {
-        newErrors.endTime = 'End time must be after start time';
+        newErrors.endDateTime = 'End time must be after start time';
+      }
+    }
+
+    // Only validate title/description if not BLOCKED
+    if (formData.entry_type !== 'BLOCKED') {
+      if (!formData.title?.trim()) {
+        newErrors.title = 'Title is required';
       }
     }
 
@@ -187,15 +229,17 @@ export function EventModal({
     return Object.keys(newErrors).length === 0;
   };
 
+
+
   const instrucor = useInstructor();
   const qc = useQueryClient();
   const scheduleClass = useMutation(scheduleClassMutation());
   // const createAvailability = useMutation(createAvailabilitySlotMutation());
+  const blockTimeForInstructor = useMutation(blockTimeMutation())
 
   const handleSave = () => {
-    if (!validateForm()) return;
+    // if (!validateForm()) return;
 
-    // Ensure required fields exist
     const { startDateTime, endDateTime, title, entry_type, date, location, attendees, isRecurring, recurringDays, status, reminders, notes } = formData;
 
     if (!startDateTime || !endDateTime || !title || !entry_type) {
@@ -230,6 +274,24 @@ export function EventModal({
     };
 
     const { localDate, localTime, localDateTime } = extractDateTimeParts(eventData.date);
+
+    // block time logic
+    if (eventData.entry_type === "BLOCKED") {
+      blockTimeForInstructor.mutate({
+        path: { instructorUuid: instrucor?.uuid as string },
+        query: { start: startDateTime as any, end: endDateTime as any }
+      }, {
+        onSuccess: (data) => {
+          toast.success(data?.message)
+          qc.invalidateQueries({
+            queryKey: getInstructorCalendarQueryKey({ path: { instructorUuid: instrucor?.uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } })
+          })
+          onClose();
+        }
+      })
+
+      return
+    }
 
     // // Availability logic
     // if (eventData.type === 'available' || eventData.type === 'unavailable') {
@@ -332,7 +394,9 @@ export function EventModal({
           <Label htmlFor='type'>Event Type</Label>
           <Select
             value={formData.entry_type}
-            onValueChange={value => setFormData(prev => ({ ...prev, type: value as EventType }))}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, entry_type: value as EventType }))
+            }
           >
             <SelectTrigger className='w-full'>
               <SelectValue placeholder='Select event type' />
@@ -353,39 +417,37 @@ export function EventModal({
 
         <div className='space-y-6'>
           {/* Basic Information */}
-          {selectedEventType?.value === 'BLOCKED' && (
-            <div className='space-y-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='title'>Event Title *</Label>
-                <Input
-                  id='title'
-                  value={formData.title || ''}
-                  onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder='Enter event title...'
-                  className={errors.title ? 'border-destructive' : ''}
-                />
-                {errors.title && (
-                  <p className='flex items-center gap-1 text-sm text-destructive'>
-                    <AlertCircle className='h-3 w-3' />
-                    {errors.title}
-                  </p>
-                )}
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='description'>Description</Label>
-                <Textarea
-                  id='description'
-                  value={formData.description || ''}
-                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder='Add a description...'
-                  rows={3}
-                />
-              </div>
-
-              <Separator />
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='title'>Event Title *</Label>
+              <Input
+                id='title'
+                value={formData.title || ''}
+                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder='Enter event title...'
+                className={errors.title ? 'border-destructive' : ''}
+              />
+              {errors.title && (
+                <p className='flex items-center gap-1 text-sm text-destructive'>
+                  <AlertCircle className='h-3 w-3' />
+                  {errors.title}
+                </p>
+              )}
             </div>
-          )}
+
+            <div className='space-y-2'>
+              <Label htmlFor='description'>Description</Label>
+              <Textarea
+                id='description'
+                value={formData.description || ''}
+                onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder='Add a description...'
+                rows={3}
+              />
+            </div>
+
+            <Separator />
+          </div>
 
           {/* Date & Time */}
           <div className="space-y-4">
@@ -428,7 +490,7 @@ export function EventModal({
           </div>
 
           {/* Additional Details */}
-          {selectedEventType?.value === 'AVAILABILITY' && (
+          {selectedEventType?.value === 'SCHEDULED_INSTANCE' && (
             <div className='space-y-4'>
               <Separator />
 
@@ -498,10 +560,10 @@ export function EventModal({
           <div className='flex gap-2'>
             {event && (
               <>
-                <Button variant='outline' onClick={handleDuplicate}>
+                {/* <Button variant='outline' onClick={handleDuplicate}>
                   <Copy className='mr-2 h-4 w-4' />
                   Duplicate
-                </Button>
+                </Button> */}
                 <Button variant='destructive' onClick={handleDelete}>
                   <Trash2 className='mr-2 h-4 w-4' />
                   Delete
@@ -514,7 +576,21 @@ export function EventModal({
             <Button variant='outline' onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>{event ? 'Save Changes' : 'Create Event'}</Button>
+
+            {selectedEventType?.value === "AVAILABILITY" && <Button onClick={handleSave}>{event ? 'Save Changes' : 'Create Availability'}</Button>}
+
+            {selectedEventType?.value === "BLOCKED" && (
+              <Button
+                className={`bg-destructive text-destructive-foreground hover:bg-destructive/70 disabled:opacity-50 disabled:cursor-not-allowed`}
+                onClick={handleSave}
+                disabled={!formData.startDateTime || !formData.endDateTime}
+              >
+                {blockTimeForInstructor.isPending ? <Spinner /> : <>{event ? "Save Changes" : "Block Time"}</>}
+              </Button>
+            )}
+
+            {selectedEventType?.value === "SCHEDULED_INSTANCE" && <Button onClick={handleSave}>{event ? 'Save Changes' : 'Schedeule Class'}</Button>}
+
           </div>
         </DialogFooter>
       </DialogContent>

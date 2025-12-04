@@ -56,7 +56,6 @@ const Page = () => {
     },
   });
 
-
   return (
     <AvailabilityManager
       availabilityData={availabilityData || []}

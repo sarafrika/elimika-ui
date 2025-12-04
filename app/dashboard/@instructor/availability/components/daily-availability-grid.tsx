@@ -149,8 +149,8 @@ export function DailyAvailabilityGrid({
     // event slots
     const getEventForSlot = (time: string, date: Date) => {
         return availabilityData?.events?.find(event => {
-            if (event.entry_type !== "SCHEDULED_INSTANCE") return false;
             if (!event.date) return false;
+
             const eventDate = new Date(event.date);
             const isSameDate = eventDate.toDateString() === date.toDateString();
 
@@ -191,17 +191,22 @@ export function DailyAvailabilityGrid({
 
     const handleSlotClick = (time: string) => {
         const existingEvent = getEventForSlot(time, currentDate);
-
         if (existingEvent) {
-            setSelectedEvent(existingEvent);
+            setSelectedEvent({
+                ...existingEvent,
+                date: new Date(existingEvent.date),
+            });
             setSelectedSlot(null);
         } else {
             setSelectedEvent(null);
-            setSelectedSlot({ time, date: currentDate });
+            setSelectedSlot({
+                time,
+                date: new Date(currentDate),
+            });
         }
-
         setIsEventModalOpen(true);
     };
+
 
     const handleSaveEvent = (eventData: CalendarEvent) => {
         const updated = [...availabilityData.events];
@@ -323,7 +328,7 @@ export function DailyAvailabilityGrid({
                                                 })()}
 
                                                 {/* Event Block */}
-                                                {event && isEventStart && (
+                                                {event && isEventStart && event.entry_type !== "BLOCKED" && event.entry_type !== "AVAILABILITY" && (
                                                     <div
                                                         className="absolute inset-x-1 top-1 z-20 rounded bg-primary/20 border border-primary/40"
                                                         style={{
