@@ -63,14 +63,6 @@ const buildListRulesOptions = (params: SystemRuleListParams) => {
     },
   };
 
-  if (params.category && params.category !== 'all') {
-    query.category = params.category;
-  }
-
-  if (params.status && params.status !== 'all') {
-    query.status = params.status;
-  }
-
   return listRulesOptions({ query });
 };
 
