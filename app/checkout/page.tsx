@@ -182,8 +182,7 @@ export default function CheckoutPage() {
 
       // Redirect to order confirmation or courses
       router.push('/dashboard/my-classes');
-    } catch (error) {
-      console.error('Checkout error:', error);
+    } catch (_error) {
       toast.error('Failed to complete checkout. Please try again.');
     } finally {
       setIsProcessing(false);

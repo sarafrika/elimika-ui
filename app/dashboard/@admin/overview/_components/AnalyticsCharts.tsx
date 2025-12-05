@@ -23,11 +23,12 @@ import { toNumber } from '@/lib/metrics';
 
 const CHART_COLORS = [
   'hsl(var(--primary))',
+  'hsl(var(--success))',
+  'hsl(var(--warning))',
   'hsl(var(--accent))',
-  'hsl(var(--muted-foreground))',
   'hsl(var(--secondary))',
   'hsl(var(--destructive))',
-  'hsl(var(--foreground))',
+  'hsl(var(--muted-foreground))',
 ];
 const AXIS_COLOR = 'hsl(var(--muted-foreground))';
 const GRID_COLOR = 'hsl(var(--border))';
