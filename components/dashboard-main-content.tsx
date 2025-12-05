@@ -9,7 +9,7 @@ export default function DashboardMainContent({ children }: { children: ReactNode
   return (
     <>
       <DashboardTopBar />
-      <div className='flex flex-1 flex-col gap-4 px-3 pt-0 sm:px-6'>
+      <div className='flex flex-1 flex-col gap-4 px-3 pt-0 sm:px-6 lg:pl-4 overflow-x-hidden'>
         <DomainAccessGate>{children}</DomainAccessGate>
       </div>
     </>

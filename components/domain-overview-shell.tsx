@@ -31,7 +31,7 @@ export function DomainOverviewShell({
   className,
 }: DomainOverviewShellProps) {
   return (
-    <div className={cn('mx-auto w-full max-w-6xl space-y-6 px-4 py-10', className)}>
+    <div className={cn('mx-auto w-full max-w-6xl space-y-6 px-4 py-10 overflow-x-hidden', className)}>
       <div className='rounded-3xl border border-border bg-card p-6 shadow-sm'>
         <div className='flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
           <div className='space-y-2'>
