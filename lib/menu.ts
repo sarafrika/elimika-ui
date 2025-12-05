@@ -24,6 +24,7 @@ import {
   School,
   Settings,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Star,
   UserCircle,
@@ -179,6 +180,11 @@ export default {
       icon: BookOpen,
     },
     {
+      title: 'Catalogue',
+      url: '/dashboard/catalogue',
+      icon: ShoppingBag,
+    },
+    {
       title: 'Trainings',
       url: '/dashboard/trainings',
       icon: ClipboardList,
@@ -307,6 +313,11 @@ export default {
       icon: BookOpen,
     },
     {
+      title: 'Catalogue',
+      url: '/dashboard/catalogue',
+      icon: ShoppingBag,
+    },
+    {
       title: 'Training Applications',
       url: '/dashboard/training-applications',
       icon: GraduationCap,
@@ -396,6 +407,11 @@ export default {
       title: 'Overview',
       url: '/dashboard/overview',
       icon: LayoutDashboard,
+    },
+    {
+      title: 'Catalogue',
+      url: '/dashboard/catalogue',
+      icon: ShoppingBag,
     },
     {
       title: 'Branches',
