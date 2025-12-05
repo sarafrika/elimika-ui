@@ -20,6 +20,7 @@ interface RulePreviewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEdit?: (rule: SystemRule) => void;
+  resolveUserName?: (id?: string | null) => string;
 }
 
 const formatDate = (value?: string | null) => {
@@ -29,7 +30,19 @@ const formatDate = (value?: string | null) => {
   return format(parsed, 'PPP p');
 };
 
-export function RulePreview({ rule, open, onOpenChange, onEdit }: RulePreviewProps) {
+export function RulePreview({
+  rule,
+  open,
+  onOpenChange,
+  onEdit,
+  resolveUserName,
+}: RulePreviewProps) {
+  const userName = (id?: string | null) => {
+    if (resolveUserName) return resolveUserName(id);
+    if (!id) return 'System';
+    return id;
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side='right' className='w-full max-w-xl border-l bg-background'>
@@ -79,10 +92,10 @@ export function RulePreview({ rule, open, onOpenChange, onEdit }: RulePreviewPro
                 <p className='text-sm font-semibold'>Audit</p>
               </div>
               <p className='text-sm'>
-                Updated by {rule.updatedBy ?? 'System'} on {formatDate(rule.updatedDate)}
+                Updated by {userName(rule.updatedBy)} on {formatDate(rule.updatedDate)}
               </p>
               <p className='text-sm text-muted-foreground'>
-                Created {formatDate(rule.createdDate)} by {rule.createdBy ?? 'System'}
+                Created {formatDate(rule.createdDate)} by {userName(rule.createdBy)}
               </p>
             </div>
 

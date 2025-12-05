@@ -30,6 +30,8 @@ import {
   X,
   Eye,
 } from 'lucide-react';
+import { useQueries } from '@tanstack/react-query';
+import { getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 
 const categoryFilters: { value: SystemRuleCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All categories' },
@@ -117,6 +119,46 @@ export function SystemConfigContent() {
     category !== 'all' ? { label: `Category: ${category}`, onClear: () => setCategory('all') } : null,
     status !== 'all' ? { label: `Status: ${status}`, onClear: () => setStatus('all') } : null,
   ].filter(Boolean) as { label: string; onClear: () => void }[];
+
+  const auditUserIds = useMemo(() => {
+    const ids = new Set<string>();
+    rules.forEach(rule => {
+      if (typeof rule.updatedBy === 'string') ids.add(rule.updatedBy);
+      if (typeof rule.createdBy === 'string') ids.add(rule.createdBy);
+    });
+    return Array.from(ids).filter(id => id && id !== 'System');
+  }, [rules]);
+
+  const userQueries = useQueries({
+    queries: auditUserIds.map(id => ({
+      ...getUserByUuidOptions({ path: { uuid: id } }),
+      queryKey: ['user-by-uuid', id],
+      enabled: Boolean(id),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const userNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    userQueries.forEach((query, index) => {
+      const data: any = (query.data as any)?.data ?? (query.data as any);
+      const id = auditUserIds[index];
+      if (!id || !data) return;
+      const name =
+        data.full_name ||
+        data.displayName ||
+        [data.first_name, data.last_name].filter(Boolean).join(' ') ||
+        data.email ||
+        id;
+      map.set(id, name);
+    });
+    return map;
+  }, [auditUserIds, userQueries]);
+
+  const resolveUserName = (id?: string | null) => {
+    if (!id || id === 'System') return 'System';
+    return userNameMap.get(id) ?? id;
+  };
 
   useEffect(() => {
     const ruleParam = searchParams?.get('rule');
@@ -391,7 +433,7 @@ export function SystemConfigContent() {
                         <TableCell className='text-sm text-muted-foreground'>{formatWindow(rule)}</TableCell>
                         <TableCell className='text-sm'>
                           <div className='flex flex-col gap-1'>
-                            <span>{rule.updatedBy ?? 'System'}</span>
+                            <span>{resolveUserName(rule.updatedBy)}</span>
                             <span className='text-muted-foreground text-xs'>
                               {rule.updatedDate
                                 ? formatDistanceToNow(new Date(rule.updatedDate), { addSuffix: true })
@@ -406,18 +448,18 @@ export function SystemConfigContent() {
                                 <MoreVertical className='h-4 w-4' />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end'>
-                              <DropdownMenuItem onClick={event => { event.stopPropagation(); openEdit(rule); }}>
-                                <Pencil className='mr-2 h-4 w-4' />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={event => { event.stopPropagation(); handleViewDetails(rule); }}>
-                                <Eye className='mr-2 h-4 w-4' />
-                                View details
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem onClick={event => { event.stopPropagation(); openEdit(rule); }}>
+                  <Pencil className='mr-2 h-4 w-4' />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={event => { event.stopPropagation(); handleViewDetails(rule); }}>
+                  <Eye className='mr-2 h-4 w-4' />
+                  View details
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -466,6 +508,10 @@ export function SystemConfigContent() {
                         </div>
                         <div className='flex items-center justify-between text-xs text-muted-foreground'>
                           <span>{formatWindow(rule)}</span>
+                        </div>
+                        <div className='flex items-center justify-between text-xs text-muted-foreground'>
+                          <span>Updated by</span>
+                          <span className='text-foreground'>{resolveUserName(rule.updatedBy)}</span>
                         </div>
                       </div>
                       <div className='flex justify-end gap-2'>
