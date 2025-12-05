@@ -190,9 +190,9 @@
   --sidebar-foreground: var(--el-neutral-100);
   --sidebar-primary: var(--el-brand-400);
   --sidebar-primary-foreground: var(--el-neutral-950);
-  --sidebar-accent: color-mix(in oklch, var(--el-highlight-700) 65%, black);
+  --sidebar-accent: color-mix(in oklch, var(--el-highlight-500) 55%, var(--el-neutral-900) 45%);
   --sidebar-accent-foreground: var(--el-neutral-50);
-  --sidebar-border: color-mix(in oklch, var(--el-neutral-800) 80%, black);
+  --sidebar-border: color-mix(in oklch, var(--el-neutral-700) 70%, black);
   --sidebar-ring: var(--el-brand-400);
 }
 
