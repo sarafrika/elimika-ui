@@ -161,11 +161,11 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
           availableViews={normalizedAvailableViews.length ? normalizedAvailableViews : undefined}
         >
           <BreadcrumbProvider>
-            <div className='flex min-h-screen w-full'>
+            <div className='flex min-h-screen w-full overflow-hidden'>
               {/* Sidebar */}
               <AppSidebar activeDomain={sidebarDomain} />
               {/* Main content area */}
-              <div className='flex w-full flex-1 flex-col'>
+              <div className='flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden'>
                 <DashboardMainContent>{currentDashboard}</DashboardMainContent>
               </div>
             </div>
