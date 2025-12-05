@@ -1,11 +1,11 @@
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
-import "pdfjs-dist/web/pdf_viewer.css";
-import * as pdfjsLib from "pdfjs-dist/webpack"; // using webpack build
+import * as pdfjsLib from "pdfjs-dist";
 import React, { useEffect, useRef, useState } from "react";
 
-// Set worker
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-    `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.212/pdf.worker.min.js`;
+// Set worker for pdfjs v5
+if (typeof window !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.394/pdf.worker.min.js`;
+}
 
 interface PDFViewerProps {
     file: string; // URL or path to PDF
