@@ -22,40 +22,43 @@ export function CataloguePreviewSummary({
   breadcrumbBase?: { title: string; href: string };
 }) {
   const params = useParams();
-  const courseUuid = params?.id as string | undefined;
+  const routeId = params?.id as string | undefined;
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   const catalogueQuery = useQuery({
     ...resolveByCourseOrClassOptions({
-      query: { course_uuid: courseUuid },
+      query: { course_uuid: routeId, class_uuid: routeId },
     }),
-    enabled: Boolean(courseUuid),
+    enabled: Boolean(routeId),
   });
 
+  const resolvedCourseId = catalogueQuery.data?.data?.course_uuid ?? routeId;
+  const resolvedClassId = catalogueQuery.data?.data?.class_definition_uuid ?? undefined;
+
   const courseQuery = useQuery({
-    ...getCourseByUuidOptions({ path: { uuid: courseUuid ?? '' } }),
-    enabled: Boolean(courseUuid),
+    ...getCourseByUuidOptions({ path: { uuid: resolvedCourseId ?? '' } }),
+    enabled: Boolean(resolvedCourseId),
   });
 
   const classQuery = useQuery({
     ...getClassDefinitionOptions({
-      path: { uuid: catalogueQuery.data?.data?.class_definition_uuid ?? '' },
+      path: { uuid: resolvedClassId ?? '' },
     }),
-    enabled: Boolean(catalogueQuery.data?.data?.class_definition_uuid),
+    enabled: Boolean(resolvedClassId),
   });
 
   const catalogueItem = catalogueQuery.data?.data;
   const course = extractEntity(courseQuery.data);
   const classDefinition = extractEntity(classQuery.data);
 
-  if (courseUuid) {
+  if (routeId) {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
       { id: 'catalogue', title: breadcrumbBase.title, url: breadcrumbBase.href },
       {
         id: 'preview',
         title: 'Summary',
-        url: `/dashboard/course-management/preview/${courseUuid}`,
+        url: `/dashboard/course-management/preview/${routeId}`,
         isLast: true,
       },
     ]);
@@ -135,7 +138,10 @@ export function CataloguePreviewSummary({
             label='Course'
             value={
               catalogueItem.course_uuid
-                ? course?.title ?? course?.name ?? catalogueItem.course_uuid
+                ? course?.title ??
+                  course?.name ??
+                  classDefinition?.course_uuid ??
+                  catalogueItem.course_uuid
                 : '—'
             }
           />
@@ -143,7 +149,10 @@ export function CataloguePreviewSummary({
             label='Class'
             value={
               catalogueItem.class_definition_uuid
-                ? classDefinition?.title ?? classDefinition?.name ?? catalogueItem.class_definition_uuid
+                ? classDefinition?.title ??
+                  classDefinition?.name ??
+                  classDefinition?.uuid ??
+                  catalogueItem.class_definition_uuid
                 : '—'
             }
           />

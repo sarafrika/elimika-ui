@@ -389,7 +389,11 @@ export default function AdminCataloguePage() {
                             <Badge variant='secondary'>{item.typeLabel}</Badge>
                           </div>
                           <p className='text-muted-foreground text-xs'>
-                            {item.course_uuid ?? item.class_definition_uuid ?? '—'}
+                            {item.course_uuid
+                              ? `Course · ${courseTitleMap.get(item.course_uuid) ?? item.course_uuid}`
+                              : item.class_definition_uuid
+                                ? `Class · ${classTitleMap.get(item.class_definition_uuid) ?? item.class_definition_uuid}`
+                                : '—'}
                           </p>
                         </div>
                       </TableCell>
