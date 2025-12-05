@@ -208,7 +208,7 @@ function OrganisationListPanel({
           <Badge variant={org.active ? 'secondary' : 'outline'}>{org.active ? 'Active' : 'Inactive'}</Badge>
         </div>
         <div className='mt-3 flex flex-wrap gap-2 text-xs'>
-          <Badge variant={org.admin_verified ? 'default' : 'outline'} className='gap-1'>
+          <Badge variant={org.admin_verified ? 'success' : 'secondary'} className='gap-1'>
             {org.admin_verified ? <Shield className='h-3 w-3' /> : <ShieldOff className='h-3 w-3' />}
             {org.admin_verified ? 'Verified' : 'Pending'}
           </Badge>
@@ -337,7 +337,7 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
               <h2 className='mt-2 text-2xl font-semibold'>{organisation.name}</h2>
               <p className='text-muted-foreground text-sm'>{organisation.location ?? 'Location not provided'}</p>
             </div>
-            <Badge variant={organisation.admin_verified ? 'default' : 'outline'} className='gap-1'>
+            <Badge variant={organisation.admin_verified ? 'success' : 'secondary'} className='gap-1'>
               {organisation.admin_verified ? <Shield className='h-4 w-4' /> : <ShieldOff className='h-4 w-4' />}
               {organisation.admin_verified ? 'Verified' : 'Pending'}
             </Badge>
