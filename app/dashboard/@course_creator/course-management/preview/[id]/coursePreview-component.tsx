@@ -36,7 +36,7 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-export default function CoursePreviewComponent({ authorName }: { authorName: string }) {
+export default function CoursePreviewComponent({ authorName }: { authorName?: string }) {
   const params = useParams();
   const router = useRouter();
   const courseId = params?.id;
@@ -125,7 +125,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName: str
 
           <div>
             <h1 className='text-3xl font-bold'>{course?.name}</h1>
-            <p className='text-muted-foreground text-sm'>By {authorName}</p>
+            <p className='text-muted-foreground text-sm'>
+              By {authorName || course?.course_creator_name || 'Course creator'}
+            </p>
             <div className='mt-2 flex flex-wrap items-center gap-2'>
               {course?.category_names?.map((cat: string) => (
                 <Badge key={cat} variant='secondary'>{cat}</Badge>
