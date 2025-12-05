@@ -91,13 +91,13 @@ export default function CertificatesSettings() {
   >[];
 
   const defaultCertification: CertificationType = {
-    certification_name: 'AWS Solutions Architect',
-    issuing_organization: 'Amazon Web Services',
-    issued_date: new Date('2023-01-15'),
-    expiry_date: new Date('2026-01-15'),
-    credential_id: 'AWS-12345',
-    credential_url: 'https://aws.amazon.com/verification',
-    description: 'Professional cloud architecture certification',
+    certification_name: '',
+    issuing_organization: '',
+    issued_date: undefined,
+    expiry_date: undefined,
+    credential_id: '',
+    credential_url: '',
+    description: '',
     is_verified: false,
     course_creator_uuid: courseCreator?.uuid!,
   };
@@ -520,7 +520,7 @@ export default function CertificatesSettings() {
               type='button'
               variant='outline'
               className='flex w-full items-center justify-center gap-2'
-              onClick={() => append(defaultCertification as CertificationType)}
+              onClick={() => append(defaultCertification)}
               disabled={!isEditing || submitting || isConfirming}
             >
               <PlusCircle className='h-4 w-4' />

@@ -98,14 +98,14 @@ export default function EducationSettings() {
     courseCreator?.educations ?? ([] as Omit<CourseCreatorEducation, 'created_date' | 'updated_date'>[]);
 
   const defaultEducation: EdType = {
-    school_name: 'University of Nairobi',
-    qualification: "Bachelor's",
-    field_of_study: 'Computer Science',
-    year_started: '2018',
-    year_completed: '2022',
+    school_name: '',
+    qualification: '',
+    field_of_study: '',
+    year_started: '',
+    year_completed: '',
     is_recent_qualification: false,
-    full_description: 'Graduated with First Class Honours.',
-    certificate_number: 'CERT12345',
+    full_description: '',
+    certificate_number: '',
     course_creator_uuid: courseCreator ? (courseCreator.uuid as string) : crypto.randomUUID(),
   };
 

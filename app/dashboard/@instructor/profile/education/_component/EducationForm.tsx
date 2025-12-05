@@ -98,14 +98,14 @@ export default function EducationSettings() {
     instructor?.educations ?? ([] as Omit<InstructorEducation, 'created_date' | 'updated_date'>[]);
 
   const defaultEducation: EdType = {
-    school_name: 'University of Nairobi',
-    qualification: "Bachelor's",
-    field_of_study: 'Computer Science',
-    year_started: '2018',
-    year_completed: '2022',
+    school_name: '',
+    qualification: '',
+    field_of_study: '',
+    year_started: '',
+    year_completed: '',
     is_recent_qualification: false,
-    full_description: 'Graduated with First Class Honours.',
-    certificate_number: 'CERT12345',
+    full_description: '',
+    certificate_number: '',
     instructor_uuid: instructor ? (instructor.uuid as string) : crypto.randomUUID(),
   };
 
@@ -373,7 +373,7 @@ export default function EducationSettings() {
                             <FormLabel>Certificate number</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder='e.g. CERT12345'
+                                placeholder='Enter certificate number'
                                 {...field}
                                 value={field.value ?? ''}
                               />

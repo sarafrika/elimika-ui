@@ -11,6 +11,10 @@ import { Button } from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { domainBadgeClass, formatDomainLabel } from '@/lib/domain-utils';
+import type {
+  CourseCreatorCertification,
+  CourseCreatorProfessionalMembership,
+} from '@/services/client';
 import {
   getCourseCreatorCertificationsOptions,
   getCourseCreatorEducationOptions,
@@ -88,8 +92,8 @@ export default function CourseCreatorProfilePage() {
 
   const educations = educationData?.data?.content || [];
   const experiences = experienceData?.data?.content || [];
-  const certifications = certificationsData?.data?.content || [];
-  const memberships = membershipsData?.data?.content || [];
+  const certifications: CourseCreatorCertification[] = certificationsData?.data?.content || [];
+  const memberships: CourseCreatorProfessionalMembership[] = membershipsData?.data?.content || [];
 
   const sections: ProfileSummarySection[] = [
     {
@@ -292,15 +296,15 @@ export default function CourseCreatorProfilePage() {
       description: 'Professional certifications and credentials.',
       content: (
         <div className='space-y-3'>
-          {certifications.map((cert: any, index) => {
-            const issued = toDate(cert.issue_date);
+          {certifications.map((cert, index) => {
+            const issued = toDate(cert.issued_date);
             const expires = toDate(cert.expiry_date);
             return (
               <div
-                key={cert.uuid ?? `${cert.name}-${index}`}
+                key={cert.uuid ?? `${cert.certification_name}-${index}`}
                 className='border-border/50 rounded-lg border p-3'
               >
-                <p className='font-medium'>{cert.name}</p>
+                <p className='font-medium'>{cert.certification_name || 'Certification'}</p>
                 <p className='text-muted-foreground text-sm'>{cert.issuing_organization}</p>
                 {issued ? (
                   <p className='text-muted-foreground text-xs'>
@@ -329,9 +333,9 @@ export default function CourseCreatorProfilePage() {
       description: 'Industry organisations that recognise your work.',
       content: (
         <div className='space-y-3'>
-          {memberships.map((membership: any, index) => {
-            const start = toDate(membership.membership_start_date);
-            const end = toDate(membership.membership_end_date);
+          {memberships.map((membership, index) => {
+            const start = toDate(membership.start_date);
+            const end = toDate(membership.end_date);
             const range =
               start || end
                 ? `${start ? format(start, 'MMM yyyy') : 'Start?'} – ${
