@@ -392,6 +392,11 @@ export default {
       icon: Building2,
     },
     {
+      title: 'Catalogue',
+      url: '/dashboard/catalogue',
+      icon: ShoppingBag,
+    },
+    {
       title: 'Administrators',
       url: '/dashboard/administrators',
       icon: ShieldCheck,
