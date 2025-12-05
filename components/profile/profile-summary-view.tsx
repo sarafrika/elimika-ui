@@ -84,7 +84,11 @@ export function ProfileSummaryView({
             {badges && badges.length > 0 ? (
               <div className='mt-3 flex flex-wrap gap-2'>
                 {badges.map((badge, index) => (
-                  <Badge key={`${badge.label}-${index}`} variant={badge.variant ?? 'outline'}>
+                  <Badge
+                    key={`${badge.label}-${index}`}
+                    variant={badge.variant ?? 'outline'}
+                    className='gap-1 rounded-full px-3 py-1 text-xs font-semibold tracking-wide'
+                  >
                     <span className='inline-flex items-center gap-1'>
                       {badge.icon}
                       {badge.label}
