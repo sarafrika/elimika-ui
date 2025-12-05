@@ -43,7 +43,10 @@ export function DomainOverviewShell({
           </div>
           <div className='flex flex-col items-start gap-3 sm:flex-row sm:items-center'>
             {badge ? (
-              <Badge variant={badge.tone ?? 'outline'} className='px-4 py-1.5 text-sm font-semibold'>
+              <Badge
+                variant={badge.tone ?? 'outline'}
+                className='gap-1 rounded-full px-3 py-1 text-xs font-semibold tracking-wide'
+              >
                 {badge.label}
               </Badge>
             ) : null}
