@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" fill="none">
+  <rect width="240" height="80" rx="4" fill="#00A651"/>
+  <g transform="translate(20, 25)">
+    <!-- M icon -->
+    <path d="M0 0 L8 15 L16 0 L24 0 L24 30 L18 30 L18 10 L10 25 L6 25 L-2 10 L-2 30 L-8 30 L-8 0 Z" fill="white" transform="translate(8, 0)"/>
+    <!-- PESA text -->
+    <text x="45" y="22" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" letter-spacing="1">PESA</text>
+  </g>
+  <!-- Dash -->
+  <line x1="40" y1="40" x2="48" y2="40" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -401,9 +401,11 @@ export default function CheckoutPage() {
                     >
                       <RadioGroupItem value='mpesa' id='mpesa' />
                       <div className='flex items-center gap-3'>
-                        <div className='flex h-10 w-16 items-center justify-center rounded-md bg-[#00A651] px-2'>
-                          <span className='text-sm font-bold text-white'>M-PESA</span>
-                        </div>
+                        <img
+                          src='/logos/payment/mpesa-logo.svg'
+                          alt='M-Pesa'
+                          className='h-10 w-auto'
+                        />
                         <div>
                           <p className='font-semibold'>M-Pesa</p>
                           <p className='text-sm text-muted-foreground'>Pay with mobile money</p>
