@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import {
   getCourseByUuidOptions,
+  getClassDefinitionOptions,
   resolveByCourseOrClassOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
@@ -36,8 +37,16 @@ export function CataloguePreviewSummary({
     enabled: Boolean(courseUuid),
   });
 
+  const classQuery = useQuery({
+    ...getClassDefinitionOptions({
+      path: { uuid: catalogueQuery.data?.data?.class_definition_uuid ?? '' },
+    }),
+    enabled: Boolean(catalogueQuery.data?.data?.class_definition_uuid),
+  });
+
   const catalogueItem = catalogueQuery.data?.data;
   const course = extractEntity(courseQuery.data);
+  const classDefinition = extractEntity(classQuery.data);
 
   if (courseUuid) {
     replaceBreadcrumbs([
@@ -122,8 +131,22 @@ export function CataloguePreviewSummary({
           </div>
         </CardHeader>
         <CardContent className='grid gap-4 md:grid-cols-2'>
-          <Detail label='Course UUID' value={catalogueItem.course_uuid ?? '—'} />
-          <Detail label='Class UUID' value={catalogueItem.class_definition_uuid ?? '—'} />
+          <Detail
+            label='Course'
+            value={
+              catalogueItem.course_uuid
+                ? course?.title ?? course?.name ?? catalogueItem.course_uuid
+                : '—'
+            }
+          />
+          <Detail
+            label='Class'
+            value={
+              catalogueItem.class_definition_uuid
+                ? classDefinition?.title ?? classDefinition?.name ?? catalogueItem.class_definition_uuid
+                : '—'
+            }
+          />
           <Detail label='Product code' value={catalogueItem.product_code ?? '—'} />
           <Detail label='Variant code' value={catalogueItem.variant_code ?? '—'} />
           <Detail label='Currency' value={catalogueItem.currency_code ?? '—'} />
