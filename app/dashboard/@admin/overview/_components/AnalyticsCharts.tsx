@@ -31,6 +31,33 @@ const CHART_COLORS = [
 ];
 const AXIS_COLOR = 'hsl(var(--muted-foreground))';
 const GRID_COLOR = 'hsl(var(--border))';
+const tooltipStyles = {
+  backgroundColor: 'hsl(var(--card))',
+  color: 'hsl(var(--foreground))',
+  borderRadius: 8,
+  border: `1px solid ${GRID_COLOR}`,
+  boxShadow: '0 12px 30px rgba(0,0,0,0.12)',
+};
+const legendWrapperStyle = { color: 'hsl(var(--muted-foreground))' };
+const RADIAN = Math.PI / 180;
+const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) => {
+  const radius = outerRadius + 12;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill='hsl(var(--foreground))'
+      textAnchor={x > cx ? 'start' : 'end'}
+      dominantBaseline='central'
+      fontSize={12}
+    >
+      {`${name} ${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
 
 interface AnalyticsChartsProps {
   statistics?: AdminDashboardStats;
@@ -144,15 +171,9 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                         allowDecimals={false}
                       />
                       <Tooltip
-                        contentStyle={{
-                          borderRadius: 8,
-                          fontSize: 13,
-                          border: `1px solid ${GRID_COLOR}`,
-                          color: 'hsl(var(--foreground))',
-                          backgroundColor: 'hsl(var(--card))',
-                        }}
+                        contentStyle={tooltipStyles}
                       />
-                      <Legend />
+                      <Legend wrapperStyle={legendWrapperStyle} />
                       <Line
                         type='monotone'
                         dataKey='value'
@@ -196,13 +217,9 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                         allowDecimals={false}
                       />
                       <Tooltip
-                        contentStyle={{
-                          borderRadius: 8,
-                          fontSize: 13,
-                          border: `1px solid ${GRID_COLOR}`,
-                        }}
+                        contentStyle={tooltipStyles}
                       />
-                      <Legend />
+                      <Legend wrapperStyle={legendWrapperStyle} />
                       <Bar
                         dataKey='value'
                         fill={CHART_COLORS[0]}
@@ -234,9 +251,7 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                         cx='50%'
                         cy='50%'
                         labelLine={false}
-                        label={({ name, percent }) =>
-                          `${name} ${percent && (percent * 100).toFixed(0)}%`
-                        }
+                        label={renderPieLabel}
                         outerRadius={90}
                         dataKey='value'
                       >
@@ -244,14 +259,8 @@ export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChar
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: 8,
-                          fontSize: 13,
-                          border: `1px solid ${GRID_COLOR}`,
-                        }}
-                      />
-                      <Legend />
+                      <Tooltip contentStyle={tooltipStyles} />
+                      <Legend wrapperStyle={legendWrapperStyle} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
