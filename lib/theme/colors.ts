@@ -63,6 +63,31 @@ const accent = {
   jade: '#26d7a0',
 };
 
+// Chart colors optimized for data visualization in both light and dark modes
+// Based on WCAG 3:1 contrast requirements for chart elements
+const charts = {
+  light: {
+    primary: '#0a63f5', // Brand blue - strong and clear
+    secondary: '#118d92', // Teal - good contrast with blue
+    tertiary: '#f97316', // Orange - warm accent
+    quaternary: '#10c180', // Green - positive association
+    quinary: '#816bff', // Purple - distinct hue
+    senary: '#ff5c5c', // Rose - attention grabbing
+    septenary: '#f5b649', // Amber - warm complement
+    octonary: '#45c7c1', // Light teal - softer option
+  },
+  dark: {
+    primary: '#5a92ff', // Muted blue - easier on eyes
+    secondary: '#45c7c1', // Lighter teal - better visibility
+    tertiary: '#ff9837', // Lighter orange - maintains warmth
+    quaternary: '#27d896', // Lighter green - pops in dark
+    quinary: '#9d8aff', // Lighter purple - softer
+    senary: '#ff8a8a', // Lighter rose - less harsh
+    septenary: '#ffd298', // Lighter amber - warm glow
+    octonary: '#71dfd3', // Brighter teal - clear distinction
+  },
+} as const;
+
 const semantic = {
   info: {
     50: '#ecf3ff',
@@ -124,6 +149,7 @@ export const elimikaPalette = {
   highlight,
   accent,
   semantic,
+  charts,
   gradients: {
     heroLight: 'none',
     heroDark: 'none',
@@ -150,6 +176,14 @@ export const elimikaThemeRoles = {
     info: semantic.info[500],
     sidebar: '#ffffff',
     sidebarBorder: neutrals[200],
+    chart1: charts.light.primary,
+    chart2: charts.light.secondary,
+    chart3: charts.light.tertiary,
+    chart4: charts.light.quaternary,
+    chart5: charts.light.quinary,
+    chart6: charts.light.senary,
+    chart7: charts.light.septenary,
+    chart8: charts.light.octonary,
   },
   dark: {
     background: neutrals[950],
@@ -168,6 +202,14 @@ export const elimikaThemeRoles = {
     info: semantic.info[400],
     sidebar: '#111527',
     sidebarBorder: 'rgba(255,255,255,0.08)',
+    chart1: charts.dark.primary,
+    chart2: charts.dark.secondary,
+    chart3: charts.dark.tertiary,
+    chart4: charts.dark.quaternary,
+    chart5: charts.dark.quinary,
+    chart6: charts.dark.senary,
+    chart7: charts.dark.septenary,
+    chart8: charts.dark.octonary,
   },
 } as const;
 
@@ -175,3 +217,15 @@ export type ElimikaThemeMode = keyof typeof elimikaThemeRoles;
 
 export const getBrandShade = (shade: Shade) => brand[shade];
 export const getNeutralShade = (shade: Shade) => neutrals[shade];
+
+// Helper to get chart colors array for the current theme mode
+export const getChartColors = (mode: ElimikaThemeMode = 'light') => [
+  charts[mode].primary,
+  charts[mode].secondary,
+  charts[mode].tertiary,
+  charts[mode].quaternary,
+  charts[mode].quinary,
+  charts[mode].senary,
+  charts[mode].septenary,
+  charts[mode].octonary,
+];

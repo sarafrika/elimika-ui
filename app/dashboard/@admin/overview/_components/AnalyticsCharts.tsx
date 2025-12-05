@@ -18,25 +18,27 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTheme } from 'next-themes';
 import type { AdminDashboardStats } from '@/services/client/types.gen';
 import { toNumber } from '@/lib/metrics';
+import { elimikaDesignSystem } from '@/lib/design-system';
 
-const CHART_COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--success))',
-  'hsl(var(--warning))',
-  'hsl(var(--accent))',
-  'hsl(var(--secondary))',
-  'hsl(var(--destructive))',
-  'hsl(var(--muted-foreground))',
-];
+// Use theme-aware chart colors
+const useChartColors = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  return isDark
+    ? elimikaDesignSystem.charts.getColors('dark')
+    : elimikaDesignSystem.charts.getColors('light');
+};
+
 const AXIS_COLOR = 'hsl(var(--muted-foreground))';
 const GRID_COLOR = 'hsl(var(--border))';
 const tooltipStyles = {
   backgroundColor: 'hsl(var(--card))',
   color: 'hsl(var(--foreground))',
   borderRadius: 8,
-  border: `1px solid ${GRID_COLOR}`,
+  border: `1px solid hsl(var(--border))`,
   boxShadow: '0 12px 30px rgba(0,0,0,0.12)',
 };
 const legendWrapperStyle = { color: 'hsl(var(--muted-foreground))' };
@@ -66,6 +68,7 @@ interface AnalyticsChartsProps {
 }
 
 export default function AnalyticsCharts({ statistics, isLoading }: AnalyticsChartsProps) {
+  const CHART_COLORS = useChartColors();
   const userMetrics = statistics?.user_metrics;
   const organizationMetrics = statistics?.organization_metrics;
   const complianceMetrics = statistics?.compliance_metrics;

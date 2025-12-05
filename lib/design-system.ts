@@ -1,4 +1,4 @@
-import { elimikaPalette, elimikaThemeRoles } from '@/lib/theme/colors';
+import { elimikaPalette, elimikaThemeRoles, getChartColors } from '@/lib/theme/colors';
 
 /**
  * Elimika Design System
@@ -12,12 +12,20 @@ import { elimikaPalette, elimikaThemeRoles } from '@/lib/theme/colors';
  * - Layered gradients and confident geometry
  * - Clean whitespace and modern typography
  * - Consistent shadows and rounded corners
+ * - Accessible chart colors optimized for both light and dark modes
  */
 
 export const elimikaDesignSystem = {
   // Foundation color data
   palette: elimikaPalette,
   themeRoles: elimikaThemeRoles,
+
+  // Chart colors - WCAG compliant for data visualization
+  charts: {
+    getColors: getChartColors,
+    light: elimikaPalette.charts.light,
+    dark: elimikaPalette.charts.dark,
+  },
 
   // Spacing & Layout
   spacing: {
