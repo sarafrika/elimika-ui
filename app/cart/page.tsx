@@ -223,9 +223,12 @@ export default function CartPage() {
                     <Button
                       size='lg'
                       className='w-full rounded-full bg-primary text-base font-semibold shadow-lg transition hover:bg-primary/90'
+                      asChild
                     >
-                      Proceed to Checkout
-                      <ArrowRight className='ml-2 h-4 w-4' />
+                      <Link href='/checkout'>
+                        Proceed to Checkout
+                        <ArrowRight className='ml-2 h-4 w-4' />
+                      </Link>
                     </Button>
                     <Button variant='outline' size='lg' className='w-full rounded-full text-base font-medium' asChild>
                       <Link href='/courses'>Continue Shopping</Link>
