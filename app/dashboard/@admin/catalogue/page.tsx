@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { Copy, ExternalLink, RefreshCw, ShoppingBag, Filter, Download } from 'lucide-react';
+import { Copy, ExternalLink, RefreshCw, ShoppingBag, Filter, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,7 @@ type CatalogueRow = CommerceCatalogueItem & {
 };
 
 const DEFAULT_CURRENCY = 'KES';
+const ITEMS_PER_PAGE = 25;
 
 const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CURRENCY) => {
   if (amount === undefined || amount === null) return '—';
@@ -52,6 +53,7 @@ export default function AdminCataloguePage() {
   const [filterType, setFilterType] = useState<'all' | 'course' | 'class'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [filterVisibility, setFilterVisibility] = useState<'all' | 'public' | 'private'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const catalogueQuery = useQuery({
     ...listCatalogItemsOptions({
@@ -67,67 +69,9 @@ export default function AdminCataloguePage() {
     }
   }, [catalogueQuery.error]);
 
-  const courseIds = useMemo(
-    () => Array.from(new Set(items.map(item => item.course_uuid).filter(Boolean))) as string[],
-    [items]
-  );
-
-  const classDefinitionIds = useMemo(
-    () =>
-      Array.from(new Set(items.map(item => item.class_definition_uuid).filter(Boolean))) as string[],
-    [items]
-  );
-
-  const courseQueries = useQueries({
-    queries: courseIds.map(uuid => ({
-      ...getCourseByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 5 * 60 * 1000,
-    })),
-  });
-
-  const classQueries = useQueries({
-    queries: classDefinitionIds.map(uuid => ({
-      ...getClassDefinitionOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 5 * 60 * 1000,
-    })),
-  });
-
-  const courseTitleMap = useMemo(() => {
-    const map = new Map<string, string>();
-    courseQueries.forEach((query, index) => {
-      const course = extractEntity<Course>(query.data);
-      if (course?.title) {
-        map.set(courseIds[index], course.title);
-      }
-    });
-    return map;
-  }, [courseIds, courseQueries]);
-
-  const classTitleMap = useMemo(() => {
-    const map = new Map<string, string>();
-    classQueries.forEach((query, index) => {
-      const classDef = extractEntity<ClassDefinition>(query.data);
-      if (classDef?.title) {
-        map.set(classDefinitionIds[index], classDef.title);
-      }
-    });
-    return map;
-  }, [classDefinitionIds, classQueries]);
-
-  const catalogueRows: CatalogueRow[] = useMemo(() => {
-    const buildTitle = (item: CommerceCatalogueItem) => {
-      if (item.class_definition_uuid && classTitleMap.has(item.class_definition_uuid)) {
-        return classTitleMap.get(item.class_definition_uuid) as string;
-      }
-      if (item.course_uuid && courseTitleMap.has(item.course_uuid)) {
-        return courseTitleMap.get(item.course_uuid) as string;
-      }
-      return 'Untitled item';
-    };
-
-    const rows = items.map(item => {
+  // Build initial catalogue rows without titles (will be loaded lazily)
+  const allCatalogueRows: Omit<CatalogueRow, 'displayTitle'>[] = useMemo(() => {
+    return items.map(item => {
       const isPublic =
         (item as CommerceCatalogueItem & { publicly_visible?: boolean }).publicly_visible ?? true;
       const isActive = item.active !== false;
@@ -141,19 +85,17 @@ export default function AdminCataloguePage() {
 
       return {
         ...item,
-        displayTitle: buildTitle(item),
+        displayTitle: '', // Will be set later
         isPublic,
         isActive,
         detailsHref,
         typeLabel,
-      } as CatalogueRow;
+      };
     });
-
-    return rows;
-  }, [classTitleMap, courseTitleMap, items]);
+  }, [items]);
 
   const filteredRows = useMemo(() => {
-    let filtered = catalogueRows;
+    let filtered = allCatalogueRows;
 
     // Apply type filter
     if (filterType !== 'all') {
@@ -179,14 +121,98 @@ export default function AdminCataloguePage() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         row =>
-          row.displayTitle.toLowerCase().includes(query) ||
           row.variant_code?.toLowerCase().includes(query) ||
-          row.product_code?.toLowerCase().includes(query)
+          row.product_code?.toLowerCase().includes(query) ||
+          row.course_uuid?.toLowerCase().includes(query) ||
+          row.class_definition_uuid?.toLowerCase().includes(query)
       );
     }
 
     return filtered;
-  }, [catalogueRows, filterType, filterStatus, filterVisibility, searchQuery]);
+  }, [allCatalogueRows, filterType, filterStatus, filterVisibility, searchQuery]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType, filterStatus, filterVisibility, searchQuery]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredRows.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedRows = filteredRows.slice(startIndex, endIndex);
+
+  // Fetch course and class details ONLY for items on current page
+  const pageItemCourseIds = useMemo(
+    () => Array.from(new Set(paginatedRows.map(item => item.course_uuid).filter(Boolean))) as string[],
+    [paginatedRows]
+  );
+
+  const pageItemClassIds = useMemo(
+    () => Array.from(new Set(paginatedRows.map(item => item.class_definition_uuid).filter(Boolean))) as string[],
+    [paginatedRows]
+  );
+
+  const courseQueries = useQueries({
+    queries: pageItemCourseIds.map(uuid => ({
+      ...getCourseByUuidOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const classQueries = useQueries({
+    queries: pageItemClassIds.map(uuid => ({
+      ...getClassDefinitionOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const courseTitleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    courseQueries.forEach((query, index) => {
+      const course = extractEntity<Course>(query.data);
+      if (course?.title || course?.name) {
+        map.set(pageItemCourseIds[index], course.title || course.name || '');
+      }
+    });
+    return map;
+  }, [pageItemCourseIds, courseQueries]);
+
+  const classTitleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    classQueries.forEach((query, index) => {
+      const classDef = extractEntity<ClassDefinition>(query.data);
+      if (classDef?.title || classDef?.name) {
+        map.set(pageItemClassIds[index], classDef.title || classDef.name || '');
+      }
+    });
+    return map;
+  }, [pageItemClassIds, classQueries]);
+
+  // Build final catalogue rows with titles for current page
+  const catalogueRows: CatalogueRow[] = useMemo(() => {
+    return paginatedRows.map(item => {
+      let displayTitle = 'Loading...';
+
+      if (item.class_definition_uuid && classTitleMap.has(item.class_definition_uuid)) {
+        displayTitle = classTitleMap.get(item.class_definition_uuid) as string;
+      } else if (item.course_uuid && courseTitleMap.has(item.course_uuid)) {
+        displayTitle = courseTitleMap.get(item.course_uuid) as string;
+      } else if (item.course_uuid || item.class_definition_uuid) {
+        // Still loading
+        displayTitle = item.course_uuid || item.class_definition_uuid || 'Untitled item';
+      } else {
+        displayTitle = 'Untitled item';
+      }
+
+      return {
+        ...item,
+        displayTitle,
+      } as CatalogueRow;
+    });
+  }, [paginatedRows, courseTitleMap, classTitleMap]);
 
   const handleCopySku = async (sku?: string) => {
     if (!sku) {
@@ -203,28 +229,29 @@ export default function AdminCataloguePage() {
   };
 
   const stats = useMemo(() => {
-    const total = catalogueRows.length;
-    const active = catalogueRows.filter(row => row.isActive).length;
-    const publicItems = catalogueRows.filter(row => row.isPublic).length;
-    const courses = catalogueRows.filter(row => row.typeLabel === 'Course').length;
-    const classes = catalogueRows.filter(row => row.typeLabel === 'Class').length;
+    const total = allCatalogueRows.length;
+    const active = allCatalogueRows.filter(row => row.isActive).length;
+    const publicItems = allCatalogueRows.filter(row => row.isPublic).length;
+    const courses = allCatalogueRows.filter(row => row.typeLabel === 'Course').length;
+    const classes = allCatalogueRows.filter(row => row.typeLabel === 'Class').length;
 
     return { total, active, inactive: total - active, publicItems, privateItems: total - publicItems, courses, classes };
-  }, [catalogueRows]);
+  }, [allCatalogueRows]);
 
   const handleExport = () => {
-    // Simple CSV export
+    // Simple CSV export - exports filtered results
     const csv = [
-      ['Title', 'Type', 'SKU', 'Product Code', 'Currency', 'Visibility', 'Status'].join(','),
+      ['Type', 'SKU', 'Product Code', 'Currency', 'Visibility', 'Status', 'Course UUID', 'Class UUID'].join(','),
       ...filteredRows.map(row =>
         [
-          `"${row.displayTitle}"`,
           row.typeLabel,
           row.variant_code ?? '',
           row.product_code ?? '',
           row.currency_code ?? '',
           row.isPublic ? 'Public' : 'Private',
           row.isActive ? 'Active' : 'Inactive',
+          row.course_uuid ?? '',
+          row.class_definition_uuid ?? '',
         ].join(',')
       ),
     ].join('\n');
@@ -236,7 +263,7 @@ export default function AdminCataloguePage() {
     a.download = `catalogue-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Catalogue exported to CSV');
+    toast.success(`Exported ${filteredRows.length} items to CSV`);
   };
 
   return (
@@ -287,7 +314,8 @@ export default function AdminCataloguePage() {
               <div className='space-y-1'>
                 <CardTitle className='text-lg font-semibold'>All Catalogue Items</CardTitle>
                 <CardDescription>
-                  {filteredRows.length} {filteredRows.length === 1 ? 'item' : 'items'} {filteredRows.length !== catalogueRows.length && `(filtered from ${catalogueRows.length})`}
+                  Showing {startIndex + 1}-{Math.min(endIndex, filteredRows.length)} of {filteredRows.length} {filteredRows.length === 1 ? 'item' : 'items'}
+                  {filteredRows.length !== allCatalogueRows.length && ` (filtered from ${allCatalogueRows.length})`}
                 </CardDescription>
               </div>
             </div>
@@ -366,71 +394,102 @@ export default function AdminCataloguePage() {
           {catalogueQuery.isLoading ? (
             <CatalogueSkeleton />
           ) : filteredRows.length ? (
-            <div className='overflow-x-auto'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className='min-w-[200px]'>Title</TableHead>
-                    <TableHead className='min-w-[120px]'>SKU</TableHead>
-                    <TableHead>Product Code</TableHead>
-                    <TableHead>Currency</TableHead>
-                    <TableHead>Visibility</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className='text-right'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRows.map(item => (
-                    <TableRow key={item.uuid ?? item.variant_code}>
-                      <TableCell>
-                        <div className='space-y-1'>
-                          <div className='flex flex-wrap items-center gap-2'>
-                            <span className='text-sm font-semibold text-foreground'>{item.displayTitle}</span>
-                            <Badge variant='secondary'>{item.typeLabel}</Badge>
-                          </div>
-                          <p className='text-muted-foreground text-xs'>
-                            {item.course_uuid
-                              ? `Course · ${courseTitleMap.get(item.course_uuid) ?? item.course_uuid}`
-                              : item.class_definition_uuid
-                                ? `Class · ${classTitleMap.get(item.class_definition_uuid) ?? item.class_definition_uuid}`
-                                : '—'}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className='font-mono text-sm'>{item.variant_code ?? '—'}</TableCell>
-                      <TableCell className='text-sm'>{item.product_code ?? '—'}</TableCell>
-                      <TableCell className='text-sm'>{item.currency_code ?? '—'}</TableCell>
-                      <TableCell>
-                        <Badge variant={item.isPublic ? 'default' : 'secondary'}>
-                          {item.isPublic ? 'Public' : 'Private'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={item.isActive ? 'default' : 'destructive'}>
-                          {item.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className='text-right'>
-                        <div className='flex flex-wrap justify-end gap-2'>
-                          <Button variant='outline' size='sm' onClick={() => handleCopySku(item.variant_code)}>
-                            <Copy className='h-4 w-4' />
-                            <span className='sr-only sm:not-sr-only sm:ml-2'>Copy</span>
-                          </Button>
-                          {item.detailsHref ? (
-                            <Button variant='ghost' size='sm' asChild>
-                              <Link prefetch href={item.detailsHref} className='gap-2'>
-                                <ExternalLink className='h-4 w-4' />
-                                <span className='sr-only sm:not-sr-only'>View</span>
-                              </Link>
-                            </Button>
-                          ) : null}
-                        </div>
-                      </TableCell>
+            <>
+              <div className='overflow-x-auto'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className='min-w-[200px]'>Title</TableHead>
+                      <TableHead className='min-w-[120px]'>SKU</TableHead>
+                      <TableHead>Product Code</TableHead>
+                      <TableHead>Currency</TableHead>
+                      <TableHead>Visibility</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className='text-right'>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {catalogueRows.map(item => (
+                      <TableRow key={item.uuid ?? item.variant_code}>
+                        <TableCell>
+                          <div className='space-y-1'>
+                            <div className='flex flex-wrap items-center gap-2'>
+                              <span className='text-sm font-semibold text-foreground'>{item.displayTitle}</span>
+                              <Badge variant='secondary'>{item.typeLabel}</Badge>
+                            </div>
+                            <p className='text-muted-foreground text-xs'>
+                              {item.course_uuid
+                                ? `Course · ${courseTitleMap.get(item.course_uuid) ?? item.course_uuid}`
+                                : item.class_definition_uuid
+                                  ? `Class · ${classTitleMap.get(item.class_definition_uuid) ?? item.class_definition_uuid}`
+                                  : '—'}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell className='font-mono text-sm'>{item.variant_code ?? '—'}</TableCell>
+                        <TableCell className='text-sm'>{item.product_code ?? '—'}</TableCell>
+                        <TableCell className='text-sm'>{item.currency_code ?? '—'}</TableCell>
+                        <TableCell>
+                          <Badge variant={item.isPublic ? 'default' : 'secondary'}>
+                            {item.isPublic ? 'Public' : 'Private'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={item.isActive ? 'default' : 'destructive'}>
+                            {item.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className='text-right'>
+                          <div className='flex flex-wrap justify-end gap-2'>
+                            <Button variant='outline' size='sm' onClick={() => handleCopySku(item.variant_code)}>
+                              <Copy className='h-4 w-4' />
+                              <span className='sr-only sm:not-sr-only sm:ml-2'>Copy</span>
+                            </Button>
+                            {item.detailsHref ? (
+                              <Button variant='ghost' size='sm' asChild>
+                                <Link prefetch href={item.detailsHref} className='gap-2'>
+                                  <ExternalLink className='h-4 w-4' />
+                                  <span className='sr-only sm:not-sr-only'>View</span>
+                                </Link>
+                              </Button>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className='mt-4 flex items-center justify-between border-t border-border/60 pt-4'>
+                  <p className='text-sm text-muted-foreground'>
+                    Page {currentPage} of {totalPages}
+                  </p>
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className='h-4 w-4' />
+                      Previous
+                    </Button>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className='flex flex-col items-center gap-3 rounded-lg border border-dashed border-border/70 bg-muted/40 p-8 text-center'>
               <ShoppingBag className='h-10 w-10 text-muted-foreground' />
