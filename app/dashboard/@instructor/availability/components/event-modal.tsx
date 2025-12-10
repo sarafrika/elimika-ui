@@ -19,7 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
 import {
-  blockTimeMutation,
+  blockTimeSlotsMutation,
   getInstructorCalendarQueryKey,
   scheduleClassMutation
 } from '@/services/client/@tanstack/react-query.gen';
@@ -235,7 +235,7 @@ export function EventModal({
   const qc = useQueryClient();
   const scheduleClass = useMutation(scheduleClassMutation());
   // const createAvailability = useMutation(createAvailabilitySlotMutation());
-  const blockTimeForInstructor = useMutation(blockTimeMutation())
+  const blockTimeForInstructor = useMutation(blockTimeSlotsMutation());
 
   const handleSave = () => {
     // if (!validateForm()) return;
@@ -279,12 +279,25 @@ export function EventModal({
     if (eventData.entry_type === "BLOCKED") {
       blockTimeForInstructor.mutate({
         path: { instructorUuid: instrucor?.uuid as string },
-        query: { start: startDateTime as any, end: endDateTime as any }
+        body: {
+          slots: [
+            {
+              start_time: new Date(startDateTime),
+              end_time: new Date(endDateTime),
+            },
+          ],
+        },
       }, {
         onSuccess: (data) => {
           toast.success(data?.message)
           qc.invalidateQueries({
-            queryKey: getInstructorCalendarQueryKey({ path: { instructorUuid: instrucor?.uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } })
+            queryKey: getInstructorCalendarQueryKey({
+              path: { instructorUuid: instrucor?.uuid as string },
+              query: {
+                start_date: new Date(startDateTime),
+                end_date: new Date(endDateTime),
+              },
+            })
           })
           onClose();
         }
