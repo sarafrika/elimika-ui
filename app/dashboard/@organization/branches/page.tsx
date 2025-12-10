@@ -574,46 +574,116 @@ function BranchDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='w-full sm:max-w-xl overflow-y-auto'>
-        <SheetHeader>
-          <SheetTitle>{defaultValues ? 'Edit Branch' : 'Create New Branch'}</SheetTitle>
-          <SheetDescription>
-            {defaultValues
-              ? 'Update the branch details and point of contact information.'
-              : 'Add a new training location for your organization.'}
-          </SheetDescription>
+      <SheetContent className='w-full overflow-y-auto sm:max-w-2xl'>
+        <SheetHeader className='space-y-3 pb-6'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-xl bg-primary/10 p-3'>
+              <GitBranch className='h-6 w-6 text-primary' />
+            </div>
+            <div>
+              <SheetTitle className='text-xl'>
+                {defaultValues ? 'Edit Training Branch' : 'Create New Branch'}
+              </SheetTitle>
+              <SheetDescription className='mt-1'>
+                {defaultValues
+                  ? 'Update the branch details and point of contact information.'
+                  : 'Add a new training location for your organization.'}
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className='mt-6 space-y-6'>
-          <div className='space-y-4'>
-            <FormField label='Branch Name' name='branch_name' form={form} required />
-            <FormField label='Address' name='address' form={form} />
-          </div>
-
-          <Separator />
-
-          <div className='space-y-4'>
-            <h3 className='text-sm font-semibold text-foreground'>Point of Contact</h3>
-            <FormField label='POC Name' name='poc_name' form={form} required />
-            <FormField label='POC Email' name='poc_email' form={form} type='email' required />
-            <FormField label='POC Telephone' name='poc_telephone' form={form} required />
-          </div>
-
-          <Separator />
-
-          <div className='flex items-center gap-3'>
-            <Switch checked={form.watch('active')} onCheckedChange={(checked) => form.setValue('active', checked)} />
-            <div>
-              <Label className='text-sm font-medium'>Active Status</Label>
-              <p className='text-xs text-muted-foreground'>Branch is available for assignments</p>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+          {/* Branch Information Section */}
+          <div className='rounded-xl border border-border bg-muted/30 p-5'>
+            <div className='mb-4 flex items-center gap-2'>
+              <Building2 className='h-5 w-5 text-primary' />
+              <h3 className='font-semibold text-foreground'>Branch Information</h3>
+            </div>
+            <div className='space-y-4'>
+              <FormField label='Branch Name' name='branch_name' form={form} required placeholder='e.g., Downtown Campus' />
+              <FormField
+                label='Address'
+                name='address'
+                form={form}
+                placeholder='e.g., 123 Main Street, City'
+                icon={<MapPin className='h-4 w-4' />}
+              />
             </div>
           </div>
 
-          <SheetFooter className='gap-2 sm:gap-0'>
-            <Button variant='outline' type='button' onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+          {/* Point of Contact Section */}
+          <div className='rounded-xl border border-border bg-muted/30 p-5'>
+            <div className='mb-4 flex items-center gap-2'>
+              <Users className='h-5 w-5 text-primary' />
+              <h3 className='font-semibold text-foreground'>Point of Contact</h3>
+            </div>
+            <div className='space-y-4'>
+              <FormField
+                label='Full Name'
+                name='poc_name'
+                form={form}
+                required
+                placeholder='e.g., John Doe'
+                icon={<Users className='h-4 w-4' />}
+              />
+              <FormField
+                label='Email Address'
+                name='poc_email'
+                form={form}
+                type='email'
+                required
+                placeholder='e.g., john@example.com'
+                icon={<Mail className='h-4 w-4' />}
+              />
+              <FormField
+                label='Phone Number'
+                name='poc_telephone'
+                form={form}
+                required
+                placeholder='e.g., +1 (555) 123-4567'
+                icon={<Phone className='h-4 w-4' />}
+              />
+            </div>
+          </div>
+
+          {/* Status Section */}
+          <div className='rounded-xl border border-border bg-muted/30 p-5'>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center gap-3'>
+                <div className='rounded-lg bg-background p-2'>
+                  <Switch
+                    checked={form.watch('active')}
+                    onCheckedChange={(checked) => form.setValue('active', checked)}
+                  />
+                </div>
+                <div>
+                  <Label className='text-sm font-semibold text-foreground'>Active Status</Label>
+                  <p className='text-xs text-muted-foreground'>
+                    {form.watch('active')
+                      ? 'Branch is active and available for assignments'
+                      : 'Branch is inactive and hidden from assignments'}
+                  </p>
+                </div>
+              </div>
+              <Badge variant={form.watch('active') ? 'secondary' : 'outline'}>
+                {form.watch('active') ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <SheetFooter className='flex gap-3 pt-4 sm:gap-3'>
+            <Button
+              variant='outline'
+              type='button'
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+              className='flex-1 sm:flex-1'
+            >
               Cancel
             </Button>
-            <Button type='submit' disabled={isSubmitting}>
+            <Button type='submit' disabled={isSubmitting} className='flex-1 sm:flex-1'>
               {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
               {defaultValues ? 'Update Branch' : 'Create Branch'}
             </Button>
@@ -630,21 +700,42 @@ function FormField({
   form,
   type = 'text',
   required = false,
+  placeholder,
+  icon,
 }: {
   label: string;
   name: keyof BranchFormValues;
   form: ReturnType<typeof useForm<BranchFormValues>>;
   type?: string;
   required?: boolean;
+  placeholder?: string;
+  icon?: React.ReactNode;
 }) {
   const error = form.formState.errors[name]?.message;
   return (
     <div className='space-y-2'>
-      <Label className='text-sm font-medium'>
+      <Label className='text-sm font-medium text-foreground'>
         {label} {required && <span className='text-destructive'>*</span>}
       </Label>
-      <Input type={type} {...form.register(name)} className={error ? 'border-destructive' : ''} />
-      {error && <p className='text-xs text-destructive'>{String(error)}</p>}
+      <div className='relative'>
+        {icon && (
+          <div className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground'>
+            {icon}
+          </div>
+        )}
+        <Input
+          type={type}
+          placeholder={placeholder}
+          {...form.register(name)}
+          className={`${error ? 'border-destructive' : ''} ${icon ? 'pl-10' : ''}`}
+        />
+      </div>
+      {error && (
+        <div className='flex items-center gap-1 text-xs text-destructive'>
+          <AlertCircle className='h-3 w-3' />
+          <span>{String(error)}</span>
+        </div>
+      )}
     </div>
   );
 }
