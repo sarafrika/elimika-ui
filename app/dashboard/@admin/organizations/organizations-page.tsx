@@ -256,21 +256,91 @@ function OrganisationListPanel({
         <div className='flex flex-col gap-4 pb-8'>{renderContent()}</div>
       </ScrollArea>
 
-      <div className='border-border/60 flex items-center justify-between border-t px-6 py-4 text-sm'>
-        <Button variant='ghost' size='sm' onClick={() => onPageChange(Math.max(page - 1, 0))} disabled={page === 0}>
-          Previous
-        </Button>
-        <div className='text-muted-foreground'>
-          Page {totalAvailable === 0 ? 0 : page + 1} / {totalPages}
+      <div className='border-border/60 flex flex-col gap-3 border-t px-6 py-4'>
+        <div className='flex items-center justify-between text-sm'>
+          <Button variant='ghost' size='sm' onClick={() => onPageChange(Math.max(page - 1, 0))} disabled={page === 0}>
+            Previous
+          </Button>
+          <div className='flex items-center gap-2'>
+            {/* Page numbers */}
+            {(() => {
+              const maxVisible = 5;
+              const half = Math.floor(maxVisible / 2);
+              let start = Math.max(0, page - half);
+              let end = Math.min(totalPages, start + maxVisible);
+
+              if (end - start < maxVisible) {
+                start = Math.max(0, end - maxVisible);
+              }
+
+              const pages = [];
+
+              // First page
+              if (start > 0) {
+                pages.push(
+                  <Button
+                    key={0}
+                    variant={0 === page ? 'default' : 'ghost'}
+                    size='sm'
+                    onClick={() => onPageChange(0)}
+                    className='h-8 w-8 p-0'
+                  >
+                    1
+                  </Button>
+                );
+                if (start > 1) {
+                  pages.push(<span key='ellipsis-start' className='text-muted-foreground px-1'>...</span>);
+                }
+              }
+
+              // Middle pages
+              for (let i = start; i < end; i++) {
+                pages.push(
+                  <Button
+                    key={i}
+                    variant={i === page ? 'default' : 'ghost'}
+                    size='sm'
+                    onClick={() => onPageChange(i)}
+                    className='h-8 w-8 p-0'
+                  >
+                    {i + 1}
+                  </Button>
+                );
+              }
+
+              // Last page
+              if (end < totalPages) {
+                if (end < totalPages - 1) {
+                  pages.push(<span key='ellipsis-end' className='text-muted-foreground px-1'>...</span>);
+                }
+                pages.push(
+                  <Button
+                    key={totalPages - 1}
+                    variant={totalPages - 1 === page ? 'default' : 'ghost'}
+                    size='sm'
+                    onClick={() => onPageChange(totalPages - 1)}
+                    className='h-8 w-8 p-0'
+                  >
+                    {totalPages}
+                  </Button>
+                );
+              }
+
+              return pages;
+            })()}
+          </div>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={() => onPageChange(Math.min(page + 1, totalPages - 1))}
+            disabled={page + 1 >= totalPages}
+          >
+            Next
+          </Button>
         </div>
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={() => onPageChange(Math.min(page + 1, totalPages - 1))}
-          disabled={page + 1 >= totalPages}
-        >
-          Next
-        </Button>
+        <div className='text-center text-xs text-muted-foreground'>
+          Showing {inViewCount} of {totalAvailable} organizations
+        </div>
       </div>
     </div>
   );

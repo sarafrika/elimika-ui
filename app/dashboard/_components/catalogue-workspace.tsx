@@ -245,6 +245,7 @@ export function CatalogueWorkspace({
   const copy = scopeCopy[scope];
   const includeHidden = copy.includeHiddenByDefault;
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [displayLimit, setDisplayLimit] = useState(20);
   const profile = useUserProfile();
 
   const fetchActiveOnly = scope === 'admin' ? false : !includeHidden;
@@ -349,6 +350,10 @@ export function CatalogueWorkspace({
 
   const selectedRow = filteredRows.find(row => row.id === selectedId) ?? null;
 
+  const displayedRows = useMemo(() => filteredRows.slice(0, displayLimit), [filteredRows, displayLimit]);
+  const hasMore = filteredRows.length > displayLimit;
+  const remaining = filteredRows.length - displayLimit;
+
   const stats = useMemo(() => {
     const total = scopedRows.length;
     const active = scopedRows.filter(row => row.isActive).length;
@@ -358,6 +363,10 @@ export function CatalogueWorkspace({
   }, [scopedRows]);
 
   const heightClass = variant === 'page' ? 'lg:h-[calc(100vh-140px)]' : 'lg:h-[520px]';
+
+  const handleLoadMore = () => {
+    setDisplayLimit(prev => prev + 20);
+  };
 
   const handleCopy = async (value?: string | null) => {
     if (!value) {
@@ -418,7 +427,8 @@ export function CatalogueWorkspace({
                   <p className='text-xs'>Try refreshing or publish items to this catalogue.</p>
                 </div>
               ) : (
-                filteredRows.map(row => {
+                <>
+                {displayedRows.map(row => {
                   const typeIcon = row.typeLabel === 'Course' ? BookOpen : row.typeLabel === 'Class' ? GraduationCap : Package;
                   const TypeIcon = typeIcon;
 
@@ -503,7 +513,17 @@ export function CatalogueWorkspace({
                       </div>
                     </button>
                   );
-                })
+                })}
+                {hasMore && (
+                  <Button
+                    variant='outline'
+                    className='w-full'
+                    onClick={handleLoadMore}
+                  >
+                    Load {remaining > 20 ? '20' : remaining} more ({remaining} remaining)
+                  </Button>
+                )}
+                </>
               )}
             </div>
           </ScrollArea>
