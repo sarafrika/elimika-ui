@@ -421,45 +421,34 @@ export function CatalogueWorkspace({
                 filteredRows.map(row => {
                   const typeIcon = row.typeLabel === 'Course' ? BookOpen : row.typeLabel === 'Class' ? GraduationCap : Package;
                   const TypeIcon = typeIcon;
-                  const linkedEntity = row.courseId ? titleMaps.courseMap.get(row.courseId) : row.classId ? titleMaps.classMap.get(row.classId) : null;
-                  const description = linkedEntity?.description || linkedEntity?.summary || null;
 
                   return (
                     <button
                       key={row.id}
                       type='button'
                       onClick={() => setSelectedId(row.id)}
-                      className={`group w-full rounded-[20px] border p-4 text-left transition-all duration-200 ${
+                      className={`group w-full rounded-[16px] border p-3.5 text-left transition-all duration-200 ${
                         selectedId === row.id
                           ? 'border-primary bg-primary/10 shadow-md ring-1 ring-primary/20'
                           : 'border-border/60 bg-card hover:border-primary/50 hover:bg-muted/50 hover:shadow-sm'
                       }`}
                     >
-                      <div className='flex gap-4'>
+                      <div className='flex gap-3'>
                         {/* Icon */}
-                        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] transition-colors ${
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-colors ${
                           selectedId === row.id
                             ? 'bg-primary/15 text-primary'
                             : 'bg-primary/10 text-primary group-hover:bg-primary/15'
                         }`}>
-                          <TypeIcon className='h-5 w-5' />
+                          <TypeIcon className='h-4.5 w-4.5' />
                         </div>
 
                         {/* Content */}
-                        <div className='flex-1 space-y-2.5 overflow-hidden'>
+                        <div className='flex-1 space-y-2 overflow-hidden'>
                           {/* Title */}
-                          <div className='flex-1 overflow-hidden'>
-                            <h3 className='line-clamp-1 text-[15px] font-semibold leading-tight text-foreground'>
-                              {row.displayTitle}
-                            </h3>
-                            {description && (
-                              <p className='mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground'
-                                 dangerouslySetInnerHTML={{
-                                   __html: description.replace(/<[^>]*>/g, '').substring(0, 100) + (description.length > 100 ? '...' : '')
-                                 }}
-                              />
-                            )}
-                          </div>
+                          <h3 className='line-clamp-1 text-sm font-semibold leading-tight text-foreground'>
+                            {row.displayTitle}
+                          </h3>
 
                           {/* Meta row */}
                           <div className='flex flex-wrap items-center gap-1.5'>
@@ -505,7 +494,7 @@ export function CatalogueWorkspace({
                                 Private
                               </Badge>
                             )}
-                            <div className='ml-auto flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-semibold text-primary'>
+                            <div className='ml-auto flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold text-primary'>
                               <DollarSign className='h-3 w-3' />
                               <span className='text-[11px]'>{formatMoney(row.price, row.currency ?? undefined)}</span>
                             </div>
