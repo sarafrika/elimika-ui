@@ -438,6 +438,10 @@ export type RubricScoringLevel = {
    */
   readonly display_name?: string;
   /**
+   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
+   */
+  readonly is_highest_level?: boolean;
+  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
@@ -445,10 +449,6 @@ export type RubricScoringLevel = {
    * **[READ-ONLY]** CSS-safe color class name derived from the color code.
    */
   readonly css_color_class?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
-   */
-  readonly is_highest_level?: boolean;
 };
 
 export type ApiResponseRubricScoringLevel = {
@@ -610,13 +610,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1290,13 +1290,13 @@ export type Instructor = {
    */
   readonly is_profile_complete?: boolean;
   /**
-   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
-   */
-  readonly formatted_location?: string;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
+   */
+  readonly formatted_location?: string;
 };
 
 /**
@@ -1412,6 +1412,14 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string;
+  /**
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number;
@@ -1437,14 +1445,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
-   */
-  readonly formatted_duration?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1517,13 +1517,9 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
-  readonly duration_in_months?: number;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string;
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
@@ -1546,9 +1542,13 @@ export type InstructorExperience = {
    */
   readonly calculated_years?: number;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
-  readonly is_complete?: boolean;
+  readonly duration_in_months?: number;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -1609,6 +1609,10 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -1625,10 +1629,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
   readonly has_certificate_number?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -3251,14 +3251,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Type of certificate based on completion achievement.
-   */
-  readonly certificate_type?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
-   */
-  readonly is_downloadable?: boolean;
-  /**
    * **[READ-ONLY]** Letter grade representation of the final grade.
    */
   readonly grade_letter?: string;
@@ -3266,6 +3258,14 @@ export type Certificate = {
    * **[READ-ONLY]** Current validity status of the certificate.
    */
   readonly validity_status?: string;
+  /**
+   * **[READ-ONLY]** Type of certificate based on completion achievement.
+   */
+  readonly certificate_type?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
+   */
+  readonly is_downloadable?: boolean;
 };
 
 export type ApiResponseCertificate = {
@@ -3411,10 +3411,6 @@ export type Assignment = {
    */
   readonly assignment_category?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
   readonly assignment_scope?: string;
@@ -3422,6 +3418,10 @@ export type Assignment = {
    * **[READ-ONLY]** Summary of accepted submission types for this assignment.
    */
   readonly submission_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseAssignment = {
@@ -3815,6 +3815,34 @@ export type ApiResponseInstructorReview = {
 };
 
 /**
+ * Payload used to block multiple time slots for an instructor.
+ */
+export type BlockTimeSlotsRequest = {
+  /**
+   * **[REQUIRED]** Collection of blocked slots to create.
+   */
+  slots: Array<BlockedTimeSlotRequest>;
+};
+
+/**
+ * Represents a single blocked time slot window for an instructor.
+ */
+export type BlockedTimeSlotRequest = {
+  /**
+   * **[REQUIRED]** Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)
+   */
+  start_time: Date;
+  /**
+   * **[REQUIRED]** End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)
+   */
+  end_time: Date;
+  /**
+   * **[OPTIONAL]** Hex color code used to visualize the blocked slot.
+   */
+  color_code?: string;
+};
+
+/**
  * Represents a guardian's access rights to a learner profile.
  */
 export type GuardianStudentLink = {
@@ -3921,21 +3949,21 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
-   */
-  readonly status_description?: string;
   /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
-  readonly can_be_cancelled?: boolean;
+  readonly status_description?: string;
 };
 
 export type ApiResponse = {
@@ -4108,7 +4136,7 @@ export type CartItemResponse = {
    */
   total?: number;
   /**
-   * Custom metadata captured for the line item
+   * System-managed metadata describing the catalogue context for the line item (read-only)
    */
   metadata?: {
     [key: string]: {
@@ -4265,7 +4293,7 @@ export type CartResponse = {
 };
 
 /**
- * Line item definition used when creating or updating a cart
+ * Line item definition used when creating or updating a cart (metadata is system-managed)
  */
 export type CartLineItemRequest = {
   /**
@@ -4276,14 +4304,6 @@ export type CartLineItemRequest = {
    * Quantity of the variant to add to the cart
    */
   quantity: number;
-  /**
-   * Optional metadata persisted with the line item
-   */
-  metadata?: {
-    [key: string]: {
-      [key: string]: unknown;
-    };
-  };
 };
 
 /**
@@ -4298,14 +4318,6 @@ export type CreateCartRequest = {
    * Optional region code for pricing rules
    */
   region_code?: string;
-  /**
-   * Arbitrary metadata stored with the cart
-   */
-  metadata?: {
-    [key: string]: {
-      [key: string]: unknown;
-    };
-  };
   items?: Array<CartLineItemRequest>;
 };
 
@@ -4483,6 +4495,139 @@ export type ApiResponseClassAssignmentSchedule = {
   };
 };
 
+/**
+ * Request payload for creating a booking for an instructor and course
+ */
+export type CreateBookingRequest = {
+  /**
+   * UUID of the student creating the booking
+   */
+  student_uuid: string;
+  /**
+   * UUID of the course being booked
+   */
+  course_uuid: string;
+  /**
+   * UUID of the instructor for the session
+   */
+  instructor_uuid: string;
+  /**
+   * Start time for the requested session
+   */
+  start_time: Date;
+  /**
+   * End time for the requested session
+   */
+  end_time: Date;
+  /**
+   * Agreed price for the session
+   */
+  price_amount?: number;
+  /**
+   * ISO currency code (e.g., USD, KES)
+   */
+  currency?: string;
+  /**
+   * Optional purpose or note for this booking
+   */
+  purpose?: string;
+};
+
+export type ApiResponseBookingResponse = {
+  success?: boolean;
+  data?: BookingResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Booking details returned to clients
+ */
+export type BookingResponse = {
+  /**
+   * Unique booking identifier
+   */
+  uuid: string;
+  /**
+   * UUID of the student who created the booking
+   */
+  student_uuid: string;
+  /**
+   * UUID of the course tied to the booking
+   */
+  course_uuid: string;
+  /**
+   * UUID of the instructor for the session
+   */
+  instructor_uuid: string;
+  /**
+   * Start time for the session
+   */
+  start_time: Date;
+  /**
+   * End time for the session
+   */
+  end_time: Date;
+  status: StatusEnum8;
+  /**
+   * Price amount agreed for the booking
+   */
+  price_amount?: number;
+  /**
+   * ISO currency code for the booking price
+   */
+  currency?: string;
+  /**
+   * Payment session identifier from the payment engine
+   */
+  payment_session_id?: string;
+  /**
+   * Payment reference supplied by the payment engine
+   */
+  payment_reference?: string;
+  /**
+   * Payment engine used for this booking
+   */
+  payment_engine?: string;
+  /**
+   * When the hold on the slot expires if unpaid
+   */
+  hold_expires_at?: Date;
+  /**
+   * UUID of the availability block created for this booking
+   */
+  availability_block_uuid?: string;
+  /**
+   * Purpose or note for this booking
+   */
+  purpose?: string;
+  /**
+   * Creation timestamp
+   */
+  created_date?: Date;
+  /**
+   * Last update timestamp
+   */
+  updated_date?: Date;
+};
+
+/**
+ * Callback payload used by payment engine to update booking status
+ */
+export type BookingPaymentUpdateRequest = {
+  /**
+   * Payment reference provided by the payment engine
+   */
+  payment_reference: string;
+  payment_status: PaymentStatusEnum;
+  /**
+   * Payment engine identifier
+   */
+  payment_engine?: string;
+};
+
 export type ApiResponseAssignmentSubmission = {
   success?: boolean;
   data?: AssignmentSubmission;
@@ -4520,7 +4665,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum8;
+  status: StatusEnum9;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -4653,14 +4798,6 @@ export type UpdateCartRequest = {
    * Billing address identifier
    */
   billing_address_id?: string;
-  /**
-   * Optional metadata map stored with the cart
-   */
-  metadata?: {
-    [key: string]: {
-      [key: string]: unknown;
-    };
-  };
 };
 
 export type Pageable = {
@@ -5002,7 +5139,7 @@ export type QuizAttempt = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum9;
+  status: StatusEnum10;
   /**
    * **[READ-ONLY]** Timestamp when the attempt was created. Automatically set by the system.
    */
@@ -5125,7 +5262,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum10;
+  status: StatusEnum11;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -5782,7 +5919,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum10;
+  status: StatusEnum11;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -7062,9 +7199,38 @@ export const ReleaseStrategyEnum = {
 export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof ReleaseStrategyEnum];
 
 /**
- * **[REQUIRED]** Current status of the submission in the grading workflow.
+ * Current status of the booking
  */
 export const StatusEnum8 = {
+  PAYMENT_REQUIRED: 'payment_required',
+  CONFIRMED: 'confirmed',
+  CANCELLED: 'cancelled',
+  PAYMENT_FAILED: 'payment_failed',
+  EXPIRED: 'expired',
+} as const;
+
+/**
+ * Current status of the booking
+ */
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+
+/**
+ * Payment status reported by the engine
+ */
+export const PaymentStatusEnum = {
+  SUCCEEDED: 'succeeded',
+  FAILED: 'failed',
+} as const;
+
+/**
+ * Payment status reported by the engine
+ */
+export type PaymentStatusEnum = (typeof PaymentStatusEnum)[keyof typeof PaymentStatusEnum];
+
+/**
+ * **[REQUIRED]** Current status of the submission in the grading workflow.
+ */
+export const StatusEnum9 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -7075,7 +7241,7 @@ export const StatusEnum8 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 /**
  * Type of assignment - global or organization-specific
@@ -7093,7 +7259,7 @@ export type AssignmentTypeEnum = (typeof AssignmentTypeEnum)[keyof typeof Assign
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const StatusEnum9 = {
+export const StatusEnum10 = {
   IN_PROGRESS: 'IN_PROGRESS',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
@@ -7102,12 +7268,12 @@ export const StatusEnum9 = {
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum10 = {
+export const StatusEnum11 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -7117,7 +7283,7 @@ export const StatusEnum10 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
 
 /**
  * Display name of the role/domain being offered
@@ -13474,32 +13640,19 @@ export type SetAvailabilityPatternsResponses = {
 export type SetAvailabilityPatternsResponse =
   SetAvailabilityPatternsResponses[keyof SetAvailabilityPatternsResponses];
 
-export type BlockTimeData = {
-  body?: never;
+export type BlockTimeSlotsData = {
+  body: BlockTimeSlotsRequest;
   path: {
     /**
      * UUID of the instructor
      */
     instructorUuid: string;
   };
-  query: {
-    /**
-     * Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)
-     */
-    start: Date;
-    /**
-     * End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)
-     */
-    end: Date;
-    /**
-     * Optional hex color code for UI visualization (e.g., #FF6B6B)
-     */
-    color_code?: string;
-  };
+  query?: never;
   url: '/api/v1/instructors/{instructorUuid}/availability/block';
 };
 
-export type BlockTimeErrors = {
+export type BlockTimeSlotsErrors = {
   /**
    * Invalid time range or color code format
    */
@@ -13514,16 +13667,16 @@ export type BlockTimeErrors = {
   500: ResponseDtoVoid;
 };
 
-export type BlockTimeError = BlockTimeErrors[keyof BlockTimeErrors];
+export type BlockTimeSlotsError = BlockTimeSlotsErrors[keyof BlockTimeSlotsErrors];
 
-export type BlockTimeResponses = {
+export type BlockTimeSlotsResponses = {
   /**
-   * Time blocked successfully
+   * Time slots blocked successfully
    */
   200: ApiResponseVoid;
 };
 
-export type BlockTimeResponse = BlockTimeResponses[keyof BlockTimeResponses];
+export type BlockTimeSlotsResponse = BlockTimeSlotsResponses[keyof BlockTimeSlotsResponses];
 
 export type CreateLinkData = {
   body: GuardianStudentLinkRequest;
@@ -16073,6 +16226,103 @@ export type GenerateCourseCertificateResponses = {
 
 export type GenerateCourseCertificateResponse =
   GenerateCourseCertificateResponses[keyof GenerateCourseCertificateResponses];
+
+export type CreateBookingData = {
+  body: CreateBookingRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/bookings';
+};
+
+export type CreateBookingErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateBookingError = CreateBookingErrors[keyof CreateBookingErrors];
+
+export type CreateBookingResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseBookingResponse;
+};
+
+export type CreateBookingResponse = CreateBookingResponses[keyof CreateBookingResponses];
+
+export type PaymentCallbackData = {
+  body: BookingPaymentUpdateRequest;
+  path: {
+    /**
+     * Booking UUID
+     */
+    bookingUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/bookings/{bookingUuid}/payment-callback';
+};
+
+export type PaymentCallbackErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type PaymentCallbackError = PaymentCallbackErrors[keyof PaymentCallbackErrors];
+
+export type PaymentCallbackResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseBookingResponse;
+};
+
+export type PaymentCallbackResponse = PaymentCallbackResponses[keyof PaymentCallbackResponses];
+
+export type CancelBookingData = {
+  body?: never;
+  path: {
+    /**
+     * Booking UUID
+     */
+    bookingUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/bookings/{bookingUuid}/cancel';
+};
+
+export type CancelBookingErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CancelBookingError = CancelBookingErrors[keyof CancelBookingErrors];
+
+export type CancelBookingResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseBookingResponse;
+};
+
+export type CancelBookingResponse = CancelBookingResponses[keyof CancelBookingResponses];
 
 export type GetAllAssignmentsData = {
   body?: never;
@@ -21368,6 +21618,40 @@ export type GetCourseCertificatesResponses = {
 
 export type GetCourseCertificatesResponse =
   GetCourseCertificatesResponses[keyof GetCourseCertificatesResponses];
+
+export type GetBookingData = {
+  body?: never;
+  path: {
+    /**
+     * Booking UUID
+     */
+    bookingUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/bookings/{bookingUuid}';
+};
+
+export type GetBookingErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetBookingError = GetBookingErrors[keyof GetBookingErrors];
+
+export type GetBookingResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseBookingResponse;
+};
+
+export type GetBookingResponse = GetBookingResponses[keyof GetBookingResponses];
 
 export type GetAssignmentSubmissionsData = {
   body?: never;

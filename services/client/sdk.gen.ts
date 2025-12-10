@@ -556,9 +556,9 @@ import type {
   SetAvailabilityPatternsData,
   SetAvailabilityPatternsResponses,
   SetAvailabilityPatternsErrors,
-  BlockTimeData,
-  BlockTimeResponses,
-  BlockTimeErrors,
+  BlockTimeSlotsData,
+  BlockTimeSlotsResponses,
+  BlockTimeSlotsErrors,
   CreateLinkData,
   CreateLinkResponses,
   CreateLinkErrors,
@@ -784,6 +784,15 @@ import type {
   GenerateCourseCertificateData,
   GenerateCourseCertificateResponses,
   GenerateCourseCertificateErrors,
+  CreateBookingData,
+  CreateBookingResponses,
+  CreateBookingErrors,
+  PaymentCallbackData,
+  PaymentCallbackResponses,
+  PaymentCallbackErrors,
+  CancelBookingData,
+  CancelBookingResponses,
+  CancelBookingErrors,
   GetAllAssignmentsData,
   GetAllAssignmentsResponses,
   GetAllAssignmentsErrors,
@@ -1228,6 +1237,9 @@ import type {
   GetCourseCertificatesData,
   GetCourseCertificatesResponses,
   GetCourseCertificatesErrors,
+  GetBookingData,
+  GetBookingResponses,
+  GetBookingErrors,
   GetAssignmentSubmissionsData,
   GetAssignmentSubmissionsResponses,
   GetAssignmentSubmissionsErrors,
@@ -1507,6 +1519,9 @@ import {
   createCertificateTemplateResponseTransformer,
   generateProgramCertificateResponseTransformer,
   generateCourseCertificateResponseTransformer,
+  createBookingResponseTransformer,
+  paymentCallbackResponseTransformer,
+  cancelBookingResponseTransformer,
   getAllAssignmentsResponseTransformer,
   createAssignmentResponseTransformer,
   submitAssignmentResponseTransformer,
@@ -1619,6 +1634,7 @@ import {
   getProgramCertificates1ResponseTransformer,
   getCertificateByNumberResponseTransformer,
   getCourseCertificatesResponseTransformer,
+  getBookingResponseTransformer,
   getAssignmentSubmissionsResponseTransformer,
   getHighPerformanceSubmissionsResponseTransformer,
   searchSubmissionsResponseTransformer,
@@ -7093,12 +7109,12 @@ export const setAvailabilityPatterns = <ThrowOnError extends boolean = false>(
 
 /**
  * Block time for an instructor
- * Blocks a specific time period for an instructor, making them unavailable.
+ * Blocks one or more specific time periods for an instructor, making them unavailable.
  *
- * This creates availability slots with isAvailable = false, which override
+ * Each slot creates availability entries with isAvailable = false, which override
  * any existing availability patterns for that time period.
  *
- * You can optionally provide a color code (hex format) to categorize and
+ * You can optionally provide color codes (hex format) to categorize and
  * visually distinguish different types of blocked times on the frontend.
  *
  * Common use cases:
@@ -7108,10 +7124,14 @@ export const setAvailabilityPatterns = <ThrowOnError extends boolean = false>(
  * - Personal time off (e.g., color_code: "#95E1D3" - teal)
  *
  */
-export const blockTime = <ThrowOnError extends boolean = false>(
-  options: Options<BlockTimeData, ThrowOnError>
+export const blockTimeSlots = <ThrowOnError extends boolean = false>(
+  options: Options<BlockTimeSlotsData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).post<BlockTimeResponses, BlockTimeErrors, ThrowOnError>({
+  return (options.client ?? _heyApiClient).post<
+    BlockTimeSlotsResponses,
+    BlockTimeSlotsErrors,
+    ThrowOnError
+  >({
     security: [
       {
         scheme: 'bearer',
@@ -7124,6 +7144,10 @@ export const blockTime = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/instructors/{instructorUuid}/availability/block',
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -9506,6 +9530,95 @@ export const generateCourseCertificate = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Create a booking for a course/instructor slot
+ */
+export const createBooking = <ThrowOnError extends boolean = false>(
+  options: Options<CreateBookingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateBookingResponses,
+    CreateBookingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createBookingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/bookings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Payment callback to update booking status
+ */
+export const paymentCallback = <ThrowOnError extends boolean = false>(
+  options: Options<PaymentCallbackData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    PaymentCallbackResponses,
+    PaymentCallbackErrors,
+    ThrowOnError
+  >({
+    responseTransformer: paymentCallbackResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/bookings/{bookingUuid}/payment-callback',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Cancel a booking and release the reserved slot
+ */
+export const cancelBooking = <ThrowOnError extends boolean = false>(
+  options: Options<CancelBookingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CancelBookingResponses,
+    CancelBookingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: cancelBookingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/bookings/{bookingUuid}/cancel',
+    ...options,
+  });
+};
+
+/**
  * Get all assignments
  * Retrieves paginated list of all assignments with filtering support.
  */
@@ -10000,7 +10113,7 @@ export const getCart = <ThrowOnError extends boolean = false>(
 
 /**
  * Update cart attributes
- * Updates cart metadata such as customer or addresses
+ * Updates cart details such as customer or addresses
  */
 export const updateCart = <ThrowOnError extends boolean = false>(
   options: Options<UpdateCartData, ThrowOnError>
@@ -13925,6 +14038,31 @@ export const getCourseCertificates = <ThrowOnError extends boolean = false>(
     url: '/api/v1/certificates/course-certificates',
     ...options,
   });
+};
+
+/**
+ * Get booking details
+ */
+export const getBooking = <ThrowOnError extends boolean = false>(
+  options: Options<GetBookingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetBookingResponses, GetBookingErrors, ThrowOnError>(
+    {
+      responseTransformer: getBookingResponseTransformer,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/bookings/{bookingUuid}',
+      ...options,
+    }
+  );
 };
 
 /**

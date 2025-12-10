@@ -199,6 +199,9 @@ import type {
   CreateCertificateTemplateResponse,
   GenerateProgramCertificateResponse,
   GenerateCourseCertificateResponse,
+  CreateBookingResponse,
+  PaymentCallbackResponse,
+  CancelBookingResponse,
   GetAllAssignmentsResponse,
   CreateAssignmentResponse,
   SubmitAssignmentResponse,
@@ -311,6 +314,7 @@ import type {
   GetProgramCertificates1Response,
   GetCertificateByNumberResponse,
   GetCourseCertificatesResponse,
+  GetBookingResponse,
   GetAssignmentSubmissionsResponse,
   GetHighPerformanceSubmissionsResponse,
   SearchSubmissionsResponse,
@@ -3511,6 +3515,49 @@ export const generateCourseCertificateResponseTransformer = async (
   return data;
 };
 
+const bookingResponseSchemaResponseTransformer = (data: any) => {
+  data.start_time = new Date(data.start_time);
+  data.end_time = new Date(data.end_time);
+  if (data.hold_expires_at) {
+    data.hold_expires_at = new Date(data.hold_expires_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponseBookingResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = bookingResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const createBookingResponseTransformer = async (
+  data: any
+): Promise<CreateBookingResponse> => {
+  data = apiResponseBookingResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const paymentCallbackResponseTransformer = async (
+  data: any
+): Promise<PaymentCallbackResponse> => {
+  data = apiResponseBookingResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const cancelBookingResponseTransformer = async (
+  data: any
+): Promise<CancelBookingResponse> => {
+  data = apiResponseBookingResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 const pagedDtoAssignmentSchemaResponseTransformer = (data: any) => {
   if (data.content) {
     data.content = data.content.map((item: any) => {
@@ -4737,6 +4784,11 @@ export const getCourseCertificatesResponseTransformer = async (
   data: any
 ): Promise<GetCourseCertificatesResponse> => {
   data = apiResponseListCertificateSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getBookingResponseTransformer = async (data: any): Promise<GetBookingResponse> => {
+  data = apiResponseBookingResponseSchemaResponseTransformer(data);
   return data;
 };
 

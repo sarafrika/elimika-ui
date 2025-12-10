@@ -1,18 +1,20 @@
 'use client';
 
+import { useMemo } from 'react';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'next/navigation';
+import { CheckCircle2, ExternalLink, ShieldAlert, ShoppingBag } from 'lucide-react';
+
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { extractEntity } from '@/lib/api-helpers';
-import { format } from 'date-fns';
-import { BookOpen, CheckCircle2, ShieldAlert, ShoppingBag } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
 import {
-  getCourseByUuidOptions,
   getClassDefinitionOptions,
+  getCourseByUuidOptions,
   resolveByCourseOrClassOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
@@ -91,8 +93,7 @@ export function CataloguePreviewSummary({
               Catalogue entry not found
             </CardTitle>
             <CardDescription>
-              We could not resolve a catalogue mapping for this course. Ensure it is published to the
-              catalogue.
+              We could not resolve a catalogue mapping for this course. Ensure it is published to the catalogue.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -102,104 +103,158 @@ export function CataloguePreviewSummary({
 
   const isActive = catalogueItem.active !== false;
   const isPublic = catalogueItem.publicly_visible !== false;
+  const pricing = (catalogueItem as { price?: number | string | null }).price ?? null;
+  const priceLabel =
+    pricing !== null && pricing !== undefined ? formatMoney(pricing, catalogueItem.currency_code) : 'No price set';
+
+  const typeLabel = useMemo(() => {
+    if (catalogueItem.course_uuid) return 'Course';
+    if (catalogueItem.class_definition_uuid) return 'Class';
+    return 'Item';
+  }, [catalogueItem.class_definition_uuid, catalogueItem.course_uuid]);
 
   return (
     <div className='mx-auto max-w-5xl space-y-6 p-6'>
       <Card>
-        <CardHeader className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-          <div className='space-y-2'>
+        <CardHeader className='space-y-2'>
+          <div className='flex flex-wrap items-center gap-2'>
             <Badge variant='outline' className='gap-2'>
               <ShoppingBag className='h-4 w-4' />
               Catalogue summary
             </Badge>
-            <CardTitle className='text-2xl font-semibold'>
-              {course?.title ?? course?.name ?? 'Catalogue item'}
-            </CardTitle>
-            <CardDescription>
-              {course?.description ? (
-                <HTMLTextPreview htmlContent={course.description} />
-              ) : (
-                'No course summary provided.'
-              )}
-            </CardDescription>
-          </div>
-          <div className='flex flex-wrap gap-2'>
             <Badge variant={isActive ? 'success' : 'secondary'} className='gap-1'>
               {isActive ? <CheckCircle2 className='h-3.5 w-3.5' /> : <ShieldAlert className='h-3.5 w-3.5' />}
               {isActive ? 'Active' : 'Inactive'}
             </Badge>
-            <Badge variant={isPublic ? 'outline' : 'secondary'} className='gap-1'>
+            <Badge variant={isPublic ? 'secondary' : 'outline'} className='gap-1'>
               {isPublic ? 'Public' : 'Private'}
             </Badge>
+            <Badge variant='outline'>{typeLabel}</Badge>
           </div>
+          <CardTitle className='text-2xl font-semibold'>
+            {course?.title ?? course?.name ?? classDefinition?.title ?? 'Catalogue item'}
+          </CardTitle>
+          <CardDescription>
+            {course?.description ? (
+              <HTMLTextPreview htmlContent={course.description} />
+            ) : (
+              'No course summary provided.'
+            )}
+          </CardDescription>
         </CardHeader>
-        <CardContent className='grid gap-4 md:grid-cols-2'>
-          <Detail
-            label='Course'
-            value={
-              catalogueItem.course_uuid
-                ? course?.title ??
-                  course?.name ??
-                  classDefinition?.course_uuid ??
+        <CardContent className='space-y-6'>
+          <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-3'>
+            <Detail label='Product code' value={catalogueItem.product_code ?? '—'} />
+            <Detail label='Variant code' value={catalogueItem.variant_code ?? '—'} />
+            <Detail label='Course ID' value={catalogueItem.course_uuid ?? '—'} />
+            <Detail label='Class ID' value={catalogueItem.class_definition_uuid ?? '—'} />
+            <Detail label='Currency' value={catalogueItem.currency_code ?? '—'} />
+            <Detail label='Created' value={formatDate(catalogueItem.created_date)} />
+            <Detail label='Updated' value={formatDate(catalogueItem.updated_date)} />
+          </div>
+
+          <div className='rounded-xl border bg-muted/40 p-4'>
+            <p className='text-xs uppercase tracking-wide text-muted-foreground'>Pricing</p>
+            <p className='mt-1 text-lg font-semibold text-foreground'>{priceLabel}</p>
+            <p className='text-muted-foreground text-sm'>
+              {catalogueItem.currency_code ? `Currency: ${catalogueItem.currency_code}` : 'Default currency applies.'}
+            </p>
+          </div>
+
+          <div className='rounded-xl border bg-card/80 p-4'>
+            <p className='text-xs uppercase tracking-wide text-muted-foreground'>Linked records</p>
+            <div className='mt-3 grid gap-3 md:grid-cols-2'>
+              <LinkedItem
+                label='Course'
+                value={
                   catalogueItem.course_uuid
-                : '—'
-            }
-          />
-          <Detail
-            label='Class'
-            value={
-              catalogueItem.class_definition_uuid
-                ? classDefinition?.title ??
-                  classDefinition?.name ??
-                  classDefinition?.uuid ??
+                    ? course?.title ?? course?.name ?? catalogueItem.course_uuid
+                    : '—'
+                }
+                href={
+                  catalogueItem.course_uuid
+                    ? `/dashboard/course-management/preview/${catalogueItem.course_uuid}`
+                    : undefined
+                }
+              />
+              <LinkedItem
+                label='Class'
+                value={
                   catalogueItem.class_definition_uuid
-                : '—'
-            }
-          />
-          <Detail label='Product code' value={catalogueItem.product_code ?? '—'} />
-          <Detail label='Variant code' value={catalogueItem.variant_code ?? '—'} />
-          <Detail label='Currency' value={catalogueItem.currency_code ?? '—'} />
-          <Detail
-            label='Created'
-            value={
-              catalogueItem.created_date
-                ? format(new Date(catalogueItem.created_date), 'dd MMM yyyy, HH:mm')
-                : '—'
-            }
-          />
-          <Detail
-            label='Updated'
-            value={
-              catalogueItem.updated_date
-                ? format(new Date(catalogueItem.updated_date), 'dd MMM yyyy, HH:mm')
-                : '—'
-            }
-          />
-          <Detail
-            label='Type'
-            value={
-              catalogueItem.course_uuid
-                ? 'Course'
-                : catalogueItem.class_definition_uuid
-                  ? 'Class'
-                  : 'Item'
-            }
-            icon={<BookOpen className='h-4 w-4 text-muted-foreground' />}
-          />
+                    ? classDefinition?.title ??
+                      classDefinition?.name ??
+                      catalogueItem.class_definition_uuid
+                    : '—'
+                }
+                href={
+                  catalogueItem.class_definition_uuid
+                    ? `/dashboard/trainings/overview/${catalogueItem.class_definition_uuid}`
+                    : undefined
+                }
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
 
-function Detail({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
+function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className='rounded-lg border border-border/60 bg-muted/40 p-3 text-sm'>
-      <p className='text-muted-foreground flex items-center gap-1 text-xs uppercase tracking-wide'>
-        {icon}
-        {label}
-      </p>
+    <div className='rounded-lg border border-dashed border-border/60 bg-muted/30 p-3 text-sm'>
+      <p className='text-muted-foreground text-xs uppercase tracking-wide'>{label}</p>
       <p className='mt-1 break-all font-semibold text-foreground'>{value}</p>
     </div>
   );
 }
+
+function LinkedItem({ label, value, href }: { label: string; value: string; href?: string }) {
+  if (!href) {
+    return (
+      <div className='rounded-lg border border-border/60 bg-muted/20 p-3'>
+        <p className='text-muted-foreground text-xs uppercase tracking-wide'>{label}</p>
+        <p className='mt-1 font-semibold text-foreground'>{value}</p>
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className='rounded-lg border border-border/60 bg-muted/10 p-3 transition hover:border-primary/50 hover:bg-primary/5'
+    >
+      <p className='text-muted-foreground flex items-center gap-1 text-xs uppercase tracking-wide'>
+        {label}
+        <ExternalLink className='h-3.5 w-3.5' />
+      </p>
+      <p className='mt-1 font-semibold text-foreground'>{value}</p>
+    </Link>
+  );
+}
+
+const formatDate = (value?: string | Date | null) => {
+  if (!value) return '—';
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '—';
+  return parsed.toLocaleString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const formatMoney = (amount: number | string | undefined | null, currency = 'KES') => {
+  if (amount === undefined || amount === null) return 'No price set';
+  const numeric = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (Number.isNaN(numeric)) return 'No price set';
+
+  return new Intl.NumberFormat('en-KE', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(numeric);
+};

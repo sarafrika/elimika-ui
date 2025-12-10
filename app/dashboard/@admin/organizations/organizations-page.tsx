@@ -29,7 +29,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Building2, Loader2, MapPin, Shield, ShieldOff } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -106,7 +106,7 @@ export default function AdminOrganisationsPage() {
   };
 
   return (
-    <div className='bg-background flex h-[calc(100vh-120px)] flex-col lg:flex-row'>
+    <div className='bg-background flex h-[calc(100vh-120px)] flex-col overflow-hidden lg:flex-row'>
       <OrganisationListPanel
         organisations={organisations}
         selectedOrganisationId={selectedOrganisationId}
@@ -261,6 +261,72 @@ function OrganisationListPanel({
   );
 }
 
+interface OrganisationSummaryProps {
+  organisation: AdminOrganisation;
+  variant?: 'default' | 'compact';
+}
+
+function OrganisationSummary({ organisation, variant = 'default' }: OrganisationSummaryProps) {
+  const gridColumns = variant === 'compact' ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3';
+  const containerPadding = variant === 'compact' ? 'p-4' : 'p-5';
+
+  return (
+    <div className={`rounded-2xl border border-border/60 bg-muted/30 ${containerPadding}`}>
+      <div className='flex items-start justify-between gap-3'>
+        <div className='space-y-1'>
+          <p className='text-xs uppercase tracking-wide text-muted-foreground'>Organisation overview</p>
+          <p className='text-lg font-semibold leading-tight'>{organisation.name}</p>
+          <p className='text-muted-foreground text-sm leading-relaxed'>
+            {organisation.description || 'No internal summary has been added yet.'}
+          </p>
+        </div>
+        <div className='flex flex-col items-end gap-2 text-right'>
+          <Badge variant={organisation.active ? 'secondary' : 'outline'} className='w-fit'>
+            {organisation.active ? 'Active' : 'Inactive'}
+          </Badge>
+          <Badge variant={organisation.admin_verified ? 'success' : 'secondary'} className='w-fit gap-1'>
+            {organisation.admin_verified ? <Shield className='h-3.5 w-3.5' /> : <ShieldOff className='h-3.5 w-3.5' />}
+            {organisation.admin_verified ? 'Verified' : 'Pending'}
+          </Badge>
+        </div>
+      </div>
+
+      <div className={`mt-4 grid gap-3 ${gridColumns}`}>
+        <DetailTile label='Primary location' value={organisation.location ?? 'Location not provided'} />
+        <DetailTile label='Country' value={organisation.country ?? '—'} />
+        <DetailTile label='Licence number' value={organisation.licence_no ?? 'Not provided'} />
+        <DetailTile label='Slug' value={organisation.slug ?? '—'} />
+        <DetailTile
+          label='Created'
+          value={organisation.created_date ? format(new Date(organisation.created_date), 'dd MMM yyyy, HH:mm') : '—'}
+        />
+        <DetailTile
+          label='Last updated'
+          value={organisation.updated_date ? format(new Date(organisation.updated_date), 'dd MMM yyyy, HH:mm') : '—'}
+        />
+        <DetailTile
+          label='UUID'
+          value={<span className='break-words text-xs font-medium text-muted-foreground'>{organisation.uuid ?? '—'}</span>}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface DetailTileProps {
+  label: string;
+  value: ReactNode;
+}
+
+function DetailTile({ label, value }: DetailTileProps) {
+  return (
+    <div className='rounded-xl border border-dashed border-border/60 bg-card/80 p-3'>
+      <p className='text-muted-foreground text-xs'>{label}</p>
+      <div className='mt-1 text-sm font-semibold leading-tight break-words'>{value}</div>
+    </div>
+  );
+}
+
 interface OrganisationDetailsPanelProps {
   organisation: AdminOrganisation | null;
 }
@@ -328,32 +394,43 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
   };
 
   return (
-    <div className='border-border/60 hidden w-full flex-col bg-card p-6 lg:flex lg:max-w-3xl lg:border-l'>
+    <div className='border-border/60 hidden w-full flex-col bg-card lg:flex lg:h-full lg:max-w-3xl lg:border-l'>
       {organisation ? (
-        <>
-          <div className='flex items-start justify-between gap-4'>
-            <div>
+        <div className='flex h-full flex-col overflow-hidden'>
+          <div className='border-border/60 flex items-start justify-between gap-4 border-b px-6 py-5'>
+            <div className='space-y-1'>
               <p className='text-xs uppercase tracking-wide text-muted-foreground'>Organisation profile</p>
-              <h2 className='mt-2 text-2xl font-semibold'>{organisation.name}</h2>
+              <h2 className='text-2xl font-semibold leading-tight'>{organisation.name}</h2>
               <p className='text-muted-foreground text-sm'>{organisation.location ?? 'Location not provided'}</p>
             </div>
-            <Badge variant={organisation.admin_verified ? 'success' : 'secondary'} className='gap-1'>
-              {organisation.admin_verified ? <Shield className='h-4 w-4' /> : <ShieldOff className='h-4 w-4' />}
-              {organisation.admin_verified ? 'Verified' : 'Pending'}
-            </Badge>
+            <div className='flex flex-col items-end gap-2'>
+              <Badge variant={organisation.admin_verified ? 'success' : 'secondary'} className='gap-1'>
+                {organisation.admin_verified ? <Shield className='h-4 w-4' /> : <ShieldOff className='h-4 w-4' />}
+                {organisation.admin_verified ? 'Verified' : 'Pending'}
+              </Badge>
+              <Badge variant={organisation.active ? 'secondary' : 'outline'}>
+                {organisation.active ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
           </div>
-          <OrganisationBranchesCard organisationUuid={organisation.uuid} />
-          <OrganisationDetailsForm
-            form={form}
-            onSubmit={handleSubmit}
-            isPending={updateOrganisation.isPending}
-            organisation={organisation}
-            onVerification={handleVerification}
-            isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
-          />
-        </>
+
+          <ScrollArea className='flex-1 px-6 py-5'>
+            <div className='space-y-6 pb-10'>
+              <OrganisationSummary organisation={organisation} />
+              <OrganisationBranchesCard organisationUuid={organisation.uuid} />
+              <OrganisationDetailsForm
+                form={form}
+                onSubmit={handleSubmit}
+                isPending={updateOrganisation.isPending}
+                organisation={organisation}
+                onVerification={handleVerification}
+                isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
+              />
+            </div>
+          </ScrollArea>
+        </div>
       ) : (
-        <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
+        <div className='flex h-full items-center justify-center px-6 text-sm text-muted-foreground'>
           Select an organisation from the list to begin a review.
         </div>
       )}
@@ -431,30 +508,35 @@ function OrganisationDetailSheet({ organisation, open, onOpenChange }: Organisat
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='w-full max-w-xl border-l'>
-        <SheetHeader>
-          <SheetTitle>Organisation profile</SheetTitle>
-          <SheetDescription>Update licensing metadata, activation status, and verification flags.</SheetDescription>
-        </SheetHeader>
-        <ScrollArea className='mt-4 flex-1 pr-3'>
-          {organisation ? (
-            <>
-              <OrganisationBranchesCard organisationUuid={organisation.uuid} variant='compact' />
-              <OrganisationDetailsForm
-                form={form}
-                onSubmit={handleSubmit}
-                isPending={updateOrganisation.isPending}
-                organisation={organisation}
-                onVerification={handleVerification}
-                isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
-              />
-            </>
-          ) : (
-            <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
-              Select an organisation to manage details.
-            </div>
-          )}
-        </ScrollArea>
+      <SheetContent className='w-full max-w-xl border-l p-0'>
+        <div className='flex h-full flex-col'>
+          <div className='border-b px-6 py-4'>
+            <SheetHeader>
+              <SheetTitle>Organisation profile</SheetTitle>
+              <SheetDescription>Update licensing metadata, activation status, and verification flags.</SheetDescription>
+            </SheetHeader>
+          </div>
+          <ScrollArea className='flex-1 px-6 py-4'>
+            {organisation ? (
+              <div className='space-y-6 pb-10'>
+                <OrganisationSummary organisation={organisation} variant='compact' />
+                <OrganisationBranchesCard organisationUuid={organisation.uuid} variant='compact' />
+                <OrganisationDetailsForm
+                  form={form}
+                  onSubmit={handleSubmit}
+                  isPending={updateOrganisation.isPending}
+                  organisation={organisation}
+                  onVerification={handleVerification}
+                  isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
+                />
+              </div>
+            ) : (
+              <div className='flex h-full items-center justify-center text-sm text-muted-foreground'>
+                Select an organisation to manage details.
+              </div>
+            )}
+          </ScrollArea>
+        </div>
       </SheetContent>
     </Sheet>
   );
@@ -483,7 +565,7 @@ function OrganisationDetailsForm({
 
   return (
     <Form {...form}>
-      <form className='mt-6 space-y-6 pb-6' onSubmit={form.handleSubmit(onSubmit)}>
+      <form className='space-y-6 pb-6' onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           control={form.control}
           name='name'
@@ -570,25 +652,6 @@ function OrganisationDetailsForm({
           )}
         />
 
-        <div className='rounded-xl border bg-muted/40 p-4 text-xs text-muted-foreground'>
-          <div className='grid gap-2 sm:grid-cols-2'>
-            <div>
-              <span className='font-medium text-foreground'>Created:</span>{' '}
-              {organisation?.created_date ? format(new Date(organisation.created_date), 'dd MMM yyyy, HH:mm') : '—'}
-            </div>
-            <div>
-              <span className='font-medium text-foreground'>Updated:</span>{' '}
-              {organisation?.updated_date ? format(new Date(organisation.updated_date), 'dd MMM yyyy, HH:mm') : '—'}
-            </div>
-            <div>
-              <span className='font-medium text-foreground'>Slug:</span> {organisation?.slug ?? '—'}
-            </div>
-            <div>
-              <span className='font-medium text-foreground'>UUID:</span> {organisation?.uuid ?? '—'}
-            </div>
-          </div>
-        </div>
-
         <div className='flex flex-col gap-3 sm:flex-row'>
           <Button
             type='button'
@@ -647,10 +710,10 @@ function OrganisationBranchesCard({ organisationUuid, variant = 'default' }: Org
 
   const branches = data?.items ?? [];
   const totalBranches = data?.totalItems ?? branches.length;
-  const wrapperMargin = variant === 'compact' ? 'mt-4' : 'mt-6';
+  const cardPadding = variant === 'compact' ? 'p-3' : 'p-4';
 
   return (
-    <div className={`rounded-2xl border border-border/60 bg-muted/30 p-4 ${wrapperMargin}`}>
+    <div className={`rounded-2xl border border-border/60 bg-muted/30 ${cardPadding}`}>
       <div className='flex items-center justify-between'>
         <div>
           <p className='text-xs uppercase tracking-wide text-muted-foreground'>Branches</p>

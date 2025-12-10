@@ -185,7 +185,7 @@ import {
   verifyDocument,
   uploadInstructorDocument,
   setAvailabilityPatterns,
-  blockTime,
+  blockTimeSlots,
   createLink,
   enrollStudent,
   joinWaitlist,
@@ -261,6 +261,9 @@ import {
   createCertificateTemplate,
   generateProgramCertificate,
   generateCourseCertificate,
+  createBooking,
+  paymentCallback,
+  cancelBooking,
   getAllAssignments,
   createAssignment,
   submitAssignment,
@@ -409,6 +412,7 @@ import {
   getProgramCertificates1,
   getCertificateByNumber,
   getCourseCertificates,
+  getBooking,
   getAssignmentSubmissions,
   getHighPerformanceSubmissions,
   getAverageScore,
@@ -914,9 +918,9 @@ import type {
   SetAvailabilityPatternsData,
   SetAvailabilityPatternsError,
   SetAvailabilityPatternsResponse,
-  BlockTimeData,
-  BlockTimeError,
-  BlockTimeResponse,
+  BlockTimeSlotsData,
+  BlockTimeSlotsError,
+  BlockTimeSlotsResponse,
   CreateLinkData,
   CreateLinkError,
   CreateLinkResponse,
@@ -1130,6 +1134,15 @@ import type {
   GenerateCourseCertificateData,
   GenerateCourseCertificateError,
   GenerateCourseCertificateResponse,
+  CreateBookingData,
+  CreateBookingError,
+  CreateBookingResponse,
+  PaymentCallbackData,
+  PaymentCallbackError,
+  PaymentCallbackResponse,
+  CancelBookingData,
+  CancelBookingError,
+  CancelBookingResponse,
   GetAllAssignmentsData,
   GetAllAssignmentsError,
   GetAllAssignmentsResponse,
@@ -1446,6 +1459,7 @@ import type {
   GetProgramCertificates1Data,
   GetCertificateByNumberData,
   GetCourseCertificatesData,
+  GetBookingData,
   GetAssignmentSubmissionsData,
   GetHighPerformanceSubmissionsData,
   GetAverageScoreData,
@@ -8291,17 +8305,17 @@ export const setAvailabilityPatternsMutation = (
   return mutationOptions;
 };
 
-export const blockTimeQueryKey = (options: Options<BlockTimeData>) =>
-  createQueryKey('blockTime', options);
+export const blockTimeSlotsQueryKey = (options: Options<BlockTimeSlotsData>) =>
+  createQueryKey('blockTimeSlots', options);
 
 /**
  * Block time for an instructor
- * Blocks a specific time period for an instructor, making them unavailable.
+ * Blocks one or more specific time periods for an instructor, making them unavailable.
  *
- * This creates availability slots with isAvailable = false, which override
+ * Each slot creates availability entries with isAvailable = false, which override
  * any existing availability patterns for that time period.
  *
- * You can optionally provide a color code (hex format) to categorize and
+ * You can optionally provide color codes (hex format) to categorize and
  * visually distinguish different types of blocked times on the frontend.
  *
  * Common use cases:
@@ -8311,10 +8325,10 @@ export const blockTimeQueryKey = (options: Options<BlockTimeData>) =>
  * - Personal time off (e.g., color_code: "#95E1D3" - teal)
  *
  */
-export const blockTimeOptions = (options: Options<BlockTimeData>) => {
+export const blockTimeSlotsOptions = (options: Options<BlockTimeSlotsData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await blockTime({
+      const { data } = await blockTimeSlots({
         ...options,
         ...queryKey[0],
         signal,
@@ -8322,22 +8336,18 @@ export const blockTimeOptions = (options: Options<BlockTimeData>) => {
       });
       return data;
     },
-    queryKey: blockTimeQueryKey(options),
+    queryKey: blockTimeSlotsQueryKey(options),
   });
 };
 
-export const blockTimeInfiniteQueryKey = (
-  options: Options<BlockTimeData>
-): QueryKey<Options<BlockTimeData>> => createQueryKey('blockTime', options, true);
-
 /**
  * Block time for an instructor
- * Blocks a specific time period for an instructor, making them unavailable.
+ * Blocks one or more specific time periods for an instructor, making them unavailable.
  *
- * This creates availability slots with isAvailable = false, which override
+ * Each slot creates availability entries with isAvailable = false, which override
  * any existing availability patterns for that time period.
  *
- * You can optionally provide a color code (hex format) to categorize and
+ * You can optionally provide color codes (hex format) to categorize and
  * visually distinguish different types of blocked times on the frontend.
  *
  * Common use cases:
@@ -8347,70 +8357,16 @@ export const blockTimeInfiniteQueryKey = (
  * - Personal time off (e.g., color_code: "#95E1D3" - teal)
  *
  */
-export const blockTimeInfiniteOptions = (options: Options<BlockTimeData>) => {
-  return infiniteQueryOptions<
-    BlockTimeResponse,
-    BlockTimeError,
-    InfiniteData<BlockTimeResponse>,
-    QueryKey<Options<BlockTimeData>>,
-    Date | Pick<QueryKey<Options<BlockTimeData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<BlockTimeData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  start: pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await blockTime({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: blockTimeInfiniteQueryKey(options),
-    }
-  );
-};
-
-/**
- * Block time for an instructor
- * Blocks a specific time period for an instructor, making them unavailable.
- *
- * This creates availability slots with isAvailable = false, which override
- * any existing availability patterns for that time period.
- *
- * You can optionally provide a color code (hex format) to categorize and
- * visually distinguish different types of blocked times on the frontend.
- *
- * Common use cases:
- * - Marking vacation time (e.g., color_code: "#FF6B6B" - red)
- * - Blocking time for meetings (e.g., color_code: "#FFD93D" - yellow)
- * - Indicating sick leave (e.g., color_code: "#FFA07A" - orange)
- * - Personal time off (e.g., color_code: "#95E1D3" - teal)
- *
- */
-export const blockTimeMutation = (
-  options?: Partial<Options<BlockTimeData>>
-): UseMutationOptions<BlockTimeResponse, BlockTimeError, Options<BlockTimeData>> => {
+export const blockTimeSlotsMutation = (
+  options?: Partial<Options<BlockTimeSlotsData>>
+): UseMutationOptions<BlockTimeSlotsResponse, BlockTimeSlotsError, Options<BlockTimeSlotsData>> => {
   const mutationOptions: UseMutationOptions<
-    BlockTimeResponse,
-    BlockTimeError,
-    Options<BlockTimeData>
+    BlockTimeSlotsResponse,
+    BlockTimeSlotsError,
+    Options<BlockTimeSlotsData>
   > = {
     mutationFn: async localOptions => {
-      const { data } = await blockTime({
+      const { data } = await blockTimeSlots({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12619,6 +12575,142 @@ export const generateCourseCertificateMutation = (
   return mutationOptions;
 };
 
+export const createBookingQueryKey = (options: Options<CreateBookingData>) =>
+  createQueryKey('createBooking', options);
+
+/**
+ * Create a booking for a course/instructor slot
+ */
+export const createBookingOptions = (options: Options<CreateBookingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createBooking({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createBookingQueryKey(options),
+  });
+};
+
+/**
+ * Create a booking for a course/instructor slot
+ */
+export const createBookingMutation = (
+  options?: Partial<Options<CreateBookingData>>
+): UseMutationOptions<CreateBookingResponse, CreateBookingError, Options<CreateBookingData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateBookingResponse,
+    CreateBookingError,
+    Options<CreateBookingData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createBooking({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const paymentCallbackQueryKey = (options: Options<PaymentCallbackData>) =>
+  createQueryKey('paymentCallback', options);
+
+/**
+ * Payment callback to update booking status
+ */
+export const paymentCallbackOptions = (options: Options<PaymentCallbackData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await paymentCallback({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: paymentCallbackQueryKey(options),
+  });
+};
+
+/**
+ * Payment callback to update booking status
+ */
+export const paymentCallbackMutation = (
+  options?: Partial<Options<PaymentCallbackData>>
+): UseMutationOptions<
+  PaymentCallbackResponse,
+  PaymentCallbackError,
+  Options<PaymentCallbackData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PaymentCallbackResponse,
+    PaymentCallbackError,
+    Options<PaymentCallbackData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await paymentCallback({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const cancelBookingQueryKey = (options: Options<CancelBookingData>) =>
+  createQueryKey('cancelBooking', options);
+
+/**
+ * Cancel a booking and release the reserved slot
+ */
+export const cancelBookingOptions = (options: Options<CancelBookingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await cancelBooking({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: cancelBookingQueryKey(options),
+  });
+};
+
+/**
+ * Cancel a booking and release the reserved slot
+ */
+export const cancelBookingMutation = (
+  options?: Partial<Options<CancelBookingData>>
+): UseMutationOptions<CancelBookingResponse, CancelBookingError, Options<CancelBookingData>> => {
+  const mutationOptions: UseMutationOptions<
+    CancelBookingResponse,
+    CancelBookingError,
+    Options<CancelBookingData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await cancelBooking({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAllAssignmentsQueryKey = (options: Options<GetAllAssignmentsData>) =>
   createQueryKey('getAllAssignments', options);
 
@@ -13386,7 +13478,7 @@ export const getCartOptions = (options: Options<GetCartData>) => {
 
 /**
  * Update cart attributes
- * Updates cart metadata such as customer or addresses
+ * Updates cart details such as customer or addresses
  */
 export const updateCartMutation = (
   options?: Partial<Options<UpdateCartData>>
@@ -19863,6 +19955,27 @@ export const getCourseCertificatesOptions = (options?: Options<GetCourseCertific
       return data;
     },
     queryKey: getCourseCertificatesQueryKey(options),
+  });
+};
+
+export const getBookingQueryKey = (options: Options<GetBookingData>) =>
+  createQueryKey('getBooking', options);
+
+/**
+ * Get booking details
+ */
+export const getBookingOptions = (options: Options<GetBookingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getBooking({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getBookingQueryKey(options),
   });
 };
 

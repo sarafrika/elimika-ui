@@ -665,6 +665,13 @@ export const zRubricScoringLevel = z
       .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
       .readonly()
       .optional(),
+    is_highest_level: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).'
+      )
+      .readonly()
+      .optional(),
     performance_indicator: z
       .string()
       .describe(
@@ -675,13 +682,6 @@ export const zRubricScoringLevel = z
     css_color_class: z
       .string()
       .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
-      .readonly()
-      .optional(),
-    is_highest_level: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).'
-      )
       .readonly()
       .optional(),
   })
@@ -857,17 +857,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
-      .readonly()
-      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1902,17 +1902,17 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    formatted_location: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
-      )
-      .readonly()
-      .optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
+      )
+      .readonly()
+      .optional(),
+    formatted_location: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
       )
       .readonly()
       .optional(),
@@ -2121,6 +2121,16 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
+    formatted_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
+      .readonly()
+      .optional(),
     membership_duration_months: z
       .number()
       .int()
@@ -2154,16 +2164,6 @@ export const zInstructorProfessionalMembership = z
     is_recent_membership: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
-      .readonly()
-      .optional(),
-    formatted_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -2285,17 +2285,9 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    duration_in_months: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
-      )
-      .readonly()
-      .optional(),
-    formatted_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration of employment.')
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
     employment_period: z
@@ -2324,9 +2316,17 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+    duration_in_months: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
+      )
+      .readonly()
+      .optional(),
+    formatted_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration of employment.')
       .readonly()
       .optional(),
   })
@@ -2431,6 +2431,11 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .readonly()
+      .optional(),
     is_recent_qualification: z
       .boolean()
       .describe(
@@ -2455,11 +2460,6 @@ export const zInstructorEducation = z
       .describe(
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -4808,16 +4808,6 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    certificate_type: z
-      .string()
-      .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
-      .readonly()
-      .optional(),
-    is_downloadable: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
-      .readonly()
-      .optional(),
     grade_letter: z
       .string()
       .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
@@ -4826,6 +4816,16 @@ export const zCertificate = z
     validity_status: z
       .string()
       .describe('**[READ-ONLY]** Current validity status of the certificate.')
+      .readonly()
+      .optional(),
+    certificate_type: z
+      .string()
+      .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
+      .readonly()
+      .optional(),
+    is_downloadable: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
       .readonly()
       .optional(),
   })
@@ -5049,11 +5049,6 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
-      .readonly()
-      .optional(),
     assignment_scope: z
       .string()
       .describe('**[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.')
@@ -5062,6 +5057,11 @@ export const zAssignment = z
     submission_summary: z
       .string()
       .describe('**[READ-ONLY]** Summary of accepted submission types for this assignment.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
   })
@@ -5524,6 +5524,38 @@ export const zApiResponseInstructorReview = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+/**
+ * Represents a single blocked time slot window for an instructor.
+ */
+export const zBlockedTimeSlotRequest = z
+  .object({
+    start_time: z
+      .string()
+      .datetime()
+      .describe('**[REQUIRED]** Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+    end_time: z
+      .string()
+      .datetime()
+      .describe('**[REQUIRED]** End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+    color_code: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .describe('**[OPTIONAL]** Hex color code used to visualize the blocked slot.')
+      .optional(),
+  })
+  .describe('Represents a single blocked time slot window for an instructor.');
+
+/**
+ * Payload used to block multiple time slots for an instructor.
+ */
+export const zBlockTimeSlotsRequest = z
+  .object({
+    slots: z
+      .array(zBlockedTimeSlotRequest)
+      .describe('**[REQUIRED]** Collection of blocked slots to create.'),
+  })
+  .describe('Payload used to block multiple time slots for an instructor.');
+
 export const zRelationshipTypeEnum = z.enum(['PARENT', 'GUARDIAN', 'SPONSOR']);
 
 export const zShareScopeEnum = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
@@ -5651,14 +5683,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
-    status_description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
     did_attend: z
@@ -5666,9 +5698,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+    status_description: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
   })
@@ -5858,7 +5890,9 @@ export const zCartItemResponse = z
       .optional(),
     metadata: z
       .record(z.record(z.unknown()))
-      .describe('Custom metadata captured for the line item')
+      .describe(
+        'System-managed metadata describing the catalogue context for the line item (read-only)'
+      )
       .optional(),
   })
   .describe('A single line item attached to a cart');
@@ -5943,7 +5977,7 @@ export const zCartResponse = z
   .describe('Cart summary returned to clients consuming the commerce APIs');
 
 /**
- * Line item definition used when creating or updating a cart
+ * Line item definition used when creating or updating a cart (metadata is system-managed)
  */
 export const zCartLineItemRequest = z
   .object({
@@ -5951,12 +5985,10 @@ export const zCartLineItemRequest = z
       .string()
       .describe('Identifier of the internal product variant to add to the cart'),
     quantity: z.number().int().gte(1).describe('Quantity of the variant to add to the cart'),
-    metadata: z
-      .record(z.record(z.unknown()))
-      .describe('Optional metadata persisted with the line item')
-      .optional(),
   })
-  .describe('Line item definition used when creating or updating a cart');
+  .describe(
+    'Line item definition used when creating or updating a cart (metadata is system-managed)'
+  );
 
 /**
  * Request body for creating a new cart
@@ -5965,10 +5997,6 @@ export const zCreateCartRequest = z
   .object({
     currency_code: z.string().describe('Currency code the cart is priced in'),
     region_code: z.string().describe('Optional region code for pricing rules').optional(),
-    metadata: z
-      .record(z.record(z.unknown()))
-      .describe('Arbitrary metadata stored with the cart')
-      .optional(),
     items: z.array(zCartLineItemRequest).optional(),
   })
   .describe('Request body for creating a new cart');
@@ -6194,9 +6222,105 @@ export const zApiResponseClassAssignmentSchedule = z.object({
 });
 
 /**
- * **[REQUIRED]** Current status of the submission in the grading workflow.
+ * Request payload for creating a booking for an instructor and course
+ */
+export const zCreateBookingRequest = z
+  .object({
+    student_uuid: z.string().uuid().describe('UUID of the student creating the booking'),
+    course_uuid: z.string().uuid().describe('UUID of the course being booked'),
+    instructor_uuid: z.string().uuid().describe('UUID of the instructor for the session'),
+    start_time: z.string().datetime().describe('Start time for the requested session'),
+    end_time: z.string().datetime().describe('End time for the requested session'),
+    price_amount: z.number().gte(0).describe('Agreed price for the session').optional(),
+    currency: z
+      .string()
+      .regex(/^[A-Za-z]{3}$/)
+      .describe('ISO currency code (e.g., USD, KES)')
+      .optional(),
+    purpose: z
+      .string()
+      .min(0)
+      .max(500)
+      .describe('Optional purpose or note for this booking')
+      .optional(),
+  })
+  .describe('Request payload for creating a booking for an instructor and course');
+
+/**
+ * Current status of the booking
  */
 export const zStatusEnum8 = z
+  .enum(['payment_required', 'confirmed', 'cancelled', 'payment_failed', 'expired'])
+  .describe('Current status of the booking');
+
+/**
+ * Booking details returned to clients
+ */
+export const zBookingResponse = z
+  .object({
+    uuid: z.string().uuid().describe('Unique booking identifier'),
+    student_uuid: z.string().uuid().describe('UUID of the student who created the booking'),
+    course_uuid: z.string().uuid().describe('UUID of the course tied to the booking'),
+    instructor_uuid: z.string().uuid().describe('UUID of the instructor for the session'),
+    start_time: z.string().datetime().describe('Start time for the session'),
+    end_time: z.string().datetime().describe('End time for the session'),
+    status: zStatusEnum8,
+    price_amount: z.number().describe('Price amount agreed for the booking').optional(),
+    currency: z.string().describe('ISO currency code for the booking price').optional(),
+    payment_session_id: z
+      .string()
+      .describe('Payment session identifier from the payment engine')
+      .optional(),
+    payment_reference: z
+      .string()
+      .describe('Payment reference supplied by the payment engine')
+      .optional(),
+    payment_engine: z.string().describe('Payment engine used for this booking').optional(),
+    hold_expires_at: z
+      .string()
+      .datetime()
+      .describe('When the hold on the slot expires if unpaid')
+      .optional(),
+    availability_block_uuid: z
+      .string()
+      .uuid()
+      .describe('UUID of the availability block created for this booking')
+      .optional(),
+    purpose: z.string().describe('Purpose or note for this booking').optional(),
+    created_date: z.string().datetime().describe('Creation timestamp').optional(),
+    updated_date: z.string().datetime().describe('Last update timestamp').optional(),
+  })
+  .describe('Booking details returned to clients');
+
+export const zApiResponseBookingResponse = z.object({
+  success: z.boolean().optional(),
+  data: zBookingResponse.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Payment status reported by the engine
+ */
+export const zPaymentStatusEnum = z
+  .enum(['succeeded', 'failed'])
+  .describe('Payment status reported by the engine');
+
+/**
+ * Callback payload used by payment engine to update booking status
+ */
+export const zBookingPaymentUpdateRequest = z
+  .object({
+    payment_reference: z.string().describe('Payment reference provided by the payment engine'),
+    payment_status: zPaymentStatusEnum,
+    payment_engine: z.string().describe('Payment engine identifier').optional(),
+  })
+  .describe('Callback payload used by payment engine to update booking status');
+
+/**
+ * **[REQUIRED]** Current status of the submission in the grading workflow.
+ */
+export const zStatusEnum9 = z
   .enum(['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'])
   .describe('**[REQUIRED]** Current status of the submission in the grading workflow.');
 
@@ -6238,7 +6362,7 @@ export const zAssignmentSubmission = z
       .datetime()
       .describe('**[OPTIONAL]** Timestamp when the submission was made by the student.')
       .optional(),
-    status: zStatusEnum8,
+    status: zStatusEnum9,
     score: z
       .number()
       .gte(0)
@@ -6405,10 +6529,6 @@ export const zUpdateCartRequest = z
     customer_id: z.string().describe('Customer identifier to associate with the cart').optional(),
     shipping_address_id: z.string().describe('Shipping address identifier').optional(),
     billing_address_id: z.string().describe('Billing address identifier').optional(),
-    metadata: z
-      .record(z.record(z.unknown()))
-      .describe('Optional metadata map stored with the cart')
-      .optional(),
   })
   .describe('Fields that can be patched on an existing cart');
 
@@ -6651,7 +6771,7 @@ export const zApiResponsePagedDtoQuizQuestionOption = z.object({
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const zStatusEnum9 = z
+export const zStatusEnum10 = z
   .enum(['IN_PROGRESS', 'SUBMITTED', 'GRADED'])
   .describe('**[REQUIRED]** Current status of the quiz attempt.');
 
@@ -6722,7 +6842,7 @@ export const zQuizAttempt = z
         '**[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.'
       )
       .optional(),
-    status: zStatusEnum9,
+    status: zStatusEnum10,
     created_date: z
       .string()
       .datetime()
@@ -6838,7 +6958,7 @@ export const zApiResponsePagedDtoProgramRequirement = z.object({
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const zStatusEnum10 = z
+export const zStatusEnum11 = z
   .enum(['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'])
   .describe("**[REQUIRED]** Current status of the student's enrollment in the program.");
 
@@ -6875,7 +6995,7 @@ export const zProgramEnrollment = z
         '**[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.'
       )
       .optional(),
-    status: zStatusEnum10,
+    status: zStatusEnum11,
     progress_percentage: z
       .number()
       .gte(0)
@@ -7549,7 +7669,7 @@ export const zCourseEnrollment = z
         '**[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.'
       )
       .optional(),
-    status: zStatusEnum10,
+    status: zStatusEnum11,
     progress_percentage: z
       .number()
       .gte(0)
@@ -10830,31 +10950,18 @@ export const zSetAvailabilityPatternsData = z.object({
  */
 export const zSetAvailabilityPatternsResponse = zApiResponseVoid;
 
-export const zBlockTimeData = z.object({
-  body: z.never().optional(),
+export const zBlockTimeSlotsData = z.object({
+  body: zBlockTimeSlotsRequest,
   path: z.object({
     instructorUuid: z.string().uuid().describe('UUID of the instructor'),
   }),
-  query: z.object({
-    start: z
-      .string()
-      .datetime()
-      .describe('Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
-    end: z
-      .string()
-      .datetime()
-      .describe('End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
-    color_code: z
-      .string()
-      .describe('Optional hex color code for UI visualization (e.g., #FF6B6B)')
-      .optional(),
-  }),
+  query: z.never().optional(),
 });
 
 /**
- * Time blocked successfully
+ * Time slots blocked successfully
  */
-export const zBlockTimeResponse = zApiResponseVoid;
+export const zBlockTimeSlotsResponse = zApiResponseVoid;
 
 export const zCreateLinkData = z.object({
   body: zGuardianStudentLinkRequest,
@@ -11893,6 +12000,43 @@ export const zGenerateCourseCertificateData = z.object({
  * Certificate generated successfully
  */
 export const zGenerateCourseCertificateResponse = zApiResponseCertificate;
+
+export const zCreateBookingData = z.object({
+  body: zCreateBookingRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateBookingResponse = zApiResponseBookingResponse;
+
+export const zPaymentCallbackData = z.object({
+  body: zBookingPaymentUpdateRequest,
+  path: z.object({
+    bookingUuid: z.string().uuid().describe('Booking UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zPaymentCallbackResponse = zApiResponseBookingResponse;
+
+export const zCancelBookingData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    bookingUuid: z.string().uuid().describe('Booking UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCancelBookingResponse = zApiResponseBookingResponse;
 
 export const zGetAllAssignmentsData = z.object({
   body: z.never().optional(),
@@ -14007,6 +14151,19 @@ export const zGetCourseCertificatesData = z.object({
  * OK
  */
 export const zGetCourseCertificatesResponse = zApiResponseListCertificate;
+
+export const zGetBookingData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    bookingUuid: z.string().uuid().describe('Booking UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetBookingResponse = zApiResponseBookingResponse;
 
 export const zGetAssignmentSubmissionsData = z.object({
   body: z.never().optional(),

@@ -535,7 +535,7 @@ export default function OrganisationOverviewPage() {
             isActivityLoading={isActivityFeedLoading}
             activityError={activityFeedError}
           />
-          <PurchasableCatalogue />
+          <PurchasableCatalogue scope='organization' />
           <CardShell
             title='Branches + people snapshot'
             subtitle='Quick glance at recent entities.'

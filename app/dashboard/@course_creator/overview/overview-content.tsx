@@ -66,7 +66,7 @@ export default function CourseCreatorOverviewContent() {
           <MetricsGrid metrics={metrics} />
           <MonetizationCard monetization={monetization} />
           <TrainingRequirementsCard trainingRequirements={trainingRequirements} />
-          <PurchasableCatalogue />
+          <PurchasableCatalogue scope='course_creator' />
         </>
       }
     />
