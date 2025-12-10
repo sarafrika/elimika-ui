@@ -35,13 +35,17 @@ export default function OrganisationProvider({
   const userDomain = useUserDomain();
   const router = useRouter();
 
-  const activeOrgId =
+  const activeAffiliation =
     userProfile?.organisation_affiliations && userProfile.organisation_affiliations.length > 0
-      ? (
-          userProfile.organisation_affiliations.find(org => org.active) ??
-          userProfile.organisation_affiliations[0]
-        )?.organisationUuid
+      ? userProfile.organisation_affiliations.find(org => org.active) ??
+        userProfile.organisation_affiliations[0]
       : null;
+
+  const activeOrgId =
+    activeAffiliation?.organisationUuid ??
+    // API returns snake_case; keep fallback for any camel-cased variants
+    activeAffiliation?.organisation_uuid ??
+    null;
 
   const hasOrgDomain = userDomain.domains.includes('organisation') || userDomain.domains.includes('organisation_user');
 
