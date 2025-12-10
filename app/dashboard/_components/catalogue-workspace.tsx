@@ -29,6 +29,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
+import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
 import {
   getClassDefinitionOptions,
@@ -37,7 +38,13 @@ import {
   getInstructorByUuidOptions,
   listCatalogItemsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ClassDefinition, CommerceCatalogueItem, Course, CourseCreator, Instructor } from '@/services/client';
+import type {
+  ClassDefinition,
+  CommerceCatalogueItem,
+  Course,
+  CourseCreator,
+  Instructor,
+} from '@/services/client';
 
 type CatalogueScope = 'admin' | 'organization' | 'instructor' | 'course_creator';
 
@@ -58,6 +65,9 @@ type CatalogueRow = {
   detailsHref: string | null;
   raw: CommerceCatalogueItem;
 };
+
+type CatalogueItemWithOrganisation = CommerceCatalogueItem & { organisation_uuid?: string | null };
+type CourseWithOrganisation = Course & { organisation_uuid?: string | null };
 
 type TitleMaps = {
   courseTitleMap: Map<string, string>;
@@ -250,6 +260,7 @@ export function CatalogueWorkspace({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [displayLimit, setDisplayLimit] = useState(20);
   const profile = useUserProfile();
+  const organisation = useOrganisation();
 
   const fetchActiveOnly = scope === 'admin' ? false : !includeHidden;
 
@@ -274,6 +285,7 @@ export function CatalogueWorkspace({
   const rowsWithTitles = useMemo(() => attachTitles(rows, titleMaps), [rows, titleMaps]);
 
   const activeOrgUuid = useMemo(() => {
+    if (organisation?.uuid) return organisation.uuid;
     const affiliations = profile?.organisation_affiliations ?? [];
     const activeAffiliation = affiliations.find(aff => aff.active);
     return (
@@ -282,7 +294,37 @@ export function CatalogueWorkspace({
       profile?.organizations?.[0]?.uuid ??
       null
     );
-  }, [profile?.organisation_affiliations, profile?.organizations]);
+  }, [organisation?.uuid, profile?.organisation_affiliations, profile?.organizations]);
+
+  const getOrganisationUuidForRow = useMemo(() => {
+    return (row: CatalogueRow) => {
+      const itemOrg = (row.raw as CatalogueItemWithOrganisation).organisation_uuid;
+      if (itemOrg) return itemOrg;
+
+      const classDef = row.classId ? titleMaps.classMap.get(row.classId) : undefined;
+      if (classDef?.organisation_uuid) {
+        return classDef.organisation_uuid;
+      }
+
+      const course = row.courseId ? titleMaps.courseMap.get(row.courseId) : undefined;
+      const courseOrg = course ? (course as CourseWithOrganisation).organisation_uuid : undefined;
+      if (courseOrg) {
+        return courseOrg;
+      }
+
+      if (classDef?.course_uuid) {
+        const linkedCourse = titleMaps.courseMap.get(classDef.course_uuid);
+        const linkedOrg = linkedCourse
+          ? (linkedCourse as CourseWithOrganisation).organisation_uuid
+          : undefined;
+        if (linkedOrg) {
+          return linkedOrg;
+        }
+      }
+
+      return null;
+    };
+  }, [titleMaps.classMap, titleMaps.courseMap]);
 
   const filterRowsByScope = useMemo(() => {
     return (row: CatalogueRow) => {
@@ -290,12 +332,10 @@ export function CatalogueWorkspace({
         case 'admin':
           return true;
         case 'organization': {
-          if (!activeOrgUuid) return true;
-          const classDef = row.classId ? titleMaps.classMap.get(row.classId) : undefined;
-          if (classDef?.organisation_uuid) {
-            return classDef.organisation_uuid === activeOrgUuid;
-          }
-          return true;
+          if (!activeOrgUuid) return false;
+          const owningOrgUuid = getOrganisationUuidForRow(row);
+          if (!owningOrgUuid) return false;
+          return owningOrgUuid === activeOrgUuid;
         }
         case 'instructor': {
           const instructorUuid = profile?.instructor?.uuid;
@@ -324,7 +364,7 @@ export function CatalogueWorkspace({
           return true;
       }
     };
-  }, [scope, activeOrgUuid, profile?.courseCreator?.uuid, profile?.instructor?.uuid, titleMaps.classMap, titleMaps.courseMap]);
+  }, [scope, activeOrgUuid, profile?.courseCreator?.uuid, profile?.instructor?.uuid, titleMaps.classMap, titleMaps.courseMap, getOrganisationUuidForRow]);
 
   const scopedRows = useMemo(
     () => rowsWithTitles.filter(filterRowsByScope),
