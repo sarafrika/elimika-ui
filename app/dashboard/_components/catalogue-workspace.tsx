@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { useUserProfile } from '@/context/profile-context';
 import { extractEntity } from '@/lib/api-helpers';
 import {
   getClassDefinitionOptions,
@@ -45,6 +46,8 @@ type CatalogueRow = {
 type TitleMaps = {
   courseTitleMap: Map<string, string>;
   classTitleMap: Map<string, string>;
+  courseMap: Map<string, Course>;
+  classMap: Map<string, ClassDefinition>;
 };
 
 const scopeCopy: Record<
@@ -169,7 +172,29 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     return map;
   }, [classIds, classQueries]);
 
-  return { courseTitleMap, classTitleMap };
+  const courseMap = useMemo(() => {
+    const map = new Map<string, Course>();
+    courseQueries.forEach((query, index) => {
+      const course = extractEntity<Course>(query.data);
+      if (course) {
+        map.set(courseIds[index], course);
+      }
+    });
+    return map;
+  }, [courseIds, courseQueries]);
+
+  const classMap = useMemo(() => {
+    const map = new Map<string, ClassDefinition>();
+    classQueries.forEach((query, index) => {
+      const classDef = extractEntity<ClassDefinition>(query.data);
+      if (classDef) {
+        map.set(classIds[index], classDef);
+      }
+    });
+    return map;
+  }, [classIds, classQueries]);
+
+  return { courseTitleMap, classTitleMap, courseMap, classMap };
 };
 
 const attachTitles = (rows: CatalogueRow[], maps: TitleMaps): CatalogueRow[] =>
@@ -208,6 +233,7 @@ export function CatalogueWorkspace({
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const profile = useUserProfile();
 
   const fetchActiveOnly = scope === 'admin' ? false : !includeHidden;
 
@@ -231,8 +257,66 @@ export function CatalogueWorkspace({
   const titleMaps = useTitleMaps(rows);
   const rowsWithTitles = useMemo(() => attachTitles(rows, titleMaps), [rows, titleMaps]);
 
+  const activeOrgUuid = useMemo(() => {
+    const affiliations = profile?.organisation_affiliations ?? [];
+    const activeAffiliation = affiliations.find(aff => aff.active);
+    return (
+      activeAffiliation?.organisation_uuid ??
+      affiliations[0]?.organisation_uuid ??
+      profile?.organizations?.[0]?.uuid ??
+      null
+    );
+  }, [profile?.organisation_affiliations, profile?.organizations]);
+
+  const filterRowsByScope = useMemo(() => {
+    return (row: CatalogueRow) => {
+      switch (scope) {
+        case 'admin':
+          return true;
+        case 'organization': {
+          if (!activeOrgUuid) return true;
+          const classDef = row.classId ? titleMaps.classMap.get(row.classId) : undefined;
+          if (classDef?.organisation_uuid) {
+            return classDef.organisation_uuid === activeOrgUuid;
+          }
+          return true;
+        }
+        case 'instructor': {
+          const instructorUuid = profile?.instructor?.uuid;
+          if (!instructorUuid) return true;
+          const classDef = row.classId ? titleMaps.classMap.get(row.classId) : undefined;
+          const classMatches = classDef?.default_instructor_uuid === instructorUuid;
+          const course = row.courseId ? titleMaps.courseMap.get(row.courseId) : undefined;
+          const courseMatches = course?.course_creator_uuid === instructorUuid;
+          return classMatches || courseMatches;
+        }
+        case 'course_creator': {
+          const creatorUuid = profile?.courseCreator?.uuid;
+          if (!creatorUuid) return true;
+          const course = row.courseId ? titleMaps.courseMap.get(row.courseId) : undefined;
+          const directCourseMatch = course?.course_creator_uuid === creatorUuid;
+          const classCourseMatch = (() => {
+            if (!row.classId) return false;
+            const classDef = titleMaps.classMap.get(row.classId);
+            if (!classDef?.course_uuid) return false;
+            const linkedCourse = titleMaps.courseMap.get(classDef.course_uuid);
+            return linkedCourse?.course_creator_uuid === creatorUuid;
+          })();
+          return directCourseMatch || classCourseMatch;
+        }
+        default:
+          return true;
+      }
+    };
+  }, [scope, activeOrgUuid, profile?.courseCreator?.uuid, profile?.instructor?.uuid, titleMaps.classMap, titleMaps.courseMap]);
+
+  const scopedRows = useMemo(
+    () => rowsWithTitles.filter(filterRowsByScope),
+    [rowsWithTitles, filterRowsByScope]
+  );
+
   const filteredRows = useMemo(() => {
-    let result = rowsWithTitles;
+    let result = scopedRows;
 
     if (!includeHidden) {
       result = result.filter(row => row.isActive && row.isPublic);
@@ -267,7 +351,7 @@ export function CatalogueWorkspace({
       const bDate = toTimestamp(b.updatedAt ?? b.createdAt);
       return bDate - aDate;
     });
-  }, [includeHidden, rowsWithTitles, typeFilter, statusFilter, visibilityFilter, searchQuery]);
+  }, [includeHidden, scopedRows, typeFilter, statusFilter, visibilityFilter, searchQuery]);
 
   useEffect(() => {
     if (filteredRows.length === 0) {
@@ -282,12 +366,12 @@ export function CatalogueWorkspace({
   const selectedRow = filteredRows.find(row => row.id === selectedId) ?? null;
 
   const stats = useMemo(() => {
-    const total = rows.length;
-    const active = rows.filter(row => row.isActive).length;
-    const publicItems = rows.filter(row => row.isPublic).length;
+    const total = scopedRows.length;
+    const active = scopedRows.filter(row => row.isActive).length;
+    const publicItems = scopedRows.filter(row => row.isPublic).length;
     const privateItems = total - publicItems;
     return { total, active, publicItems, privateItems };
-  }, [rows]);
+  }, [scopedRows]);
 
   const heightClass = variant === 'page' ? 'lg:h-[calc(100vh-140px)]' : 'lg:h-[520px]';
 
