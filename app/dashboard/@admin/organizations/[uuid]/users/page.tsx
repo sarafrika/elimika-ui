@@ -88,14 +88,10 @@ async function OrganizationUsersContent({
         </div>
       </div>
 
-      <div className='bg-background flex flex-1 flex-col lg:flex-row'>
+      <div className='bg-background flex min-h-0 flex-1 flex-col lg:flex-row'>
         <OrganizationUsersList
           users={users}
           organizationUuid={uuid}
-          searchQuery={searchQuery}
-          roleFilter={roleFilter}
-          sortField={sortField}
-          sortOrder={sortOrder}
           selectedUser={selectedUser}
         />
         <OrganizationUserDetailsPanel user={selectedUser} organizationUuid={uuid} />
