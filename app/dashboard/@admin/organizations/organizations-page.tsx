@@ -15,6 +15,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
   type AdminOrganisation,
@@ -23,16 +24,30 @@ import {
   useVerifyAdminOrganisation,
 } from '@/services/admin';
 import { useAdminBranches } from '@/services/admin/branches';
-import { getAllOrganisationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getAllOrganisationsOptions, getUsersByOrganisationOptions } from '@/services/client/@tanstack/react-query.gen';
 import { zOrganisation } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Building2, Loader2, MapPin, Shield, ShieldOff } from 'lucide-react';
+import {
+  Building2,
+  Loader2,
+  MapPin,
+  Shield,
+  ShieldOff,
+  Users,
+  BookOpen,
+  GraduationCap,
+  Calendar,
+  TrendingUp,
+  ExternalLink,
+  ChevronRight,
+} from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import Link from 'next/link';
 
 const organisationFormSchema = z.object({
   name: zOrganisation.shape.name,
@@ -327,6 +342,170 @@ function DetailTile({ label, value }: DetailTileProps) {
   );
 }
 
+function InfoCard({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className='rounded-[12px] border border-border/60 bg-muted/20 p-3.5 transition-all hover:bg-muted/30'>
+      <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>{label}</p>
+      <div className='mt-1.5 text-sm font-semibold leading-tight text-foreground'>{value}</div>
+    </div>
+  );
+}
+
+function OrganisationStats({ organisationUuid }: { organisationUuid?: string }) {
+  const { data: branchesData, isLoading: branchesLoading } = useAdminBranches(
+    organisationUuid ? { organizationUuid: organisationUuid, page: 0, size: 1 } : null
+  );
+
+  const { data: usersData, isLoading: usersLoading } = useQuery({
+    ...getUsersByOrganisationOptions({
+      path: { uuid: organisationUuid ?? '' },
+      query: { pageable: { page: 0, size: 1 } },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+
+  const totalBranches = branchesData?.totalItems ?? 0;
+  const totalMembers = usersData?.data?.metadata?.totalElements ?? 0;
+
+  return (
+    <div className='grid gap-3 sm:grid-cols-3'>
+      <StatCard
+        icon={Building2}
+        label='Branches'
+        value={branchesLoading ? '—' : totalBranches.toString()}
+        description='Training locations'
+      />
+      <StatCard
+        icon={Users}
+        label='Members'
+        value={usersLoading ? '—' : totalMembers.toString()}
+        description='Affiliated users'
+      />
+      <StatCard
+        icon={TrendingUp}
+        label='Status'
+        value='Active'
+        description='Organization state'
+        variant='success'
+      />
+    </div>
+  );
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  description,
+  variant = 'default',
+}: {
+  icon: typeof Building2;
+  label: string;
+  value: string;
+  description: string;
+  variant?: 'default' | 'success';
+}) {
+  const variantClasses = {
+    default: 'border-border bg-card',
+    success: 'border-success/30 bg-success/5',
+  };
+
+  const iconClasses = {
+    default: 'bg-primary/10 text-primary',
+    success: 'bg-success/10 text-success-foreground',
+  };
+
+  return (
+    <div className={`rounded-[14px] border p-4 transition-all hover:shadow-sm ${variantClasses[variant]}`}>
+      <div className='flex items-start justify-between'>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-[10px] ${iconClasses[variant]}`}>
+          <Icon className='h-5 w-5' />
+        </div>
+      </div>
+      <div className='mt-3'>
+        <p className='text-2xl font-bold text-foreground'>{value}</p>
+        <p className='mt-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground'>{label}</p>
+        <p className='mt-1 text-xs text-muted-foreground'>{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function OrganisationMembersCard({ organisationUuid }: { organisationUuid?: string }) {
+  const { data, isLoading } = useQuery({
+    ...getUsersByOrganisationOptions({
+      path: { uuid: organisationUuid ?? '' },
+      query: { pageable: { page: 0, size: 5 } },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+
+  if (!organisationUuid) return null;
+
+  const users = data?.data?.content ?? [];
+  const totalMembers = data?.data?.metadata?.totalElements ?? users.length;
+
+  return (
+    <div className='rounded-[16px] border border-border/60 bg-card/50 p-5'>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-3'>
+          <div className='flex h-10 w-10 items-center justify-center rounded-[10px] bg-primary/10'>
+            <Users className='h-5 w-5 text-primary' />
+          </div>
+          <div>
+            <p className='text-sm font-semibold text-foreground'>Members</p>
+            <p className='text-xs text-muted-foreground'>
+              {isLoading ? 'Loading...' : `${totalMembers} ${totalMembers === 1 ? 'member' : 'members'}`}
+            </p>
+          </div>
+        </div>
+        {totalMembers > 0 && (
+          <Button variant='ghost' size='sm' asChild>
+            <Link href={`/dashboard/organizations/${organisationUuid}/users`} className='gap-1.5'>
+              View all
+              <ChevronRight className='h-4 w-4' />
+            </Link>
+          </Button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className='mt-4 space-y-3'>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={`member-skeleton-${index}`} className='rounded-[12px] border border-border/60 p-3'>
+              <Skeleton className='h-4 w-32' />
+              <Skeleton className='mt-2 h-3 w-20' />
+            </div>
+          ))}
+        </div>
+      ) : users.length > 0 ? (
+        <div className='mt-4 space-y-2'>
+          {users.slice(0, 5).map((user, index) => (
+            <div
+              key={user.uuid ?? `user-${index}`}
+              className='flex items-center justify-between rounded-[12px] border border-border/60 bg-muted/10 p-3 transition hover:bg-muted/20'
+            >
+              <div className='flex-1'>
+                <p className='text-sm font-medium leading-tight text-foreground'>
+                  {user.first_name} {user.last_name}
+                </p>
+                <p className='mt-0.5 text-xs text-muted-foreground'>{user.email ?? 'No email'}</p>
+              </div>
+              {user.organisation_affiliations && user.organisation_affiliations.length > 0 && (
+                <Badge variant='outline' className='text-xs'>
+                  {user.organisation_affiliations[0]?.domain_in_organisation ?? 'Member'}
+                </Badge>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className='mt-4 text-sm text-muted-foreground'>No members yet</p>
+      )}
+    </div>
+  );
+}
+
 interface OrganisationDetailsPanelProps {
   organisation: AdminOrganisation | null;
 }
@@ -397,27 +576,92 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
     <div className='border-border/60 hidden w-full flex-col bg-card lg:flex lg:h-full lg:max-w-3xl lg:border-l'>
       {organisation ? (
         <div className='flex h-full flex-col overflow-hidden'>
-          <div className='border-border/60 flex items-start justify-between gap-4 border-b px-6 py-5'>
-            <div className='space-y-1'>
-              <p className='text-xs uppercase tracking-wide text-muted-foreground'>Organisation profile</p>
-              <h2 className='text-2xl font-semibold leading-tight'>{organisation.name}</h2>
-              <p className='text-muted-foreground text-sm'>{organisation.location ?? 'Location not provided'}</p>
-            </div>
-            <div className='flex flex-col items-end gap-2'>
-              <Badge variant={organisation.admin_verified ? 'success' : 'secondary'} className='gap-1'>
-                {organisation.admin_verified ? <Shield className='h-4 w-4' /> : <ShieldOff className='h-4 w-4' />}
-                {organisation.admin_verified ? 'Verified' : 'Pending'}
-              </Badge>
-              <Badge variant={organisation.active ? 'secondary' : 'outline'}>
-                {organisation.active ? 'Active' : 'Inactive'}
-              </Badge>
+          {/* Modern Header */}
+          <div className='border-border/60 border-b bg-muted/20 px-6 py-5'>
+            <div className='flex items-start gap-4'>
+              <div className='flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] bg-primary/10'>
+                <Building2 className='h-7 w-7 text-primary' />
+              </div>
+              <div className='flex-1 space-y-2'>
+                <div className='flex items-start justify-between gap-3'>
+                  <div>
+                    <h2 className='text-xl font-semibold leading-tight text-foreground'>{organisation.name}</h2>
+                    <p className='mt-1 flex items-center gap-1.5 text-sm text-muted-foreground'>
+                      <MapPin className='h-3.5 w-3.5' />
+                      {organisation.location ?? 'Location not provided'}
+                    </p>
+                  </div>
+                </div>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <Badge variant={organisation.admin_verified ? 'default' : 'secondary'} className='gap-1.5'>
+                    {organisation.admin_verified ? <Shield className='h-3.5 w-3.5' /> : <ShieldOff className='h-3.5 w-3.5' />}
+                    {organisation.admin_verified ? 'Verified' : 'Pending'}
+                  </Badge>
+                  <Badge variant={organisation.active ? 'secondary' : 'outline'}>
+                    {organisation.active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+              </div>
             </div>
           </div>
 
-          <ScrollArea className='flex-1 px-6 py-5'>
+          <ScrollArea className='flex-1 px-6 py-6'>
             <div className='space-y-6 pb-10'>
-              <OrganisationSummary organisation={organisation} />
+              {/* Quick Stats */}
+              <OrganisationStats organisationUuid={organisation.uuid} />
+
+              {/* Description */}
+              {organisation.description && (
+                <div className='rounded-[16px] border border-border/60 bg-muted/20 p-5'>
+                  <p className='mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                    <BookOpen className='h-3.5 w-3.5' />
+                    Description
+                  </p>
+                  <p className='text-sm leading-relaxed text-foreground'>{organisation.description}</p>
+                </div>
+              )}
+
+              {/* Organization Details Grid */}
+              <div className='space-y-3'>
+                <p className='flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                  <Building2 className='h-3.5 w-3.5' />
+                  Organization Details
+                </p>
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  <InfoCard label='Primary location' value={organisation.location ?? '—'} />
+                  <InfoCard label='Country' value={organisation.country ?? '—'} />
+                  <InfoCard label='Licence number' value={organisation.licence_no ?? 'Not provided'} />
+                  <InfoCard label='Slug' value={organisation.slug ?? '—'} />
+                </div>
+              </div>
+
+              {/* Members Section */}
+              <OrganisationMembersCard organisationUuid={organisation.uuid} />
+
+              {/* Branches Section */}
               <OrganisationBranchesCard organisationUuid={organisation.uuid} />
+
+              {/* Activity Timeline */}
+              <div className='space-y-3'>
+                <p className='flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                  <Calendar className='h-3.5 w-3.5' />
+                  Timeline
+                </p>
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  <InfoCard
+                    label='Created'
+                    value={organisation.created_date ? format(new Date(organisation.created_date), 'dd MMM yyyy, HH:mm') : '—'}
+                  />
+                  <InfoCard
+                    label='Last updated'
+                    value={organisation.updated_date ? format(new Date(organisation.updated_date), 'dd MMM yyyy, HH:mm') : '—'}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Edit Form */}
               <OrganisationDetailsForm
                 form={form}
                 onSubmit={handleSubmit}
@@ -426,6 +670,20 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
                 onVerification={handleVerification}
                 isVerificationPending={verifyOrganisation.isPending || unverifyOrganisation.isPending}
               />
+
+              {/* Technical Details (Collapsed) */}
+              <details className='group rounded-[16px] border border-border/60 bg-card/50'>
+                <summary className='flex cursor-pointer items-center justify-between p-4 text-sm font-semibold text-foreground transition hover:bg-muted/30'>
+                  Technical Details
+                  <span className='text-muted-foreground transition group-open:rotate-180'>▼</span>
+                </summary>
+                <div className='space-y-3 border-t border-border/60 p-4'>
+                  <InfoCard
+                    label='UUID'
+                    value={<span className='break-all text-xs font-mono text-muted-foreground'>{organisation.uuid ?? '—'}</span>}
+                  />
+                </div>
+              </details>
             </div>
           </ScrollArea>
         </div>
@@ -710,52 +968,65 @@ function OrganisationBranchesCard({ organisationUuid, variant = 'default' }: Org
 
   const branches = data?.items ?? [];
   const totalBranches = data?.totalItems ?? branches.length;
-  const cardPadding = variant === 'compact' ? 'p-3' : 'p-4';
 
   return (
-    <div className={`rounded-2xl border border-border/60 bg-muted/30 ${cardPadding}`}>
+    <div className='rounded-[16px] border border-border/60 bg-card/50 p-5'>
       <div className='flex items-center justify-between'>
-        <div>
-          <p className='text-xs uppercase tracking-wide text-muted-foreground'>Branches</p>
-          <p className='text-xl font-semibold'>{isLoading ? '—' : totalBranches}</p>
-          <p className='text-muted-foreground text-xs'>Organisation training locations in view</p>
+        <div className='flex items-center gap-3'>
+          <div className='flex h-10 w-10 items-center justify-center rounded-[10px] bg-primary/10'>
+            <MapPin className='h-5 w-5 text-primary' />
+          </div>
+          <div>
+            <p className='text-sm font-semibold text-foreground'>Branches</p>
+            <p className='text-xs text-muted-foreground'>
+              {isLoading ? 'Loading...' : `${totalBranches} training ${totalBranches === 1 ? 'location' : 'locations'}`}
+            </p>
+          </div>
         </div>
-        <Badge variant='secondary' className='text-xs'>
-          {isLoading ? 'Loading' : `${totalBranches} total`}
-        </Badge>
+        {totalBranches > 0 && (
+          <Button variant='ghost' size='sm' asChild>
+            <Link href={`/dashboard/organizations/${organisationUuid}/branches`} className='gap-1.5'>
+              View all
+              <ChevronRight className='h-4 w-4' />
+            </Link>
+          </Button>
+        )}
       </div>
 
-      <div className='mt-4 space-y-3'>
-        {isLoading
-          ? Array.from({ length: 3 }).map((_, index) => (
-            <div key={`branch-skeleton-${index}`} className='rounded-xl border border-dashed border-border/60 p-3'>
+      {isLoading ? (
+        <div className='mt-4 space-y-3'>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={`branch-skeleton-${index}`} className='rounded-[12px] border border-border/60 p-3'>
               <Skeleton className='h-4 w-32' />
               <Skeleton className='mt-2 h-3 w-20' />
             </div>
-          ))
-          : branches.length > 0
-            ? branches.map((branch, index) => (
-              <div key={branch.uuid ?? `${branch.branch_name ?? 'branch'}-${index}`} className='rounded-xl border border-dashed border-border/60 p-3'>
-                <div className='flex items-center justify-between gap-3'>
-                  <div>
-                    <p className='font-medium leading-tight'>{branch.branch_name ?? 'Unnamed branch'}</p>
-                    <p className='text-muted-foreground text-xs'>
-                      {branch.location ?? branch.branch_code ?? 'Location not provided'}
-                    </p>
-                  </div>
-                  <Badge variant={branch.active ? 'secondary' : 'outline'} className='text-xs'>
-                    {branch.active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-                {branch.branch_code ? (
-                  <p className='text-muted-foreground mt-2 text-xs'>Code: {branch.branch_code}</p>
-                ) : null}
+          ))}
+        </div>
+      ) : branches.length > 0 ? (
+        <div className='mt-4 space-y-2'>
+          {branches.map((branch, index) => (
+            <div
+              key={branch.uuid ?? `${branch.branch_name ?? 'branch'}-${index}`}
+              className='flex items-center justify-between rounded-[12px] border border-border/60 bg-muted/10 p-3 transition hover:bg-muted/20'
+            >
+              <div className='flex-1'>
+                <p className='text-sm font-medium leading-tight text-foreground'>{branch.branch_name ?? 'Unnamed branch'}</p>
+                <p className='mt-0.5 text-xs text-muted-foreground'>
+                  {branch.location ?? branch.branch_code ?? 'Location not provided'}
+                </p>
+                {branch.branch_code && (
+                  <p className='mt-1 text-xs text-muted-foreground'>Code: {branch.branch_code}</p>
+                )}
               </div>
-            ))
-            : (
-              <p className='text-muted-foreground text-sm'>No branches registered yet.</p>
-            )}
-      </div>
+              <Badge variant={branch.active ? 'secondary' : 'outline'} className='text-xs'>
+                {branch.active ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className='mt-4 text-sm text-muted-foreground'>No branches registered yet</p>
+      )}
     </div>
   );
 }
