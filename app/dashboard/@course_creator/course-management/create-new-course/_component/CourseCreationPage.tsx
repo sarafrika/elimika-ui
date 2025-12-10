@@ -153,7 +153,6 @@ export default function CourseCreationPage() {
       name: c.name || '',
       description: c.description || '',
       instructor: c.course_creator_uuid || '',
-      is_free: c.is_free ?? false,
       price: c.price ?? 0,
       // sale_price: c.sale_price ?? c.price ?? 0,
       // currency: c.currency || 'KES',
@@ -595,7 +594,7 @@ export default function CourseCreationPage() {
                   <h1 className='text-2xl font-semibold'>{course?.data?.name}</h1>
                 </div>
               </div>
-              <RubricsCreationPage />
+              <RubricsCreationPage courseId={resolveId as string} />
             </div>
           </StepperContent>
 
@@ -752,7 +751,7 @@ export default function CourseCreationPage() {
                   <div className='space-y-2 text-muted-foreground'>
                     <p>
                       <span className='font-medium'>Free Course:</span>{' '}
-                      {course?.data?.is_free ? 'Yes' : 'No'}
+                      {/* {course?.data?.is_free ? 'Yes' : 'No'} */}
                     </p>
                   </div>
                 </div>

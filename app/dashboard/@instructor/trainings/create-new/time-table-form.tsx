@@ -18,6 +18,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { createClassRecurrencePatternMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useEffect } from 'react';
+import Spinner from '../../../../../components/ui/spinner';
 import MapboxSearchInput from '../component/mapbox-search-input';
 
 interface TimetableFormProps {
@@ -353,7 +354,9 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
       </Card>
 
       <div className='flex justify-end gap-4'>
-        <Button type='submit'>Save & Continue</Button>
+        {createTimetable.isPending ? <Spinner /> :
+          <Button type='submit' className='min-w-[250px]'>Save & Continue</Button>
+        }
       </div>
     </form>
   );

@@ -99,14 +99,8 @@ import {
   deactivateClassDefinition,
   getClassDefinition,
   updateClassDefinition,
-  cancelRecurringClassSchedule,
-  scheduleRecurringClassFromDefinition,
-  updateRecurringClassSchedule,
   getLessonPlan,
   saveLessonPlan,
-  deleteClassRecurrencePattern,
-  getClassRecurrencePattern,
-  updateClassRecurrencePattern,
   deleteCertificate,
   getCertificateByUuid,
   updateCertificate,
@@ -124,6 +118,7 @@ import {
   checkStudentConflict,
   scheduleClass,
   checkInstructorConflict,
+  blockInstructorTime,
   listRules,
   createRule,
   getAllStudents,
@@ -184,8 +179,6 @@ import {
   addInstructorDocument,
   verifyDocument,
   uploadInstructorDocument,
-  setAvailabilityPatterns,
-  blockTime,
   createLink,
   enrollStudent,
   joinWaitlist,
@@ -251,7 +244,6 @@ import {
   createQuizSchedule,
   getAssignmentSchedules,
   createAssignmentSchedule,
-  createClassRecurrencePattern,
   getAllCertificates,
   createCertificate,
   uploadCertificatePdf,
@@ -261,6 +253,9 @@ import {
   createCertificateTemplate,
   generateProgramCertificate,
   generateCourseCertificate,
+  createBooking,
+  paymentCallback,
+  cancelBooking,
   getAllAssignments,
   createAssignment,
   submitAssignment,
@@ -359,7 +354,7 @@ import {
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
-  listActiveCurrencies,
+  listCurrencies,
   getDefaultCurrency,
   getStatusTransitions,
   checkRubricAssociation,
@@ -409,6 +404,7 @@ import {
   getProgramCertificates1,
   getCertificateByNumber,
   getCourseCertificates,
+  getBooking,
   getAssignmentSubmissions,
   getHighPerformanceSubmissions,
   getAverageScore,
@@ -679,26 +675,10 @@ import type {
   UpdateClassDefinitionData,
   UpdateClassDefinitionError,
   UpdateClassDefinitionResponse,
-  CancelRecurringClassScheduleData,
-  CancelRecurringClassScheduleError,
-  CancelRecurringClassScheduleResponse,
-  ScheduleRecurringClassFromDefinitionData,
-  ScheduleRecurringClassFromDefinitionError,
-  ScheduleRecurringClassFromDefinitionResponse,
-  UpdateRecurringClassScheduleData,
-  UpdateRecurringClassScheduleError,
-  UpdateRecurringClassScheduleResponse,
   GetLessonPlanData,
   SaveLessonPlanData,
   SaveLessonPlanError,
   SaveLessonPlanResponse,
-  DeleteClassRecurrencePatternData,
-  DeleteClassRecurrencePatternError,
-  DeleteClassRecurrencePatternResponse,
-  GetClassRecurrencePatternData,
-  UpdateClassRecurrencePatternData,
-  UpdateClassRecurrencePatternError,
-  UpdateClassRecurrencePatternResponse,
   DeleteCertificateData,
   DeleteCertificateError,
   DeleteCertificateResponse,
@@ -745,6 +725,9 @@ import type {
   CheckInstructorConflictData,
   CheckInstructorConflictError,
   CheckInstructorConflictResponse,
+  BlockInstructorTimeData,
+  BlockInstructorTimeError,
+  BlockInstructorTimeResponse,
   ListRulesData,
   ListRulesError,
   ListRulesResponse,
@@ -911,12 +894,6 @@ import type {
   UploadInstructorDocumentData,
   UploadInstructorDocumentError,
   UploadInstructorDocumentResponse,
-  SetAvailabilityPatternsData,
-  SetAvailabilityPatternsError,
-  SetAvailabilityPatternsResponse,
-  BlockTimeData,
-  BlockTimeError,
-  BlockTimeResponse,
   CreateLinkData,
   CreateLinkError,
   CreateLinkResponse,
@@ -1100,9 +1077,6 @@ import type {
   CreateAssignmentScheduleData,
   CreateAssignmentScheduleError,
   CreateAssignmentScheduleResponse,
-  CreateClassRecurrencePatternData,
-  CreateClassRecurrencePatternError,
-  CreateClassRecurrencePatternResponse,
   GetAllCertificatesData,
   GetAllCertificatesError,
   GetAllCertificatesResponse,
@@ -1130,6 +1104,15 @@ import type {
   GenerateCourseCertificateData,
   GenerateCourseCertificateError,
   GenerateCourseCertificateResponse,
+  CreateBookingData,
+  CreateBookingError,
+  CreateBookingResponse,
+  PaymentCallbackData,
+  PaymentCallbackError,
+  PaymentCallbackResponse,
+  CancelBookingData,
+  CancelBookingError,
+  CancelBookingResponse,
   GetAllAssignmentsData,
   GetAllAssignmentsError,
   GetAllAssignmentsResponse,
@@ -1352,7 +1335,9 @@ import type {
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
-  ListActiveCurrenciesData,
+  ListCurrenciesData,
+  ListCurrenciesError,
+  ListCurrenciesResponse,
   GetDefaultCurrencyData,
   GetStatusTransitionsData,
   CheckRubricAssociationData,
@@ -1446,6 +1431,7 @@ import type {
   GetProgramCertificates1Data,
   GetCertificateByNumberData,
   GetCourseCertificatesData,
+  GetBookingData,
   GetAssignmentSubmissionsData,
   GetHighPerformanceSubmissionsData,
   GetAverageScoreData,
@@ -4115,111 +4101,6 @@ export const updateClassDefinitionMutation = (
   return mutationOptions;
 };
 
-/**
- * Cancel recurring schedule for a class definition
- */
-export const cancelRecurringClassScheduleMutation = (
-  options?: Partial<Options<CancelRecurringClassScheduleData>>
-): UseMutationOptions<
-  CancelRecurringClassScheduleResponse,
-  CancelRecurringClassScheduleError,
-  Options<CancelRecurringClassScheduleData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CancelRecurringClassScheduleResponse,
-    CancelRecurringClassScheduleError,
-    Options<CancelRecurringClassScheduleData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await cancelRecurringClassSchedule({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const scheduleRecurringClassFromDefinitionQueryKey = (
-  options: Options<ScheduleRecurringClassFromDefinitionData>
-) => createQueryKey('scheduleRecurringClassFromDefinition', options);
-
-/**
- * Schedule recurring classes from a class definition
- */
-export const scheduleRecurringClassFromDefinitionOptions = (
-  options: Options<ScheduleRecurringClassFromDefinitionData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await scheduleRecurringClassFromDefinition({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: scheduleRecurringClassFromDefinitionQueryKey(options),
-  });
-};
-
-/**
- * Schedule recurring classes from a class definition
- */
-export const scheduleRecurringClassFromDefinitionMutation = (
-  options?: Partial<Options<ScheduleRecurringClassFromDefinitionData>>
-): UseMutationOptions<
-  ScheduleRecurringClassFromDefinitionResponse,
-  ScheduleRecurringClassFromDefinitionError,
-  Options<ScheduleRecurringClassFromDefinitionData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ScheduleRecurringClassFromDefinitionResponse,
-    ScheduleRecurringClassFromDefinitionError,
-    Options<ScheduleRecurringClassFromDefinitionData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await scheduleRecurringClassFromDefinition({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Update recurring schedule for a class definition
- */
-export const updateRecurringClassScheduleMutation = (
-  options?: Partial<Options<UpdateRecurringClassScheduleData>>
-): UseMutationOptions<
-  UpdateRecurringClassScheduleResponse,
-  UpdateRecurringClassScheduleError,
-  Options<UpdateRecurringClassScheduleData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateRecurringClassScheduleResponse,
-    UpdateRecurringClassScheduleError,
-    Options<UpdateRecurringClassScheduleData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await updateRecurringClassSchedule({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const getLessonPlanQueryKey = (options: Options<GetLessonPlanData>) =>
   createQueryKey('getLessonPlan', options);
 
@@ -4254,84 +4135,6 @@ export const saveLessonPlanMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await saveLessonPlan({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete a recurrence pattern by UUID
- */
-export const deleteClassRecurrencePatternMutation = (
-  options?: Partial<Options<DeleteClassRecurrencePatternData>>
-): UseMutationOptions<
-  DeleteClassRecurrencePatternResponse,
-  DeleteClassRecurrencePatternError,
-  Options<DeleteClassRecurrencePatternData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteClassRecurrencePatternResponse,
-    DeleteClassRecurrencePatternError,
-    Options<DeleteClassRecurrencePatternData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await deleteClassRecurrencePattern({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getClassRecurrencePatternQueryKey = (
-  options: Options<GetClassRecurrencePatternData>
-) => createQueryKey('getClassRecurrencePattern', options);
-
-/**
- * Get a recurrence pattern by UUID
- */
-export const getClassRecurrencePatternOptions = (
-  options: Options<GetClassRecurrencePatternData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getClassRecurrencePattern({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getClassRecurrencePatternQueryKey(options),
-  });
-};
-
-/**
- * Update a recurrence pattern by UUID
- */
-export const updateClassRecurrencePatternMutation = (
-  options?: Partial<Options<UpdateClassRecurrencePatternData>>
-): UseMutationOptions<
-  UpdateClassRecurrencePatternResponse,
-  UpdateClassRecurrencePatternError,
-  Options<UpdateClassRecurrencePatternData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateClassRecurrencePatternResponse,
-    UpdateClassRecurrencePatternError,
-    Options<UpdateClassRecurrencePatternData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await updateClassRecurrencePattern({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -5008,6 +4811,54 @@ export const checkInstructorConflictMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await checkInstructorConflict({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const blockInstructorTimeQueryKey = (options: Options<BlockInstructorTimeData>) =>
+  createQueryKey('blockInstructorTime', options);
+
+/**
+ * Block instructor calendar for non-teaching time
+ */
+export const blockInstructorTimeOptions = (options: Options<BlockInstructorTimeData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await blockInstructorTime({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: blockInstructorTimeQueryKey(options),
+  });
+};
+
+/**
+ * Block instructor calendar for non-teaching time
+ */
+export const blockInstructorTimeMutation = (
+  options?: Partial<Options<BlockInstructorTimeData>>
+): UseMutationOptions<
+  BlockInstructorTimeResponse,
+  BlockInstructorTimeError,
+  Options<BlockInstructorTimeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    BlockInstructorTimeResponse,
+    BlockInstructorTimeError,
+    Options<BlockInstructorTimeData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await blockInstructorTime({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -8199,218 +8050,6 @@ export const uploadInstructorDocumentMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await uploadInstructorDocument({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const setAvailabilityPatternsQueryKey = (options: Options<SetAvailabilityPatternsData>) =>
-  createQueryKey('setAvailabilityPatterns', options);
-
-/**
- * Set availability patterns
- * Sets recurring availability patterns for an instructor.
- *
- * Supports multiple pattern types:
- * - **weekly**: Patterns based on day of week (Monday-Sunday)
- * - **daily**: Patterns that repeat daily
- * - **monthly**: Patterns based on day of month (1-31)
- * - **custom**: Custom recurring patterns with specific rules
- *
- * The pattern type is determined by the request body structure.
- * Use the appropriate DTO for the pattern type you want to set.
- *
- * Examples:
- * - Weekly: Set availability every Monday and Wednesday 9am-5pm
- * - Daily: Set availability every day 2pm-4pm
- * - Monthly: Set availability on the 1st and 15th of every month
- * - Custom: Set availability with custom recurrence rules
- *
- */
-export const setAvailabilityPatternsOptions = (options: Options<SetAvailabilityPatternsData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await setAvailabilityPatterns({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: setAvailabilityPatternsQueryKey(options),
-  });
-};
-
-/**
- * Set availability patterns
- * Sets recurring availability patterns for an instructor.
- *
- * Supports multiple pattern types:
- * - **weekly**: Patterns based on day of week (Monday-Sunday)
- * - **daily**: Patterns that repeat daily
- * - **monthly**: Patterns based on day of month (1-31)
- * - **custom**: Custom recurring patterns with specific rules
- *
- * The pattern type is determined by the request body structure.
- * Use the appropriate DTO for the pattern type you want to set.
- *
- * Examples:
- * - Weekly: Set availability every Monday and Wednesday 9am-5pm
- * - Daily: Set availability every day 2pm-4pm
- * - Monthly: Set availability on the 1st and 15th of every month
- * - Custom: Set availability with custom recurrence rules
- *
- */
-export const setAvailabilityPatternsMutation = (
-  options?: Partial<Options<SetAvailabilityPatternsData>>
-): UseMutationOptions<
-  SetAvailabilityPatternsResponse,
-  SetAvailabilityPatternsError,
-  Options<SetAvailabilityPatternsData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    SetAvailabilityPatternsResponse,
-    SetAvailabilityPatternsError,
-    Options<SetAvailabilityPatternsData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await setAvailabilityPatterns({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const blockTimeQueryKey = (options: Options<BlockTimeData>) =>
-  createQueryKey('blockTime', options);
-
-/**
- * Block time for an instructor
- * Blocks a specific time period for an instructor, making them unavailable.
- *
- * This creates availability slots with isAvailable = false, which override
- * any existing availability patterns for that time period.
- *
- * You can optionally provide a color code (hex format) to categorize and
- * visually distinguish different types of blocked times on the frontend.
- *
- * Common use cases:
- * - Marking vacation time (e.g., color_code: "#FF6B6B" - red)
- * - Blocking time for meetings (e.g., color_code: "#FFD93D" - yellow)
- * - Indicating sick leave (e.g., color_code: "#FFA07A" - orange)
- * - Personal time off (e.g., color_code: "#95E1D3" - teal)
- *
- */
-export const blockTimeOptions = (options: Options<BlockTimeData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await blockTime({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: blockTimeQueryKey(options),
-  });
-};
-
-export const blockTimeInfiniteQueryKey = (
-  options: Options<BlockTimeData>
-): QueryKey<Options<BlockTimeData>> => createQueryKey('blockTime', options, true);
-
-/**
- * Block time for an instructor
- * Blocks a specific time period for an instructor, making them unavailable.
- *
- * This creates availability slots with isAvailable = false, which override
- * any existing availability patterns for that time period.
- *
- * You can optionally provide a color code (hex format) to categorize and
- * visually distinguish different types of blocked times on the frontend.
- *
- * Common use cases:
- * - Marking vacation time (e.g., color_code: "#FF6B6B" - red)
- * - Blocking time for meetings (e.g., color_code: "#FFD93D" - yellow)
- * - Indicating sick leave (e.g., color_code: "#FFA07A" - orange)
- * - Personal time off (e.g., color_code: "#95E1D3" - teal)
- *
- */
-export const blockTimeInfiniteOptions = (options: Options<BlockTimeData>) => {
-  return infiniteQueryOptions<
-    BlockTimeResponse,
-    BlockTimeError,
-    InfiniteData<BlockTimeResponse>,
-    QueryKey<Options<BlockTimeData>>,
-    Date | Pick<QueryKey<Options<BlockTimeData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<BlockTimeData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  start: pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await blockTime({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: blockTimeInfiniteQueryKey(options),
-    }
-  );
-};
-
-/**
- * Block time for an instructor
- * Blocks a specific time period for an instructor, making them unavailable.
- *
- * This creates availability slots with isAvailable = false, which override
- * any existing availability patterns for that time period.
- *
- * You can optionally provide a color code (hex format) to categorize and
- * visually distinguish different types of blocked times on the frontend.
- *
- * Common use cases:
- * - Marking vacation time (e.g., color_code: "#FF6B6B" - red)
- * - Blocking time for meetings (e.g., color_code: "#FFD93D" - yellow)
- * - Indicating sick leave (e.g., color_code: "#FFA07A" - orange)
- * - Personal time off (e.g., color_code: "#95E1D3" - teal)
- *
- */
-export const blockTimeMutation = (
-  options?: Partial<Options<BlockTimeData>>
-): UseMutationOptions<BlockTimeResponse, BlockTimeError, Options<BlockTimeData>> => {
-  const mutationOptions: UseMutationOptions<
-    BlockTimeResponse,
-    BlockTimeError,
-    Options<BlockTimeData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await blockTime({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12054,57 +11693,6 @@ export const createAssignmentScheduleMutation = (
   return mutationOptions;
 };
 
-export const createClassRecurrencePatternQueryKey = (
-  options: Options<CreateClassRecurrencePatternData>
-) => createQueryKey('createClassRecurrencePattern', options);
-
-/**
- * Create a new recurrence pattern
- */
-export const createClassRecurrencePatternOptions = (
-  options: Options<CreateClassRecurrencePatternData>
-) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await createClassRecurrencePattern({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: createClassRecurrencePatternQueryKey(options),
-  });
-};
-
-/**
- * Create a new recurrence pattern
- */
-export const createClassRecurrencePatternMutation = (
-  options?: Partial<Options<CreateClassRecurrencePatternData>>
-): UseMutationOptions<
-  CreateClassRecurrencePatternResponse,
-  CreateClassRecurrencePatternError,
-  Options<CreateClassRecurrencePatternData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateClassRecurrencePatternResponse,
-    CreateClassRecurrencePatternError,
-    Options<CreateClassRecurrencePatternData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await createClassRecurrencePattern({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const getAllCertificatesQueryKey = (options: Options<GetAllCertificatesData>) =>
   createQueryKey('getAllCertificates', options);
 
@@ -12609,6 +12197,142 @@ export const generateCourseCertificateMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await generateCourseCertificate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const createBookingQueryKey = (options: Options<CreateBookingData>) =>
+  createQueryKey('createBooking', options);
+
+/**
+ * Create a booking for a course/instructor slot
+ */
+export const createBookingOptions = (options: Options<CreateBookingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createBooking({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createBookingQueryKey(options),
+  });
+};
+
+/**
+ * Create a booking for a course/instructor slot
+ */
+export const createBookingMutation = (
+  options?: Partial<Options<CreateBookingData>>
+): UseMutationOptions<CreateBookingResponse, CreateBookingError, Options<CreateBookingData>> => {
+  const mutationOptions: UseMutationOptions<
+    CreateBookingResponse,
+    CreateBookingError,
+    Options<CreateBookingData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createBooking({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const paymentCallbackQueryKey = (options: Options<PaymentCallbackData>) =>
+  createQueryKey('paymentCallback', options);
+
+/**
+ * Payment callback to update booking status
+ */
+export const paymentCallbackOptions = (options: Options<PaymentCallbackData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await paymentCallback({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: paymentCallbackQueryKey(options),
+  });
+};
+
+/**
+ * Payment callback to update booking status
+ */
+export const paymentCallbackMutation = (
+  options?: Partial<Options<PaymentCallbackData>>
+): UseMutationOptions<
+  PaymentCallbackResponse,
+  PaymentCallbackError,
+  Options<PaymentCallbackData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PaymentCallbackResponse,
+    PaymentCallbackError,
+    Options<PaymentCallbackData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await paymentCallback({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const cancelBookingQueryKey = (options: Options<CancelBookingData>) =>
+  createQueryKey('cancelBooking', options);
+
+/**
+ * Cancel a booking and release the reserved slot
+ */
+export const cancelBookingOptions = (options: Options<CancelBookingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await cancelBooking({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: cancelBookingQueryKey(options),
+  });
+};
+
+/**
+ * Cancel a booking and release the reserved slot
+ */
+export const cancelBookingMutation = (
+  options?: Partial<Options<CancelBookingData>>
+): UseMutationOptions<CancelBookingResponse, CancelBookingError, Options<CancelBookingData>> => {
+  const mutationOptions: UseMutationOptions<
+    CancelBookingResponse,
+    CancelBookingError,
+    Options<CancelBookingData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await cancelBooking({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -13386,7 +13110,7 @@ export const getCartOptions = (options: Options<GetCartData>) => {
 
 /**
  * Update cart attributes
- * Updates cart metadata such as customer or addresses
+ * Updates cart details such as customer or addresses
  */
 export const updateCartMutation = (
   options?: Partial<Options<UpdateCartData>>
@@ -17471,16 +17195,16 @@ export const hasCapacityForEnrollmentOptions = (options: Options<HasCapacityForE
   });
 };
 
-export const listActiveCurrenciesQueryKey = (options?: Options<ListActiveCurrenciesData>) =>
-  createQueryKey('listActiveCurrencies', options);
+export const listCurrenciesQueryKey = (options: Options<ListCurrenciesData>) =>
+  createQueryKey('listCurrencies', options);
 
 /**
- * List active platform currencies
+ * List platform currencies (paginated)
  */
-export const listActiveCurrenciesOptions = (options?: Options<ListActiveCurrenciesData>) => {
+export const listCurrenciesOptions = (options: Options<ListCurrenciesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listActiveCurrencies({
+      const { data } = await listCurrencies({
         ...options,
         ...queryKey[0],
         signal,
@@ -17488,8 +17212,52 @@ export const listActiveCurrenciesOptions = (options?: Options<ListActiveCurrenci
       });
       return data;
     },
-    queryKey: listActiveCurrenciesQueryKey(options),
+    queryKey: listCurrenciesQueryKey(options),
   });
+};
+
+export const listCurrenciesInfiniteQueryKey = (
+  options: Options<ListCurrenciesData>
+): QueryKey<Options<ListCurrenciesData>> => createQueryKey('listCurrencies', options, true);
+
+/**
+ * List platform currencies (paginated)
+ */
+export const listCurrenciesInfiniteOptions = (options: Options<ListCurrenciesData>) => {
+  return infiniteQueryOptions<
+    ListCurrenciesResponse,
+    ListCurrenciesError,
+    InfiniteData<ListCurrenciesResponse>,
+    QueryKey<Options<ListCurrenciesData>>,
+    number | Pick<QueryKey<Options<ListCurrenciesData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListCurrenciesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listCurrencies({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listCurrenciesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getDefaultCurrencyQueryKey = (options?: Options<GetDefaultCurrencyData>) =>
@@ -19381,8 +19149,8 @@ export const resolveByCourseOrClassQueryKey = (options?: Options<ResolveByCourse
   createQueryKey('resolveByCourseOrClass', options);
 
 /**
- * Resolve catalogue mapping by course or class
- * Tries course first, then class
+ * Resolve catalogue mappings by course or class
+ * Returns all catalogue entries for the provided course or class
  */
 export const resolveByCourseOrClassOptions = (options?: Options<ResolveByCourseOrClassData>) => {
   return queryOptions({
@@ -19863,6 +19631,27 @@ export const getCourseCertificatesOptions = (options?: Options<GetCourseCertific
       return data;
     },
     queryKey: getCourseCertificatesQueryKey(options),
+  });
+};
+
+export const getBookingQueryKey = (options: Options<GetBookingData>) =>
+  createQueryKey('getBooking', options);
+
+/**
+ * Get booking details
+ */
+export const getBookingOptions = (options: Options<GetBookingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getBooking({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getBookingQueryKey(options),
   });
 };
 

@@ -298,30 +298,12 @@ import type {
   UpdateClassDefinitionData,
   UpdateClassDefinitionResponses,
   UpdateClassDefinitionErrors,
-  CancelRecurringClassScheduleData,
-  CancelRecurringClassScheduleResponses,
-  CancelRecurringClassScheduleErrors,
-  ScheduleRecurringClassFromDefinitionData,
-  ScheduleRecurringClassFromDefinitionResponses,
-  ScheduleRecurringClassFromDefinitionErrors,
-  UpdateRecurringClassScheduleData,
-  UpdateRecurringClassScheduleResponses,
-  UpdateRecurringClassScheduleErrors,
   GetLessonPlanData,
   GetLessonPlanResponses,
   GetLessonPlanErrors,
   SaveLessonPlanData,
   SaveLessonPlanResponses,
   SaveLessonPlanErrors,
-  DeleteClassRecurrencePatternData,
-  DeleteClassRecurrencePatternResponses,
-  DeleteClassRecurrencePatternErrors,
-  GetClassRecurrencePatternData,
-  GetClassRecurrencePatternResponses,
-  GetClassRecurrencePatternErrors,
-  UpdateClassRecurrencePatternData,
-  UpdateClassRecurrencePatternResponses,
-  UpdateClassRecurrencePatternErrors,
   DeleteCertificateData,
   DeleteCertificateResponses,
   DeleteCertificateErrors,
@@ -373,6 +355,9 @@ import type {
   CheckInstructorConflictData,
   CheckInstructorConflictResponses,
   CheckInstructorConflictErrors,
+  BlockInstructorTimeData,
+  BlockInstructorTimeResponses,
+  BlockInstructorTimeErrors,
   ListRulesData,
   ListRulesResponses,
   ListRulesErrors,
@@ -553,12 +538,6 @@ import type {
   UploadInstructorDocumentData,
   UploadInstructorDocumentResponses,
   UploadInstructorDocumentErrors,
-  SetAvailabilityPatternsData,
-  SetAvailabilityPatternsResponses,
-  SetAvailabilityPatternsErrors,
-  BlockTimeData,
-  BlockTimeResponses,
-  BlockTimeErrors,
   CreateLinkData,
   CreateLinkResponses,
   CreateLinkErrors,
@@ -754,9 +733,6 @@ import type {
   CreateAssignmentScheduleData,
   CreateAssignmentScheduleResponses,
   CreateAssignmentScheduleErrors,
-  CreateClassRecurrencePatternData,
-  CreateClassRecurrencePatternResponses,
-  CreateClassRecurrencePatternErrors,
   GetAllCertificatesData,
   GetAllCertificatesResponses,
   GetAllCertificatesErrors,
@@ -784,6 +760,15 @@ import type {
   GenerateCourseCertificateData,
   GenerateCourseCertificateResponses,
   GenerateCourseCertificateErrors,
+  CreateBookingData,
+  CreateBookingResponses,
+  CreateBookingErrors,
+  PaymentCallbackData,
+  PaymentCallbackResponses,
+  PaymentCallbackErrors,
+  CancelBookingData,
+  CancelBookingResponses,
+  CancelBookingErrors,
   GetAllAssignmentsData,
   GetAllAssignmentsResponses,
   GetAllAssignmentsErrors,
@@ -1078,9 +1063,9 @@ import type {
   HasCapacityForEnrollmentData,
   HasCapacityForEnrollmentResponses,
   HasCapacityForEnrollmentErrors,
-  ListActiveCurrenciesData,
-  ListActiveCurrenciesResponses,
-  ListActiveCurrenciesErrors,
+  ListCurrenciesData,
+  ListCurrenciesResponses,
+  ListCurrenciesErrors,
   GetDefaultCurrencyData,
   GetDefaultCurrencyResponses,
   GetDefaultCurrencyErrors,
@@ -1228,6 +1213,9 @@ import type {
   GetCourseCertificatesData,
   GetCourseCertificatesResponses,
   GetCourseCertificatesErrors,
+  GetBookingData,
+  GetBookingResponses,
+  GetBookingErrors,
   GetAssignmentSubmissionsData,
   GetAssignmentSubmissionsResponses,
   GetAssignmentSubmissionsErrors,
@@ -1368,12 +1356,8 @@ import {
   updateCatalogItemResponseTransformer,
   getClassDefinitionResponseTransformer,
   updateClassDefinitionResponseTransformer,
-  scheduleRecurringClassFromDefinitionResponseTransformer,
-  updateRecurringClassScheduleResponseTransformer,
   getLessonPlanResponseTransformer,
   saveLessonPlanResponseTransformer,
-  getClassRecurrencePatternResponseTransformer,
-  updateClassRecurrencePatternResponseTransformer,
   getCertificateByUuidResponseTransformer,
   updateCertificateResponseTransformer,
   updateCertificateTemplateResponseTransformer,
@@ -1384,6 +1368,7 @@ import {
   getAllTrainingBranchesResponseTransformer,
   createTrainingBranchResponseTransformer,
   scheduleClassResponseTransformer,
+  blockInstructorTimeResponseTransformer,
   listRulesResponseTransformer,
   createRuleResponseTransformer,
   getAllStudentsResponseTransformer,
@@ -1498,7 +1483,6 @@ import {
   createQuizScheduleResponseTransformer,
   getAssignmentSchedulesResponseTransformer,
   createAssignmentScheduleResponseTransformer,
-  createClassRecurrencePatternResponseTransformer,
   getAllCertificatesResponseTransformer,
   createCertificateResponseTransformer,
   uploadCertificatePdfResponseTransformer,
@@ -1507,6 +1491,9 @@ import {
   createCertificateTemplateResponseTransformer,
   generateProgramCertificateResponseTransformer,
   generateCourseCertificateResponseTransformer,
+  createBookingResponseTransformer,
+  paymentCallbackResponseTransformer,
+  cancelBookingResponseTransformer,
   getAllAssignmentsResponseTransformer,
   createAssignmentResponseTransformer,
   submitAssignmentResponseTransformer,
@@ -1579,6 +1566,7 @@ import {
   getStudentScheduleResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
+  listCurrenciesResponseTransformer,
   getPrimaryRubricResponseTransformer,
   getRubricsByContextResponseTransformer,
   getCourseEnrollmentsResponseTransformer,
@@ -1619,6 +1607,7 @@ import {
   getProgramCertificates1ResponseTransformer,
   getCertificateByNumberResponseTransformer,
   getCourseCertificatesResponseTransformer,
+  getBookingResponseTransformer,
   getAssignmentSubmissionsResponseTransformer,
   getHighPerformanceSubmissionsResponseTransformer,
   searchSubmissionsResponseTransformer,
@@ -4514,86 +4503,6 @@ export const updateClassDefinition = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Cancel recurring schedule for a class definition
- */
-export const cancelRecurringClassSchedule = <ThrowOnError extends boolean = false>(
-  options: Options<CancelRecurringClassScheduleData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).delete<
-    CancelRecurringClassScheduleResponses,
-    CancelRecurringClassScheduleErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/{uuid}/schedule',
-    ...options,
-  });
-};
-
-/**
- * Schedule recurring classes from a class definition
- */
-export const scheduleRecurringClassFromDefinition = <ThrowOnError extends boolean = false>(
-  options: Options<ScheduleRecurringClassFromDefinitionData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    ScheduleRecurringClassFromDefinitionResponses,
-    ScheduleRecurringClassFromDefinitionErrors,
-    ThrowOnError
-  >({
-    responseTransformer: scheduleRecurringClassFromDefinitionResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/{uuid}/schedule',
-    ...options,
-  });
-};
-
-/**
- * Update recurring schedule for a class definition
- */
-export const updateRecurringClassSchedule = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateRecurringClassScheduleData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).put<
-    UpdateRecurringClassScheduleResponses,
-    UpdateRecurringClassScheduleErrors,
-    ThrowOnError
-  >({
-    responseTransformer: updateRecurringClassScheduleResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/{uuid}/schedule',
-    ...options,
-  });
-};
-
-/**
  * Get the lesson plan for a class definition
  */
 export const getLessonPlan = <ThrowOnError extends boolean = false>(
@@ -4643,90 +4552,6 @@ export const saveLessonPlan = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/{classUuid}/lesson-plan',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Delete a recurrence pattern by UUID
- */
-export const deleteClassRecurrencePattern = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteClassRecurrencePatternData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).delete<
-    DeleteClassRecurrencePatternResponses,
-    DeleteClassRecurrencePatternErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/recurrence-patterns/{uuid}',
-    ...options,
-  });
-};
-
-/**
- * Get a recurrence pattern by UUID
- */
-export const getClassRecurrencePattern = <ThrowOnError extends boolean = false>(
-  options: Options<GetClassRecurrencePatternData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).get<
-    GetClassRecurrencePatternResponses,
-    GetClassRecurrencePatternErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getClassRecurrencePatternResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/recurrence-patterns/{uuid}',
-    ...options,
-  });
-};
-
-/**
- * Update a recurrence pattern by UUID
- */
-export const updateClassRecurrencePattern = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateClassRecurrencePatternData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).put<
-    UpdateClassRecurrencePatternResponses,
-    UpdateClassRecurrencePatternErrors,
-    ThrowOnError
-  >({
-    responseTransformer: updateClassRecurrencePatternResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/recurrence-patterns/{uuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -5226,6 +5051,37 @@ export const checkInstructorConflict = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/timetable/instructor/{instructorUuid}/check-conflict',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Block instructor calendar for non-teaching time
+ */
+export const blockInstructorTime = <ThrowOnError extends boolean = false>(
+  options: Options<BlockInstructorTimeData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    BlockInstructorTimeResponses,
+    BlockInstructorTimeErrors,
+    ThrowOnError
+  >({
+    responseTransformer: blockInstructorTimeResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/instructor/{instructorUuid}/blocks',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7041,89 +6897,6 @@ export const uploadInstructorDocument = <ThrowOnError extends boolean = false>(
       'Content-Type': null,
       ...options.headers,
     },
-  });
-};
-
-/**
- * Set availability patterns
- * Sets recurring availability patterns for an instructor.
- *
- * Supports multiple pattern types:
- * - **weekly**: Patterns based on day of week (Monday-Sunday)
- * - **daily**: Patterns that repeat daily
- * - **monthly**: Patterns based on day of month (1-31)
- * - **custom**: Custom recurring patterns with specific rules
- *
- * The pattern type is determined by the request body structure.
- * Use the appropriate DTO for the pattern type you want to set.
- *
- * Examples:
- * - Weekly: Set availability every Monday and Wednesday 9am-5pm
- * - Daily: Set availability every day 2pm-4pm
- * - Monthly: Set availability on the 1st and 15th of every month
- * - Custom: Set availability with custom recurrence rules
- *
- */
-export const setAvailabilityPatterns = <ThrowOnError extends boolean = false>(
-  options: Options<SetAvailabilityPatternsData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    SetAvailabilityPatternsResponses,
-    SetAvailabilityPatternsErrors,
-    ThrowOnError
-  >({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/patterns',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
- * Block time for an instructor
- * Blocks a specific time period for an instructor, making them unavailable.
- *
- * This creates availability slots with isAvailable = false, which override
- * any existing availability patterns for that time period.
- *
- * You can optionally provide a color code (hex format) to categorize and
- * visually distinguish different types of blocked times on the frontend.
- *
- * Common use cases:
- * - Marking vacation time (e.g., color_code: "#FF6B6B" - red)
- * - Blocking time for meetings (e.g., color_code: "#FFD93D" - yellow)
- * - Indicating sick leave (e.g., color_code: "#FFA07A" - orange)
- * - Personal time off (e.g., color_code: "#95E1D3" - teal)
- *
- */
-export const blockTime = <ThrowOnError extends boolean = false>(
-  options: Options<BlockTimeData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<BlockTimeResponses, BlockTimeErrors, ThrowOnError>({
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/instructors/{instructorUuid}/availability/block',
-    ...options,
   });
 };
 
@@ -9203,37 +8976,6 @@ export const createAssignmentSchedule = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create a new recurrence pattern
- */
-export const createClassRecurrencePattern = <ThrowOnError extends boolean = false>(
-  options: Options<CreateClassRecurrencePatternData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    CreateClassRecurrencePatternResponses,
-    CreateClassRecurrencePatternErrors,
-    ThrowOnError
-  >({
-    responseTransformer: createClassRecurrencePatternResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/recurrence-patterns',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-};
-
-/**
  * Get all certificates
  * Retrieves paginated list of all certificates with filtering support.
  */
@@ -9501,6 +9243,95 @@ export const generateCourseCertificate = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/certificates/generate/course',
+    ...options,
+  });
+};
+
+/**
+ * Create a booking for a course/instructor slot
+ */
+export const createBooking = <ThrowOnError extends boolean = false>(
+  options: Options<CreateBookingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateBookingResponses,
+    CreateBookingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createBookingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/bookings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Payment callback to update booking status
+ */
+export const paymentCallback = <ThrowOnError extends boolean = false>(
+  options: Options<PaymentCallbackData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    PaymentCallbackResponses,
+    PaymentCallbackErrors,
+    ThrowOnError
+  >({
+    responseTransformer: paymentCallbackResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/bookings/{bookingUuid}/payment-callback',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Cancel a booking and release the reserved slot
+ */
+export const cancelBooking = <ThrowOnError extends boolean = false>(
+  options: Options<CancelBookingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CancelBookingResponses,
+    CancelBookingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: cancelBookingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/bookings/{bookingUuid}/cancel',
     ...options,
   });
 };
@@ -10000,7 +9831,7 @@ export const getCart = <ThrowOnError extends boolean = false>(
 
 /**
  * Update cart attributes
- * Updates cart metadata such as customer or addresses
+ * Updates cart details such as customer or addresses
  */
 export const updateCart = <ThrowOnError extends boolean = false>(
   options: Options<UpdateCartData, ThrowOnError>
@@ -12423,16 +12254,17 @@ export const hasCapacityForEnrollment = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * List active platform currencies
+ * List platform currencies (paginated)
  */
-export const listActiveCurrencies = <ThrowOnError extends boolean = false>(
-  options?: Options<ListActiveCurrenciesData, ThrowOnError>
+export const listCurrencies = <ThrowOnError extends boolean = false>(
+  options: Options<ListCurrenciesData, ThrowOnError>
 ) => {
-  return (options?.client ?? _heyApiClient).get<
-    ListActiveCurrenciesResponses,
-    ListActiveCurrenciesErrors,
+  return (options.client ?? _heyApiClient).get<
+    ListCurrenciesResponses,
+    ListCurrenciesErrors,
     ThrowOnError
   >({
+    responseTransformer: listCurrenciesResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -13490,8 +13322,8 @@ export const searchCatalogue = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Resolve catalogue mapping by course or class
- * Tries course first, then class
+ * Resolve catalogue mappings by course or class
+ * Returns all catalogue entries for the provided course or class
  */
 export const resolveByCourseOrClass = <ThrowOnError extends boolean = false>(
   options?: Options<ResolveByCourseOrClassData, ThrowOnError>
@@ -13925,6 +13757,31 @@ export const getCourseCertificates = <ThrowOnError extends boolean = false>(
     url: '/api/v1/certificates/course-certificates',
     ...options,
   });
+};
+
+/**
+ * Get booking details
+ */
+export const getBooking = <ThrowOnError extends boolean = false>(
+  options: Options<GetBookingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetBookingResponses, GetBookingErrors, ThrowOnError>(
+    {
+      responseTransformer: getBookingResponseTransformer,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/bookings/{bookingUuid}',
+      ...options,
+    }
+  );
 };
 
 /**

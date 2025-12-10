@@ -191,7 +191,6 @@ export default function ClassPreviewPage() {
   });
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
-    slots: [],
     events: [],
     settings: {
       timezone: 'UTC',

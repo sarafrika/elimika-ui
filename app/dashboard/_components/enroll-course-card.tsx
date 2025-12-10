@@ -5,8 +5,8 @@ import { Card } from '@/components/ui/card';
 import { useStudent } from '@/context/student-context';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { addItemMutation, createCartMutation } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation } from '@tanstack/react-query';
+import { addItemMutation, createCartMutation, getCartQueryKey } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, CheckCircle, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -32,6 +32,7 @@ export default function EnrollCourseCard({
   variant,
 }: EnrollCourseCardProps) {
   const student = useStudent()
+  const qc = useQueryClient()
   const { difficultyMap } = useDifficultyLevels();
   const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'Unknown';
 
@@ -46,34 +47,43 @@ export default function EnrollCourseCard({
   const createCart = useMutation(createCartMutation())
   const addItemToCart = useMutation(addItemMutation())
 
-  const handleCreateCart = (classUuid: string) => {
-    if (!classUuid) return;
+  const handleCreateCart = (cls: any) => {
+    if (!cls) return;
+
+    const catalogue = cls.catalogue
+
+    if (catalogue === null) {
+      toast.error("No catalogue found for this class")
+      setShowCartModal(false);
+      return
+    }
 
     if (!savedCartId) {
       createCart.mutate(
         {
           body: {
-            currency_code: "USD",
+            // currency_code: catalogue.currency_code,
+            currency_code: "KES",
             region_code: "KE",
-            metadata: {
-              campaign: "back-to-school",
-            } as any,
+            // metadata: {
+            //   campaign: "",
+            // } as any,
             items: [
               {
-                variant_id: "course",
+                variant_id: catalogue.variant_code,
                 quantity: 1,
-                metadata: {
-                  course_uuid: cls?.course?.uuid as any,
-                  class_definition_uuid: cls?.uuid as any,
-                  student_uuid: student?.uuid as any,
-                },
+                // metadata: {
+                //   course_uuid: catalogue.course_uuid,
+                //   class_definition_uuid: catalogue.class_definition_uuid,
+                //   student_uuid: student?.uuid as any,
+                // },
               },
             ],
           },
         },
         {
           onSuccess: (data: any) => {
-            const cartId = data?.uuid || null;
+            const cartId = data?.data?.id || null;
 
             if (cartId) {
               localStorage.setItem("cart_id", cartId);
@@ -84,6 +94,9 @@ export default function EnrollCourseCard({
             toast.success("Class added to cart!");
             setShowCartModal(false);
           },
+          onError: (error: any) => {
+            toast.error(error.message)
+          }
         }
       );
 
@@ -93,16 +106,19 @@ export default function EnrollCourseCard({
     addItemToCart.mutate({
       path: { cartId: savedCartId as string },
       body: {
-        variant_id: "",
+        variant_id: catalogue.variant_code,
         quantity: 1,
-        metadata: {
-          course_uuid: cls?.course?.uuid as any,
-          class_definition_uuid: cls?.uuid as any,
-          student_uuid: student?.uuid as any,
-        }
+        // metadata: {
+        //   course_uuid: cls?.course?.uuid as any,
+        //   class_definition_uuid: cls?.uuid as any,
+        //   student_uuid: student?.uuid as any,
+        // }
       }
     }, {
       onSuccess: (data) => {
+        qc.invalidateQueries({
+          queryKey: getCartQueryKey({ path: { cartId: savedCartId } }),
+        });
         toast.success("Class added to cart!");
         setShowCartModal(false);
       }
@@ -286,8 +302,9 @@ export default function EnrollCourseCard({
         onClose={() => setShowCartModal(false)}
         cls={selectedClass}
         onConfirm={() => {
-          handleCreateCart(selectedClass.uuid);
+          handleCreateCart(selectedClass);
         }}
+        isPending={createCart.isPending || addItemToCart.isPending}
       />
 
     </div>

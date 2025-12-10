@@ -4,21 +4,26 @@ import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Button } from '@/components/ui/button';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
+  associateRubricMutation,
   deleteAssessmentRubricMutation,
   deleteRubricCriterionMutation,
   deleteRubricScoringMutation,
   deleteScoringLevelMutation,
+  dissociateRubricMutation,
+  getCourseRubricsOptions,
+  getCourseRubricsQueryKey,
   getRubricCriteriaQueryKey,
   getRubricMatrixQueryKey,
   getRubricScoringQueryKey,
   getScoringLevelsByRubricQueryKey,
-  searchAssessmentRubricsQueryKey,
+  searchAssessmentRubricsQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import deepEqual from 'fast-deep-equal';
 import { PlusCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import ConfirmModal from '../../../../components/custom-modals/confirm-modal';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import { CustomLoadingState } from '../_components/loading-state';
 import {
@@ -35,7 +40,7 @@ import {
 import { useRubricsWithCriteriaAndScoring } from './rubric-chaining';
 import RubricTable from './rubric-table-render';
 
-export default function RubricsCreationPage() {
+export default function RubricsCreationPage(course: any) {
   const qc = useQueryClient();
   const creator = useCourseCreator();
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -76,6 +81,27 @@ export default function RubricsCreationPage() {
       setRubrics(memoizedRubricsWithDetails);
     }
   }, [memoizedRubricsWithDetails, rubricDataIsLoading, rubrics]);
+
+  const { data: associatedRubrics } = useQuery({
+    ...getCourseRubricsOptions({
+      path: { courseUuid: course?.courseId },
+      query: { pageable: {} }
+    }),
+    enabled: !!course?.courseId
+  })
+
+  const associatedRubricUuids = useMemo(() => {
+    const list = associatedRubrics?.data?.content ?? [];
+    return new Set(list.map(r => r.rubric_uuid));
+  }, [associatedRubrics]);
+
+
+  const rubricsWithLinkedStatus = useMemo(() => {
+    return (rubrics || []).map((rubric: any) => ({
+      ...rubric,
+      isLinked: associatedRubricUuids.has(rubric.rubric.uuid as string)
+    }));
+  }, [rubrics, associatedRubricUuids]);
 
   const [editingRubric, setEditingRubric] = useState<RubricDetailsFormValues | null>(null);
   const [editingCriterion, setEditingCriterion] = useState<RubricCriteriaFormValues | null>(null);
@@ -202,6 +228,94 @@ export default function RubricsCreationPage() {
     setEditingScoringId(cell.scoring_level_uuid);
     setIsScoringModalOpen(true);
   };
+
+  const [associationModal, setAssociationModal] = useState(false)
+  const [dissociationModal, setDissociationModal] = useState(false)
+
+  const openAssociateRubricModal = (rubricId: string) => {
+    const rubricItem = rubrics.find(r => r.rubric.uuid === rubricId);
+    if (!rubricItem) return;
+
+    const rubric = rubricItem.rubric;
+
+    setEditingRubric({
+      title: rubric.title,
+      description: rubric.description,
+      type: rubric.rubric_type,
+      visibility: rubric.is_public ? Visibility.Public : Visibility.Private,
+      total_weight: rubric.total_weight,
+      max_score: rubric.max_score,
+      min_passing_score: rubric.min_passing_score,
+      course_creator_uuid: rubric.course_creator_uuid
+    });
+
+    setAssociationModal(true)
+    setEditingRubricId(rubricId)
+  }
+  const openRemoveAssociationModal = (rubricId: string) => {
+    setDissociationModal(true)
+    setEditingRubricId(rubricId)
+  }
+
+  const associateRubric = useMutation(associateRubricMutation())
+  const dissociateRubric = useMutation(dissociateRubricMutation())
+
+  const handleRubricAssociation = () => {
+    if (!course?.courseId) {
+      toast.error("Course not found")
+      return
+    }
+
+    associateRubric.mutate({
+      body: {
+        course_uuid: course?.courseId,
+        rubric_uuid: editingRubricId as string,
+        associated_by: editingRubric?.course_creator_uuid,
+        is_primary_rubric: false,
+        usage_context: "",
+      }, path: { courseUuid: course?.courseId }
+    },
+      {
+        onSuccess: (data) => {
+          qc.invalidateQueries({
+            queryKey: getCourseRubricsQueryKey({
+              path: { courseUuid: course?.courseId as string },
+              query: { pageable: {} }
+            }),
+          });
+          toast.success(data?.message)
+          setAssociationModal(false)
+        },
+        onError: (error) => {
+          toast.error(error?.message)
+        }
+      })
+  }
+
+  const handleRuricDissociation = () => {
+    if (!course?.courseId) {
+      toast.error("Course not found")
+      return
+    }
+
+    dissociateRubric.mutate({
+      path: { courseUuid: course?.courseId, rubricUuid: editingRubricId as string }
+    }, {
+      onSuccess: (data) => {
+        qc.invalidateQueries({
+          queryKey: getCourseRubricsQueryKey({
+            path: { courseUuid: course?.courseId as string },
+            query: { pageable: {} }
+          }),
+        });
+        toast.success(data?.message)
+        setDissociationModal(false)
+      },
+      onError: (error) => {
+        toast.error(error?.message)
+      }
+    })
+  }
 
   const [rubricToDelete, setRubricToDelete] = useState<string | null>(null);
   const [criterionToDelete, setCriterionToDelete] = useState<string | null>(null);
@@ -459,35 +573,41 @@ export default function RubricsCreationPage() {
       )}
 
       {rubricsDataIsFetched && rubrics.length >= 1 && (
-          <div className='space-y-6'>
-            {rubrics.map(item => {
-              const rubric = item.rubric;
-              const matrixData = item.matrix?.data?.data;
+        <div className='space-y-6'>
+          {rubricsWithLinkedStatus.map(item => {
+            const rubric = item.rubric;
+            const matrixData = item.matrix?.data?.data;
+            const linked = item.isLinked
 
-              return (
-                <RubricTable
-                  key={rubric.uuid}
-                  rubric={rubric}
-                  scoringLevels={matrixData?.scoring_levels || []}
-                  criteria={matrixData?.criteria || []}
-                  matrixCells={matrixData?.matrix_cells || {}}
-                  // Pass action handlers here
-                  onEditRubric={openEditModal}
-                  onDeleteRubric={handleAskDeleteRubric}
-                  onAddCriterion={handleAddCriteria}
-                  onAddScoringLevel={handleAddScoringLevel}
-                  onEditScoringLevel={handleEditScoringLevel}
-                  onDeleteScoringLevel={handleAskDeleteScoringLevel}
-                  onEditCriterion={handleEditCriterion}
-                  onDeleteCriterion={handleAskDeleteCriterion}
-                  onAddScoring={handleAddScore}
-                  onEditCriterionScoring={handleEditCriteriaScoring}
-                  onDeleteCriterionScoring={handleAskDeleteCriteriaScoring}
-                />
-              );
-            })}
-          </div>
-        )}
+            return (
+              <RubricTable
+                key={rubric.uuid}
+                rubric={rubric}
+                scoringLevels={matrixData?.scoring_levels || []}
+                criteria={matrixData?.criteria || []}
+                matrixCells={matrixData?.matrix_cells || {}}
+                // 
+                onAssociateRubricWithCourse={openAssociateRubricModal}
+                onRemoveRubricAssociation={openRemoveAssociationModal}
+                linked={linked}
+
+                // Pass action handlers here
+                onEditRubric={openEditModal}
+                onDeleteRubric={handleAskDeleteRubric}
+                onAddCriterion={handleAddCriteria}
+                onAddScoringLevel={handleAddScoringLevel}
+                onEditScoringLevel={handleEditScoringLevel}
+                onDeleteScoringLevel={handleAskDeleteScoringLevel}
+                onEditCriterion={handleEditCriterion}
+                onDeleteCriterion={handleAskDeleteCriterion}
+                onAddScoring={handleAddScore}
+                onEditCriterionScoring={handleEditCriteriaScoring}
+                onDeleteCriterionScoring={handleAskDeleteCriteriaScoring}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Create and edit components modals */}
       {isCreateModalOpen && (
@@ -551,6 +671,43 @@ export default function RubricsCreationPage() {
           }}
         />
       )}
+
+
+      <ConfirmModal
+        open={associationModal}
+        setOpen={setAssociationModal}
+        title="Associate rubric with course"
+        description={
+          <div className='space-y-3 text-sm text-muted-foreground'>
+            <p>
+              You are about to <strong>associate</strong> this rubric with this course. Training instructors will now have access to this assessment rubric.
+            </p>
+          </div>
+        }
+        onConfirm={handleRubricAssociation}
+        isLoading={associateRubric.isPending}
+        confirmText="Yes, Associate Rubric"
+        cancelText="No, Cancel"
+        variant="primary"
+      />
+
+      <ConfirmModal
+        open={dissociationModal}
+        setOpen={setDissociationModal}
+        title="Remove rubric association with course"
+        description={
+          <div className='space-y-3 text-sm text-muted-foreground'>
+            <p>
+              You are about to <strong>dissociate</strong> this rubric from this course. Training instructors will no longer have access to this assesment rubric.
+            </p>
+          </div>
+        }
+        onConfirm={handleRuricDissociation}
+        isLoading={dissociateRubric.isPending}
+        confirmText="Yes, Dissociate Rubric"
+        cancelText="No, Cancel"
+        variant="primary"
+      />
 
       {/* Delete components modals */}
       <DeleteModal

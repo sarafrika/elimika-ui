@@ -6,11 +6,13 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import {
+  completeCartMutation,
   enrollStudentMutation,
+  getCartOptions,
   getStudentScheduleQueryKey,
   selectPaymentSessionMutation
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ShoppingCart } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -108,7 +110,10 @@ const EnrollmentPage = () => {
   const savedCartId = localStorage.getItem("cart_id");
   const [openCartModal, setOpenCartModal] = useState(false);
 
-  // const { data: cart } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }))
+  const { data: cartData } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }))
+  // @ts-ignore
+  const cart = cartData?.data
+
   const cartPaymentSession = useMutation(selectPaymentSessionMutation())
   const handlePaymentSession = (cart: any) => {
     cartPaymentSession.mutate({
@@ -122,61 +127,20 @@ const EnrollmentPage = () => {
     })
   }
 
-  const cart = {
-    "id": "2f6d4d1e-5f2a-4b2e-9f8d-0b7c3e9b5c1a",
-    "currency_code": "USD",
-    "region_code": "KE",
-    "status": "OPEN",
-    "subtotal": 8500,
-    "tax": 0,
-    "discount": 0,
-    "shipping": 0,
-    "total": 8500,
-    "created_at": "2024-07-20T09:45:00Z",
-    "updated_at": "2024-07-20T10:15:00Z",
-    "items": [
+  const completeCart = useMutation(completeCartMutation())
+  const handleCompleteCart = () => [
+    completeCart.mutate({
+      path: { cartId: savedCartId as string }
+    },
       {
-        "id": "item_01HZX2KJ6ZG5R2Y4B4S4G0QJZY",
-        "title": "Advanced Excel Course",
-        "quantity": 1,
-        "variant_id": "variant_01HZX1Y4K8R0HVWZ4Q6CF6M1AP",
-        "unit_price": 2500,
-        "subtotal": 2500,
-        "total": 2500,
-        "metadata": {}
-      },
-      {
-        "id": "item_01HZYYTR8HX9K3FQW1A1F3T8RS",
-        "title": "Data Analysis with Python",
-        "quantity": 1,
-        "variant_id": "variant_01HZYXQ2K9D1LSOP4G3M8N7QWE",
-        "unit_price": 3000,
-        "subtotal": 3000,
-        "total": 3000,
-        "metadata": {}
-      },
-      {
-        "id": "item_01HZYSAB4MK7P2ZQ9X3TRQ4FUV",
-        "title": "Project Management Essentials",
-        "quantity": 1,
-        "variant_id": "variant_01HZYPAQ4JU9BVWZ3T6CX2M9LO",
-        "unit_price": 1500,
-        "subtotal": 1500,
-        "total": 1500,
-        "metadata": {}
-      },
-      {
-        "id": "item_01HZYPQW7ND4MTX9V2S9TQ1BDE",
-        "title": "Digital Marketing Fundamentals",
-        "quantity": 1,
-        "variant_id": "variant_01HZYOMK9TV3LWQZ2B5AF9G8JK",
-        "unit_price": 1500,
-        "subtotal": 1500,
-        "total": 1500,
-        "metadata": {}
-      }
-    ]
-  }
+        onSuccess: (data: any) => {
+          toast.success("Success")
+        },
+        onError: (error: any) => {
+          toast.error(error?.message)
+        }
+      })
+  ]
 
   if (loading) {
     return <CustomLoadingState subHeading="Loading available classes..." />;
@@ -202,7 +166,10 @@ const EnrollmentPage = () => {
             {cart?.items.length}
           </span>
         </div>
+      </div>
 
+      <div className='cursor-pointer' onClick={handleCompleteCart} >
+        <span>Complete current cart</span>
       </div>
 
       {classes.length === 0 ? (
@@ -289,7 +256,7 @@ const EnrollmentPage = () => {
               <p className="text-muted-foreground text-center">Your cart is empty.</p>
             )}
 
-            {cart.items.map(item => (
+            {cart.items.map((item: any) => (
               <div
                 key={item.id}
                 className="rounded-md border bg-muted/50 p-3 space-y-1"
