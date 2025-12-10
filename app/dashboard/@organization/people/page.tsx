@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { AdminDataTable } from '@/components/admin/data-table/data-table';
-import type { AdminDataTableColumn } from '@/components/admin/data-table/types';
+import { elimikaDesignSystem } from '@/lib/design-system';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
@@ -16,6 +16,19 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import {
+  Users,
+  Mail,
+  Search,
+  UserPlus,
+  Calendar,
+  Filter,
+  X,
+  Building2,
+  GraduationCap,
+  BookOpen,
+} from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const domainOptions = [
   { value: '', label: 'All roles' },
@@ -31,7 +44,7 @@ export default function OrganisationPeoplePage() {
   const [domainFilter, setDomainFilter] = useState('');
   const [page, setPage] = useState(0);
   const [searchValue, setSearchValue] = useState('');
-  const pageSize = 10;
+  const pageSize = 12;
 
   const usersQuery = useQuery({
     ...(domainFilter
@@ -49,7 +62,7 @@ export default function OrganisationPeoplePage() {
   const filteredItems = useMemo(() => {
     if (!searchValue) return usersPage.items;
     const term = searchValue.toLowerCase();
-    return usersPage.items.filter(user => {
+    return usersPage.items.filter((user) => {
       const name = `${user.first_name ?? ''} ${user.last_name ?? ''}`.toLowerCase();
       return name.includes(term) || (user.email ?? '').toLowerCase().includes(term);
     });
@@ -60,128 +73,240 @@ export default function OrganisationPeoplePage() {
     domainFilter || totalItems === 0
       ? 1
       : Math.max(
-          (usersPage.metadata.totalPages as number | undefined) ??
-            Math.ceil(totalItems / pageSize) ??
-            1,
+          (usersPage.metadata.totalPages as number | undefined) ?? Math.ceil(totalItems / pageSize) ?? 1,
           1
         );
 
-  const columns: AdminDataTableColumn<User>[] = [
-    {
-      id: 'name',
-      header: 'Name',
-      cell: user => (
-        <div className='flex flex-col'>
-          <span className='font-medium'>
-            {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email}
-          </span>
-          <span className='text-muted-foreground text-xs'>{user.email}</span>
-        </div>
-      ),
-    },
-    {
-      id: 'domains',
-      header: 'Domains',
-      cell: user => (
-        <div className='flex flex-wrap gap-2'>
-          {user.user_domain?.map(domain => (
-            <Badge key={domain} variant='secondary'>
-              {domain}
-            </Badge>
-          )) || <span className='text-muted-foreground text-sm'>—</span>}
-        </div>
-      ),
-    },
-    {
-      id: 'created',
-      header: 'Created',
-      cell: user =>
-        user.created_date ? (
-          <span className='text-sm'>{format(new Date(user.created_date), 'dd MMM yyyy')}</span>
-        ) : (
-          <span className='text-muted-foreground text-sm'>—</span>
-        ),
-      className: 'text-right',
-    },
-  ];
+  const stats = useMemo(() => {
+    const all = usersPage.items;
+    return {
+      total: totalItems,
+      orgUsers: all.filter((u) => u.user_domain?.includes('organisation_user')).length,
+      instructors: all.filter((u) => u.user_domain?.includes('instructor')).length,
+      students: all.filter((u) => u.user_domain?.includes('student')).length,
+    };
+  }, [usersPage.items, totalItems]);
 
   return (
-    <div className='space-y-6'>
-      <div className='flex flex-col gap-3 rounded-3xl border border-border/60 bg-card p-6 shadow-sm md:flex-row md:items-center md:justify-between'>
-        <div>
-          <h1 className='text-2xl font-semibold'>People</h1>
-          <p className='text-muted-foreground text-sm'>
-            Paginated from GET /api/v1/organisations/{organisationUuid}/users with role filters for organisation admins, instructors, and students.
-          </p>
-        </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          <Button asChild variant='outline' size='sm'>
-            <Link prefetch href='/dashboard/invitations'>
-              Invite to organisation
+    <div className={elimikaDesignSystem.components.pageContainer}>
+      {/* Compact Header */}
+      <section className='mb-6'>
+        <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+          <div>
+            <h1 className='text-2xl font-bold text-foreground'>People</h1>
+            <p className='text-sm text-muted-foreground'>Manage members and team roles</p>
+          </div>
+          <Button asChild size='sm'>
+            <Link href='/dashboard/invitations'>
+              <UserPlus className='mr-2 h-4 w-4' />
+              Invite People
             </Link>
           </Button>
         </div>
-      </div>
 
-      <div className='rounded-2xl border border-border/60 bg-card p-5 shadow-sm'>
-        <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
-          <div className='flex flex-wrap items-center gap-3'>
-            <label className='text-xs text-muted-foreground' htmlFor='domain-filter'>
-              Role filter
-            </label>
+        {/* Stats */}
+        <div className='grid gap-3 sm:grid-cols-4'>
+          <div className='rounded-lg border border-border bg-card p-3'>
+            <div className='flex items-center gap-3'>
+              <div className='rounded-lg bg-muted p-2'>
+                <Users className='h-4 w-4 text-primary' />
+              </div>
+              <div>
+                <p className='text-xs text-muted-foreground'>Total Members</p>
+                <p className='text-lg font-bold text-foreground'>{stats.total}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className='rounded-lg border border-border bg-card p-3'>
+            <div className='flex items-center gap-3'>
+              <div className='rounded-lg bg-muted p-2'>
+                <Building2 className='h-4 w-4 text-primary' />
+              </div>
+              <div>
+                <p className='text-xs text-muted-foreground'>Org Users</p>
+                <p className='text-lg font-bold text-foreground'>{stats.orgUsers}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className='rounded-lg border border-border bg-card p-3'>
+            <div className='flex items-center gap-3'>
+              <div className='rounded-lg bg-muted p-2'>
+                <BookOpen className='h-4 w-4 text-primary' />
+              </div>
+              <div>
+                <p className='text-xs text-muted-foreground'>Instructors</p>
+                <p className='text-lg font-bold text-foreground'>{stats.instructors}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className='rounded-lg border border-border bg-card p-3'>
+            <div className='flex items-center gap-3'>
+              <div className='rounded-lg bg-muted p-2'>
+                <GraduationCap className='h-4 w-4 text-primary' />
+              </div>
+              <div>
+                <p className='text-xs text-muted-foreground'>Students</p>
+                <p className='text-lg font-bold text-foreground'>{stats.students}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Filters and Search */}
+      <section className='mb-6'>
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='flex items-center gap-3'>
+            <Filter className='h-4 w-4 text-muted-foreground' />
             <select
-              id='domain-filter'
-              className='rounded-md border border-border/60 bg-background px-3 py-2 text-sm'
+              className='rounded-md border border-border bg-background px-3 py-2 text-sm'
               value={domainFilter}
-              onChange={event => {
+              onChange={(event) => {
                 setDomainFilter(event.target.value);
                 setPage(0);
               }}
             >
-              {domainOptions.map(option => (
+              {domainOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
+            {domainFilter && (
+              <Button variant='ghost' size='sm' onClick={() => setDomainFilter('')}>
+                <X className='h-4 w-4' />
+              </Button>
+            )}
           </div>
-          <div className='flex items-center gap-2'>
+          <div className='relative'>
+            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
             <Input
-              placeholder='Search by name or email'
+              placeholder='Search by name or email...'
               value={searchValue}
-              onChange={event => setSearchValue(event.target.value)}
-              className='w-full md:w-72'
+              onChange={(event) => setSearchValue(event.target.value)}
+              className='w-full pl-10 sm:w-80'
             />
-            <Button variant='ghost' size='sm' onClick={() => setSearchValue('')}>
-              Reset
+            {searchValue && (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setSearchValue('')}
+                className='absolute right-1 top-1/2 h-7 -translate-y-1/2'
+              >
+                <X className='h-4 w-4' />
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* People Grid */}
+      <section className={elimikaDesignSystem.spacing.content}>
+        {usersQuery.isLoading ? (
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className='h-40 w-full' />
+            ))}
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className={elimikaDesignSystem.components.emptyState.container}>
+            <Users className={elimikaDesignSystem.components.emptyState.icon} />
+            <h3 className={elimikaDesignSystem.components.emptyState.title}>No members found</h3>
+            <p className={elimikaDesignSystem.components.emptyState.description}>
+              {searchValue || domainFilter
+                ? 'Try adjusting your search or filter criteria'
+                : 'Invite people to your organization to get started'}
+            </p>
+            <Button asChild className='mt-4'>
+              <Link href='/dashboard/invitations'>
+                <UserPlus className='mr-2 h-4 w-4' />
+                Invite People
+              </Link>
             </Button>
           </div>
-        </div>
-        <div className='mt-4'>
-          <AdminDataTable
-            title='Members & roles'
-            description='Domain chips show full access including organisation-level roles.'
-            columns={columns}
-            data={filteredItems}
-            isLoading={usersQuery.isLoading}
-            pagination={
-              domainFilter
-                ? undefined
-                : {
-                    page,
-                    pageSize,
-                    totalItems,
-                    totalPages,
-                    onPageChange: setPage,
-                  }
-            }
-            emptyState={{
-              title: 'No members found',
-              description: 'Invite people to this organisation or adjust filters.',
-            }}
-          />
-        </div>
-      </div>
+        ) : (
+          <>
+            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+              {filteredItems.map((user) => (
+                <div key={user.uuid} className={elimikaDesignSystem.components.listCard.base}>
+                  <div className='mb-4 flex items-start justify-between'>
+                    <div className='flex items-center gap-3'>
+                      <div className='flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary'>
+                        <span className='text-lg font-semibold'>
+                          {(user.first_name?.[0] || user.email?.[0] || '?').toUpperCase()}
+                        </span>
+                      </div>
+                      <div className='flex-1'>
+                        <h3 className='font-semibold text-foreground'>
+                          {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'Unnamed User'}
+                        </h3>
+                        <div className='mt-1 flex items-center gap-1.5 text-xs text-muted-foreground'>
+                          <Mail className='h-3 w-3' />
+                          <span className='truncate'>{user.email}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator className='my-3' />
+
+                  <div className='space-y-3'>
+                    <div>
+                      <p className='mb-2 text-xs font-medium text-muted-foreground'>Roles</p>
+                      <div className='flex flex-wrap gap-1.5'>
+                        {user.user_domain && user.user_domain.length > 0 ? (
+                          user.user_domain.map((domain) => (
+                            <Badge key={domain} variant='secondary' className='text-xs'>
+                              {domain}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className='text-xs text-muted-foreground'>No roles</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {user.created_date && (
+                      <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                        <Calendar className='h-3 w-3' />
+                        <span>Joined {format(new Date(user.created_date), 'MMM dd, yyyy')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {!domainFilter && totalPages > 1 && (
+              <div className='mt-6 flex items-center justify-center gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                >
+                  Previous
+                </Button>
+                <span className='text-sm text-muted-foreground'>
+                  Page {page + 1} of {totalPages}
+                </span>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }
