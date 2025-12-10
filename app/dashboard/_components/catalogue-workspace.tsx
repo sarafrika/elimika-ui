@@ -15,7 +15,11 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  XCircle
+  XCircle,
+  User,
+  UserCheck,
+  TrendingUp,
+  Percent
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,9 +33,11 @@ import { extractEntity } from '@/lib/api-helpers';
 import {
   getClassDefinitionOptions,
   getCourseByUuidOptions,
+  getCourseCreatorByUuidOptions,
+  getInstructorByUuidOptions,
   listCatalogItemsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ClassDefinition, CommerceCatalogueItem, Course } from '@/services/client';
+import type { ClassDefinition, CommerceCatalogueItem, Course, CourseCreator, Instructor } from '@/services/client';
 
 type CatalogueScope = 'admin' | 'organization' | 'instructor' | 'course_creator';
 
@@ -592,21 +598,18 @@ export function CatalogueWorkspace({
                   ) : null;
                 })()}
 
+                {/* Creator/Instructor Information */}
+                <CatalogueItemCreatorInfo
+                  selectedRow={selectedRow}
+                  courseMap={titleMaps.courseMap}
+                  classMap={titleMaps.classMap}
+                />
+
                 {/* Pricing - More Prominent */}
-                <div className='rounded-[16px] border border-primary/20 bg-primary/5 p-5'>
-                  <p className='mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary'>
-                    <DollarSign className='h-3.5 w-3.5' />
-                    Pricing
-                  </p>
-                  <p className='mt-2 text-2xl font-bold text-foreground'>
-                    {selectedRow.price !== null && selectedRow.price !== undefined
-                      ? formatMoney(selectedRow.price, selectedRow.currency ?? undefined)
-                      : 'No price set'}
-                  </p>
-                  <p className='mt-1 text-xs text-muted-foreground'>
-                    {selectedRow.currency ? `Currency: ${selectedRow.currency}` : 'Default currency applied'}
-                  </p>
-                </div>
+                <CatalogueItemPricing
+                  selectedRow={selectedRow}
+                  courseMap={titleMaps.courseMap}
+                />
 
                 {/* Key Information */}
                 <div className='space-y-3'>
@@ -660,6 +663,144 @@ export function CatalogueWorkspace({
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function CatalogueItemCreatorInfo({
+  selectedRow,
+  courseMap,
+  classMap,
+}: {
+  selectedRow: CatalogueRow;
+  courseMap: Map<string, Course>;
+  classMap: Map<string, ClassDefinition>;
+}) {
+  const course = selectedRow.courseId ? courseMap.get(selectedRow.courseId) : null;
+  const classDef = selectedRow.classId ? classMap.get(selectedRow.classId) : null;
+
+  const courseCreatorUuid = course?.course_creator_uuid;
+  const instructorUuid = classDef?.default_instructor_uuid;
+
+  const { data: creatorData } = useQuery({
+    ...getCourseCreatorByUuidOptions({
+      path: { uuid: courseCreatorUuid ?? '' },
+    }),
+    enabled: Boolean(courseCreatorUuid),
+  });
+
+  const { data: instructorData } = useQuery({
+    ...getInstructorByUuidOptions({
+      path: { uuid: instructorUuid ?? '' },
+    }),
+    enabled: Boolean(instructorUuid),
+  });
+
+  const creator = extractEntity<CourseCreator>(creatorData);
+  const instructor = extractEntity<Instructor>(instructorData);
+
+  if (!creator && !instructor) return null;
+
+  return (
+    <div className='space-y-3'>
+      <p className='flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+        <UserCheck className='h-3.5 w-3.5' />
+        People
+      </p>
+      <div className='grid gap-3 sm:grid-cols-2'>
+        {creator && (
+          <div className='rounded-[12px] border border-border/60 bg-card/80 p-4'>
+            <div className='flex items-center gap-3'>
+              <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary/10'>
+                <User className='h-5 w-5 text-primary' />
+              </div>
+              <div className='flex-1 overflow-hidden'>
+                <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>Course Creator</p>
+                <p className='mt-1 truncate text-sm font-semibold text-foreground'>
+                  {creator.first_name} {creator.last_name}
+                </p>
+                {creator.email && (
+                  <p className='truncate text-xs text-muted-foreground'>{creator.email}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        {instructor && (
+          <div className='rounded-[12px] border border-border/60 bg-card/80 p-4'>
+            <div className='flex items-center gap-3'>
+              <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary/10'>
+                <GraduationCap className='h-5 w-5 text-primary' />
+              </div>
+              <div className='flex-1 overflow-hidden'>
+                <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>Instructor</p>
+                <p className='mt-1 truncate text-sm font-semibold text-foreground'>
+                  {instructor.first_name} {instructor.last_name}
+                </p>
+                {instructor.email && (
+                  <p className='truncate text-xs text-muted-foreground'>{instructor.email}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CatalogueItemPricing({
+  selectedRow,
+  courseMap,
+}: {
+  selectedRow: CatalogueRow;
+  courseMap: Map<string, Course>;
+}) {
+  const course = selectedRow.courseId ? courseMap.get(selectedRow.courseId) : null;
+
+  return (
+    <div className='space-y-3'>
+      <div className='rounded-[16px] border border-primary/20 bg-primary/5 p-5'>
+        <p className='mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary'>
+          <DollarSign className='h-3.5 w-3.5' />
+          Pricing & Revenue
+        </p>
+        <p className='mt-2 text-2xl font-bold text-foreground'>
+          {selectedRow.price !== null && selectedRow.price !== undefined
+            ? formatMoney(selectedRow.price, selectedRow.currency ?? undefined)
+            : 'No price set'}
+        </p>
+        <p className='mt-1 text-xs text-muted-foreground'>
+          {selectedRow.currency ? `Currency: ${selectedRow.currency}` : 'Default currency applied'}
+        </p>
+
+        {/* Revenue Share Information */}
+        {course && course.creator_share_percentage !== undefined && course.instructor_share_percentage !== undefined && (
+          <div className='mt-4 grid gap-3 sm:grid-cols-2'>
+            <div className='rounded-[10px] border border-border/60 bg-card/60 p-3'>
+              <div className='flex items-center gap-2'>
+                <Percent className='h-3.5 w-3.5 text-primary' />
+                <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>Creator Share</p>
+              </div>
+              <p className='mt-1.5 text-lg font-bold text-foreground'>{course.creator_share_percentage}%</p>
+            </div>
+            <div className='rounded-[10px] border border-border/60 bg-card/60 p-3'>
+              <div className='flex items-center gap-2'>
+                <TrendingUp className='h-3.5 w-3.5 text-primary' />
+                <p className='text-[10px] font-medium uppercase tracking-wider text-muted-foreground'>Instructor Share</p>
+              </div>
+              <p className='mt-1.5 text-lg font-bold text-foreground'>{course.instructor_share_percentage}%</p>
+            </div>
+          </div>
+        )}
+
+        {/* Revenue Allocation Context */}
+        {course?.revenue_allocation_context && (
+          <div className='mt-3 rounded-[10px] border border-border/60 bg-muted/20 p-3'>
+            <p className='text-xs text-muted-foreground'>{course.revenue_allocation_context}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
