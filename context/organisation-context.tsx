@@ -23,7 +23,13 @@ const OrganisationContext = createContext<OrganisationContextValue>(null);
 
 export const useOrganisation = () => useContext(OrganisationContext);
 
-export default function OrganisationProvider({ children }: { children: ReactNode }) {
+export default function OrganisationProvider({
+  children,
+  initialOrganisation,
+}: {
+  children: ReactNode;
+  initialOrganisation?: OrganisationContextValue;
+}) {
   const { data: session } = useSession();
   const userProfile = useUserProfile();
   const userDomain = useUserDomain();
@@ -44,6 +50,10 @@ export default function OrganisationProvider({ children }: { children: ReactNode
       router.replace('/onboarding/organisation');
     }
   }, [hasOrgDomain, activeOrgId, userProfile?.isLoading, router]);
+
+  if (initialOrganisation) {
+    return <OrganisationContext.Provider value={initialOrganisation}>{children}</OrganisationContext.Provider>;
+  }
 
   // If no organisation is attached and user is not in an organisation domain, just render children without fetching
   if ((!activeOrgId || !session?.user) && !hasOrgDomain) {
