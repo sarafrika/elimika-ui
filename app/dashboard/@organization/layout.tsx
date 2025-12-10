@@ -1,8 +1,10 @@
 import OrganisationProvider from '@/context/organisation-context';
+import { getCourseCreatorDashboardData } from '@/services/course-creator/data';
 import type { Organisation, User, UserOrganisationAffiliationDto } from '@/services/client';
 import { getOrganisationByUuid, search, type ApiResponse, type SearchResponse } from '@/services/client';
 import { auth } from '@/services/auth';
 import type { ReactNode } from 'react';
+import OrganisationLayoutClient from './layout-client';
 
 async function fetchOrganisationForUser(): Promise<Organisation | null> {
   const session = await auth();
@@ -30,6 +32,11 @@ async function fetchOrganisationForUser(): Promise<Organisation | null> {
 
 export default async function OrganisationLayout({ children }: { children: ReactNode }) {
   const organisation = await fetchOrganisationForUser();
+  const courseCreatorData = await getCourseCreatorDashboardData();
 
-  return <OrganisationProvider initialOrganisation={organisation}>{children}</OrganisationProvider>;
+  return (
+    <OrganisationProvider initialOrganisation={organisation}>
+      <OrganisationLayoutClient initialData={courseCreatorData}>{children}</OrganisationLayoutClient>
+    </OrganisationProvider>
+  );
 }

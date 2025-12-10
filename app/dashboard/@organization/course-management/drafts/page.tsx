@@ -1,11 +1,12 @@
 'use client';
 
-import { useInstructor } from '../../../../../context/instructor-context';
+import { useOptionalCourseCreator } from '../../../../../context/course-creator-context';
 import DraftCoursesComponent from '../../../@course_creator/course-management/drafts/draftCourse-component';
 
 function Page() {
-  const instructor = useInstructor();
-  return <DraftCoursesComponent courseCreatorId={instructor?.uuid as string} />;
+  const courseCreatorContext = useOptionalCourseCreator();
+  const courseCreatorProfile = courseCreatorContext?.profile;
+  return <DraftCoursesComponent courseCreatorId={courseCreatorProfile?.uuid as string} />;
 }
 
 export default Page;
