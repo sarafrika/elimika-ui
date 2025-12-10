@@ -1,4 +1,6 @@
-import type { UserDomain, UserProfileType } from '@/lib/types';
+'use client';
+
+import type { UserProfileType } from '@/lib/types';
 import {
   type CourseCreator,
   getInstructorEducation,
@@ -21,10 +23,7 @@ import {
 import { queryOptions, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { getDashboardStorageKey } from '../lib/utils';
-
-type DomainTypes = UserDomain;
+import { createContext, type ReactNode, useCallback, useContext, useEffect } from 'react';
 
 type ExtendedInstructor = Instructor & {
   educations: InstructorEducation[];
@@ -38,9 +37,6 @@ const UserProfileContext = createContext<
       isLoading: boolean;
       invalidateQuery: () => void;
       clearProfile: () => void;
-      setActiveDomain: (domain: UserDomain) => void;
-      activeDomain: UserDomain | null;
-      hasMultipleDomains: boolean;
     })
   | null
 >(null);
@@ -52,50 +48,22 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
   const qc = useQueryClient();
   const router = useRouter();
 
-  const { data, isLoading, isError, refetch } = useQuery(
+  const { data, isLoading, refetch } = useQuery(
     createQueryOptions(session?.user?.email, {
       enabled: !!session?.user?.email,
     })
   );
 
-  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(null);
-  const storageIdentifier = data?.uuid ?? session?.user?.email ?? undefined;
-  const dashboardStorageKey = useMemo(
-    () => getDashboardStorageKey(storageIdentifier),
-    [storageIdentifier]
-  );
-
-  // Update active domain when profile data changes
-  useEffect(() => {
-    if (data && !isError && data.user_domain && data.user_domain.length > 0) {
-      let persistedDomain: UserDomain | null = null;
-      if (typeof window !== 'undefined') {
-        const cachedDomain = localStorage.getItem(dashboardStorageKey) as UserDomain | null;
-        if (cachedDomain && data.user_domain.includes(cachedDomain)) {
-          persistedDomain = cachedDomain;
-        }
-      }
-      const domain = (persistedDomain ?? data.user_domain[0]) as UserDomain;
-      if (domain) {
-        setActiveDomain(domain);
-      }
-    }
-  }, [data, isError, dashboardStorageKey]);
+  const clearProfile = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ['profile'] });
+  }, [qc]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       clearProfile();
-      setActiveDomain(null);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(dashboardStorageKey);
-      }
       router.replace('/');
     }
-  }, [status, dashboardStorageKey, clearProfile, router.replace]);
-
-  function clearProfile() {
-    void qc.invalidateQueries({ queryKey: ['profile'] });
-  }
+  }, [status, clearProfile, router]);
 
   return (
     <UserProfileContext.Provider
@@ -107,14 +75,6 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
           await refetch();
         },
         clearProfile,
-        setActiveDomain: (domain: UserDomain) => {
-          setActiveDomain(domain);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(dashboardStorageKey, domain);
-          }
-        },
-        activeDomain,
-        hasMultipleDomains: (data?.user_domain?.length || 0) > 1,
       }}
     >
       {children}

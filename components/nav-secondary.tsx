@@ -6,7 +6,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { getMenuWithActivePath, type MenuItem } from '@/lib/menu';
-import { useUserStore } from '@/store/use-user-store';
+import { useUserDomain } from '@/context/user-domain-context';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ComponentPropsWithoutRef } from 'react';
@@ -20,7 +20,7 @@ export function NavSecondary({
   ...props
 }: NavSecondaryProps & ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const pathname = usePathname();
-  const activeDomain = useUserStore(store => store.activeDomain);
+  const { activeDomain } = useUserDomain();
 
   const filteredItems = items.filter(item => !item.domain || item.domain === activeDomain);
 

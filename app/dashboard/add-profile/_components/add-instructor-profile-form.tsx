@@ -15,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
+import { useUserDomain } from '@/context/user-domain-context';
 import { createInstructor } from '@/services/client';
 import { zInstructor } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,6 +51,7 @@ type InstructorOnboardingFormData = z.infer<typeof InstructorOnboardingSchema>;
 export default function AddInstructorProfileForm() {
   const router = useRouter();
   const user = useUserProfile();
+  const userDomain = useUserDomain();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -109,9 +111,7 @@ export default function AddInstructorProfileForm() {
 
       toast.success('Instructor profile added successfully!');
 
-      if (user.setActiveDomain) {
-        user.setActiveDomain('instructor');
-      }
+      userDomain.setActiveDomain('instructor');
 
       await new Promise(resolve => setTimeout(resolve, 300));
       router.replace('/dashboard/overview');

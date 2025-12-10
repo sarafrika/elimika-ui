@@ -1,8 +1,7 @@
 'use client';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { useUserProfile } from '../context/profile-context';
+import { useUserDomain } from '../context/user-domain-context';
 import type { UserDomain } from '../lib/types';
-import { getDashboardStorageKey } from '../lib/utils';
 
 export const AvailableViews = [
   'student',
@@ -32,33 +31,53 @@ export function DashboardViewProvider({
   initialView?: DashboardView;
   availableViews?: DashboardView[];
 }) {
-  // Load from localStorage if available
-  const profile = useUserProfile();
+  const domain = useUserDomain();
+
+  const mapDomainToView = (currentDomain?: UserDomain | null): DashboardView => {
+    if (!currentDomain) return 'student';
+    if (currentDomain === 'organisation' || currentDomain === 'organisation_user') {
+      return 'organization';
+    }
+    return currentDomain as DashboardView;
+  };
+
+  const normalizedAvailableViews = useMemo(() => {
+    if (availableViews && availableViews.length > 0 && availableViews !== AvailableViews) {
+      return availableViews;
+    }
+
+    if (domain.domains.length > 0) {
+      return Array.from(
+        new Set(domain.domains.map(currentDomain => mapDomainToView(currentDomain)))
+      ) as DashboardView[];
+    }
+
+    return AvailableViews as DashboardView[];
+  }, [availableViews, domain.domains]);
+
   const [view, setViewState] = useState<DashboardView>(
-    initialView ?? profile?.activeDomain ?? 'student'
-  );
-  const dashboardStorageKey = useMemo(
-    () => getDashboardStorageKey(profile?.uuid ?? profile?.email ?? undefined),
-    [profile?.uuid, profile?.email]
+    initialView ?? mapDomainToView(domain.activeDomain ?? domain.domains[0])
   );
 
-  // Save to localStorage on change
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(dashboardStorageKey, view);
+    const nextView = mapDomainToView(domain.activeDomain ?? domain.domains[0]);
+    if (nextView && nextView !== view) {
+      setViewState(nextView);
     }
-  }, [view, dashboardStorageKey]);
+  }, [domain.activeDomain, domain.domains, view]);
 
   // Only allow switching to available views
   const setView = (v: DashboardView) => {
-    if (availableViews.includes(v)) {
+    if (normalizedAvailableViews.includes(v)) {
       setViewState(v);
-      profile?.setActiveDomain(v as UserDomain);
+      const mappedDomain =
+        v === 'organization' ? ('organisation' as UserDomain) : (v as UserDomain);
+      domain.setActiveDomain(mappedDomain);
     }
   };
 
   return (
-    <DashboardViewContext.Provider value={{ view, setView, availableViews }}>
+    <DashboardViewContext.Provider value={{ view, setView, availableViews: normalizedAvailableViews }}>
       {children}
     </DashboardViewContext.Provider>
   );

@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useUserProfile } from '@/context/profile-context';
+import { useUserDomain } from '@/context/user-domain-context';
 import type { UserDomain } from '@/lib/types';
 import {
   GraduationCap,
@@ -38,6 +38,11 @@ const domainConfig = {
     title: 'Course Creator Dashboard',
     color: 'text-primary',
   },
+  parent: {
+    icon: Users,
+    title: 'Parent Dashboard',
+    color: 'text-primary',
+  },
   organisation_user: {
     icon: Users,
     title: 'Organization Dashboard',
@@ -60,40 +65,38 @@ interface DomainSwitcherProps {
 }
 
 export function DomainSwitcher({ className }: DomainSwitcherProps) {
-  const profile = useUserProfile();
+  const userDomain = useUserDomain();
   const router = useRouter();
   const [isSwitching, setIsSwitching] = useState(false);
 
   // Don't show if user has only one domain or is loading
-  if (!profile || profile.isLoading || !profile.hasMultipleDomains || !profile.user_domain) {
+  if (userDomain.isLoading || !userDomain.hasMultipleDomains || !userDomain.activeDomain) {
     return null;
   }
 
-  const activeDomain = profile.activeDomain;
-  const availableDomains = profile.user_domain as UserDomain[];
+  const activeDomain = userDomain.activeDomain;
+  const availableDomains = userDomain.domains as UserDomain[];
 
   const currentDomainConfig = activeDomain ? domainConfig[activeDomain] : null;
   const CurrentIcon = currentDomainConfig?.icon || Users;
 
-  const handleDomainSwitch = async (domain: UserDomain) => {
-    if (domain === activeDomain) return; // Already on this domain
+  const handleDomainSwitch = async (nextDomain: UserDomain) => {
+    if (nextDomain === activeDomain) return; // Already on this domain
 
     setIsSwitching(true);
     toast.loading('Switching dashboard...', { id: 'domain-switch' });
 
     try {
-      if (profile.setActiveDomain) {
-        profile.setActiveDomain(domain);
+      userDomain.setActiveDomain(nextDomain);
 
-        // Small delay to allow context to update
-        await new Promise(resolve => setTimeout(resolve, 300));
+      // Small delay to allow context to update
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Navigate to overview page of new domain
-        router.push('/dashboard/overview');
-        router.refresh(); // Force a refresh to load new domain data
+      // Navigate to overview page of new domain
+      router.push('/dashboard/overview');
+      router.refresh(); // Force a refresh to load new domain data
 
-        toast.success(`Switched to ${domainConfig[domain].title}`, { id: 'domain-switch' });
-      }
+      toast.success(`Switched to ${domainConfig[nextDomain].title}`, { id: 'domain-switch' });
     } catch (_error) {
       toast.error('Failed to switch dashboard', { id: 'domain-switch' });
     } finally {

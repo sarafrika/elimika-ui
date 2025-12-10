@@ -1,11 +1,11 @@
-import { useUserProfile } from '@/context/profile-context';
+import { useUserDomain } from '@/context/user-domain-context';
 import { getQuizQuestionsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import QuestionItem from './questionItem';
 
 const QuizQuestions = ({ quizUuid }: { quizUuid: string }) => {
   const { data, isLoading, isFetching } = useQuery(getQuizQuestionsOptions({ path: { quizUuid } }));
-  const user = useUserProfile();
+  const { activeDomain } = useUserDomain();
 
   return (
     <div className='mt-2 ml-4 space-y-2'>
@@ -18,7 +18,7 @@ const QuizQuestions = ({ quizUuid }: { quizUuid: string }) => {
             quizUuid={quizUuid}
             question={question}
             qIndex={qIndex}
-            userDomain={user?.activeDomain}
+            userDomain={activeDomain}
           />
         ))
       ) : (

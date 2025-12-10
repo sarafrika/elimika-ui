@@ -9,7 +9,7 @@ import {
 } from './breadcrumb';
 import Link from 'next/link';
 import { Fragment } from 'react';
-import { useUserStore } from '@/store/use-user-store';
+import { useUserDomain } from '@/context/user-domain-context';
 
 interface AppBreadcrumbProps {
   className?: string;
@@ -18,7 +18,8 @@ interface AppBreadcrumbProps {
 
 export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps) {
   const { breadcrumbs } = useBreadcrumb();
-  const activeDomain = useUserStore(state => state.activeDomain);
+  const { activeDomain, domains } = useUserDomain();
+  const resolvedDomain = activeDomain ?? domains[0] ?? null;
 
   if (breadcrumbs.length === 0 && !showHome) return null;
 
@@ -28,7 +29,11 @@ export function AppBreadcrumb({ className, showHome = true }: AppBreadcrumbProps
         {showHome && (
           <>
             <BreadcrumbItem className='hidden md:block'>
-              <BreadcrumbLink href={`/dashboard/${activeDomain}/overview`}>
+              <BreadcrumbLink
+                href={
+                  resolvedDomain ? `/dashboard/${resolvedDomain}/overview` : '/dashboard/overview'
+                }
+              >
                 Dashboard
               </BreadcrumbLink>
             </BreadcrumbItem>

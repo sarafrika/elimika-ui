@@ -6,12 +6,15 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { SessionProvider } from 'next-auth/react';
 import type { ReactNode } from 'react';
 import UserProfileProvider from './profile-context';
+import { UserDomainProvider } from './user-domain-context';
 
 export function RootProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        <UserProfileProvider>{children}</UserProfileProvider>
+        <UserProfileProvider>
+          <UserDomainProvider>{children}</UserDomainProvider>
+        </UserProfileProvider>
       </SessionProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

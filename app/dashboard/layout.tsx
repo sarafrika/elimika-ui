@@ -5,6 +5,7 @@ import { type DashboardView, DashboardViewProvider } from '@/components/dashboar
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
+import { useUserDomain } from '@/context/user-domain-context';
 import type { DashboardChildrenTypes, UserDomain } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo } from 'react';
@@ -38,40 +39,35 @@ const domainToDashboardViewMap: Record<KnownDomain, DashboardView> = {
 
 export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) {
   const profile = useUserProfile();
+  const domain = useUserDomain();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     // Only process redirects when profile is fully loaded
-    if (!profile?.isLoading && profile && profile.user_domain !== undefined) {
+    if (!profile?.isLoading && domain.isReady) {
       // Redirect to onboarding if no domains
-      if (!profile.user_domain || profile.user_domain.length === 0) {
+      if (domain.domains.length === 0) {
         router.push('/onboarding');
         return;
       }
     }
-  }, [profile, router]);
+  }, [profile?.isLoading, domain.isReady, domain.domains, router]);
 
   useEffect(() => {
     if (
       !profile?.isLoading &&
-      profile?.activeDomain === 'organisation_user' &&
+      domain.activeDomain === 'organisation_user' &&
       (!profile.organisation_affiliations || profile.organisation_affiliations.length === 0)
     ) {
       router.push('/onboarding/organisation');
     }
-  }, [profile, router]);
+  }, [profile?.isLoading, profile?.organisation_affiliations, domain.activeDomain, router]);
 
-  const userDomains = useMemo(
-    () => (profile?.user_domain ?? []) as KnownDomain[],
-    [profile?.user_domain]
-  );
-  const activeDomain = (profile?.activeDomain ?? null) as KnownDomain | null;
+  const userDomains = useMemo(() => domain.domains as KnownDomain[], [domain.domains]);
+  const activeDomain = (domain.activeDomain ?? null) as KnownDomain | null;
   const selectableDomains = useMemo(
-    () =>
-      Array.from(
-        new Set(userDomains.map(domain => (domain === 'organization' ? 'organisation' : domain)))
-      ) as UserDomain[],
+    () => Array.from(new Set(userDomains.map(current => current))) as UserDomain[],
     [userDomains]
   );
 
@@ -135,9 +131,7 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   // Show loading if profile exists but domains are not loaded yet
   // This handles the rehydration period when TanStack Query is loading persisted data
   const showLoader =
-    profile?.isLoading ||
-    !profile ||
-    (!profile?.isLoading && (!profile?.user_domain || profile.user_domain.length === 0));
+    profile?.isLoading || domain.isLoading || !profile;
 
   if (showLoader) {
     return <CustomLoader />;
@@ -147,7 +141,7 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
     return (
       <DomainSelection
         domains={selectableDomains}
-        onDomainSelect={domain => profile.setActiveDomain(domain)}
+        onDomainSelect={nextDomain => domain.setActiveDomain(nextDomain)}
         userName={profile.first_name}
       />
     );

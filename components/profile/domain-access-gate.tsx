@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useUserDomain } from '@/context/user-domain-context';
 import { useTrainingCenter } from '@/context/training-center-provide';
 import { cn } from '@/lib/utils';
 import { ShieldAlert } from 'lucide-react';
@@ -25,6 +26,7 @@ const ADD_PROFILE_PREFIX = '/dashboard/add-profile';
 
 export default function DomainAccessGate({ children }: { children: ReactNode }) {
   const profile = useUserProfile();
+  const userDomain = useUserDomain();
   const courseCreator = useOptionalCourseCreator();
   const trainingCenter = useTrainingCenter();
   const pathname = usePathname();
@@ -35,7 +37,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       return { renderChildren: true };
     }
 
-    const domain = profile.activeDomain;
+    const domain = userDomain.activeDomain;
     if (!domain) {
       return { renderChildren: true };
     }
@@ -103,7 +105,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
         description: config.description,
       },
     };
-  }, [profile, courseCreator, trainingCenter, pathname]);
+  }, [profile, courseCreator, trainingCenter, pathname, userDomain.activeDomain]);
 
   useEffect(() => {
     if (!state.renderChildren && state.redirect && pathname !== state.redirect) {
