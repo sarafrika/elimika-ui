@@ -47,7 +47,7 @@ type CatalogueRow = {
   typeLabel: 'Course' | 'Class' | 'Item';
   isActive: boolean;
   isPublic: boolean;
-  price: number | string | null | undefined;
+  unitAmount: number | string | null | undefined;
   currency: string | null | undefined;
   productCode: string | null | undefined;
   variantCode: string | null | undefined;
@@ -127,7 +127,10 @@ const buildRows = (items: CommerceCatalogueItem[]): CatalogueRow[] =>
       typeLabel: item.course_uuid ? 'Course' : item.class_definition_uuid ? 'Class' : 'Item',
       isActive: item.active !== false,
       isPublic: (item as CommerceCatalogueItem & { publicly_visible?: boolean }).publicly_visible !== false,
-      price: (item as CommerceCatalogueItem & { price?: number | string | null }).price ?? null,
+      unitAmount:
+        (item as CommerceCatalogueItem & { unit_amount?: number | string | null }).unit_amount ??
+        (item as CommerceCatalogueItem & { price?: number | string | null }).price ??
+        null,
       currency: (item as CommerceCatalogueItem & { currency_code?: string | null }).currency_code ?? null,
       productCode: item.product_code ?? null,
       variantCode: item.variant_code ?? null,
@@ -506,7 +509,7 @@ export function CatalogueWorkspace({
                             )}
                             <div className='ml-auto flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold text-primary'>
                               <DollarSign className='h-3 w-3' />
-                              <span className='text-[11px]'>{formatMoney(row.price, row.currency ?? undefined)}</span>
+                              <span className='text-[11px]'>{formatMoney(row.unitAmount, row.currency ?? undefined)}</span>
                             </div>
                           </div>
                         </div>
@@ -555,7 +558,11 @@ export function CatalogueWorkspace({
             {selectedRow ? (
               <div className='flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-sm font-semibold text-foreground'>
                 <DollarSign className='h-4 w-4 text-primary' />
-                <span>{selectedRow.price !== null && selectedRow.price !== undefined ? formatMoney(selectedRow.price, selectedRow.currency ?? undefined) : 'No price set'}</span>
+                <span>
+                  {selectedRow.unitAmount !== null && selectedRow.unitAmount !== undefined
+                    ? formatMoney(selectedRow.unitAmount, selectedRow.currency ?? undefined)
+                    : 'No price set'}
+                </span>
                 {selectedRow.currency && (
                   <span className='text-xs font-medium text-muted-foreground'>({selectedRow.currency})</span>
                 )}
@@ -786,8 +793,8 @@ function CatalogueItemPricing({
           Pricing & Revenue
         </p>
         <p className='mt-2 text-2xl font-bold text-foreground'>
-          {selectedRow.price !== null && selectedRow.price !== undefined
-            ? formatMoney(selectedRow.price, selectedRow.currency ?? undefined)
+          {selectedRow.unitAmount !== null && selectedRow.unitAmount !== undefined
+            ? formatMoney(selectedRow.unitAmount, selectedRow.currency ?? undefined)
             : 'No price set'}
         </p>
         <p className='mt-1 text-xs text-muted-foreground'>
