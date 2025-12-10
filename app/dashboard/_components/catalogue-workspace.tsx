@@ -551,14 +551,25 @@ export function CatalogueWorkspace({
                 : 'Choose an item from the list to see its details'}
             </CardDescription>
           </div>
-          {selectedRow?.detailsHref ? (
-            <Button variant='default' size='sm' asChild className='shrink-0'>
-              <Link href={selectedRow.detailsHref} className='inline-flex items-center gap-2'>
-                <ExternalLink className='h-4 w-4' />
-                Open
-              </Link>
-            </Button>
-          ) : null}
+          <div className='flex flex-wrap items-center gap-2 lg:justify-end'>
+            {selectedRow ? (
+              <div className='flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-sm font-semibold text-foreground'>
+                <DollarSign className='h-4 w-4 text-primary' />
+                <span>{selectedRow.price !== null && selectedRow.price !== undefined ? formatMoney(selectedRow.price, selectedRow.currency ?? undefined) : 'No price set'}</span>
+                {selectedRow.currency && (
+                  <span className='text-xs font-medium text-muted-foreground'>({selectedRow.currency})</span>
+                )}
+              </div>
+            ) : null}
+            {selectedRow?.detailsHref ? (
+              <Button variant='default' size='sm' asChild className='shrink-0'>
+                <Link href={selectedRow.detailsHref} className='inline-flex items-center gap-2'>
+                  <ExternalLink className='h-4 w-4' />
+                  Open
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent className='flex-1 overflow-hidden p-0'>
           {catalogueQuery.isLoading ? (

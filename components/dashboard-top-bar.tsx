@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppBreadcrumb } from '@/components/ui/app-breadcrumb';
 import { DomainSwitcher } from '@/components/domain-switcher';
@@ -35,9 +36,23 @@ export default function DashboardTopBar({ showToggle = true }: { showToggle?: bo
   return (
     <div className='bg-opacity-80 sticky top-0 z-40 flex items-center px-6 py-3 backdrop-blur-sm'>
       {!showToggle ? (
-        !isMobile && <AppBreadcrumb />
+        <div className='flex w-full items-center gap-3'>
+          <Link
+            href='/'
+            className='text-base font-semibold tracking-tight text-foreground transition hover:text-primary'
+          >
+            Elimika
+          </Link>
+          {!isMobile && <AppBreadcrumb />}
+        </div>
       ) : (
         <div className='flex w-full items-center gap-3'>
+          <Link
+            href='/'
+            className='text-base font-semibold tracking-tight text-foreground transition hover:text-primary'
+          >
+            Elimika
+          </Link>
           {!isMobile && <AppBreadcrumb />}
           <div className='flex-1' />
           <ThemeSwitcher size='icon' />
