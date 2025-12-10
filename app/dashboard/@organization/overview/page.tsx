@@ -24,31 +24,21 @@ import { OrganizationProfile } from './_components/organization-profile';
 export default async function OrganizationOverviewPage() {
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
-      {/* Hero Header Section */}
-      <section className={elimikaDesignSystem.components.header.base}>
-        <Badge className={elimikaDesignSystem.components.header.badge}>
-          <Building2 className='h-3.5 w-3.5' />
-          Organization Dashboard
-        </Badge>
-
-        <div className='mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between'>
-          <div className='flex-1'>
-            <h1 className={elimikaDesignSystem.components.header.title}>
-              Welcome to Your Organization
-            </h1>
-            <p className={elimikaDesignSystem.components.header.subtitle}>
-              Monitor your organization's performance, manage teams, and track learning progress all in one place.
-            </p>
+      {/* Compact Header Section */}
+      <section className='mb-6'>
+        <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+          <div>
+            <h1 className='text-2xl font-bold text-foreground'>Organization Overview</h1>
+            <p className='text-sm text-muted-foreground'>Monitor performance and manage your organization</p>
           </div>
-
-          <div className='flex flex-wrap gap-3'>
-            <Button asChild size='lg' className={elimikaDesignSystem.components.button.primary}>
+          <div className='flex flex-wrap gap-2'>
+            <Button asChild size='sm' variant='outline'>
               <Link href='/dashboard/people'>
                 <Users className='mr-2 h-4 w-4' />
                 Manage People
               </Link>
             </Button>
-            <Button asChild size='lg' variant='outline' className={elimikaDesignSystem.components.button.secondary}>
+            <Button asChild size='sm' variant='outline'>
               <Link href='/dashboard/branches'>
                 <GitBranch className='mr-2 h-4 w-4' />
                 View Branches

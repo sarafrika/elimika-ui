@@ -234,25 +234,15 @@ export default function BranchesPage() {
 
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
-      {/* Header */}
-      <section className={elimikaDesignSystem.components.header.base}>
-        <Badge className={elimikaDesignSystem.components.header.badge}>
-          <GitBranch className='h-3.5 w-3.5' />
-          Training Branches
-        </Badge>
-
-        <div className='mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between'>
-          <div className='flex-1'>
-            <h1 className={elimikaDesignSystem.components.header.title}>Manage Training Branches</h1>
-            <p className={elimikaDesignSystem.components.header.subtitle}>
-              Create and manage training locations for your organization. Assign team members and track branch
-              activities.
-            </p>
+      {/* Compact Header */}
+      <section className='mb-6'>
+        <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+          <div>
+            <h1 className='text-2xl font-bold text-foreground'>Training Branches</h1>
+            <p className='text-sm text-muted-foreground'>Manage locations and assign team members</p>
           </div>
-
           <Button
-            size='lg'
-            className={elimikaDesignSystem.components.button.primary}
+            size='sm'
             onClick={() => {
               setEditingBranch(null);
               setIsSheetOpen(true);
@@ -264,39 +254,39 @@ export default function BranchesPage() {
         </div>
 
         {/* Stats */}
-        <div className='mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-          <div className='rounded-[20px] border border-border bg-card/50 p-4'>
+        <div className='grid gap-3 sm:grid-cols-3'>
+          <div className='rounded-lg border border-border bg-card p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-xl bg-muted p-3'>
-                <Building2 className='h-5 w-5 text-primary' />
+              <div className='rounded-lg bg-muted p-2'>
+                <Building2 className='h-4 w-4 text-primary' />
               </div>
               <div>
-                <p className='text-sm text-muted-foreground'>Total Branches</p>
-                <p className='text-2xl font-bold text-foreground'>{totalBranches}</p>
+                <p className='text-xs text-muted-foreground'>Total Branches</p>
+                <p className='text-lg font-bold text-foreground'>{totalBranches}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-[20px] border border-border bg-card/50 p-4'>
+          <div className='rounded-lg border border-border bg-card p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-xl bg-muted p-3'>
-                <Users className='h-5 w-5 text-primary' />
+              <div className='rounded-lg bg-muted p-2'>
+                <Users className='h-4 w-4 text-primary' />
               </div>
               <div>
-                <p className='text-sm text-muted-foreground'>Team Members</p>
-                <p className='text-2xl font-bold text-foreground'>{branchUsers.length}</p>
+                <p className='text-xs text-muted-foreground'>Team Members</p>
+                <p className='text-lg font-bold text-foreground'>{branchUsers.length}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-[20px] border border-border bg-card/50 p-4'>
+          <div className='rounded-lg border border-border bg-card p-3'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-xl bg-muted p-3'>
-                <GitBranch className='h-5 w-5 text-primary' />
+              <div className='rounded-lg bg-muted p-2'>
+                <GitBranch className='h-4 w-4 text-primary' />
               </div>
               <div>
-                <p className='text-sm text-muted-foreground'>Active Branches</p>
-                <p className='text-2xl font-bold text-foreground'>
+                <p className='text-xs text-muted-foreground'>Active Branches</p>
+                <p className='text-lg font-bold text-foreground'>
                   {branches.filter((b) => b.active).length}
                 </p>
               </div>

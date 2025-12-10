@@ -50,7 +50,6 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
       // Redirect to onboarding if no domains AND profile has been fetched
       // Check user_domain exists to ensure profile data is complete
       if (domain.domains.length === 0 && profile.user_domain !== undefined) {
-        console.log('[Dashboard] Redirecting to onboarding - no domains found');
         router.push('/onboarding');
         return;
       }
@@ -67,7 +66,6 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
       domain.activeDomain === 'organisation_user' &&
       (!profile.organisation_affiliations || profile.organisation_affiliations.length === 0)
     ) {
-      console.log('[Dashboard] Redirecting to organization onboarding - no affiliations');
       router.push('/onboarding/organisation');
     }
   }, [profile, profile?.isLoading, domain.isLoading, domain.isReady, profile?.organisation_affiliations, domain.activeDomain, router]);
