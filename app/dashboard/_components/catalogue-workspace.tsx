@@ -3,17 +3,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { Copy, ExternalLink, RefreshCw, Search } from 'lucide-react';
+import { Copy, ExternalLink, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 import { useUserProfile } from '@/context/profile-context';
 import { extractEntity } from '@/lib/api-helpers';
 import {
@@ -227,11 +224,7 @@ export function CatalogueWorkspace({
   variant?: 'page' | 'embedded';
 }) {
   const copy = scopeCopy[scope];
-  const [includeHidden, setIncludeHidden] = useState(copy.includeHiddenByDefault);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'course' | 'class' | 'item'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all');
+  const includeHidden = copy.includeHiddenByDefault;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const profile = useUserProfile();
 
@@ -316,42 +309,14 @@ export function CatalogueWorkspace({
   );
 
   const filteredRows = useMemo(() => {
-    let result = scopedRows;
+    const result = includeHidden ? scopedRows : scopedRows.filter(row => row.isActive && row.isPublic);
 
-    if (!includeHidden) {
-      result = result.filter(row => row.isActive && row.isPublic);
-    }
-
-    if (typeFilter !== 'all') {
-      result = result.filter(row => row.typeLabel.toLowerCase() === typeFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      result = result.filter(row => (statusFilter === 'active' ? row.isActive : !row.isActive));
-    }
-
-    if (visibilityFilter !== 'all') {
-      result = result.filter(row => (visibilityFilter === 'public' ? row.isPublic : !row.isPublic));
-    }
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        row =>
-          row.displayTitle.toLowerCase().includes(query) ||
-          row.productCode?.toLowerCase().includes(query) ||
-          row.variantCode?.toLowerCase().includes(query) ||
-          row.courseId?.toLowerCase().includes(query) ||
-          row.classId?.toLowerCase().includes(query)
-      );
-    }
-
-    return result.sort((a, b) => {
+    return [...result].sort((a, b) => {
       const aDate = toTimestamp(a.updatedAt ?? a.createdAt);
       const bDate = toTimestamp(b.updatedAt ?? b.createdAt);
       return bDate - aDate;
     });
-  }, [includeHidden, scopedRows, typeFilter, statusFilter, visibilityFilter, searchQuery]);
+  }, [includeHidden, scopedRows]);
 
   useEffect(() => {
     if (filteredRows.length === 0) {
@@ -393,82 +358,28 @@ export function CatalogueWorkspace({
     <div className={`flex flex-col gap-4 overflow-hidden lg:flex-row ${heightClass}`}>
       <Card className='lg:w-[420px] lg:min-w-[380px] lg:max-w-[440px]'>
         <CardHeader className='space-y-3'>
-          <div className='space-y-1.5'>
-            <Badge variant='outline' className='w-fit'>
-              {title ?? copy.title}
-            </Badge>
-            <CardTitle className='text-2xl font-semibold'>{title ?? copy.title}</CardTitle>
-            <CardDescription>{description ?? copy.description}</CardDescription>
+          <div className='flex items-start justify-between gap-3'>
+            <div className='space-y-1.5'>
+              <Badge variant='outline' className='w-fit'>
+                {title ?? copy.title}
+              </Badge>
+              <CardTitle className='text-2xl font-semibold'>{title ?? copy.title}</CardTitle>
+              <CardDescription>{description ?? copy.description}</CardDescription>
+            </div>
+            <Button
+              variant='outline'
+              size='icon'
+              onClick={() => catalogueQuery.refetch()}
+              disabled={catalogueQuery.isFetching}
+            >
+              <RefreshCw className={`h-4 w-4 ${catalogueQuery.isFetching ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
-          <div className='flex flex-col gap-3'>
-            <div className='flex items-center gap-2'>
-              <div className='relative w-full'>
-                <Input
-                  placeholder='Search title, SKU, code, or ID'
-                  value={searchQuery}
-                  onChange={event => setSearchQuery(event.target.value)}
-                  className='pl-9'
-                />
-                <Search className='text-muted-foreground absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2' />
-              </div>
-              <Button
-                variant='outline'
-                size='icon'
-                onClick={() => catalogueQuery.refetch()}
-                disabled={catalogueQuery.isFetching}
-              >
-                <RefreshCw className={`h-4 w-4 ${catalogueQuery.isFetching ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-            <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
-              <Select value={typeFilter} onValueChange={value => setTypeFilter(value as typeof typeFilter)}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Type' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>All types</SelectItem>
-                  <SelectItem value='course'>Courses</SelectItem>
-                  <SelectItem value='class'>Classes</SelectItem>
-                  <SelectItem value='item'>Items</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={value => setStatusFilter(value as typeof statusFilter)}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Status' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>All status</SelectItem>
-                  <SelectItem value='active'>Active</SelectItem>
-                  <SelectItem value='inactive'>Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={visibilityFilter}
-                onValueChange={value => setVisibilityFilter(value as typeof visibilityFilter)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Visibility' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>All visibility</SelectItem>
-                  <SelectItem value='public'>Public</SelectItem>
-                  <SelectItem value='private'>Private</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='flex items-center justify-between rounded-xl border bg-muted/40 px-3 py-2'>
-              <div>
-                <p className='text-xs font-medium'>Include inactive & private</p>
-                <p className='text-muted-foreground text-[11px]'>Show hidden SKUs in the list</p>
-              </div>
-              <Switch checked={includeHidden} onCheckedChange={setIncludeHidden} />
-            </div>
-            <div className='grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4'>
-              <StatPill label='Total' value={stats.total} />
-              <StatPill label='Active' value={stats.active} />
-              <StatPill label='Public' value={stats.publicItems} />
-              <StatPill label='Private' value={stats.privateItems} />
-            </div>
+          <div className='grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4'>
+            <StatPill label='Total' value={stats.total} />
+            <StatPill label='Active' value={stats.active} />
+            <StatPill label='Public' value={stats.publicItems} />
+            <StatPill label='Private' value={stats.privateItems} />
           </div>
         </CardHeader>
         <CardContent className='pt-0'>
@@ -486,10 +397,8 @@ export function CatalogueWorkspace({
                 ))
               ) : filteredRows.length === 0 ? (
                 <div className='text-muted-foreground flex flex-col items-start gap-2 rounded-2xl border border-dashed border-border/60 bg-muted/40 p-4 text-sm'>
-                  <p className='font-semibold text-foreground'>No catalogue items match your filters.</p>
-                  <p className='text-xs'>
-                    Adjust the filters or include inactive and private items to widen the view.
-                  </p>
+                  <p className='font-semibold text-foreground'>No catalogue items available here yet.</p>
+                  <p className='text-xs'>Try refreshing or publish items to this catalogue.</p>
                 </div>
               ) : (
                 filteredRows.map(row => (
