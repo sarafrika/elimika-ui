@@ -84,11 +84,11 @@ const statusColours: Record<string, { label: string; variant: 'default' | 'secon
 };
 
 export default function OrganisationOverviewPage() {
-  const organisation = useOrganisation();
+  const organisationContext = useOrganisation();
   const profile = useUserProfile();
   const qc = useQueryClient();
 
-  const organisationUuid = organisation?.uuid ?? null;
+  const organisationUuid = organisationContext?.uuid ?? null;
   const isSystemAdmin = profile?.user_domain?.includes('admin');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -137,7 +137,7 @@ export default function OrganisationOverviewPage() {
     enabled: isSystemAdmin,
   });
 
-  const organisation = extractEntity<Organisation>(organisationQuery.data);
+  const organisation = extractEntity<Organisation>(organisationQuery.data) ?? organisationContext;
   const usersPage = extractPage<User>(usersQuery.data);
   const branchesPage = extractPage<TrainingBranch>(branchesQuery.data);
   const organisationCount = getTotalFromMetadata(usersPage.metadata);
