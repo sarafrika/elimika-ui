@@ -1,5 +1,5 @@
 import OrganisationProvider from '@/context/organisation-context';
-import type { Organisation } from '@/services/client';
+import type { Organisation, User, UserOrganisationAffiliationDto } from '@/services/client';
 import { getOrganisationByUuid, search, type ApiResponse, type SearchResponse } from '@/services/client';
 import { auth } from '@/services/auth';
 import type { ReactNode } from 'react';
@@ -17,9 +17,10 @@ async function fetchOrganisationForUser(): Promise<Organisation | null> {
   });
 
   const userData = userResp.data as SearchResponse;
-  const user = userData?.data?.content?.[0] as any;
-  const affiliation = user?.organisation_affiliations?.find((org: any) => org.active) ?? user?.organisation_affiliations?.[0];
-  const organisationUuid = affiliation?.organisationUuid ?? affiliation?.organisation_uuid;
+  const user = userData?.data?.content?.[0] as User | undefined;
+  const affiliation: UserOrganisationAffiliationDto | undefined =
+    user?.organisation_affiliations?.find(org => org.active) ?? user?.organisation_affiliations?.[0];
+  const organisationUuid = affiliation?.organisation_uuid;
   if (!organisationUuid) return null;
 
   const orgResp = await getOrganisationByUuid({ path: { uuid: organisationUuid } });

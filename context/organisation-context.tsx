@@ -8,11 +8,12 @@ import {
   type Organisation,
   type TrainingBranch,
   type User,
+  type UserOrganisationAffiliationDto,
 } from '@/services/client';
 import { queryOptions, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import CustomLoader from '../components/custom-loader';
 import { useUserProfile } from './profile-context';
 import { useUserDomain } from './user-domain-context';
@@ -35,17 +36,11 @@ export default function OrganisationProvider({
   const userDomain = useUserDomain();
   const router = useRouter();
 
-  const activeAffiliation =
-    userProfile?.organisation_affiliations && userProfile.organisation_affiliations.length > 0
-      ? userProfile.organisation_affiliations.find(org => org.active) ??
-        userProfile.organisation_affiliations[0]
-      : null;
+  const affiliations: UserOrganisationAffiliationDto[] = userProfile?.organisation_affiliations ?? [];
+  const activeAffiliation: UserOrganisationAffiliationDto | undefined =
+    affiliations.find(org => org.active) ?? affiliations[0];
 
-  const activeOrgId =
-    activeAffiliation?.organisationUuid ??
-    // API returns snake_case; keep fallback for any camel-cased variants
-    activeAffiliation?.organisation_uuid ??
-    null;
+  const activeOrgId = activeAffiliation?.organisation_uuid ?? null;
 
   const hasOrgDomain = userDomain.domains.includes('organisation') || userDomain.domains.includes('organisation_user');
 
