@@ -11,9 +11,11 @@ import {
 } from '@/services/client';
 import { queryOptions, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { createContext, type ReactNode, useContext } from 'react';
+import { useRouter } from 'next/navigation';
+import { createContext, useContext, useEffect } from 'react';
 import CustomLoader from '../components/custom-loader';
 import { useUserProfile } from './profile-context';
+import { useUserDomain } from './user-domain-context';
 
 type OrganisationContextValue = (Organisation & { branches?: TrainingBranch[]; users?: User[] }) | null;
 
@@ -24,6 +26,8 @@ export const useOrganisation = () => useContext(OrganisationContext);
 export default function OrganisationProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const userProfile = useUserProfile();
+  const userDomain = useUserDomain();
+  const router = useRouter();
 
   const activeOrgId =
     userProfile?.organisation_affiliations && userProfile.organisation_affiliations.length > 0
@@ -33,9 +37,21 @@ export default function OrganisationProvider({ children }: { children: ReactNode
         )?.organisationUuid
       : null;
 
-  // If no organisation is attached, just render children without fetching
-  if (!activeOrgId || !session?.user) {
+  const hasOrgDomain = userDomain.domains.includes('organisation') || userDomain.domains.includes('organisation_user');
+
+  useEffect(() => {
+    if (hasOrgDomain && !activeOrgId && !userProfile?.isLoading) {
+      router.replace('/onboarding/organisation');
+    }
+  }, [hasOrgDomain, activeOrgId, userProfile?.isLoading, router]);
+
+  // If no organisation is attached and user is not in an organisation domain, just render children without fetching
+  if ((!activeOrgId || !session?.user) && !hasOrgDomain) {
     return <OrganisationContext.Provider value={null}>{children}</OrganisationContext.Provider>;
+  }
+
+  if (hasOrgDomain && !activeOrgId) {
+    return <CustomLoader />;
   }
 
   const { data, isLoading } = useQuery(
