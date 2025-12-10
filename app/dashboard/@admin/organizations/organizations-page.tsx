@@ -575,9 +575,9 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
   return (
     <div className='border-border/60 hidden w-full flex-col bg-card lg:flex lg:h-full lg:max-w-3xl lg:border-l'>
       {organisation ? (
-        <div className='flex h-full flex-col overflow-hidden'>
+        <div className='flex h-full min-h-0 flex-col overflow-hidden'>
           {/* Modern Header */}
-          <div className='border-border/60 border-b bg-muted/20 px-6 py-5'>
+          <div className='shrink-0 border-b border-border/60 bg-muted/20 px-6 py-5'>
             <div className='flex items-start gap-4'>
               <div className='flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] bg-primary/10'>
                 <Building2 className='h-7 w-7 text-primary' />
@@ -605,7 +605,8 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
             </div>
           </div>
 
-          <ScrollArea className='flex-1 px-6 py-6'>
+          <ScrollArea className='flex-1 min-h-0'>
+            <div className='px-6 py-6'>
             <div className='space-y-6 pb-10'>
               {/* Quick Stats */}
               <OrganisationStats organisationUuid={organisation.uuid} />
@@ -684,6 +685,7 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
                   />
                 </div>
               </details>
+            </div>
             </div>
           </ScrollArea>
         </div>
