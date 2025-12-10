@@ -8,6 +8,7 @@ import { useUserProfile } from '@/context/profile-context';
 import { useUserDomain } from '@/context/user-domain-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { cn } from '@/lib/utils';
+import type { Organisation } from '@/services/client';
 import { ShieldAlert } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -24,6 +25,14 @@ const PROFILE_PREFIX = '/dashboard/profile';
 const ACCOUNT_PREFIX = '/dashboard/account';
 const ADD_PROFILE_PREFIX = '/dashboard/add-profile';
 
+function resolveOrganisationVerified(
+  organisation?: (Organisation & { adminVerified?: boolean }) | null
+): boolean | undefined {
+  if (!organisation) return undefined;
+  if (typeof organisation.admin_verified !== 'undefined') return organisation.admin_verified;
+  return organisation.adminVerified;
+}
+
 export default function DomainAccessGate({ children }: { children: ReactNode }) {
   const profile = useUserProfile();
   const userDomain = useUserDomain();
@@ -33,8 +42,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
   const router = useRouter();
 
   const hasOrganisation = Boolean(profile?.organisation_affiliations?.length);
-  const organisationVerifiedFlag =
-    organisation?.admin_verified ?? (organisation as any)?.adminVerified ?? undefined;
+  const organisationVerifiedFlag = resolveOrganisationVerified(organisation);
   // Default to true while organisation data is loading; only gate when explicitly false
   const organisationVerified = hasOrganisation ? organisationVerifiedFlag !== false : true;
 
