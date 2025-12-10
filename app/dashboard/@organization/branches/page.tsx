@@ -574,127 +574,131 @@ function BranchDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='w-full overflow-y-auto sm:max-w-2xl'>
-        <SheetHeader className='space-y-4 pb-8'>
-          <div className='flex items-center gap-4'>
-            <div className='rounded-xl bg-primary/10 p-3.5'>
-              <GitBranch className='h-6 w-6 text-primary' />
+      <SheetContent className='w-full sm:max-w-2xl'>
+        <div className='flex h-full flex-col'>
+          <SheetHeader className='space-y-4 px-6 pb-6 pt-6'>
+            <div className='flex items-center gap-4'>
+              <div className='rounded-xl bg-primary/10 p-3.5'>
+                <GitBranch className='h-6 w-6 text-primary' />
+              </div>
+              <div>
+                <SheetTitle className='text-2xl font-semibold'>
+                  {defaultValues ? 'Edit Branch' : 'New Branch'}
+                </SheetTitle>
+                <SheetDescription className='mt-1.5 text-base'>
+                  {defaultValues
+                    ? 'Update the branch details and contact information'
+                    : 'Add a new training location to your organization'}
+                </SheetDescription>
+              </div>
             </div>
-            <div>
-              <SheetTitle className='text-2xl font-semibold'>
-                {defaultValues ? 'Edit Branch' : 'New Branch'}
-              </SheetTitle>
-              <SheetDescription className='mt-1.5 text-base'>
-                {defaultValues
-                  ? 'Update the branch details and contact information'
-                  : 'Add a new training location to your organization'}
-              </SheetDescription>
-            </div>
-          </div>
-        </SheetHeader>
+          </SheetHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-          {/* Branch Information Section */}
-          <div className='space-y-5'>
-            <div className='flex items-center gap-2.5'>
-              <Building2 className='h-5 w-5 text-muted-foreground' />
-              <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
-                Branch Details
-              </h3>
-            </div>
-            <div className='space-y-5 pl-7'>
-              <FormField label='Branch Name' name='branch_name' form={form} required placeholder='Downtown Campus' />
-              <FormField
-                label='Address'
-                name='address'
-                form={form}
-                placeholder='123 Main Street, City, State'
-                icon={<MapPin className='h-4 w-4' />}
-              />
-            </div>
-          </div>
-
-          <Separator className='my-8' />
-
-          {/* Point of Contact Section */}
-          <div className='space-y-5'>
-            <div className='flex items-center gap-2.5'>
-              <Users className='h-5 w-5 text-muted-foreground' />
-              <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
-                Point of Contact
-              </h3>
-            </div>
-            <div className='space-y-5 pl-7'>
-              <FormField
-                label='Full Name'
-                name='poc_name'
-                form={form}
-                required
-                placeholder='John Doe'
-                icon={<Users className='h-4 w-4' />}
-              />
-              <FormField
-                label='Email Address'
-                name='poc_email'
-                form={form}
-                type='email'
-                required
-                placeholder='john.doe@example.com'
-                icon={<Mail className='h-4 w-4' />}
-              />
-              <FormField
-                label='Phone Number'
-                name='poc_telephone'
-                form={form}
-                required
-                placeholder='+1 (555) 123-4567'
-                icon={<Phone className='h-4 w-4' />}
-              />
-            </div>
-          </div>
-
-          <Separator className='my-8' />
-
-          {/* Status Section */}
-          <div className='space-y-5'>
-            <div className='flex items-center justify-between pl-7'>
-              <div className='flex items-center gap-4'>
-                <Switch
-                  checked={form.watch('active')}
-                  onCheckedChange={(checked) => form.setValue('active', checked)}
-                />
-                <div>
-                  <Label className='text-base font-medium text-foreground'>Active Status</Label>
-                  <p className='mt-0.5 text-sm text-muted-foreground'>
-                    {form.watch('active')
-                      ? 'Branch is active and available for assignments'
-                      : 'Branch is inactive and hidden from assignments'}
-                  </p>
+          <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-1 flex-col overflow-hidden'>
+            <div className='flex-1 space-y-8 overflow-y-auto px-6 pb-6'>
+              {/* Branch Information Section */}
+              <div className='space-y-5'>
+                <div className='flex items-center gap-2.5'>
+                  <Building2 className='h-5 w-5 text-muted-foreground' />
+                  <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+                    Branch Details
+                  </h3>
+                </div>
+                <div className='space-y-5 pl-7'>
+                  <FormField label='Branch Name' name='branch_name' form={form} required placeholder='Downtown Campus' />
+                  <FormField
+                    label='Address'
+                    name='address'
+                    form={form}
+                    placeholder='123 Main Street, City, State'
+                    icon={<MapPin className='h-4 w-4' />}
+                  />
                 </div>
               </div>
-              <Badge variant={form.watch('active') ? 'secondary' : 'outline'} className='text-xs'>
-                {form.watch('active') ? 'Active' : 'Inactive'}
-              </Badge>
-            </div>
-          </div>
 
-          {/* Form Actions */}
-          <div className='flex gap-3 border-t border-border pt-6'>
-            <Button
-              variant='outline'
-              type='button'
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-              className='flex-1'
-            >
-              Cancel
-            </Button>
-            <Button type='submit' disabled={isSubmitting} className='flex-1'>
-              {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              {defaultValues ? 'Save Changes' : 'Create Branch'}
-            </Button>
-          </div>
-        </form>
+              <Separator className='my-8' />
+
+              {/* Point of Contact Section */}
+              <div className='space-y-5'>
+                <div className='flex items-center gap-2.5'>
+                  <Users className='h-5 w-5 text-muted-foreground' />
+                  <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+                    Point of Contact
+                  </h3>
+                </div>
+                <div className='space-y-5 pl-7'>
+                  <FormField
+                    label='Full Name'
+                    name='poc_name'
+                    form={form}
+                    required
+                    placeholder='John Doe'
+                    icon={<Users className='h-4 w-4' />}
+                  />
+                  <FormField
+                    label='Email Address'
+                    name='poc_email'
+                    form={form}
+                    type='email'
+                    required
+                    placeholder='john.doe@example.com'
+                    icon={<Mail className='h-4 w-4' />}
+                  />
+                  <FormField
+                    label='Phone Number'
+                    name='poc_telephone'
+                    form={form}
+                    required
+                    placeholder='+1 (555) 123-4567'
+                    icon={<Phone className='h-4 w-4' />}
+                  />
+                </div>
+              </div>
+
+              <Separator className='my-8' />
+
+              {/* Status Section */}
+              <div className='space-y-5'>
+                <div className='flex items-center justify-between pl-7'>
+                  <div className='flex items-center gap-4'>
+                    <Switch
+                      checked={form.watch('active')}
+                      onCheckedChange={(checked) => form.setValue('active', checked)}
+                    />
+                    <div>
+                      <Label className='text-base font-medium text-foreground'>Active Status</Label>
+                      <p className='mt-0.5 text-sm text-muted-foreground'>
+                        {form.watch('active')
+                          ? 'Branch is active and available for assignments'
+                          : 'Branch is inactive and hidden from assignments'}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant={form.watch('active') ? 'secondary' : 'outline'} className='text-xs'>
+                    {form.watch('active') ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Actions */}
+            <div className='flex gap-3 border-t border-border px-6 py-4'>
+              <Button
+                variant='outline'
+                type='button'
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+                className='flex-1'
+              >
+                Cancel
+              </Button>
+              <Button type='submit' disabled={isSubmitting} className='flex-1'>
+                {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                {defaultValues ? 'Save Changes' : 'Create Branch'}
+              </Button>
+            </div>
+          </form>
+        </div>
       </SheetContent>
     </Sheet>
   );
