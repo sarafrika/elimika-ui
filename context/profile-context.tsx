@@ -1,28 +1,11 @@
 'use client';
 
 import type { UserProfileType } from '@/lib/types';
-import {
-  type CourseCreator,
-  type Instructor,
-  search,
-  searchCourseCreators,
-  searchInstructors,
-  type SearchResponse,
-  searchStudents,
-  type Student,
-  type User,
-} from '@/services/client';
+import { type CourseCreator, type Instructor, search, searchCourseCreators, searchInstructors, type SearchResponse, searchStudents, type Student, type User } from '@/services/client';
 import { queryOptions, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { createContext, type ReactNode, useCallback, useContext, useEffect } from 'react';
-
-type ExtendedInstructor = Instructor & {
-  educations: [];
-  experience: [];
-  membership: [];
-  skills: [];
-};
 
 const UserProfileContext = createContext<
   | (Partial<UserProfileType> & {
@@ -142,13 +125,7 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
         responseData.data.content.length > 0
       ) {
         const instructor = responseData.data.content[0] as unknown as Instructor;
-        user.instructor = {
-          ...instructor,
-          educations: [],
-          experience: [],
-          membership: [],
-          skills: [],
-        } as ExtendedInstructor;
+        user.instructor = instructor as unknown as UserProfileType['instructor'];
       }
     }
 
