@@ -5,7 +5,7 @@ import type { AdminDataTableColumn } from '@/components/admin/data-table/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useTrainingCenter } from '@/context/training-center-provide';
+import { useOrganisation } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
   getUsersByOrganisationAndDomainOptions,
@@ -25,8 +25,8 @@ const domainOptions = [
 ];
 
 export default function OrganisationPeoplePage() {
-  const trainingCenter = useTrainingCenter();
-  const organisationUuid = trainingCenter?.uuid ?? '';
+  const organisation = useOrganisation();
+  const organisationUuid = organisation?.uuid ?? '';
 
   const [domainFilter, setDomainFilter] = useState('');
   const [page, setPage] = useState(0);

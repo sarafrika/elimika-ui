@@ -11,23 +11,23 @@ import {
   TableRow,
 } from '../../../../../components/ui/table';
 import UserBadge from '../../../../../components/user-badge';
-import { useTrainingCenter } from '../../../../../context/training-center-provide';
+import { useOrganisation } from '../../../../../context/organisation-context';
 import { getUsersByOrganisationAndDomain, type User } from '../../../../../services/client';
 import { InviteForm } from '../../invites/_components/InviteForm';
 
 export default function InstructorsList() {
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
 
   const { data, error } = useQuery({
     queryKey: ['organization', 'students'],
     queryFn: () =>
       getUsersByOrganisationAndDomain({
         path: {
-          uuid: trainingCenter?.uuid!,
+          uuid: organisation?.uuid!,
           domainName: 'instructor',
         },
       }),
-    enabled: !!trainingCenter,
+    enabled: !!organisation,
   });
 
   if (error) {
@@ -45,7 +45,7 @@ export default function InstructorsList() {
       <div className='flex items-end justify-between'>
         <div>
           <h1 className='text-2xl font-bold'>Manage Instructors</h1>
-          <p>A list of all the instructors under {trainingCenter?.name}.</p>
+          <p>A list of all the instructors under {organisation?.name}.</p>
         </div>
         <InviteForm>
           <Button>Invite Instructor</Button>

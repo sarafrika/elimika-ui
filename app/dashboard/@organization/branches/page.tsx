@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useTrainingCenter } from '@/context/training-center-provide';
+import { useOrganisation } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
   assignUserToBranchMutation,
@@ -56,10 +56,10 @@ const domainOptions = [
 ];
 
 export default function BranchesPage() {
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
   const qc = useQueryClient();
 
-  const organisationUuid = trainingCenter?.uuid ?? '';
+  const organisationUuid = organisation?.uuid ?? '';
   const [page, setPage] = useState(0);
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);

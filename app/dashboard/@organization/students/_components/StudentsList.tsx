@@ -13,11 +13,11 @@ import {
   TableRow,
 } from '../../../../../components/ui/table';
 import UserBadge from '../../../../../components/user-badge';
-import { useTrainingCenter } from '../../../../../context/training-center-provide';
+import { useOrganisation } from '../../../../../context/organisation-context';
 import { getAllStudents, type Student } from '../../../../../services/client';
 
 export default function StudentsList() {
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
 
   const { data, error } = useQuery({
     queryKey: ['organization', 'students'],
@@ -30,7 +30,7 @@ export default function StudentsList() {
           },
         },
       }),
-    enabled: !!trainingCenter,
+    enabled: !!organisation,
   });
 
   if (error) {
@@ -48,7 +48,7 @@ export default function StudentsList() {
       <div className='flex items-end justify-between'>
         <div>
           <h1 className='text-2xl font-bold'>Manage Students</h1>
-          <p>A list of all the students enrolled to {trainingCenter?.name} organisation.</p>
+          <p>A list of all the students enrolled to {organisation?.name} organisation.</p>
         </div>
         <Link href={'/'}>
           <Button>Enroll Students</Button>

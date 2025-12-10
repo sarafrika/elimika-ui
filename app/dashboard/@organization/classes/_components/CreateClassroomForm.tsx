@@ -12,12 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../../components/ui/select';
-import { useTrainingCenter } from '../../../../../context/training-center-provide';
+import { useOrganisation } from '../../../../../context/organisation-context';
 import type { Course } from '../../../../../services/api/schema';
 import { getAllCourses } from '../../../../../services/client';
 
 export default function CreateClassroomForm() {
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
   const { data, error } = useQuery({
     queryKey: ['courses'],
     queryFn: () =>
@@ -51,7 +51,7 @@ export default function CreateClassroomForm() {
                     <SelectValue placeholder={'Select Branch'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {trainingCenter?.branches?.map(branch => (
+                    {organisation?.branches?.map(branch => (
                       <SelectItem key={branch.uuid} value={branch.uuid!}>
                         {branch.branch_name}
                       </SelectItem>

@@ -11,7 +11,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import CustomLoader from '../../components/custom-loader';
 import { DomainSelection } from '../../components/domain-selection';
-import TrainingCenterProvider from '../../context/training-center-provide';
+import OrganisationProvider from '../../context/organisation-context';
 
 type KnownDomain = UserDomain | 'organization';
 
@@ -148,7 +148,7 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   }
 
   return (
-    <TrainingCenterProvider>
+    <OrganisationProvider>
       <SidebarProvider>
         <DashboardViewProvider
           initialView={normalizedActiveView as DashboardView}
@@ -166,6 +166,6 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
           </BreadcrumbProvider>
         </DashboardViewProvider>
       </SidebarProvider>
-    </TrainingCenterProvider>
+    </OrganisationProvider>
   );
 }

@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useTrainingCenter } from '@/context/training-center-provide';
+import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { extractPage, } from '@/lib/api-helpers';
 import {
@@ -52,11 +52,11 @@ const statusBadges: Record<
 type InvitationFormValues = z.infer<typeof zInvitationRequest> & { branchUuid?: string };
 
 export default function OrganisationInvitationsPage() {
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
   const profile = useUserProfile();
   const qc = useQueryClient();
 
-  const organisationUuid = trainingCenter?.uuid ?? '';
+  const organisationUuid = organisation?.uuid ?? '';
   const inviterUuid = profile?.uuid ?? '';
 
   const [statusFilter, setStatusFilter] = useState<string>('');

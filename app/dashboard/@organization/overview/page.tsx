@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { useTrainingCenter } from '@/context/training-center-provide';
+import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
@@ -84,11 +84,11 @@ const statusColours: Record<string, { label: string; variant: 'default' | 'secon
 };
 
 export default function OrganisationOverviewPage() {
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
   const profile = useUserProfile();
   const qc = useQueryClient();
 
-  const organisationUuid = trainingCenter?.uuid ?? null;
+  const organisationUuid = organisation?.uuid ?? null;
   const isSystemAdmin = profile?.user_domain?.includes('admin');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);

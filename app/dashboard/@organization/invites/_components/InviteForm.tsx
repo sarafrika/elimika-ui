@@ -36,7 +36,7 @@ import {
 } from '../../../../../components/ui/select';
 import { Textarea } from '../../../../../components/ui/textarea';
 import { useUserProfile } from '../../../../../context/profile-context';
-import { useTrainingCenter } from '../../../../../context/training-center-provide';
+import { useOrganisation } from '../../../../../context/organisation-context';
 import { queryClient } from '../../../../../lib/query-client';
 import {
   createBranchInvitation,
@@ -54,7 +54,7 @@ export function InviteForm({
   children: ReactNode;
   branch_uuid?: string;
 }) {
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
   const userProfile = useUserProfile();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -68,7 +68,7 @@ export function InviteForm({
   });
 
   async function onSubmit(inviteData: InviteType) {
-    if (!trainingCenter || !userProfile) {
+    if (!organisation || !userProfile) {
       toast.error('No organization or profile selected');
       return;
     }
@@ -77,7 +77,7 @@ export function InviteForm({
     if (branch_uuid) {
       inviteResp = await createBranchInvitation({
         path: {
-          uuid: trainingCenter?.uuid!,
+          uuid: organisation?.uuid!,
           branchUuid: branch_uuid,
         },
         body: inviteData,
@@ -85,7 +85,7 @@ export function InviteForm({
     } else {
       inviteResp = await createOrganizationInvitation({
         path: {
-          uuid: trainingCenter?.uuid!,
+          uuid: organisation?.uuid!,
         },
         body: inviteData,
       });

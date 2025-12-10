@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useTrainingCenter } from '@/context/training-center-provide';
+import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
@@ -30,11 +30,11 @@ const actions = [
 ];
 
 export default function OrganisationVerificationPage() {
-  const trainingCenter = useTrainingCenter();
+  const organisationContext = useOrganisation();
   const profile = useUserProfile();
   const qc = useQueryClient();
 
-  const organisationUuid = trainingCenter?.uuid ?? '';
+  const organisationUuid = organisationContext?.uuid ?? '';
   const [page, setPage] = useState(0);
   const [selectedOrg, setSelectedOrg] = useState<Organisation | null>(null);
   const [action, setAction] = useState(actions[0]?.value ?? 'approve');

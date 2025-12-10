@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useUserProfile } from '@/context/profile-context';
 import { useUserDomain } from '@/context/user-domain-context';
-import { useTrainingCenter } from '@/context/training-center-provide';
+import { useOrganisation } from '@/context/organisation-context';
 import { cn } from '@/lib/utils';
 import { ShieldAlert } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -28,14 +28,12 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
   const profile = useUserProfile();
   const userDomain = useUserDomain();
   const courseCreator = useOptionalCourseCreator();
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
   const pathname = usePathname();
   const router = useRouter();
 
   const hasOrganisation = Boolean(profile?.organisation_affiliations?.length);
-  const organisationVerified = hasOrganisation
-    ? Boolean(trainingCenter?.admin_verified)
-    : true; // if not attached, skip organisation verification gating
+  const organisationVerified = hasOrganisation ? Boolean(organisation?.admin_verified) : true; // if not attached, skip organisation verification gating
 
   const state: DomainGateState = useMemo(() => {
     if (!profile || profile.isLoading) {
@@ -113,7 +111,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
   }, [
     profile,
     courseCreator,
-    trainingCenter,
+    organisation,
     pathname,
     userDomain.activeDomain,
     organisationVerified,

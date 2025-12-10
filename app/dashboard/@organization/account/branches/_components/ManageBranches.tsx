@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 import LocationInput from '../../../../../../components/locationInput';
 import { useProfileFormMode } from '../../../../../../context/profile-form-mode-context';
-import { useTrainingCenter } from '../../../../../../context/training-center-provide';
+import { useOrganisation } from '../../../../../../context/organisation-context';
 import { useUserProfile } from '../../../../../../context/profile-context';
 import { queryClient } from '../../../../../../lib/query-client';
 import {
@@ -65,7 +65,7 @@ export default function ManageBranch() {
   }, [replaceBreadcrumbs]);
 
   const userProfile = useUserProfile();
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   const defaultBranch = (): BranchType => ({
@@ -88,8 +88,8 @@ export default function ManageBranch() {
     resolver: zodResolver(branchesSchema),
     defaultValues: {
       branches:
-        trainingCenter && trainingCenter.branches?.length > 0
-          ? trainingCenter.branches
+        organisation && organisation.branches?.length > 0
+          ? organisation.branches
           : [defaultBranch()],
     },
   });
@@ -102,8 +102,8 @@ export default function ManageBranch() {
   const [isSaving, setIsSaving] = useState(false);
 
   const onSubmit = (data: BranchesFormValues) => {
-    if (!trainingCenter || !trainingCenter.uuid) {
-      toast.warning('No training center selected');
+    if (!organisation || !organisation.uuid) {
+      toast.warning('No organisation selected');
       return;
     }
 
@@ -124,14 +124,14 @@ export default function ManageBranch() {
                   },
                   body: {
                     ...branch,
-                    organisation_uuid: trainingCenter.uuid!,
+                    organisation_uuid: organisation.uuid!,
                   },
                 });
 
               return createTrainingBranch({
                 body: {
                   ...branch,
-                  organisation_uuid: trainingCenter.uuid!,
+                  organisation_uuid: organisation.uuid!,
                 },
               });
             })
