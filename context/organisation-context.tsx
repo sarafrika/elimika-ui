@@ -13,7 +13,7 @@ import {
 import { queryOptions, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import CustomLoader from '../components/custom-loader';
 import { useUserProfile } from './profile-context';
 import { useUserDomain } from './user-domain-context';
@@ -36,19 +36,46 @@ export default function OrganisationProvider({
   const userDomain = useUserDomain();
   const router = useRouter();
 
+  const [storedOrgId, setStoredOrgId] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
   const affiliations: UserOrganisationAffiliationDto[] = userProfile?.organisation_affiliations ?? [];
   const activeAffiliation: UserOrganisationAffiliationDto | undefined =
     affiliations.find(org => org.active) ?? affiliations[0];
 
-  const activeOrgId = activeAffiliation?.organisation_uuid ?? initialOrganisation?.uuid ?? null;
+  const storageKey = useMemo(() => {
+    const identifier = userProfile?.uuid ?? userProfile?.email;
+    return identifier ? `organisation:last:${identifier}` : null;
+  }, [userProfile?.uuid, userProfile?.email]);
+
+  useEffect(() => {
+    if (hydrated) return;
+    if (typeof window === 'undefined') return;
+    if (!storageKey) {
+      setHydrated(true);
+      return;
+    }
+    const cachedId = window.localStorage.getItem(storageKey);
+    setStoredOrgId(cachedId);
+    setHydrated(true);
+  }, [hydrated, storageKey]);
+
+  const activeOrgId =
+    activeAffiliation?.organisation_uuid ?? initialOrganisation?.uuid ?? storedOrgId ?? null;
 
   const hasOrgDomain = userDomain.domains.includes('organisation') || userDomain.domains.includes('organisation_user');
 
   useEffect(() => {
-    if (hasOrgDomain && !activeOrgId && !userProfile?.isLoading) {
+    if (typeof window !== 'undefined' && storageKey && activeOrgId) {
+      window.localStorage.setItem(storageKey, activeOrgId);
+    }
+  }, [storageKey, activeOrgId]);
+
+  useEffect(() => {
+    if (hasOrgDomain && hydrated && !activeOrgId && !userProfile?.isLoading) {
       router.replace('/onboarding/organisation');
     }
-  }, [hasOrgDomain, activeOrgId, userProfile?.isLoading, router]);
+  }, [hasOrgDomain, hydrated, activeOrgId, userProfile?.isLoading, router]);
 
   if (initialOrganisation) {
     return <OrganisationContext.Provider value={initialOrganisation}>{children}</OrganisationContext.Provider>;
