@@ -588,7 +588,14 @@ function OrganisationDetailsPanel({ organisation }: OrganisationDetailsPanelProp
 
   const form = useForm<OrganisationFormValues>({
     resolver: zodResolver(organisationFormSchema),
-    defaultValues: organisation ? mapOrganisationToForm(organisation) : undefined,
+    defaultValues: organisation ? mapOrganisationToForm(organisation) : {
+      name: '',
+      description: '',
+      active: false,
+      licence_no: '',
+      location: '',
+      country: '',
+    },
     mode: 'onBlur',
   });
 
@@ -782,7 +789,14 @@ function OrganisationDetailSheet({ organisation, open, onOpenChange }: Organisat
 
   const form = useForm<OrganisationFormValues>({
     resolver: zodResolver(organisationFormSchema),
-    defaultValues: organisation ? mapOrganisationToForm(organisation) : undefined,
+    defaultValues: organisation ? mapOrganisationToForm(organisation) : {
+      name: '',
+      description: '',
+      active: false,
+      licence_no: '',
+      location: '',
+      country: '',
+    },
     mode: 'onBlur',
   });
 
