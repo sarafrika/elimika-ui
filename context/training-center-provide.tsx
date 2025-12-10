@@ -1,3 +1,5 @@
+'use client';
+
 import type { TrainingCenter } from '@/lib/types';
 import {
   type ApiResponse,
