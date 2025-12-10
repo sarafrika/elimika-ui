@@ -32,6 +32,11 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
   const pathname = usePathname();
   const router = useRouter();
 
+  const hasOrganisation = Boolean(profile?.organisation_affiliations?.length);
+  const organisationVerified = hasOrganisation
+    ? Boolean(trainingCenter?.admin_verified)
+    : true; // if not attached, skip organisation verification gating
+
   const state: DomainGateState = useMemo(() => {
     if (!profile || profile.isLoading) {
       return { renderChildren: true };
@@ -62,7 +67,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
           'Complete your course creator profile to request publishing access on Elimika.',
       },
       organisation: {
-        verified: Boolean(trainingCenter?.admin_verified),
+        verified: organisationVerified,
         allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
@@ -70,7 +75,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
           'Review and submit your organisation information so your workspace can be approved.',
       },
       organisation_user: {
-        verified: Boolean(trainingCenter?.admin_verified),
+        verified: organisationVerified,
         allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
@@ -105,7 +110,14 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
         description: config.description,
       },
     };
-  }, [profile, courseCreator, trainingCenter, pathname, userDomain.activeDomain]);
+  }, [
+    profile,
+    courseCreator,
+    trainingCenter,
+    pathname,
+    userDomain.activeDomain,
+    organisationVerified,
+  ]);
 
   useEffect(() => {
     if (!state.renderChildren && state.redirect && pathname !== state.redirect) {
