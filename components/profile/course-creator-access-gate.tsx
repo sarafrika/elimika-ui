@@ -53,15 +53,15 @@ export default function CourseCreatorAccessGate({
       <div className='mx-auto max-w-5xl p-4'>
         <Alert
           className={cn(
-            'border-red-500/30 bg-red-50 text-red-900 shadow-sm',
-            'dark:border-red-500/40 dark:bg-red-950/30 dark:text-red-100'
+            'border-destructive/30 bg-destructive/10 text-destructive shadow-sm',
+            'dark:border-destructive/40 dark:bg-destructive/20'
           )}
         >
-          <ShieldAlert className='col-start-1 self-start text-red-600 dark:text-red-400' />
-          <AlertTitle className='text-xs font-semibold tracking-[0.15em] text-red-700 uppercase dark:text-red-300'>
+          <ShieldAlert className='col-start-1 self-start text-destructive' />
+          <AlertTitle className='text-xs font-semibold tracking-[0.15em] uppercase'>
             Access Denied
           </AlertTitle>
-          <AlertDescription className='text-sm text-red-800/80 dark:text-red-200/80'>
+          <AlertDescription className='text-sm'>
             You need course creator permissions to access this feature. Please contact your organization
             administrator or the Elimika team for access.
           </AlertDescription>
