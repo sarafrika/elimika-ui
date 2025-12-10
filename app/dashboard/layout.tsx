@@ -45,26 +45,32 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   useEffect(() => {
     // Only process redirects when profile is fully loaded and domain is ready
     // Important: Check !domain.isLoading to prevent redirect during rehydration
-    if (!profile?.isLoading && domain.isReady && !domain.isLoading) {
-      // Redirect to onboarding if no domains
-      if (domain.domains.length === 0) {
+    // Also ensure profile has been fetched (profile object exists)
+    if (!profile?.isLoading && domain.isReady && !domain.isLoading && profile) {
+      // Redirect to onboarding if no domains AND profile has been fetched
+      // Check user_domain exists to ensure profile data is complete
+      if (domain.domains.length === 0 && profile.user_domain !== undefined) {
+        console.log('[Dashboard] Redirecting to onboarding - no domains found');
         router.push('/onboarding');
         return;
       }
     }
-  }, [profile?.isLoading, domain.isReady, domain.isLoading, domain.domains, router]);
+  }, [profile, profile?.isLoading, domain.isReady, domain.isLoading, domain.domains, router]);
 
   useEffect(() => {
     // Only redirect to organization onboarding when fully loaded
     if (
       !profile?.isLoading &&
       !domain.isLoading &&
+      domain.isReady &&
+      profile &&
       domain.activeDomain === 'organisation_user' &&
       (!profile.organisation_affiliations || profile.organisation_affiliations.length === 0)
     ) {
+      console.log('[Dashboard] Redirecting to organization onboarding - no affiliations');
       router.push('/onboarding/organisation');
     }
-  }, [profile?.isLoading, domain.isLoading, profile?.organisation_affiliations, domain.activeDomain, router]);
+  }, [profile, profile?.isLoading, domain.isLoading, domain.isReady, profile?.organisation_affiliations, domain.activeDomain, router]);
 
   const userDomains = useMemo(() => domain.domains as KnownDomain[], [domain.domains]);
   const activeDomain = (domain.activeDomain ?? null) as KnownDomain | null;
