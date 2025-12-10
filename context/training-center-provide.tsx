@@ -32,7 +32,9 @@ export default function TrainingCenterProvider({ children }: { children: ReactNo
 
   // If no organisation is attached, just render children without fetching
   if (!activeOrgId || !session?.user) {
-    return <TrainingCenterContext.Provider value={undefined}>{children}</TrainingCenterContext.Provider>;
+    return (
+      <TrainingCenterContext.Provider value={undefined}>{children}</TrainingCenterContext.Provider>
+    );
   }
 
   const { data, isLoading } = useQuery(
@@ -49,20 +51,16 @@ export default function TrainingCenterProvider({ children }: { children: ReactNo
 }
 
 function createQueryOptions(
-  organizaition_uuid: string | null,
+  organizationUuid: string | null,
   options?: Omit<UseQueryOptions<TrainingCenter | null>, 'queryKey' | 'queryFn' | 'staleTime'>
 ) {
   return queryOptions({
     ...options,
-    queryKey: ['organization', organizaition_uuid],
+    queryKey: ['organization', organizationUuid],
     queryFn: async () => {
-      if (!organizaition_uuid) return null;
+      if (!organizationUuid) return null;
 
-      const orgResp = await getOrganisationByUuid({
-        path: {
-          uuid: organizaition_uuid,
-        },
-      });
+      const orgResp = await getOrganisationByUuid({ path: { uuid: organizationUuid } });
 
       const orgRespData = orgResp.data as ApiResponse;
 
@@ -74,33 +72,33 @@ function createQueryOptions(
         ...orgRespData.data,
       } as TrainingCenter;
 
-      const branchesResp = (await getTrainingBranchesByOrganisation({
-        path: {
-          uuid: organizationData.uuid!,
-        },
-        query: {
-          pageable: { page: 0, size: 5 },
-        },
-      })) as ApiResponse;
+      // Branches and users are optional; if not present or errors occur, ignore silently.
+      try {
+        const branchesResp = (await getTrainingBranchesByOrganisation({
+          path: { uuid: organizationData.uuid! },
+          query: { pageable: { page: 0, size: 5 } },
+        })) as ApiResponse;
 
-      const branchesData = branchesResp.data as SearchResponse;
-      if (branchesData.data?.content)
-        organizationData.branches = branchesData.data.content as unknown as TrainingBranch[];
+        const branchesData = branchesResp.data as SearchResponse;
+        if (branchesData.data?.content) {
+          organizationData.branches = branchesData.data.content as unknown as TrainingBranch[];
+        }
+      } catch (_error) {
+      }
 
-      const orgUsersResp = (await getUsersByOrganisation({
-        path: {
-          uuid: organizationData.uuid!,
-        },
-        query: {
-          pageable: { page: 0, size: 5 },
-        },
-      })) as ApiResponse;
+      try {
+        const orgUsersResp = (await getUsersByOrganisation({
+          path: { uuid: organizationData.uuid! },
+          query: { pageable: { page: 0, size: 5 } },
+        })) as ApiResponse;
 
-      const orgUsersData = orgUsersResp.data as SearchResponse;
-      if (orgUsersData.data?.content)
-        organizationData.users = orgUsersData.data.content as unknown as User[];
+        const orgUsersData = orgUsersResp.data as SearchResponse;
+        if (orgUsersData.data?.content) {
+          organizationData.users = orgUsersData.data.content as unknown as User[];
+        }
+      } catch (_error) {
+      }
 
-      // TODO: get organization branches, courses, instructures and users
       return organizationData;
     },
     staleTime: 1000 * 60 * 15,
