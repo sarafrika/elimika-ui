@@ -3,15 +3,7 @@
 import type { UserProfileType } from '@/lib/types';
 import {
   type CourseCreator,
-  getInstructorEducation,
-  getInstructorExperience,
-  getInstructorMemberships,
-  getInstructorSkills,
   type Instructor,
-  type InstructorEducation,
-  type InstructorExperience,
-  type InstructorProfessionalMembership,
-  type InstructorSkill,
   search,
   searchCourseCreators,
   searchInstructors,
@@ -26,10 +18,10 @@ import { useRouter } from 'next/navigation';
 import { createContext, type ReactNode, useCallback, useContext, useEffect } from 'react';
 
 type ExtendedInstructor = Instructor & {
-  educations: InstructorEducation[];
-  experience: InstructorExperience[];
-  membership: InstructorProfessionalMembership[];
-  skills: InstructorSkill[];
+  educations: [];
+  experience: [];
+  membership: [];
+  skills: [];
 };
 
 const UserProfileContext = createContext<
@@ -128,7 +120,7 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
       }
     }
 
-    // Add instructor data if user is an instructor
+    // Add instructor data if user is an instructor (lean payload only)
     if (user.user_domain.includes('instructor')) {
       const instructorSearchResponse = await searchInstructors({
         query: {
@@ -152,81 +144,11 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
         const instructor = responseData.data.content[0] as unknown as Instructor;
         user.instructor = {
           ...instructor,
-          educations: [] as InstructorEducation[],
-          experience: [] as InstructorExperience[],
-          membership: [] as InstructorProfessionalMembership[],
-          skills: [] as InstructorSkill[],
+          educations: [],
+          experience: [],
+          membership: [],
+          skills: [],
         } as ExtendedInstructor;
-
-        // Add instructor education
-        try {
-          const instructorEducation = await getInstructorEducation({
-            path: { instructorUuid: instructor.uuid! },
-          });
-          if (!instructorEducation.error && instructorEducation.data?.data && user.instructor) {
-            user.instructor.educations = instructorEducation.data
-              .data as unknown as InstructorEducation[];
-          }
-        } catch (_error) {
-        }
-
-        // Add instructor experience
-        try {
-          const instructorExperience = await getInstructorExperience({
-            path: { instructorUuid: instructor.uuid! },
-            query: {
-              pageable: {
-                page: 0,
-                size: 20,
-                sort: [],
-              },
-            },
-          });
-          const expResp = instructorExperience.data as SearchResponse;
-          if (!expResp.error && expResp.data?.content && user.instructor) {
-            user.instructor.experience = expResp.data.content as unknown as InstructorExperience[];
-          }
-        } catch (_error) {
-        }
-
-        // Add instructor memberships
-        try {
-          const instructorMembership = await getInstructorMemberships({
-            path: { instructorUuid: instructor.uuid! },
-            query: {
-              pageable: {
-                page: 0,
-                size: 20,
-                sort: [],
-              },
-            },
-          });
-          const memResp = instructorMembership.data as SearchResponse;
-          if (!memResp.error && memResp.data?.content && user.instructor) {
-            user.instructor.membership = memResp.data
-              .content as unknown as InstructorProfessionalMembership[];
-          }
-        } catch (_error) {
-        }
-
-        // Add instructor skills
-        try {
-          const instructorSkills = await getInstructorSkills({
-            path: { instructorUuid: instructor.uuid! },
-            query: {
-              pageable: {
-                page: 0,
-                size: 20,
-                sort: [],
-              },
-            },
-          });
-          const skillsResp = instructorSkills.data as SearchResponse;
-          if (!skillsResp.error && skillsResp.data?.content && user.instructor) {
-            user.instructor.skills = skillsResp.data.content as unknown as InstructorSkill[];
-          }
-        } catch (_error) {
-        }
       }
     }
 
