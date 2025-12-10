@@ -33,7 +33,10 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
   const router = useRouter();
 
   const hasOrganisation = Boolean(profile?.organisation_affiliations?.length);
-  const organisationVerified = hasOrganisation ? Boolean(organisation?.admin_verified) : true; // if not attached, skip organisation verification gating
+  const organisationVerifiedFlag =
+    organisation?.admin_verified ?? (organisation as any)?.adminVerified ?? undefined;
+  // Default to true while organisation data is loading; only gate when explicitly false
+  const organisationVerified = hasOrganisation ? organisationVerifiedFlag !== false : true;
 
   const state: DomainGateState = useMemo(() => {
     if (!profile || profile.isLoading) {
