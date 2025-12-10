@@ -21,12 +21,17 @@ export default function TrainingCenterProvider({ children }: { children: ReactNo
   const { data: session } = useSession();
   const userProfile = useUserProfile();
   const activeOrgId =
-    userProfile?.organisation_affiliations &&
-    userProfile.organisation_affiliations.length > 0
+    userProfile?.organisation_affiliations && userProfile.organisation_affiliations.length > 0
       ? (
           userProfile.organisation_affiliations.find(org => org.active) ??
-          userProfile.organisation_affiliations[0])?.organisationUuid
+          userProfile.organisation_affiliations[0]
+        )?.organisationUuid
       : null;
+
+  // If no organisation is attached, just render children without fetching
+  if (!activeOrgId || !session?.user) {
+    return <TrainingCenterContext.Provider value={undefined}>{children}</TrainingCenterContext.Provider>;
+  }
 
   const { data, isLoading } = useQuery(
     createQueryOptions(activeOrgId!, {
@@ -47,7 +52,7 @@ function createQueryOptions(
 ) {
   return queryOptions({
     ...options,
-    queryKey: ['organization'],
+    queryKey: ['organization', organizaition_uuid],
     queryFn: async () => {
       if (!organizaition_uuid) return null;
 
