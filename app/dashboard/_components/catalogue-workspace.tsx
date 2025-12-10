@@ -355,8 +355,8 @@ export function CatalogueWorkspace({
   };
 
   return (
-    <div className={`flex flex-col gap-4 overflow-hidden lg:flex-row ${heightClass}`}>
-      <Card className='lg:w-[420px] lg:min-w-[380px] lg:max-w-[440px]'>
+    <div className={`flex flex-col gap-4 overflow-hidden lg:flex-row ${heightClass} min-h-0`}>
+      <Card className='lg:w-[420px] lg:min-w-[380px] lg:max-w-[440px] flex h-full min-h-0 flex-col'>
         <CardHeader className='space-y-3'>
           <div className='flex items-start justify-between gap-3'>
             <div className='space-y-1.5'>
@@ -382,8 +382,8 @@ export function CatalogueWorkspace({
             <StatPill label='Private' value={stats.privateItems} />
           </div>
         </CardHeader>
-        <CardContent className='pt-0'>
-          <ScrollArea className='h-[420px] pr-3'>
+        <CardContent className='flex-1 overflow-hidden pt-0'>
+          <ScrollArea className='h-full pr-3'>
             <div className='space-y-2 pb-3'>
               {catalogueQuery.isLoading ? (
                 Array.from({ length: 6 }).map((_, index) => (
@@ -442,7 +442,7 @@ export function CatalogueWorkspace({
         </CardContent>
       </Card>
 
-      <Card className='flex-1'>
+      <Card className='flex min-h-0 flex-1 flex-col'>
         <CardHeader className='flex flex-col gap-3 border-b lg:flex-row lg:items-center lg:justify-between'>
           <div className='space-y-1'>
             <Badge variant='outline' className='w-fit'>
@@ -466,7 +466,7 @@ export function CatalogueWorkspace({
             </Button>
           ) : null}
         </CardHeader>
-        <CardContent className='p-0'>
+        <CardContent className='flex-1 overflow-hidden p-0'>
           {catalogueQuery.isLoading ? (
             <div className='space-y-4 p-6'>
               <Skeleton className='h-6 w-1/3' />
@@ -474,7 +474,7 @@ export function CatalogueWorkspace({
               <Skeleton className='h-32 w-full' />
             </div>
           ) : selectedRow ? (
-            <ScrollArea className='h-[520px] px-6 py-5 pr-8'>
+            <ScrollArea className='h-full px-6 py-5 pr-8'>
               <div className='space-y-5'>
                 <div className='flex flex-wrap items-center gap-2'>
                   <Badge variant={selectedRow.isActive ? 'success' : 'secondary'} className='gap-1'>
@@ -526,7 +526,7 @@ export function CatalogueWorkspace({
               </div>
             </ScrollArea>
           ) : (
-            <div className='text-muted-foreground flex h-[520px] items-center justify-center px-6 text-sm'>
+            <div className='text-muted-foreground flex h-full items-center justify-center px-6 text-sm'>
               Select a catalogue item on the left to load its details.
             </div>
           )}
