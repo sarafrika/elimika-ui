@@ -274,6 +274,7 @@ import type {
   GetStudentScheduleResponse,
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
+  ListCurrenciesResponse,
   GetPrimaryRubricResponse,
   GetRubricsByContextResponse,
   GetCourseEnrollmentsResponse,
@@ -4400,6 +4401,27 @@ export const getEnrollmentCountResponseTransformer = async (
   return data;
 };
 
+const pagedDtoCurrencySchemaResponseTransformer = (data: any) => {
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoCurrencySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoCurrencySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listCurrenciesResponseTransformer = async (
+  data: any
+): Promise<ListCurrenciesResponse> => {
+  data = apiResponsePagedDtoCurrencySchemaResponseTransformer(data);
+  return data;
+};
+
 export const getPrimaryRubricResponseTransformer = async (
   data: any
 ): Promise<GetPrimaryRubricResponse> => {
@@ -4674,7 +4696,7 @@ export const searchCatalogueResponseTransformer = async (
 export const resolveByCourseOrClassResponseTransformer = async (
   data: any
 ): Promise<ResolveByCourseOrClassResponse> => {
-  data = apiResponseCommerceCatalogueItemSchemaResponseTransformer(data);
+  data = apiResponseListCommerceCatalogueItemSchemaResponseTransformer(data);
   return data;
 };
 

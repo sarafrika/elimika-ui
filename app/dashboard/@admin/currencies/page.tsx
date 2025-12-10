@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listAllOptions,
@@ -40,6 +40,9 @@ import {
   XCircle,
   Star,
   Loader2,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from 'lucide-react';
 
 type CurrencyFormData = {
@@ -51,10 +54,25 @@ type CurrencyFormData = {
   active: boolean;
 };
 
+type SortField =
+  | 'code'
+  | 'name'
+  | 'symbol'
+  | 'numericCode'
+  | 'decimalPlaces'
+  | 'active'
+  | 'defaultCurrency';
+type SortDirection = 'asc' | 'desc';
+
 export default function CurrenciesPage() {
   const queryClient = useQueryClient();
+  const PAGE_SIZE = 20;
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const [sortField, setSortField] = useState<SortField>('code');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [formData, setFormData] = useState<CurrencyFormData>({
     code: '',
     name: '',
@@ -69,6 +87,74 @@ export default function CurrenciesPage() {
   });
 
   const currencies = (data?.data ?? []) as Currency[];
+  const toggleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortField(field);
+    setSortDirection('asc');
+  };
+
+  const getComparableValue = (currency: Currency, field: SortField) => {
+    switch (field) {
+      case 'code':
+        return (currency.code || '').toUpperCase();
+      case 'name':
+        return (currency.name || '').toUpperCase();
+      case 'symbol':
+        return (currency.symbol || '').toUpperCase();
+      case 'numericCode':
+        return currency.numericCode ?? Number.NEGATIVE_INFINITY;
+      case 'decimalPlaces':
+        return currency.decimalPlaces ?? Number.NEGATIVE_INFINITY;
+      case 'active':
+        return currency.active ? 1 : 0;
+      case 'defaultCurrency':
+        return currency.defaultCurrency ? 1 : 0;
+      default:
+        return '';
+    }
+  };
+
+  const sortedCurrencies = [...currencies].sort((a, b) => {
+    const aValue = getComparableValue(a, sortField);
+    const bValue = getComparableValue(b, sortField);
+
+    let comparison = 0;
+    if (typeof aValue === 'string' || typeof bValue === 'string') {
+      comparison = String(aValue).localeCompare(String(bValue));
+    } else {
+      comparison = Number(aValue) - Number(bValue);
+    }
+
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredCurrencies = normalizedSearch
+    ? sortedCurrencies.filter(currency =>
+        (currency.code || '').toLowerCase().includes(normalizedSearch),
+      )
+    : sortedCurrencies;
+
+  const totalPages = Math.max(1, Math.ceil(filteredCurrencies.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedCurrencies = filteredCurrencies.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [normalizedSearch, currencies.length]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   const activeCurrencies = currencies.filter(c => c.active);
   const defaultCurrency = currencies.find(c => c.defaultCurrency);
 
@@ -243,67 +329,236 @@ export default function CurrenciesPage() {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead>Numeric Code</TableHead>
-                  <TableHead>Decimal Places</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Default</TableHead>
-                  <TableHead className='text-right'>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currencies.map(currency => (
-                  <TableRow key={currency.code}>
-                    <TableCell className='font-mono font-semibold'>{currency.code}</TableCell>
-                    <TableCell>{currency.name}</TableCell>
-                    <TableCell className='text-lg'>{currency.symbol || '—'}</TableCell>
-                    <TableCell>{currency.numericCode || '—'}</TableCell>
-                    <TableCell>{currency.decimalPlaces ?? 2}</TableCell>
-                    <TableCell>
-                      {currency.active ? (
-                        <Badge variant='default' className='gap-1'>
-                          <CheckCircle2 className='h-3 w-3' />
-                          Active
-                        </Badge>
-                      ) : (
-                        <Badge variant='outline' className='gap-1'>
-                          <XCircle className='h-3 w-3' />
-                          Inactive
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {currency.defaultCurrency && (
-                        <Badge variant='secondary' className='gap-1'>
-                          <Star className='h-3 w-3 fill-current' />
-                          Default
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className='text-right'>
-                      <div className='flex justify-end gap-2'>
-                        <Button variant='ghost' size='sm' onClick={() => handleEdit(currency)}>
-                          <Edit className='h-4 w-4' />
-                        </Button>
-                        <Button
-                          variant={currency.active ? 'outline' : 'default'}
-                          size='sm'
-                          onClick={() => handleToggleActive(currency)}
-                          disabled={updateMutation.isPending}
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className='align-top'>
+                      <div className='space-y-2'>
+                        <button
+                          type='button'
+                          onClick={() => toggleSort('code')}
+                          className='flex items-center gap-2 font-semibold'
                         >
-                          {currency.active ? 'Deactivate' : 'Activate'}
-                        </Button>
+                          <span>Code</span>
+                          {sortField === 'code' ? (
+                            sortDirection === 'asc' ? (
+                              <ArrowUp className='h-4 w-4' />
+                            ) : (
+                              <ArrowDown className='h-4 w-4' />
+                            )
+                          ) : (
+                            <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                          )}
+                        </button>
+                        <Input
+                          placeholder='Search code'
+                          value={searchTerm}
+                          onChange={e => setSearchTerm(e.target.value)}
+                          className='h-9 w-full'
+                        />
                       </div>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        type='button'
+                        onClick={() => toggleSort('name')}
+                        className='flex items-center gap-2 font-semibold'
+                      >
+                        <span>Name</span>
+                        {sortField === 'name' ? (
+                          sortDirection === 'asc' ? (
+                            <ArrowUp className='h-4 w-4' />
+                          ) : (
+                            <ArrowDown className='h-4 w-4' />
+                          )
+                        ) : (
+                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                        )}
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        type='button'
+                        onClick={() => toggleSort('symbol')}
+                        className='flex items-center gap-2 font-semibold'
+                      >
+                        <span>Symbol</span>
+                        {sortField === 'symbol' ? (
+                          sortDirection === 'asc' ? (
+                            <ArrowUp className='h-4 w-4' />
+                          ) : (
+                            <ArrowDown className='h-4 w-4' />
+                          )
+                        ) : (
+                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                        )}
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        type='button'
+                        onClick={() => toggleSort('numericCode')}
+                        className='flex items-center gap-2 font-semibold'
+                      >
+                        <span>Numeric Code</span>
+                        {sortField === 'numericCode' ? (
+                          sortDirection === 'asc' ? (
+                            <ArrowUp className='h-4 w-4' />
+                          ) : (
+                            <ArrowDown className='h-4 w-4' />
+                          )
+                        ) : (
+                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                        )}
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        type='button'
+                        onClick={() => toggleSort('decimalPlaces')}
+                        className='flex items-center gap-2 font-semibold'
+                      >
+                        <span>Decimal Places</span>
+                        {sortField === 'decimalPlaces' ? (
+                          sortDirection === 'asc' ? (
+                            <ArrowUp className='h-4 w-4' />
+                          ) : (
+                            <ArrowDown className='h-4 w-4' />
+                          )
+                        ) : (
+                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                        )}
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        type='button'
+                        onClick={() => toggleSort('active')}
+                        className='flex items-center gap-2 font-semibold'
+                      >
+                        <span>Status</span>
+                        {sortField === 'active' ? (
+                          sortDirection === 'asc' ? (
+                            <ArrowUp className='h-4 w-4' />
+                          ) : (
+                            <ArrowDown className='h-4 w-4' />
+                          )
+                        ) : (
+                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                        )}
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button
+                        type='button'
+                        onClick={() => toggleSort('defaultCurrency')}
+                        className='flex items-center gap-2 font-semibold'
+                      >
+                        <span>Default</span>
+                        {sortField === 'defaultCurrency' ? (
+                          sortDirection === 'asc' ? (
+                            <ArrowUp className='h-4 w-4' />
+                          ) : (
+                            <ArrowDown className='h-4 w-4' />
+                          )
+                        ) : (
+                          <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
+                        )}
+                      </button>
+                    </TableHead>
+                    <TableHead className='text-right'>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedCurrencies.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className='text-center text-sm text-muted-foreground'>
+                        No currencies match your search.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedCurrencies.map(currency => (
+                      <TableRow key={currency.code}>
+                        <TableCell className='font-mono font-semibold'>{currency.code}</TableCell>
+                        <TableCell>{currency.name}</TableCell>
+                        <TableCell className='text-lg'>{currency.symbol || '—'}</TableCell>
+                        <TableCell>{currency.numericCode || '—'}</TableCell>
+                        <TableCell>{currency.decimalPlaces ?? 2}</TableCell>
+                        <TableCell>
+                          {currency.active ? (
+                            <Badge variant='default' className='gap-1'>
+                              <CheckCircle2 className='h-3 w-3' />
+                              Active
+                            </Badge>
+                          ) : (
+                            <Badge variant='outline' className='gap-1'>
+                              <XCircle className='h-3 w-3' />
+                              Inactive
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {currency.defaultCurrency && (
+                            <Badge variant='secondary' className='gap-1'>
+                              <Star className='h-3 w-3 fill-current' />
+                              Default
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className='text-right'>
+                          <div className='flex justify-end gap-2'>
+                            <Button variant='ghost' size='sm' onClick={() => handleEdit(currency)}>
+                              <Edit className='h-4 w-4' />
+                            </Button>
+                            <Button
+                              variant={currency.active ? 'outline' : 'default'}
+                              size='sm'
+                              onClick={() => handleToggleActive(currency)}
+                              disabled={updateMutation.isPending}
+                            >
+                              {currency.active ? 'Deactivate' : 'Activate'}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              <div className='mt-4 flex flex-wrap items-center justify-between gap-3'>
+                <div className='text-sm text-muted-foreground'>
+                  {filteredCurrencies.length === 0
+                    ? 'Showing 0 of 0 currencies'
+                    : `Showing ${
+                        (currentPage - 1) * PAGE_SIZE + 1
+                      }-${Math.min(currentPage * PAGE_SIZE, filteredCurrencies.length)} of ${
+                        filteredCurrencies.length
+                      } currencies`}
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className='text-sm text-muted-foreground'>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages || filteredCurrencies.length === 0}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

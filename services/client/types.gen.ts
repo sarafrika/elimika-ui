@@ -438,10 +438,6 @@ export type RubricScoringLevel = {
    */
   readonly display_name?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
-   */
-  readonly is_highest_level?: boolean;
-  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
@@ -449,6 +445,10 @@ export type RubricScoringLevel = {
    * **[READ-ONLY]** CSS-safe color class name derived from the color code.
    */
   readonly css_color_class?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
+   */
+  readonly is_highest_level?: boolean;
 };
 
 export type ApiResponseRubricScoringLevel = {
@@ -1521,6 +1521,10 @@ export type InstructorExperience = {
    */
   readonly is_complete?: boolean;
   /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string;
+  /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
   readonly employment_period?: string;
@@ -1545,10 +1549,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -2823,6 +2823,10 @@ export type CommerceCatalogueItem = {
    */
   variant_code?: string;
   /**
+   * Unit price of the variant
+   */
+  unit_amount?: number;
+  /**
    * Currency code configured for the variant
    */
   currency_code?: string;
@@ -3251,14 +3255,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Letter grade representation of the final grade.
-   */
-  readonly grade_letter?: string;
-  /**
-   * **[READ-ONLY]** Current validity status of the certificate.
-   */
-  readonly validity_status?: string;
-  /**
    * **[READ-ONLY]** Type of certificate based on completion achievement.
    */
   readonly certificate_type?: string;
@@ -3266,6 +3262,14 @@ export type Certificate = {
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
+  /**
+   * **[READ-ONLY]** Letter grade representation of the final grade.
+   */
+  readonly grade_letter?: string;
+  /**
+   * **[READ-ONLY]** Current validity status of the certificate.
+   */
+  readonly validity_status?: string;
 };
 
 export type ApiResponseCertificate = {
@@ -3407,6 +3411,10 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
    */
   readonly assignment_category?: string;
@@ -3418,10 +3426,6 @@ export type Assignment = {
    * **[READ-ONLY]** Summary of accepted submission types for this assignment.
    */
   readonly submission_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
 };
 
 export type ApiResponseAssignment = {
@@ -3949,21 +3953,21 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   * **[READ-ONLY]** Indicates if the student attended the class.
    */
-  readonly can_be_cancelled?: boolean;
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4711,13 +4715,13 @@ export type AssignmentSubmission = {
    */
   readonly is_graded?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the submission based on its content type.
-   */
-  readonly submission_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
   readonly grade_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the submission based on its content type.
+   */
+  readonly submission_category?: string;
   /**
    * **[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.
    */
@@ -5769,13 +5773,19 @@ export type ApiResponseLong = {
   };
 };
 
-export type ApiResponseListCurrency = {
+export type ApiResponsePagedDtoCurrency = {
   success?: boolean;
-  data?: Array<Currency>;
+  data?: PagedDtoCurrency;
   message?: string;
   error?: {
     [key: string]: unknown;
   };
+};
+
+export type PagedDtoCurrency = {
+  content?: Array<Currency>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
 };
 
 export type ApiResponsePagedDtoCourse = {
@@ -6594,6 +6604,15 @@ export type PagedDtoAdminActivityEvent = {
   content?: Array<AdminActivityEvent>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListCurrency = {
+  success?: boolean;
+  data?: Array<Currency>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
 };
 
 /**
@@ -19898,14 +19917,16 @@ export type HasCapacityForEnrollmentResponses = {
 export type HasCapacityForEnrollmentResponse =
   HasCapacityForEnrollmentResponses[keyof HasCapacityForEnrollmentResponses];
 
-export type ListActiveCurrenciesData = {
+export type ListCurrenciesData = {
   body?: never;
   path?: never;
-  query?: never;
+  query: {
+    pageable: Pageable;
+  };
   url: '/api/v1/currencies';
 };
 
-export type ListActiveCurrenciesErrors = {
+export type ListCurrenciesErrors = {
   /**
    * Not Found
    */
@@ -19916,18 +19937,16 @@ export type ListActiveCurrenciesErrors = {
   500: ResponseDtoVoid;
 };
 
-export type ListActiveCurrenciesError =
-  ListActiveCurrenciesErrors[keyof ListActiveCurrenciesErrors];
+export type ListCurrenciesError = ListCurrenciesErrors[keyof ListCurrenciesErrors];
 
-export type ListActiveCurrenciesResponses = {
+export type ListCurrenciesResponses = {
   /**
    * OK
    */
-  200: ApiResponseListCurrency;
+  200: ApiResponsePagedDtoCurrency;
 };
 
-export type ListActiveCurrenciesResponse =
-  ListActiveCurrenciesResponses[keyof ListActiveCurrenciesResponses];
+export type ListCurrenciesResponse = ListCurrenciesResponses[keyof ListCurrenciesResponses];
 
 export type GetDefaultCurrencyData = {
   body?: never;
@@ -21127,7 +21146,7 @@ export type ResolveByCourseOrClassResponses = {
   /**
    * OK
    */
-  200: ApiResponseCommerceCatalogueItem;
+  200: ApiResponseListCommerceCatalogueItem;
 };
 
 export type ResolveByCourseOrClassResponse =

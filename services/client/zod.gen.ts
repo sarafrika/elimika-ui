@@ -665,13 +665,6 @@ export const zRubricScoringLevel = z
       .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
       .readonly()
       .optional(),
-    is_highest_level: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).'
-      )
-      .readonly()
-      .optional(),
     performance_indicator: z
       .string()
       .describe(
@@ -682,6 +675,13 @@ export const zRubricScoringLevel = z
     css_color_class: z
       .string()
       .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
+      .readonly()
+      .optional(),
+    is_highest_level: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).'
+      )
       .readonly()
       .optional(),
   })
@@ -2290,6 +2290,11 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
+    formatted_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration of employment.')
+      .readonly()
+      .optional(),
     employment_period: z
       .string()
       .describe('**[READ-ONLY]** Formatted employment period showing start and end dates.')
@@ -2322,11 +2327,6 @@ export const zInstructorExperience = z
       .describe(
         '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
       )
-      .readonly()
-      .optional(),
-    formatted_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration of employment.')
       .readonly()
       .optional(),
   })
@@ -4167,6 +4167,7 @@ export const zCommerceCatalogueItem = z
       .optional(),
     product_code: z.string().describe('Internal commerce product code').optional(),
     variant_code: z.string().describe('Internal commerce variant code').optional(),
+    unit_amount: z.number().describe('Unit price of the variant').optional(),
     currency_code: z.string().describe('Currency code configured for the variant').optional(),
     active: z.boolean().describe('Whether this mapping is active').optional(),
     publicly_visible: z
@@ -4808,16 +4809,6 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    grade_letter: z
-      .string()
-      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
-      .readonly()
-      .optional(),
-    validity_status: z
-      .string()
-      .describe('**[READ-ONLY]** Current validity status of the certificate.')
-      .readonly()
-      .optional(),
     certificate_type: z
       .string()
       .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
@@ -4826,6 +4817,16 @@ export const zCertificate = z
     is_downloadable: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
+      .readonly()
+      .optional(),
+    grade_letter: z
+      .string()
+      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
+      .readonly()
+      .optional(),
+    validity_status: z
+      .string()
+      .describe('**[READ-ONLY]** Current validity status of the certificate.')
       .readonly()
       .optional(),
   })
@@ -5042,6 +5043,11 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
+      .readonly()
+      .optional(),
     assignment_category: z
       .string()
       .describe(
@@ -5057,11 +5063,6 @@ export const zAssignment = z
     submission_summary: z
       .string()
       .describe('**[READ-ONLY]** Summary of accepted submission types for this assignment.')
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
   })
@@ -5683,9 +5684,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
+    did_attend: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
     is_attendance_marked: z
@@ -5693,14 +5694,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -6430,14 +6431,14 @@ export const zAssignmentSubmission = z
       .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
       .readonly()
       .optional(),
-    submission_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
-      .readonly()
-      .optional(),
     grade_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
+    submission_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
       .readonly()
       .optional(),
     submission_status_display: z
@@ -7537,9 +7538,15 @@ export const zApiResponseLong = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-export const zApiResponseListCurrency = z.object({
+export const zPagedDtoCurrency = z.object({
+  content: z.array(zCurrency).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCurrency = z.object({
   success: z.boolean().optional(),
-  data: z.array(zCurrency).optional(),
+  data: zPagedDtoCurrency.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -8326,6 +8333,13 @@ export const zPagedDtoAdminActivityEvent = z.object({
 export const zApiResponsePagedDtoAdminActivityEvent = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoAdminActivityEvent.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zApiResponseListCurrency = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCurrency).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -13470,16 +13484,18 @@ export const zHasCapacityForEnrollmentData = z.object({
  */
 export const zHasCapacityForEnrollmentResponse = zApiResponseBoolean;
 
-export const zListActiveCurrenciesData = z.object({
+export const zListCurrenciesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
-  query: z.never().optional(),
+  query: z.object({
+    pageable: zPageable,
+  }),
 });
 
 /**
  * OK
  */
-export const zListActiveCurrenciesResponse = zApiResponseListCurrency;
+export const zListCurrenciesResponse = zApiResponsePagedDtoCurrency;
 
 export const zGetDefaultCurrencyData = z.object({
   body: z.never().optional(),
@@ -13958,7 +13974,7 @@ export const zResolveByCourseOrClassData = z.object({
 /**
  * OK
  */
-export const zResolveByCourseOrClassResponse = zApiResponseCommerceCatalogueItem;
+export const zResolveByCourseOrClassResponse = zApiResponseListCommerceCatalogueItem;
 
 export const zGetEnrollmentsForClassData = z.object({
   body: z.never().optional(),

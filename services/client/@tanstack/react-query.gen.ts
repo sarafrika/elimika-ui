@@ -362,7 +362,7 @@ import {
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
-  listActiveCurrencies,
+  listCurrencies,
   getDefaultCurrency,
   getStatusTransitions,
   checkRubricAssociation,
@@ -1365,7 +1365,9 @@ import type {
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
-  ListActiveCurrenciesData,
+  ListCurrenciesData,
+  ListCurrenciesError,
+  ListCurrenciesResponse,
   GetDefaultCurrencyData,
   GetStatusTransitionsData,
   CheckRubricAssociationData,
@@ -17563,16 +17565,16 @@ export const hasCapacityForEnrollmentOptions = (options: Options<HasCapacityForE
   });
 };
 
-export const listActiveCurrenciesQueryKey = (options?: Options<ListActiveCurrenciesData>) =>
-  createQueryKey('listActiveCurrencies', options);
+export const listCurrenciesQueryKey = (options: Options<ListCurrenciesData>) =>
+  createQueryKey('listCurrencies', options);
 
 /**
- * List active platform currencies
+ * List platform currencies (paginated)
  */
-export const listActiveCurrenciesOptions = (options?: Options<ListActiveCurrenciesData>) => {
+export const listCurrenciesOptions = (options: Options<ListCurrenciesData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listActiveCurrencies({
+      const { data } = await listCurrencies({
         ...options,
         ...queryKey[0],
         signal,
@@ -17580,8 +17582,52 @@ export const listActiveCurrenciesOptions = (options?: Options<ListActiveCurrenci
       });
       return data;
     },
-    queryKey: listActiveCurrenciesQueryKey(options),
+    queryKey: listCurrenciesQueryKey(options),
   });
+};
+
+export const listCurrenciesInfiniteQueryKey = (
+  options: Options<ListCurrenciesData>
+): QueryKey<Options<ListCurrenciesData>> => createQueryKey('listCurrencies', options, true);
+
+/**
+ * List platform currencies (paginated)
+ */
+export const listCurrenciesInfiniteOptions = (options: Options<ListCurrenciesData>) => {
+  return infiniteQueryOptions<
+    ListCurrenciesResponse,
+    ListCurrenciesError,
+    InfiniteData<ListCurrenciesResponse>,
+    QueryKey<Options<ListCurrenciesData>>,
+    number | Pick<QueryKey<Options<ListCurrenciesData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListCurrenciesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listCurrencies({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listCurrenciesInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const getDefaultCurrencyQueryKey = (options?: Options<GetDefaultCurrencyData>) =>
@@ -19473,8 +19519,8 @@ export const resolveByCourseOrClassQueryKey = (options?: Options<ResolveByCourse
   createQueryKey('resolveByCourseOrClass', options);
 
 /**
- * Resolve catalogue mapping by course or class
- * Tries course first, then class
+ * Resolve catalogue mappings by course or class
+ * Returns all catalogue entries for the provided course or class
  */
 export const resolveByCourseOrClassOptions = (options?: Options<ResolveByCourseOrClassData>) => {
   return queryOptions({

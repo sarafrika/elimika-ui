@@ -936,13 +936,6 @@ export const RubricScoringLevelSchema = {
       example: 'Excellent (4.0 pts)',
       readOnly: true,
     },
-    is_highest_level: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).',
-      example: true,
-      readOnly: true,
-    },
     performance_indicator: {
       type: 'string',
       description:
@@ -954,6 +947,13 @@ export const RubricScoringLevelSchema = {
       type: 'string',
       description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
       example: 'level-green',
+      readOnly: true,
+    },
+    is_highest_level: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).',
+      example: true,
       readOnly: true,
     },
   },
@@ -3125,6 +3125,12 @@ export const InstructorExperienceSchema = {
       example: true,
       readOnly: true,
     },
+    formatted_duration: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: 5,
+      readOnly: true,
+    },
     employment_period: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
@@ -3166,12 +3172,6 @@ export const InstructorExperienceSchema = {
       description:
         '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
       example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: 5,
       readOnly: true,
     },
   },
@@ -5924,6 +5924,10 @@ export const CommerceCatalogueItemSchema = {
       type: 'string',
       description: 'Internal commerce variant code',
     },
+    unit_amount: {
+      type: 'number',
+      description: 'Unit price of the variant',
+    },
     currency_code: {
       type: 'string',
       description: 'Currency code configured for the variant',
@@ -6762,18 +6766,6 @@ export const CertificateSchema = {
       example: 'system',
       readOnly: true,
     },
-    grade_letter: {
-      type: 'string',
-      description: '**[READ-ONLY]** Letter grade representation of the final grade.',
-      example: 'B+',
-      readOnly: true,
-    },
-    validity_status: {
-      type: 'string',
-      description: '**[READ-ONLY]** Current validity status of the certificate.',
-      example: 'Valid Certificate',
-      readOnly: true,
-    },
     certificate_type: {
       type: 'string',
       description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
@@ -6784,6 +6776,18 @@ export const CertificateSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
       example: true,
+      readOnly: true,
+    },
+    grade_letter: {
+      type: 'string',
+      description: '**[READ-ONLY]** Letter grade representation of the final grade.',
+      example: 'B+',
+      readOnly: true,
+    },
+    validity_status: {
+      type: 'string',
+      description: '**[READ-ONLY]** Current validity status of the certificate.',
+      example: 'Valid Certificate',
       readOnly: true,
     },
   },
@@ -7088,6 +7092,12 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: 100,
+      readOnly: true,
+    },
     assignment_category: {
       type: 'string',
       description:
@@ -7105,12 +7115,6 @@ export const AssignmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Summary of accepted submission types for this assignment.',
       example: 3,
-      readOnly: true,
-    },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: 100,
       readOnly: true,
     },
   },
@@ -8124,10 +8128,10 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
+    did_attend: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
       readOnly: true,
     },
     is_attendance_marked: {
@@ -8136,16 +8140,16 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -9359,17 +9363,17 @@ export const AssignmentSubmissionSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     submission_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the submission based on its content type.',
       example: 'Mixed Media Submission',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
     submission_status_display: {
@@ -11658,23 +11662,38 @@ export const ApiResponseLongSchema = {
   },
 } as const;
 
-export const ApiResponseListCurrencySchema = {
+export const ApiResponsePagedDTOCurrencySchema = {
   type: 'object',
   properties: {
     success: {
       type: 'boolean',
     },
     data: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/Currency',
-      },
+      $ref: '#/components/schemas/PagedDTOCurrency',
     },
     message: {
       type: 'string',
     },
     error: {
       type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOCurrencySchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Currency',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
     },
   },
 } as const;
@@ -13430,6 +13449,27 @@ export const PagedDTOAdminActivityEventSchema = {
     },
     links: {
       $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCurrencySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Currency',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
     },
   },
 } as const;

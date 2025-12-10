@@ -1087,9 +1087,9 @@ import type {
   HasCapacityForEnrollmentData,
   HasCapacityForEnrollmentResponses,
   HasCapacityForEnrollmentErrors,
-  ListActiveCurrenciesData,
-  ListActiveCurrenciesResponses,
-  ListActiveCurrenciesErrors,
+  ListCurrenciesData,
+  ListCurrenciesResponses,
+  ListCurrenciesErrors,
   GetDefaultCurrencyData,
   GetDefaultCurrencyResponses,
   GetDefaultCurrencyErrors,
@@ -1594,6 +1594,7 @@ import {
   getStudentScheduleResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
+  listCurrenciesResponseTransformer,
   getPrimaryRubricResponseTransformer,
   getRubricsByContextResponseTransformer,
   getCourseEnrollmentsResponseTransformer,
@@ -12536,16 +12537,17 @@ export const hasCapacityForEnrollment = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * List active platform currencies
+ * List platform currencies (paginated)
  */
-export const listActiveCurrencies = <ThrowOnError extends boolean = false>(
-  options?: Options<ListActiveCurrenciesData, ThrowOnError>
+export const listCurrencies = <ThrowOnError extends boolean = false>(
+  options: Options<ListCurrenciesData, ThrowOnError>
 ) => {
-  return (options?.client ?? _heyApiClient).get<
-    ListActiveCurrenciesResponses,
-    ListActiveCurrenciesErrors,
+  return (options.client ?? _heyApiClient).get<
+    ListCurrenciesResponses,
+    ListCurrenciesErrors,
     ThrowOnError
   >({
+    responseTransformer: listCurrenciesResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -13603,8 +13605,8 @@ export const searchCatalogue = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Resolve catalogue mapping by course or class
- * Tries course first, then class
+ * Resolve catalogue mappings by course or class
+ * Returns all catalogue entries for the provided course or class
  */
 export const resolveByCourseOrClass = <ThrowOnError extends boolean = false>(
   options?: Options<ResolveByCourseOrClassData, ThrowOnError>
