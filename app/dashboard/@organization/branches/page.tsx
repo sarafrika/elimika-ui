@@ -575,56 +575,62 @@ function BranchDrawer({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className='w-full overflow-y-auto sm:max-w-2xl'>
-        <SheetHeader className='space-y-3 pb-6'>
-          <div className='flex items-center gap-3'>
-            <div className='rounded-xl bg-primary/10 p-3'>
+        <SheetHeader className='space-y-4 pb-8'>
+          <div className='flex items-center gap-4'>
+            <div className='rounded-xl bg-primary/10 p-3.5'>
               <GitBranch className='h-6 w-6 text-primary' />
             </div>
             <div>
-              <SheetTitle className='text-xl'>
-                {defaultValues ? 'Edit Training Branch' : 'Create New Branch'}
+              <SheetTitle className='text-2xl font-semibold'>
+                {defaultValues ? 'Edit Branch' : 'New Branch'}
               </SheetTitle>
-              <SheetDescription className='mt-1'>
+              <SheetDescription className='mt-1.5 text-base'>
                 {defaultValues
-                  ? 'Update the branch details and point of contact information.'
-                  : 'Add a new training location for your organization.'}
+                  ? 'Update the branch details and contact information'
+                  : 'Add a new training location to your organization'}
               </SheetDescription>
             </div>
           </div>
         </SheetHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
           {/* Branch Information Section */}
-          <div className='rounded-xl border border-border bg-muted/30 p-5'>
-            <div className='mb-4 flex items-center gap-2'>
-              <Building2 className='h-5 w-5 text-primary' />
-              <h3 className='font-semibold text-foreground'>Branch Information</h3>
+          <div className='space-y-5'>
+            <div className='flex items-center gap-2.5'>
+              <Building2 className='h-5 w-5 text-muted-foreground' />
+              <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+                Branch Details
+              </h3>
             </div>
-            <div className='space-y-4'>
-              <FormField label='Branch Name' name='branch_name' form={form} required placeholder='e.g., Downtown Campus' />
+            <div className='space-y-5 pl-7'>
+              <FormField label='Branch Name' name='branch_name' form={form} required placeholder='Downtown Campus' />
               <FormField
                 label='Address'
                 name='address'
                 form={form}
-                placeholder='e.g., 123 Main Street, City'
+                placeholder='123 Main Street, City, State'
                 icon={<MapPin className='h-4 w-4' />}
               />
             </div>
           </div>
 
+          <Separator className='my-8' />
+
           {/* Point of Contact Section */}
-          <div className='rounded-xl border border-border bg-muted/30 p-5'>
-            <div className='mb-4 flex items-center gap-2'>
-              <Users className='h-5 w-5 text-primary' />
-              <h3 className='font-semibold text-foreground'>Point of Contact</h3>
+          <div className='space-y-5'>
+            <div className='flex items-center gap-2.5'>
+              <Users className='h-5 w-5 text-muted-foreground' />
+              <h3 className='text-sm font-semibold uppercase tracking-wide text-muted-foreground'>
+                Point of Contact
+              </h3>
             </div>
-            <div className='space-y-4'>
+            <div className='space-y-5 pl-7'>
               <FormField
                 label='Full Name'
                 name='poc_name'
                 form={form}
                 required
-                placeholder='e.g., John Doe'
+                placeholder='John Doe'
                 icon={<Users className='h-4 w-4' />}
               />
               <FormField
@@ -633,7 +639,7 @@ function BranchDrawer({
                 form={form}
                 type='email'
                 required
-                placeholder='e.g., john@example.com'
+                placeholder='john.doe@example.com'
                 icon={<Mail className='h-4 w-4' />}
               />
               <FormField
@@ -641,53 +647,53 @@ function BranchDrawer({
                 name='poc_telephone'
                 form={form}
                 required
-                placeholder='e.g., +1 (555) 123-4567'
+                placeholder='+1 (555) 123-4567'
                 icon={<Phone className='h-4 w-4' />}
               />
             </div>
           </div>
 
+          <Separator className='my-8' />
+
           {/* Status Section */}
-          <div className='rounded-xl border border-border bg-muted/30 p-5'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <div className='rounded-lg bg-background p-2'>
-                  <Switch
-                    checked={form.watch('active')}
-                    onCheckedChange={(checked) => form.setValue('active', checked)}
-                  />
-                </div>
+          <div className='space-y-5'>
+            <div className='flex items-center justify-between pl-7'>
+              <div className='flex items-center gap-4'>
+                <Switch
+                  checked={form.watch('active')}
+                  onCheckedChange={(checked) => form.setValue('active', checked)}
+                />
                 <div>
-                  <Label className='text-sm font-semibold text-foreground'>Active Status</Label>
-                  <p className='text-xs text-muted-foreground'>
+                  <Label className='text-base font-medium text-foreground'>Active Status</Label>
+                  <p className='mt-0.5 text-sm text-muted-foreground'>
                     {form.watch('active')
                       ? 'Branch is active and available for assignments'
                       : 'Branch is inactive and hidden from assignments'}
                   </p>
                 </div>
               </div>
-              <Badge variant={form.watch('active') ? 'secondary' : 'outline'}>
+              <Badge variant={form.watch('active') ? 'secondary' : 'outline'} className='text-xs'>
                 {form.watch('active') ? 'Active' : 'Inactive'}
               </Badge>
             </div>
           </div>
 
           {/* Form Actions */}
-          <SheetFooter className='flex gap-3 pt-4 sm:gap-3'>
+          <div className='flex gap-3 border-t border-border pt-6'>
             <Button
               variant='outline'
               type='button'
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className='flex-1 sm:flex-1'
+              className='flex-1'
             >
               Cancel
             </Button>
-            <Button type='submit' disabled={isSubmitting} className='flex-1 sm:flex-1'>
+            <Button type='submit' disabled={isSubmitting} className='flex-1'>
               {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              {defaultValues ? 'Update Branch' : 'Create Branch'}
+              {defaultValues ? 'Save Changes' : 'Create Branch'}
             </Button>
-          </SheetFooter>
+          </div>
         </form>
       </SheetContent>
     </Sheet>
@@ -713,13 +719,14 @@ function FormField({
 }) {
   const error = form.formState.errors[name]?.message;
   return (
-    <div className='space-y-2'>
+    <div className='space-y-2.5'>
       <Label className='text-sm font-medium text-foreground'>
-        {label} {required && <span className='text-destructive'>*</span>}
+        {label}
+        {required && <span className='ml-1 text-destructive'>*</span>}
       </Label>
       <div className='relative'>
         {icon && (
-          <div className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground'>
+          <div className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground'>
             {icon}
           </div>
         )}
@@ -727,12 +734,12 @@ function FormField({
           type={type}
           placeholder={placeholder}
           {...form.register(name)}
-          className={`${error ? 'border-destructive' : ''} ${icon ? 'pl-10' : ''}`}
+          className={`h-11 ${error ? 'border-destructive focus-visible:ring-destructive' : ''} ${icon ? 'pl-11' : ''}`}
         />
       </div>
       {error && (
-        <div className='flex items-center gap-1 text-xs text-destructive'>
-          <AlertCircle className='h-3 w-3' />
+        <div className='flex items-center gap-1.5 text-sm text-destructive'>
+          <AlertCircle className='h-3.5 w-3.5' />
           <span>{String(error)}</span>
         </div>
       )}
