@@ -43,25 +43,28 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   const pathname = usePathname();
 
   useEffect(() => {
-    // Only process redirects when profile is fully loaded
-    if (!profile?.isLoading && domain.isReady) {
+    // Only process redirects when profile is fully loaded and domain is ready
+    // Important: Check !domain.isLoading to prevent redirect during rehydration
+    if (!profile?.isLoading && domain.isReady && !domain.isLoading) {
       // Redirect to onboarding if no domains
       if (domain.domains.length === 0) {
         router.push('/onboarding');
         return;
       }
     }
-  }, [profile?.isLoading, domain.isReady, domain.domains, router]);
+  }, [profile?.isLoading, domain.isReady, domain.isLoading, domain.domains, router]);
 
   useEffect(() => {
+    // Only redirect to organization onboarding when fully loaded
     if (
       !profile?.isLoading &&
+      !domain.isLoading &&
       domain.activeDomain === 'organisation_user' &&
       (!profile.organisation_affiliations || profile.organisation_affiliations.length === 0)
     ) {
       router.push('/onboarding/organisation');
     }
-  }, [profile?.isLoading, profile?.organisation_affiliations, domain.activeDomain, router]);
+  }, [profile?.isLoading, domain.isLoading, profile?.organisation_affiliations, domain.activeDomain, router]);
 
   const userDomains = useMemo(() => domain.domains as KnownDomain[], [domain.domains]);
   const activeDomain = (domain.activeDomain ?? null) as KnownDomain | null;
