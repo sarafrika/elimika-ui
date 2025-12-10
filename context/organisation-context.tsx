@@ -40,7 +40,7 @@ export default function OrganisationProvider({
   const activeAffiliation: UserOrganisationAffiliationDto | undefined =
     affiliations.find(org => org.active) ?? affiliations[0];
 
-  const activeOrgId = activeAffiliation?.organisation_uuid ?? null;
+  const activeOrgId = activeAffiliation?.organisation_uuid ?? initialOrganisation?.uuid ?? null;
 
   const hasOrgDomain = userDomain.domains.includes('organisation') || userDomain.domains.includes('organisation_user');
 
