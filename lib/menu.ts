@@ -424,6 +424,16 @@ export default {
       icon: ShoppingBag,
     },
     {
+      title: 'Training Applications',
+      url: '/dashboard/training-applications',
+      icon: GraduationCap,
+    },
+    {
+      title: 'My Applications',
+      url: '/dashboard/my-applications',
+      icon: FileText,
+    },
+    {
       title: 'Branches',
       url: '/dashboard/branches',
       icon: Building,
@@ -437,6 +447,28 @@ export default {
       title: 'Invitations',
       url: '/dashboard/invitations',
       icon: Mails,
+    },
+    {
+      title: 'Course Management',
+      url: '/dashboard/course-management',
+      icon: ClipboardList,
+      items: [
+        {
+          title: 'Create New Course',
+          url: '/dashboard/course-management/create-new-course',
+          icon: PlusCircle,
+        },
+        {
+          title: 'Drafts',
+          url: '/dashboard/course-management/drafts',
+          icon: FileText,
+        },
+        {
+          title: 'Published',
+          url: '/dashboard/course-management/published',
+          icon: FileCheck,
+        },
+      ],
     },
     {
       title: 'Verification',
