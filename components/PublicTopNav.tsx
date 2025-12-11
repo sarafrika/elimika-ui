@@ -19,7 +19,6 @@ export function PublicTopNav() {
   const navLinks = [
     { label: 'Courses', href: '/courses' },
     { label: 'Skills Fund', href: '/skills-fund' },
-    { label: 'Instructors', href: '/instructors' },
     { label: 'Help', href: '/help' },
   ];
 
