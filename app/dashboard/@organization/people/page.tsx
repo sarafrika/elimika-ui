@@ -203,12 +203,12 @@ export default function OrganisationPeoplePage() {
         </div>
       </section>
 
-      {/* People Grid */}
+      {/* People List */}
       <section className={elimikaDesignSystem.spacing.content}>
         {usersQuery.isLoading ? (
-          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          <div className='space-y-2'>
             {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className='h-40 w-full' />
+              <Skeleton key={i} className='h-20 w-full' />
             ))}
           </div>
         ) : filteredItems.length === 0 ? (
@@ -229,51 +229,48 @@ export default function OrganisationPeoplePage() {
           </div>
         ) : (
           <>
-            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+            <div className='space-y-2'>
               {filteredItems.map((user) => (
-                <div key={user.uuid} className={elimikaDesignSystem.components.listCard.base}>
-                  <div className='mb-4 flex items-start justify-between'>
-                    <div className='flex items-center gap-3'>
-                      <div className='flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary'>
-                        <span className='text-lg font-semibold'>
-                          {(user.first_name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                        </span>
+                <div
+                  key={user.uuid}
+                  className='flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-accent/50'
+                >
+                  {/* User Avatar */}
+                  <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
+                    <span className='text-lg font-semibold'>
+                      {(user.first_name?.[0] || user.email?.[0] || '?').toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* User Details */}
+                  <div className='flex min-w-0 flex-1 flex-col gap-1'>
+                    <h3 className='text-base font-semibold text-foreground'>
+                      {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'Unnamed User'}
+                    </h3>
+                    <div className='flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground'>
+                      <div className='flex items-center gap-1.5'>
+                        <Mail className='h-3.5 w-3.5' />
+                        <span className='truncate'>{user.email}</span>
                       </div>
-                      <div className='flex-1'>
-                        <h3 className='font-semibold text-foreground'>
-                          {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'Unnamed User'}
-                        </h3>
-                        <div className='mt-1 flex items-center gap-1.5 text-xs text-muted-foreground'>
-                          <Mail className='h-3 w-3' />
-                          <span className='truncate'>{user.email}</span>
+                      {user.created_date && (
+                        <div className='flex items-center gap-1.5'>
+                          <Calendar className='h-3.5 w-3.5' />
+                          <span>Joined {format(new Date(user.created_date), 'MMM dd, yyyy')}</span>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
 
-                  <Separator className='my-3' />
-
-                  <div className='space-y-3'>
-                    <div>
-                      <p className='mb-2 text-xs font-medium text-muted-foreground'>Roles</p>
-                      <div className='flex flex-wrap gap-1.5'>
-                        {user.user_domain && user.user_domain.length > 0 ? (
-                          user.user_domain.map((domain) => (
-                            <Badge key={domain} variant='secondary' className='text-xs'>
-                              {domain}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className='text-xs text-muted-foreground'>No roles</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {user.created_date && (
-                      <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                        <Calendar className='h-3 w-3' />
-                        <span>Joined {format(new Date(user.created_date), 'MMM dd, yyyy')}</span>
-                      </div>
+                  {/* Roles */}
+                  <div className='flex shrink-0 flex-wrap gap-1.5'>
+                    {user.user_domain && user.user_domain.length > 0 ? (
+                      user.user_domain.map((domain) => (
+                        <Badge key={domain} variant='secondary' className='text-xs'>
+                          {domain}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className='text-xs text-muted-foreground'>No roles</span>
                     )}
                   </div>
                 </div>

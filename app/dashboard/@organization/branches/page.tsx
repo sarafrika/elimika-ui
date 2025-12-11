@@ -295,7 +295,7 @@ export default function BranchesPage() {
         </div>
       </section>
 
-      {/* Branches Grid */}
+      {/* Branches List */}
       <section className={elimikaDesignSystem.spacing.content}>
         <div className='mb-4 flex items-center justify-between'>
           <div>
@@ -305,9 +305,9 @@ export default function BranchesPage() {
         </div>
 
         {branchesQuery.isLoading ? (
-          <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+          <div className='space-y-2'>
             {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className='h-48 w-full' />
+              <Skeleton key={i} className='h-20 w-full' />
             ))}
           </div>
         ) : branches.length === 0 ? (
@@ -330,58 +330,62 @@ export default function BranchesPage() {
           </div>
         ) : (
           <>
-            <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+            <div className='space-y-2'>
               {branches.map((branch) => (
                 <div
                   key={branch.uuid}
-                  className={`${elimikaDesignSystem.components.listCard.base} cursor-pointer ${
-                    selectedBranchId === branch.uuid ? 'ring-2 ring-primary ring-offset-2' : ''
+                  className={`flex cursor-pointer items-center gap-4 rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-accent/50 ${
+                    selectedBranchId === branch.uuid
+                      ? 'border-primary bg-accent ring-2 ring-primary/20 ring-offset-2'
+                      : ''
                   }`}
                   onClick={() => setSelectedBranchId(branch.uuid ?? null)}
                 >
-                  <div className='mb-4 flex items-start justify-between'>
-                    <div className='flex-1'>
-                      <h3 className='mb-1 text-lg font-semibold text-foreground'>{branch.branch_name}</h3>
-                      <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                  {/* Branch Icon */}
+                  <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10'>
+                    <Building2 className='h-6 w-6 text-primary' />
+                  </div>
+
+                  {/* Branch Details */}
+                  <div className='flex min-w-0 flex-1 flex-col gap-1'>
+                    <div className='flex items-center gap-3'>
+                      <h3 className='text-base font-semibold text-foreground'>{branch.branch_name}</h3>
+                      <Badge variant={branch.active ? 'secondary' : 'outline'} className='shrink-0'>
+                        {branch.active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                    <div className='flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground'>
+                      <div className='flex items-center gap-1.5'>
                         <MapPin className='h-3.5 w-3.5' />
-                        <span>{branch.address || 'No address'}</span>
+                        <span className='truncate'>{branch.address || 'No address'}</span>
+                      </div>
+                      <div className='flex items-center gap-1.5'>
+                        <Users className='h-3.5 w-3.5' />
+                        <span className='truncate'>{branch.poc_name}</span>
+                      </div>
+                      <div className='flex items-center gap-1.5'>
+                        <Mail className='h-3.5 w-3.5' />
+                        <span className='truncate'>{branch.poc_email}</span>
+                      </div>
+                      <div className='flex items-center gap-1.5'>
+                        <Phone className='h-3.5 w-3.5' />
+                        <span>{branch.poc_telephone}</span>
                       </div>
                     </div>
-                    <Badge variant={branch.active ? 'secondary' : 'outline'}>
-                      {branch.active ? 'Active' : 'Inactive'}
-                    </Badge>
                   </div>
 
-                  <Separator className='my-4' />
-
-                  <div className='space-y-2'>
-                    <div className='flex items-center gap-2 text-sm'>
-                      <Users className='h-4 w-4 text-muted-foreground' />
-                      <span className='font-medium text-foreground'>{branch.poc_name}</span>
-                    </div>
-                    <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                      <Mail className='h-4 w-4' />
-                      <span>{branch.poc_email}</span>
-                    </div>
-                    <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                      <Phone className='h-4 w-4' />
-                      <span>{branch.poc_telephone}</span>
-                    </div>
-                  </div>
-
-                  <div className='mt-4 flex gap-2'>
+                  {/* Actions */}
+                  <div className='flex shrink-0 gap-2'>
                     <Button
                       size='sm'
                       variant='outline'
-                      className='flex-1'
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditingBranch(branch);
                         setIsSheetOpen(true);
                       }}
                     >
-                      <Pencil className='mr-2 h-3.5 w-3.5' />
-                      Edit
+                      <Pencil className='h-3.5 w-3.5' />
                     </Button>
                     <Button
                       size='sm'
