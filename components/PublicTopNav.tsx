@@ -17,7 +17,7 @@ export function PublicTopNav() {
   const cartItemCount = 0;
 
   const navLinks = [
-    { label: 'Courses', href: '/courses' },
+    { label: 'Catalogue', href: '/courses' },
     { label: 'Help', href: '/help' },
   ];
 

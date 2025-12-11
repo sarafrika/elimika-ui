@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PublicTopNav } from '@/components/PublicTopNav';
-import { getCourseCreatorByUuidOptions, getPublishedCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getCourseCreatorByUuidOptions, searchCatalogueOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Course } from '@/services/client';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, GraduationCap, CircleAlert, Layers } from 'lucide-react';
@@ -15,9 +15,13 @@ import Image from 'next/image';
 
 export default function PublicCoursesPage() {
   const coursesQuery = useQuery({
-    ...getPublishedCoursesOptions({
+    ...searchCatalogueOptions({
       query: {
-        pageable: {},
+        searchParams: {},
+        pageable: {
+          page: 0,
+          size: 50,
+        },
       },
     }),
     retry: 1,
@@ -33,15 +37,15 @@ export default function PublicCoursesPage() {
       <div className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
         <header className='space-y-6 rounded-[36px] border border-border bg-card p-8 shadow-xl backdrop-blur-sm lg:p-12'>
           <div className='inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-primary'>
-            Course Catalogue
+            Catalogue
           </div>
           <div className='space-y-4'>
             <h1 className='text-3xl font-semibold text-foreground sm:text-4xl'>
-              Explore published courses
+              Browse our course catalogue
             </h1>
             <p className='max-w-3xl text-base text-muted-foreground'>
-              Discover comprehensive courses created by expert instructors. Each course offers
-              structured learning paths designed to help you master new skills.
+              Explore our comprehensive catalogue of courses created by expert instructors and organizations.
+              Find the perfect course to advance your skills and achieve your learning goals.
             </p>
           </div>
         </header>
@@ -71,9 +75,9 @@ export default function PublicCoursesPage() {
                 <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10'>
                   <BookOpen className='h-6 w-6 text-primary' />
                 </div>
-                <CardTitle className='text-foreground'>No published courses yet</CardTitle>
+                <CardTitle className='text-foreground'>No courses available</CardTitle>
                 <CardDescription className='text-muted-foreground'>
-                  Check back soon for new courses or reach out to explore custom learning opportunities.
+                  Our catalogue is being updated. Check back soon for new courses or contact us to explore custom learning opportunities.
                 </CardDescription>
               </CardHeader>
             </Card>
