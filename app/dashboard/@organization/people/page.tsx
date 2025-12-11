@@ -43,8 +43,8 @@ export default function OrganisationPeoplePage() {
 
   const [domainFilter, setDomainFilter] = useState('');
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [searchValue, setSearchValue] = useState('');
-  const pageSize = 12;
 
   const usersQuery = useQuery({
     ...(domainFilter
@@ -203,12 +203,12 @@ export default function OrganisationPeoplePage() {
         </div>
       </section>
 
-      {/* People List */}
+      {/* People DataTable */}
       <section className={elimikaDesignSystem.spacing.content}>
         {usersQuery.isLoading ? (
           <div className='space-y-2'>
             {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className='h-20 w-full' />
+              <Skeleton key={i} className='h-16 w-full' />
             ))}
           </div>
         ) : filteredItems.length === 0 ? (
@@ -229,76 +229,164 @@ export default function OrganisationPeoplePage() {
           </div>
         ) : (
           <>
-            <div className='space-y-2'>
-              {filteredItems.map((user) => (
-                <div
-                  key={user.uuid}
-                  className='flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/40 hover:bg-accent/50'
-                >
-                  {/* User Avatar */}
-                  <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
-                    <span className='text-lg font-semibold'>
-                      {(user.first_name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                    </span>
-                  </div>
-
-                  {/* User Details */}
-                  <div className='flex min-w-0 flex-1 flex-col gap-1'>
-                    <h3 className='text-base font-semibold text-foreground'>
-                      {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'Unnamed User'}
-                    </h3>
-                    <div className='flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground'>
-                      <div className='flex items-center gap-1.5'>
-                        <Mail className='h-3.5 w-3.5' />
-                        <span className='truncate'>{user.email}</span>
-                      </div>
-                      {user.created_date && (
-                        <div className='flex items-center gap-1.5'>
-                          <Calendar className='h-3.5 w-3.5' />
-                          <span>Joined {format(new Date(user.created_date), 'MMM dd, yyyy')}</span>
+            {/* Table */}
+            <div className='overflow-hidden rounded-lg border border-border'>
+              <table className='w-full'>
+                <thead className='bg-muted/50'>
+                  <tr className='border-b border-border'>
+                    <th className='px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground'>
+                      Member
+                    </th>
+                    <th className='px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground'>
+                      Email
+                    </th>
+                    <th className='px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground'>
+                      Roles
+                    </th>
+                    <th className='px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground'>
+                      Joined
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className='divide-y divide-border bg-card'>
+                  {filteredItems.map((user) => (
+                    <tr
+                      key={user.uuid}
+                      className='transition-colors hover:bg-accent/50'
+                    >
+                      <td className='px-4 py-4'>
+                        <div className='flex items-center gap-3'>
+                          <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary'>
+                            <span className='text-base font-semibold'>
+                              {(user.first_name?.[0] || user.email?.[0] || '?').toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <div className='font-semibold text-foreground'>
+                              {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'Unnamed User'}
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Roles */}
-                  <div className='flex shrink-0 flex-wrap gap-1.5'>
-                    {user.user_domain && user.user_domain.length > 0 ? (
-                      user.user_domain.map((domain) => (
-                        <Badge key={domain} variant='secondary' className='text-xs'>
-                          {domain}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className='text-xs text-muted-foreground'>No roles</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                      </td>
+                      <td className='px-4 py-4'>
+                        <div className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+                          <Mail className='h-3.5 w-3.5' />
+                          <span>{user.email}</span>
+                        </div>
+                      </td>
+                      <td className='px-4 py-4'>
+                        <div className='flex flex-wrap gap-1.5'>
+                          {user.user_domain && user.user_domain.length > 0 ? (
+                            user.user_domain.map((domain) => (
+                              <Badge key={domain} variant='secondary' className='text-xs'>
+                                {domain}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className='text-xs text-muted-foreground'>No roles</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className='px-4 py-4'>
+                        {user.created_date && (
+                          <div className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+                            <Calendar className='h-3.5 w-3.5' />
+                            <span>{format(new Date(user.created_date), 'MMM dd, yyyy')}</span>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            {/* Pagination */}
-            {!domainFilter && totalPages > 1 && (
-              <div className='mt-6 flex items-center justify-center gap-2'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                >
-                  Previous
-                </Button>
-                <span className='text-sm text-muted-foreground'>
-                  Page {page + 1} of {totalPages}
-                </span>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
-                >
-                  Next
-                </Button>
+            {/* Enhanced Pagination */}
+            {!domainFilter && (
+              <div className='mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='flex items-center gap-2'>
+                  <span className='text-sm text-muted-foreground'>Rows per page:</span>
+                  <select
+                    className='rounded-md border border-border bg-background px-3 py-1.5 text-sm'
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(0);
+                    }}
+                  >
+                    <option value='5'>5</option>
+                    <option value='10'>10</option>
+                    <option value='20'>20</option>
+                    <option value='50'>50</option>
+                  </select>
+                </div>
+
+                <div className='flex items-center gap-2'>
+                  <span className='text-sm text-muted-foreground'>
+                    Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, totalItems)} of{' '}
+                    {totalItems} entries
+                  </span>
+                </div>
+
+                <div className='flex items-center gap-1'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage(0)}
+                    disabled={page === 0}
+                  >
+                    First
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    disabled={page === 0}
+                  >
+                    Previous
+                  </Button>
+                  <div className='flex items-center gap-1'>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i;
+                      } else if (page < 3) {
+                        pageNum = i;
+                      } else if (page > totalPages - 4) {
+                        pageNum = totalPages - 5 + i;
+                      } else {
+                        pageNum = page - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={page === pageNum ? 'default' : 'outline'}
+                          size='sm'
+                          onClick={() => setPage(pageNum)}
+                          className='min-w-[2.5rem]'
+                        >
+                          {pageNum + 1}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                    disabled={page >= totalPages - 1}
+                  >
+                    Next
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setPage(totalPages - 1)}
+                    disabled={page >= totalPages - 1}
+                  >
+                    Last
+                  </Button>
+                </div>
               </div>
             )}
           </>
