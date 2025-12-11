@@ -11,7 +11,7 @@ import {
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { ApplicantTypeEnum } from '@/services/client/types.gen';
-import { useOrganisation } from '@/context/organisation-provider';
+import { useOrganisation } from '@/context/organisation-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {

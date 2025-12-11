@@ -7,7 +7,7 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
-import { useOrganisation } from '@/context/organisation-provider';
+import { useOrganisation } from '@/context/organisation-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
