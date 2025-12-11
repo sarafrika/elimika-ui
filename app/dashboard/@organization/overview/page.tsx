@@ -191,12 +191,6 @@ export default async function OrganizationOverviewPage() {
                 </div>
               </div>
 
-              <Button asChild variant='outline' className='w-full' size='sm'>
-                <Link href='/dashboard/invitations'>
-                  <Mail className='mr-2 h-4 w-4' />
-                  View All Notifications
-                </Link>
-              </Button>
             </div>
           </section>
 

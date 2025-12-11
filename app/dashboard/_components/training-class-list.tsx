@@ -72,7 +72,6 @@ export const getDifficultyColor = (difficulty: string) => {
 interface TrainingClassListProps {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
-  onInviteStudents: (cls: any) => void;
   onOpenTimetable?: (id: string) => void;
   onOpenRecurring?: (id: string) => void;
   classesWithCourseAndInstructor: any;
@@ -82,7 +81,6 @@ interface TrainingClassListProps {
 export function TrainingClassList({
   onEdit,
   onDelete,
-  onInviteStudents,
   onOpenTimetable,
   onOpenRecurring,
   classesWithCourseAndInstructor,
@@ -399,7 +397,6 @@ export function TrainingClassList({
                     </div>
 
                     <div className='flex flex-row items-center justify-between' >
-                      <Button variant={'ghost'} onClick={() => onInviteStudents(cls)} className='border border-border/100'  >Invite Students</Button>
                       <Button onClick={() => router.push(`/dashboard/trainings/instructor-console/${cls?.uuid}`)}> <Play />  Start Class</Button>
                     </div>
                   </div>

@@ -19,7 +19,6 @@ import {
   LayoutDashboard,
   LibraryIcon,
   LucideBookUser,
-  Mails,
   PlusCircle,
   School,
   Settings,
@@ -227,11 +226,6 @@ export default {
       //     icon: FileCheck,
       //   },
       // ],
-    },
-    {
-      title: 'Waiting List',
-      url: '/dashboard/waiting-list',
-      icon: Mails,
     },
     {
       title: 'Learning',
@@ -442,11 +436,6 @@ export default {
       title: 'People',
       url: '/dashboard/people',
       icon: Users,
-    },
-    {
-      title: 'Invitations',
-      url: '/dashboard/invitations',
-      icon: Mails,
     },
     {
       title: 'Course Management',

@@ -11,21 +11,16 @@ import {
   CardTitle,
 } from '../../../../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../../components/ui/tabs';
-import { useOrganisation } from '../../../../../context/organisation-context';
-import { getBranchInvitations, type TrainingBranch } from '../../../../../services/client';
-import { InviteForm } from '../../invites/_components/InviteForm';
-import InviteList from '../../invites/_components/InviteList';
+import { type TrainingBranch } from '../../../../../services/client';
 import Classroms from './classrooms';
 import Courses from './courses';
 
 export default function TabSection({ branch }: { branch: TrainingBranch }) {
-  const organisation = useOrganisation();
   const [courseViewType, setCourseViewType] = useState<'list' | 'grid'>('list');
   return (
     <Tabs defaultValue='courses' className='mb-20'>
       <TabsList>
         <TabsTrigger value='courses'>Courses</TabsTrigger>
-        <TabsTrigger value='invites'>Invites</TabsTrigger>
         <TabsTrigger value='classrooms'>Classrooms</TabsTrigger>
       </TabsList>
       <TabsContent value='courses'>
@@ -47,34 +42,6 @@ export default function TabSection({ branch }: { branch: TrainingBranch }) {
           </CardHeader>
           <CardContent>
             <Courses viewType={courseViewType} user_uuid={branch.organisation_uuid} />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value='invites'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Invites</CardTitle>
-            <CardDescription>All invites sent to instructors / users</CardDescription>
-            <CardAction>
-              <InviteForm branch_uuid={branch.uuid}>
-                <Button>Invite</Button>
-              </InviteForm>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            <InviteList
-              queryOption={{
-                queryKey: ['branch', branch.uuid, 'invites'],
-                queryFn: () =>
-                  getBranchInvitations({
-                    path: {
-                      branchUuid: branch.uuid!,
-                      uuid: organisation?.uuid!,
-                    },
-                  }),
-              }}
-            />
           </CardContent>
         </Card>
       </TabsContent>

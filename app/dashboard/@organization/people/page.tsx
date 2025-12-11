@@ -16,18 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import {
-  Users,
-  Mail,
-  Search,
-  UserPlus,
-  Calendar,
-  Filter,
-  X,
-  Building2,
-  GraduationCap,
-  BookOpen,
-} from 'lucide-react';
+import { Users, Mail, Search, Calendar, Filter, X, Building2, GraduationCap, BookOpen } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 const domainOptions = [
@@ -96,12 +85,6 @@ export default function OrganisationPeoplePage() {
             <h1 className='text-2xl font-bold text-foreground'>People</h1>
             <p className='text-sm text-muted-foreground'>Manage members and team roles</p>
           </div>
-          <Button asChild size='sm'>
-            <Link href='/dashboard/invitations'>
-              <UserPlus className='mr-2 h-4 w-4' />
-              Invite People
-            </Link>
-          </Button>
         </div>
 
         {/* Stats */}
@@ -218,14 +201,8 @@ export default function OrganisationPeoplePage() {
             <p className={elimikaDesignSystem.components.emptyState.description}>
               {searchValue || domainFilter
                 ? 'Try adjusting your search or filter criteria'
-                : 'Invite people to your organization to get started'}
+                : 'No members have been added yet.'}
             </p>
-            <Button asChild className='mt-4'>
-              <Link href='/dashboard/invitations'>
-                <UserPlus className='mr-2 h-4 w-4' />
-                Invite People
-              </Link>
-            </Button>
           </div>
         ) : (
           <>
