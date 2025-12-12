@@ -1,19 +1,11 @@
 'use client';
 
 import { elimikaDesignSystem } from '@/lib/design-system';
-import { Button } from '@/components/ui/button';
-import { UserPlus, GitBranch, BookOpen, Mail, Settings, FileText } from 'lucide-react';
+import { GitBranch, BookOpen, Settings, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 export function QuickActions() {
   const actions = [
-    {
-      title: 'Invite Members',
-      description: 'Add new team members to your organization',
-      icon: UserPlus,
-      href: '/dashboard/invitations',
-      color: 'blue' as const,
-    },
     {
       title: 'Create Branch',
       description: 'Set up a new training location',
@@ -27,13 +19,6 @@ export function QuickActions() {
       icon: BookOpen,
       href: '/dashboard/course-management',
       color: 'purple' as const,
-    },
-    {
-      title: 'View Invitations',
-      description: 'Check pending and sent invitations',
-      icon: Mail,
-      href: '/dashboard/invitations',
-      color: 'orange' as const,
     },
     {
       title: 'Organization Settings',

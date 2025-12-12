@@ -17,9 +17,7 @@ export function PublicTopNav() {
   const cartItemCount = 0;
 
   const navLinks = [
-    { label: 'Courses', href: '/courses' },
-    { label: 'Skills Fund', href: '/skills-fund' },
-    { label: 'Instructors', href: '/instructors' },
+    { label: 'Catalogue', href: '/courses' },
     { label: 'Help', href: '/help' },
   ];
 

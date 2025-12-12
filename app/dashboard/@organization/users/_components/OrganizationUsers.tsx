@@ -1,6 +1,5 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '../../../../../components/ui/button';
 import { Separator } from '../../../../../components/ui/separator';
 import {
   Table,
@@ -13,7 +12,6 @@ import {
 import UserBadge from '../../../../../components/user-badge';
 import { useOrganisation } from '../../../../../context/organisation-context';
 import { getUsersByOrganisation, type User } from '../../../../../services/client';
-import { InviteForm } from '../../invites/_components/InviteForm';
 
 export default function OrganizationUsers() {
   const organisation = useOrganisation();
@@ -52,9 +50,6 @@ export default function OrganizationUsers() {
           <h1 className='text-2xl font-bold'>Manage Users</h1>
           <p>A list of all the users under {organisation?.name} organisation.</p>
         </div>
-        <InviteForm>
-          <Button>Invite User</Button>
-        </InviteForm>
       </div>
       <Separator />
 

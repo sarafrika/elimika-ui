@@ -1,6 +1,5 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '../../../../../components/ui/button';
 import { Card, CardContent } from '../../../../../components/ui/card';
 import {
   Table,
@@ -13,7 +12,6 @@ import {
 import UserBadge from '../../../../../components/user-badge';
 import { useOrganisation } from '../../../../../context/organisation-context';
 import { getUsersByOrganisationAndDomain, type User } from '../../../../../services/client';
-import { InviteForm } from '../../invites/_components/InviteForm';
 
 export default function InstructorsList() {
   const organisation = useOrganisation();
@@ -47,9 +45,6 @@ export default function InstructorsList() {
           <h1 className='text-2xl font-bold'>Manage Instructors</h1>
           <p>A list of all the instructors under {organisation?.name}.</p>
         </div>
-        <InviteForm>
-          <Button>Invite Instructor</Button>
-        </InviteForm>
       </div>
 
       <Card>
@@ -74,9 +69,6 @@ export default function InstructorsList() {
           ) : (
             <div className='flex flex-col items-center gap-5 p-4'>
               <h3 className='text-3xl'>No Instructor added</h3>
-              <InviteForm>
-                <Button>Invite Instructor</Button>
-              </InviteForm>
             </div>
           )}
         </CardContent>
