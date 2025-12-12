@@ -39,6 +39,10 @@ interface RubricTableProps {
   criteria: any[];
   matrixCells: any;
 
+  linked: boolean;
+  onAssociateRubricWithCourse: (rubricId: string) => void;
+  onRemoveRubricAssociation: (rubricId: string) => void;
+
   onEditRubric: (rubricId: string) => void;
   onDeleteRubric: (rubricId: string) => void;
   onAddCriterion: (rubricId: string) => void;
@@ -59,6 +63,11 @@ const RubricTable: React.FC<RubricTableProps> = ({
   scoringLevels,
   criteria,
   matrixCells,
+
+  linked,
+  onAssociateRubricWithCourse,
+  onRemoveRubricAssociation,
+
   onEditRubric,
   onDeleteRubric,
   //
@@ -99,14 +108,23 @@ const RubricTable: React.FC<RubricTableProps> = ({
                 {rubric.is_public ? 'Public Rubric' : 'Private Rubric'}
               </p>
             </div>
+
+            <div className="flex gap-2">
+              {linked ? <Button onClick={() => onRemoveRubricAssociation(rubric.uuid)} variant="destructive">
+                Remove rubric from course
+              </Button> : <Button onClick={() => onAssociateRubricWithCourse(rubric.uuid)} variant="default">
+                Link rubric to course
+              </Button>}
+            </div>
+
           </button>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='ghost' size='icon' className='hover:bg-blue-700'>
+            <div className='hover:bg-blue-700 p-2.5 rounded-sm'>
               <EllipsisVertical className='h-4 w-4' />
-            </Button>
+            </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
             <DropdownMenuItem onClick={() => onEditRubric(rubric.uuid)}>

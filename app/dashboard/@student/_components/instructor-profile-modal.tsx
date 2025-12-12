@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudent } from '@/context/student-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
-import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { createBookingMutation, getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Award, BookOpen, Briefcase, Calendar, CheckCircle, DollarSign, MapPin, Star, Users, Video, X } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { AvailabilityData, ClassScheduleItem, convertToCalendarEvents } from '../../@instructor/availability/components/types';
@@ -26,6 +27,9 @@ type Props = {
 
 export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClose, onBookingComplete }) => {
   const student = useStudent();
+  const searchParams = useSearchParams();
+  const courseId = searchParams.get('courseId');
+
   const [showBooking, setShowBooking] = useState(false);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -89,32 +93,33 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
     instructor?.uuid as string
   );
 
-  // const bookInstructor = useMutation(bookInstructorSlotMutation());
-
+  const bookInstructor = useMutation(createBookingMutation());
   const handleBooking = () => {
     if (!instructor?.uuid || !student?.uuid || !startTime || !endTime) return;
 
     const utcStartTime = new Date(startTime).toISOString();
     const utcEndTime = new Date(endTime).toISOString();
 
-    // bookInstructor.mutate(
-    //   {
-    //     path: { instructorUuid: instructor.uuid },
-    //     body: {
-    //       instructor_uuid: instructor.uuid,
-    //       student_uuid: student.uuid,
-    //       start_time: utcStartTime as any,
-    //       end_time: utcEndTime as any,
-    //       purpose: reason,
-    //     },
-    //   },
-    // {
-    //   onSuccess: (booking: Booking) => {
-    //     onBookingComplete(booking);
-    //     setShowBooking(false);
-    //   },
-    // }
-    // );
+    bookInstructor.mutate(
+      {
+        body: {
+          instructor_uuid: instructor.uuid,
+          student_uuid: student.uuid,
+          start_time: utcStartTime as any,
+          end_time: utcEndTime as any,
+          course_uuid: courseId as string,
+          currency: "KES",
+          price_amount: 100,
+          purpose: reason,
+        },
+      },
+      {
+        onSuccess: (data: any) => {
+          // onBookingComplete(data?.);
+          setShowBooking(false);
+        },
+      }
+    );
   };
 
   return (

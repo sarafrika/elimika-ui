@@ -5,8 +5,8 @@ import { Card } from '@/components/ui/card';
 import { useStudent } from '@/context/student-context';
 import { useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { addItemMutation, createCartMutation } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation } from '@tanstack/react-query';
+import { addItemMutation, createCartMutation, getCartQueryKey } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, CheckCircle, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -32,6 +32,7 @@ export default function EnrollCourseCard({
   variant,
 }: EnrollCourseCardProps) {
   const student = useStudent()
+  const qc = useQueryClient()
   const { difficultyMap } = useDifficultyLevels();
   const difficultyName = difficultyMap[cls?.course?.difficulty_uuid] || 'Unknown';
 
@@ -46,34 +47,35 @@ export default function EnrollCourseCard({
   const createCart = useMutation(createCartMutation())
   const addItemToCart = useMutation(addItemMutation())
 
-  const handleCreateCart = (classUuid: string) => {
-    if (!classUuid) return;
+  const handleCreateCart = (cls: any) => {
+    if (!cls) return;
+
+    const catalogue = cls.catalogue
+
+    if (catalogue === null) {
+      toast.error("No catalogue found for this class")
+      setShowCartModal(false);
+      return
+    }
 
     if (!savedCartId) {
       createCart.mutate(
         {
           body: {
-            currency_code: "USD",
+            currency_code: "KES",
             region_code: "KE",
-            metadata: {
-              campaign: "back-to-school",
-            } as any,
             items: [
               {
-                variant_id: "course",
+                variant_id: catalogue.variant_code,
                 quantity: 1,
-                metadata: {
-                  course_uuid: cls?.course?.uuid as any,
-                  class_definition_uuid: cls?.uuid as any,
-                  student_uuid: student?.uuid as any,
-                },
+
               },
             ],
           },
         },
         {
           onSuccess: (data: any) => {
-            const cartId = data?.uuid || null;
+            const cartId = data?.data?.id || null;
 
             if (cartId) {
               localStorage.setItem("cart_id", cartId);
@@ -84,6 +86,9 @@ export default function EnrollCourseCard({
             toast.success("Class added to cart!");
             setShowCartModal(false);
           },
+          onError: (error: any) => {
+            toast.error(error.message)
+          }
         }
       );
 
@@ -93,16 +98,14 @@ export default function EnrollCourseCard({
     addItemToCart.mutate({
       path: { cartId: savedCartId as string },
       body: {
-        variant_id: "",
+        variant_id: catalogue.variant_code,
         quantity: 1,
-        metadata: {
-          course_uuid: cls?.course?.uuid as any,
-          class_definition_uuid: cls?.uuid as any,
-          student_uuid: student?.uuid as any,
-        }
       }
     }, {
       onSuccess: (data) => {
+        qc.invalidateQueries({
+          queryKey: getCartQueryKey({ path: { cartId: savedCartId } }),
+        });
         toast.success("Class added to cart!");
         setShowCartModal(false);
       }
@@ -117,8 +120,8 @@ export default function EnrollCourseCard({
           <div className='relative h-48 overflow-hidden'>
             <div className='absolute inset-0 z-10 bg-primary/10' />
             <Image
-              src={cls?.course?.thumbnail_url}
-              alt={cls?.title}
+              src={cls?.course?.banner_url}
+              alt={"banner"}
               className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
               width={200}
               height={50}
@@ -242,10 +245,11 @@ export default function EnrollCourseCard({
             {/* Footer: Enroll + Add to Cart */}
             <div className='flex items-center justify-between border-t border-primary/30 pt-3'>
               {variant === 'full' ? (
-                <div className='flex items-center gap-2'>
+                <div className='flex items-center gap-1'>
                   <span className='text-lg font-medium'>
                     KES {cls?.training_fee || 'N/A'}
                   </span>
+                  <span className='text-sm' >/hour/head</span>
                 </div>
               ) : (
                 ''
@@ -286,8 +290,9 @@ export default function EnrollCourseCard({
         onClose={() => setShowCartModal(false)}
         cls={selectedClass}
         onConfirm={() => {
-          handleCreateCart(selectedClass.uuid);
+          handleCreateCart(selectedClass);
         }}
+        isPending={createCart.isPending || addItemToCart.isPending}
       />
 
     </div>

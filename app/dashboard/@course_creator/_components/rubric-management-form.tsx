@@ -78,6 +78,7 @@ export const rubricDetailsSchema = z.object({
   total_weight: z.coerce.number().optional(),
   max_score: z.coerce.number().optional(),
   min_passing_score: z.coerce.number().optional(),
+  course_creator_uuid: z.any().optional(),
 });
 
 export type RubricDetailsFormValues = z.infer<typeof rubricDetailsSchema>;

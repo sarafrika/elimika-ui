@@ -19,11 +19,13 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
 import {
-  blockTimeSlotsMutation,
+  blockInstructorTimeMutation,
+  createBookingMutation,
   getInstructorCalendarQueryKey,
   scheduleClassMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from "dayjs";
 import {
   AlertCircle,
   BookOpen,
@@ -34,9 +36,11 @@ import {
   Trash2
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import DatePicker from "react-multi-date-picker";
 import { toast } from 'sonner';
 import Spinner from '../../../../../components/ui/spinner';
 import type { CalendarEvent } from './types';
+
 
 
 interface EventModalProps {
@@ -51,6 +55,18 @@ interface EventModalProps {
   onSave: (event: CalendarEvent) => void;
   onDelete?: (eventId: string) => void;
 }
+
+interface DateTimeItem {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+interface OutputItem {
+  start_time: string;
+  end_time: string;
+  color_code: string;
+}
+
 export type EventType = "BLOCKED" | "AVAILABILITY" | "SCHEDULED_INSTANCE";
 
 const eventTypes: {
@@ -135,6 +151,35 @@ export function EventModal({
     reminders: [15],
     notes: '',
   });
+
+  function convertDates(dates: DateTimeItem[]): OutputItem[] {
+    return dates.map((item) => ({
+      start_time: dayjs(`${item.date}T${item.startTime}`).toISOString(),
+      end_time: dayjs(`${item.date}T${item.endTime}`).toISOString(),
+      color_code: "",
+    }));
+  }
+
+  const [blockDates, setBlockDates] = useState<DateTimeItem[]>([]);
+  const handleDatesChange = (selectedDates: any[]) => {
+    const newDates: DateTimeItem[] = selectedDates.map((d) => {
+      const formatted = dayjs(d.toDate()).format("YYYY-MM-DD");
+      return { date: formatted, startTime: "09:00", endTime: "17:00" };
+    });
+    setBlockDates(newDates);
+  };
+
+  const updateTime = (
+    index: number,
+    field: "startTime" | "endTime",
+    value: string
+  ) => {
+    setBlockDates((prev: any) => {
+      const copy = [...prev];
+      copy[index][field] = value;
+      return copy;
+    });
+  };
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -234,8 +279,8 @@ export function EventModal({
   const instrucor = useInstructor();
   const qc = useQueryClient();
   const scheduleClass = useMutation(scheduleClassMutation());
-  // const createAvailability = useMutation(createAvailabilitySlotMutation());
-  const blockTimeForInstructor = useMutation(blockTimeSlotsMutation());
+  const blockTimeForInstructor = useMutation(blockInstructorTimeMutation())
+  const createBookingForInstructor = useMutation(createBookingMutation())
 
   const handleSave = () => {
     // if (!validateForm()) return;
@@ -279,14 +324,7 @@ export function EventModal({
     if (eventData.entry_type === "BLOCKED") {
       blockTimeForInstructor.mutate({
         path: { instructorUuid: instrucor?.uuid as string },
-        body: {
-          slots: [
-            {
-              start_time: new Date(startDateTime),
-              end_time: new Date(endDateTime),
-            },
-          ],
-        },
+        body: { periods: convertDates(blockDates) as any }
       }, {
         onSuccess: (data) => {
           toast.success(data?.message)
@@ -306,71 +344,41 @@ export function EventModal({
       return
     }
 
-    // // Availability logic
-    // if (eventData.type === 'available' || eventData.type === 'unavailable') {
-    //   createAvailability.mutate(
-    //     {
-    //       body: {
-    //         instructor_uuid: instrucor?.uuid as string,
-    //         availability_type: AvailabilityTypeEnum.DAILY,
-    //         day_of_week: getDayOfWeek1To7(eventData.date),
-    //         start_time: eventData.startTime as LocalTime,
-    //         end_time: eventData.endTime as LocalTime,
-    //         is_available: eventData.type === 'available',
-    //         recurrence_interval: 1,
-    //         effective_start_date: eventData.date,
-    //         effective_end_date: new Date('2026-03-15'),
-    //         color_code: eventData.color,
-    //       },
-    //       path: { instructorUuid: instrucor?.uuid as string },
-    //     },
-    //     {
-    //       onSuccess: data => {
-    //         qc.invalidateQueries({
-    //           queryKey: getInstructorAvailabilityQueryKey({
-    //             path: { instructorUuid: instrucor?.uuid as string },
-    //           }),
-    //         });
-    //         toast.success(data?.message);
-    //         onClose();
-    //       },
-    //       onError: error => {
-    //         toast.error(error?.message);
-    //         onClose();
-    //       },
-    //     }
-    //   );
-    // }
+    if (eventData.entry_type === "AVAILABILITY") {
+      const body = {
+        course_uuid: "",
+        end_time: endDateTime as any,
+        instructor_uuid: instrucor?.uuid as string,
+        start_time: startDateTime as any,
+        student_uuid: "",
+        currency: "KES",
+        price_amount: 100,
+        purpose: "Booking"
+      }
 
-    // // Booked logic
-    // else if (eventData.type === 'booked') {
-    //   scheduleClass.mutate(
-    //     {
-    //       body: {
-    //         instructor_uuid: instrucor?.uuid as string,
-    //         class_definition_uuid: '',
-    //         start_time: startDateTime as any,
-    //         end_time: endDateTime as any,
-    //         timezone: 'UTC',
-    //       },
-    //     },
-    //     {
-    //       onSuccess: data => {
-    //         qc.invalidateQueries({
-    //           queryKey: getScheduledInstanceQueryKey({
-    //             path: { instanceUuid: data?.data?.uuid as string },
-    //           }),
-    //         });
-    //         toast.success(data?.message);
-    //         onClose();
-    //       },
-    //       onError: error => {
-    //         toast.error(error?.message);
-    //         onClose();
-    //       },
-    //     }
-    //   );
-    // }
+      // createBookingForInstructor.mutate({
+      //   body: {
+      //     course_uuid: "",
+      //     end_time: "" as any,
+      //     instructor_uuid: "",
+      //     start_time: "" as any,
+      //     student_uuid: "",
+      //     currency: "",
+      //     price_amount: 100,
+      //     purpose: ""
+      //   }
+      // }, {
+      //   onSuccess: (data) => {
+      //     qc.invalidateQueries({
+      //       queryKey: getInstructorCalendarQueryKey({ path: { instructorUuid: instrucor?.uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } })
+      //     })
+      //     toast.success(data?.message)
+      //   },
+      //   onError: (error: any) => {
+      //     toast.error(error?.message)
+      //   }
+      // })
+    }
   };
 
   const handleDelete = () => {
@@ -430,6 +438,52 @@ export function EventModal({
 
         <div className='space-y-6'>
           {/* Basic Information */}
+          {selectedEventType?.value === "BLOCKED" && (
+            <div>
+              <div className="w-full max-w-sm">
+                <DatePicker
+                  multiple
+                  value={blockDates.map((d) => d.date)}
+                  onChange={handleDatesChange}
+                  format="YYYY-MM-DD"
+                  placeholder="Select dates"
+                />
+              </div>
+              {/* Rows */}
+              <div className="mt-4 flex flex-col gap-3">
+                {blockDates.map((item, index) => (
+                  <div
+                    key={item.date}
+                    className="flex items-center gap-3 border p-3 rounded-md"
+                  >
+                    <span className="w-32">{item.date}</span>
+
+                    <Input
+                      type="time"
+                      value={item.startTime}
+                      onChange={(e) => updateTime(index, "startTime", e.target.value)}
+                      className="w-32"
+                    />
+
+                    <Input
+                      type="time"
+                      value={item.endTime}
+                      onChange={(e) => updateTime(index, "endTime", e.target.value)}
+                      className="w-32"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                className="mt-4"
+                onClick={() => setBlockDates([])}
+              >
+                Clear dates
+              </Button>
+            </div>
+          )}
+
           <div className='space-y-4'>
             <div className='space-y-2'>
               <Label htmlFor='title'>Event Title *</Label>
@@ -462,8 +516,10 @@ export function EventModal({
             <Separator />
           </div>
 
-          {/* Date & Time */}
-          <div className="space-y-4">
+
+
+
+          {selectedEventType?.value !== "BLOCKED" && <div className="space-y-4">
             <h4 className="flex items-center gap-2 font-medium">
               <Clock className="h-4 w-4" />
               Date & Time (ISO Format)
@@ -500,7 +556,9 @@ export function EventModal({
                 />
               </div>
             </div>
-          </div>
+          </div>}
+          {/* Date & Time */}
+
 
           {/* Additional Details */}
           {selectedEventType?.value === 'SCHEDULED_INSTANCE' && (
