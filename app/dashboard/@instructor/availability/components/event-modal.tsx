@@ -514,7 +514,7 @@ export function EventModal({
 
               <button
                 style={{ marginTop: 16 }}
-                onClick={() => console.log("Selected Dates:", convertDates(blockDates))}
+              // onClick={() => console.log("Selected Dates:", convertDates(blockDates))}
               >
                 Print Output
               </button>

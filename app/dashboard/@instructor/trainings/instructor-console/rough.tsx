@@ -60,7 +60,6 @@ export default function ClassPreviewPage() {
         enabled: !!classId,
     });
     const classData = data?.data;
-    console.log(classData, "CLD")
 
     // --- Fetch course detail (for title/desc, etc.)
     const {
