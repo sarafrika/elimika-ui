@@ -439,6 +439,52 @@ export function EventModal({
 
         <div className='space-y-6'>
           {/* Basic Information */}
+          {selectedEventType?.value === "BLOCKED" && (
+            <div>
+              <div className="w-full max-w-sm">
+                <DatePicker
+                  multiple
+                  value={blockDates.map((d) => d.date)}
+                  onChange={handleDatesChange}
+                  format="YYYY-MM-DD"
+                  placeholder="Select dates"
+                />
+              </div>
+              {/* Rows */}
+              <div className="mt-4 flex flex-col gap-3">
+                {blockDates.map((item, index) => (
+                  <div
+                    key={item.date}
+                    className="flex items-center gap-3 border p-3 rounded-md"
+                  >
+                    <span className="w-32">{item.date}</span>
+
+                    <Input
+                      type="time"
+                      value={item.startTime}
+                      onChange={(e) => updateTime(index, "startTime", e.target.value)}
+                      className="w-32"
+                    />
+
+                    <Input
+                      type="time"
+                      value={item.endTime}
+                      onChange={(e) => updateTime(index, "endTime", e.target.value)}
+                      className="w-32"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                className="mt-4"
+                onClick={() => setBlockDates([])}
+              >
+                Clear dates
+              </Button>
+            </div>
+          )}
+
           <div className='space-y-4'>
             <div className='space-y-2'>
               <Label htmlFor='title'>Event Title *</Label>
@@ -471,55 +517,8 @@ export function EventModal({
             <Separator />
           </div>
 
-          {selectedEventType?.value === "BLOCKED" &&
-            <div style={{ padding: 16 }}>
-              <h2>Multi-date Picker + Per-date Time</h2>
 
-              <DatePicker
-                multiple
-                value={blockDates.map((d) => d.date)}
-                onChange={handleDatesChange}
-                format="YYYY-MM-DD"
-              />
 
-              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                {blockDates.map((item, index) => (
-                  <div
-                    key={item.date}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      border: "1px solid #ccc",
-                      padding: 8,
-                      borderRadius: 4,
-                    }}
-                  >
-                    <span style={{ width: 120 }}>{item.date}</span>
-
-                    <input
-                      type="time"
-                      value={item.startTime}
-                      onChange={(e) => updateTime(index, "startTime", e.target.value)}
-                    />
-
-                    <input
-                      type="time"
-                      value={item.endTime}
-                      onChange={(e) => updateTime(index, "endTime", e.target.value)}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <button
-                style={{ marginTop: 16 }}
-              // onClick={() => console.log("Selected Dates:", convertDates(blockDates))}
-              >
-                Print Output
-              </button>
-            </div>
-          }
 
           {selectedEventType?.value !== "BLOCKED" && <div className="space-y-4">
             <h4 className="flex items-center gap-2 font-medium">
