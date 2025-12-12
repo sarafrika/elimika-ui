@@ -5,8 +5,10 @@ import { type ReactNode, useEffect, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useUserProfile } from '@/context/profile-context';
-import { useTrainingCenter } from '@/context/training-center-provide';
+import { useUserDomain } from '@/context/user-domain-context';
+import { useOrganisation } from '@/context/organisation-context';
 import { cn } from '@/lib/utils';
+import type { Organisation } from '@/services/client';
 import { ShieldAlert } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -23,19 +25,33 @@ const PROFILE_PREFIX = '/dashboard/profile';
 const ACCOUNT_PREFIX = '/dashboard/account';
 const ADD_PROFILE_PREFIX = '/dashboard/add-profile';
 
+function resolveOrganisationVerified(
+  organisation?: (Organisation & { adminVerified?: boolean }) | null
+): boolean | undefined {
+  if (!organisation) return undefined;
+  if (typeof organisation.admin_verified !== 'undefined') return organisation.admin_verified;
+  return organisation.adminVerified;
+}
+
 export default function DomainAccessGate({ children }: { children: ReactNode }) {
   const profile = useUserProfile();
+  const userDomain = useUserDomain();
   const courseCreator = useOptionalCourseCreator();
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
   const pathname = usePathname();
   const router = useRouter();
+
+  const hasOrganisation = Boolean(profile?.organisation_affiliations?.length);
+  const organisationVerifiedFlag = resolveOrganisationVerified(organisation);
+  // Default to true while organisation data is loading; only gate when explicitly false
+  const organisationVerified = hasOrganisation ? organisationVerifiedFlag !== false : true;
 
   const state: DomainGateState = useMemo(() => {
     if (!profile || profile.isLoading) {
       return { renderChildren: true };
     }
 
-    const domain = profile.activeDomain;
+    const domain = userDomain.activeDomain;
     if (!domain) {
       return { renderChildren: true };
     }
@@ -60,7 +76,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
           'Complete your course creator profile to request publishing access on Elimika.',
       },
       organisation: {
-        verified: Boolean(trainingCenter?.admin_verified),
+        verified: organisationVerified,
         allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
@@ -68,7 +84,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
           'Review and submit your organisation information so your workspace can be approved.',
       },
       organisation_user: {
-        verified: Boolean(trainingCenter?.admin_verified),
+        verified: organisationVerified,
         allowedPrefixes: [ACCOUNT_PREFIX, PROFILE_PREFIX, ADD_PROFILE_PREFIX],
         fallback: `${ACCOUNT_PREFIX}/training-center`,
         title: 'Organisation verification pending',
@@ -103,7 +119,14 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
         description: config.description,
       },
     };
-  }, [profile, courseCreator, trainingCenter, pathname]);
+  }, [
+    profile,
+    courseCreator,
+    organisation,
+    pathname,
+    userDomain.activeDomain,
+    organisationVerified,
+  ]);
 
   useEffect(() => {
     if (!state.renderChildren && state.redirect && pathname !== state.redirect) {

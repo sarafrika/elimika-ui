@@ -233,7 +233,9 @@ export default function MyCoursesPage() {
               course={course as any}
               isStudentView={true}
               handleEnroll={() => router.push(`/dashboard/browse-courses/enroll/${course.uuid}`)}
-              handleSearchInstructor={() => router.push(`/dashboard/browse-courses/instructor`)}
+              handleSearchInstructor={() =>
+                router.push(`/dashboard/browse-courses/instructor?courseId=${course.uuid}`)
+              }
               handleClick={() => router.push(`/dashboard/browse-courses/${course.uuid}`)}
             />
           ))}

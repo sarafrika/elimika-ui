@@ -5,12 +5,12 @@ import { type DashboardView, DashboardViewProvider } from '@/components/dashboar
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
+import { useUserDomain } from '@/context/user-domain-context';
 import type { DashboardChildrenTypes, UserDomain } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import CustomLoader from '../../components/custom-loader';
 import { DomainSelection } from '../../components/domain-selection';
-import TrainingCenterProvider from '../../context/training-center-provide';
 
 type KnownDomain = UserDomain | 'organization';
 
@@ -38,40 +38,42 @@ const domainToDashboardViewMap: Record<KnownDomain, DashboardView> = {
 
 export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) {
   const profile = useUserProfile();
+  const domain = useUserDomain();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // Only process redirects when profile is fully loaded
-    if (!profile?.isLoading && profile && profile.user_domain !== undefined) {
-      // Redirect to onboarding if no domains
-      if (!profile.user_domain || profile.user_domain.length === 0) {
+    // Only process redirects when profile is fully loaded and domain is ready
+    // Important: Check !domain.isLoading to prevent redirect during rehydration
+    // Also ensure profile has been fetched (profile object exists)
+    if (!profile?.isLoading && domain.isReady && !domain.isLoading && profile) {
+      // Redirect to onboarding if no domains AND profile has been fetched
+      // Check user_domain exists to ensure profile data is complete
+      if (domain.domains.length === 0 && profile.user_domain !== undefined) {
         router.push('/onboarding');
         return;
       }
     }
-  }, [profile, router]);
+  }, [profile, profile?.isLoading, domain.isReady, domain.isLoading, domain.domains, router]);
 
   useEffect(() => {
+    // Only redirect to organization onboarding when fully loaded
     if (
       !profile?.isLoading &&
-      profile?.activeDomain === 'organisation_user' &&
+      !domain.isLoading &&
+      domain.isReady &&
+      profile &&
+      domain.activeDomain === 'organisation_user' &&
       (!profile.organisation_affiliations || profile.organisation_affiliations.length === 0)
     ) {
       router.push('/onboarding/organisation');
     }
-  }, [profile, router]);
+  }, [profile, profile?.isLoading, domain.isLoading, domain.isReady, profile?.organisation_affiliations, domain.activeDomain, router]);
 
-  const userDomains = useMemo(
-    () => (profile?.user_domain ?? []) as KnownDomain[],
-    [profile?.user_domain]
-  );
-  const activeDomain = (profile?.activeDomain ?? null) as KnownDomain | null;
+  const userDomains = useMemo(() => domain.domains as KnownDomain[], [domain.domains]);
+  const activeDomain = (domain.activeDomain ?? null) as KnownDomain | null;
   const selectableDomains = useMemo(
-    () =>
-      Array.from(
-        new Set(userDomains.map(domain => (domain === 'organization' ? 'organisation' : domain)))
-      ) as UserDomain[],
+    () => Array.from(new Set(userDomains.map(current => current))) as UserDomain[],
     [userDomains]
   );
 
@@ -135,9 +137,7 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
   // Show loading if profile exists but domains are not loaded yet
   // This handles the rehydration period when TanStack Query is loading persisted data
   const showLoader =
-    profile?.isLoading ||
-    !profile ||
-    (!profile?.isLoading && (!profile?.user_domain || profile.user_domain.length === 0));
+    profile?.isLoading || domain.isLoading || !profile;
 
   if (showLoader) {
     return <CustomLoader />;
@@ -147,14 +147,13 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
     return (
       <DomainSelection
         domains={selectableDomains}
-        onDomainSelect={domain => profile.setActiveDomain(domain)}
+        onDomainSelect={nextDomain => domain.setActiveDomain(nextDomain)}
         userName={profile.first_name}
       />
     );
   }
 
   return (
-    <TrainingCenterProvider>
       <SidebarProvider>
         <DashboardViewProvider
           initialView={normalizedActiveView as DashboardView}
@@ -172,6 +171,5 @@ export default function DashboardLayout(dashboardProps: DashboardChildrenTypes) 
           </BreadcrumbProvider>
         </DashboardViewProvider>
       </SidebarProvider>
-    </TrainingCenterProvider>
   );
 }

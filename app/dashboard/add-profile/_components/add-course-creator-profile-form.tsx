@@ -15,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
+import { useUserDomain } from '@/context/user-domain-context';
 import { createCourseCreator } from '@/services/client';
 import { zCourseCreator } from '@/services/client/zod.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,6 +48,7 @@ type CourseCreatorOnboardingFormData = z.infer<typeof CourseCreatorOnboardingSch
 export default function AddCourseCreatorProfileForm() {
   const router = useRouter();
   const user = useUserProfile();
+  const userDomain = useUserDomain();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -110,9 +112,7 @@ export default function AddCourseCreatorProfileForm() {
 
       toast.success('Course Creator profile added successfully!');
 
-      if (user.setActiveDomain) {
-        user.setActiveDomain('course_creator');
-      }
+      userDomain.setActiveDomain('course_creator');
 
       await new Promise(resolve => setTimeout(resolve, 300));
       router.replace('/dashboard/overview');

@@ -1267,19 +1267,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -3129,8 +3129,8 @@ export const InstructorExperienceSchema = {
       type: 'integer',
       format: 'int32',
       description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
       readOnly: true,
     },
     formatted_duration: {
@@ -3170,8 +3170,8 @@ export const InstructorExperienceSchema = {
     is_complete: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
       readOnly: true,
     },
   },
@@ -7869,6 +7869,47 @@ export const ApiResponseInstructorReviewSchema = {
   },
 } as const;
 
+export const BlockTimeSlotsRequestSchema = {
+  type: 'object',
+  description: 'Payload used to block multiple time slots for an instructor.',
+  properties: {
+    slots: {
+      type: 'array',
+      description: '**[REQUIRED]** Collection of blocked slots to create.',
+      items: {
+        $ref: '#/components/schemas/BlockedTimeSlotRequest',
+      },
+    },
+  },
+  required: ['slots'],
+} as const;
+
+export const BlockedTimeSlotRequestSchema = {
+  type: 'object',
+  description: 'Represents a single blocked time slot window for an instructor.',
+  properties: {
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)',
+      example: '2024-10-15T09:00:00',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)',
+      example: '2024-10-15T10:30:00',
+    },
+    color_code: {
+      type: 'string',
+      description: '**[OPTIONAL]** Hex color code used to visualize the blocked slot.',
+      example: '#FF6B6B',
+      pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+  },
+  required: ['end_time', 'start_time'],
+} as const;
+
 export const GuardianStudentLinkSchema = {
   type: 'object',
   description: "Represents a guardian's access rights to a learner profile.",
@@ -9380,17 +9421,17 @@ export const AssignmentSubmissionSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     submission_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the submission based on its content type.',
       example: 'Mixed Media Submission',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
     submission_status_display: {

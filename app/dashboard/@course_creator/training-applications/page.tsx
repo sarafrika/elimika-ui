@@ -1,5 +1,5 @@
-import CoursesPage from './_components/CoursesPage';
+import TrainingApplicationsPage from './_components/TrainingApplicationsPage';
 
 export default function Page() {
-  return <CoursesPage />;
+  return <TrainingApplicationsPage />;
 }

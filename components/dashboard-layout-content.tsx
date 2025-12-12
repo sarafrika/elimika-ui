@@ -6,7 +6,8 @@ import type { ReactNode } from 'react';
 
 export default function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { view } = useDashboardView();
-  const activeDomain: UserDomain = view as UserDomain;
+  const activeDomain: UserDomain =
+    view === 'organization' ? ('organisation' as UserDomain) : (view as UserDomain);
   // Only render the sidebar here
   return <AppSidebar activeDomain={activeDomain} />;
 }

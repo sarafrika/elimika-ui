@@ -32,15 +32,10 @@ import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
   createClassDefinitionMutation,
-  createClassRecurrencePatternMutation,
   getAllActiveClassDefinitionsQueryKey,
   getAllCoursesOptions,
-  getClassRecurrencePatternQueryKey,
   scheduleClassMutation,
-  scheduleRecurringClassFromDefinitionMutation,
   updateClassDefinitionMutation,
-  updateClassRecurrencePatternMutation,
-  updateRecurringClassScheduleMutation,
   updateScheduledInstanceStatusMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { LocationTypeEnum, RecurrenceTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
@@ -405,8 +400,8 @@ function RecurrencForm({
   const qc = useQueryClient();
   const _user = useUserProfile();
 
-  const createClassRecurrence = useMutation(createClassRecurrencePatternMutation());
-  const updateClassRecurrence = useMutation(updateClassRecurrencePatternMutation());
+  // const createClassRecurrence = useMutation(createClassRecurrencePatternMutation());
+  // const updateClassRecurrence = useMutation(updateClassRecurrencePatternMutation());
 
   const handleSubmit = async (values: RecurrenceFormValues) => {
     const payload = {
@@ -417,37 +412,37 @@ function RecurrencForm({
     };
 
     if (recurrenceId) {
-      updateClassRecurrence.mutate(
-        { path: { uuid: recurrenceId }, body: payload as any },
-        {
-          onSuccess: data => {
-            qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({
-                path: { uuid: recurrenceId as string },
-              }),
-            });
-            toast.success(data?.message);
-            onCancel();
-            onSuccess(data);
-          },
-        }
-      );
+      // updateClassRecurrence.mutate(
+      //   { path: { uuid: recurrenceId }, body: payload as any },
+      //   {
+      //     onSuccess: data => {
+      //       qc.invalidateQueries({
+      //         queryKey: getClassRecurrencePatternQueryKey({
+      //           path: { uuid: recurrenceId as string },
+      //         }),
+      //       });
+      //       toast.success(data?.message);
+      //       onCancel();
+      //       onSuccess(data);
+      //     },
+      //   }
+      // );
     } else {
-      createClassRecurrence.mutate(
-        { body: payload as any },
-        {
-          onSuccess: (data: any) => {
-            qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({
-                path: { uuid: recurrenceId as string },
-              }),
-            });
-            toast.success(data?.message);
-            onCancel();
-            onSuccess(data);
-          },
-        }
-      );
+      // createClassRecurrence.mutate(
+      //   { body: payload as any },
+      //   {
+      //     onSuccess: (data: any) => {
+      //       qc.invalidateQueries({
+      //         queryKey: getClassRecurrencePatternQueryKey({
+      //           path: { uuid: recurrenceId as string },
+      //         }),
+      //       });
+      //       toast.success(data?.message);
+      //       onCancel();
+      //       onSuccess(data);
+      //     },
+      //   }
+      // );
     }
   };
 
@@ -620,9 +615,9 @@ function RecurrencForm({
           <Button
             type='submit'
             className='flex min-w-[120px] items-center justify-center gap-2'
-            disabled={createClassRecurrence.isPending || updateClassRecurrence.isPending}
+          // disabled={createClassRecurrence.isPending || updateClassRecurrence.isPending}
           >
-            {(createClassRecurrence.isPending || updateClassRecurrence.isPending) && <Spinner />}
+            {/* {(createClassRecurrence.isPending || updateClassRecurrence.isPending) && <Spinner />} */}
             {initialValues ? 'Update Recurrence' : 'Create Recurrence'}
           </Button>
         </div>
@@ -662,8 +657,8 @@ function ScheduleForm({
   const qc = useQueryClient();
   const _user = useUserProfile();
 
-  const createClassSchedule = useMutation(scheduleRecurringClassFromDefinitionMutation());
-  const updateClassSchedule = useMutation(updateRecurringClassScheduleMutation());
+  // const createClassSchedule = useMutation(scheduleRecurringClassFromDefinitionMutation());
+  // const updateClassSchedule = useMutation(updateRecurringClassScheduleMutation());
 
   const handleSubmit = async (values: ScheduleFormValues) => {
     const payload = {
@@ -671,36 +666,36 @@ function ScheduleForm({
     };
 
     if (scheduleId) {
-      updateClassSchedule.mutate(
-        { path: { uuid: classId as string } },
-        {
-          onSuccess: data => {
-            qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
-            });
-            toast.success(data?.message);
-            onCancel();
-            onSuccess();
-          },
-        }
-      );
+      // updateClassSchedule.mutate(
+      //   { path: { uuid: classId as string } },
+      //   {
+      //     onSuccess: data => {
+      //       qc.invalidateQueries({
+      //         queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
+      //       });
+      //       toast.success(data?.message);
+      //       onCancel();
+      //       onSuccess();
+      //     },
+      //   }
+      // );
     } else {
-      createClassSchedule.mutate(
-        {
-          path: { uuid: classId as string },
-          query: { startDate: payload.start_date, endDate: payload.end_date },
-        },
-        {
-          onSuccess: (data: any) => {
-            qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
-            });
-            toast.success(data?.message);
-            onCancel();
-            onSuccess();
-          },
-        }
-      );
+      // createClassSchedule.mutate(
+      //   {
+      //     path: { uuid: classId as string },
+      //     query: { startDate: payload.start_date, endDate: payload.end_date },
+      //   },
+      //   {
+      //     onSuccess: (data: any) => {
+      //       qc.invalidateQueries({
+      //         queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
+      //       });
+      //       toast.success(data?.message);
+      //       onCancel();
+      //       onSuccess();
+      //     },
+      //   }
+      // );
     }
   };
 
@@ -750,9 +745,9 @@ function ScheduleForm({
           <Button
             type='submit'
             className='flex min-w-[120px] items-center justify-center gap-2'
-            disabled={createClassSchedule.isPending || updateClassSchedule.isPending}
+          // disabled={createClassSchedule.isPending || updateClassSchedule.isPending}
           >
-            {(createClassSchedule.isPending || updateClassSchedule.isPending) && <Spinner />}
+            {/* {(createClassSchedule.isPending || updateClassSchedule.isPending) && <Spinner />} */}
             {initialValues ? 'Update Schedule' : 'Create Schedule'}
           </Button>
         </div>
@@ -809,9 +804,9 @@ function TimetableScheduleForm({
         { path: { instanceUuid: timetableScheduleId as string }, query: { status } },
         {
           onSuccess: (data: any) => {
-            qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
-            });
+            // qc.invalidateQueries({
+            //   queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
+            // });
             toast.success(data?.message);
             onCancel();
             onSuccess();
@@ -826,9 +821,9 @@ function TimetableScheduleForm({
         { body: payload as any },
         {
           onSuccess: (data: any) => {
-            qc.invalidateQueries({
-              queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
-            });
+            // qc.invalidateQueries({
+            //   queryKey: getClassRecurrencePatternQueryKey({ path: { uuid: '' } }),
+            // });
             toast.success(data?.message);
             onCancel();
             onSuccess();

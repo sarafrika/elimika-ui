@@ -280,7 +280,6 @@ export function EventModal({
   const instrucor = useInstructor();
   const qc = useQueryClient();
   const scheduleClass = useMutation(scheduleClassMutation());
-  // const createAvailability = useMutation(createAvailabilitySlotMutation());
   const blockTimeForInstructor = useMutation(blockInstructorTimeMutation())
   const createBookingForInstructor = useMutation(createBookingMutation())
 
@@ -331,7 +330,13 @@ export function EventModal({
         onSuccess: (data) => {
           toast.success(data?.message)
           qc.invalidateQueries({
-            queryKey: getInstructorCalendarQueryKey({ path: { instructorUuid: instrucor?.uuid as string }, query: { start_date: "2025-09-11" as any, end_date: "2026-11-11" as any } })
+            queryKey: getInstructorCalendarQueryKey({
+              path: { instructorUuid: instrucor?.uuid as string },
+              query: {
+                start_date: new Date(startDateTime),
+                end_date: new Date(endDateTime),
+              },
+            })
           })
           onClose();
         }

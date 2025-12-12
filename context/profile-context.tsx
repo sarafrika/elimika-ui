@@ -1,46 +1,17 @@
-import type { UserDomain, UserProfileType } from '@/lib/types';
-import {
-  type CourseCreator,
-  getInstructorEducation,
-  getInstructorExperience,
-  getInstructorMemberships,
-  getInstructorSkills,
-  type Instructor,
-  type InstructorEducation,
-  type InstructorExperience,
-  type InstructorProfessionalMembership,
-  type InstructorSkill,
-  search,
-  searchCourseCreators,
-  searchInstructors,
-  type SearchResponse,
-  searchStudents,
-  type Student,
-  type User,
-} from '@/services/client';
+'use client';
+
+import type { UserProfileType } from '@/lib/types';
+import { type CourseCreator, type Instructor, search, searchCourseCreators, searchInstructors, type SearchResponse, searchStudents, type Student, type User } from '@/services/client';
 import { queryOptions, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { getDashboardStorageKey } from '../lib/utils';
-
-type DomainTypes = UserDomain;
-
-type ExtendedInstructor = Instructor & {
-  educations: InstructorEducation[];
-  experience: InstructorExperience[];
-  membership: InstructorProfessionalMembership[];
-  skills: InstructorSkill[];
-};
+import { createContext, type ReactNode, useCallback, useContext, useEffect } from 'react';
 
 const UserProfileContext = createContext<
   | (Partial<UserProfileType> & {
       isLoading: boolean;
       invalidateQuery: () => void;
       clearProfile: () => void;
-      setActiveDomain: (domain: UserDomain) => void;
-      activeDomain: UserDomain | null;
-      hasMultipleDomains: boolean;
     })
   | null
 >(null);
@@ -52,50 +23,22 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
   const qc = useQueryClient();
   const router = useRouter();
 
-  const { data, isLoading, isError, refetch } = useQuery(
+  const { data, isLoading, refetch } = useQuery(
     createQueryOptions(session?.user?.email, {
       enabled: !!session?.user?.email,
     })
   );
 
-  const [activeDomain, setActiveDomain] = useState<UserDomain | null>(null);
-  const storageIdentifier = data?.uuid ?? session?.user?.email ?? undefined;
-  const dashboardStorageKey = useMemo(
-    () => getDashboardStorageKey(storageIdentifier),
-    [storageIdentifier]
-  );
-
-  // Update active domain when profile data changes
-  useEffect(() => {
-    if (data && !isError && data.user_domain && data.user_domain.length > 0) {
-      let persistedDomain: UserDomain | null = null;
-      if (typeof window !== 'undefined') {
-        const cachedDomain = localStorage.getItem(dashboardStorageKey) as UserDomain | null;
-        if (cachedDomain && data.user_domain.includes(cachedDomain)) {
-          persistedDomain = cachedDomain;
-        }
-      }
-      const domain = (persistedDomain ?? data.user_domain[0]) as UserDomain;
-      if (domain) {
-        setActiveDomain(domain);
-      }
-    }
-  }, [data, isError, dashboardStorageKey]);
+  const clearProfile = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ['profile'] });
+  }, [qc]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       clearProfile();
-      setActiveDomain(null);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(dashboardStorageKey);
-      }
       router.replace('/');
     }
-  }, [status, dashboardStorageKey, clearProfile, router.replace]);
-
-  function clearProfile() {
-    void qc.invalidateQueries({ queryKey: ['profile'] });
-  }
+  }, [status, clearProfile, router]);
 
   return (
     <UserProfileContext.Provider
@@ -107,14 +50,6 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
           await refetch();
         },
         clearProfile,
-        setActiveDomain: (domain: UserDomain) => {
-          setActiveDomain(domain);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(dashboardStorageKey, domain);
-          }
-        },
-        activeDomain,
-        hasMultipleDomains: (data?.user_domain?.length || 0) > 1,
       }}
     >
       {children}
@@ -168,7 +103,7 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
       }
     }
 
-    // Add instructor data if user is an instructor
+    // Add instructor data if user is an instructor (lean payload only)
     if (user.user_domain.includes('instructor')) {
       const instructorSearchResponse = await searchInstructors({
         query: {
@@ -190,83 +125,7 @@ async function fetchUserProfile(email: string): Promise<UserProfileType> {
         responseData.data.content.length > 0
       ) {
         const instructor = responseData.data.content[0] as unknown as Instructor;
-        user.instructor = {
-          ...instructor,
-          educations: [] as InstructorEducation[],
-          experience: [] as InstructorExperience[],
-          membership: [] as InstructorProfessionalMembership[],
-          skills: [] as InstructorSkill[],
-        } as ExtendedInstructor;
-
-        // Add instructor education
-        try {
-          const instructorEducation = await getInstructorEducation({
-            path: { instructorUuid: instructor.uuid! },
-          });
-          if (!instructorEducation.error && instructorEducation.data?.data && user.instructor) {
-            user.instructor.educations = instructorEducation.data
-              .data as unknown as InstructorEducation[];
-          }
-        } catch (_error) {
-        }
-
-        // Add instructor experience
-        try {
-          const instructorExperience = await getInstructorExperience({
-            path: { instructorUuid: instructor.uuid! },
-            query: {
-              pageable: {
-                page: 0,
-                size: 20,
-                sort: [],
-              },
-            },
-          });
-          const expResp = instructorExperience.data as SearchResponse;
-          if (!expResp.error && expResp.data?.content && user.instructor) {
-            user.instructor.experience = expResp.data.content as unknown as InstructorExperience[];
-          }
-        } catch (_error) {
-        }
-
-        // Add instructor memberships
-        try {
-          const instructorMembership = await getInstructorMemberships({
-            path: { instructorUuid: instructor.uuid! },
-            query: {
-              pageable: {
-                page: 0,
-                size: 20,
-                sort: [],
-              },
-            },
-          });
-          const memResp = instructorMembership.data as SearchResponse;
-          if (!memResp.error && memResp.data?.content && user.instructor) {
-            user.instructor.membership = memResp.data
-              .content as unknown as InstructorProfessionalMembership[];
-          }
-        } catch (_error) {
-        }
-
-        // Add instructor skills
-        try {
-          const instructorSkills = await getInstructorSkills({
-            path: { instructorUuid: instructor.uuid! },
-            query: {
-              pageable: {
-                page: 0,
-                size: 20,
-                sort: [],
-              },
-            },
-          });
-          const skillsResp = instructorSkills.data as SearchResponse;
-          if (!skillsResp.error && skillsResp.data?.content && user.instructor) {
-            user.instructor.skills = skillsResp.data.content as unknown as InstructorSkill[];
-          }
-        } catch (_error) {
-        }
+        user.instructor = instructor as unknown as UserProfileType['instructor'];
       }
     }
 

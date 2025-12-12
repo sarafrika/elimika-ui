@@ -38,6 +38,14 @@ const domainConfig = {
     bgColor: 'bg-accent/10 dark:bg-accent/20',
     borderColor: 'border-accent/30 dark:border-accent/30',
   },
+  parent: {
+    icon: Users,
+    title: 'Parent Dashboard',
+    description: 'Manage learner approvals, monitor progress, and stay on top of updates.',
+    color: 'text-primary',
+    bgColor: 'bg-primary/10 dark:bg-primary/15',
+    borderColor: 'border-primary/30 dark:border-primary/30',
+  },
   organisation_user: {
     icon: Users,
     title: 'Organization Dashboard',

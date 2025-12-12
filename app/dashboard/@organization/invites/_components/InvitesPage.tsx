@@ -2,13 +2,13 @@
 
 import { Button } from '../../../../../components/ui/button';
 import { Separator } from '../../../../../components/ui/separator';
-import { useTrainingCenter } from '../../../../../context/training-center-provide';
-import { getOrganizationInvitations, } from '../../../../../services/client';
+import { useOrganisation } from '../../../../../context/organisation-context';
+import { getOrganizationInvitations } from '../../../../../services/client';
 import { InviteForm } from './InviteForm';
 import InviteList from './InviteList';
 
 export default function InvitesPage() {
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
 
   return (
     <div className='space-y-6 p-4 pb-16 md:py-10'>
@@ -28,9 +28,9 @@ export default function InvitesPage() {
             queryKey: ['organization', 'invites'],
             queryFn: () =>
               getOrganizationInvitations({
-                path: { uuid: trainingCenter?.uuid! },
+                path: { uuid: organisation?.uuid! },
               }),
-            enabled: !!trainingCenter,
+            enabled: !!organisation,
           }}
         />
       </div>

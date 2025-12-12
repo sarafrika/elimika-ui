@@ -25,7 +25,7 @@ import CustomLoader from '../../../../../../components/custom-loader';
 import ImageSelector, { type ImageType } from '../../../../../../components/image-selector';
 import LocationInput from '../../../../../../components/locationInput';
 import { useUserProfile } from '../../../../../../context/profile-context';
-import { useTrainingCenter } from '../../../../../../context/training-center-provide';
+import { useOrganisation } from '../../../../../../context/organisation-context';
 import { queryClient } from '../../../../../../lib/query-client';
 import { profilePicSvg } from '../../../../../../lib/utils';
 import { updateOrganisation, updateUser, type User } from '../../../../../../services/client';
@@ -64,7 +64,7 @@ export default function TrainingCenterForm() {
   }, [replaceBreadcrumbs]);
 
   const userProfile = useUserProfile();
-  const organisation = useTrainingCenter();
+  const organisation = useOrganisation();
   const { disableEditing, isEditing, requestConfirmation, isConfirming } = useProfileFormMode();
 
   /** For handling profile picture preview */

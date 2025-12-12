@@ -857,17 +857,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
-      .readonly()
-      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1913,6 +1913,13 @@ export const zInstructor = z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
+      )
+      .readonly()
+      .optional(),
+    formatted_location: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
       )
       .readonly()
       .optional(),
@@ -5498,6 +5505,38 @@ export const zApiResponseInstructorReview = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+/**
+ * Represents a single blocked time slot window for an instructor.
+ */
+export const zBlockedTimeSlotRequest = z
+  .object({
+    start_time: z
+      .string()
+      .datetime()
+      .describe('**[REQUIRED]** Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+    end_time: z
+      .string()
+      .datetime()
+      .describe('**[REQUIRED]** End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+    color_code: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/)
+      .describe('**[OPTIONAL]** Hex color code used to visualize the blocked slot.')
+      .optional(),
+  })
+  .describe('Represents a single blocked time slot window for an instructor.');
+
+/**
+ * Payload used to block multiple time slots for an instructor.
+ */
+export const zBlockTimeSlotsRequest = z
+  .object({
+    slots: z
+      .array(zBlockedTimeSlotRequest)
+      .describe('**[REQUIRED]** Collection of blocked slots to create.'),
+  })
+  .describe('Payload used to block multiple time slots for an instructor.');
+
 export const zRelationshipTypeEnum = z.enum(['PARENT', 'GUARDIAN', 'SPONSOR']);
 
 export const zShareScopeEnum = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
@@ -6417,14 +6456,14 @@ export const zAssignmentSubmission = z
       .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
       .readonly()
       .optional(),
-    submission_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
-      .readonly()
-      .optional(),
     grade_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
+    submission_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
       .readonly()
       .optional(),
     submission_status_display: z

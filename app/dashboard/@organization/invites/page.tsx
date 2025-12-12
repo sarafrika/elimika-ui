@@ -1,6 +1,6 @@
 import { auth } from '../../../../services/auth';
 import { search, type User } from '../../../../services/client';
-import InvitesPage from './_components/InvitesPage';
+import InvitesPageImproved from './_components/InvitesPageImproved';
 
 export default async function Invitations() {
   /**
@@ -31,5 +31,5 @@ export default async function Invitations() {
 
   /* End of the checks */
 
-  return <InvitesPage />;
+  return <InvitesPageImproved />;
 }

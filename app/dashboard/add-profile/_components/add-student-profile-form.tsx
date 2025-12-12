@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUserProfile } from '@/context/profile-context';
+import { useUserDomain } from '@/context/user-domain-context';
 import { createStudent } from '@/services/client';
 import { zStudent } from '@/services/client/zod.gen';
 
@@ -46,6 +47,7 @@ type StudentOnboardingFormData = z.infer<typeof StudentOnboardingSchema>;
 export default function AddStudentProfileForm() {
   const router = useRouter();
   const user = useUserProfile();
+  const userDomain = useUserDomain();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -83,9 +85,7 @@ export default function AddStudentProfileForm() {
       toast.success('Student profile added successfully!');
 
       // Set the new domain as active and redirect
-      if (user.setActiveDomain) {
-        user.setActiveDomain('student');
-      }
+      userDomain.setActiveDomain('student');
 
       // Small delay to allow context to update
       await new Promise(resolve => setTimeout(resolve, 300));

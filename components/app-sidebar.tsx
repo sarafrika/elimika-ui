@@ -18,7 +18,7 @@ import { LibraryBigIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type * as React from 'react';
-import { useTrainingCenter } from '../context/training-center-provide';
+import { useOrganisation } from '../context/organisation-context';
 import { useUserProfile } from '../context/profile-context';
 import { NavMain } from './nav-main';
 
@@ -26,7 +26,7 @@ export function AppSidebar({
   activeDomain,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { activeDomain: UserDomain }) {
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
   const profile = useUserProfile();
   const pathname = usePathname();
   const isAdmin = profile?.user_domain?.includes('admin');
@@ -60,7 +60,7 @@ export function AppSidebar({
                 </div>
                 <div className='grid flex-1 text-left text-sm leading-tight'>
                   <span className='truncate font-medium capitalize'>
-                    {trainingCenter?.name || 'Elimika'}
+                    {organisation?.name || 'Elimika'}
                   </span>
                 </div>
               </Link>

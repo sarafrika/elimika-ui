@@ -96,6 +96,15 @@ Use only standardized utility generators like `getCardClasses()`, not custom val
 
 ---
 
+## 📱 Responsive Behavior
+
+- Design mobile-first and scale through Tailwind breakpoints (`sm`, `md`, `lg`, `xl`, `2xl`); ensure layouts remain stable up to 2xl/ultra-wide screens (2560px+) without overflowing or leaving massive dead space.
+- Use fluid widths (`w-full`, responsive grid/flex) with sensible max widths (`max-w-screen-2xl` or typography clamps) to keep content readable on very large displays while cards/tables can stretch responsibly.
+- Avoid fixed heights where possible; prefer min-height + intrinsic sizing and use `ScrollArea`/overflow utilities for sectional scrolling on tall or short viewports.
+- Validate key screens at mobile (<640px), tablet (~768–1024px), desktop (1280–1536px), and wide desktop (≥1920px) to confirm spacing, stacking, and interactive targets stay accessible.
+
+---
+
 ## 🧱 Component Styling Rules
 
 - **Spacing**: Use Tailwind spacing utilities tied to token scale (`p-6`, `gap-4`)
@@ -156,7 +165,7 @@ Use only standardized utility generators like `getCardClasses()`, not custom val
   fix: patch broken auth redirect
   chore: update dependencies
   ```
-
+- Commit after every task so no work is left uncommitted at handoff; avoid leaving a dirty working tree.
 - After completing a task, **always** end with a commit using the above format; do not leave a dirty working tree at handoff.
 - Subject <72 chars, body explains rationale, links issues
 - Include screenshots or videos for UI changes

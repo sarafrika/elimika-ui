@@ -397,6 +397,11 @@ export default {
       icon: ShoppingBag,
     },
     {
+      title: 'Currencies',
+      url: '/dashboard/currencies',
+      icon: DollarSign,
+    },
+    {
       title: 'Administrators',
       url: '/dashboard/administrators',
       icon: ShieldCheck,

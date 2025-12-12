@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from '../../../../../components/ui/form';
 import { Input } from '../../../../../components/ui/input';
-import { useTrainingCenter } from '../../../../../context/training-center-provide';
+import { useOrganisation } from '../../../../../context/organisation-context';
 import { queryClient } from '../../../../../lib/query-client';
 import {
   createTrainingBranch,
@@ -60,11 +60,11 @@ export default function CreateEditBranchform({
     defaultValues: branch,
   });
 
-  const trainingCenter = useTrainingCenter();
+  const organisation = useOrganisation();
 
   async function onSubmit(branchData: BranchType) {
-    if (!trainingCenter) {
-      toast.warning('No training center loaded');
+    if (!organisation) {
+      toast.warning('No organisation loaded');
       return;
     }
     let createResp;
@@ -73,7 +73,7 @@ export default function CreateEditBranchform({
         body: {
           ...branchData,
           active: true,
-          organisation_uuid: trainingCenter.uuid!,
+          organisation_uuid: organisation.uuid!,
         },
       });
     else

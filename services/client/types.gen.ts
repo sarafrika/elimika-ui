@@ -610,13 +610,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1523,7 +1523,7 @@ export type InstructorExperience = {
   /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
-  readonly duration_in_months?: number;
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted duration of employment.
    */
@@ -1548,7 +1548,7 @@ export type InstructorExperience = {
   /**
    * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
-  readonly is_complete?: boolean;
+  readonly duration_in_months?: number;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -3833,6 +3833,34 @@ export type ApiResponseInstructorReview = {
 };
 
 /**
+ * Payload used to block multiple time slots for an instructor.
+ */
+export type BlockTimeSlotsRequest = {
+  /**
+   * **[REQUIRED]** Collection of blocked slots to create.
+   */
+  slots: Array<BlockedTimeSlotRequest>;
+};
+
+/**
+ * Represents a single blocked time slot window for an instructor.
+ */
+export type BlockedTimeSlotRequest = {
+  /**
+   * **[REQUIRED]** Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)
+   */
+  start_time: Date;
+  /**
+   * **[REQUIRED]** End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)
+   */
+  end_time: Date;
+  /**
+   * **[OPTIONAL]** Hex color code used to visualize the blocked slot.
+   */
+  color_code?: string;
+};
+
+/**
  * Represents a guardian's access rights to a learner profile.
  */
 export type GuardianStudentLink = {
@@ -4746,13 +4774,13 @@ export type AssignmentSubmission = {
    */
   readonly is_graded?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the submission based on its content type.
-   */
-  readonly submission_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
   readonly grade_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the submission based on its content type.
+   */
+  readonly submission_category?: string;
   /**
    * **[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.
    */

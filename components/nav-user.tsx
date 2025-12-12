@@ -22,6 +22,7 @@ import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '../context/profile-context';
 import { DomainSwitcher } from '@/components/domain-switcher';
+import { useUserDomain } from '@/context/user-domain-context';
 
 type NavUserProps = {
   items: MenuItem[];
@@ -30,11 +31,11 @@ type NavUserProps = {
 export function NavUser({ items }: NavUserProps) {
   const router = useRouter();
   const user = useUserProfile();
+  const userDomain = useUserDomain();
   const { isMobile } = useSidebar();
   // const { data: session } = useSession();
-  const activeDomain =
-    user?.activeDomain ??
-    (user?.user_domain && user.user_domain.length > 0 ? user.user_domain[0] : '');
+  const activeDomain = userDomain.activeDomain ?? userDomain.domains[0] ?? '';
+  const activeDomainLabel = activeDomain || 'dashboard';
 
   const userInitials =
     user?.full_name
@@ -65,7 +66,7 @@ export function NavUser({ items }: NavUserProps) {
                     variant='outline'
                     className='border-primary/20 text-primary h-5 px-1.5 py-0 text-[10px] font-normal capitalize'
                   >
-                    {activeDomain}
+                    {activeDomainLabel}
                   </Badge>
                 </div>
                 <span className='text-muted-foreground truncate text-xs'>{user?.email}</span>
@@ -96,7 +97,7 @@ export function NavUser({ items }: NavUserProps) {
               </div>
 
               {/* Domain Switcher - Only show if user has multiple domains */}
-              {user?.hasMultipleDomains && (
+              {userDomain.hasMultipleDomains && (
                 <>
                   <DropdownMenuSeparator className='my-2' />
                   <div className='mb-2'>
@@ -135,7 +136,12 @@ export function NavUser({ items }: NavUserProps) {
 
                 <div
                   className='flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive'
-                  onClick={async () => await signOut().then(() => user?.clearProfile())}
+                  onClick={async () =>
+                    await signOut().then(() => {
+                      userDomain.clearDomain();
+                      user?.clearProfile();
+                    })
+                  }
                 >
                   <LogOut className='size-4' />
                   <span>Log out</span>

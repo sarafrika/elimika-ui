@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
-import { useUserProfile } from '@/context/profile-context';
 import type { ApplicantTypeEnum } from '@/services/client';
 import {
   getAllCoursesOptions,
@@ -27,12 +26,13 @@ import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { TrainCourseCard } from '../../../_components/train-course-card';
+import { useUserDomain } from '@/context/user-domain-context';
 
 export default function CourseMangementPage() {
   const qc = useQueryClient()
   const router = useRouter();
   const instructor = useInstructor();
-  const profile = useUserProfile();
+  const userDomain = useUserDomain();
 
   const [statusFilter, setStatusFilter] = useState<string | null>('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -114,7 +114,7 @@ export default function CourseMangementPage() {
     applyToTrain.mutate(
       {
         body: {
-          applicant_type: profile?.activeDomain as ApplicantTypeEnum,
+          applicant_type: userDomain?.activeDomain as ApplicantTypeEnum,
           applicant_uuid: instructor?.uuid as string,
           rate_card: {
             currency: data?.rate_currency,

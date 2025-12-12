@@ -203,7 +203,7 @@ export default function InstructorOverviewPage() {
         <>
           {approvalPanel}
           {quickActions}
-          <PurchasableCatalogue />
+          <PurchasableCatalogue scope='instructor' />
         </>
       }
     />

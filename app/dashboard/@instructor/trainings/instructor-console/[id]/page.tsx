@@ -14,10 +14,31 @@ import {
     getCourseByUuidOptions,
     getCourseRubricsOptions,
     getInstructorCalendarOptions,
-    markAttendanceMutation
+    markAttendanceMutation,
 } from "@/services/client/@tanstack/react-query.gen";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Award, BookOpen, CheckCircle, ChevronDown, ChevronRight, ChevronUp, FileText, ImageIcon, Lock, Maximize, MessageCircle, Pause, Play, Search, Settings, Users, Volume2, X, ZoomIn, ZoomOut } from "lucide-react";
+import {
+    Award,
+    BookOpen,
+    CheckCircle,
+    ChevronDown,
+    ChevronRight,
+    ChevronUp,
+    FileText,
+    ImageIcon,
+    Lock,
+    Maximize,
+    MessageCircle,
+    Pause,
+    Play,
+    Search,
+    Settings,
+    Users,
+    Volume2,
+    X,
+    ZoomIn,
+    ZoomOut,
+} from "lucide-react";
 import moment from "moment";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -26,6 +47,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader } from "../../../../../../components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../../../../../../components/ui/collapsible";
+import { Skeleton } from "../../../../../../components/ui/skeleton";
 import PDFViewer from "../../../../@student/_components/pdf-viewer";
 
 const localizer = momentLocalizer(moment);
@@ -68,10 +90,12 @@ export default function ClassPreviewPage() {
     const course = courseDetail?.data;
 
     const { data: courseRubrics } = useQuery({
-        ...getCourseRubricsOptions({ path: { courseUuid: course?.uuid as string }, query: { pageable: {} } }
-        ),
-        enabled: !!course?.uuid
-    })
+        ...getCourseRubricsOptions({
+            path: { courseUuid: course?.uuid as string },
+            query: { pageable: {} },
+        }),
+        enabled: !!course?.uuid,
+    });
 
     const {
         isLoading: isAllLessonsDataLoading,
@@ -109,7 +133,6 @@ export default function ClassPreviewPage() {
         }
     };
 
-    // --- UI state for the 3-column page
     const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
     const [grade, setGrade] = useState<number | "">("");
     const [status, setStatus] = useState<"Submitted" | "Excused" | "Missing">("Submitted");
@@ -120,7 +143,6 @@ export default function ClassPreviewPage() {
     const markAttendance = useMutation(markAttendanceMutation());
     const { roster, isLoading: rosterLoading } = useClassRoster(classId);
 
-
     const { data: classSchedule } = useQuery({
         ...getInstructorCalendarOptions({
             path: { instructorUuid: classData?.default_instructor_uuid as string },
@@ -128,30 +150,6 @@ export default function ClassPreviewPage() {
         }),
         enabled: !!classData?.default_instructor_uuid,
     });
-
-    // activity / rubric / performance (you can replace with your fetched ones)
-    const activityLog = [
-        { name: "Dianne Russel", action: "Checked in via QR", time: "8:35 AM" },
-        { name: "Jacob Jones", action: "Submitted Assignment 2", time: "9:15 AM" },
-        { name: "Leslie Alexander", action: "Downloaded Lecture Slides", time: "10:02 AM" },
-    ];
-
-    const rubric = [
-        { criteria: "Attendance", weight: "20%", description: "Consistency and punctuality" },
-        { criteria: "Participation", weight: "25%", description: "Engagement during sessions" },
-        { criteria: "Assignments", weight: "35%", description: "Completion and quality" },
-        { criteria: "Exam", weight: "20%", description: "Final test performance" },
-    ];
-
-    const performance = [
-        { name: "Dianne Russel", participation: 95, score: 88, progress: 92 },
-        { name: "Jacob Jones", participation: 78, score: 70, progress: 75 },
-        { name: "Leslie Alexander", participation: 85, score: 90, progress: 88 },
-    ];
-
-    const toggleAttendance = (studentName: string) => {
-        setAttendance((prev) => ({ ...prev, [studentName]: !prev[studentName] }));
-    };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -166,15 +164,15 @@ export default function ClassPreviewPage() {
     const [isPlaying, setIsPlaying] = useState(false);
 
     const firstLesson = lessonsWithContent?.[0]?.lesson;
-    const [expandedModules, setExpandedModules] = useState<string[]>([firstLesson?.uuid as string]);
+    const [expandedModules, setExpandedModules] = useState<string[]>([
+        firstLesson?.uuid as string,
+    ]);
     const [selectedLesson, setSelectedLesson] = useState<any>(firstLesson);
-    const contentTypeName = contentTypeMap[selectedLesson?.content_type_uuid] || 'text';
+    const contentTypeName = contentTypeMap[selectedLesson?.content_type_uuid] || "text";
 
     const toggleModule = (skillId: string) => {
-        setExpandedModules(prev =>
-            prev.includes(skillId)
-                ? prev.filter(id => id !== skillId)
-                : [...prev, skillId]
+        setExpandedModules((prev) =>
+            prev.includes(skillId) ? prev.filter((id) => id !== skillId) : [...prev, skillId]
         );
     };
 
@@ -185,532 +183,564 @@ export default function ClassPreviewPage() {
 
     const handleStartLesson = () => {
         if (!selectedLesson) {
-            toast.message('Please select a lesson to start.');
+            toast.message("Please select a lesson to start.");
             return;
         }
 
         const contentTypeName = contentTypeMap[selectedLesson?.content_type_uuid];
 
-        if (contentTypeName === 'video') {
+        if (contentTypeName === "video") {
             setIsPlaying(true);
-        } else if (contentTypeName === 'pdf' || contentTypeName === 'text') {
+        } else if (contentTypeName === "pdf" || contentTypeName === "text") {
             setIsReading(true);
         } else {
-            toast.message('Lesson type not supported for viewing.');
-        }
-    }
-
-    const getLessonIcon = (type: any['type'], completed: boolean, locked: boolean) => {
-        if (locked) return <Lock className="w-4 h-4 text-muted-foreground" />;
-        if (completed) return <CheckCircle className="w-4 h-4 text-green-600" />;
-
-        switch (type) {
-            case 'video':
-                return <Play className="w-4 h-4 text-primary" />;
-            case 'reading':
-                return <BookOpen className="w-4 h-4 text-accent" />;
-            case 'quiz':
-                return <FileText className="w-4 h-4 text-warning" />;
-            case 'assignment':
-                return <Award className="w-4 h-4 text-success" />;
-            default:
-                return <Play className="w-4 h-4" />;
+            toast.message("Lesson type not supported for viewing.");
         }
     };
 
-    // if (isAllLessonsDataLoading || classIsLoading || rosterLoading) {
-    //     return (
-    //         <div className="flex flex-col gap-6 space-y-2 p-6">
-    //             <Skeleton className="h-[150px] w-full" />
-    //             <div className="flex flex-row items-center justify-between gap-4">
-    //                 <Skeleton className="h-[450px] w-2/3" />
-    //                 <Skeleton className="h-[450px] w-1/3" />
-    //             </div>
-    //             <Skeleton className="h-[100px] w-full" />
-    //         </div>
-    //     );
-    // }
+    const getLessonIcon = (type: any["type"], completed: boolean, locked: boolean) => {
+        if (locked) return <Lock className="h-4 w-4 text-muted-foreground" />;
+        if (completed) return <CheckCircle className="h-4 w-4 text-success" />;
+
+        switch (type) {
+            case "video":
+                return <Play className="h-4 w-4 text-primary" />;
+            case "reading":
+                return <BookOpen className="h-4 w-4 text-accent" />;
+            case "quiz":
+                return <FileText className="h-4 w-4 text-warning" />;
+            case "assignment":
+                return <Award className="h-4 w-4 text-success" />;
+            default:
+                return <Play className="h-4 w-4" />;
+        }
+    };
+
+    if (isAllLessonsDataLoading || classIsLoading || rosterLoading) {
+        return (
+            <div className="flex flex-col gap-6 space-y-2 p-6">
+                <Skeleton className="h-[150px] w-full" />
+                <div className="flex flex-row items-center justify-between gap-4">
+                    <Skeleton className="h-[450px] w-2/3" />
+                    <Skeleton className="h-[450px] w-1/3" />
+                </div>
+                <Skeleton className="h-[100px] w-full" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
-            <aside className="w-72 bg-card border-r">
-                <div className="p-4">
+            {/* Left Sidebar - Students List */}
+            <aside className="w-72 border-r border-border bg-card flex flex-col">
+                {/* Search Header */}
+                <div className="border-b border-border p-4">
                     <div className="relative">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type="text"
-                            placeholder="Search Student"
-                            className="pl-10"
+                            placeholder="Search students..."
+                            className="pl-10 bg-background"
                         />
                     </div>
                 </div>
 
-                <div className="flex items-center gap-6 p-4">
-                    <span className="font-medium text-foreground">All students</span>
-                    <span className="text-muted-foreground">{roster?.length}</span>
+                {/* Students Count */}
+                <div className="border-b border-border px-4 py-3">
+                    <p className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-foreground">All Students</span>
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                            {roster?.length}
+                        </span>
+                    </p>
                 </div>
 
-                <ScrollArea className="flex-1 px-2 py-1 h-[calc(100vh-80px)]">
-                    {roster?.map((entry: any, idx: number) => {
-                        const name = entry?.user?.full_name ?? "Unknown"
-                        const isActive = entry?.enrollment?.status === "ENROLLED"
-                        const isSelected = selectedStudent?.user?.uuid === entry?.user?.uuid
+                {/* Students Scroll Area */}
+                <ScrollArea className="flex-1">
+                    <div className="space-y-1 p-2">
+                        {roster?.map((entry: any) => {
+                            const name = entry?.user?.full_name ?? "Unknown";
+                            const isActive = entry?.enrollment?.status === "ENROLLED";
+                            const isSelected = selectedStudent?.user?.uuid === entry?.user?.uuid;
 
-                        return (
-                            <div
-                                key={entry?.user?.uuid}
-                                onClick={() => {
-                                    setSelectedStudent(entry)
-                                }}
-                                className={`
-              group cursor-pointer rounded-md mb-1 px-3 py-2
-              flex items-center justify-between h-auto
-              transition-all duration-150 text-sm
-              ${isSelected
-                                        ? "bg-secondary/80 shadow-sm"
-                                        : "hover:bg-accent/60"}
-              relative
-            `}
-                            >
+                            return (
+                                <button
+                                    key={entry?.user?.uuid}
+                                    onClick={() => setSelectedStudent(entry)}
+                                    className={`group relative w-full rounded-lg px-3 py-2.5 text-left transition-all duration-150 ${isSelected
+                                        ? "bg-primary/10 shadow-sm"
+                                        : "hover:bg-accent/50"
+                                        }`}
+                                >
+                                    {/* Left accent bar */}
+                                    <div
+                                        className={`absolute left-0 top-0 h-full w-1 rounded-r transition-all ${isSelected ? "bg-primary" : "opacity-0"
+                                            }`}
+                                    />
 
-                                {/* Left highlight bar */}
-                                <div
-                                    className={`
-                  absolute left-0 top-0 h-full w-1 rounded-r
-                  transition-all duration-200
-                  ${isSelected ? "bg-primary opacity-90" : "opacity-0 group-hover:opacity-50 bg-primary/60"}
-                `}
-                                />
+                                    <div className="flex items-center justify-between gap-2 pl-1">
+                                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                            {/* Avatar */}
+                                            <div
+                                                className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${isSelected
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "bg-primary/15 text-primary"
+                                                    }`}
+                                            >
+                                                {name
+                                                    .split(" ")
+                                                    .map((n: string) => n?.[0])
+                                                    .slice(0, 2)
+                                                    .join("")}
+                                            </div>
 
-                                {/* Content */}
-                                <div className="flex items-center gap-3 pl-1">
-                                    {/* Avatar */}
-                                    <div className={`
-                    w-9 h-9 rounded-full grid place-items-center text-xs font-medium
-                    transition-colors
-                    ${isSelected
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-primary/15 text-primary"
-                                        }
-                `}>
-                                        {name
-                                            ?.split(" ")
-                                            .map((n: string) => n?.[0])
-                                            .slice(0, 2)
-                                            .join("")}
+                                            {/* Name & Status */}
+                                            <div className="flex flex-1 flex-col min-w-0">
+                                                <span
+                                                    className={`truncate text-sm ${isSelected ? "font-semibold text-foreground" : "font-medium"
+                                                        }`}
+                                                >
+                                                    {name}
+                                                </span>
+                                                <span
+                                                    className={`text-xs ${isActive ? "text-success" : "text-muted-foreground"
+                                                        }`}
+                                                >
+                                                    {isActive ? "Active" : "Inactive"}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <ChevronRight
+                                            className={`h-4 w-4 flex-shrink-0 transition-opacity ${isSelected ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-70 text-muted-foreground"
+                                                }`}
+                                        />
                                     </div>
+                                </button>
+                            );
+                        })}
 
-                                    {/* Name & status */}
-                                    <div className="flex flex-col text-left">
-                                        <span className={`text-sm ${isSelected ? "font-semibold" : ""}`}>
-                                            {name}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                            {isActive ? "Active" : "Inactive"}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <ChevronRight
-                                    className={`
-                    h-4 w-4 text-muted-foreground transition-opacity
-                    ${isSelected ? "opacity-100" : "opacity-40 group-hover:opacity-70"}
-                `}
-                                />
+                        {roster?.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <Users className="mb-3 h-8 w-8 opacity-40" />
+                                <p className="text-xs text-muted-foreground">No enrolled students</p>
                             </div>
-                        )
-                    })}
-
-                    {roster?.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-                            <Users className="h-8 w-8 mb-3 opacity-70" />
-                            <p className="text-sm">No enrolled students</p>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </ScrollArea>
             </aside>
 
-            <main className="flex-1 overflow-y-auto px-4 py-6">
-                <div className="bg-card rounded-xl shadow-sm border p-6">
-                    <div className="flex items-start justify-between gap-6 mb-6">
-                        <div className="flex-1">
-                            <h1 className="text-2xl font-semibold">
-                                {classData?.title}
-                            </h1>
-                            <p className="text-foreground/80 leading-7 text-sm mb-6">
-                                {classData?.capacity_info}
-                            </p>
-                        </div>
-                    </div>
-
-                    {!isPlaying && !isReading && <CardContent>
-                        <ScrollArea className="min-h-auto pb-10 pr-4">
-                            <span>Course Content</span>
-
-                            <div className="space-y-3">
-                                {lessonsWithContent?.map((skill, skillIndex) => (
-                                    <Collapsible
-                                        key={skillIndex}
-                                        open={expandedModules.includes(skill?.lesson?.uuid as string)}
-                                        onOpenChange={() => toggleModule(skill?.lesson?.uuid as string)}
-                                    >
-                                        <Card className="border-2 py-2.5">
-                                            <CollapsibleTrigger className="w-full">
-                                                <CardHeader className="cursor-pointer hover:bg-muted transition-colors py-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className='flex flex-row gap-2 items-center'>
-                                                            <h3 className="font-medium text-left">{skillIndex + 1}.</h3>                                    <h3 className="font-medium text-left">{skill?.lesson?.title}</h3>
-                                                        </div>
-                                                        {expandedModules.includes(skill?.lesson?.uuid as string) ? (
-                                                            <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                                                        ) : (
-                                                            <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                                                        )}
-                                                    </div>
-                                                </CardHeader>
-                                            </CollapsibleTrigger>
-
-                                            <CollapsibleContent>
-                                                <CardContent className="pt-0">
-                                                    <div className="space-y-2">
-                                                        {skill?.content?.data?.map((content: any) => (
-                                                            <button
-                                                                key={content.uuid}
-                                                                onClick={() => handleLessonSelect(content)}
-                                                                // disabled={content.locked}
-                                                                disabled={false}
-                                                                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all border-2 border-muted`}
-                                                            >
-                                                                <div className="flex items-center gap-3">
-                                                                    {/* {getLessonIcon(lesson.type, lesson.completed, lesson.locked)} */}
-                                                                    {getLessonIcon("", false, true)}
-
-                                                                    <div className="text-left">
-                                                                        <p className="font-medium">{content.title}</p>
-                                                                        <p className="text-sm text-muted-foreground capitalize">
-                                                                            {content.type}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                                {/* 
-                                                            <div className="flex items-center gap-3">
-                                                          {lesson.locked ? (
-                                                            <Clock className="w-4 h-4 text-muted-foreground" />
-                                                          ) : lesson.completed ? (
-                                                            <CheckCircle className="w-5 h-5 text-success" />
-                                                          ) : (
-                                                            <span className="text-sm text-muted-foreground">{lesson.duration}</span>
-                                                          )}
-                                                        </div> */}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </CardContent>
-                                            </CollapsibleContent>
-                                        </Card>
-                                    </Collapsible>
-                                ))}
+            {/* Main Content */}
+            <main className="flex-1 overflow-y-auto px-6 py-6">
+                {/* Class Header Card */}
+                <Card className="mb-6 border-border bg-gradient-to-br from-card via-card to-card/80">
+                    <CardHeader className="pb-4">
+                        <div className="space-y-4">
+                            <div>
+                                <h1 className="text-3xl font-bold text-foreground mb-2">
+                                    {classData?.title}
+                                </h1>
+                                <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                                    {classData?.capacity_info}
+                                </p>
                             </div>
-                        </ScrollArea>
-                    </CardContent>}
 
+                            {/* Quick Actions */}
+                            <div className="flex flex-wrap gap-2 pt-2">
+                                <Button size="sm" variant="outline">
+                                    Share Class
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                    View Analytics
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                    Export Roster
+                                </Button>
+                            </div>
+                        </div>
+                    </CardHeader>
+                </Card>
 
-                    {/* Secondary content */}
-                    {selectedLesson &&
-                        <div className="rounded-lg flex flex-col items-center justify-center">
-                            {!isPlaying && !isReading && (
-                                <Card className="w-full max-w-md p-6 flex flex-col items-center gap-6 shadow-lg rounded-xl">
+                {/* Content Section */}
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                    {/* Left: Course Content & Lessons */}
+                    <div className="xl:col-span-2 space-y-6">
+                        {!isPlaying && !isReading && (
+                            <Card className="border-border">
+                                <CardHeader className="pb-4">
+                                    <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                                        <BookOpen className="h-5 w-5 text-primary" />
+                                        Course Content
+                                    </h2>
+                                </CardHeader>
 
-                                    {/* Thumbnail */}
-                                    <div className="w-full h-40 rounded-lg overflow-hidden bg-muted">
-                                        {course?.thumbnail_url ? (
-                                            <img
-                                                src={course.thumbnail_url}
-                                                alt={classData?.title}
-                                                className="w-auto h-auto"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                                <ImageIcon className="w-10 h-10 opacity-60" />
-                                            </div>
-                                        )}
-                                    </div>
+                                <CardContent>
+                                    <ScrollArea className="h-[60vh]">
+                                        <div className="space-y-2 pr-4">
+                                            {lessonsWithContent?.map((skill, skillIndex) => (
+                                                <Collapsible
+                                                    key={skillIndex}
+                                                    open={expandedModules.includes(skill?.lesson?.uuid as string)}
+                                                    onOpenChange={() => toggleModule(skill?.lesson?.uuid as string)}
+                                                >
+                                                    <Card className="border-border/50 hover:border-border transition-colors">
+                                                        <CollapsibleTrigger className="w-full">
+                                                            <CardHeader className="cursor-pointer hover:bg-accent/30 transition-colors py-3">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="text-xs font-semibold text-primary/60 min-w-[1.5rem]">
+                                                                            {String(skillIndex + 1).padStart(2, "0")}
+                                                                        </span>
+                                                                        <h3 className="font-medium text-foreground">
+                                                                            {skill?.lesson?.title}
+                                                                        </h3>
+                                                                    </div>
+                                                                    {expandedModules.includes(skill?.lesson?.uuid as string) ? (
+                                                                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                                                                    ) : (
+                                                                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                                                    )}
+                                                                </div>
+                                                            </CardHeader>
+                                                        </CollapsibleTrigger>
 
-                                    {/* Title */}
-                                    <div className="text-center space-y-1">
-                                        <h2 className="text-xl font-semibold">{selectedLesson?.title}</h2>
+                                                        <CollapsibleContent>
+                                                            <CardContent className="pt-0 space-y-2">
+                                                                {skill?.content?.data?.map((content: any) => (
+                                                                    <button
+                                                                        key={content.uuid}
+                                                                        onClick={() => handleLessonSelect(content)}
+                                                                        className={`w-full rounded-lg border-2 border-border/50 p-3 transition-all hover:border-primary/50 hover:bg-accent/30 ${selectedLesson?.uuid === content.uuid
+                                                                            ? "border-primary bg-primary/5"
+                                                                            : ""
+                                                                            }`}
+                                                                    >
+                                                                        <div className="flex items-center justify-between gap-3">
+                                                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                                                {getLessonIcon("", false, false)}
+                                                                                <div className="text-left min-w-0">
+                                                                                    <p className="text-sm font-medium text-foreground truncate">
+                                                                                        {content.title}
+                                                                                    </p>
+                                                                                    <p className="text-xs text-muted-foreground capitalize">
+                                                                                        {content.type}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
+                                                            </CardContent>
+                                                        </CollapsibleContent>
+                                                    </Card>
+                                                </Collapsible>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Lesson Preview Card */}
+                        {selectedLesson && !isPlaying && !isReading && (
+                            <Card className="border-border overflow-hidden">
+                                <div className="aspect-video w-full bg-muted relative group overflow-hidden">
+                                    {course?.thumbnail_url ? (
+                                        <img
+                                            src={course.thumbnail_url}
+                                            alt={classData?.title}
+                                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full items-center justify-center text-muted-foreground">
+                                            <ImageIcon className="h-12 w-12 opacity-40" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <CardContent className="pt-6 space-y-4">
+                                    <div className="space-y-1">
+                                        <h2 className="text-xl font-semibold text-foreground">
+                                            {selectedLesson?.title}
+                                        </h2>
                                         {selectedLesson?.subtitle && (
                                             <p className="text-sm text-muted-foreground">{selectedLesson.subtitle}</p>
                                         )}
                                     </div>
 
-                                    {/* CTA Button */}
-                                    <Button
-                                        onClick={handleStartLesson}
-                                        className="w-full gap-2 py-6 text-lg"
-                                        size="lg"
-                                    >
-                                        <Play className="w-5 h-5" />
+                                    <Button onClick={handleStartLesson} className="w-full gap-2 py-6 text-base">
+                                        <Play className="h-5 w-5" />
                                         Begin Class
                                     </Button>
+                                </CardContent>
+                            </Card>
+                        )}
 
-                                </Card>
-                            )}
+                        {/* Video Player */}
+                        {isPlaying && contentTypeName === "video" && (
+                            <Card className="border-border overflow-hidden">
+                                <div className="relative bg-black">
+                                    <button
+                                        onClick={() => setIsPlaying(false)}
+                                        className="absolute right-3 top-3 z-50 rounded-full bg-black/60 p-2 text-white transition-colors hover:bg-black/80"
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </button>
 
-
-                            {/* Video Player Section (shown when video is playing) */}
-                            {isPlaying && contentTypeName === "video" && (
-                                <div className="w-full flex flex-col items-center mt-6">
-                                    <div className="w-full max-w-5xl relative">
-                                        <div className="aspect-video bg-black relative rounded-lg overflow-hidden shadow-lg">
-
-                                            {/* Close Button */}
-                                            <button
-                                                onClick={() => setIsPlaying(false)}
-                                                className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full z-50"
-                                            >
-                                                ✕
-                                            </button>
-
-                                            {/* Video placeholder */}
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <Play className="w-20 h-20 text-white opacity-50" />
-                                            </div>
-
-                                            {/* Controls */}
-                                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-4">
-                                                <div className="flex items-center gap-4">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="text-white hover:bg-white/20"
-                                                        onClick={() => setIsPlaying(false)}
-                                                    >
-                                                        <Pause className="w-5 h-5" />
-                                                    </Button>
-
-                                                    <span className="text-white text-sm">3:15 / 9:00</span>
-
-                                                    <Button size="sm" variant="ghost" className="text-white hover:bg-white/20">
-                                                        <Volume2 className="w-5 h-5" />
-                                                    </Button>
-
-                                                    <Button size="sm" variant="ghost" className="text-white hover:bg-white/20">
-                                                        <Settings className="w-5 h-5" />
-                                                    </Button>
-
-                                                    <Button size="sm" variant="ghost" className="text-white hover:bg-white/20">
-                                                        <Maximize className="w-5 h-5" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div className="aspect-video flex items-center justify-center">
+                                        <Play className="h-20 w-20 opacity-50 text-white" />
                                     </div>
-                                </div>
-                            )}
 
-
-                            {/* Reading Mode Section (shown when reading) */}
-                            {isReading && (contentTypeName === "pdf" || contentTypeName === "text") && (
-                                <Card className="">
-                                    {/* Top Bar */}
-                                    <div className="flex flex-col items-center p-4 border-b">
+                                    {/* Video Controls */}
+                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
                                         <div className="flex items-center gap-4">
-                                            {/* Left controls */}
-                                            <div className="flex items-center gap-3">
-                                                <Button size="sm" variant="ghost">
-                                                    <ZoomIn className="w-5 h-5" />
-                                                </Button>
-                                                <Button size="sm" variant="ghost">
-                                                    <ZoomOut className="w-5 h-5" />
-                                                </Button>
-                                                <Button size="sm" variant="ghost">
-                                                    <Settings className="w-5 h-5" />
-                                                </Button>
-                                            </div>
-
-                                            {/* Close button */}
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                onClick={() => setIsReading(false)}
+                                                className="text-white hover:bg-white/20"
                                             >
-                                                Close
+                                                <Pause className="h-5 w-5" />
+                                            </Button>
+                                            <span className="text-xs text-white/80">3:15 / 9:00</span>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="text-white hover:bg-white/20"
+                                            >
+                                                <Volume2 className="h-5 w-5" />
+                                            </Button>
+                                            <div className="flex-1" />
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="text-white hover:bg-white/20"
+                                            >
+                                                <Settings className="h-5 w-5" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="text-white hover:bg-white/20"
+                                            >
+                                                <Maximize className="h-5 w-5" />
                                             </Button>
                                         </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        )}
 
-                                        {/* Title + optional description */}
-                                        <div className="flex flex-col items-start text-start">
-                                            <h2 className="text-sm font-semibold">
+                        {/* Reading Mode */}
+                        {isReading && (contentTypeName === "pdf" || contentTypeName === "text") && (
+                            <Card className="border-border overflow-hidden flex flex-col">
+                                <CardHeader className="border-b border-border bg-accent/20 py-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <h2 className="text-sm font-semibold text-foreground">
                                                 {selectedLesson?.title}
                                             </h2>
-                                            <p className="text-xs">
+                                            <p className="text-xs text-muted-foreground">
                                                 {selectedLesson?.description}
                                             </p>
                                         </div>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => setIsReading(false)}
+                                            className="gap-1"
+                                        >
+                                            <X className="h-4 w-4" />
+                                            Close
+                                        </Button>
                                     </div>
 
+                                    {/* Zoom Controls */}
+                                    <div className="flex gap-2 mt-3">
+                                        <Button size="sm" variant="outline">
+                                            <ZoomIn className="h-4 w-4" />
+                                        </Button>
+                                        <Button size="sm" variant="outline">
+                                            <ZoomOut className="h-4 w-4" />
+                                        </Button>
+                                        <Button size="sm" variant="outline">
+                                            <Settings className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </CardHeader>
 
-                                    {/* Content Scroll Area */}
-                                    <div className="flex-1 overflow-y-auto p-6">
-                                        <div className="max-w-4xl mx-auto prose prose-gray">
-                                            {contentTypeName === "text" && (
-                                                <div dangerouslySetInnerHTML={{ __html: selectedLesson?.content_text }} />
-                                            )}
+                                <ScrollArea className="flex-1">
+                                    <div className="prose prose-sm dark:prose-invert max-w-none p-6">
+                                        {contentTypeName === "text" && (
+                                            <div dangerouslySetInnerHTML={{ __html: selectedLesson?.content_text }} />
+                                        )}
 
-                                            {contentTypeName === "pdf" && (
-                                                <div className="flex flex-col items-center">
-                                                    <p className="italic">Cannot display pdf contents at the moment</p>
+                                        {contentTypeName === "pdf" && (
+                                            <div className="flex flex-col items-center gap-4">
+                                                <p className="italic text-muted-foreground text-sm">
+                                                    PDF content viewer
+                                                </p>
+                                                <PDFViewer file={selectedLesson?.content_text} />
+                                            </div>
+                                        )}
+                                    </div>
+                                </ScrollArea>
+                            </Card>
+                        )}
+                    </div>
 
-                                                    <PDFViewer file={selectedLesson?.content_text} />
-
-                                                </div>
-                                            )}
+                    {/* Right: Student Details Panel */}
+                    {selectedStudent && (
+                        <div className="xl:col-span-1">
+                            <Card className="border-border sticky top-6 overflow-hidden flex flex-col max-h-[calc(100vh-10rem)]">
+                                {/* Header */}
+                                <CardHeader className="border-b border-border bg-accent/10 py-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <h3 className="font-semibold text-foreground">
+                                                {selectedStudent?.user?.full_name}
+                                            </h3>
+                                            <p className="text-xs text-muted-foreground">
+                                                Graded: <span className="font-semibold text-foreground">20/50</span>
+                                            </p>
                                         </div>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => setSelectedStudent(null)}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
                                     </div>
+                                </CardHeader>
 
-                                    {/* Bottom Progress Bar (similar to video) */}
-                                    <div className="p-2 border-t">
-                                        {/* <Progress value={readingProgress} className="w-full h-1" /> */}
-                                    </div>
-                                </Card>
-                            )}
-                        </div>}
+                                <ScrollArea className="flex-1">
+                                    <CardContent className="space-y-6 pt-4">
+                                        {/* Submission Section */}
+                                        <div className="space-y-3">
+                                            <h4 className="text-sm font-semibold text-foreground">Submission</h4>
+
+                                            <div className="space-y-3 bg-accent/5 rounded-lg p-3">
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <span className="text-muted-foreground">Due Date</span>
+                                                    <span className="font-medium text-foreground">02/10/2024</span>
+                                                </div>
+
+                                                <div>
+                                                    <Label className="text-xs text-muted-foreground">Grade</Label>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="e.g. 80"
+                                                        className="mt-1.5 text-sm bg-background"
+                                                        value={grade === "" ? "" : grade}
+                                                        onChange={(e) =>
+                                                            setGrade(e.target.value === "" ? "" : Number(e.target.value))
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <Separator className="bg-border/50" />
+
+                                        {/* Status Section */}
+                                        <div className="space-y-3">
+                                            <h4 className="text-sm font-semibold text-foreground">Status</h4>
+                                            <RadioGroup
+                                                value={status}
+                                                onValueChange={(value) =>
+                                                    setStatus(value as "Submitted" | "Excused" | "Missing")
+                                                }
+                                                className="space-y-2"
+                                            >
+                                                {[
+                                                    { value: "Submitted", label: "Submitted" },
+                                                    { value: "Excused", label: "Excused" },
+                                                    { value: "Missing", label: "Missing" },
+                                                ].map((item) => (
+                                                    <div key={item.value} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={item.value} id={item.value.toLowerCase()} />
+                                                        <Label
+                                                            htmlFor={item.value.toLowerCase()}
+                                                            className="text-sm cursor-pointer font-normal"
+                                                        >
+                                                            {item.label}
+                                                        </Label>
+                                                    </div>
+                                                ))}
+                                            </RadioGroup>
+                                        </div>
+
+                                        <Separator className="bg-border/50" />
+
+                                        {/* Actions */}
+                                        <div className="space-y-2">
+                                            <Button className="w-full">Save Grade</Button>
+                                            <Button variant="outline" className="w-full">
+                                                Toggle Present
+                                            </Button>
+                                        </div>
+
+                                        <Separator className="bg-border/50" />
+
+                                        {/* Submission Details */}
+                                        <div className="space-y-3">
+                                            <h4 className="text-sm font-semibold text-foreground">
+                                                Submission Details
+                                            </h4>
+
+                                            <div className="space-y-2 text-sm bg-accent/5 rounded-lg p-3">
+                                                <div>
+                                                    <span className="text-muted-foreground">Word Count:</span>
+                                                    <span className="ml-2 font-medium text-foreground">500</span>
+                                                </div>
+
+                                                <div className="pt-2 space-y-2 border-t border-border">
+                                                    <p className="text-xs font-semibold text-foreground">Files Uploaded</p>
+                                                    {uploadedFiles.length === 0 ? (
+                                                        <p className="text-xs text-muted-foreground">No files yet</p>
+                                                    ) : (
+                                                        <ul className="space-y-1">
+                                                            {uploadedFiles.map((file, i) => (
+                                                                <li
+                                                                    key={i}
+                                                                    className="flex items-center gap-2 text-primary text-xs hover:underline cursor-pointer"
+                                                                >
+                                                                    <FileText className="h-3 w-3" />
+                                                                    <span className="truncate">{file}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <Label className="text-xs text-muted-foreground">Upload File</Label>
+                                                <Input
+                                                    type="file"
+                                                    multiple
+                                                    onChange={handleFileUpload}
+                                                    className="mt-1.5 text-xs bg-background"
+                                                />
+                                            </div>
+
+                                            <Button
+                                                variant="link"
+                                                className="h-auto px-0 gap-2 text-primary text-xs font-medium"
+                                            >
+                                                <MessageCircle className="h-3 w-3" /> View Comments (50)
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </ScrollArea>
+                            </Card>
+                        </div>
+                    )}
                 </div>
             </main>
-
-            {selectedStudent && <aside className="w-80 bg-card border-l p-6 overflow-y-auto">
-                {/* Header */}
-                <div className="flex items-center justify-end mb-4">
-                    <Button onClick={() => setSelectedStudent(null)} >
-                        <X />
-                    </Button>
-                </div>
-
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                    <p className="text-sm text-muted-foreground">
-                        Graded: <span className="font-semibold text-foreground">20/50</span>
-                    </p>
-
-                    <Button variant="link" className="text-sm h-auto px-0 font-medium">
-                        View Rubric
-                    </Button>
-                </div>
-
-                {/* Submission Card */}
-                <div className="mb-6">
-                    <p className="text-muted-foreground text-sm mb-2">Submission</p>
-
-                    {/* Due Date */}
-                    <div className="mb-3 text-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Due Date</span>
-                            <span className="font-medium text-foreground">02/10/2024</span>
-                        </div>
-                    </div>
-
-                    {/* Grade Input */}
-                    <div className="mb-4">
-                        <Label className="text-sm text-muted-foreground">Grade</Label>
-                        <Input
-                            type="number"
-                            placeholder="e.g. 80"
-                            className="mt-1 text-sm"
-                            value={grade === "" ? "" : grade}
-                            onChange={(e) =>
-                                setGrade(e.target.value === "" ? "" : Number(e.target.value))
-                            }
-                        />
-                    </div>
-
-                    {/* Status */}
-                    <div className="mb-4">
-                        <p className="text-muted-foreground text-sm mb-2">Status</p>
-
-                        <RadioGroup
-                            value={status}
-                            onValueChange={(value) =>
-                                setStatus(value as "Submitted" | "Excused" | "Missing")
-                            }
-                            className="flex items-center gap-4"
-                        >
-                            {/* Submitted */}
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Submitted" id="submitted" />
-                                <Label htmlFor="submitted" className="text-sm">
-                                    Submitted
-                                </Label>
-                            </div>
-
-                            {/* Excused */}
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Excused" id="excused" />
-                                <Label htmlFor="excused" className="text-sm">
-                                    Excused
-                                </Label>
-                            </div>
-
-                            {/* Missing */}
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Missing" id="missing" />
-                                <Label htmlFor="missing" className="text-sm">
-                                    Missing
-                                </Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-
-                    {/* Save + Toggle Buttons */}
-                    <div className="flex items-center gap-2">
-                        <Button>Save Grade</Button>
-                        <Button variant="outline">Toggle Present</Button>
-                    </div>
-                </div>
-
-                <Separator className="my-4" />
-
-                {/* Submission Details */}
-                <div>
-                    <p className="text-muted-foreground text-sm mb-2">Submission Details</p>
-
-                    <p className="text-sm text-foreground mb-3">
-                        <span className="font-medium">Word Count:</span> 500 Words
-                    </p>
-
-                    <div className="mb-3">
-                        <p className="text-foreground font-medium text-sm mb-2">Files Uploaded</p>
-
-                        <ul className="text-sm space-y-2">
-                            {uploadedFiles.length === 0 && (
-                                <li className="text-muted-foreground">No files uploaded yet</li>
-                            )}
-
-                            {uploadedFiles.map((file, i) => (
-                                <li
-                                    key={i}
-                                    className="flex items-center gap-2 text-primary cursor-pointer hover:underline"
-                                >
-                                    <FileText className="w-4 h-4" /> {file}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    <div className="mb-4">
-                        <Label className="text-sm font-medium text-muted-foreground mb-2 block">
-                            Upload file
-                        </Label>
-
-                        <Input type="file" multiple onChange={handleFileUpload} className="text-sm" />
-                    </div>
-
-                    <Button variant="link" className="mt-3 flex items-center gap-2 text-primary text-sm font-medium">
-                        <MessageCircle className="w-4 h-4" /> View Comments (50)
-                    </Button>
-                </div>
-            </aside>}
-
         </div>
     );
 }
+// ...existing code...
