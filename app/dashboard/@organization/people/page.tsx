@@ -16,8 +16,14 @@ import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { useMemo, useState } from 'react';
-import { Users, Mail, Calendar, Filter, X, Building2, GraduationCap, BookOpen } from 'lucide-react';
+import { Users, Mail, Calendar, Filter, X, Building2, GraduationCap, BookOpen, MoreVertical, UserCog } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const domainOptions = [
   { value: '', label: 'All roles' },
@@ -80,6 +86,45 @@ const peopleColumns: ColumnDef<User>[] = [
           <span>{format(new Date(row.original.created_date), 'MMM dd, yyyy')}</span>
         </div>
       ) : null,
+  },
+  {
+    id: 'actions',
+    header: () => <div className='text-right'>Actions</div>,
+    cell: ({ row }) => (
+      <div className='flex justify-end'>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size='sm'
+              variant='ghost'
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreVertical className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                // Handle view profile action
+              }}
+            >
+              <Users className='h-4 w-4' />
+              View Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                // Handle manage roles action
+              }}
+            >
+              <UserCog className='h-4 w-4' />
+              Manage Roles
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ),
   },
 ];
 

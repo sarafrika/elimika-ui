@@ -37,6 +37,7 @@ import {
   Mail,
   Building2,
   AlertCircle,
+  MoreVertical,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -44,6 +45,12 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable } from '@/components/ui/data-table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const branchSchema = z.object({
   branch_name: z.string().min(1, 'Branch name is required'),
@@ -123,30 +130,42 @@ function createBranchColumns(
       id: 'actions',
       header: () => <div className='text-right'>Actions</div>,
       cell: ({ row }) => (
-        <div className='flex justify-end gap-2'>
-          <Button
-            size='sm'
-            variant='ghost'
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(row.original);
-            }}
-          >
-            <Pencil className='h-4 w-4' />
-          </Button>
-          <Button
-            size='sm'
-            variant='ghost'
-            onClick={(e) => {
-              e.stopPropagation();
-              if (confirm(`Delete branch "${row.original.branch_name}"?`)) {
-                onDelete(row.original.uuid!, row.original.branch_name ?? '');
-              }
-            }}
-            disabled={isDeleting}
-          >
-            <Trash2 className='h-4 w-4 text-destructive' />
-          </Button>
+        <div className='flex justify-end'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(row.original);
+                }}
+              >
+                <Pencil className='h-4 w-4' />
+                Edit Branch
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant='destructive'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`Delete branch "${row.original.branch_name}"?`)) {
+                    onDelete(row.original.uuid!, row.original.branch_name ?? '');
+                  }
+                }}
+                disabled={isDeleting}
+              >
+                <Trash2 className='h-4 w-4' />
+                Delete Branch
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },

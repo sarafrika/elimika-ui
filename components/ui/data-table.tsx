@@ -140,11 +140,11 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className='cursor-pointer transition-colors hover:bg-accent/50'
+                  className='cursor-pointer transition-colors hover:bg-muted/30'
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className='px-4 py-4'>
+                    <TableCell key={cell.id} className='px-4 py-2'>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
