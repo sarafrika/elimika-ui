@@ -66,7 +66,6 @@ interface OutputItem {
   end_time: string;
   color_code: string;
 }
-const colorCode = "#FF6B6B";
 
 export type EventType = "BLOCKED" | "AVAILABILITY" | "SCHEDULED_INSTANCE";
 
@@ -157,7 +156,7 @@ export function EventModal({
     return dates.map((item) => ({
       start_time: dayjs(`${item.date}T${item.startTime}`).toISOString(),
       end_time: dayjs(`${item.date}T${item.endTime}`).toISOString(),
-      color_code: colorCode,
+      color_code: "",
     }));
   }
 
