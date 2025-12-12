@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { Calendar } from 'lucide-react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -16,13 +15,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { createClassRecurrencePatternMutation } from '@/services/client/@tanstack/react-query.gen';
 import { useEffect } from 'react';
 import Spinner from '../../../../../components/ui/spinner';
 import MapboxSearchInput from '../component/mapbox-search-input';
 
 interface TimetableFormProps {
-  classId: string;
+  classId?: string;
   data: any;
   onPrev: () => void;
   onNext: (data: { response: any; payload: any }) => void;
@@ -56,7 +54,7 @@ const TimetableSchema = z.object({
 
 type TimetableFormData = z.infer<typeof TimetableSchema>;
 
-export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
+export function TimetableForm({ data, onNext }: TimetableFormProps) {
   const recurrence = data?.recurrence ?? {};
   const recurrenceEndDate = recurrence?.end_date
     ? new Date(recurrence.end_date).toISOString().split('T')[0]
@@ -86,7 +84,7 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
     watch,
     reset,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<TimetableFormData>({
     resolver: zodResolver(TimetableSchema),
     defaultValues,
@@ -129,9 +127,6 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
     }
   }, [data, reset]);
 
-
-  const createTimetable = useMutation(createClassRecurrencePatternMutation());
-
   const toggleDay = (dayIndex: number) => {
     const day = availabilityFields[dayIndex];
     // @ts-expect-error
@@ -155,24 +150,10 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
       },
     };
 
-    if (classId) {
-      onNext({
-        response: null,
-        payload,
-      });
-    } else {
-      createTimetable.mutate(
-        { body: payload.recurrence as any },
-        {
-          onSuccess: data => {
-            onNext({
-              response: data?.data ?? null,
-              payload,
-            });
-          },
-        }
-      );
-    }
+    onNext({
+      response: null,
+      payload,
+    });
   };
 
   const watched = watch();
@@ -354,7 +335,7 @@ export function TimetableForm({ data, onNext, classId }: TimetableFormProps) {
       </Card>
 
       <div className='flex justify-end gap-4'>
-        {createTimetable.isPending ? <Spinner /> :
+        {isSubmitting ? <Spinner /> :
           <Button type='submit' className='min-w-[250px]'>Save & Continue</Button>
         }
       </div>

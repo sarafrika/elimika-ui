@@ -27,7 +27,6 @@ import {
   getAllCoursesOptions,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
-  getClassRecurrencePatternOptions,
   searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
   updateClassDefinitionMutation
@@ -35,9 +34,8 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { type FieldErrors, useFieldArray, useForm } from 'react-hook-form';
+import { type FieldErrors, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { CustomLoadingState } from '../../../@course_creator/_components/loading-state';
 import {
@@ -72,7 +70,6 @@ export default function ClassDetailsForm({
   isLoading,
   onPrev,
 }: ClassDetailsProps) {
-  const _router = useRouter();
   const instructor = useInstructor();
   const searchParams = new URLSearchParams(location.search);
   const classId = searchParams.get('id');
@@ -154,26 +151,54 @@ export default function ClassDetailsForm({
     },
   });
 
-  const {
-    // fields: categoryFields,
-    append: appendCategory,
-    remove: removeCategory,
-  } = useFieldArray({
-    control: form.control,
-    name: 'categories',
-  });
-
   const [_recurringUuid, setRecurringUuid] = useState<string | null>(null);
   const [_recurringData, setRecurringData] = useState<any | null>(null);
   const [openAddRecurrenceModal, setOpenAddRecurrenceModal] = useState(false);
 
   const [editingRecurrenceId, _setEditingRecurrenceId] = useState<string | null>(null);
-  const { data: recurrenceData, isLoading: recurrenceLoading } = useQuery({
-    ...getClassRecurrencePatternOptions({
-      path: { uuid: classData?.recurrence_pattern_uuid as string },
-    }),
-    enabled: !!classData?.recurrence_pattern_uuid,
-  });
+
+  const parseDateValue = (value?: string | Date | null) => {
+    if (!value) return undefined;
+    const parsed = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  };
+
+  const buildSessionTemplates = (values: ClassFormValues) => {
+    const startTime = parseDateValue(values.default_start_time ?? classData?.default_start_time);
+    const endTime = parseDateValue(values.default_end_time ?? classData?.default_end_time);
+
+    if (!startTime || !endTime) {
+      return classData?.session_templates ?? [];
+    }
+
+    const availabilityDays =
+      combinedRecurrenceData?.payload?.availability
+        ?.filter((slot: any) => slot?.enabled)
+        ?.map((slot: any) => slot.day?.toString().toUpperCase());
+
+    const recurrence =
+      combinedRecurrenceData?.payload?.recurrence ||
+      classData?.session_templates?.[0]?.recurrence ||
+      (availabilityDays?.length
+        ? {
+            recurrence_type: 'WEEKLY',
+            interval_value: 1,
+            days_of_week: availabilityDays.join(','),
+          }
+        : undefined);
+
+    const conflictResolution =
+      classData?.session_templates?.[0]?.conflict_resolution || 'FAIL';
+
+    return [
+      {
+        start_time: startTime,
+        end_time: endTime,
+        recurrence,
+        conflict_resolution: conflictResolution,
+      },
+    ];
+  };
 
   const createClassDefinition = useMutation(createClassDefinitionMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
@@ -183,29 +208,40 @@ export default function ClassDetailsForm({
   };
 
   const handleSubmit = async (values: ClassFormValues) => {
+    const resolvedStartTime = values.default_start_time || classData?.default_start_time || null;
+    const resolvedEndTime = values.default_end_time || classData?.default_end_time || null;
+    const sessionTemplates = buildSessionTemplates(values);
+    const locationType =
+      combinedRecurrenceData?.payload?.location_type ||
+      values.location_type ||
+      classData?.location_type ||
+      'ONLINE';
+
+    const classTimeValidity =
+      resolvedStartTime && resolvedEndTime
+        ? `${Math.ceil(
+            (new Date(resolvedEndTime).getTime() - new Date(resolvedStartTime).getTime()) /
+              (1000 * 60 * 60 * 24 * 30)
+          )} months`
+        : undefined;
+
     const payload = {
       ...values,
       course_uuid: values.course_uuid || classData?.course_uuid,
       max_participants: values.max_participants || classData?.max_participants,
-      recurrence_pattern_uuid: combinedRecurrenceData?.response?.uuid || values?.recurrence_pattern_uuid,
-
-      default_instructor_uuid: instructor?.uuid,
-
-      location_type: combinedRecurrenceData?.payload?.location_type || classData?.location_type,
-      location_name: combinedRecurrenceData?.payload?.location_name || classData?.location_name || "Nairobi Class 1",
-      location_latitude: combinedRecurrenceData?.payload?.location_latitude || classData?.location_latitude,
-      location_longitude: combinedRecurrenceData?.payload?.location_longitude || classData?.location_longitude,
-
-      duration_minutes: combinedRecurrenceData?.payload?.duration || classData?.duration_minutes,
-
-      // 👇 REMOVE HARDCODED VALUES
-      default_start_time: values.default_start_time || classData?.default_start_time || null,
-      default_end_time: values.default_end_time || classData?.default_end_time || null,
-
-      class_time_validity: `${Math.ceil(
-        (new Date(values.default_end_time).getTime() - new Date(values.default_start_time).getTime()) /
-        (1000 * 60 * 60 * 24 * 30)
-      )} months`,
+      default_instructor_uuid: instructor?.uuid || classData?.default_instructor_uuid,
+      location_type: locationType,
+      location_name: combinedRecurrenceData?.payload?.location_name ?? classData?.location_name,
+      location_latitude:
+        combinedRecurrenceData?.payload?.location_latitude ?? classData?.location_latitude,
+      location_longitude:
+        combinedRecurrenceData?.payload?.location_longitude ?? classData?.location_longitude,
+      default_start_time: resolvedStartTime,
+      default_end_time: resolvedEndTime,
+      session_templates: sessionTemplates.length
+        ? sessionTemplates
+        : classData?.session_templates || [],
+      class_time_validity: classTimeValidity,
     };
 
 
@@ -600,7 +636,10 @@ export default function ClassDetailsForm({
         setOpen={setOpenAddRecurrenceModal}
         onCancel={() => setOpenAddRecurrenceModal(false)}
         editingRecurrenceId={editingRecurrenceId}
-        initialValues={recurrenceData?.data}
+        initialValues={
+          combinedRecurrenceData?.payload?.recurrence ||
+          classData?.session_templates?.[0]?.recurrence
+        }
         onSuccess={(data: any) => {
           setRecurringUuid(data?.data?.uuid as string);
           setRecurringData(data?.data);

@@ -70,12 +70,11 @@ import {
 } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
+import { useInstructor } from '@/context/instructor-context';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
 
-import {
-  scheduleRecurringClassFromDefinitionMutation
-} from '@/services/client/@tanstack/react-query.gen';
+import { scheduleClassMutation } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -83,9 +82,19 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const formatDateOnly = (date: Date | string) => {
-  const d = new Date(date);
-  return d.toISOString().split('T')[0]; // → "2025-02-01"
+const combineDateWithTime = (date: Date, timeValue?: Date | string | null) => {
+  if (!timeValue) return date;
+  const time = timeValue instanceof Date ? timeValue : new Date(timeValue);
+  if (Number.isNaN(time.getTime())) return date;
+
+  const merged = new Date(date);
+  merged.setHours(
+    time.getHours(),
+    time.getMinutes(),
+    time.getSeconds(),
+    time.getMilliseconds()
+  );
+  return merged;
 };
 
 interface AcademicFormProps {
@@ -109,6 +118,7 @@ const academicPeriodSchema = z.object({
 type AcademicPeriodFormValues = z.infer<typeof academicPeriodSchema>;
 
 export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: AcademicFormProps) {
+  const instructor = useInstructor();
   const form = useForm<AcademicPeriodFormValues>({
     resolver: zodResolver(academicPeriodSchema),
     defaultValues: {
@@ -146,23 +156,45 @@ export function AcademicPeriodForm({ onNext, onPrev, classId, classData }: Acade
 
   const [continuousRegistration, setContinuousRegistration] = useState(false);
 
-  const createClassSchdeule = useMutation(scheduleRecurringClassFromDefinitionMutation());
+  const scheduleClassRequest = useMutation(scheduleClassMutation());
 
   const onSubmit = (values: AcademicPeriodFormValues) => {
     if (!classId) return;
 
-    createClassSchdeule.mutate(
+    const instructorUuid = classData?.default_instructor_uuid || instructor?.uuid;
+    if (!instructorUuid) {
+      toast.error('Missing instructor information for scheduling');
+      return;
+    }
+
+    const startTime = combineDateWithTime(
+      values.academicPeriod.startDate,
+      classData?.default_start_time
+    );
+    const endTime = combineDateWithTime(
+      values.academicPeriod.endDate,
+      classData?.default_end_time
+    );
+
+    scheduleClassRequest.mutate(
       {
-        path: { uuid: classId as string },
-        query: {
-          startDate: formatDateOnly(values.academicPeriod.startDate) as any,
-          endDate: formatDateOnly(values.academicPeriod.endDate) as any,
+        body: {
+          class_definition_uuid: classId,
+          instructor_uuid: instructorUuid,
+          start_time: startTime,
+          end_time: endTime,
+          timezone: 'UTC',
         },
       },
       {
         onSuccess: data => {
           toast.success(data?.message);
           onNext();
+        },
+        onError: error => {
+          const message =
+            (error as any)?.error?.message || 'Could not schedule class for selected period';
+          toast.error(message);
         },
       }
     );

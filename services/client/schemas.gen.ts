@@ -1267,19 +1267,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1730,16 +1730,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: 2,
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2065,16 +2065,16 @@ export const TrainingProgramSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total program duration.',
-      example: 120,
-      readOnly: true,
-    },
     program_type: {
       type: 'string',
       description: '**[READ-ONLY]** Classification of program type based on duration and content.',
       example: 'Comprehensive Masterclass',
+      readOnly: true,
+    },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total program duration.',
+      example: 120,
       readOnly: true,
     },
   },
@@ -2642,6 +2642,13 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_profile_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
+      example: true,
+      readOnly: true,
+    },
     has_location_coordinates: {
       type: 'boolean',
       description:
@@ -2654,13 +2661,6 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
-    is_profile_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
       readOnly: true,
     },
   },
@@ -2904,17 +2904,25 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     formatted_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: 4,
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
+    membership_duration_months: {
+      type: 'integer',
+      format: 'int32',
       description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
     membership_status: {
@@ -2955,14 +2963,6 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
       example: true,
-      readOnly: true,
-    },
-    membership_duration_months: {
-      type: 'integer',
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
       readOnly: true,
     },
   },
@@ -3118,16 +3118,8 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    calculated_years: {
-      type: 'number',
-      format: 'double',
-      description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
-      example: 5.46,
-      readOnly: true,
-    },
-    duration_in_months: {
-      type: 'integer',
-      format: 'int32',
+    is_complete: {
+      type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the experience record has all essential information.',
       example: true,
@@ -3167,8 +3159,16 @@ export const InstructorExperienceSchema = {
       example: true,
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
+    calculated_years: {
+      type: 'number',
+      format: 'double',
+      description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
+      example: 5.46,
+      readOnly: true,
+    },
+    duration_in_months: {
+      type: 'integer',
+      format: 'int32',
       description:
         '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
       example: 66,
@@ -3303,20 +3303,10 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    years_since_completion: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
-      example: 4,
-      readOnly: true,
-    },
-    education_level: {
-      $ref: '#/components/schemas/EducationLevelEnum',
-    },
-    has_certificate_number: {
+    is_complete: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
       example: true,
       readOnly: true,
     },
@@ -3333,10 +3323,20 @@ export const InstructorEducationSchema = {
       example: 2020,
       readOnly: true,
     },
-    is_complete: {
+    years_since_completion: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
+      example: 4,
+      readOnly: true,
+    },
+    education_level: {
+      $ref: '#/components/schemas/EducationLevelEnum',
+    },
+    has_certificate_number: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
       example: true,
       readOnly: true,
     },
@@ -3917,32 +3917,6 @@ export const CourseSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: 40,
-      readOnly: true,
-    },
-    has_multiple_categories: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
-      example: true,
-      readOnly: true,
-    },
-    category_count: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of categories this course belongs to.',
-      example: 2,
-      readOnly: true,
-    },
-    lifecycle_stage: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
-      example: 'Published and Active',
-      readOnly: true,
-    },
     accepts_new_enrollments: {
       type: 'boolean',
       description:
@@ -3972,6 +3946,32 @@ export const CourseSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is currently under review.',
       example: false,
+      readOnly: true,
+    },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: 40,
+      readOnly: true,
+    },
+    has_multiple_categories: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
+      example: true,
+      readOnly: true,
+    },
+    category_count: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of categories this course belongs to.',
+      example: 2,
+      readOnly: true,
+    },
+    lifecycle_stage: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
+      example: 'Published and Active',
       readOnly: true,
     },
   },
@@ -6867,17 +6867,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: 100,
-      readOnly: true,
-    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: 100,
       readOnly: true,
     },
     assignment_scope: {
@@ -7008,24 +7008,6 @@ export const CurrencySchema = {
     defaultCurrency: {
       type: 'boolean',
       description: 'Indicates whether this is the platform default currency',
-    },
-  },
-} as const;
-
-export const ApiResponseVoidSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      type: 'object',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
     },
   },
 } as const;
@@ -7398,307 +7380,14 @@ export const ApiResponseStringSchema = {
   },
 } as const;
 
-export const InvitationRequestSchema = {
-  type: 'object',
-  description:
-    'Request body for creating new organization or branch invitations with recipient details and role assignment',
-  example: {
-    recipient_email: 'john.doe@example.com',
-    recipient_name: 'John Doe',
-    domain_name: 'instructor',
-    inviter_uuid: '550e8400-e29b-41d4-a716-446655440004',
-    notes: "Welcome to our training program! We're excited to have you join our team.",
-  },
-  properties: {
-    recipient_email: {
-      type: 'string',
-      format: 'email',
-      description:
-        '**[REQUIRED]** Email address of the invitation recipient. Must be a valid email format and will be used to send the invitation email with accept/decline links.',
-      example: 'john.doe@example.com',
-      maxLength: 100,
-      minLength: 0,
-    },
-    recipient_name: {
-      type: 'string',
-      description:
-        '**[REQUIRED]** Full name of the invitation recipient. Used in email templates, invitation records, and for display purposes throughout the invitation process.',
-      example: 'John Doe',
-      maxLength: 150,
-      minLength: 0,
-    },
-    domain_name: {
-      $ref: '#/components/schemas/DomainNameEnum',
-    },
-    inviter_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[REQUIRED]** UUID of the user who is sending this invitation. Must be an existing user with appropriate permissions to invite users to the target organization/branch.',
-      example: '550e8400-e29b-41d4-a716-446655440004',
-    },
-    notes: {
-      type: 'string',
-      description:
-        '**[OPTIONAL]** Optional personal message or notes to include with the invitation email. Will be displayed in the invitation email template and can contain welcoming text, instructions, or context.',
-      example:
-        "Welcome to our training program! We're excited to have you join our team as an instructor. Please let us know if you have any questions.",
-      maxLength: 500,
-      minLength: 0,
-    },
-  },
-  required: ['domain_name', 'inviter_uuid', 'recipient_email', 'recipient_name'],
-} as const;
-
-export const ApiResponseInvitationSchema = {
+export const ApiResponseVoidSchema = {
   type: 'object',
   properties: {
     success: {
       type: 'boolean',
     },
     data: {
-      $ref: '#/components/schemas/Invitation',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
       type: 'object',
-    },
-  },
-} as const;
-
-export const InvitationSchema = {
-  type: 'object',
-  description:
-    'Complete invitation information including recipient details, organization/branch assignment, invitation status, and lifecycle tracking',
-  example: {
-    uuid: '550e8400-e29b-41d4-a716-446655440000',
-    token: 'abc123def456ghi789jkl012mno345pqr678stu901vwx234yz0123456789abcd',
-    recipient_email: 'john.doe@example.com',
-    recipient_name: 'John Doe',
-    organisation_uuid: '550e8400-e29b-41d4-a716-446655440001',
-    organisation_name: 'Acme Training Institute',
-    branch_uuid: '550e8400-e29b-41d4-a716-446655440002',
-    branch_name: 'Downtown Branch',
-    domain_uuid: '550e8400-e29b-41d4-a716-446655440003',
-    domain_name: 'instructor',
-    inviter_uuid: '550e8400-e29b-41d4-a716-446655440004',
-    inviter_name: 'Jane Smith',
-    status: 'PENDING',
-    expires_at: '2025-07-16T14:30:00',
-    accepted_at: null,
-    declined_at: null,
-    user_uuid: null,
-    notes: "Welcome to our training program! We're excited to have you join our team.",
-    created_date: '2025-07-09T09:00:00',
-    updated_date: '2025-07-09T09:00:00',
-    created_by: 'admin@organization.com',
-    updated_by: 'admin@organization.com',
-  },
-  properties: {
-    uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[READ-ONLY]** Unique system identifier for the invitation. Auto-generated by the system and cannot be modified.',
-      example: '550e8400-e29b-41d4-a716-446655440000',
-      readOnly: true,
-    },
-    token: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Unique token used for invitation acceptance and decline links. Generated by the system and used in email URLs for secure invitation processing.',
-      example: 'abc123def456ghi789jkl012mno345pqr678stu901vwx234yz0123456789abcd',
-      maxLength: 64,
-      minLength: 64,
-      readOnly: true,
-    },
-    recipient_email: {
-      type: 'string',
-      format: 'email',
-      description:
-        '**[REQUIRED]** Email address of the invitation recipient. Must be a valid email format and will be used to send invitation emails.',
-      example: 'john.doe@example.com',
-      maxLength: 100,
-      minLength: 0,
-    },
-    recipient_name: {
-      type: 'string',
-      description:
-        '**[REQUIRED]** Full name of the invitation recipient. Used in email templates and for display purposes throughout the invitation process.',
-      example: 'John Doe',
-      maxLength: 150,
-      minLength: 0,
-    },
-    organisation_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[REQUIRED]** UUID of the organization the user is being invited to join. References the target organization for this invitation.',
-      example: '550e8400-e29b-41d4-a716-446655440001',
-    },
-    branch_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[OPTIONAL]** UUID of the training branch for branch-specific invitations. When provided, the invitation is for a specific branch within the organization.',
-      example: '550e8400-e29b-41d4-a716-446655440002',
-    },
-    domain_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[REQUIRED]** UUID of the user domain/role being offered to the recipient. Determines what permissions and access the user will have upon acceptance.',
-      example: '550e8400-e29b-41d4-a716-446655440003',
-    },
-    inviter_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[REQUIRED]** UUID of the user who sent the invitation. References the user who initiated this invitation process.',
-      example: '550e8400-e29b-41d4-a716-446655440004',
-    },
-    status: {
-      $ref: '#/components/schemas/StatusEnum4',
-    },
-    notes: {
-      type: 'string',
-      description:
-        '**[OPTIONAL]** Optional notes or message included with the invitation. Can contain welcoming text, instructions, or other relevant information for the recipient.',
-      example: "Welcome to our training program! We're excited to have you join our team.",
-      maxLength: 500,
-      minLength: 0,
-    },
-    organisation_name: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Name of the organization for display purposes. Populated by the system based on the organisation_uuid and cannot be directly modified.',
-      example: 'Acme Training Institute',
-      readOnly: true,
-    },
-    branch_name: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Name of the training branch for display purposes. Populated by the system based on the branch_uuid and cannot be directly modified.',
-      example: 'Downtown Branch',
-      readOnly: true,
-    },
-    domain_name: {
-      $ref: '#/components/schemas/DomainNameEnum',
-    },
-    inviter_name: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Full name of the user who sent the invitation. Cached for performance and email template purposes, automatically populated by the system.',
-      example: 'Jane Smith',
-      maxLength: 150,
-      readOnly: true,
-    },
-    expires_at: {
-      type: 'string',
-      format: 'date-time',
-      description:
-        '**[READ-ONLY]** Date and time when the invitation expires in ISO 8601 format. After this time, the invitation cannot be accepted and will be marked as expired.',
-      example: '2025-07-16T14:30:00',
-      readOnly: true,
-    },
-    accepted_at: {
-      type: 'string',
-      format: 'date-time',
-      description:
-        '**[READ-ONLY]** Date and time when the invitation was accepted in ISO 8601 format. Only populated when the invitation status is ACCEPTED.',
-      example: '2025-07-10T10:15:30',
-      readOnly: true,
-    },
-    declined_at: {
-      type: 'string',
-      format: 'date-time',
-      description:
-        '**[READ-ONLY]** Date and time when the invitation was declined in ISO 8601 format. Only populated when the invitation status is DECLINED.',
-      example: '2025-07-10T16:45:00',
-      readOnly: true,
-    },
-    user_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[READ-ONLY]** UUID of the user who accepted the invitation. Only populated when the invitation status is ACCEPTED, linking to the actual user account.',
-      example: '550e8400-e29b-41d4-a716-446655440005',
-      readOnly: true,
-    },
-    created_date: {
-      type: 'string',
-      format: 'date-time',
-      description:
-        '**[READ-ONLY]** Timestamp when the invitation was first created in ISO 8601 format. Automatically set by the system and cannot be modified.',
-      example: '2025-07-09T09:00:00',
-      readOnly: true,
-    },
-    updated_date: {
-      type: 'string',
-      format: 'date-time',
-      description:
-        '**[READ-ONLY]** Timestamp when the invitation was last modified in ISO 8601 format. Automatically updated by the system on any changes and cannot be directly modified.',
-      example: '2025-07-09T09:00:00',
-      readOnly: true,
-    },
-    created_by: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Email or identifier of who created the invitation. Used for audit trail purposes and automatically populated by the system.',
-      example: 'admin@organization.com',
-      maxLength: 50,
-      readOnly: true,
-    },
-    updated_by: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Email or identifier of who last modified the invitation. Used for audit trail purposes and automatically updated by the system on changes.',
-      example: 'admin@organization.com',
-      maxLength: 50,
-      readOnly: true,
-    },
-  },
-  required: [
-    'domain_uuid',
-    'inviter_uuid',
-    'organisation_uuid',
-    'recipient_email',
-    'recipient_name',
-  ],
-} as const;
-
-export const ApiResponseListInvitationSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/Invitation',
-      },
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
-    },
-  },
-} as const;
-
-export const ApiResponseIntegerSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      type: 'integer',
-      format: 'int32',
     },
     message: {
       type: 'string',
@@ -7869,47 +7558,6 @@ export const ApiResponseInstructorReviewSchema = {
   },
 } as const;
 
-export const BlockTimeSlotsRequestSchema = {
-  type: 'object',
-  description: 'Payload used to block multiple time slots for an instructor.',
-  properties: {
-    slots: {
-      type: 'array',
-      description: '**[REQUIRED]** Collection of blocked slots to create.',
-      items: {
-        $ref: '#/components/schemas/BlockedTimeSlotRequest',
-      },
-    },
-  },
-  required: ['slots'],
-} as const;
-
-export const BlockedTimeSlotRequestSchema = {
-  type: 'object',
-  description: 'Represents a single blocked time slot window for an instructor.',
-  properties: {
-    start_time: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[REQUIRED]** Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)',
-      example: '2024-10-15T09:00:00',
-    },
-    end_time: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[REQUIRED]** End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)',
-      example: '2024-10-15T10:30:00',
-    },
-    color_code: {
-      type: 'string',
-      description: '**[OPTIONAL]** Hex color code used to visualize the blocked slot.',
-      example: '#FF6B6B',
-      pattern: '^#[0-9A-Fa-f]{6}$',
-    },
-  },
-  required: ['end_time', 'start_time'],
-} as const;
-
 export const GuardianStudentLinkSchema = {
   type: 'object',
   description: "Represents a guardian's access rights to a learner profile.",
@@ -7939,7 +7587,7 @@ export const GuardianStudentLinkSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum4',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -8073,7 +7721,7 @@ export const EnrollmentSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum6',
+      $ref: '#/components/schemas/StatusEnum5',
     },
     attendance_marked_at: {
       type: 'string',
@@ -8296,7 +7944,7 @@ export const CourseTrainingApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     application_notes: {
       type: 'string',
@@ -8569,6 +8217,25 @@ export const CheckoutRequestSchema = {
     },
   },
   required: ['cart_id', 'customer_email', 'payment_provider_id'],
+} as const;
+
+export const ApiResponseIntegerSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'integer',
+      format: 'int32',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
 } as const;
 
 export const CartResponseSchema = {
@@ -9168,7 +8835,7 @@ export const BookingResponseSchema = {
       description: 'End time for the session',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum8',
+      $ref: '#/components/schemas/StatusEnum7',
     },
     price_amount: {
       type: 'number',
@@ -9344,7 +9011,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum9',
+      $ref: '#/components/schemas/StatusEnum8',
     },
     score: {
       type: 'number',
@@ -9421,17 +9088,17 @@ export const AssignmentSubmissionSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
-      readOnly: true,
-    },
     submission_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the submission based on its content type.',
       example: 'Mixed Media Submission',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
       readOnly: true,
     },
     submission_status_display: {
@@ -9476,6 +9143,99 @@ export const AdminDomainAssignmentRequestSchema = {
     },
   },
   required: ['assignment_type', 'domain_name'],
+} as const;
+
+export const AdminCreateUserRequestDTOSchema = {
+  type: 'object',
+  properties: {
+    first_name: {
+      type: 'string',
+      description: 'First name of the admin user',
+      example: 'Jane',
+      maxLength: 100,
+      minLength: 0,
+    },
+    middle_name: {
+      type: 'string',
+      description: 'Middle name of the admin user',
+      example: 'A.',
+      maxLength: 100,
+      minLength: 0,
+    },
+    last_name: {
+      type: 'string',
+      description: 'Last name of the admin user',
+      example: 'Doe',
+      maxLength: 100,
+      minLength: 0,
+    },
+    email: {
+      type: 'string',
+      description: 'Email address of the admin user',
+      example: 'jane.doe@example.com',
+      maxLength: 150,
+      minLength: 0,
+    },
+    phone_number: {
+      type: 'string',
+      description: 'Optional phone number',
+      example: '+254700000000',
+      maxLength: 50,
+      minLength: 0,
+    },
+  },
+  required: ['email', 'first_name', 'last_name'],
+} as const;
+
+export const OrganisationUserCreateRequestDTOSchema = {
+  type: 'object',
+  properties: {
+    first_name: {
+      type: 'string',
+      description: 'First name of the user',
+      example: 'Jane',
+      maxLength: 100,
+      minLength: 0,
+    },
+    middle_name: {
+      type: 'string',
+      description: 'Middle name of the user',
+      example: 'A.',
+      maxLength: 100,
+      minLength: 0,
+    },
+    last_name: {
+      type: 'string',
+      description: 'Last name of the user',
+      example: 'Doe',
+      maxLength: 100,
+      minLength: 0,
+    },
+    email: {
+      type: 'string',
+      description: 'Email address of the user',
+      example: 'jane.doe@example.com',
+      maxLength: 150,
+      minLength: 0,
+    },
+    phone_number: {
+      type: 'string',
+      description: 'Optional phone number',
+      example: '+254700000000',
+      maxLength: 50,
+      minLength: 0,
+    },
+    domain_name: {
+      $ref: '#/components/schemas/DomainNameEnum',
+    },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Optional training branch UUID for branch-specific assignment',
+      example: '550e8400-e29b-41d4-a716-446655440002',
+    },
+  },
+  required: ['domain_name', 'email', 'first_name', 'last_name'],
 } as const;
 
 export const CurrencyCreateRequestSchema = {
@@ -10392,7 +10152,7 @@ export const QuizAttemptSchema = {
       example: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum9',
     },
     created_date: {
       type: 'string',
@@ -10431,6 +10191,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: 85,
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -10447,12 +10213,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: 85,
       readOnly: true,
     },
   },
@@ -10661,7 +10421,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     progress_percentage: {
       type: 'number',
@@ -10910,103 +10670,6 @@ export const ApiResponseListUserSchema = {
       type: 'object',
     },
   },
-} as const;
-
-export const ApiResponseInvitationPreviewSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/InvitationPreview',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {
-      type: 'object',
-    },
-  },
-} as const;
-
-export const InvitationPreviewSchema = {
-  type: 'object',
-  description: 'Public-safe invitation details shown to users before authentication',
-  example: {
-    recipient_name: 'John Doe',
-    organisation_name: 'Acme Training Institute',
-    branch_name: 'Downtown Branch',
-    role_name: 'Instructor',
-    role_description: 'A teacher or facilitator with course creation and management capabilities',
-    inviter_name: 'Jane Smith',
-    expires_at: '2025-09-05T14:30:00',
-    notes: "Welcome to our training program! We're excited to have you join our team.",
-    is_expired: false,
-    requires_registration: true,
-  },
-  properties: {
-    recipient_name: {
-      type: 'string',
-      description: 'Full name of the person being invited',
-      example: 'John Doe',
-    },
-    organisation_name: {
-      type: 'string',
-      description: 'Name of the organization extending the invitation',
-      example: 'Acme Training Institute',
-    },
-    branch_name: {
-      type: 'string',
-      description: 'Name of the specific training branch (if applicable)',
-      example: 'Downtown Branch',
-    },
-    role_name: {
-      $ref: '#/components/schemas/RoleNameEnum',
-    },
-    role_description: {
-      type: 'string',
-      description: "Detailed description of the role's responsibilities and permissions",
-      example: 'A teacher or facilitator with course creation and management capabilities',
-    },
-    inviter_name: {
-      type: 'string',
-      description: 'Full name of the person who sent the invitation',
-      example: 'Jane Smith',
-    },
-    expires_at: {
-      type: 'string',
-      format: 'date-time',
-      description: 'Date and time when the invitation expires in ISO 8601 format',
-      example: '2025-09-05T14:30:00',
-    },
-    notes: {
-      type: 'string',
-      description: 'Optional personal message or notes included with the invitation',
-      example: "Welcome to our training program! We're excited to have you join our team.",
-    },
-    is_expired: {
-      type: 'boolean',
-      description: 'Indicates whether the invitation has expired and can no longer be accepted',
-      example: false,
-    },
-    requires_registration: {
-      type: 'boolean',
-      description:
-        'Indicates whether the recipient needs to register an account before accepting. True for student/instructor/course_creator roles, false for admin/organisation_user roles.',
-      example: true,
-    },
-  },
-  required: [
-    'expires_at',
-    'inviter_name',
-    'is_expired',
-    'organisation_name',
-    'recipient_name',
-    'requires_registration',
-    'role_description',
-    'role_name',
-  ],
 } as const;
 
 export const ApiResponsePagedDTOInstructorSchema = {
@@ -11431,7 +11094,7 @@ export const GuardianStudentDashboardDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum4',
     },
     courseProgress: {
       type: 'array',
@@ -11544,7 +11207,7 @@ export const GuardianStudentSummaryDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum4',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -11707,16 +11370,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -12110,7 +11773,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     progress_percentage: {
       type: 'number',
@@ -12308,17 +11971,17 @@ export const CourseCategoryMappingSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    has_names: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if both course and category names are populated.',
+      example: true,
+      readOnly: true,
+    },
     display_text: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable text representing this course-category relationship.',
       example: 'Advanced Java Programming → Programming',
-      readOnly: true,
-    },
-    has_names: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if both course and category names are populated.',
-      example: true,
       readOnly: true,
     },
   },
@@ -13014,6 +12677,40 @@ export const PagedDTOAssignmentSubmissionSchema = {
     },
     links: {
       $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListDomainDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/DomainDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const DomainDTOSchema = {
+  type: 'object',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    name: {
+      type: 'string',
     },
   },
 } as const;
@@ -13874,28 +13571,6 @@ export const StatusEnum3Schema = {
   example: 'SCHEDULED',
 } as const;
 
-export const DomainNameEnumSchema = {
-  type: 'string',
-  description:
-    '**[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.',
-  enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],
-  example: 'instructor',
-  externalDocs: {
-    description: 'User Domain Roles Guide',
-    url: '/docs/OrganizationDomainsGuide.md',
-  },
-} as const;
-
-export const StatusEnum4Schema = {
-  type: 'string',
-  default: 'PENDING',
-  description:
-    '**[READ-ONLY]** Current status of the invitation in its lifecycle. Automatically managed by the system based on user actions and expiration rules.',
-  enum: ['PENDING', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'CANCELLED'],
-  example: 'PENDING',
-  readOnly: true,
-} as const;
-
 export const RelationshipTypeEnumSchema = {
   type: 'string',
   enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
@@ -13906,12 +13581,12 @@ export const ShareScopeEnumSchema = {
   enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
 } as const;
 
-export const StatusEnum5Schema = {
+export const StatusEnum4Schema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
 
-export const StatusEnum6Schema = {
+export const StatusEnum5Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
@@ -13924,7 +13599,7 @@ export const ApplicantTypeEnumSchema = {
   enum: ['instructor', 'organisation'],
 } as const;
 
-export const StatusEnum7Schema = {
+export const StatusEnum6Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected'],
@@ -13946,7 +13621,7 @@ export const ReleaseStrategyEnumSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum8Schema = {
+export const StatusEnum7Schema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: ['payment_required', 'confirmed', 'cancelled', 'payment_failed', 'expired'],
@@ -13959,7 +13634,7 @@ export const PaymentStatusEnumSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum9Schema = {
+export const StatusEnum8Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -13973,25 +13648,25 @@ export const AssignmentTypeEnumSchema = {
   example: 'global',
 } as const;
 
-export const StatusEnum10Schema = {
+export const DomainNameEnumSchema = {
+  type: 'string',
+  description: 'Domain/role to assign within the organisation',
+  enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],
+  example: 'organisation_user',
+} as const;
+
+export const StatusEnum9Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the quiz attempt.',
   enum: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'],
   example: 'GRADED',
 } as const;
 
-export const StatusEnum11Schema = {
+export const StatusEnum10Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
   example: 'COMPLETED',
-} as const;
-
-export const RoleNameEnumSchema = {
-  type: 'string',
-  description: 'Display name of the role/domain being offered',
-  enum: ['Student', 'Instructor', 'Administrator', 'Organization Member'],
-  example: 'Instructor',
 } as const;
 
 export const EntryTypeEnumSchema = {

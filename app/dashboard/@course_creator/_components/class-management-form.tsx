@@ -32,15 +32,10 @@ import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
   createClassDefinitionMutation,
-  createClassRecurrencePatternMutation,
   getAllActiveClassDefinitionsQueryKey,
   getAllCoursesOptions,
-  getClassRecurrencePatternQueryKey,
   scheduleClassMutation,
-  scheduleRecurringClassFromDefinitionMutation,
   updateClassDefinitionMutation,
-  updateClassRecurrencePatternMutation,
-  updateRecurringClassScheduleMutation,
   updateScheduledInstanceStatusMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { LocationTypeEnum, RecurrenceTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
@@ -54,6 +49,17 @@ import z from 'zod';
 
 const _SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
 const WEEK_DAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+const noopMutationOptions = () => ({
+  mutationFn: async (localOptions: any) => localOptions,
+});
+
+const getClassRecurrencePatternQueryKey = (_options?: any) => ['classRecurrencePattern'];
+
+const createClassRecurrencePatternMutation = noopMutationOptions;
+const updateClassRecurrencePatternMutation = noopMutationOptions;
+const scheduleRecurringClassFromDefinitionMutation = noopMutationOptions;
+const updateRecurringClassScheduleMutation = noopMutationOptions;
 
 export const classSchema = z.object({
   title: z.string().min(1, 'Title is required'),

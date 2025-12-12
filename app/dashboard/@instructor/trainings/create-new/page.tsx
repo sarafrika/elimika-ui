@@ -3,7 +3,6 @@
 import { Card } from '@/components/ui/card';
 import {
   getClassDefinitionOptions,
-  getClassRecurrencePatternOptions,
   getCourseByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
@@ -67,20 +66,13 @@ export default function ClassCreationPage() {
     enabled: !!data?.data?.course_uuid,
   });
 
-  const { data: recurrenceData, isLoading: isRecurrenceLoading } = useQuery({
-    ...getClassRecurrencePatternOptions({
-      path: { uuid: data?.data?.recurrence_pattern_uuid as string },
-    }),
-    enabled: !!data?.data?.recurrence_pattern_uuid,
-  });
-
-  const isLoading = isClassLoading || isCourseLoading || isRecurrenceLoading;
+  const isLoading = isClassLoading || isCourseLoading;
 
   const combinedData = data?.data
     ? {
       ...data.data,
       course: courseData?.data || null,
-      recurrence: recurrenceData?.data || null,
+      recurrence: data.data.session_templates?.[0]?.recurrence || null,
     }
     : null;
 

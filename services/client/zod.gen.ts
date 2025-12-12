@@ -857,17 +857,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1211,14 +1211,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -1455,14 +1455,14 @@ export const zTrainingProgram = z
       )
       .readonly()
       .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total program duration.')
-      .readonly()
-      .optional(),
     program_type: z
       .string()
       .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total program duration.')
       .readonly()
       .optional(),
   })
@@ -1895,24 +1895,17 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    has_location_coordinates: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
-      )
-      .readonly()
-      .optional(),
-    formatted_location: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
-      )
-      .readonly()
-      .optional(),
     is_profile_complete: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
+      )
+      .readonly()
+      .optional(),
+    has_location_coordinates: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
       )
       .readonly()
       .optional(),
@@ -2128,14 +2121,22 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
     formatted_duration: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+    membership_duration_months: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
+      )
       .readonly()
       .optional(),
     membership_status: zMembershipStatusEnum.optional(),
@@ -2163,14 +2164,6 @@ export const zInstructorProfessionalMembership = z
     is_recent_membership: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
-      .readonly()
-      .optional(),
-    membership_duration_months: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
-      )
       .readonly()
       .optional(),
   })
@@ -2292,17 +2285,9 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    calculated_years: z
-      .number()
-      .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
-      .readonly()
-      .optional(),
-    duration_in_months: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
-      )
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
     formatted_duration: z
@@ -2331,9 +2316,17 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+    calculated_years: z
+      .number()
+      .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
+      .readonly()
+      .optional(),
+    duration_in_months: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
+      )
       .readonly()
       .optional(),
   })
@@ -2438,18 +2431,9 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
-    years_since_completion: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of years since the qualification was completed.')
-      .readonly()
-      .optional(),
-    education_level: zEducationLevelEnum.optional(),
-    has_certificate_number: z
+    is_complete: z
       .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
-      )
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
     is_recent_qualification: z
@@ -2464,9 +2448,18 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
-    is_complete: z
+    years_since_completion: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of years since the qualification was completed.')
+      .readonly()
+      .optional(),
+    education_level: zEducationLevelEnum.optional(),
+    has_certificate_number: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .describe(
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
+      )
       .readonly()
       .optional(),
   })
@@ -2997,29 +2990,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
-      .readonly()
-      .optional(),
-    has_multiple_categories: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
-      .readonly()
-      .optional(),
-    category_count: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
-      .readonly()
-      .optional(),
     accepts_new_enrollments: z
       .boolean()
       .describe(
@@ -3045,6 +3015,29 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
+    has_multiple_categories: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+      .readonly()
+      .optional(),
+    category_count: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
       .readonly()
       .optional(),
   })
@@ -4866,16 +4859,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
-      .readonly()
-      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z
@@ -4936,13 +4929,6 @@ export const zCurrency = z.object({
 export const zApiResponseCurrency = z.object({
   success: z.boolean().optional(),
   data: zCurrency.optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
-export const zApiResponseVoid = z.object({
-  success: z.boolean().optional(),
-  data: z.record(z.unknown()).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -5174,243 +5160,9 @@ export const zApiResponseString = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-/**
- * **[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.
- */
-export const zDomainNameEnum = z
-  .enum(['student', 'instructor', 'admin', 'organisation_user', 'course_creator'])
-  .describe(
-    '**[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.'
-  );
-
-/**
- * Request body for creating new organization or branch invitations with recipient details and role assignment
- */
-export const zInvitationRequest = z
-  .object({
-    recipient_email: z
-      .string()
-      .email()
-      .min(0)
-      .max(100)
-      .describe(
-        '**[REQUIRED]** Email address of the invitation recipient. Must be a valid email format and will be used to send the invitation email with accept/decline links.'
-      ),
-    recipient_name: z
-      .string()
-      .min(0)
-      .max(150)
-      .describe(
-        '**[REQUIRED]** Full name of the invitation recipient. Used in email templates, invitation records, and for display purposes throughout the invitation process.'
-      ),
-    domain_name: zDomainNameEnum,
-    inviter_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[REQUIRED]** UUID of the user who is sending this invitation. Must be an existing user with appropriate permissions to invite users to the target organization/branch.'
-      ),
-    notes: z
-      .string()
-      .min(0)
-      .max(500)
-      .describe(
-        '**[OPTIONAL]** Optional personal message or notes to include with the invitation email. Will be displayed in the invitation email template and can contain welcoming text, instructions, or context.'
-      )
-      .optional(),
-  })
-  .describe(
-    'Request body for creating new organization or branch invitations with recipient details and role assignment'
-  );
-
-/**
- * **[READ-ONLY]** Current status of the invitation in its lifecycle. Automatically managed by the system based on user actions and expiration rules.
- */
-export const zStatusEnum4 = z
-  .enum(['PENDING', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'CANCELLED'])
-  .describe(
-    '**[READ-ONLY]** Current status of the invitation in its lifecycle. Automatically managed by the system based on user actions and expiration rules.'
-  );
-
-/**
- * Complete invitation information including recipient details, organization/branch assignment, invitation status, and lifecycle tracking
- */
-export const zInvitation = z
-  .object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[READ-ONLY]** Unique system identifier for the invitation. Auto-generated by the system and cannot be modified.'
-      )
-      .readonly()
-      .optional(),
-    token: z
-      .string()
-      .length(64)
-      .describe(
-        '**[READ-ONLY]** Unique token used for invitation acceptance and decline links. Generated by the system and used in email URLs for secure invitation processing.'
-      )
-      .readonly()
-      .optional(),
-    recipient_email: z
-      .string()
-      .email()
-      .min(0)
-      .max(100)
-      .describe(
-        '**[REQUIRED]** Email address of the invitation recipient. Must be a valid email format and will be used to send invitation emails.'
-      ),
-    recipient_name: z
-      .string()
-      .min(0)
-      .max(150)
-      .describe(
-        '**[REQUIRED]** Full name of the invitation recipient. Used in email templates and for display purposes throughout the invitation process.'
-      ),
-    organisation_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[REQUIRED]** UUID of the organization the user is being invited to join. References the target organization for this invitation.'
-      ),
-    branch_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[OPTIONAL]** UUID of the training branch for branch-specific invitations. When provided, the invitation is for a specific branch within the organization.'
-      )
-      .optional(),
-    domain_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[REQUIRED]** UUID of the user domain/role being offered to the recipient. Determines what permissions and access the user will have upon acceptance.'
-      ),
-    inviter_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[REQUIRED]** UUID of the user who sent the invitation. References the user who initiated this invitation process.'
-      ),
-    status: zStatusEnum4.optional(),
-    notes: z
-      .string()
-      .min(0)
-      .max(500)
-      .describe(
-        '**[OPTIONAL]** Optional notes or message included with the invitation. Can contain welcoming text, instructions, or other relevant information for the recipient.'
-      )
-      .optional(),
-    organisation_name: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Name of the organization for display purposes. Populated by the system based on the organisation_uuid and cannot be directly modified.'
-      )
-      .readonly()
-      .optional(),
-    branch_name: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Name of the training branch for display purposes. Populated by the system based on the branch_uuid and cannot be directly modified.'
-      )
-      .readonly()
-      .optional(),
-    domain_name: zDomainNameEnum.optional(),
-    inviter_name: z
-      .string()
-      .max(150)
-      .describe(
-        '**[READ-ONLY]** Full name of the user who sent the invitation. Cached for performance and email template purposes, automatically populated by the system.'
-      )
-      .readonly()
-      .optional(),
-    expires_at: z
-      .string()
-      .datetime()
-      .describe(
-        '**[READ-ONLY]** Date and time when the invitation expires in ISO 8601 format. After this time, the invitation cannot be accepted and will be marked as expired.'
-      )
-      .readonly()
-      .optional(),
-    accepted_at: z
-      .string()
-      .datetime()
-      .describe(
-        '**[READ-ONLY]** Date and time when the invitation was accepted in ISO 8601 format. Only populated when the invitation status is ACCEPTED.'
-      )
-      .readonly()
-      .optional(),
-    declined_at: z
-      .string()
-      .datetime()
-      .describe(
-        '**[READ-ONLY]** Date and time when the invitation was declined in ISO 8601 format. Only populated when the invitation status is DECLINED.'
-      )
-      .readonly()
-      .optional(),
-    user_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[READ-ONLY]** UUID of the user who accepted the invitation. Only populated when the invitation status is ACCEPTED, linking to the actual user account.'
-      )
-      .readonly()
-      .optional(),
-    created_date: z
-      .string()
-      .datetime()
-      .describe(
-        '**[READ-ONLY]** Timestamp when the invitation was first created in ISO 8601 format. Automatically set by the system and cannot be modified.'
-      )
-      .readonly()
-      .optional(),
-    updated_date: z
-      .string()
-      .datetime()
-      .describe(
-        '**[READ-ONLY]** Timestamp when the invitation was last modified in ISO 8601 format. Automatically updated by the system on any changes and cannot be directly modified.'
-      )
-      .readonly()
-      .optional(),
-    created_by: z
-      .string()
-      .max(50)
-      .describe(
-        '**[READ-ONLY]** Email or identifier of who created the invitation. Used for audit trail purposes and automatically populated by the system.'
-      )
-      .readonly()
-      .optional(),
-    updated_by: z
-      .string()
-      .max(50)
-      .describe(
-        '**[READ-ONLY]** Email or identifier of who last modified the invitation. Used for audit trail purposes and automatically updated by the system on changes.'
-      )
-      .readonly()
-      .optional(),
-  })
-  .describe(
-    'Complete invitation information including recipient details, organization/branch assignment, invitation status, and lifecycle tracking'
-  );
-
-export const zApiResponseInvitation = z.object({
+export const zApiResponseVoid = z.object({
   success: z.boolean().optional(),
-  data: zInvitation.optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
-export const zApiResponseListInvitation = z.object({
-  success: z.boolean().optional(),
-  data: z.array(zInvitation).optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
-export const zApiResponseInteger = z.object({
-  success: z.boolean().optional(),
-  data: z.number().int().optional(),
+  data: z.record(z.unknown()).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -5505,43 +5257,11 @@ export const zApiResponseInstructorReview = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
-/**
- * Represents a single blocked time slot window for an instructor.
- */
-export const zBlockedTimeSlotRequest = z
-  .object({
-    start_time: z
-      .string()
-      .datetime()
-      .describe('**[REQUIRED]** Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
-    end_time: z
-      .string()
-      .datetime()
-      .describe('**[REQUIRED]** End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)'),
-    color_code: z
-      .string()
-      .regex(/^#[0-9A-Fa-f]{6}$/)
-      .describe('**[OPTIONAL]** Hex color code used to visualize the blocked slot.')
-      .optional(),
-  })
-  .describe('Represents a single blocked time slot window for an instructor.');
-
-/**
- * Payload used to block multiple time slots for an instructor.
- */
-export const zBlockTimeSlotsRequest = z
-  .object({
-    slots: z
-      .array(zBlockedTimeSlotRequest)
-      .describe('**[REQUIRED]** Collection of blocked slots to create.'),
-  })
-  .describe('Payload used to block multiple time slots for an instructor.');
-
 export const zRelationshipTypeEnum = z.enum(['PARENT', 'GUARDIAN', 'SPONSOR']);
 
 export const zShareScopeEnum = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
 
-export const zStatusEnum5 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
+export const zStatusEnum4 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
 
 /**
  * Represents a guardian's access rights to a learner profile.
@@ -5555,7 +5275,7 @@ export const zGuardianStudentLink = z
     guardianDisplayName: z.string().optional(),
     relationshipType: zRelationshipTypeEnum.optional(),
     shareScope: zShareScopeEnum.optional(),
-    status: zStatusEnum5.optional(),
+    status: zStatusEnum4.optional(),
     primaryGuardian: z.boolean().optional(),
     linkedDate: z.string().datetime().optional(),
     revokedDate: z.string().datetime().optional(),
@@ -5600,7 +5320,7 @@ export const zEnrollmentRequest = z
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const zStatusEnum6 = z
+export const zStatusEnum5 = z
   .enum(['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
   .describe('**[OPTIONAL]** Current enrollment and attendance status.');
 
@@ -5627,7 +5347,7 @@ export const zEnrollment = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Reference to the student UUID who is enrolling.'),
-    status: zStatusEnum6.optional(),
+    status: zStatusEnum5.optional(),
     attendance_marked_at: z
       .string()
       .datetime()
@@ -5758,7 +5478,7 @@ export const zCourseTrainingApplicationRequest = z
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const zStatusEnum7 = z
+export const zStatusEnum6 = z
   .enum(['pending', 'approved', 'rejected'])
   .describe('**[READ-ONLY]** Current status of the application.');
 
@@ -5773,7 +5493,7 @@ export const zCourseTrainingApplication = z
       .describe('**[READ-ONLY]** Unique identifier for this application.')
       .readonly()
       .optional(),
-    status: zStatusEnum7.optional(),
+    status: zStatusEnum6.optional(),
     application_notes: z
       .string()
       .describe('Submission notes provided by the applicant.')
@@ -5932,6 +5652,13 @@ export const zCheckoutRequest = z
     payment_provider_id: z.string().describe('Payment provider identifier to use for the checkout'),
   })
   .describe('Checkout payload that orchestrates cart completion');
+
+export const zApiResponseInteger = z.object({
+  success: z.boolean().optional(),
+  data: z.number().int().optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
 
 /**
  * Cart summary returned to clients consuming the commerce APIs
@@ -6275,7 +6002,7 @@ export const zCreateBookingRequest = z
 /**
  * Current status of the booking
  */
-export const zStatusEnum8 = z
+export const zStatusEnum7 = z
   .enum(['payment_required', 'confirmed', 'cancelled', 'payment_failed', 'expired'])
   .describe('Current status of the booking');
 
@@ -6290,7 +6017,7 @@ export const zBookingResponse = z
     instructor_uuid: z.string().uuid().describe('UUID of the instructor for the session'),
     start_time: z.string().datetime().describe('Start time for the session'),
     end_time: z.string().datetime().describe('End time for the session'),
-    status: zStatusEnum8,
+    status: zStatusEnum7,
     price_amount: z.number().describe('Price amount agreed for the booking').optional(),
     currency: z.string().describe('ISO currency code for the booking price').optional(),
     payment_session_id: z
@@ -6346,7 +6073,7 @@ export const zBookingPaymentUpdateRequest = z
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const zStatusEnum9 = z
+export const zStatusEnum8 = z
   .enum(['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'])
   .describe('**[REQUIRED]** Current status of the submission in the grading workflow.');
 
@@ -6388,7 +6115,7 @@ export const zAssignmentSubmission = z
       .datetime()
       .describe('**[OPTIONAL]** Timestamp when the submission was made by the student.')
       .optional(),
-    status: zStatusEnum9,
+    status: zStatusEnum8,
     score: z
       .number()
       .gte(0)
@@ -6456,14 +6183,14 @@ export const zAssignmentSubmission = z
       .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     submission_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
     submission_status_display: z
@@ -6512,6 +6239,35 @@ export const zAdminDomainAssignmentRequest = z
       .optional(),
   })
   .describe('Admin domain assignment request containing domain type, reason, and effective date');
+
+export const zAdminCreateUserRequestDto = z.object({
+  first_name: z.string().min(0).max(100).describe('First name of the admin user'),
+  middle_name: z.string().min(0).max(100).describe('Middle name of the admin user').optional(),
+  last_name: z.string().min(0).max(100).describe('Last name of the admin user'),
+  email: z.string().min(0).max(150).describe('Email address of the admin user'),
+  phone_number: z.string().min(0).max(50).describe('Optional phone number').optional(),
+});
+
+/**
+ * Domain/role to assign within the organisation
+ */
+export const zDomainNameEnum = z
+  .enum(['student', 'instructor', 'admin', 'organisation_user', 'course_creator'])
+  .describe('Domain/role to assign within the organisation');
+
+export const zOrganisationUserCreateRequestDto = z.object({
+  first_name: z.string().min(0).max(100).describe('First name of the user'),
+  middle_name: z.string().min(0).max(100).describe('Middle name of the user').optional(),
+  last_name: z.string().min(0).max(100).describe('Last name of the user'),
+  email: z.string().min(0).max(150).describe('Email address of the user'),
+  phone_number: z.string().min(0).max(50).describe('Optional phone number').optional(),
+  domain_name: zDomainNameEnum,
+  branch_uuid: z
+    .string()
+    .uuid()
+    .describe('Optional training branch UUID for branch-specific assignment')
+    .optional(),
+});
 
 /**
  * Admin payload to register an additional platform currency
@@ -6804,7 +6560,7 @@ export const zApiResponsePagedDtoQuizQuestionOption = z.object({
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const zStatusEnum10 = z
+export const zStatusEnum9 = z
   .enum(['IN_PROGRESS', 'SUBMITTED', 'GRADED'])
   .describe('**[REQUIRED]** Current status of the quiz attempt.');
 
@@ -6875,7 +6631,7 @@ export const zQuizAttempt = z
         '**[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.'
       )
       .optional(),
-    status: zStatusEnum10,
+    status: zStatusEnum9,
     created_date: z
       .string()
       .datetime()
@@ -6913,6 +6669,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -6926,11 +6687,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -6991,7 +6747,7 @@ export const zApiResponsePagedDtoProgramRequirement = z.object({
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const zStatusEnum11 = z
+export const zStatusEnum10 = z
   .enum(['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'])
   .describe("**[REQUIRED]** Current status of the student's enrollment in the program.");
 
@@ -7028,7 +6784,7 @@ export const zProgramEnrollment = z
         '**[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.'
       )
       .optional(),
-    status: zStatusEnum11,
+    status: zStatusEnum10,
     progress_percentage: z
       .number()
       .gte(0)
@@ -7174,55 +6930,6 @@ export const zApiResponsePagedDtoOrganisation = z.object({
 export const zApiResponseListUser = z.object({
   success: z.boolean().optional(),
   data: z.array(zUser).optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
-/**
- * Display name of the role/domain being offered
- */
-export const zRoleNameEnum = z
-  .enum(['Student', 'Instructor', 'Administrator', 'Organization Member'])
-  .describe('Display name of the role/domain being offered');
-
-/**
- * Public-safe invitation details shown to users before authentication
- */
-export const zInvitationPreview = z
-  .object({
-    recipient_name: z.string().describe('Full name of the person being invited'),
-    organisation_name: z.string().describe('Name of the organization extending the invitation'),
-    branch_name: z
-      .string()
-      .describe('Name of the specific training branch (if applicable)')
-      .optional(),
-    role_name: zRoleNameEnum,
-    role_description: z
-      .string()
-      .describe("Detailed description of the role's responsibilities and permissions"),
-    inviter_name: z.string().describe('Full name of the person who sent the invitation'),
-    expires_at: z
-      .string()
-      .datetime()
-      .describe('Date and time when the invitation expires in ISO 8601 format'),
-    notes: z
-      .string()
-      .describe('Optional personal message or notes included with the invitation')
-      .optional(),
-    is_expired: z
-      .boolean()
-      .describe('Indicates whether the invitation has expired and can no longer be accepted'),
-    requires_registration: z
-      .boolean()
-      .describe(
-        'Indicates whether the recipient needs to register an account before accepting. True for student/instructor/course_creator roles, false for admin/organisation_user roles.'
-      ),
-  })
-  .describe('Public-safe invitation details shown to users before authentication');
-
-export const zApiResponseInvitationPreview = z.object({
-  success: z.boolean().optional(),
-  data: zInvitationPreview.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -7427,7 +7134,7 @@ export const zGuardianStudentDashboardDto = z.object({
   studentUuid: z.string().uuid().optional(),
   studentName: z.string().optional(),
   shareScope: zShareScopeEnum.optional(),
-  status: zStatusEnum5.optional(),
+  status: zStatusEnum4.optional(),
   courseProgress: z.array(zLearnerCourseProgressView).optional(),
   programProgress: z.array(zLearnerProgramProgressView).optional(),
 });
@@ -7438,7 +7145,7 @@ export const zGuardianStudentSummaryDto = z.object({
   studentName: z.string().optional(),
   relationshipType: zRelationshipTypeEnum.optional(),
   shareScope: zShareScopeEnum.optional(),
-  status: zStatusEnum5.optional(),
+  status: zStatusEnum4.optional(),
   primaryGuardian: z.boolean().optional(),
 });
 
@@ -7543,14 +7250,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
     is_upcoming: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
   })
@@ -7708,7 +7415,7 @@ export const zCourseEnrollment = z
         '**[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.'
       )
       .optional(),
-    status: zStatusEnum11,
+    status: zStatusEnum10,
     progress_percentage: z
       .number()
       .gte(0)
@@ -7861,16 +7568,16 @@ export const zCourseCategoryMapping = z
       )
       .readonly()
       .optional(),
+    has_names: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
+      .readonly()
+      .optional(),
     display_text: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable text representing this course-category relationship.'
       )
-      .readonly()
-      .optional(),
-    has_names: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
       .readonly()
       .optional(),
   })
@@ -8124,6 +7831,18 @@ export const zPagedDtoAssignmentSubmission = z.object({
 export const zApiResponsePagedDtoAssignmentSubmission = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoAssignmentSubmission.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zDomainDto = z.object({
+  uuid: z.string().uuid().optional(),
+  name: z.string().optional(),
+});
+
+export const zApiResponseListDomainDto = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zDomainDto).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -9861,54 +9580,6 @@ export const zUpdateCurrencyData = z.object({
  */
 export const zUpdateCurrencyResponse = zApiResponseCurrency;
 
-export const zDeclineInvitationData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        "UUID of the user who is declining the invitation. The user's email must match the invitation recipient email for security."
-      ),
-  }),
-  query: z.object({
-    token: z
-      .string()
-      .describe(
-        'Unique invitation token from the invitation email URL. This is the 64-character token that identifies the specific invitation.'
-      ),
-  }),
-});
-
-/**
- * Invitation declined successfully, notifications sent to inviter
- */
-export const zDeclineInvitationResponse = zApiResponseVoid;
-
-export const zAcceptInvitationData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        "UUID of the user who is accepting the invitation. The user's email must match the invitation recipient email for security."
-      ),
-  }),
-  query: z.object({
-    token: z
-      .string()
-      .describe(
-        'Unique invitation token from the invitation email URL. This is the 64-character token that identifies the specific invitation.'
-      ),
-  }),
-});
-
-/**
- * Invitation accepted successfully, user added to organization/branch with specified role
- */
-export const zAcceptInvitationResponse = zApiResponseUser;
-
 export const zUploadProfileImageData = z.object({
   body: z
     .object({
@@ -10495,188 +10166,6 @@ export const zAssignUserToBranchData = z.object({
  * User assigned to branch successfully
  */
 export const zAssignUserToBranchResponse = zApiResponseVoid;
-
-export const zGetBranchInvitationsData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
-      ),
-    branchUuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the training branch to retrieve invitations for. Must be a branch within the specified organization.'
-      ),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Branch invitations retrieved successfully (may be empty list)
- */
-export const zGetBranchInvitationsResponse = zApiResponseListInvitation;
-
-export const zCreateBranchInvitationData = z.object({
-  body: zInvitationRequest,
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the organization that owns the training branch. Must be an existing organization.'
-      ),
-    branchUuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the training branch the user is being invited to join. Must be a branch within the specified organization.'
-      ),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Branch invitation created and email sent successfully
- */
-export const zCreateBranchInvitationResponse = zApiResponseInvitation;
-
-export const zGetOrganizationInvitationsData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the organization to retrieve invitations for. Must be an existing organization.'
-      ),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Organization invitations retrieved successfully (may be empty list)
- */
-export const zGetOrganizationInvitationsResponse = zApiResponseListInvitation;
-
-export const zCreateOrganizationInvitationData = z.object({
-  body: zInvitationRequest,
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the organization the user is being invited to join.'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Organization-level invitation created and sent successfully
- */
-export const zCreateOrganizationInvitationResponse = zApiResponseInvitation;
-
-export const zResendInvitationData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the organization that owns the invitation. Must be an existing organization.'
-      ),
-    invitationUuid: z
-      .string()
-      .uuid()
-      .describe(
-        "UUID of the invitation to resend. Must be a pending invitation that hasn't been accepted, declined, or cancelled."
-      ),
-  }),
-  query: z.object({
-    resender_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the user requesting to resend the invitation. Must be either the original inviter or an administrator of the organization.'
-      ),
-  }),
-});
-
-/**
- * Invitation email resent successfully with updated expiry date
- */
-export const zResendInvitationResponse = zApiResponseVoid;
-
-export const zProcessPendingInvitationsData = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z.never().optional(),
-});
-
-/**
- * Pending invitations processed successfully (may be empty list)
- */
-export const zProcessPendingInvitationsResponse = zApiResponseListInvitation;
-
-export const zSendExpiryRemindersData = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z
-    .object({
-      hoursBeforeExpiry: z
-        .number()
-        .int()
-        .describe('Number of hours before expiry to send reminder. Default is 24 hours.')
-        .optional()
-        .default(24),
-    })
-    .optional(),
-});
-
-/**
- * Expiry reminders sent successfully
- */
-export const zSendExpiryRemindersResponse = zApiResponseInteger;
-
-export const zMarkExpiredInvitationsData = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z.never().optional(),
-});
-
-/**
- * Expired invitations marked successfully
- */
-export const zMarkExpiredInvitationsResponse = zApiResponseInteger;
-
-export const zDeclineInvitation1Data = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z.object({
-    token: z
-      .string()
-      .describe('Invitation token from email link. Must match an active, non-expired invitation.'),
-  }),
-});
-
-/**
- * Invitation declined successfully
- */
-export const zDeclineInvitation1Response = zApiResponseVoid;
-
-export const zAcceptInvitation1Data = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z.object({
-    token: z
-      .string()
-      .describe('Invitation token from email link. Must match an active, non-expired invitation.'),
-  }),
-});
-
-/**
- * Invitation accepted successfully, user added to organization
- */
-export const zAcceptInvitation1Response = zApiResponseUser;
 
 export const zGetAllInstructorsData = z.object({
   body: z.never().optional(),
@@ -12062,6 +11551,31 @@ export const zAssignAdminDomainData = z.object({
  */
 export const zAssignAdminDomainResponse = zApiResponseUser;
 
+export const zGetAdminUsersData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    filters: z.record(z.unknown()).describe('Optional filters for admin user search'),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Admin users retrieved successfully
+ */
+export const zGetAdminUsersResponse = zApiResponsePagedDtoUser;
+
+export const zCreateAdminUserData = z.object({
+  body: zAdminCreateUserRequestDto,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Admin user created and activation email sent
+ */
+export const zCreateAdminUserResponse = zApiResponseUser;
+
 export const zModerateOrganisationData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -12082,6 +11596,19 @@ export const zModerateOrganisationData = z.object({
  * Organization moderation completed successfully
  */
 export const zModerateOrganisationResponse = zApiResponseOrganisation;
+
+export const zCreateOrganisationUserData = z.object({
+  body: zOrganisationUserCreateRequestDto,
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the organisation to assign the user to'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Organisation user created and activation email sent
+ */
+export const zCreateOrganisationUserResponse = zApiResponseUser;
 
 export const zVerifyInstructorData = z.object({
   body: z.never().optional(),
@@ -12313,40 +11840,6 @@ export const zGetAllUsersData = z.object({
  * Paginated list of all users retrieved successfully
  */
 export const zGetAllUsersResponse = zApiResponsePagedDtoUser;
-
-export const zGetInvitationsSentByUserData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe('UUID of the user to retrieve sent invitations for. Must be an existing user.'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * User's sent invitations retrieved successfully (may be empty list)
- */
-export const zGetInvitationsSentByUserResponse = zApiResponseListInvitation;
-
-export const zGetPendingInvitationsForUserData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        "UUID of the user to get pending invitations for. The system will use the user's email to find invitations."
-      ),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Pending invitations retrieved successfully (may be empty list)
- */
-export const zGetPendingInvitationsForUserResponse = zApiResponseListInvitation;
 
 export const zSearchData = z.object({
   body: z.never().optional(),
@@ -13100,72 +12593,6 @@ export const zSearch2Data = z.object({
  * Paginated list of organisations matching the search criteria
  */
 export const zSearch2Response = zApiResponsePagedDtoOrganisation;
-
-export const zValidateInvitationData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    token: z
-      .string()
-      .describe(
-        'Unique invitation token to validate. This is the 64-character token from invitation emails.'
-      ),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Validation completed - check response body for result
- */
-export const zValidateInvitationResponse = zApiResponseBoolean;
-
-export const zGetInvitationByTokenData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    token: z
-      .string()
-      .describe(
-        'Unique invitation token from the invitation email URL. This is the 64-character identifier for the specific invitation.'
-      ),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Invitation details retrieved successfully
- */
-export const zGetInvitationByTokenResponse = zApiResponseInvitation;
-
-export const zPreviewInvitationData = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z.object({
-    token: z
-      .string()
-      .describe('Invitation token from email link. Must be a valid, non-expired invitation token.'),
-  }),
-});
-
-/**
- * Invitation preview retrieved successfully
- */
-export const zPreviewInvitationResponse = zApiResponseInvitationPreview;
-
-export const zGetPendingInvitationsForEmailData = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z.object({
-    email: z
-      .string()
-      .describe(
-        'Email address to search for pending invitations. Must be a valid email format. Search is case-insensitive.'
-      ),
-  }),
-});
-
-/**
- * Pending invitations retrieved successfully (may be empty list)
- */
-export const zGetPendingInvitationsForEmailResponse = zApiResponseListInvitation;
 
 export const zGetInstructorRatingSummaryData = z.object({
   body: z.never().optional(),
@@ -14259,20 +13686,6 @@ export const zGetAdminEligibleUsersData = z.object({
  */
 export const zGetAdminEligibleUsersResponse = zApiResponsePagedDtoUser;
 
-export const zGetAdminUsersData = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z.object({
-    filters: z.record(z.unknown()).describe('Optional filters for admin user search'),
-    pageable: zPageable,
-  }),
-});
-
-/**
- * Admin users retrieved successfully
- */
-export const zGetAdminUsersResponse = zApiResponsePagedDtoUser;
-
 export const zIsOrganisationVerifiedData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -14312,6 +13725,17 @@ export const zIsInstructorVerifiedData = z.object({
  */
 export const zIsInstructorVerifiedResponse = zApiResponseBoolean;
 
+export const zGetOrganisationSupportedDomainsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Organisation domains retrieved successfully
+ */
+export const zGetOrganisationSupportedDomainsResponse = zApiResponseListDomainDto;
+
 export const zGetDashboardStatisticsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -14335,57 +13759,6 @@ export const zGetDashboardActivityData = z.object({
  * Dashboard activity retrieved successfully
  */
 export const zGetDashboardActivityResponse = zApiResponsePagedDtoAdminActivityEvent;
-
-export const zCancelInvitationData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the organization that owns the invitation. Must be an existing organization.'
-      ),
-    invitationUuid: z
-      .string()
-      .uuid()
-      .describe(
-        "UUID of the invitation to cancel. Must be a pending invitation that hasn't been accepted, declined, or expired."
-      ),
-  }),
-  query: z.object({
-    canceller_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        'UUID of the user requesting to cancel the invitation. Must be either the original inviter or an administrator of the organization.'
-      ),
-  }),
-});
-
-/**
- * Invitation cancelled successfully
- */
-export const zCancelInvitationResponse = zApiResponseVoid;
-
-export const zCleanupOldInvitationsData = z.object({
-  body: z.never().optional(),
-  path: z.never().optional(),
-  query: z
-    .object({
-      daysOld: z
-        .number()
-        .int()
-        .describe('Delete invitations older than this many days. Default is 90 days.')
-        .optional()
-        .default(90),
-    })
-    .optional(),
-});
-
-/**
- * Old invitations cleaned up successfully
- */
-export const zCleanupOldInvitationsResponse = zApiResponseInteger;
 
 export const zClearInstructorAvailabilityData = z.object({
   body: z.never().optional(),

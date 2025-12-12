@@ -67,7 +67,6 @@ import type {
   UpdateCertificateTemplateResponse,
   GetAssignmentByUuidResponse,
   UpdateAssignmentResponse,
-  AcceptInvitationResponse,
   UploadProfileImageResponse,
   GetAllTrainingBranchesResponse,
   CreateTrainingBranchResponse,
@@ -103,12 +102,6 @@ import type {
   CreateOrganisationResponse,
   GetTrainingBranchesByOrganisationResponse,
   CreateTrainingBranch1Response,
-  GetBranchInvitationsResponse,
-  CreateBranchInvitationResponse,
-  GetOrganizationInvitationsResponse,
-  CreateOrganizationInvitationResponse,
-  ProcessPendingInvitationsResponse,
-  AcceptInvitation1Response,
   GetAllInstructorsResponse,
   CreateInstructorResponse,
   GetInstructorSkillsResponse,
@@ -204,7 +197,10 @@ import type {
   ReturnSubmissionResponse,
   GradeSubmissionResponse,
   AssignAdminDomainResponse,
+  GetAdminUsersResponse,
+  CreateAdminUserResponse,
   ModerateOrganisationResponse,
+  CreateOrganisationUserResponse,
   VerifyInstructorResponse,
   UnverifyInstructorResponse,
   GetCartResponse,
@@ -212,8 +208,6 @@ import type {
   UpdateQuizScheduleResponse,
   UpdateAssignmentScheduleResponse,
   GetAllUsersResponse,
-  GetInvitationsSentByUserResponse,
-  GetPendingInvitationsForUserResponse,
   SearchResponse,
   Search1Response,
   GetTrainingBranchesByOrganisation1Response,
@@ -254,9 +248,6 @@ import type {
   GetBranchUsersResponse,
   GetBranchUsersByDomainResponse,
   Search2Response,
-  GetInvitationByTokenResponse,
-  PreviewInvitationResponse,
-  GetPendingInvitationsForEmailResponse,
   GetInstructorRatingSummaryResponse,
   GetInstructorCalendarResponse,
   SearchSkillsResponse,
@@ -320,7 +311,6 @@ import type {
   GetSystemAdminUsersResponse,
   GetOrganizationAdminUsersResponse,
   GetAdminEligibleUsersResponse,
-  GetAdminUsersResponse,
   GetPendingOrganisationsResponse,
   GetDashboardStatisticsResponse,
   GetDashboardActivityResponse,
@@ -1644,13 +1634,6 @@ export const updateAssignmentResponseTransformer = async (
   return data;
 };
 
-export const acceptInvitationResponseTransformer = async (
-  data: any
-): Promise<AcceptInvitationResponse> => {
-  data = apiResponseUserSchemaResponseTransformer(data);
-  return data;
-};
-
 export const uploadProfileImageResponseTransformer = async (
   data: any
 ): Promise<UploadProfileImageResponse> => {
@@ -2171,83 +2154,6 @@ export const createTrainingBranch1ResponseTransformer = async (
   data: any
 ): Promise<CreateTrainingBranch1Response> => {
   data = apiResponseTrainingBranchSchemaResponseTransformer(data);
-  return data;
-};
-
-const invitationSchemaResponseTransformer = (data: any) => {
-  if (data.expires_at) {
-    data.expires_at = new Date(data.expires_at);
-  }
-  if (data.accepted_at) {
-    data.accepted_at = new Date(data.accepted_at);
-  }
-  if (data.declined_at) {
-    data.declined_at = new Date(data.declined_at);
-  }
-  if (data.created_date) {
-    data.created_date = new Date(data.created_date);
-  }
-  if (data.updated_date) {
-    data.updated_date = new Date(data.updated_date);
-  }
-  return data;
-};
-
-const apiResponseListInvitationSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = data.data.map((item: any) => {
-      return invitationSchemaResponseTransformer(item);
-    });
-  }
-  return data;
-};
-
-export const getBranchInvitationsResponseTransformer = async (
-  data: any
-): Promise<GetBranchInvitationsResponse> => {
-  data = apiResponseListInvitationSchemaResponseTransformer(data);
-  return data;
-};
-
-const apiResponseInvitationSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = invitationSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const createBranchInvitationResponseTransformer = async (
-  data: any
-): Promise<CreateBranchInvitationResponse> => {
-  data = apiResponseInvitationSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getOrganizationInvitationsResponseTransformer = async (
-  data: any
-): Promise<GetOrganizationInvitationsResponse> => {
-  data = apiResponseListInvitationSchemaResponseTransformer(data);
-  return data;
-};
-
-export const createOrganizationInvitationResponseTransformer = async (
-  data: any
-): Promise<CreateOrganizationInvitationResponse> => {
-  data = apiResponseInvitationSchemaResponseTransformer(data);
-  return data;
-};
-
-export const processPendingInvitationsResponseTransformer = async (
-  data: any
-): Promise<ProcessPendingInvitationsResponse> => {
-  data = apiResponseListInvitationSchemaResponseTransformer(data);
-  return data;
-};
-
-export const acceptInvitation1ResponseTransformer = async (
-  data: any
-): Promise<AcceptInvitation1Response> => {
-  data = apiResponseUserSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3641,10 +3547,50 @@ export const assignAdminDomainResponseTransformer = async (
   return data;
 };
 
+const pagedDtoUserSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return userSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoUserSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoUserSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAdminUsersResponseTransformer = async (
+  data: any
+): Promise<GetAdminUsersResponse> => {
+  data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createAdminUserResponseTransformer = async (
+  data: any
+): Promise<CreateAdminUserResponse> => {
+  data = apiResponseUserSchemaResponseTransformer(data);
+  return data;
+};
+
 export const moderateOrganisationResponseTransformer = async (
   data: any
 ): Promise<ModerateOrganisationResponse> => {
   data = apiResponseOrganisationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createOrganisationUserResponseTransformer = async (
+  data: any
+): Promise<CreateOrganisationUserResponse> => {
+  data = apiResponseUserSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3693,41 +3639,8 @@ export const updateAssignmentScheduleResponseTransformer = async (
   return data;
 };
 
-const pagedDtoUserSchemaResponseTransformer = (data: any) => {
-  if (data.content) {
-    data.content = data.content.map((item: any) => {
-      return userSchemaResponseTransformer(item);
-    });
-  }
-  if (data.metadata) {
-    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
-  }
-  return data;
-};
-
-const apiResponsePagedDtoUserSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = pagedDtoUserSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
 export const getAllUsersResponseTransformer = async (data: any): Promise<GetAllUsersResponse> => {
   data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getInvitationsSentByUserResponseTransformer = async (
-  data: any
-): Promise<GetInvitationsSentByUserResponse> => {
-  data = apiResponseListInvitationSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getPendingInvitationsForUserResponseTransformer = async (
-  data: any
-): Promise<GetPendingInvitationsForUserResponse> => {
-  data = apiResponseListInvitationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4145,39 +4058,6 @@ export const getBranchUsersByDomainResponseTransformer = async (
 
 export const search2ResponseTransformer = async (data: any): Promise<Search2Response> => {
   data = apiResponsePagedDtoOrganisationSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getInvitationByTokenResponseTransformer = async (
-  data: any
-): Promise<GetInvitationByTokenResponse> => {
-  data = apiResponseInvitationSchemaResponseTransformer(data);
-  return data;
-};
-
-const invitationPreviewSchemaResponseTransformer = (data: any) => {
-  data.expires_at = new Date(data.expires_at);
-  return data;
-};
-
-const apiResponseInvitationPreviewSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = invitationPreviewSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const previewInvitationResponseTransformer = async (
-  data: any
-): Promise<PreviewInvitationResponse> => {
-  data = apiResponseInvitationPreviewSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getPendingInvitationsForEmailResponseTransformer = async (
-  data: any
-): Promise<GetPendingInvitationsForEmailResponse> => {
-  data = apiResponseListInvitationSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4901,13 +4781,6 @@ export const getOrganizationAdminUsersResponseTransformer = async (
 export const getAdminEligibleUsersResponseTransformer = async (
   data: any
 ): Promise<GetAdminEligibleUsersResponse> => {
-  data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getAdminUsersResponseTransformer = async (
-  data: any
-): Promise<GetAdminUsersResponse> => {
   data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
   return data;
 };

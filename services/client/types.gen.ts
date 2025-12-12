@@ -610,13 +610,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -838,13 +838,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1001,13 +1001,13 @@ export type TrainingProgram = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of total program duration.
-   */
-  readonly total_duration_display?: string;
-  /**
    * **[READ-ONLY]** Classification of program type based on duration and content.
    */
   readonly program_type?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of total program duration.
+   */
+  readonly total_duration_display?: string;
 };
 
 export type ApiResponseTrainingProgram = {
@@ -1286,6 +1286,10 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   */
+  readonly is_profile_complete?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
@@ -1293,10 +1297,6 @@ export type Instructor = {
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
-   */
-  readonly is_profile_complete?: boolean;
 };
 
 /**
@@ -1412,13 +1412,17 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
-  readonly is_complete?: boolean;
+  readonly membership_duration_months?: number;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -1441,10 +1445,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1517,11 +1517,7 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Calculated years of experience based on start and end dates.
-   */
-  readonly calculated_years?: number;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
   readonly is_complete?: boolean;
   /**
@@ -1546,7 +1542,11 @@ export type InstructorExperience = {
    */
   readonly is_recent_experience?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   * **[READ-ONLY]** Calculated years of experience based on start and end dates.
+   */
+  readonly calculated_years?: number;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number;
 };
@@ -1609,14 +1609,9 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Number of years since the qualification was completed.
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
-  readonly years_since_completion?: number;
-  education_level?: EducationLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
-   */
-  readonly has_certificate_number?: boolean;
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
@@ -1626,9 +1621,14 @@ export type InstructorEducation = {
    */
   readonly formatted_completion?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   * **[READ-ONLY]** Number of years since the qualification was completed.
    */
-  readonly is_complete?: boolean;
+  readonly years_since_completion?: number;
+  education_level?: EducationLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
+   */
+  readonly has_certificate_number?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -1891,22 +1891,6 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
-  /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
-  /**
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
@@ -1926,6 +1910,22 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
 };
 
 /**
@@ -3305,13 +3305,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
    */
   readonly assignment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -3395,17 +3395,6 @@ export type Currency = {
    * Indicates whether this is the platform default currency
    */
   defaultCurrency?: boolean;
-};
-
-export type ApiResponseVoid = {
-  success?: boolean;
-  data?: {
-    [key: string]: unknown;
-  };
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
 };
 
 /**
@@ -3610,138 +3599,11 @@ export type ApiResponseString = {
   };
 };
 
-/**
- * Request body for creating new organization or branch invitations with recipient details and role assignment
- */
-export type InvitationRequest = {
-  /**
-   * **[REQUIRED]** Email address of the invitation recipient. Must be a valid email format and will be used to send the invitation email with accept/decline links.
-   */
-  recipient_email: string;
-  /**
-   * **[REQUIRED]** Full name of the invitation recipient. Used in email templates, invitation records, and for display purposes throughout the invitation process.
-   */
-  recipient_name: string;
-  domain_name: DomainNameEnum;
-  /**
-   * **[REQUIRED]** UUID of the user who is sending this invitation. Must be an existing user with appropriate permissions to invite users to the target organization/branch.
-   */
-  inviter_uuid: string;
-  /**
-   * **[OPTIONAL]** Optional personal message or notes to include with the invitation email. Will be displayed in the invitation email template and can contain welcoming text, instructions, or context.
-   */
-  notes?: string;
-};
-
-export type ApiResponseInvitation = {
+export type ApiResponseVoid = {
   success?: boolean;
-  data?: Invitation;
-  message?: string;
-  error?: {
+  data?: {
     [key: string]: unknown;
   };
-};
-
-/**
- * Complete invitation information including recipient details, organization/branch assignment, invitation status, and lifecycle tracking
- */
-export type Invitation = {
-  /**
-   * **[READ-ONLY]** Unique system identifier for the invitation. Auto-generated by the system and cannot be modified.
-   */
-  readonly uuid?: string;
-  /**
-   * **[READ-ONLY]** Unique token used for invitation acceptance and decline links. Generated by the system and used in email URLs for secure invitation processing.
-   */
-  readonly token?: string;
-  /**
-   * **[REQUIRED]** Email address of the invitation recipient. Must be a valid email format and will be used to send invitation emails.
-   */
-  recipient_email: string;
-  /**
-   * **[REQUIRED]** Full name of the invitation recipient. Used in email templates and for display purposes throughout the invitation process.
-   */
-  recipient_name: string;
-  /**
-   * **[REQUIRED]** UUID of the organization the user is being invited to join. References the target organization for this invitation.
-   */
-  organisation_uuid: string;
-  /**
-   * **[OPTIONAL]** UUID of the training branch for branch-specific invitations. When provided, the invitation is for a specific branch within the organization.
-   */
-  branch_uuid?: string;
-  /**
-   * **[REQUIRED]** UUID of the user domain/role being offered to the recipient. Determines what permissions and access the user will have upon acceptance.
-   */
-  domain_uuid: string;
-  /**
-   * **[REQUIRED]** UUID of the user who sent the invitation. References the user who initiated this invitation process.
-   */
-  inviter_uuid: string;
-  status?: StatusEnum4;
-  /**
-   * **[OPTIONAL]** Optional notes or message included with the invitation. Can contain welcoming text, instructions, or other relevant information for the recipient.
-   */
-  notes?: string;
-  /**
-   * **[READ-ONLY]** Name of the organization for display purposes. Populated by the system based on the organisation_uuid and cannot be directly modified.
-   */
-  readonly organisation_name?: string;
-  /**
-   * **[READ-ONLY]** Name of the training branch for display purposes. Populated by the system based on the branch_uuid and cannot be directly modified.
-   */
-  readonly branch_name?: string;
-  domain_name?: DomainNameEnum;
-  /**
-   * **[READ-ONLY]** Full name of the user who sent the invitation. Cached for performance and email template purposes, automatically populated by the system.
-   */
-  readonly inviter_name?: string;
-  /**
-   * **[READ-ONLY]** Date and time when the invitation expires in ISO 8601 format. After this time, the invitation cannot be accepted and will be marked as expired.
-   */
-  readonly expires_at?: Date;
-  /**
-   * **[READ-ONLY]** Date and time when the invitation was accepted in ISO 8601 format. Only populated when the invitation status is ACCEPTED.
-   */
-  readonly accepted_at?: Date;
-  /**
-   * **[READ-ONLY]** Date and time when the invitation was declined in ISO 8601 format. Only populated when the invitation status is DECLINED.
-   */
-  readonly declined_at?: Date;
-  /**
-   * **[READ-ONLY]** UUID of the user who accepted the invitation. Only populated when the invitation status is ACCEPTED, linking to the actual user account.
-   */
-  readonly user_uuid?: string;
-  /**
-   * **[READ-ONLY]** Timestamp when the invitation was first created in ISO 8601 format. Automatically set by the system and cannot be modified.
-   */
-  readonly created_date?: Date;
-  /**
-   * **[READ-ONLY]** Timestamp when the invitation was last modified in ISO 8601 format. Automatically updated by the system on any changes and cannot be directly modified.
-   */
-  readonly updated_date?: Date;
-  /**
-   * **[READ-ONLY]** Email or identifier of who created the invitation. Used for audit trail purposes and automatically populated by the system.
-   */
-  readonly created_by?: string;
-  /**
-   * **[READ-ONLY]** Email or identifier of who last modified the invitation. Used for audit trail purposes and automatically updated by the system on changes.
-   */
-  readonly updated_by?: string;
-};
-
-export type ApiResponseListInvitation = {
-  success?: boolean;
-  data?: Array<Invitation>;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
-};
-
-export type ApiResponseInteger = {
-  success?: boolean;
-  data?: number;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -3833,34 +3695,6 @@ export type ApiResponseInstructorReview = {
 };
 
 /**
- * Payload used to block multiple time slots for an instructor.
- */
-export type BlockTimeSlotsRequest = {
-  /**
-   * **[REQUIRED]** Collection of blocked slots to create.
-   */
-  slots: Array<BlockedTimeSlotRequest>;
-};
-
-/**
- * Represents a single blocked time slot window for an instructor.
- */
-export type BlockedTimeSlotRequest = {
-  /**
-   * **[REQUIRED]** Start date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)
-   */
-  start_time: Date;
-  /**
-   * **[REQUIRED]** End date and time to block (ISO format: YYYY-MM-DDTHH:mm:ss)
-   */
-  end_time: Date;
-  /**
-   * **[OPTIONAL]** Hex color code used to visualize the blocked slot.
-   */
-  color_code?: string;
-};
-
-/**
  * Represents a guardian's access rights to a learner profile.
  */
 export type GuardianStudentLink = {
@@ -3871,7 +3705,7 @@ export type GuardianStudentLink = {
   guardianDisplayName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum5;
+  status?: StatusEnum4;
   primaryGuardian?: boolean;
   linkedDate?: Date;
   revokedDate?: Date;
@@ -3941,7 +3775,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum6;
+  status?: StatusEnum5;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -4054,7 +3888,7 @@ export type CourseTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum7;
+  status?: StatusEnum6;
   /**
    * Submission notes provided by the applicant.
    */
@@ -4257,6 +4091,15 @@ export type CheckoutRequest = {
    * Payment provider identifier to use for the checkout
    */
   payment_provider_id: string;
+};
+
+export type ApiResponseInteger = {
+  success?: boolean;
+  data?: number;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
 };
 
 /**
@@ -4633,7 +4476,7 @@ export type BookingResponse = {
    * End time for the session
    */
   end_time: Date;
-  status: StatusEnum8;
+  status: StatusEnum7;
   /**
    * Price amount agreed for the booking
    */
@@ -4728,7 +4571,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum9;
+  status: StatusEnum8;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -4774,13 +4617,13 @@ export type AssignmentSubmission = {
    */
   readonly is_graded?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the submission based on its content type.
    */
   readonly submission_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
   /**
    * **[READ-ONLY]** Comprehensive status indicating submission state and availability of feedback.
    */
@@ -4805,6 +4648,57 @@ export type AdminDomainAssignmentRequest = {
    * Effective date for the admin assignment
    */
   effective_date?: Date;
+};
+
+export type AdminCreateUserRequestDto = {
+  /**
+   * First name of the admin user
+   */
+  first_name: string;
+  /**
+   * Middle name of the admin user
+   */
+  middle_name?: string;
+  /**
+   * Last name of the admin user
+   */
+  last_name: string;
+  /**
+   * Email address of the admin user
+   */
+  email: string;
+  /**
+   * Optional phone number
+   */
+  phone_number?: string;
+};
+
+export type OrganisationUserCreateRequestDto = {
+  /**
+   * First name of the user
+   */
+  first_name: string;
+  /**
+   * Middle name of the user
+   */
+  middle_name?: string;
+  /**
+   * Last name of the user
+   */
+  last_name: string;
+  /**
+   * Email address of the user
+   */
+  email: string;
+  /**
+   * Optional phone number
+   */
+  phone_number?: string;
+  domain_name: DomainNameEnum;
+  /**
+   * Optional training branch UUID for branch-specific assignment
+   */
+  branch_uuid?: string;
 };
 
 /**
@@ -5211,7 +5105,7 @@ export type QuizAttempt = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum10;
+  status: StatusEnum9;
   /**
    * **[READ-ONLY]** Timestamp when the attempt was created. Automatically set by the system.
    */
@@ -5233,6 +5127,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -5244,10 +5142,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -5334,7 +5228,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum11;
+  status: StatusEnum10;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -5451,58 +5345,6 @@ export type ApiResponseListUser = {
   error?: {
     [key: string]: unknown;
   };
-};
-
-export type ApiResponseInvitationPreview = {
-  success?: boolean;
-  data?: InvitationPreview;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
-};
-
-/**
- * Public-safe invitation details shown to users before authentication
- */
-export type InvitationPreview = {
-  /**
-   * Full name of the person being invited
-   */
-  recipient_name: string;
-  /**
-   * Name of the organization extending the invitation
-   */
-  organisation_name: string;
-  /**
-   * Name of the specific training branch (if applicable)
-   */
-  branch_name?: string;
-  role_name: RoleNameEnum;
-  /**
-   * Detailed description of the role's responsibilities and permissions
-   */
-  role_description: string;
-  /**
-   * Full name of the person who sent the invitation
-   */
-  inviter_name: string;
-  /**
-   * Date and time when the invitation expires in ISO 8601 format
-   */
-  expires_at: Date;
-  /**
-   * Optional personal message or notes included with the invitation
-   */
-  notes?: string;
-  /**
-   * Indicates whether the invitation has expired and can no longer be accepted
-   */
-  is_expired: boolean;
-  /**
-   * Indicates whether the recipient needs to register an account before accepting. True for student/instructor/course_creator roles, false for admin/organisation_user roles.
-   */
-  requires_registration: boolean;
 };
 
 export type ApiResponsePagedDtoInstructor = {
@@ -5703,7 +5545,7 @@ export type GuardianStudentDashboardDto = {
   studentUuid?: string;
   studentName?: string;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum5;
+  status?: StatusEnum4;
   courseProgress?: Array<LearnerCourseProgressView>;
   programProgress?: Array<LearnerProgramProgressView>;
 };
@@ -5741,7 +5583,7 @@ export type GuardianStudentSummaryDto = {
   studentName?: string;
   relationshipType?: RelationshipTypeEnum;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum5;
+  status?: StatusEnum4;
   primaryGuardian?: boolean;
 };
 
@@ -5823,13 +5665,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponseLong = {
@@ -5997,7 +5839,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date;
-  status: StatusEnum11;
+  status: StatusEnum10;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -6100,13 +5942,13 @@ export type CourseCategoryMapping = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable text representing this course-category relationship.
-   */
-  readonly display_text?: string;
-  /**
    * **[READ-ONLY]** Indicates if both course and category names are populated.
    */
   readonly has_names?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable text representing this course-category relationship.
+   */
+  readonly display_text?: string;
 };
 
 export type ApiResponsePagedDtoCourseAssessment = {
@@ -6398,6 +6240,20 @@ export type PagedDtoAssignmentSubmission = {
   content?: Array<AssignmentSubmission>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListDomainDto = {
+  success?: boolean;
+  data?: Array<DomainDto>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type DomainDto = {
+  uuid?: string;
+  name?: string;
 };
 
 /**
@@ -7174,38 +7030,6 @@ export const StatusEnum3 = {
  */
 export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
 
-/**
- * **[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.
- */
-export const DomainNameEnum = {
-  STUDENT: 'student',
-  INSTRUCTOR: 'instructor',
-  ADMIN: 'admin',
-  ORGANISATION_USER: 'organisation_user',
-  COURSE_CREATOR: 'course_creator',
-} as const;
-
-/**
- * **[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.
- */
-export type DomainNameEnum = (typeof DomainNameEnum)[keyof typeof DomainNameEnum];
-
-/**
- * **[READ-ONLY]** Current status of the invitation in its lifecycle. Automatically managed by the system based on user actions and expiration rules.
- */
-export const StatusEnum4 = {
-  PENDING: 'PENDING',
-  ACCEPTED: 'ACCEPTED',
-  DECLINED: 'DECLINED',
-  EXPIRED: 'EXPIRED',
-  CANCELLED: 'CANCELLED',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the invitation in its lifecycle. Automatically managed by the system based on user actions and expiration rules.
- */
-export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
-
 export const RelationshipTypeEnum = {
   PARENT: 'PARENT',
   GUARDIAN: 'GUARDIAN',
@@ -7222,18 +7046,18 @@ export const ShareScopeEnum = {
 
 export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
 
-export const StatusEnum5 = {
+export const StatusEnum4 = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
 
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum6 = {
+export const StatusEnum5 = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -7244,7 +7068,7 @@ export const StatusEnum6 = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
 
 /**
  * **[REQUIRED]** Applicant type initiating the request.
@@ -7262,7 +7086,7 @@ export type ApplicantTypeEnum = (typeof ApplicantTypeEnum)[keyof typeof Applican
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum7 = {
+export const StatusEnum6 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -7271,7 +7095,7 @@ export const StatusEnum7 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
 
 /**
  * How the platform fee was configured
@@ -7303,7 +7127,7 @@ export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof Rele
 /**
  * Current status of the booking
  */
-export const StatusEnum8 = {
+export const StatusEnum7 = {
   PAYMENT_REQUIRED: 'payment_required',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
@@ -7314,7 +7138,7 @@ export const StatusEnum8 = {
 /**
  * Current status of the booking
  */
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
 
 /**
  * Payment status reported by the engine
@@ -7332,7 +7156,7 @@ export type PaymentStatusEnum = (typeof PaymentStatusEnum)[keyof typeof PaymentS
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum9 = {
+export const StatusEnum8 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -7343,7 +7167,7 @@ export const StatusEnum9 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
 /**
  * Type of assignment - global or organization-specific
@@ -7359,9 +7183,25 @@ export const AssignmentTypeEnum = {
 export type AssignmentTypeEnum = (typeof AssignmentTypeEnum)[keyof typeof AssignmentTypeEnum];
 
 /**
+ * Domain/role to assign within the organisation
+ */
+export const DomainNameEnum = {
+  STUDENT: 'student',
+  INSTRUCTOR: 'instructor',
+  ADMIN: 'admin',
+  ORGANISATION_USER: 'organisation_user',
+  COURSE_CREATOR: 'course_creator',
+} as const;
+
+/**
+ * Domain/role to assign within the organisation
+ */
+export type DomainNameEnum = (typeof DomainNameEnum)[keyof typeof DomainNameEnum];
+
+/**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const StatusEnum10 = {
+export const StatusEnum9 = {
   IN_PROGRESS: 'IN_PROGRESS',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
@@ -7370,12 +7210,12 @@ export const StatusEnum10 = {
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum11 = {
+export const StatusEnum10 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -7385,22 +7225,7 @@ export const StatusEnum11 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
-
-/**
- * Display name of the role/domain being offered
- */
-export const RoleNameEnum = {
-  STUDENT: 'Student',
-  INSTRUCTOR: 'Instructor',
-  ADMINISTRATOR: 'Administrator',
-  ORGANIZATION_MEMBER: 'Organization Member',
-} as const;
-
-/**
- * Display name of the role/domain being offered
- */
-export type RoleNameEnum = (typeof RoleNameEnum)[keyof typeof RoleNameEnum];
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
 /**
  * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
@@ -11044,93 +10869,6 @@ export type UpdateCurrencyResponses = {
 
 export type UpdateCurrencyResponse = UpdateCurrencyResponses[keyof UpdateCurrencyResponses];
 
-export type DeclineInvitationData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the user who is declining the invitation. The user's email must match the invitation recipient email for security.
-     */
-    uuid: string;
-  };
-  query: {
-    /**
-     * Unique invitation token from the invitation email URL. This is the 64-character token that identifies the specific invitation.
-     */
-    token: string;
-  };
-  url: '/api/v1/users/{uuid}/invitations/decline';
-};
-
-export type DeclineInvitationErrors = {
-  /**
-   * Invalid token, expired invitation, or user email mismatch
-   */
-  400: ApiResponseVoid;
-  /**
-   * Invitation token not found or user not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type DeclineInvitationError = DeclineInvitationErrors[keyof DeclineInvitationErrors];
-
-export type DeclineInvitationResponses = {
-  /**
-   * Invitation declined successfully, notifications sent to inviter
-   */
-  200: ApiResponseVoid;
-};
-
-export type DeclineInvitationResponse =
-  DeclineInvitationResponses[keyof DeclineInvitationResponses];
-
-export type AcceptInvitationData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the user who is accepting the invitation. The user's email must match the invitation recipient email for security.
-     */
-    uuid: string;
-  };
-  query: {
-    /**
-     * Unique invitation token from the invitation email URL. This is the 64-character token that identifies the specific invitation.
-     */
-    token: string;
-  };
-  url: '/api/v1/users/{uuid}/invitations/accept';
-};
-
-export type AcceptInvitationErrors = {
-  /**
-   * Invalid token, expired invitation, user email mismatch, or user already member of organization
-   */
-  400: ApiResponseUser;
-  /**
-   * Invitation token not found or user not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type AcceptInvitationError = AcceptInvitationErrors[keyof AcceptInvitationErrors];
-
-export type AcceptInvitationResponses = {
-  /**
-   * Invitation accepted successfully, user added to organization/branch with specified role
-   */
-  200: ApiResponseUser;
-};
-
-export type AcceptInvitationResponse = AcceptInvitationResponses[keyof AcceptInvitationResponses];
-
 export type UploadProfileImageData = {
   body?: {
     /**
@@ -12554,400 +12292,6 @@ export type AssignUserToBranchResponses = {
 
 export type AssignUserToBranchResponse =
   AssignUserToBranchResponses[keyof AssignUserToBranchResponses];
-
-export type GetBranchInvitationsData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
-     */
-    uuid: string;
-    /**
-     * UUID of the training branch to retrieve invitations for. Must be a branch within the specified organization.
-     */
-    branchUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/invitations';
-};
-
-export type GetBranchInvitationsErrors = {
-  /**
-   * Training branch not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetBranchInvitationsError =
-  GetBranchInvitationsErrors[keyof GetBranchInvitationsErrors];
-
-export type GetBranchInvitationsResponses = {
-  /**
-   * Branch invitations retrieved successfully (may be empty list)
-   */
-  200: ApiResponseListInvitation;
-};
-
-export type GetBranchInvitationsResponse =
-  GetBranchInvitationsResponses[keyof GetBranchInvitationsResponses];
-
-export type CreateBranchInvitationData = {
-  body: InvitationRequest;
-  path: {
-    /**
-     * UUID of the organization that owns the training branch. Must be an existing organization.
-     */
-    uuid: string;
-    /**
-     * UUID of the training branch the user is being invited to join. Must be a branch within the specified organization.
-     */
-    branchUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/organisations/{uuid}/training-branches/{branchUuid}/invitations';
-};
-
-export type CreateBranchInvitationErrors = {
-  /**
-   * Invalid input data: duplicate invitation, invalid domain, or invalid branch
-   */
-  400: ApiResponseInvitation;
-  /**
-   * Training branch, inviter user not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type CreateBranchInvitationError =
-  CreateBranchInvitationErrors[keyof CreateBranchInvitationErrors];
-
-export type CreateBranchInvitationResponses = {
-  /**
-   * Branch invitation created and email sent successfully
-   */
-  201: ApiResponseInvitation;
-};
-
-export type CreateBranchInvitationResponse =
-  CreateBranchInvitationResponses[keyof CreateBranchInvitationResponses];
-
-export type GetOrganizationInvitationsData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the organization to retrieve invitations for. Must be an existing organization.
-     */
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/organisations/{uuid}/invitations';
-};
-
-export type GetOrganizationInvitationsErrors = {
-  /**
-   * Organization not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetOrganizationInvitationsError =
-  GetOrganizationInvitationsErrors[keyof GetOrganizationInvitationsErrors];
-
-export type GetOrganizationInvitationsResponses = {
-  /**
-   * Organization invitations retrieved successfully (may be empty list)
-   */
-  200: ApiResponseListInvitation;
-};
-
-export type GetOrganizationInvitationsResponse =
-  GetOrganizationInvitationsResponses[keyof GetOrganizationInvitationsResponses];
-
-export type CreateOrganizationInvitationData = {
-  body: InvitationRequest;
-  path: {
-    /**
-     * UUID of the organization the user is being invited to join.
-     */
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/organisations/{uuid}/invitations';
-};
-
-export type CreateOrganizationInvitationErrors = {
-  /**
-   * Invalid input data: duplicate invitation or invalid domain
-   */
-  400: ApiResponseInvitation;
-  /**
-   * Organization or inviter user not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type CreateOrganizationInvitationError =
-  CreateOrganizationInvitationErrors[keyof CreateOrganizationInvitationErrors];
-
-export type CreateOrganizationInvitationResponses = {
-  /**
-   * Organization-level invitation created and sent successfully
-   */
-  201: ApiResponseInvitation;
-};
-
-export type CreateOrganizationInvitationResponse =
-  CreateOrganizationInvitationResponses[keyof CreateOrganizationInvitationResponses];
-
-export type ResendInvitationData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the organization that owns the invitation. Must be an existing organization.
-     */
-    uuid: string;
-    /**
-     * UUID of the invitation to resend. Must be a pending invitation that hasn't been accepted, declined, or cancelled.
-     */
-    invitationUuid: string;
-  };
-  query: {
-    /**
-     * UUID of the user requesting to resend the invitation. Must be either the original inviter or an administrator of the organization.
-     */
-    resender_uuid: string;
-  };
-  url: '/api/v1/organisations/{uuid}/invitations/{invitationUuid}/resend';
-};
-
-export type ResendInvitationErrors = {
-  /**
-   * Invitation is not pending, or user lacks permission to resend
-   */
-  400: ApiResponseVoid;
-  /**
-   * Invitation not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ResendInvitationError = ResendInvitationErrors[keyof ResendInvitationErrors];
-
-export type ResendInvitationResponses = {
-  /**
-   * Invitation email resent successfully with updated expiry date
-   */
-  200: ApiResponseVoid;
-};
-
-export type ResendInvitationResponse = ResendInvitationResponses[keyof ResendInvitationResponses];
-
-export type ProcessPendingInvitationsData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: '/api/v1/invitations/process-pending';
-};
-
-export type ProcessPendingInvitationsErrors = {
-  /**
-   * Authentication required - user must be logged in via Keycloak
-   */
-  401: ApiResponseListInvitation;
-  /**
-   * User not found in database after authentication
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ProcessPendingInvitationsError =
-  ProcessPendingInvitationsErrors[keyof ProcessPendingInvitationsErrors];
-
-export type ProcessPendingInvitationsResponses = {
-  /**
-   * Pending invitations processed successfully (may be empty list)
-   */
-  200: ApiResponseListInvitation;
-};
-
-export type ProcessPendingInvitationsResponse =
-  ProcessPendingInvitationsResponses[keyof ProcessPendingInvitationsResponses];
-
-export type SendExpiryRemindersData = {
-  body?: never;
-  path?: never;
-  query?: {
-    /**
-     * Number of hours before expiry to send reminder. Default is 24 hours.
-     */
-    hoursBeforeExpiry?: number;
-  };
-  url: '/api/v1/invitations/maintenance/send-reminders';
-};
-
-export type SendExpiryRemindersErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SendExpiryRemindersError = SendExpiryRemindersErrors[keyof SendExpiryRemindersErrors];
-
-export type SendExpiryRemindersResponses = {
-  /**
-   * Expiry reminders sent successfully
-   */
-  200: ApiResponseInteger;
-};
-
-export type SendExpiryRemindersResponse =
-  SendExpiryRemindersResponses[keyof SendExpiryRemindersResponses];
-
-export type MarkExpiredInvitationsData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: '/api/v1/invitations/maintenance/mark-expired';
-};
-
-export type MarkExpiredInvitationsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type MarkExpiredInvitationsError =
-  MarkExpiredInvitationsErrors[keyof MarkExpiredInvitationsErrors];
-
-export type MarkExpiredInvitationsResponses = {
-  /**
-   * Expired invitations marked successfully
-   */
-  200: ApiResponseInteger;
-};
-
-export type MarkExpiredInvitationsResponse =
-  MarkExpiredInvitationsResponses[keyof MarkExpiredInvitationsResponses];
-
-export type DeclineInvitation1Data = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Invitation token from email link. Must match an active, non-expired invitation.
-     */
-    token: string;
-  };
-  url: '/api/v1/invitations/decline';
-};
-
-export type DeclineInvitation1Errors = {
-  /**
-   * Invalid token, email mismatch, or invitation already processed
-   */
-  400: ApiResponseVoid;
-  /**
-   * Authentication required - user must be logged in via Keycloak
-   */
-  401: ApiResponseVoid;
-  /**
-   * Invitation not found or user not found in database
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type DeclineInvitation1Error = DeclineInvitation1Errors[keyof DeclineInvitation1Errors];
-
-export type DeclineInvitation1Responses = {
-  /**
-   * Invitation declined successfully
-   */
-  200: ApiResponseVoid;
-};
-
-export type DeclineInvitation1Response =
-  DeclineInvitation1Responses[keyof DeclineInvitation1Responses];
-
-export type AcceptInvitation1Data = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Invitation token from email link. Must match an active, non-expired invitation.
-     */
-    token: string;
-  };
-  url: '/api/v1/invitations/accept';
-};
-
-export type AcceptInvitation1Errors = {
-  /**
-   * Invalid token, email mismatch, or invitation already processed
-   */
-  400: ApiResponseUser;
-  /**
-   * Authentication required - user must be logged in via Keycloak
-   */
-  401: ApiResponseUser;
-  /**
-   * Invitation not found or user not found in database
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type AcceptInvitation1Error = AcceptInvitation1Errors[keyof AcceptInvitation1Errors];
-
-export type AcceptInvitation1Responses = {
-  /**
-   * Invitation accepted successfully, user added to organization
-   */
-  200: ApiResponseUser;
-};
-
-export type AcceptInvitation1Response =
-  AcceptInvitation1Responses[keyof AcceptInvitation1Responses];
 
 export type GetAllInstructorsData = {
   body?: never;
@@ -16316,6 +15660,80 @@ export type AssignAdminDomainResponses = {
 export type AssignAdminDomainResponse =
   AssignAdminDomainResponses[keyof AssignAdminDomainResponses];
 
+export type GetAdminUsersData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Optional filters for admin user search
+     */
+    filters: {
+      [key: string]: unknown;
+    };
+    pageable: Pageable;
+  };
+  url: '/api/v1/admin/users/admins';
+};
+
+export type GetAdminUsersErrors = {
+  /**
+   * Insufficient privileges - system admin required
+   */
+  403: ApiResponsePagedDtoUser;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetAdminUsersError = GetAdminUsersErrors[keyof GetAdminUsersErrors];
+
+export type GetAdminUsersResponses = {
+  /**
+   * Admin users retrieved successfully
+   */
+  200: ApiResponsePagedDtoUser;
+};
+
+export type GetAdminUsersResponse = GetAdminUsersResponses[keyof GetAdminUsersResponses];
+
+export type CreateAdminUserData = {
+  body: AdminCreateUserRequestDto;
+  path?: never;
+  query?: never;
+  url: '/api/v1/admin/users/admins';
+};
+
+export type CreateAdminUserErrors = {
+  /**
+   * Email already exists; use existing user promotion flow
+   */
+  400: ApiResponseUser;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateAdminUserError = CreateAdminUserErrors[keyof CreateAdminUserErrors];
+
+export type CreateAdminUserResponses = {
+  /**
+   * Admin user created and activation email sent
+   */
+  201: ApiResponseUser;
+};
+
+export type CreateAdminUserResponse = CreateAdminUserResponses[keyof CreateAdminUserResponses];
+
 export type ModerateOrganisationData = {
   body?: never;
   path: {
@@ -16368,6 +15786,46 @@ export type ModerateOrganisationResponses = {
 
 export type ModerateOrganisationResponse =
   ModerateOrganisationResponses[keyof ModerateOrganisationResponses];
+
+export type CreateOrganisationUserData = {
+  body: OrganisationUserCreateRequestDto;
+  path: {
+    /**
+     * UUID of the organisation to assign the user to
+     */
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/organisations/{uuid}/users';
+};
+
+export type CreateOrganisationUserErrors = {
+  /**
+   * Email already exists; use existing user assignment flow
+   */
+  400: ApiResponseUser;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateOrganisationUserError =
+  CreateOrganisationUserErrors[keyof CreateOrganisationUserErrors];
+
+export type CreateOrganisationUserResponses = {
+  /**
+   * Organisation user created and activation email sent
+   */
+  201: ApiResponseUser;
+};
+
+export type CreateOrganisationUserResponse =
+  CreateOrganisationUserResponses[keyof CreateOrganisationUserResponses];
 
 export type VerifyInstructorData = {
   body?: never;
@@ -16986,78 +16444,6 @@ export type GetAllUsersResponses = {
 };
 
 export type GetAllUsersResponse = GetAllUsersResponses[keyof GetAllUsersResponses];
-
-export type GetInvitationsSentByUserData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the user to retrieve sent invitations for. Must be an existing user.
-     */
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/users/{uuid}/invitations/sent';
-};
-
-export type GetInvitationsSentByUserErrors = {
-  /**
-   * User not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetInvitationsSentByUserError =
-  GetInvitationsSentByUserErrors[keyof GetInvitationsSentByUserErrors];
-
-export type GetInvitationsSentByUserResponses = {
-  /**
-   * User's sent invitations retrieved successfully (may be empty list)
-   */
-  200: ApiResponseListInvitation;
-};
-
-export type GetInvitationsSentByUserResponse =
-  GetInvitationsSentByUserResponses[keyof GetInvitationsSentByUserResponses];
-
-export type GetPendingInvitationsForUserData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the user to get pending invitations for. The system will use the user's email to find invitations.
-     */
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/users/{uuid}/invitations/pending';
-};
-
-export type GetPendingInvitationsForUserErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetPendingInvitationsForUserError =
-  GetPendingInvitationsForUserErrors[keyof GetPendingInvitationsForUserErrors];
-
-export type GetPendingInvitationsForUserResponses = {
-  /**
-   * Pending invitations retrieved successfully (may be empty list)
-   */
-  200: ApiResponseListInvitation;
-};
-
-export type GetPendingInvitationsForUserResponse =
-  GetPendingInvitationsForUserResponses[keyof GetPendingInvitationsForUserResponses];
 
 export type SearchData = {
   body?: never;
@@ -18895,152 +18281,6 @@ export type Search2Responses = {
 };
 
 export type Search2Response = Search2Responses[keyof Search2Responses];
-
-export type ValidateInvitationData = {
-  body?: never;
-  path: {
-    /**
-     * Unique invitation token to validate. This is the 64-character token from invitation emails.
-     */
-    token: string;
-  };
-  query?: never;
-  url: '/api/v1/invitations/validate/{token}';
-};
-
-export type ValidateInvitationErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ValidateInvitationError = ValidateInvitationErrors[keyof ValidateInvitationErrors];
-
-export type ValidateInvitationResponses = {
-  /**
-   * Validation completed - check response body for result
-   */
-  200: ApiResponseBoolean;
-};
-
-export type ValidateInvitationResponse =
-  ValidateInvitationResponses[keyof ValidateInvitationResponses];
-
-export type GetInvitationByTokenData = {
-  body?: never;
-  path: {
-    /**
-     * Unique invitation token from the invitation email URL. This is the 64-character identifier for the specific invitation.
-     */
-    token: string;
-  };
-  query?: never;
-  url: '/api/v1/invitations/token/{token}';
-};
-
-export type GetInvitationByTokenErrors = {
-  /**
-   * Invitation token not found or invalid
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetInvitationByTokenError =
-  GetInvitationByTokenErrors[keyof GetInvitationByTokenErrors];
-
-export type GetInvitationByTokenResponses = {
-  /**
-   * Invitation details retrieved successfully
-   */
-  200: ApiResponseInvitation;
-};
-
-export type GetInvitationByTokenResponse =
-  GetInvitationByTokenResponses[keyof GetInvitationByTokenResponses];
-
-export type PreviewInvitationData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Invitation token from email link. Must be a valid, non-expired invitation token.
-     */
-    token: string;
-  };
-  url: '/api/v1/invitations/preview';
-};
-
-export type PreviewInvitationErrors = {
-  /**
-   * Invalid or malformed token
-   */
-  400: ApiResponseInvitationPreview;
-  /**
-   * Invitation not found or token expired
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type PreviewInvitationError = PreviewInvitationErrors[keyof PreviewInvitationErrors];
-
-export type PreviewInvitationResponses = {
-  /**
-   * Invitation preview retrieved successfully
-   */
-  200: ApiResponseInvitationPreview;
-};
-
-export type PreviewInvitationResponse =
-  PreviewInvitationResponses[keyof PreviewInvitationResponses];
-
-export type GetPendingInvitationsForEmailData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Email address to search for pending invitations. Must be a valid email format. Search is case-insensitive.
-     */
-    email: string;
-  };
-  url: '/api/v1/invitations/pending';
-};
-
-export type GetPendingInvitationsForEmailErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetPendingInvitationsForEmailError =
-  GetPendingInvitationsForEmailErrors[keyof GetPendingInvitationsForEmailErrors];
-
-export type GetPendingInvitationsForEmailResponses = {
-  /**
-   * Pending invitations retrieved successfully (may be empty list)
-   */
-  200: ApiResponseListInvitation;
-};
-
-export type GetPendingInvitationsForEmailResponse =
-  GetPendingInvitationsForEmailResponses[keyof GetPendingInvitationsForEmailResponses];
 
 export type GetInstructorRatingSummaryData = {
   body?: never;
@@ -21853,47 +21093,6 @@ export type GetAdminEligibleUsersResponses = {
 export type GetAdminEligibleUsersResponse =
   GetAdminEligibleUsersResponses[keyof GetAdminEligibleUsersResponses];
 
-export type GetAdminUsersData = {
-  body?: never;
-  path?: never;
-  query: {
-    /**
-     * Optional filters for admin user search
-     */
-    filters: {
-      [key: string]: unknown;
-    };
-    pageable: Pageable;
-  };
-  url: '/api/v1/admin/users/admins';
-};
-
-export type GetAdminUsersErrors = {
-  /**
-   * Insufficient privileges - system admin required
-   */
-  403: ApiResponsePagedDtoUser;
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetAdminUsersError = GetAdminUsersErrors[keyof GetAdminUsersErrors];
-
-export type GetAdminUsersResponses = {
-  /**
-   * Admin users retrieved successfully
-   */
-  200: ApiResponsePagedDtoUser;
-};
-
-export type GetAdminUsersResponse = GetAdminUsersResponses[keyof GetAdminUsersResponses];
-
 export type IsOrganisationVerifiedData = {
   body?: never;
   path: {
@@ -21999,6 +21198,37 @@ export type IsInstructorVerifiedResponses = {
 export type IsInstructorVerifiedResponse =
   IsInstructorVerifiedResponses[keyof IsInstructorVerifiedResponses];
 
+export type GetOrganisationSupportedDomainsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/admin/domains/organisation-supported';
+};
+
+export type GetOrganisationSupportedDomainsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetOrganisationSupportedDomainsError =
+  GetOrganisationSupportedDomainsErrors[keyof GetOrganisationSupportedDomainsErrors];
+
+export type GetOrganisationSupportedDomainsResponses = {
+  /**
+   * Organisation domains retrieved successfully
+   */
+  200: ApiResponseListDomainDto;
+};
+
+export type GetOrganisationSupportedDomainsResponse =
+  GetOrganisationSupportedDomainsResponses[keyof GetOrganisationSupportedDomainsResponses];
+
 export type GetDashboardStatisticsData = {
   body?: never;
   path?: never;
@@ -22066,89 +21296,6 @@ export type GetDashboardActivityResponses = {
 
 export type GetDashboardActivityResponse =
   GetDashboardActivityResponses[keyof GetDashboardActivityResponses];
-
-export type CancelInvitationData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the organization that owns the invitation. Must be an existing organization.
-     */
-    uuid: string;
-    /**
-     * UUID of the invitation to cancel. Must be a pending invitation that hasn't been accepted, declined, or expired.
-     */
-    invitationUuid: string;
-  };
-  query: {
-    /**
-     * UUID of the user requesting to cancel the invitation. Must be either the original inviter or an administrator of the organization.
-     */
-    canceller_uuid: string;
-  };
-  url: '/api/v1/organisations/{uuid}/invitations/{invitationUuid}';
-};
-
-export type CancelInvitationErrors = {
-  /**
-   * Invitation is not pending, or user lacks permission to cancel
-   */
-  400: ApiResponseVoid;
-  /**
-   * Invitation not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type CancelInvitationError = CancelInvitationErrors[keyof CancelInvitationErrors];
-
-export type CancelInvitationResponses = {
-  /**
-   * Invitation cancelled successfully
-   */
-  200: ApiResponseVoid;
-};
-
-export type CancelInvitationResponse = CancelInvitationResponses[keyof CancelInvitationResponses];
-
-export type CleanupOldInvitationsData = {
-  body?: never;
-  path?: never;
-  query?: {
-    /**
-     * Delete invitations older than this many days. Default is 90 days.
-     */
-    daysOld?: number;
-  };
-  url: '/api/v1/invitations/maintenance/cleanup';
-};
-
-export type CleanupOldInvitationsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type CleanupOldInvitationsError =
-  CleanupOldInvitationsErrors[keyof CleanupOldInvitationsErrors];
-
-export type CleanupOldInvitationsResponses = {
-  /**
-   * Old invitations cleaned up successfully
-   */
-  200: ApiResponseInteger;
-};
-
-export type CleanupOldInvitationsResponse =
-  CleanupOldInvitationsResponses[keyof CleanupOldInvitationsResponses];
 
 export type ClearInstructorAvailabilityData = {
   body?: never;
