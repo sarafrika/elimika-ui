@@ -62,21 +62,13 @@ export default function EnrollCourseCard({
       createCart.mutate(
         {
           body: {
-            // currency_code: catalogue.currency_code,
             currency_code: "KES",
             region_code: "KE",
-            // metadata: {
-            //   campaign: "",
-            // } as any,
             items: [
               {
                 variant_id: catalogue.variant_code,
                 quantity: 1,
-                // metadata: {
-                //   course_uuid: catalogue.course_uuid,
-                //   class_definition_uuid: catalogue.class_definition_uuid,
-                //   student_uuid: student?.uuid as any,
-                // },
+
               },
             ],
           },
@@ -108,11 +100,6 @@ export default function EnrollCourseCard({
       body: {
         variant_id: catalogue.variant_code,
         quantity: 1,
-        // metadata: {
-        //   course_uuid: cls?.course?.uuid as any,
-        //   class_definition_uuid: cls?.uuid as any,
-        //   student_uuid: student?.uuid as any,
-        // }
       }
     }, {
       onSuccess: (data) => {
@@ -133,8 +120,8 @@ export default function EnrollCourseCard({
           <div className='relative h-48 overflow-hidden'>
             <div className='absolute inset-0 z-10 bg-primary/10' />
             <Image
-              src={cls?.course?.thumbnail_url}
-              alt={cls?.title}
+              src={cls?.course?.banner_url}
+              alt={"banner"}
               className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
               width={200}
               height={50}
@@ -258,10 +245,11 @@ export default function EnrollCourseCard({
             {/* Footer: Enroll + Add to Cart */}
             <div className='flex items-center justify-between border-t border-primary/30 pt-3'>
               {variant === 'full' ? (
-                <div className='flex items-center gap-2'>
+                <div className='flex items-center gap-1'>
                   <span className='text-lg font-medium'>
                     KES {cls?.training_fee || 'N/A'}
                   </span>
+                  <span className='text-sm' >/hour/head</span>
                 </div>
               ) : (
                 ''
