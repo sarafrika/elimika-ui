@@ -1211,14 +1211,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
-      .readonly()
-      .optional(),
     question_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
   })
@@ -1455,14 +1455,14 @@ export const zTrainingProgram = z
       )
       .readonly()
       .optional(),
-    program_type: z
-      .string()
-      .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
-      .readonly()
-      .optional(),
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total program duration.')
+      .readonly()
+      .optional(),
+    program_type: z
+      .string()
+      .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
       .readonly()
       .optional(),
   })
@@ -1895,17 +1895,24 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    is_profile_complete: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
-      )
-      .readonly()
-      .optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
+      )
+      .readonly()
+      .optional(),
+    formatted_location: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.'
+      )
+      .readonly()
+      .optional(),
+    is_profile_complete: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
       )
       .readonly()
       .optional(),
@@ -2121,22 +2128,14 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
-      .readonly()
-      .optional(),
     formatted_duration: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration of membership.')
       .readonly()
       .optional(),
-    membership_duration_months: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
-      )
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
     membership_status: zMembershipStatusEnum.optional(),
@@ -2164,6 +2163,14 @@ export const zInstructorProfessionalMembership = z
     is_recent_membership: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
+      .readonly()
+      .optional(),
+    membership_duration_months: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.'
+      )
       .readonly()
       .optional(),
   })
@@ -2285,9 +2292,17 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+    calculated_years: z
+      .number()
+      .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
+      .readonly()
+      .optional(),
+    duration_in_months: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
+      )
       .readonly()
       .optional(),
     formatted_duration: z
@@ -2316,17 +2331,9 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Indicates if this experience is recent (within the last 5 years).')
       .readonly()
       .optional(),
-    calculated_years: z
-      .number()
-      .describe('**[READ-ONLY]** Calculated years of experience based on start and end dates.')
-      .readonly()
-      .optional(),
-    duration_in_months: z
-      .number()
-      .int()
-      .describe(
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.'
-      )
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -2431,9 +2438,18 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
-    is_complete: z
+    years_since_completion: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of years since the qualification was completed.')
+      .readonly()
+      .optional(),
+    education_level: zEducationLevelEnum.optional(),
+    has_certificate_number: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .describe(
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
+      )
       .readonly()
       .optional(),
     is_recent_qualification: z
@@ -2448,18 +2464,9 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
-    years_since_completion: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of years since the qualification was completed.')
-      .readonly()
-      .optional(),
-    education_level: zEducationLevelEnum.optional(),
-    has_certificate_number: z
+    is_complete: z
       .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
-      )
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -2990,6 +2997,29 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
+    has_multiple_categories: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+      .readonly()
+      .optional(),
+    category_count: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
+      .readonly()
+      .optional(),
     accepts_new_enrollments: z
       .boolean()
       .describe(
@@ -3015,29 +3045,6 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
-      .readonly()
-      .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
-      .readonly()
-      .optional(),
-    has_multiple_categories: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
-      .readonly()
-      .optional(),
-    category_count: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
       .readonly()
       .optional(),
   })
@@ -4210,6 +4217,59 @@ export const zLocationTypeEnum = z
   .describe('**[REQUIRED]** Default delivery format for the class.');
 
 /**
+ * Recurrence type to apply for the session template
+ */
+export const zRecurrenceTypeEnum = z
+  .enum(['DAILY', 'WEEKLY', 'MONTHLY'])
+  .describe('Recurrence type to apply for the session template');
+
+/**
+ * Inline recurrence rule for class session templates (embedded within class creation)
+ */
+export const zClassRecurrence = z
+  .object({
+    recurrence_type: zRecurrenceTypeEnum.optional(),
+    interval_value: z
+      .number()
+      .int()
+      .describe('Interval between recurrences (e.g., every 2 weeks)')
+      .optional(),
+    days_of_week: z
+      .string()
+      .describe('Comma separated days of week (WEEKLY only). Example: MONDAY,WEDNESDAY')
+      .optional(),
+    day_of_month: z.number().int().describe('Day of month to repeat on (MONTHLY only)').optional(),
+    end_date: z
+      .string()
+      .date()
+      .describe('Optional end date (inclusive) for the recurrence series')
+      .optional(),
+    occurrence_count: z.number().int().describe('Number of occurrences to generate').optional(),
+  })
+  .describe('Inline recurrence rule for class session templates (embedded within class creation)');
+
+/**
+ * Conflict handling strategy: FAIL (default), SKIP, ROLLOVER
+ */
+export const zConflictResolutionEnum = z
+  .enum(['FAIL', 'SKIP', 'ROLLOVER'])
+  .describe('Conflict handling strategy: FAIL (default), SKIP, ROLLOVER');
+
+/**
+ * Time slot template used during class creation to generate scheduled instances with optional recurrence
+ */
+export const zClassSessionTemplate = z
+  .object({
+    start_time: z.string().datetime().describe('Start time for the first occurrence (UTC)'),
+    end_time: z.string().datetime().describe('End time for the first occurrence (UTC)'),
+    recurrence: zClassRecurrence.optional(),
+    conflict_resolution: zConflictResolutionEnum.optional(),
+  })
+  .describe(
+    'Time slot template used during class creation to generate scheduled instances with optional recurrence'
+  );
+
+/**
  * Class definition template that defines what a class is, independent of scheduling
  */
 export const zClassDefinition = z
@@ -4305,17 +4365,19 @@ export const zClassDefinition = z
       .boolean()
       .describe('**[OPTIONAL]** Whether to allow waitlisting when maximum capacity is reached.')
       .optional(),
-    recurrence_pattern_uuid: z
-      .string()
-      .uuid()
-      .describe('**[OPTIONAL]** Reference to the recurrence pattern UUID for repeating classes.')
-      .optional(),
     is_active: z
       .boolean()
       .describe(
         '**[OPTIONAL]** Whether this class definition is currently active and available for scheduling.'
       )
       .optional(),
+    session_templates: z
+      .array(zClassSessionTemplate)
+      .min(1)
+      .max(2147483647)
+      .describe(
+        '**[REQUIRED]** Inline session templates with time slots and recurrence rules to schedule class instances during creation.\nconflict_resolution per template:\n- FAIL: stop scheduling if any conflict; response 409 with conflicts.\n- SKIP: schedule non-conflicting occurrences; return conflicts for skipped dates.\n- ROLLOVER: push conflicting dates forward by the recurrence interval (bounded retries) and extend the series; return unrecoverable conflicts.\n'
+      ),
     created_date: z
       .string()
       .datetime()
@@ -4363,13 +4425,6 @@ export const zClassDefinition = z
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
-    has_recurrence: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the class definition has a recurrence pattern configured.'
-      )
-      .readonly()
-      .optional(),
     capacity_info: z
       .string()
       .describe(
@@ -4383,146 +4438,6 @@ export const zClassDefinition = z
 export const zApiResponseClassDefinition = z.object({
   success: z.boolean().optional(),
   data: zClassDefinition.optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
-/**
- * **[OPTIONAL]** Current status of the scheduled instance.
- */
-export const zStatusEnum3 = z
-  .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'])
-  .describe('**[OPTIONAL]** Current status of the scheduled instance.');
-
-/**
- * A scheduled class instance that represents a concrete class occurrence placed on the calendar
- */
-export const zScheduledInstance = z
-  .object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[READ-ONLY]** Unique system identifier for the scheduled instance. Auto-generated by the system.'
-      )
-      .readonly()
-      .optional(),
-    class_definition_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[REQUIRED]** Reference to the class definition UUID that this instance is based on.'
-      ),
-    instructor_uuid: z
-      .string()
-      .uuid()
-      .describe('**[REQUIRED]** Reference to the instructor UUID who will conduct this session.'),
-    start_time: z
-      .string()
-      .datetime()
-      .describe('**[REQUIRED]** Start date and time of the scheduled class session.'),
-    end_time: z
-      .string()
-      .datetime()
-      .describe('**[REQUIRED]** End date and time of the scheduled class session.'),
-    timezone: z.string().describe('**[REQUIRED]** Timezone for the scheduled session.'),
-    title: z
-      .string()
-      .describe(
-        '**[REQUIRED]** Title of the class (cached from class definition for performance).'
-      ),
-    location_type: zLocationTypeEnum,
-    location_name: z
-      .string()
-      .describe(
-        '**[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).'
-      )
-      .optional(),
-    location_latitude: z
-      .number()
-      .describe('**[OPTIONAL]** Latitude coordinate for this scheduled instance location.')
-      .optional(),
-    location_longitude: z
-      .number()
-      .describe('**[OPTIONAL]** Longitude coordinate for this scheduled instance location.')
-      .optional(),
-    max_participants: z
-      .number()
-      .int()
-      .gte(1)
-      .describe(
-        '**[REQUIRED]** Maximum number of participants for this session (cached from class definition).'
-      ),
-    status: zStatusEnum3.optional(),
-    cancellation_reason: z
-      .string()
-      .describe('**[OPTIONAL]** Reason for cancellation if status is CANCELLED.')
-      .optional(),
-    created_date: z
-      .string()
-      .datetime()
-      .describe(
-        '**[READ-ONLY]** Timestamp when the scheduled instance was first created. Automatically set by the system.'
-      )
-      .readonly()
-      .optional(),
-    updated_date: z
-      .string()
-      .datetime()
-      .describe(
-        '**[READ-ONLY]** Timestamp when the scheduled instance was last modified. Automatically updated by the system.'
-      )
-      .readonly()
-      .optional(),
-    created_by: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Email or username of the user who created this scheduled instance.'
-      )
-      .readonly()
-      .optional(),
-    updated_by: z
-      .string()
-      .describe(
-        '**[READ-ONLY]** Email or username of the user who last modified this scheduled instance.'
-      )
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
-      .readonly()
-      .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
-    time_range: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable date and time range.')
-      .readonly()
-      .optional(),
-    is_currently_active: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
-      )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-  })
-  .describe(
-    'A scheduled class instance that represents a concrete class occurrence placed on the calendar'
-  );
-
-export const zApiResponseListScheduledInstance = z.object({
-  success: z.boolean().optional(),
-  data: z.array(zScheduledInstance).optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -4600,98 +4515,6 @@ export const zClassLessonPlan = z
 export const zApiResponseListClassLessonPlan = z.object({
   success: z.boolean().optional(),
   data: z.array(zClassLessonPlan).optional(),
-  message: z.string().optional(),
-  error: z.record(z.unknown()).optional(),
-});
-
-/**
- * **[REQUIRED]** Type of recurrence pattern. Defines the base frequency of repetition.
- */
-export const zRecurrenceTypeEnum = z
-  .enum(['DAILY', 'WEEKLY', 'MONTHLY'])
-  .describe('**[REQUIRED]** Type of recurrence pattern. Defines the base frequency of repetition.');
-
-/**
- * Recurrence pattern configuration for class scheduling with support for daily, weekly, and monthly patterns
- */
-export const zRecurrencePattern = z
-  .object({
-    uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[READ-ONLY]** Unique system identifier for the recurrence pattern. Auto-generated by the system.'
-      )
-      .readonly()
-      .optional(),
-    recurrence_type: zRecurrenceTypeEnum,
-    interval_value: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(365)
-      .describe(
-        '**[OPTIONAL]** Interval value for recurrence. For example, 2 means every 2 weeks for WEEKLY pattern.'
-      )
-      .optional(),
-    days_of_week: z
-      .string()
-      .max(100)
-      .describe(
-        '**[OPTIONAL]** Comma-separated list of days for WEEKLY recurrence. Valid values: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY.'
-      )
-      .optional(),
-    day_of_month: z
-      .number()
-      .int()
-      .gte(1)
-      .lte(31)
-      .describe(
-        '**[OPTIONAL]** Specific day of month for MONTHLY recurrence. Must be between 1 and 31.'
-      )
-      .optional(),
-    end_date: z
-      .string()
-      .date()
-      .describe(
-        '**[OPTIONAL]** End date for the recurrence pattern. If null, pattern continues indefinitely unless limited by occurrence count.'
-      )
-      .optional(),
-    occurrence_count: z
-      .number()
-      .int()
-      .gte(1)
-      .describe(
-        '**[OPTIONAL]** Maximum number of occurrences for this pattern. If null, pattern continues until end date or indefinitely.'
-      )
-      .optional(),
-    is_active: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the recurrence pattern is currently active based on end date.'
-      )
-      .readonly()
-      .optional(),
-    is_indefinite: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the pattern continues indefinitely (no end date or occurrence limit).'
-      )
-      .readonly()
-      .optional(),
-    pattern_description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the recurrence pattern.')
-      .readonly()
-      .optional(),
-  })
-  .describe(
-    'Recurrence pattern configuration for class scheduling with support for daily, weekly, and monthly patterns'
-  );
-
-export const zApiResponseRecurrencePattern = z.object({
-  success: z.boolean().optional(),
-  data: zRecurrencePattern.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -5159,12 +4982,169 @@ export const zApiResponseBoolean = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+/**
+ * **[OPTIONAL]** Current status of the scheduled instance.
+ */
+export const zStatusEnum3 = z
+  .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'])
+  .describe('**[OPTIONAL]** Current status of the scheduled instance.');
+
+/**
+ * A scheduled class instance that represents a concrete class occurrence placed on the calendar
+ */
+export const zScheduledInstance = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** Unique system identifier for the scheduled instance. Auto-generated by the system.'
+      )
+      .readonly()
+      .optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[OPTIONAL]** Reference to the class definition UUID that this instance is based on. Null for instructor block entries.'
+      )
+      .optional(),
+    instructor_uuid: z
+      .string()
+      .uuid()
+      .describe('**[REQUIRED]** Reference to the instructor UUID who will conduct this session.'),
+    start_time: z
+      .string()
+      .datetime()
+      .describe('**[REQUIRED]** Start date and time of the scheduled class session.'),
+    end_time: z
+      .string()
+      .datetime()
+      .describe('**[REQUIRED]** End date and time of the scheduled class session.'),
+    timezone: z.string().describe('**[REQUIRED]** Timezone for the scheduled session.'),
+    title: z
+      .string()
+      .describe(
+        '**[REQUIRED]** Title of the class (cached from class definition for performance).'
+      ),
+    location_type: zLocationTypeEnum,
+    location_name: z
+      .string()
+      .describe(
+        '**[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).'
+      )
+      .optional(),
+    location_latitude: z
+      .number()
+      .describe('**[OPTIONAL]** Latitude coordinate for this scheduled instance location.')
+      .optional(),
+    location_longitude: z
+      .number()
+      .describe('**[OPTIONAL]** Longitude coordinate for this scheduled instance location.')
+      .optional(),
+    max_participants: z
+      .number()
+      .int()
+      .gte(0)
+      .describe(
+        '**[OPTIONAL]** Maximum number of participants for this session (cached from class definition).'
+      )
+      .optional(),
+    status: zStatusEnum3.optional(),
+    cancellation_reason: z
+      .string()
+      .describe('**[OPTIONAL]** Reason for cancellation if status is CANCELLED.')
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe(
+        '**[READ-ONLY]** Timestamp when the scheduled instance was first created. Automatically set by the system.'
+      )
+      .readonly()
+      .optional(),
+    updated_date: z
+      .string()
+      .datetime()
+      .describe(
+        '**[READ-ONLY]** Timestamp when the scheduled instance was last modified. Automatically updated by the system.'
+      )
+      .readonly()
+      .optional(),
+    created_by: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Email or username of the user who created this scheduled instance.'
+      )
+      .readonly()
+      .optional(),
+    updated_by: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Email or username of the user who last modified this scheduled instance.'
+      )
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
+    time_range: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable date and time range.')
+      .readonly()
+      .optional(),
+    is_currently_active: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
+      )
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    'A scheduled class instance that represents a concrete class occurrence placed on the calendar'
+  );
+
 export const zApiResponseScheduledInstance = z.object({
   success: z.boolean().optional(),
   data: zScheduledInstance.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
+
+/**
+ * A single blocked period
+ */
+export const zPeriod = z
+  .object({
+    start_time: z.string().datetime().describe('Start time (UTC) for the block'),
+    end_time: z.string().datetime().describe('End time (UTC) for the block'),
+    reason: z.string().describe('Optional reason shown on the calendar').optional(),
+  })
+  .describe('A single blocked period');
+
+/**
+ * Request to block an instructor's calendar for non-teaching commitments (optional feature). Supports multiple periods.
+ */
+export const zBlockInstructorTimeRequest = z
+  .object({
+    periods: z.array(zPeriod).min(1).max(2147483647).describe('Periods to block'),
+  })
+  .describe(
+    "Request to block an instructor's calendar for non-teaching commitments (optional feature). Supports multiple periods."
+  );
 
 export const zApiResponseStudent = z.object({
   success: z.boolean().optional(),
@@ -5684,9 +5664,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    did_attend: z
+    can_be_cancelled: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
     is_attendance_marked: z
@@ -5694,14 +5674,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -6012,6 +5992,51 @@ export const zSelectPaymentSessionRequest = z
       .describe("Identifier of the payment provider (e.g. 'manual', 'stripe')"),
   })
   .describe('Specifies the payment provider to use for a cart');
+
+/**
+ * Details of a conflicting schedule request during class creation
+ */
+export const zClassSchedulingConflict = z
+  .object({
+    requested_start: z
+      .string()
+      .datetime()
+      .describe('Requested start date-time that conflicted')
+      .optional(),
+    requested_end: z
+      .string()
+      .datetime()
+      .describe('Requested end date-time that conflicted')
+      .optional(),
+    reasons: z.array(z.string()).describe('Reasons for the conflict').optional(),
+  })
+  .describe('Details of a conflicting schedule request during class creation');
+
+/**
+ * Response payload for class definition creation including scheduled instances and conflicts
+ */
+export const zClassDefinitionCreationResponse = z
+  .object({
+    class_definition: zClassDefinition.optional(),
+    scheduled_instances: z
+      .array(zScheduledInstance)
+      .describe('Instances scheduled from embedded session templates')
+      .optional(),
+    scheduling_conflicts: z
+      .array(zClassSchedulingConflict)
+      .describe('Conflicts encountered while scheduling')
+      .optional(),
+  })
+  .describe(
+    'Response payload for class definition creation including scheduled instances and conflicts'
+  );
+
+export const zApiResponseClassDefinitionCreationResponse = z.object({
+  success: z.boolean().optional(),
+  data: zClassDefinitionCreationResponse.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
 
 /**
  * **[REQUIRED]** Strategy describing how this class schedule derives from the template.
@@ -6584,6 +6609,13 @@ export const zApiResponsePagedDtoTrainingBranch = z.object({
   error: z.record(z.unknown()).optional(),
 });
 
+export const zApiResponseListScheduledInstance = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zScheduledInstance).optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
 export const zPagedDtoSystemRuleResponse = z.object({
   content: z.array(zSystemRuleResponse).optional(),
   metadata: zPageMetadata.optional(),
@@ -6881,11 +6913,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -6899,6 +6926,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -7829,16 +7861,16 @@ export const zCourseCategoryMapping = z
       )
       .readonly()
       .optional(),
-    has_names: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
-      .readonly()
-      .optional(),
     display_text: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable text representing this course-category relationship.'
       )
+      .readonly()
+      .optional(),
+    has_names: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
       .readonly()
       .optional(),
   })
@@ -9691,54 +9723,6 @@ export const zUpdateClassDefinitionData = z.object({
  */
 export const zUpdateClassDefinitionResponse = zApiResponseClassDefinition;
 
-export const zCancelRecurringClassScheduleData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the class definition to cancel schedule for'),
-  }),
-  query: z.object({
-    reason: z.string().describe('Reason for cancellation'),
-  }),
-});
-
-/**
- * Recurring schedule cancelled successfully
- */
-export const zCancelRecurringClassScheduleResponse = zApiResponseVoid;
-
-export const zScheduleRecurringClassFromDefinitionData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the class definition to schedule'),
-  }),
-  query: z.object({
-    startDate: z.string().date().describe('Date to start scheduling from (YYYY-MM-DD)'),
-    endDate: z
-      .string()
-      .date()
-      .describe('Date to stop scheduling (optional, uses pattern end date if not provided)')
-      .optional(),
-  }),
-});
-
-/**
- * Recurring schedule created successfully
- */
-export const zScheduleRecurringClassFromDefinitionResponse = zApiResponseListScheduledInstance;
-
-export const zUpdateRecurringClassScheduleData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the class definition to update schedule for'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Recurring schedule updated successfully
- */
-export const zUpdateRecurringClassScheduleResponse = zApiResponseListScheduledInstance;
-
 export const zGetLessonPlanData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -9764,45 +9748,6 @@ export const zSaveLessonPlanData = z.object({
  * OK
  */
 export const zSaveLessonPlanResponse = zApiResponseListClassLessonPlan;
-
-export const zDeleteClassRecurrencePatternData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the recurrence pattern to delete'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Recurrence pattern deleted successfully
- */
-export const zDeleteClassRecurrencePatternResponse = zApiResponseVoid;
-
-export const zGetClassRecurrencePatternData = z.object({
-  body: z.never().optional(),
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the recurrence pattern to retrieve'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Recurrence pattern retrieved successfully
- */
-export const zGetClassRecurrencePatternResponse = zApiResponseRecurrencePattern;
-
-export const zUpdateClassRecurrencePatternData = z.object({
-  body: zRecurrencePattern,
-  path: z.object({
-    uuid: z.string().uuid().describe('UUID of the recurrence pattern to update'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Recurrence pattern updated successfully
- */
-export const zUpdateClassRecurrencePatternResponse = zApiResponseRecurrencePattern;
 
 export const zDeleteCertificateData = z.object({
   body: z.never().optional(),
@@ -10041,6 +9986,19 @@ export const zCheckInstructorConflictData = z.object({
  * Conflict check completed
  */
 export const zCheckInstructorConflictResponse = zApiResponseBoolean;
+
+export const zBlockInstructorTimeData = z.object({
+  body: zBlockInstructorTimeRequest,
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Block created successfully
+ */
+export const zBlockInstructorTimeResponse = zApiResponseScheduledInstance;
 
 export const zListRulesData = z.object({
   body: z.never().optional(),
@@ -10949,34 +10907,6 @@ export const zUploadInstructorDocumentData = z.object({
  */
 export const zUploadInstructorDocumentResponse = zApiResponseInstructorDocument;
 
-export const zSetAvailabilityPatternsData = z.object({
-  body: z.record(z.unknown()),
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.object({
-    pattern_type: z.string().describe('Pattern type: weekly, daily, monthly, or custom'),
-  }),
-});
-
-/**
- * Availability patterns set successfully
- */
-export const zSetAvailabilityPatternsResponse = zApiResponseVoid;
-
-export const zBlockTimeSlotsData = z.object({
-  body: zBlockTimeSlotsRequest,
-  path: z.object({
-    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * Time slots blocked successfully
- */
-export const zBlockTimeSlotsResponse = zApiResponseVoid;
-
 export const zCreateLinkData = z.object({
   body: zGuardianStudentLinkRequest,
   path: z.never().optional(),
@@ -11825,7 +11755,7 @@ export const zCreateClassDefinitionData = z.object({
 /**
  * Class definition created successfully
  */
-export const zCreateClassDefinitionResponse = zApiResponseClassDefinition;
+export const zCreateClassDefinitionResponse = zApiResponseClassDefinitionCreationResponse;
 
 export const zGetQuizSchedulesData = z.object({
   body: z.never().optional(),
@@ -11878,17 +11808,6 @@ export const zCreateAssignmentScheduleData = z.object({
  * OK
  */
 export const zCreateAssignmentScheduleResponse = zApiResponseClassAssignmentSchedule;
-
-export const zCreateClassRecurrencePatternData = z.object({
-  body: zRecurrencePattern,
-  path: z.never().optional(),
-  query: z.never().optional(),
-});
-
-/**
- * Recurrence pattern created successfully
- */
-export const zCreateClassRecurrencePatternResponse = zApiResponseRecurrencePattern;
 
 export const zGetAllCertificatesData = z.object({
   body: z.never().optional(),

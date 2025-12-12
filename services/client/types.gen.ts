@@ -838,13 +838,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1001,13 +1001,13 @@ export type TrainingProgram = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Classification of program type based on duration and content.
-   */
-  readonly program_type?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of total program duration.
    */
   readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Classification of program type based on duration and content.
+   */
+  readonly program_type?: string;
 };
 
 export type ApiResponseTrainingProgram = {
@@ -1286,10 +1286,6 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
-   */
-  readonly is_profile_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
@@ -1297,6 +1293,10 @@ export type Instructor = {
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   */
+  readonly is_profile_complete?: boolean;
 };
 
 /**
@@ -1412,17 +1412,13 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
-  readonly membership_duration_months?: number;
+  readonly is_complete?: boolean;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -1445,6 +1441,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -1517,7 +1517,11 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   * **[READ-ONLY]** Calculated years of experience based on start and end dates.
+   */
+  readonly calculated_years?: number;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly is_complete?: boolean;
   /**
@@ -1542,11 +1546,7 @@ export type InstructorExperience = {
    */
   readonly is_recent_experience?: boolean;
   /**
-   * **[READ-ONLY]** Calculated years of experience based on start and end dates.
-   */
-  readonly calculated_years?: number;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
   readonly duration_in_months?: number;
 };
@@ -1609,9 +1609,14 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   * **[READ-ONLY]** Number of years since the qualification was completed.
    */
-  readonly is_complete?: boolean;
+  readonly years_since_completion?: number;
+  education_level?: EducationLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
+   */
+  readonly has_certificate_number?: boolean;
   /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
@@ -1621,14 +1626,9 @@ export type InstructorEducation = {
    */
   readonly formatted_completion?: string;
   /**
-   * **[READ-ONLY]** Number of years since the qualification was completed.
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
-  readonly years_since_completion?: number;
-  education_level?: EducationLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
-   */
-  readonly has_certificate_number?: boolean;
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -1891,6 +1891,22 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
+  /**
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
@@ -1910,22 +1926,6 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
-  /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
 };
 
 /**
@@ -2912,13 +2912,18 @@ export type ClassDefinition = {
    */
   allow_waitlist?: boolean;
   /**
-   * **[OPTIONAL]** Reference to the recurrence pattern UUID for repeating classes.
-   */
-  recurrence_pattern_uuid?: string;
-  /**
    * **[OPTIONAL]** Whether this class definition is currently active and available for scheduling.
    */
   is_active?: boolean;
+  /**
+   * **[REQUIRED]** Inline session templates with time slots and recurrence rules to schedule class instances during creation.
+   * conflict_resolution per template:
+   * - FAIL: stop scheduling if any conflict; response 409 with conflicts.
+   * - SKIP: schedule non-conflicting occurrences; return conflicts for skipped dates.
+   * - ROLLOVER: push conflicting dates forward by the recurrence interval (bounded retries) and extend the series; return unrecoverable conflicts.
+   *
+   */
+  session_templates: Array<ClassSessionTemplate>;
   /**
    * **[READ-ONLY]** Timestamp when the class definition was first created. Automatically set by the system.
    */
@@ -2948,13 +2953,55 @@ export type ClassDefinition = {
    */
   readonly duration_formatted?: string;
   /**
-   * **[READ-ONLY]** Indicates if the class definition has a recurrence pattern configured.
-   */
-  readonly has_recurrence?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
+};
+
+/**
+ * Inline recurrence rule for class session templates (embedded within class creation)
+ */
+export type ClassRecurrence = {
+  recurrence_type?: RecurrenceTypeEnum;
+  /**
+   * Interval between recurrences (e.g., every 2 weeks)
+   */
+  interval_value?: number;
+  /**
+   * Comma separated days of week (WEEKLY only). Example: MONDAY,WEDNESDAY
+   */
+  days_of_week?: string;
+  /**
+   * Day of month to repeat on (MONTHLY only)
+   */
+  day_of_month?: number;
+  /**
+   * Optional end date (inclusive) for the recurrence series
+   */
+  end_date?: Date;
+  /**
+   * Number of occurrences to generate
+   */
+  occurrence_count?: number;
+};
+
+/**
+ * Time slot template used during class creation to generate scheduled instances with optional recurrence
+ */
+export type ClassSessionTemplate = {
+  /**
+   * Start time for the first occurrence (UTC)
+   */
+  start_time: Date;
+  /**
+   * End time for the first occurrence (UTC)
+   */
+  end_time: Date;
+  /**
+   * Inline recurrence rule for this session template
+   */
+  recurrence?: ClassRecurrence;
+  conflict_resolution?: ConflictResolutionEnum;
 };
 
 export type ApiResponseClassDefinition = {
@@ -2964,107 +3011,6 @@ export type ApiResponseClassDefinition = {
   error?: {
     [key: string]: unknown;
   };
-};
-
-export type ApiResponseListScheduledInstance = {
-  success?: boolean;
-  data?: Array<ScheduledInstance>;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
-};
-
-/**
- * A scheduled class instance that represents a concrete class occurrence placed on the calendar
- */
-export type ScheduledInstance = {
-  /**
-   * **[READ-ONLY]** Unique system identifier for the scheduled instance. Auto-generated by the system.
-   */
-  readonly uuid?: string;
-  /**
-   * **[REQUIRED]** Reference to the class definition UUID that this instance is based on.
-   */
-  class_definition_uuid: string;
-  /**
-   * **[REQUIRED]** Reference to the instructor UUID who will conduct this session.
-   */
-  instructor_uuid: string;
-  /**
-   * **[REQUIRED]** Start date and time of the scheduled class session.
-   */
-  start_time: Date;
-  /**
-   * **[REQUIRED]** End date and time of the scheduled class session.
-   */
-  end_time: Date;
-  /**
-   * **[REQUIRED]** Timezone for the scheduled session.
-   */
-  timezone: string;
-  /**
-   * **[REQUIRED]** Title of the class (cached from class definition for performance).
-   */
-  title: string;
-  location_type: LocationTypeEnum;
-  /**
-   * **[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).
-   */
-  location_name?: string;
-  /**
-   * **[OPTIONAL]** Latitude coordinate for this scheduled instance location.
-   */
-  location_latitude?: number;
-  /**
-   * **[OPTIONAL]** Longitude coordinate for this scheduled instance location.
-   */
-  location_longitude?: number;
-  /**
-   * **[REQUIRED]** Maximum number of participants for this session (cached from class definition).
-   */
-  max_participants: number;
-  status?: StatusEnum3;
-  /**
-   * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
-   */
-  cancellation_reason?: string;
-  /**
-   * **[READ-ONLY]** Timestamp when the scheduled instance was first created. Automatically set by the system.
-   */
-  readonly created_date?: Date;
-  /**
-   * **[READ-ONLY]** Timestamp when the scheduled instance was last modified. Automatically updated by the system.
-   */
-  readonly updated_date?: Date;
-  /**
-   * **[READ-ONLY]** Email or username of the user who created this scheduled instance.
-   */
-  readonly created_by?: string;
-  /**
-   * **[READ-ONLY]** Email or username of the user who last modified this scheduled instance.
-   */
-  readonly updated_by?: string;
-  /**
-   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
-   */
-  readonly duration_minutes?: bigint;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
-   * **[READ-ONLY]** Human-readable date and time range.
-   */
-  readonly time_range?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
-   */
-  readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 /**
@@ -3124,58 +3070,6 @@ export type ClassLessonPlan = {
 export type ApiResponseListClassLessonPlan = {
   success?: boolean;
   data?: Array<ClassLessonPlan>;
-  message?: string;
-  error?: {
-    [key: string]: unknown;
-  };
-};
-
-/**
- * Recurrence pattern configuration for class scheduling with support for daily, weekly, and monthly patterns
- */
-export type RecurrencePattern = {
-  /**
-   * **[READ-ONLY]** Unique system identifier for the recurrence pattern. Auto-generated by the system.
-   */
-  readonly uuid?: string;
-  recurrence_type: RecurrenceTypeEnum;
-  /**
-   * **[OPTIONAL]** Interval value for recurrence. For example, 2 means every 2 weeks for WEEKLY pattern.
-   */
-  interval_value?: number;
-  /**
-   * **[OPTIONAL]** Comma-separated list of days for WEEKLY recurrence. Valid values: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY.
-   */
-  days_of_week?: string;
-  /**
-   * **[OPTIONAL]** Specific day of month for MONTHLY recurrence. Must be between 1 and 31.
-   */
-  day_of_month?: number;
-  /**
-   * **[OPTIONAL]** End date for the recurrence pattern. If null, pattern continues indefinitely unless limited by occurrence count.
-   */
-  end_date?: Date;
-  /**
-   * **[OPTIONAL]** Maximum number of occurrences for this pattern. If null, pattern continues until end date or indefinitely.
-   */
-  occurrence_count?: number;
-  /**
-   * **[READ-ONLY]** Indicates if the recurrence pattern is currently active based on end date.
-   */
-  readonly is_active?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the pattern continues indefinitely (no end date or occurrence limit).
-   */
-  readonly is_indefinite?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable description of the recurrence pattern.
-   */
-  readonly pattern_description?: string;
-};
-
-export type ApiResponseRecurrencePattern = {
-  success?: boolean;
-  data?: RecurrencePattern;
   message?: string;
   error?: {
     [key: string]: unknown;
@@ -3556,6 +3450,126 @@ export type ApiResponseScheduledInstance = {
   error?: {
     [key: string]: unknown;
   };
+};
+
+/**
+ * A scheduled class instance that represents a concrete class occurrence placed on the calendar
+ */
+export type ScheduledInstance = {
+  /**
+   * **[READ-ONLY]** Unique system identifier for the scheduled instance. Auto-generated by the system.
+   */
+  readonly uuid?: string;
+  /**
+   * **[OPTIONAL]** Reference to the class definition UUID that this instance is based on. Null for instructor block entries.
+   */
+  class_definition_uuid?: string;
+  /**
+   * **[REQUIRED]** Reference to the instructor UUID who will conduct this session.
+   */
+  instructor_uuid: string;
+  /**
+   * **[REQUIRED]** Start date and time of the scheduled class session.
+   */
+  start_time: Date;
+  /**
+   * **[REQUIRED]** End date and time of the scheduled class session.
+   */
+  end_time: Date;
+  /**
+   * **[REQUIRED]** Timezone for the scheduled session.
+   */
+  timezone: string;
+  /**
+   * **[REQUIRED]** Title of the class (cached from class definition for performance).
+   */
+  title: string;
+  location_type: LocationTypeEnum;
+  /**
+   * **[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).
+   */
+  location_name?: string;
+  /**
+   * **[OPTIONAL]** Latitude coordinate for this scheduled instance location.
+   */
+  location_latitude?: number;
+  /**
+   * **[OPTIONAL]** Longitude coordinate for this scheduled instance location.
+   */
+  location_longitude?: number;
+  /**
+   * **[OPTIONAL]** Maximum number of participants for this session (cached from class definition).
+   */
+  max_participants?: number;
+  status?: StatusEnum3;
+  /**
+   * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
+   */
+  cancellation_reason?: string;
+  /**
+   * **[READ-ONLY]** Timestamp when the scheduled instance was first created. Automatically set by the system.
+   */
+  readonly created_date?: Date;
+  /**
+   * **[READ-ONLY]** Timestamp when the scheduled instance was last modified. Automatically updated by the system.
+   */
+  readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** Email or username of the user who created this scheduled instance.
+   */
+  readonly created_by?: string;
+  /**
+   * **[READ-ONLY]** Email or username of the user who last modified this scheduled instance.
+   */
+  readonly updated_by?: string;
+  /**
+   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
+   */
+  readonly duration_minutes?: bigint;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable date and time range.
+   */
+  readonly time_range?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
+   */
+  readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+};
+
+/**
+ * Request to block an instructor's calendar for non-teaching commitments (optional feature). Supports multiple periods.
+ */
+export type BlockInstructorTimeRequest = {
+  /**
+   * Periods to block
+   */
+  periods: Array<Period>;
+};
+
+/**
+ * A single blocked period
+ */
+export type Period = {
+  /**
+   * Start time (UTC) for the block
+   */
+  start_time: Date;
+  /**
+   * End time (UTC) for the block
+   */
+  end_time: Date;
+  /**
+   * Optional reason shown on the calendar
+   */
+  reason?: string;
 };
 
 export type ApiResponseStudent = {
@@ -3953,21 +3967,21 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
-  readonly did_attend?: boolean;
+  readonly can_be_cancelled?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4333,6 +4347,51 @@ export type SelectPaymentSessionRequest = {
    * Identifier of the payment provider (e.g. 'manual', 'stripe')
    */
   provider_id: string;
+};
+
+export type ApiResponseClassDefinitionCreationResponse = {
+  success?: boolean;
+  data?: ClassDefinitionCreationResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Response payload for class definition creation including scheduled instances and conflicts
+ */
+export type ClassDefinitionCreationResponse = {
+  /**
+   * Persisted class definition
+   */
+  class_definition?: ClassDefinition;
+  /**
+   * Instances scheduled from embedded session templates
+   */
+  scheduled_instances?: Array<ScheduledInstance>;
+  /**
+   * Conflicts encountered while scheduling
+   */
+  scheduling_conflicts?: Array<ClassSchedulingConflict>;
+};
+
+/**
+ * Details of a conflicting schedule request during class creation
+ */
+export type ClassSchedulingConflict = {
+  /**
+   * Requested start date-time that conflicted
+   */
+  requested_start?: Date;
+  /**
+   * Requested end date-time that conflicted
+   */
+  requested_end?: Date;
+  /**
+   * Reasons for the conflict
+   */
+  reasons?: Array<string>;
 };
 
 /**
@@ -4859,6 +4918,15 @@ export type PagedDtoTrainingBranch = {
   links?: PageLinks;
 };
 
+export type ApiResponseListScheduledInstance = {
+  success?: boolean;
+  data?: Array<ScheduledInstance>;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
 export type ApiResponsePagedDtoSystemRuleResponse = {
   success?: boolean;
   data?: PagedDtoSystemRuleResponse;
@@ -5165,10 +5233,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -5180,6 +5244,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 export type ApiResponsePagedDtoQuizQuestion = {
@@ -6032,13 +6100,13 @@ export type CourseCategoryMapping = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if both course and category names are populated.
-   */
-  readonly has_names?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable text representing this course-category relationship.
    */
   readonly display_text?: string;
+  /**
+   * **[READ-ONLY]** Indicates if both course and category names are populated.
+   */
+  readonly has_names?: boolean;
 };
 
 export type ApiResponsePagedDtoCourseAssessment = {
@@ -7048,22 +7116,7 @@ export const LocationTypeEnum = {
 export type LocationTypeEnum = (typeof LocationTypeEnum)[keyof typeof LocationTypeEnum];
 
 /**
- * **[OPTIONAL]** Current status of the scheduled instance.
- */
-export const StatusEnum3 = {
-  SCHEDULED: 'SCHEDULED',
-  ONGOING: 'ONGOING',
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED',
-} as const;
-
-/**
- * **[OPTIONAL]** Current status of the scheduled instance.
- */
-export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
-
-/**
- * **[REQUIRED]** Type of recurrence pattern. Defines the base frequency of repetition.
+ * Recurrence type to apply for the session template
  */
 export const RecurrenceTypeEnum = {
   DAILY: 'DAILY',
@@ -7072,9 +7125,24 @@ export const RecurrenceTypeEnum = {
 } as const;
 
 /**
- * **[REQUIRED]** Type of recurrence pattern. Defines the base frequency of repetition.
+ * Recurrence type to apply for the session template
  */
 export type RecurrenceTypeEnum = (typeof RecurrenceTypeEnum)[keyof typeof RecurrenceTypeEnum];
+
+/**
+ * Conflict handling strategy: FAIL (default), SKIP, ROLLOVER
+ */
+export const ConflictResolutionEnum = {
+  FAIL: 'FAIL',
+  SKIP: 'SKIP',
+  ROLLOVER: 'ROLLOVER',
+} as const;
+
+/**
+ * Conflict handling strategy: FAIL (default), SKIP, ROLLOVER
+ */
+export type ConflictResolutionEnum =
+  (typeof ConflictResolutionEnum)[keyof typeof ConflictResolutionEnum];
 
 /**
  * **[REQUIRED]** Type of certificate this template is designed for.
@@ -7090,6 +7158,21 @@ export const TemplateTypeEnum = {
  * **[REQUIRED]** Type of certificate this template is designed for.
  */
 export type TemplateTypeEnum = (typeof TemplateTypeEnum)[keyof typeof TemplateTypeEnum];
+
+/**
+ * **[OPTIONAL]** Current status of the scheduled instance.
+ */
+export const StatusEnum3 = {
+  SCHEDULED: 'SCHEDULED',
+  ONGOING: 'ONGOING',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * **[OPTIONAL]** Current status of the scheduled instance.
+ */
+export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
 
 /**
  * **[REQUIRED]** Role/domain name being offered to the recipient. Determines the permissions and access level the user will have upon accepting the invitation.
@@ -10608,132 +10691,6 @@ export type UpdateClassDefinitionResponses = {
 export type UpdateClassDefinitionResponse =
   UpdateClassDefinitionResponses[keyof UpdateClassDefinitionResponses];
 
-export type CancelRecurringClassScheduleData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the class definition to cancel schedule for
-     */
-    uuid: string;
-  };
-  query: {
-    /**
-     * Reason for cancellation
-     */
-    reason: string;
-  };
-  url: '/api/v1/classes/{uuid}/schedule';
-};
-
-export type CancelRecurringClassScheduleErrors = {
-  /**
-   * Class definition not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type CancelRecurringClassScheduleError =
-  CancelRecurringClassScheduleErrors[keyof CancelRecurringClassScheduleErrors];
-
-export type CancelRecurringClassScheduleResponses = {
-  /**
-   * Recurring schedule cancelled successfully
-   */
-  200: ApiResponseVoid;
-};
-
-export type CancelRecurringClassScheduleResponse =
-  CancelRecurringClassScheduleResponses[keyof CancelRecurringClassScheduleResponses];
-
-export type ScheduleRecurringClassFromDefinitionData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the class definition to schedule
-     */
-    uuid: string;
-  };
-  query: {
-    /**
-     * Date to start scheduling from (YYYY-MM-DD)
-     */
-    startDate: Date;
-    /**
-     * Date to stop scheduling (optional, uses pattern end date if not provided)
-     */
-    endDate?: Date;
-  };
-  url: '/api/v1/classes/{uuid}/schedule';
-};
-
-export type ScheduleRecurringClassFromDefinitionErrors = {
-  /**
-   * Invalid input data or class definition has no recurrence pattern
-   */
-  400: ApiResponseListScheduledInstance;
-  /**
-   * Class definition not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ScheduleRecurringClassFromDefinitionError =
-  ScheduleRecurringClassFromDefinitionErrors[keyof ScheduleRecurringClassFromDefinitionErrors];
-
-export type ScheduleRecurringClassFromDefinitionResponses = {
-  /**
-   * Recurring schedule created successfully
-   */
-  201: ApiResponseListScheduledInstance;
-};
-
-export type ScheduleRecurringClassFromDefinitionResponse =
-  ScheduleRecurringClassFromDefinitionResponses[keyof ScheduleRecurringClassFromDefinitionResponses];
-
-export type UpdateRecurringClassScheduleData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the class definition to update schedule for
-     */
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/classes/{uuid}/schedule';
-};
-
-export type UpdateRecurringClassScheduleErrors = {
-  /**
-   * Class definition not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type UpdateRecurringClassScheduleError =
-  UpdateRecurringClassScheduleErrors[keyof UpdateRecurringClassScheduleErrors];
-
-export type UpdateRecurringClassScheduleResponses = {
-  /**
-   * Recurring schedule updated successfully
-   */
-  200: ApiResponseListScheduledInstance;
-};
-
-export type UpdateRecurringClassScheduleResponse =
-  UpdateRecurringClassScheduleResponses[keyof UpdateRecurringClassScheduleResponses];
-
 export type GetLessonPlanData = {
   body?: never;
   path: {
@@ -10801,122 +10758,6 @@ export type SaveLessonPlanResponses = {
 };
 
 export type SaveLessonPlanResponse = SaveLessonPlanResponses[keyof SaveLessonPlanResponses];
-
-export type DeleteClassRecurrencePatternData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the recurrence pattern to delete
-     */
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/classes/recurrence-patterns/{uuid}';
-};
-
-export type DeleteClassRecurrencePatternErrors = {
-  /**
-   * Recurrence pattern is still in use
-   */
-  400: ApiResponseVoid;
-  /**
-   * Recurrence pattern not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type DeleteClassRecurrencePatternError =
-  DeleteClassRecurrencePatternErrors[keyof DeleteClassRecurrencePatternErrors];
-
-export type DeleteClassRecurrencePatternResponses = {
-  /**
-   * Recurrence pattern deleted successfully
-   */
-  200: ApiResponseVoid;
-};
-
-export type DeleteClassRecurrencePatternResponse =
-  DeleteClassRecurrencePatternResponses[keyof DeleteClassRecurrencePatternResponses];
-
-export type GetClassRecurrencePatternData = {
-  body?: never;
-  path: {
-    /**
-     * UUID of the recurrence pattern to retrieve
-     */
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/classes/recurrence-patterns/{uuid}';
-};
-
-export type GetClassRecurrencePatternErrors = {
-  /**
-   * Recurrence pattern not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetClassRecurrencePatternError =
-  GetClassRecurrencePatternErrors[keyof GetClassRecurrencePatternErrors];
-
-export type GetClassRecurrencePatternResponses = {
-  /**
-   * Recurrence pattern retrieved successfully
-   */
-  200: ApiResponseRecurrencePattern;
-};
-
-export type GetClassRecurrencePatternResponse =
-  GetClassRecurrencePatternResponses[keyof GetClassRecurrencePatternResponses];
-
-export type UpdateClassRecurrencePatternData = {
-  body: RecurrencePattern;
-  path: {
-    /**
-     * UUID of the recurrence pattern to update
-     */
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/classes/recurrence-patterns/{uuid}';
-};
-
-export type UpdateClassRecurrencePatternErrors = {
-  /**
-   * Invalid input data
-   */
-  400: ApiResponseRecurrencePattern;
-  /**
-   * Recurrence pattern not found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type UpdateClassRecurrencePatternError =
-  UpdateClassRecurrencePatternErrors[keyof UpdateClassRecurrencePatternErrors];
-
-export type UpdateClassRecurrencePatternResponses = {
-  /**
-   * Recurrence pattern updated successfully
-   */
-  200: ApiResponseRecurrencePattern;
-};
-
-export type UpdateClassRecurrencePatternResponse =
-  UpdateClassRecurrencePatternResponses[keyof UpdateClassRecurrencePatternResponses];
 
 export type DeleteCertificateData = {
   body?: never;
@@ -11506,6 +11347,45 @@ export type CheckInstructorConflictResponses = {
 
 export type CheckInstructorConflictResponse =
   CheckInstructorConflictResponses[keyof CheckInstructorConflictResponses];
+
+export type BlockInstructorTimeData = {
+  body: BlockInstructorTimeRequest;
+  path: {
+    /**
+     * UUID of the instructor
+     */
+    instructorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/timetable/instructor/{instructorUuid}/blocks';
+};
+
+export type BlockInstructorTimeErrors = {
+  /**
+   * Invalid block request
+   */
+  400: ApiResponseScheduledInstance;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type BlockInstructorTimeError = BlockInstructorTimeErrors[keyof BlockInstructorTimeErrors];
+
+export type BlockInstructorTimeResponses = {
+  /**
+   * Block created successfully
+   */
+  201: ApiResponseScheduledInstance;
+};
+
+export type BlockInstructorTimeResponse =
+  BlockInstructorTimeResponses[keyof BlockInstructorTimeResponses];
 
 export type ListRulesData = {
   body?: never;
@@ -13612,91 +13492,6 @@ export type UploadInstructorDocumentResponses = {
 export type UploadInstructorDocumentResponse =
   UploadInstructorDocumentResponses[keyof UploadInstructorDocumentResponses];
 
-export type SetAvailabilityPatternsData = {
-  body: {
-    [key: string]: unknown;
-  };
-  path: {
-    /**
-     * UUID of the instructor
-     */
-    instructorUuid: string;
-  };
-  query: {
-    /**
-     * Pattern type: weekly, daily, monthly, or custom
-     */
-    pattern_type: string;
-  };
-  url: '/api/v1/instructors/{instructorUuid}/availability/patterns';
-};
-
-export type SetAvailabilityPatternsErrors = {
-  /**
-   * Invalid pattern data
-   */
-  400: ApiResponseVoid;
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SetAvailabilityPatternsError =
-  SetAvailabilityPatternsErrors[keyof SetAvailabilityPatternsErrors];
-
-export type SetAvailabilityPatternsResponses = {
-  /**
-   * Availability patterns set successfully
-   */
-  200: ApiResponseVoid;
-};
-
-export type SetAvailabilityPatternsResponse =
-  SetAvailabilityPatternsResponses[keyof SetAvailabilityPatternsResponses];
-
-export type BlockTimeSlotsData = {
-  body: BlockTimeSlotsRequest;
-  path: {
-    /**
-     * UUID of the instructor
-     */
-    instructorUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/instructors/{instructorUuid}/availability/block';
-};
-
-export type BlockTimeSlotsErrors = {
-  /**
-   * Invalid time range or color code format
-   */
-  400: ApiResponseVoid;
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type BlockTimeSlotsError = BlockTimeSlotsErrors[keyof BlockTimeSlotsErrors];
-
-export type BlockTimeSlotsResponses = {
-  /**
-   * Time slots blocked successfully
-   */
-  200: ApiResponseVoid;
-};
-
-export type BlockTimeSlotsResponse = BlockTimeSlotsResponses[keyof BlockTimeSlotsResponses];
-
 export type CreateLinkData = {
   body: GuardianStudentLinkRequest;
   path?: never;
@@ -15734,7 +15529,7 @@ export type CreateClassDefinitionErrors = {
   /**
    * Invalid input data
    */
-  400: ApiResponseClassDefinition;
+  400: ApiResponseClassDefinitionCreationResponse;
   /**
    * Not Found
    */
@@ -15752,7 +15547,7 @@ export type CreateClassDefinitionResponses = {
   /**
    * Class definition created successfully
    */
-  201: ApiResponseClassDefinition;
+  201: ApiResponseClassDefinitionCreationResponse;
 };
 
 export type CreateClassDefinitionResponse =
@@ -15898,41 +15693,6 @@ export type CreateAssignmentScheduleResponses = {
 
 export type CreateAssignmentScheduleResponse =
   CreateAssignmentScheduleResponses[keyof CreateAssignmentScheduleResponses];
-
-export type CreateClassRecurrencePatternData = {
-  body: RecurrencePattern;
-  path?: never;
-  query?: never;
-  url: '/api/v1/classes/recurrence-patterns';
-};
-
-export type CreateClassRecurrencePatternErrors = {
-  /**
-   * Invalid input data
-   */
-  400: ApiResponseRecurrencePattern;
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type CreateClassRecurrencePatternError =
-  CreateClassRecurrencePatternErrors[keyof CreateClassRecurrencePatternErrors];
-
-export type CreateClassRecurrencePatternResponses = {
-  /**
-   * Recurrence pattern created successfully
-   */
-  201: ApiResponseRecurrencePattern;
-};
-
-export type CreateClassRecurrencePatternResponse =
-  CreateClassRecurrencePatternResponses[keyof CreateClassRecurrencePatternResponses];
 
 export type GetAllCertificatesData = {
   body?: never;

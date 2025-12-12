@@ -6,16 +6,22 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import {
+  completeCartMutation,
   enrollStudentMutation,
+  getCartOptions,
   getStudentScheduleQueryKey,
+  listCatalogItemsOptions,
   selectPaymentSessionMutation
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { addYears, format } from 'date-fns';
 import { ShoppingCart } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { Button } from '../../../../../../components/ui/button';
+import { Input } from '../../../../../../components/ui/input';
+import { Label } from '../../../../../../components/ui/label';
 import { CustomLoadingState } from '../../../../@course_creator/_components/loading-state';
 import EnrollCourseCard from '../../../../_components/enroll-course-card';
 
@@ -40,11 +46,58 @@ const EnrollmentPage = () => {
     }
   }, [replaceBreadcrumbs, courseId]);
 
+  // --- Date filter: default to a 1-year span, but classes won't load until user clicks Apply
+  const today = new Date();
+  const defaultStartDate = today;
+  const defaultEndDate = addYears(today, 1);
+
+  const toInputDate = (d: Date) => d.toISOString().slice(0, 10);
+  const [startDateInput, setStartDateInput] = useState<string>(toInputDate(defaultStartDate));
+  const [endDateInput, setEndDateInput] = useState<string>(toInputDate(defaultEndDate));
+
+  const [appliedStart, setAppliedStart] = useState<string | null>(null);
+  const [appliedEnd, setAppliedEnd] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  const applyDates = () => {
+    setDateError(null);
+    if (!startDateInput || !endDateInput) {
+      setDateError('Please select both start and end dates.');
+      return;
+    }
+    const s = new Date(startDateInput);
+    const e = new Date(endDateInput);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) {
+      setDateError('Invalid date format.');
+      return;
+    }
+    if (s > e) {
+      setDateError('Start date must be before end date.');
+      return;
+    }
+    setAppliedStart(startDateInput);
+    setAppliedEnd(endDateInput);
+  };
+
+  const clearDates = () => {
+    setStartDateInput(toInputDate(defaultStartDate));
+    setEndDateInput(toInputDate(defaultEndDate));
+    setAppliedStart(null);
+    setAppliedEnd(null);
+    setDateError(null);
+  };
+
+  const { data: catalogues } = useQuery(listCatalogItemsOptions())
   const { classes = [], loading, isError } = useBundledClassInfo(
     courseId,
-    '2024-10-23',
-    '2026-12-12',
+    appliedStart ?? undefined,
+    appliedEnd ?? undefined,
     student
+  );
+
+
+  const filteredClasses = classes.filter(cls =>
+    catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
   );
 
   const { formattedStart, formattedEnd } = useMemo(() => {
@@ -108,7 +161,10 @@ const EnrollmentPage = () => {
   const savedCartId = localStorage.getItem("cart_id");
   const [openCartModal, setOpenCartModal] = useState(false);
 
-  // const { data: cart } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }))
+  const { data: cartData } = useQuery(getCartOptions({ path: { cartId: savedCartId as string } }))
+  // @ts-ignore
+  const cart = cartData?.data
+
   const cartPaymentSession = useMutation(selectPaymentSessionMutation())
   const handlePaymentSession = (cart: any) => {
     cartPaymentSession.mutate({
@@ -122,68 +178,23 @@ const EnrollmentPage = () => {
     })
   }
 
-  const cart = {
-    "id": "2f6d4d1e-5f2a-4b2e-9f8d-0b7c3e9b5c1a",
-    "currency_code": "USD",
-    "region_code": "KE",
-    "status": "OPEN",
-    "subtotal": 8500,
-    "tax": 0,
-    "discount": 0,
-    "shipping": 0,
-    "total": 8500,
-    "created_at": "2024-07-20T09:45:00Z",
-    "updated_at": "2024-07-20T10:15:00Z",
-    "items": [
+  const completeCart = useMutation(completeCartMutation())
+  const handleCompleteCart = () => [
+    completeCart.mutate({
+      path: { cartId: savedCartId as string }
+    },
       {
-        "id": "item_01HZX2KJ6ZG5R2Y4B4S4G0QJZY",
-        "title": "Advanced Excel Course",
-        "quantity": 1,
-        "variant_id": "variant_01HZX1Y4K8R0HVWZ4Q6CF6M1AP",
-        "unit_price": 2500,
-        "subtotal": 2500,
-        "total": 2500,
-        "metadata": {}
-      },
-      {
-        "id": "item_01HZYYTR8HX9K3FQW1A1F3T8RS",
-        "title": "Data Analysis with Python",
-        "quantity": 1,
-        "variant_id": "variant_01HZYXQ2K9D1LSOP4G3M8N7QWE",
-        "unit_price": 3000,
-        "subtotal": 3000,
-        "total": 3000,
-        "metadata": {}
-      },
-      {
-        "id": "item_01HZYSAB4MK7P2ZQ9X3TRQ4FUV",
-        "title": "Project Management Essentials",
-        "quantity": 1,
-        "variant_id": "variant_01HZYPAQ4JU9BVWZ3T6CX2M9LO",
-        "unit_price": 1500,
-        "subtotal": 1500,
-        "total": 1500,
-        "metadata": {}
-      },
-      {
-        "id": "item_01HZYPQW7ND4MTX9V2S9TQ1BDE",
-        "title": "Digital Marketing Fundamentals",
-        "quantity": 1,
-        "variant_id": "variant_01HZYOMK9TV3LWQZ2B5AF9G8JK",
-        "unit_price": 1500,
-        "subtotal": 1500,
-        "total": 1500,
-        "metadata": {}
-      }
-    ]
-  }
-
-  if (loading) {
-    return <CustomLoadingState subHeading="Loading available classes..." />;
-  }
+        onSuccess: (data: any) => {
+          toast.success("Success")
+        },
+        onError: (error: any) => {
+          toast.error(error?.message)
+        }
+      })
+  ]
 
   return (
-    <div className="space-y-4 py-10">
+    <div className="space-y-4 pb-10">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Explore Classes Open for Enrollment</h1>
@@ -202,45 +213,102 @@ const EnrollmentPage = () => {
             {cart?.items.length}
           </span>
         </div>
-
       </div>
 
-      {classes.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center space-y-2 p-6 text-center text-muted-foreground">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-10 w-10 text-muted-foreground"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10m-9 4h4m-8 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+      {/* Date filter controls */}
+      <Card className="p-4 flex flex-col md:flex-row items-start md:items-end gap-3">
+        <div className="flex items-center justify-center gap-3 w-full md:w-auto">
+          <div>
+            <Label className="text-xs">Start</Label>
+            <Input
+              type="date"
+              value={startDateInput}
+              onChange={(e) => setStartDateInput(e.target.value)}
+              className="mt-1"
             />
-          </svg>
-          <h3 className="text-lg font-medium text-foreground">No Classes Available</h3>
-          <p className="text-sm text-muted-foreground">
-            It looks like this course doesn’t have any classes yet.
-          </p>
-        </Card>
-      ) : (
-        <div className="flex flex-row flex-wrap gap-4">
-          {classes.map(cls => (
-            <EnrollCourseCard
-              key={cls?.uuid}
-              href="#"
-              cls={cls}
-              isFull={false}
-              disableEnroll={false}
-              handleEnroll={() => {
-                setEnrollingClass(cls);
-                setOpenEnrollModal(true);
-              }}
-              variant="full"
+          </div>
+
+          <div>
+            <Label className="text-xs">End</Label>
+            <Input
+              type="date"
+              value={endDateInput}
+              onChange={(e) => setEndDateInput(e.target.value)}
+              className="mt-1"
             />
-          ))}
+          </div>
+
+          <div className="flex items-end gap-2">
+            <Button size="sm" onClick={applyDates}>Apply</Button>
+            <Button size="sm" variant="outline" onClick={clearDates}>Reset</Button>
+          </div>
         </div>
-      )}
+
+        <div className="ml-auto text-sm text-muted-foreground">
+          {!appliedStart || !appliedEnd ? (
+            <span>Please apply a date range to load classes (defaults shown).</span>
+          ) : (
+            <span>Showing classes from <strong>{format(new Date(appliedStart), 'MMM dd, yyyy')}</strong> to <strong>{format(new Date(appliedEnd), 'MMM dd, yyyy')}</strong></span>
+          )}
+        </div>
+
+        {dateError && <div className="w-full text-sm text-destructive mt-2 md:mt-0">{dateError}</div>}
+      </Card>
+
+      <div className='cursor-pointer' onClick={handleCompleteCart} >
+        <span>Complete current cart</span>
+      </div>
+
+
+      {loading ?
+        <CustomLoadingState subHeading="Loading available classes..." />
+        : <>
+          {(!appliedStart || !appliedEnd) ? (
+            <Card className="flex flex-col items-center justify-center space-y-2 p-6 text-center text-muted-foreground">
+              <h3 className="text-lg font-medium text-foreground">Select a date range</h3>
+              <p className="text-sm text-muted-foreground">
+                Choose a start and end date then click Apply to view available classes.
+              </p>
+            </Card>
+          ) :
+            classes.length === 0 ? (
+              <Card className="flex flex-col items-center justify-center space-y-2 p-6 text-center text-muted-foreground">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-10 w-10 text-muted-foreground"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10m-9 4h4m-8 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                <h3 className="text-lg font-medium text-foreground">No Classes Available</h3>
+                <p className="text-sm text-muted-foreground">
+                  It looks like this course doesn’t have any classes yet.
+                </p>
+              </Card>
+            ) : (
+              <div className="flex flex-row flex-wrap gap-4">
+                {filteredClasses.map(cls => (
+                  <EnrollCourseCard
+                    key={cls?.uuid}
+                    href="#"
+                    cls={cls}
+                    isFull={false}
+                    disableEnroll={false}
+                    handleEnroll={() => {
+                      setEnrollingClass(cls);
+                      setOpenEnrollModal(true);
+                    }}
+                    variant="full"
+                  />
+                ))}
+              </div>
+            )}</>}
+
+
 
       <ConfirmModal
         open={openEnrollModal}
@@ -285,11 +353,11 @@ const EnrollmentPage = () => {
         title="Your Cart"
         description={
           <div className="space-y-4 text-sm text-foreground">
-            {cart.items.length === 0 && (
+            {cart?.items?.length === 0 && (
               <p className="text-muted-foreground text-center">Your cart is empty.</p>
             )}
 
-            {cart.items.map(item => (
+            {cart?.items?.map((item: any) => (
               <div
                 key={item.id}
                 className="rounded-md border bg-muted/50 p-3 space-y-1"
@@ -307,7 +375,7 @@ const EnrollmentPage = () => {
 
             <div className="border-t pt-3">
               <p className="font-semibold text-base">
-                Cart Total: ${cart.total}
+                Cart Total: ${cart?.total}
               </p>
             </div>
           </div>

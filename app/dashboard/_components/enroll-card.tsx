@@ -163,22 +163,23 @@ export const EnrollmentCards = ({
                 },
                 {
                   onSuccess: _data => {
-                    // console.log(data, "created cart data")
                     toast.success('Success!');
                   },
+                  onError: (error: any) => {
+                    toast.error(error.message)
+                  }
                 }
               );
             }}
             disabled={!uuid}
           >
-            Add to Cart
+            {/* Add to Cart */}
           </Button>
 
           <Button
             variant='ghost'
             size='icon'
             onClick={() => {
-              // console.log('Toggled wishlist for', courseData?.uuid);
               toast.message('Coming soon');
             }}
             title='Add to Wishlist'

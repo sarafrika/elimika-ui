@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, Users } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
@@ -100,6 +101,9 @@ type Props = {
 };
 
 const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
+  const searchParams = useSearchParams();
+  const courseId = searchParams.get('courseId');
+
   const bookings = exampleBookings || [];
   const [activeTab, setActiveTab] = useState('browse');
   const { data: trainingInstructors, loading } = useSearchTrainingInstructors();

@@ -20,13 +20,12 @@ interface TimetablePageProps {
 
 const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePageProps) => {
   const instructor = useInstructor();
-  const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
 
-  // const { data: availabilitySlots, refetch } = useQuery(
-  //   getInstructorAvailabilityOptions({ path: { instructorUuid: user?.instructor?.uuid as string } })
-  // );
-
-  const { data: timetable } = useQuery({
+  const {
+    data: timetable,
+    refetch: refetchTimetable,
+    isFetching,
+  } = useQuery({
     ...getInstructorCalendarOptions({
       path: { instructorUuid: instructor?.uuid as string },
       query: { start_date: '2024-09-10' as any, end_date: '2026-11-11' as any },
@@ -37,8 +36,6 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
   const instructorSchedule = timetable?.data ?? []
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
-    // slots: transformedSlots as any,
-    // events: [],
     events: convertToCalendarEvents(instructorSchedule as ClassScheduleItem[]),
     settings: {
       timezone: 'UTC',
@@ -62,22 +59,25 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
     }));
   }, [timetable?.data]);
 
-  // useEffect(() => {
-  //   if (availabilitySlots?.data) {
-  //     const slots = transformAvailabilityArray(availabilitySlots.data);
-  //     setTransformedSlots(slots);
+  const handleAvailabilityUpdate = async (updatedAvailability: AvailabilityData) => {
+    setAvailabilityData(updatedAvailability);
 
-  //     setAvailabilityData((prev: any) => ({
-  //       ...prev,
-  //       slots,
-  //     }));
-  //   }
-  // }, [availabilitySlots?.data]);
+    const refreshed = await refetchTimetable();
+
+    const newEvents = refreshed.data?.data
+      ? convertToCalendarEvents(refreshed.data.data as ClassScheduleItem[])
+      : [];
+
+    setAvailabilityData(prev => ({
+      ...prev,
+      events: newEvents,
+    }));
+  };
 
   return (
     <TimetableManager
       availabilityData={availabilityData || []}
-      onAvailabilityUpdate={setAvailabilityData}
+      onAvailabilityUpdate={handleAvailabilityUpdate}
     />
   );
 };

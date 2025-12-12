@@ -249,7 +249,7 @@ export default function ClassDetailsForm({
             handleNextStep();
           },
           onError: (error: any) => {
-            toast.error(JSON.stringify(error?.error));
+            toast.error(error?.message);
           },
         }
       );
