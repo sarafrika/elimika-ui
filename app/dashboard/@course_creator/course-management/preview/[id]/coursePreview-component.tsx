@@ -14,10 +14,11 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader } from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useCourseRubrics } from '@/hooks/use-course-rubric';
 import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
-  getCourseLessonsOptions,
+  getCourseLessonsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -29,6 +30,7 @@ import {
   FileWarning,
   GraduationCap,
   Layers,
+  Scale,
   Users,
   Video,
 } from 'lucide-react';
@@ -79,6 +81,12 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
     }),
     enabled: !!courseId,
   });
+
+  const {
+    data: courseRubrics,
+    isLoading: rubric,
+    errors,
+  } = useCourseRubrics(courseId as string);
 
   if (isLoading) {
     return (
@@ -223,21 +231,53 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
       {/* Assessments */}
       <Card>
         <CardHeader>
-          <CardTitle>Course Assessments</CardTitle>
-          <CardDescription>Tests and quizzes included.</CardDescription>
+          <CardTitle>Course Assessment Rubrics</CardTitle>
+          <CardDescription>Rubrics for Tests and quizzes included.</CardDescription>
         </CardHeader>
         <CardContent>
-          {assessmentsData?.data?.content?.length ? (
-            assessmentsData.data.content.map((assessment: any) => (
-              <div key={assessment.uuid} className='border-b pb-4 last:border-0'>
+          {courseRubrics?.length ? (
+            courseRubrics.map((assessment: any) => (
+              <div key={assessment.uuid} className='border-b pb-4 pt-2 last:border-0'>
                 <div className='flex items-center gap-2'>
                   <BookOpenCheck className='text-blue-500 h-4 w-4' />
-                  <h3 className='font-semibold'>{assessment.title}</h3>
+                  <h3 className='font-semibold'>{assessment.rubric.title}</h3>
                 </div>
-                <RichTextRenderer htmlString={assessment.description ?? 'No description.'} />
-                <p className='mt-1 text-sm text-muted-foreground'>
-                  <Clock className='mr-1 inline-block h-4 w-4' /> {assessment.duration_display}
-                </p>
+                <RichTextRenderer htmlString={assessment.rubric.description ?? 'No description.'} />
+
+                <div className="flex flex-row space-x-4 mt-1">
+                  {assessment.rubric?.duration_display && (
+                    <p className="text-sm text-muted-foreground">
+                      <Clock className="mr-1 inline-block h-4 w-4" />
+                      {assessment.rubric.duration_display}
+                    </p>
+                  )}
+
+                  {assessment.rubric.total_weight != null && (
+                    <p className="text-sm text-muted-foreground">
+                      <Scale className="mr-1 inline-block h-4 w-4" />
+                      Weight: {assessment.rubric.total_weight}%
+                    </p>
+                  )}
+
+
+                  {assessment.rubric.min_passing_score != null && (
+                    <p className="text-sm text-muted-foreground">
+                      <CheckCircle className="mr-1 inline-block h-4 w-4" />
+                      Passing score: {assessment.rubric.min_passing_score}%
+                    </p>
+                  )}
+
+                  {assessment.rubric?.is_published ? (
+                    <p className="text-sm text-muted-foreground">
+                      Published                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      Not published
+                    </p>
+                  )}
+
+                </div>
+
               </div>
             ))
           ) : (

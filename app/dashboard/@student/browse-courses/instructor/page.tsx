@@ -216,6 +216,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
             instructors={trainingInstructors as any}
             classes={classes}
             onBookingComplete={handleBookingComplete}
+            courseId={courseId as string}
           />
         </TabsContent>
 

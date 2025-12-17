@@ -4,19 +4,18 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudent } from '@/context/student-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
-import { createBookingMutation, getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
+import { createBookingMutation, getInstructorCalendarOptions, getInstructorReviewsOptions, listCatalogItemsOptions, searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Award, BookOpen, Briefcase, Calendar, CheckCircle, DollarSign, MapPin, Star, Users, Video, X } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { AvailabilityData, ClassScheduleItem, convertToCalendarEvents } from '../../@instructor/availability/components/types';
-import TimetableManager from '../../@instructor/trainings/timetable/timetable-manager';
 import type { Booking } from '../browse-courses/instructor/page';
 
 type Props = {
@@ -35,12 +34,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
   const [endTime, setEndTime] = useState('');
   const [reason, setReason] = useState('');
 
-  const [transformedSlots, setTransformedSlots] = useState<any[]>([]);
-
-  // const { data: availabilitySlots, refetch } = useQuery(
-  //   getInstructorAvailabilityOptions({ path: { instructorUuid: instructor?.uuid as string } })
-  // );
-
   const { data: timetable } = useQuery({
     ...getInstructorCalendarOptions({
       path: { instructorUuid: instructor?.uuid as string },
@@ -52,8 +45,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
   const instructorSchedule = timetable?.data ?? []
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
-    // slots: transformedSlots as any,
-    // events: [],
     events: convertToCalendarEvents(instructorSchedule as ClassScheduleItem[]),
     settings: {
       timezone: 'UTC',
@@ -77,21 +68,34 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
     }));
   }, [timetable?.data]);
 
-  // useEffect(() => {
-  //   if (availabilitySlots?.data) {
-  //     const slots = transformAvailabilityArray(availabilitySlots.data);
-  //     setTransformedSlots(slots);
-
-  //     setAvailabilityData((prev: any) => ({
-  //       ...prev,
-  //       slots,
-  //     }));
-  //   }
-  // }, [availabilitySlots?.data]);
-
+  const { data: catalogues } = useQuery(listCatalogItemsOptions())
   const { classes: classesWithCourseAndInstructor } = useInstructorClassesWithDetails(
     instructor?.uuid as string
   );
+
+  const filteredClasses = classesWithCourseAndInstructor.filter(cls =>
+    catalogues?.data?.some(cat => cat.class_definition_uuid === cls.uuid)
+  );
+
+  const { data: reviews } = useQuery({
+    ...getInstructorReviewsOptions({ path: { instructorUuid: instructor?.uuid as string } }),
+    enabled: !!instructor.uuid,
+  })
+  const instructorReviews = reviews?.data || [];
+  // get students details
+  // get enrollment details / class name or course name
+
+  const { data: appliedCourses } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+    }),
+    enabled: !!instructor?.uuid,
+  });
+
+  const matchedCourse = appliedCourses?.data?.content?.find(
+    course => course.course_uuid === courseId
+  );
+
 
   const bookInstructor = useMutation(createBookingMutation());
   const handleBooking = () => {
@@ -155,15 +159,15 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
             <div className='mt-4 flex flex-wrap items-center gap-4'>
               <div className='flex items-center gap-1'>
                 <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-                <span>x reviews</span>
+                <span>{instructorReviews?.length} reviews</span>
               </div>
               <div className='text-muted-foreground flex items-center gap-1'>
                 <Users className='h-4 w-4' />
-                <span>xx students</span>
+                <span>N/A students</span>
               </div>
               <div className='text-muted-foreground flex items-center gap-1'>
                 <Briefcase className='h-4 w-4' />
-                <span>xx years experience</span>
+                <span>{instructor?.total_experience_years} years experience</span>
               </div>
               {instructor?.has_location_coordinates && (
                 <div className='text-muted-foreground flex items-center gap-1'>
@@ -226,27 +230,30 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className='flex flex-row items-center justify-between'>
               <Button onClick={handleBooking} className="w-full sm:w-auto">
                 Book
+              </Button>
+
+              <Button onClick={() => setShowBooking(false)} variant={"destructive"} className="w-full sm:w-auto bg:destructive">
+                Cancel
               </Button>
             </CardFooter>
           </Card>
         )}
-
+        {/* 
         {showBooking && <>
           <TimetableManager
             availabilityData={availabilityData || []}
             onAvailabilityUpdate={setAvailabilityData}
           />
-
-        </>}
+        </>} */}
 
         {/* Content Tabs */}
         <Tabs defaultValue='overview' className='w-full'>
           <TabsList className='flex flex-row gap-4' >
             <TabsTrigger value='overview'>Overview</TabsTrigger>
-            <TabsTrigger value='reviews'>Reviews ({reviews.length})</TabsTrigger>
+            <TabsTrigger value='reviews'>Reviews ({instructorReviews.length})</TabsTrigger>
             <TabsTrigger value='certifications'>Certifications</TabsTrigger>
             <TabsTrigger value='rates'>Rates</TabsTrigger>
           </TabsList>
@@ -285,13 +292,17 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
               {/* Classes */}
               <Card className="mb-6 p-6">
                 <div className="mb-4 flex items-center justify-between">
-                  <CardTitle className="text-lg font-semibold">Available Instructor Classes</CardTitle>
-                  <Badge variant="secondary">{classesWithCourseAndInstructor?.length || 0} Classes</Badge>
+                  <div>
+
+                    <CardTitle className="text-lg font-semibold">Available Instructor Classes</CardTitle>
+                    <CardDescription>Classes with catalogues, available for enrollment</CardDescription>
+                  </div>
+                  <Badge variant="secondary">{filteredClasses?.length || 0} Classe(s)</Badge>
                 </div>
 
-                {classesWithCourseAndInstructor?.length > 0 ? (
+                {filteredClasses?.length > 0 ? (
                   <div className="divide-y divide-border rounded-md">
-                    {classesWithCourseAndInstructor.map(course => (
+                    {filteredClasses.map(course => (
                       <div key={course?.uuid} className="flex items-start gap-3 p-4 transition hover:bg-secondary dark:hover:bg-muted">
                         <CheckCircle className="mt-1 h-5 w-5 text-green-600" />
                         <div className="flex flex-col">
@@ -319,22 +330,22 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
 
             {/* Reviews Tab */}
             <TabsContent value="reviews" className="space-y-4">
-              {Array.isArray(reviews) && reviews.length > 0 ? (
-                reviews.map((review) => (
-                  <Card key={review.id} className="transition hover:bg-muted/60">
+              {Array.isArray(instructorReviews) && instructorReviews.length > 0 ? (
+                instructorReviews.map((review: any) => (
+                  <Card key={review.uuid} className="transition hover:bg-muted/60">
                     <CardContent className="flex flex-col gap-3 p-6">
                       {/* Reviewer Header */}
                       <div className="flex items-center gap-4">
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={review.studentImage} alt={review.studentName} />
                           <AvatarFallback>
-                            {review.studentName.charAt(0).toUpperCase()}
+                            {/* {review.studentName.charAt(0).toUpperCase()} */}
                           </AvatarFallback>
                         </Avatar>
 
                         <div className="flex-1">
                           <div className='flex flex-row items-center justify-between' >
-                            <p className="font-medium text-foreground">{review.studentName}</p>
+                            <p className="font-medium text-foreground">{review?.studentName || "No name"}</p>
                             <div className="flex items-center gap-0.5">
                               {[...Array(5)].map((_, i) => (
                                 <Star
@@ -349,22 +360,30 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <BookOpen className="h-4 w-4" />
-                            {review.course}
+                            {review.course || "Class/Course Title"}
                             <span className="text-muted-foreground">•</span>
                             <Calendar className="h-4 w-4" />
-                            {review.date.toLocaleDateString('en-US', {
+                            {new Date(review.updated_date).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                               year: 'numeric',
                             })}
+
                           </div>
                         </div>
                       </div>
 
                       {/* Comment */}
-                      <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                        {review.comment}
-                      </p>
+                      <div>
+                        <CardTitle>
+                          {review.headline}
+                        </CardTitle>
+                        <CardDescription>
+                          {review.comments}
+                        </CardDescription>
+                      </div>
+                      {/* <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                      </p> */}
                     </CardContent>
                   </Card>
                 ))
@@ -414,38 +433,49 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
             {/* Rates Tab */}
             <TabsContent value='rates' className='space-y-4'>
               <Card className='p-6'>
-                <h3 className='mb-4'>Rate Card</h3>
+                <div>
+                  <CardTitle className='mb-4'>Rate Card</CardTitle>
+
+                </div>
                 <div className='space-y-4'>
                   <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
                     <div>
-                      <p>Hourly Rate</p>
-                      <p className='text-muted-foreground text-sm'>1 hour session</p>
+                      <p>Group In Person Rate</p>
+                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
                     </div>
                     <p className='text-2xl'>
-                      {/* {instructor.rateCard.currency} ${instructor.rateCard.hourly} */}
-                      rate xx
+                      {matchedCourse?.rate_card?.currency} {matchedCourse?.rate_card?.group_inperson_rate}
                     </p>
                   </div>
 
                   <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
                     <div>
-                      <p>Half Day</p>
-                      <p className='text-muted-foreground text-sm'>4 hours session</p>
+                      <p>Group Online Rate</p>
+                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
                     </div>
                     <p className='text-2xl'>
-                      {/* {instructor.rateCard.currency} ${instructor.rateCard.halfDay} */}
-                      rate xx
+                      {matchedCourse?.rate_card?.currency} {matchedCourse?.rate_card?.group_online_rate}
                     </p>
                   </div>
 
                   <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
                     <div>
-                      <p>Full Day</p>
-                      <p className='text-muted-foreground text-sm'>8 hours session</p>
+                      <p>Private In Person Rate</p>
+                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
                     </div>
                     <p className='text-2xl'>
-                      {/* {instructor.rateCard.currency} ${instructor.rateCard.fullDay} */}
-                      rate xx
+                      {matchedCourse?.rate_card?.currency} {matchedCourse?.rate_card?.private_inperson_rate}
+                    </p>
+                  </div>
+
+
+                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
+                    <div>
+                      <p>Private Online Rate</p>
+                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
+                    </div>
+                    <p className='text-2xl'>
+                      {matchedCourse?.rate_card?.currency} {matchedCourse?.rate_card?.private_online_rate}
                     </p>
                   </div>
                 </div>

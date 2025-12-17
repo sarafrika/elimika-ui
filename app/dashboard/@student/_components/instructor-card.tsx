@@ -8,17 +8,18 @@ import {
   DialogHeader,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { getInstructorSkillsOptions, getUserByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getInstructorRatingSummaryOptions, getInstructorSkillsOptions, getUserByUuidOptions, searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Briefcase, Building, MapPin, Star, Users, Video } from 'lucide-react';
 import { InstructorSkillCard } from '../../@instructor/profile/skills/_component/instructor-skill-card';
 
 type Props = {
   instructor: any;
+  courseId: string;
   onViewProfile: () => void;
 };
 
-export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
+export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) => {
   const { data } = useQuery({
     ...getUserByUuidOptions({ path: { uuid: instructor.user_uuid } }),
     enabled: !!instructor.uuid,
@@ -30,6 +31,23 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
     enabled: !!instructor.uuid,
   })
   const instructorSkills = skills?.data?.content || [];
+
+  const { data: reviews } = useQuery({
+    ...getInstructorRatingSummaryOptions({ path: { instructorUuid: instructor?.uuid as string } }),
+    enabled: !!instructor.uuid,
+  })
+  const instructorReviews = reviews?.data;
+
+  const { data: appliedCourses } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
+    }),
+    enabled: !!instructor?.uuid,
+  });
+
+  const matchedCourse = appliedCourses?.data?.content?.find(
+    course => course.course_uuid === courseId
+  );
 
   return (
     <Card className='min-w-[300px] overflow-hidden transition-shadow hover:shadow-lg sm:min-w-[320px]'>
@@ -56,12 +74,15 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
             {/* Rating */}
             <div className='mt-2 flex items-center justify-between gap-1'>
               <span className='text-muted-foreground text-sm'>
-                {/* ({instructor.totalReviews} reviews) */}xx reviews
+                {instructorReviews?.review_count} reviews
               </span>
-              <div className='flex flex-row items-center gap-2'>
-                <Star className='h-4 w-4 fill-yellow-500 text-yellow-500' />
-                <span className='text-sm'>{/* {instructor.rating.toFixed(1)} */}1</span>
+              <div className="flex flex-row items-center gap-2">
+                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                <span className="text-sm">
+                  {(instructorReviews?.average_rating ?? 0).toFixed(1)}
+                </span>
               </div>
+
             </div>
           </div>
         </div>
@@ -75,13 +96,13 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
           </div>
           <div className='text-muted-foreground flex items-center gap-2'>
             <Briefcase className='h-4 w-4' />
-            <span>{instructor.total_experience_years} years</span>
+            <span>{instructor?.total_experience_years} years</span>
           </div>
         </div>
 
         {/* Location and Mode */}
         <div className='flex items-center gap-3 text-sm'>
-          {instructor.formatted_location && (
+          {instructor?.formatted_location && (
             <div className='text-muted-foreground flex items-center gap-1'>
               <MapPin className='h-4 w-4' />
               <span>{'Laos'}</span>
@@ -134,13 +155,19 @@ export const InstructorCard = ({ instructor, onViewProfile }: Props) => {
         <div className='border-border border-t pt-3'>
           <div className='flex items-center justify-between'>
             <div>
-              <p className='text-muted-foreground text-sm'>Starting from</p>
-              <p className='text-lg'>
-                {/* ${instructor.rateCard.hourly} */}
-                $xx
-                <span className='text-muted-foreground text-sm'>/hour</span>
-              </p>
+              <p className="text-muted-foreground text-sm">Starting from</p>
+
+              {matchedCourse ? (
+                <p className="text-lg">
+                  KES {matchedCourse.rate_card?.private_online_rate ?? "N/A"} -{" "}
+                  {matchedCourse.rate_card?.private_inperson_rate ?? "N/A"}
+                  <span className="text-muted-foreground text-sm">/hour</span>
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Hourly rate not available</p>
+              )}
             </div>
+
             <Button onClick={onViewProfile} size='sm'>
               View Profile
             </Button>

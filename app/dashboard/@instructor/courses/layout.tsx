@@ -19,7 +19,7 @@ export default function CourseManagementLayout({ children }: CourseManagementLay
       </div>
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
-        <div className='flex-1 lg:max-w-6xl'>{children}</div>
+        <div className='flex-1 max-w-7xl w-full mx-auto items-center'>{children}</div>
       </div>
     </div>
   );

@@ -19,6 +19,7 @@ import {
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface NotesModalProps {
   open: boolean;
@@ -106,99 +107,104 @@ export default function NotesModal({
           )}
         </DialogHeader>
 
-        {/* Notes Field */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Notes</label>
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder={placeholder}
-            rows={6}
-          />
-        </div>
-
-        {userType === "instructor" && (
-          <>
-            {/* Currency */}
+        <ScrollArea className='h-[calc(90vh-16rem)] sm:h-[calc(90vh-24rem)]'>
+          <div className='flex flex-col gap-3' >
             <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">Currency</label>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="KES">KES</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium text-muted-foreground">Notes</label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={placeholder}
+                rows={6}
+              />
             </div>
 
-            {/* Minimum rate note */}
-            <p className="text-sm text-muted-foreground">
-              Minimum rate set by course creator: <span className="font-semibold">{minimum_rate} {currency}</span> per hour per head.
-            </p>
-
-            {/* PRIVATE SECTION */}
-            <div className="border rounded-md p-3 mt-3">
-              <h3 className="font-semibold text-sm mb-2">Private Training Rates (Per Hour Per Head)</h3>
-
-              <div className="flex gap-4">
-                {/* Private Online */}
-                <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Online</label>
-                  <Input
-                    type="number"
-                    min={minimum_rate}
-                    value={privateOnlineRate}
-                    onChange={(e) => setPrivateOnlineRate(e.target.value ? Number(e.target.value) : '')}
-                  />
+            {userType === "instructor" && (
+              <>
+                {/* Currency */}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">Currency</label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="KES">KES</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Private In-Person */}
-                <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">In-Person</label>
-                  <Input
-                    type="number"
-                    min={minimum_rate}
-                    value={privateInpersonRate}
-                    onChange={(e) => setPrivateInpersonRate(e.target.value ? Number(e.target.value) : '')}
-                  />
-                </div>
-              </div>
-            </div>
+                {/* Minimum rate note */}
+                <div className='mt-3'>
+                  <p className="text-sm text-muted-foreground">
+                    Minimum rate set by course creator: <span className="font-semibold">{minimum_rate} {currency}</span> per hour per head.
+                  </p>
 
-            {/* GROUP SECTION */}
-            <div className="border rounded-md p-3 mt-4">
-              <h3 className="font-semibold text-sm mb-2">Group Training Rates (Per Hour Per Head)</h3>
+                  {/* PRIVATE SECTION */}
+                  <div className="border rounded-md p-3 mt-3">
+                    <h3 className="font-semibold text-sm mb-2">Private Training Rates (Per Hour Per Head)</h3>
 
-              <div className="flex gap-4">
-                {/* Group Online */}
-                <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Online</label>
-                  <Input
-                    type="number"
-                    min={minimum_rate}
-                    value={groupOnlineRate}
-                    onChange={(e) => setGroupOnlineRate(e.target.value ? Number(e.target.value) : '')}
-                  />
-                </div>
+                    <div className="flex gap-4">
+                      {/* Private Online */}
+                      <div className="flex-1 space-y-1">
+                        <label className="text-sm font-medium text-muted-foreground">Online</label>
+                        <Input
+                          type="number"
+                          min={minimum_rate}
+                          value={privateOnlineRate}
+                          onChange={(e) => setPrivateOnlineRate(e.target.value ? Number(e.target.value) : '')}
+                        />
+                      </div>
 
-                {/* Group In-Person */}
-                <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">In-Person</label>
-                  <Input
-                    type="number"
-                    min={minimum_rate}
-                    value={groupInpersonRate}
-                    onChange={(e) => setGroupInpersonRate(e.target.value ? Number(e.target.value) : '')}
-                  />
+                      {/* Private In-Person */}
+                      <div className="flex-1 space-y-1">
+                        <label className="text-sm font-medium text-muted-foreground">In-Person</label>
+                        <Input
+                          type="number"
+                          min={minimum_rate}
+                          value={privateInpersonRate}
+                          onChange={(e) => setPrivateInpersonRate(e.target.value ? Number(e.target.value) : '')}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* GROUP SECTION */}
+                  <div className="border rounded-md p-3 mt-4">
+                    <h3 className="font-semibold text-sm mb-2">Group Training Rates (Per Hour Per Head)</h3>
+
+                    <div className="flex gap-4">
+                      {/* Group Online */}
+                      <div className="flex-1 space-y-1">
+                        <label className="text-sm font-medium text-muted-foreground">Online</label>
+                        <Input
+                          type="number"
+                          min={minimum_rate}
+                          value={groupOnlineRate}
+                          onChange={(e) => setGroupOnlineRate(e.target.value ? Number(e.target.value) : '')}
+                        />
+                      </div>
+
+                      {/* Group In-Person */}
+                      <div className="flex-1 space-y-1">
+                        <label className="text-sm font-medium text-muted-foreground">In-Person</label>
+                        <Input
+                          type="number"
+                          min={minimum_rate}
+                          value={groupInpersonRate}
+                          onChange={(e) => setGroupInpersonRate(e.target.value ? Number(e.target.value) : '')}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </>
-        )}
+              </>
+            )}
+          </div>
+        </ScrollArea>
 
         {/* Footer buttons */}
         <div className="flex justify-end gap-2 pt-2">

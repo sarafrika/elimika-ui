@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useCourseRubrics } from '@/hooks/use-course-rubric';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import {
   getAllAssignmentsOptions,
@@ -94,6 +95,12 @@ export default function ReusableCourseDetailsPage({
     }),
     enabled: !!courseId,
   });
+
+  const {
+    data: courseRubrics,
+    isLoading: rubric,
+    errors,
+  } = useCourseRubrics(courseId as string);
 
   const {
     data: cAssignments,
@@ -548,7 +555,7 @@ export default function ReusableCourseDetailsPage({
           </TabsContent>
 
           <TabsContent value='assessments' className='space-y-4'>
-            {cAssesssment?.data?.content?.length === 0 && (
+            {courseRubrics?.length === 0 && (
               <div className='text-muted-foreground flex flex-col items-center justify-center py-12 text-center'>
                 <FileQuestion className='mb-4 h-10 w-10 text-muted-foreground' />
                 <h3 className='text-lg font-semibold'>No Assessment Found</h3>
@@ -556,18 +563,18 @@ export default function ReusableCourseDetailsPage({
               </div>
             )}
 
-            {cAssesssment?.data?.content?.map(assessment => (
-              <Card key={assessment.uuid}>
+            {courseRubrics?.map((assessment: any) => (
+              <Card key={assessment?.uuid}>
                 <CardContent className='p-6'>
                   <div className='flex items-start justify-between'>
                     <div className='flex items-start gap-3'>
                       <Award className='text-primary mt-1 h-6 w-6' />
                       <div>
-                        <h4>{assessment?.title}</h4>
+                        <h4>{assessment?.rubric?.title}</h4>
                         <Badge variant='outline' className='mb-2'>
-                          {assessment?.assessment_type}
+                          {assessment?.rubric?.rubric_type}
                         </Badge>
-                        <p className='text-muted-foreground text-sm'>{assessment?.description}</p>
+                        <p className='text-muted-foreground text-sm'>{assessment?.rubric.description}</p>
                       </div>
                     </div>
                     <Button>View Details</Button>
