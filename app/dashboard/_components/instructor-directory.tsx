@@ -25,6 +25,7 @@ type Props = {
   instructors: any[];
   classes: any[];
   onBookingComplete: (booking: Booking) => void;
+  courseId: string
 };
 
 type Filters = {
@@ -45,6 +46,7 @@ export const InstructorDirectory: React.FC<Props> = ({
   instructors,
   classes,
   onBookingComplete,
+  courseId
 }) => {
   const [selectedInstructor, setSelectedInstructor] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(true);
@@ -436,6 +438,7 @@ export const InstructorDirectory: React.FC<Props> = ({
                     key={instructor?.uuid}
                     instructor={instructor}
                     onViewProfile={() => setSelectedInstructor(instructor)}
+                    courseId={courseId}
                   />
                 </div>
               ))}

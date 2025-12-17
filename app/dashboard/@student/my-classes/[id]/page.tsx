@@ -448,7 +448,7 @@ export default function ClassDetailsPage() {
                     <div className="space-y-2">
                       <Button onClick={handleStartLesson} className="w-full gap-2" size="lg">
                         <Play className="w-5 h-5" />
-                        Start Lesson
+                        Join Class
                       </Button>
 
                       <div className="text-center py-4">

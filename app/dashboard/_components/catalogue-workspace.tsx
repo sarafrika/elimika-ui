@@ -1,26 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import {
-  Copy,
-  ExternalLink,
-  RefreshCw,
   BookOpen,
-  GraduationCap,
-  Package,
   Calendar,
+  CheckCircle2,
+  Copy,
   DollarSign,
+  ExternalLink,
   Eye,
   EyeOff,
-  CheckCircle2,
-  XCircle,
+  GraduationCap,
+  Package,
+  Percent,
+  RefreshCw,
+  TrendingUp,
   User,
   UserCheck,
-  TrendingUp,
-  Percent
+  XCircle
 } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -28,16 +28,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUserProfile } from '@/context/profile-context';
 import { useOrganisation } from '@/context/organisation-context';
+import { useUserProfile } from '@/context/profile-context';
 import { extractEntity } from '@/lib/api-helpers';
-import {
-  getClassDefinitionOptions,
-  getCourseByUuidOptions,
-  getCourseCreatorByUuidOptions,
-  getInstructorByUuidOptions,
-  listCatalogItemsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassDefinition,
   CommerceCatalogueItem,
@@ -45,6 +38,13 @@ import type {
   CourseCreator,
   Instructor,
 } from '@/services/client';
+import {
+  getClassDefinitionOptions,
+  getCourseByUuidOptions,
+  getCourseCreatorByUuidOptions,
+  getInstructorByUuidOptions,
+  listCatalogItemsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 
 type CatalogueScope = 'admin' | 'organization' | 'instructor' | 'course_creator';
 
@@ -471,101 +471,99 @@ export function CatalogueWorkspace({
                 </div>
               ) : (
                 <>
-                {displayedRows.map(row => {
-                  const typeIcon = row.typeLabel === 'Course' ? BookOpen : row.typeLabel === 'Class' ? GraduationCap : Package;
-                  const TypeIcon = typeIcon;
+                  {displayedRows.map(row => {
+                    const typeIcon = row.typeLabel === 'Course' ? BookOpen : row.typeLabel === 'Class' ? GraduationCap : Package;
+                    const TypeIcon = typeIcon;
 
-                  return (
-                    <button
-                      key={row.id}
-                      type='button'
-                      onClick={() => setSelectedId(row.id)}
-                      className={`group w-full rounded-[16px] border p-3.5 text-left transition-all duration-200 ${
-                        selectedId === row.id
-                          ? 'border-primary bg-primary/10 shadow-md ring-1 ring-primary/20'
-                          : 'border-border/60 bg-card hover:border-primary/50 hover:bg-muted/50 hover:shadow-sm'
-                      }`}
-                    >
-                      <div className='flex gap-3'>
-                        {/* Icon */}
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-colors ${
-                          selectedId === row.id
-                            ? 'bg-primary/15 text-primary'
-                            : 'bg-primary/10 text-primary group-hover:bg-primary/15'
-                        }`}>
-                          <TypeIcon className='h-4.5 w-4.5' />
-                        </div>
+                    return (
+                      <button
+                        key={row.id}
+                        type='button'
+                        onClick={() => setSelectedId(row.id)}
+                        className={`group w-full rounded-[16px] border p-3.5 text-left transition-all duration-200 ${selectedId === row.id
+                            ? 'border-primary bg-primary/10 shadow-md ring-1 ring-primary/20'
+                            : 'border-border/60 bg-card hover:border-primary/50 hover:bg-muted/50 hover:shadow-sm'
+                          }`}
+                      >
+                        <div className='flex gap-3'>
+                          {/* Icon */}
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] transition-colors ${selectedId === row.id
+                              ? 'bg-primary/15 text-primary'
+                              : 'bg-primary/10 text-primary group-hover:bg-primary/15'
+                            }`}>
+                            <TypeIcon className='h-4.5 w-4.5' />
+                          </div>
 
-                        {/* Content */}
-                        <div className='flex-1 space-y-2 overflow-hidden'>
-                          {/* Title */}
-                          <h3 className='line-clamp-1 text-sm font-semibold leading-tight text-foreground'>
-                            {row.displayTitle}
-                          </h3>
+                          {/* Content */}
+                          <div className='flex-1 space-y-2 overflow-hidden'>
+                            {/* Title */}
+                            <h3 className='line-clamp-1 text-sm font-semibold leading-tight text-foreground'>
+                              {row.displayTitle}
+                            </h3>
 
-                          {/* Meta row */}
-                          <div className='flex flex-wrap items-center gap-1.5'>
-                            <Badge
-                              variant='outline'
-                              className='gap-1 border-primary/40 bg-primary/5 text-[10px] font-medium text-primary'
-                            >
-                              {row.typeLabel}
-                            </Badge>
-                            {row.isActive && (
+                            {/* Meta row */}
+                            <div className='flex flex-wrap items-center gap-1.5'>
                               <Badge
-                                className='gap-1 text-[10px]'
-                                variant='default'
-                              >
-                                <CheckCircle2 className='h-2.5 w-2.5' />
-                                Active
-                              </Badge>
-                            )}
-                            {row.isPublic && (
-                              <Badge
-                                className='gap-1 text-[10px]'
-                                variant='secondary'
-                              >
-                                <Eye className='h-2.5 w-2.5' />
-                                Public
-                              </Badge>
-                            )}
-                            {!row.isActive && (
-                              <Badge
-                                className='gap-1 text-[10px]'
                                 variant='outline'
+                                className='gap-1 border-primary/40 bg-primary/5 text-[10px] font-medium text-primary'
                               >
-                                <XCircle className='h-2.5 w-2.5' />
-                                Inactive
+                                {row.typeLabel}
                               </Badge>
-                            )}
-                            {!row.isPublic && (
-                              <Badge
-                                className='gap-1 text-[10px]'
-                                variant='outline'
-                              >
-                                <EyeOff className='h-2.5 w-2.5' />
-                                Private
-                              </Badge>
-                            )}
-                            <div className='ml-auto flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold text-primary'>
-                              <DollarSign className='h-3 w-3' />
-                              <span className='text-[11px]'>{formatMoney(row.unitAmount, row.currency ?? undefined)}</span>
+                              {row.isActive && (
+                                <Badge
+                                  className='gap-1 text-[10px]'
+                                  variant='default'
+                                >
+                                  <CheckCircle2 className='h-2.5 w-2.5' />
+                                  Active
+                                </Badge>
+                              )}
+                              {row.isPublic && (
+                                <Badge
+                                  className='gap-1 text-[10px]'
+                                  variant='secondary'
+                                >
+                                  <Eye className='h-2.5 w-2.5' />
+                                  Public
+                                </Badge>
+                              )}
+                              {!row.isActive && (
+                                <Badge
+                                  className='gap-1 text-[10px]'
+                                  variant='outline'
+                                >
+                                  <XCircle className='h-2.5 w-2.5' />
+                                  Inactive
+                                </Badge>
+                              )}
+                              {!row.isPublic && (
+                                <Badge
+                                  className='gap-1 text-[10px]'
+                                  variant='outline'
+                                >
+                                  <EyeOff className='h-2.5 w-2.5' />
+                                  Private
+                                </Badge>
+                              )}
+                              <div className='ml-auto flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold text-primary'>
+                                <DollarSign className='h-3 w-3' />
+                                <span className='text-[11px]'>{formatMoney(row.unitAmount, row.currency ?? undefined)}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
-                {hasMore && (
-                  <Button
-                    variant='outline'
-                    className='w-full'
-                    onClick={handleLoadMore}
-                  >
-                    Load {remaining > 20 ? '20' : remaining} more ({remaining} remaining)
-                  </Button>
-                )}
+                      </button>
+                    );
+                  })}
+                  {hasMore && (
+                    <Button
+                      variant='outline'
+                      className='w-full'
+                      onClick={handleLoadMore}
+                    >
+                      Load {remaining > 20 ? '20' : remaining} more ({remaining} remaining)
+                    </Button>
+                  )}
                 </>
               )}
             </div>
@@ -574,7 +572,7 @@ export function CatalogueWorkspace({
       </Card>
 
       <Card className='flex min-h-0 flex-1 flex-col'>
-        <CardHeader className='flex flex-col gap-3 border-b border-border/60 lg:flex-row lg:items-start lg:justify-between'>
+        <CardHeader className='flex flex-col gap-3 border-b border-border/60 lg:flex-col lg:items-start lg:justify-between'>
           <div className='flex-1 space-y-1.5'>
             <div className='flex items-center gap-2'>
               {selectedRow && (

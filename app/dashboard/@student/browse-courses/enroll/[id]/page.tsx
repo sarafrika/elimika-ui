@@ -55,8 +55,12 @@ const EnrollmentPage = () => {
   const [startDateInput, setStartDateInput] = useState<string>(toInputDate(defaultStartDate));
   const [endDateInput, setEndDateInput] = useState<string>(toInputDate(defaultEndDate));
 
-  const [appliedStart, setAppliedStart] = useState<string | null>(null);
-  const [appliedEnd, setAppliedEnd] = useState<string | null>(null);
+  const [appliedStart, setAppliedStart] = useState<string>(
+    toInputDate(defaultStartDate)
+  );
+  const [appliedEnd, setAppliedEnd] = useState<string>(
+    toInputDate(defaultEndDate)
+  );
   const [dateError, setDateError] = useState<string | null>(null);
 
   const applyDates = () => {
@@ -80,10 +84,13 @@ const EnrollmentPage = () => {
   };
 
   const clearDates = () => {
-    setStartDateInput(toInputDate(defaultStartDate));
-    setEndDateInput(toInputDate(defaultEndDate));
-    setAppliedStart(null);
-    setAppliedEnd(null);
+    const start = toInputDate(defaultStartDate);
+    const end = toInputDate(defaultEndDate);
+
+    setStartDateInput(start);
+    setEndDateInput(end);
+    setAppliedStart(start);
+    setAppliedEnd(end);
     setDateError(null);
   };
 
@@ -213,52 +220,70 @@ const EnrollmentPage = () => {
             {cart?.items.length}
           </span>
         </div>
+
+        <div className='cursor-pointer' onClick={handleCompleteCart} >
+          <span>Complete Cart</span>
+        </div>
       </div>
 
       {/* Date filter controls */}
-      <Card className="p-4 flex flex-col md:flex-row items-start md:items-end gap-3">
-        <div className="flex items-center justify-center gap-3 w-full md:w-auto">
-          <div>
+      <Card className="p-4 space-y-3">
+
+        {/* Info */}
+        <div className="text-sm text-muted-foreground">
+          {!appliedStart || !appliedEnd ? (
+            <span>
+              Showing default date range. Adjust dates and click{" "}
+              <strong>Apply</strong>.
+            </span>
+          ) : (
+            <span>
+              Showing{" "}
+              <strong>{format(new Date(appliedStart), "MMM dd, yyyy")}</strong> –{" "}
+              <strong>{format(new Date(appliedEnd), "MMM dd, yyyy")}</strong>
+            </span>
+          )}
+
+          {dateError && (
+            <p className="mt-1 text-destructive">{dateError}</p>
+          )}
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
+
+          <div className="w-full sm:w-auto">
             <Label className="text-xs">Start</Label>
             <Input
               type="date"
               value={startDateInput}
               onChange={(e) => setStartDateInput(e.target.value)}
-              className="mt-1"
+              className="mt-1 w-full sm:w-[160px]"
             />
           </div>
 
-          <div>
+          <div className="w-full sm:w-auto">
             <Label className="text-xs">End</Label>
             <Input
               type="date"
               value={endDateInput}
               onChange={(e) => setEndDateInput(e.target.value)}
-              className="mt-1"
+              className="mt-1 w-full sm:w-[160px]"
             />
           </div>
 
-          <div className="flex items-end gap-2">
-            <Button size="sm" onClick={applyDates}>Apply</Button>
-            <Button size="sm" variant="outline" onClick={clearDates}>Reset</Button>
+          {/* Actions */}
+          <div className="flex gap-2 pt-1 sm:pt-0">
+            <Button size="sm" onClick={applyDates}>
+              Apply
+            </Button>
+            <Button size="sm" variant="outline" onClick={clearDates}>
+              Reset
+            </Button>
           </div>
         </div>
 
-        <div className="ml-auto text-sm text-muted-foreground">
-          {!appliedStart || !appliedEnd ? (
-            <span>Please apply a date range to load classes (defaults shown).</span>
-          ) : (
-            <span>Showing classes from <strong>{format(new Date(appliedStart), 'MMM dd, yyyy')}</strong> to <strong>{format(new Date(appliedEnd), 'MMM dd, yyyy')}</strong></span>
-          )}
-        </div>
-
-        {dateError && <div className="w-full text-sm text-destructive mt-2 md:mt-0">{dateError}</div>}
       </Card>
-
-      <div className='cursor-pointer' onClick={handleCompleteCart} >
-        <span>Complete current cart</span>
-      </div>
-
 
       {loading ?
         <CustomLoadingState subHeading="Loading available classes..." />
