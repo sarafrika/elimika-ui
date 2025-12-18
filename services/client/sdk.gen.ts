@@ -727,6 +727,9 @@ import type {
   CreateBookingData,
   CreateBookingResponses,
   CreateBookingErrors,
+  RequestPaymentData,
+  RequestPaymentResponses,
+  RequestPaymentErrors,
   PaymentCallbackData,
   PaymentCallbackResponses,
   PaymentCallbackErrors,
@@ -835,6 +838,9 @@ import type {
   GetInstructorScheduleData,
   GetInstructorScheduleResponses,
   GetInstructorScheduleErrors,
+  GetStudentBookingsData,
+  GetStudentBookingsResponses,
+  GetStudentBookingsErrors,
   SearchStudentsData,
   SearchStudentsResponses,
   SearchStudentsErrors,
@@ -970,6 +976,9 @@ import type {
   GetInstructorRatingSummaryData,
   GetInstructorRatingSummaryResponses,
   GetInstructorRatingSummaryErrors,
+  GetInstructorBookingsData,
+  GetInstructorBookingsResponses,
+  GetInstructorBookingsErrors,
   CheckAvailabilityData,
   CheckAvailabilityResponses,
   CheckAvailabilityErrors,
@@ -1434,6 +1443,7 @@ import {
   generateProgramCertificateResponseTransformer,
   generateCourseCertificateResponseTransformer,
   createBookingResponseTransformer,
+  requestPaymentResponseTransformer,
   paymentCallbackResponseTransformer,
   cancelBookingResponseTransformer,
   getAllAssignmentsResponseTransformer,
@@ -1458,6 +1468,7 @@ import {
   getTrainingBranchesByOrganisation1ResponseTransformer,
   getScheduledInstanceResponseTransformer,
   getInstructorScheduleResponseTransformer,
+  getStudentBookingsResponseTransformer,
   searchStudentsResponseTransformer,
   getPassingScoringLevelsResponseTransformer,
   getHighestScoringLevelResponseTransformer,
@@ -1494,6 +1505,7 @@ import {
   getBranchUsersByDomainResponseTransformer,
   search2ResponseTransformer,
   getInstructorRatingSummaryResponseTransformer,
+  getInstructorBookingsResponseTransformer,
   getInstructorCalendarResponseTransformer,
   searchSkillsResponseTransformer,
   searchInstructorsResponseTransformer,
@@ -8851,6 +8863,37 @@ export const createBooking = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Request payment for a booking
+ */
+export const requestPayment = <ThrowOnError extends boolean = false>(
+  options: Options<RequestPaymentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    RequestPaymentResponses,
+    RequestPaymentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: requestPaymentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/bookings/{bookingUuid}/request-payment',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Payment callback to update booking status
  */
 export const paymentCallback = <ThrowOnError extends boolean = false>(
@@ -9844,6 +9887,33 @@ export const getInstructorSchedule = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/timetable/instructor/{instructorUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get student bookings
+ */
+export const getStudentBookings = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentBookingsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentBookingsResponses,
+    GetStudentBookingsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStudentBookingsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/students/{studentUuid}/bookings',
     ...options,
   });
 };
@@ -11170,6 +11240,33 @@ export const getInstructorRatingSummary = <ThrowOnError extends boolean = false>
       },
     ],
     url: '/api/v1/instructors/{instructorUuid}/reviews/summary',
+    ...options,
+  });
+};
+
+/**
+ * Get instructor bookings
+ */
+export const getInstructorBookings = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorBookingsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorBookingsResponses,
+    GetInstructorBookingsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorBookingsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{instructorUuid}/bookings',
     ...options,
   });
 };

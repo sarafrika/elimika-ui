@@ -4,12 +4,13 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
-import { getBookingOptions, listTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { getStudentBookingsOptions, listTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { useStudent } from '../../../../../context/student-context';
 import type { ClassData } from '../../../@instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../_components/instructor-directory';
 import { ManageBookings } from '../../../_components/manage-bookings';
@@ -105,24 +106,14 @@ type Props = {
 const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
+  const student = useStudent()
 
-  // saved booking ids in local storage
-  const bookingIds: string[] = JSON.parse(
-    localStorage.getItem('student_booking_ids') || '[]'
-  );
-  const bookingQueries = useQueries({
-    queries: bookingIds.map(bookingUuid => ({
-      ...getBookingOptions({
-        path: { bookingUuid },
-      }),
-      enabled: !!bookingUuid,
-    })),
-  });
-
-  const studentsBookings = bookingQueries
-    .map(q => q.data?.data)
-    .filter(Boolean);
-  // saved booking ids in local storage
+  const { data: studentsBookingsData, refetch } = useQuery(
+    {
+      ...getStudentBookingsOptions({ path: { studentUuid: student?.uuid as string }, query: { pageable: {}, status: "" } })
+      , enabled: !!student?.uuid
+    })
+  const studentsBookings = studentsBookingsData?.data?.content
 
   const bookings = studentsBookings || [];
   const [activeTab, setActiveTab] = useState('browse');
@@ -262,7 +253,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
             bookings={bookings}
             instructors={filteredInstructors as any}
             onBookingUpdate={handleBookingUpdate}
-            refetchBookings={() => bookingQueries.forEach(q => q.refetch())}
+            refetchBookings={() => refetch()}
           />
         </TabsContent>
       </Tabs>

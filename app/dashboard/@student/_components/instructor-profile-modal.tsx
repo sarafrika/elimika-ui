@@ -9,12 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStudent } from '@/context/student-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
-import { createBookingMutation, getInstructorCalendarOptions, getInstructorReviewsOptions, listCatalogItemsOptions, searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { createBookingMutation, getInstructorCalendarOptions, getInstructorReviewsOptions, getStudentBookingsQueryKey, listCatalogItemsOptions, searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Award, BookOpen, Briefcase, Calendar, CheckCircle, DollarSign, MapPin, Star, Users, Video, X } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { AvailabilityData, ClassScheduleItem, convertToCalendarEvents } from '../../@instructor/availability/components/types';
 import type { Booking } from '../browse-courses/instructor/page';
 
@@ -26,6 +27,7 @@ type Props = {
 
 export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClose, onBookingComplete }) => {
   const student = useStudent();
+  const qc = useQueryClient();
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
 
@@ -96,6 +98,35 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
     course => course.course_uuid === courseId
   );
 
+  const [selectedRateKey, setSelectedRateKey] = useState("");
+  const [totalAmount, setTotalAmount] = useState(0);
+
+  const calculateHours = (): number => {
+    if (!startTime || !endTime) return 0;
+
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    const diffMs = end.getTime() - start.getTime();
+    if (diffMs <= 0) return 0;
+
+    return diffMs / (1000 * 60 * 60);
+  };
+
+  useEffect(() => {
+    if (!selectedRateKey) {
+      setTotalAmount(0);
+      return;
+    }
+
+    const hours = calculateHours();
+    // @ts-ignore
+    const ratePerHour = matchedCourse?.rate_card[selectedRateKey] || 0;
+
+    setTotalAmount(hours * ratePerHour);
+  }, [startTime, endTime, selectedRateKey]);
+
+
   const bookInstructor = useMutation(createBookingMutation());
   const handleBooking = () => {
     if (!instructor?.uuid || !student?.uuid || !startTime || !endTime) return;
@@ -111,29 +142,20 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
           start_time: utcStartTime as any,
           end_time: utcEndTime as any,
           course_uuid: courseId as string,
-          currency: "KES",
-          price_amount: 100,
+          currency: matchedCourse?.rate_card?.currency || 'KES',
+          price_amount: totalAmount,
           purpose: reason,
         },
       },
       {
         onSuccess: (data: any) => {
-          const bookingId = data?.data?.uuid;
-
-          if (typeof bookingId === 'string') {
-            const STORAGE_KEY = 'student_booking_ids';
-
-            const existing: string[] = JSON.parse(
-              localStorage.getItem(STORAGE_KEY) || '[]'
-            );
-
-            if (!existing.includes(bookingId)) {
-              existing.push(bookingId);
-            }
-
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-          }
-
+          qc.invalidateQueries({
+            queryKey: getStudentBookingsQueryKey({
+              path: { studentUuid: student?.uuid as string },
+              query: { pageable: {} },
+            }),
+          });
+          toast.success("Booking created successfully")
           setShowBooking(false);
         },
       }
@@ -236,6 +258,31 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
                     />
                   </div>
                 </div>
+
+                <div className="flex flex-col mt-4">
+                  <label className="mb-1">Session Type</label>
+                  <select
+                    className="border rounded p-2"
+                    value={selectedRateKey}
+                    onChange={(e) => setSelectedRateKey(e.target.value as any)}
+                  >
+                    <option value="">Select an option</option>
+                    <option value="private_online_rate">
+                      Private Online ({matchedCourse?.rate_card?.private_online_rate} {matchedCourse?.rate_card?.currency}/hr)
+                    </option>
+                    <option value="private_inperson_rate">
+                      Private In-person ({matchedCourse?.rate_card?.private_inperson_rate} {matchedCourse?.rate_card?.currency}/hr)
+                    </option>
+                    <option value="group_online_rate">
+                      Group Online ({matchedCourse?.rate_card?.group_online_rate} {matchedCourse?.rate_card?.currency}/hr)
+                    </option>
+                    <option value="group_inperson_rate">
+                      Group In-person ({matchedCourse?.rate_card?.group_inperson_rate} {matchedCourse?.rate_card?.currency}/hr)
+                    </option>
+                  </select>
+                </div>
+
+
                 <div className="flex flex-col mt-4 sm:mt-0">
                   <label className="mb-1">Purpose</label>
                   <Input
@@ -256,8 +303,8 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
             </CardFooter>
           </Card>
         )}
-        {/* 
-        {showBooking && <>
+
+        {/* {showBooking && <>
           <TimetableManager
             availabilityData={availabilityData || []}
             onAvailabilityUpdate={setAvailabilityData}

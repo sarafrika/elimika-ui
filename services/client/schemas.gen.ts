@@ -523,10 +523,13 @@ export const StudentSchema = {
   example: {
     uuid: 's1e2d3c4-5f6g-7h8i-9j0k-lmnopqrstuv',
     user_uuid: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    full_name: 'Amani Njeri',
+    demographic_tag: 'youth_female',
     first_guardian_name: 'John Doe',
     first_guardian_mobile: '+254712345678',
     second_guardian_name: 'Jane Doe',
     second_guardian_mobile: '+254787654321',
+    bio: 'Curious learner who loves science and robotics clubs.',
     created_date: '2024-04-01T12:00:00',
     created_by: 'admin@sarafrika.com',
     updated_date: '2024-04-15T15:30:00',
@@ -590,6 +593,14 @@ export const StudentSchema = {
       minLength: 0,
       pattern: '^(\\+254|0)?[17]\\d{8}$',
     },
+    bio: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Short biography or notes about the student. Used in student profiles.',
+      example: 'Curious learner who loves science and robotics clubs.',
+      maxLength: 2000,
+      minLength: 0,
+    },
     primaryGuardianContact: {
       type: 'string',
     },
@@ -601,6 +612,13 @@ export const StudentSchema = {
       items: {
         type: 'string',
       },
+    },
+    full_name: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.',
+      example: 'Amani Njeri',
+      readOnly: true,
     },
     created_date: {
       type: 'string',
@@ -6867,17 +6885,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: 100,
+      readOnly: true,
+    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
-      readOnly: true,
-    },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: 100,
       readOnly: true,
     },
     assignment_scope: {
@@ -7764,12 +7782,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -7786,6 +7798,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -8893,6 +8911,68 @@ export const BookingResponseSchema = {
   ],
 } as const;
 
+export const BookingPaymentRequestSchema = {
+  type: 'object',
+  description: 'Request payload used to initiate a booking payment session',
+  properties: {
+    payment_engine: {
+      type: 'string',
+      description: 'Payment engine identifier',
+      example: 'stripe',
+      maxLength: 64,
+      minLength: 0,
+    },
+  },
+} as const;
+
+export const ApiResponseBookingPaymentSessionSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/BookingPaymentSession',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const BookingPaymentSessionSchema = {
+  type: 'object',
+  description: 'Payment session details for a booking',
+  properties: {
+    booking_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Booking UUID',
+    },
+    payment_session_id: {
+      type: 'string',
+      description: 'Payment session identifier',
+    },
+    payment_url: {
+      type: 'string',
+      description: 'Payment URL to complete the booking payment',
+    },
+    payment_engine: {
+      type: 'string',
+      description: 'Payment engine used for this booking',
+    },
+    hold_expires_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the hold on the slot expires if unpaid',
+    },
+  },
+  required: ['booking_uuid', 'payment_session_id'],
+} as const;
+
 export const BookingPaymentUpdateRequestSchema = {
   type: 'object',
   description: 'Callback payload used by payment engine to update booking status',
@@ -9551,6 +9631,42 @@ export const PagedDTOStudentSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/Student',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOBookingResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOBookingResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {
+      type: 'object',
+    },
+  },
+} as const;
+
+export const PagedDTOBookingResponseSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/BookingResponse',
       },
     },
     metadata: {
@@ -10983,7 +11099,7 @@ export const InstructorCalendarEntrySchema = {
         'Flag indicating availability; false represents blocked time or scheduled instances occupying the slot',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum3',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     title: {
       type: 'string',
@@ -11370,16 +11486,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    is_upcoming: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended this class.',
       example: false,
+      readOnly: true,
+    },
+    is_upcoming: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
+      example: true,
       readOnly: true,
     },
   },
@@ -13681,6 +13797,13 @@ export const AvailabilityTypeEnumSchema = {
   description: 'Availability type when the entry is derived from availability patterns',
   enum: ['daily', 'weekly', 'monthly', 'custom'],
   example: 'WEEKLY',
+} as const;
+
+export const StatusEnum11Schema = {
+  type: 'string',
+  description: 'Scheduled instance status when applicable',
+  enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'],
+  example: 'SCHEDULED',
 } as const;
 
 export const EnrollmentStatusEnumSchema = {

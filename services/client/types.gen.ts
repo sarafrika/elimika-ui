@@ -267,9 +267,17 @@ export type Student = {
    * **[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.
    */
   second_guardian_mobile?: string;
+  /**
+   * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
+   */
+  bio?: string;
   primaryGuardianContact?: string;
   secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
+  /**
+   * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
+   */
+  readonly full_name?: string;
   /**
    * **[READ-ONLY]** Timestamp when the student profile was first created. Automatically set by the system.
    */
@@ -3305,13 +3313,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
-   */
-  readonly assignment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
+   */
+  readonly assignment_category?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -3801,10 +3809,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -3816,6 +3820,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -4520,6 +4528,51 @@ export type BookingResponse = {
 };
 
 /**
+ * Request payload used to initiate a booking payment session
+ */
+export type BookingPaymentRequest = {
+  /**
+   * Payment engine identifier
+   */
+  payment_engine?: string;
+};
+
+export type ApiResponseBookingPaymentSession = {
+  success?: boolean;
+  data?: BookingPaymentSession;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+/**
+ * Payment session details for a booking
+ */
+export type BookingPaymentSession = {
+  /**
+   * Booking UUID
+   */
+  booking_uuid: string;
+  /**
+   * Payment session identifier
+   */
+  payment_session_id: string;
+  /**
+   * Payment URL to complete the booking payment
+   */
+  payment_url?: string;
+  /**
+   * Payment engine used for this booking
+   */
+  payment_engine?: string;
+  /**
+   * When the hold on the slot expires if unpaid
+   */
+  hold_expires_at?: Date;
+};
+
+/**
  * Callback payload used by payment engine to update booking status
  */
 export type BookingPaymentUpdateRequest = {
@@ -4847,6 +4900,21 @@ export type ApiResponsePagedDtoStudent = {
 
 export type PagedDtoStudent = {
   content?: Array<Student>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+export type ApiResponsePagedDtoBookingResponse = {
+  success?: boolean;
+  data?: PagedDtoBookingResponse;
+  message?: string;
+  error?: {
+    [key: string]: unknown;
+  };
+};
+
+export type PagedDtoBookingResponse = {
+  content?: Array<BookingResponse>;
   metadata?: PageMetadata;
   links?: PageLinks;
 };
@@ -5492,7 +5560,7 @@ export type InstructorCalendarEntry = {
    * Flag indicating availability; false represents blocked time or scheduled instances occupying the slot
    */
   is_available?: boolean;
-  status?: StatusEnum3;
+  status?: StatusEnum11;
   /**
    * Optional title (for scheduled instances)
    */
@@ -5665,13 +5733,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
-   */
-  readonly is_upcoming?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this class is upcoming.
+   */
+  readonly is_upcoming?: boolean;
 };
 
 export type ApiResponseLong = {
@@ -7255,6 +7323,22 @@ export const AvailabilityTypeEnum = {
  * Availability type when the entry is derived from availability patterns
  */
 export type AvailabilityTypeEnum = (typeof AvailabilityTypeEnum)[keyof typeof AvailabilityTypeEnum];
+
+/**
+ * Scheduled instance status when applicable
+ */
+export const StatusEnum11 = {
+  SCHEDULED: 'SCHEDULED',
+  ONGOING: 'ONGOING',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  BLOCKED: 'BLOCKED',
+} as const;
+
+/**
+ * Scheduled instance status when applicable
+ */
+export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
 
 /**
  * **[READ-ONLY]** Current enrollment status for the student.
@@ -15379,6 +15463,40 @@ export type CreateBookingResponses = {
 
 export type CreateBookingResponse = CreateBookingResponses[keyof CreateBookingResponses];
 
+export type RequestPaymentData = {
+  body?: BookingPaymentRequest;
+  path: {
+    /**
+     * Booking UUID
+     */
+    bookingUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/bookings/{bookingUuid}/request-payment';
+};
+
+export type RequestPaymentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RequestPaymentError = RequestPaymentErrors[keyof RequestPaymentErrors];
+
+export type RequestPaymentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseBookingPaymentSession;
+};
+
+export type RequestPaymentResponse = RequestPaymentResponses[keyof RequestPaymentResponses];
+
 export type PaymentCallbackData = {
   body: BookingPaymentUpdateRequest;
   path: {
@@ -16713,6 +16831,47 @@ export type GetInstructorScheduleResponses = {
 
 export type GetInstructorScheduleResponse =
   GetInstructorScheduleResponses[keyof GetInstructorScheduleResponses];
+
+export type GetStudentBookingsData = {
+  body?: never;
+  path: {
+    /**
+     * Student UUID
+     */
+    studentUuid: string;
+  };
+  query: {
+    /**
+     * Optional booking status filter (e.g., payment_required)
+     */
+    status?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/students/{studentUuid}/bookings';
+};
+
+export type GetStudentBookingsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetStudentBookingsError = GetStudentBookingsErrors[keyof GetStudentBookingsErrors];
+
+export type GetStudentBookingsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoBookingResponse;
+};
+
+export type GetStudentBookingsResponse =
+  GetStudentBookingsResponses[keyof GetStudentBookingsResponses];
 
 export type SearchStudentsData = {
   body?: never;
@@ -18314,6 +18473,48 @@ export type GetInstructorRatingSummaryResponses = {
 
 export type GetInstructorRatingSummaryResponse =
   GetInstructorRatingSummaryResponses[keyof GetInstructorRatingSummaryResponses];
+
+export type GetInstructorBookingsData = {
+  body?: never;
+  path: {
+    /**
+     * Instructor UUID
+     */
+    instructorUuid: string;
+  };
+  query: {
+    /**
+     * Optional booking status filter (e.g., payment_required)
+     */
+    status?: string;
+    pageable: Pageable;
+  };
+  url: '/api/v1/instructors/{instructorUuid}/bookings';
+};
+
+export type GetInstructorBookingsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetInstructorBookingsError =
+  GetInstructorBookingsErrors[keyof GetInstructorBookingsErrors];
+
+export type GetInstructorBookingsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoBookingResponse;
+};
+
+export type GetInstructorBookingsResponse =
+  GetInstructorBookingsResponses[keyof GetInstructorBookingsResponses];
 
 export type CheckAvailabilityData = {
   body?: never;

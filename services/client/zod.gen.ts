@@ -395,9 +395,24 @@ export const zStudent = z
         '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.'
       )
       .optional(),
+    bio: z
+      .string()
+      .min(0)
+      .max(2000)
+      .describe(
+        '**[OPTIONAL]** Short biography or notes about the student. Used in student profiles.'
+      )
+      .optional(),
     primaryGuardianContact: z.string().optional(),
     secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
+    full_name: z
+      .string()
+      .describe(
+        '**[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.'
+      )
+      .readonly()
+      .optional(),
     created_date: z
       .string()
       .datetime()
@@ -4859,16 +4874,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
+      .readonly()
+      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z
@@ -5384,11 +5399,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -5402,6 +5412,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -6053,6 +6068,39 @@ export const zApiResponseBookingResponse = z.object({
 });
 
 /**
+ * Request payload used to initiate a booking payment session
+ */
+export const zBookingPaymentRequest = z
+  .object({
+    payment_engine: z.string().min(0).max(64).describe('Payment engine identifier').optional(),
+  })
+  .describe('Request payload used to initiate a booking payment session');
+
+/**
+ * Payment session details for a booking
+ */
+export const zBookingPaymentSession = z
+  .object({
+    booking_uuid: z.string().uuid().describe('Booking UUID'),
+    payment_session_id: z.string().describe('Payment session identifier'),
+    payment_url: z.string().describe('Payment URL to complete the booking payment').optional(),
+    payment_engine: z.string().describe('Payment engine used for this booking').optional(),
+    hold_expires_at: z
+      .string()
+      .datetime()
+      .describe('When the hold on the slot expires if unpaid')
+      .optional(),
+  })
+  .describe('Payment session details for a booking');
+
+export const zApiResponseBookingPaymentSession = z.object({
+  success: z.boolean().optional(),
+  data: zBookingPaymentSession.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+/**
  * Payment status reported by the engine
  */
 export const zPaymentStatusEnum = z
@@ -6394,6 +6442,19 @@ export const zPagedDtoStudent = z.object({
 export const zApiResponsePagedDtoStudent = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoStudent.optional(),
+  message: z.string().optional(),
+  error: z.record(z.unknown()).optional(),
+});
+
+export const zPagedDtoBookingResponse = z.object({
+  content: z.array(zBookingResponse).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoBookingResponse = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoBookingResponse.optional(),
   message: z.string().optional(),
   error: z.record(z.unknown()).optional(),
 });
@@ -7046,6 +7107,13 @@ export const zAvailabilityTypeEnum = z
   .describe('Availability type when the entry is derived from availability patterns');
 
 /**
+ * Scheduled instance status when applicable
+ */
+export const zStatusEnum11 = z
+  .enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'])
+  .describe('Scheduled instance status when applicable');
+
+/**
  * Unified calendar entry combining availability slots and scheduled instances
  */
 export const zInstructorCalendarEntry = z
@@ -7067,7 +7135,7 @@ export const zInstructorCalendarEntry = z
         'Flag indicating availability; false represents blocked time or scheduled instances occupying the slot'
       )
       .optional(),
-    status: zStatusEnum3.optional(),
+    status: zStatusEnum11.optional(),
     title: z.string().describe('Optional title (for scheduled instances)').optional(),
     class_definition_uuid: z
       .string()
@@ -7250,14 +7318,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    is_upcoming: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended this class.')
+      .readonly()
+      .optional(),
+    is_upcoming: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
       .readonly()
       .optional(),
   })
@@ -11434,6 +11502,19 @@ export const zCreateBookingData = z.object({
  */
 export const zCreateBookingResponse = zApiResponseBookingResponse;
 
+export const zRequestPaymentData = z.object({
+  body: zBookingPaymentRequest.optional(),
+  path: z.object({
+    bookingUuid: z.string().uuid().describe('Booking UUID'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zRequestPaymentResponse = zApiResponseBookingPaymentSession;
+
 export const zPaymentCallbackData = z.object({
   body: zBookingPaymentUpdateRequest,
   path: z.object({
@@ -11944,6 +12025,25 @@ export const zGetInstructorScheduleData = z.object({
  * Instructor schedule retrieved successfully
  */
 export const zGetInstructorScheduleResponse = zApiResponseListScheduledInstance;
+
+export const zGetStudentBookingsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    studentUuid: z.string().uuid().describe('Student UUID'),
+  }),
+  query: z.object({
+    status: z
+      .string()
+      .describe('Optional booking status filter (e.g., payment_required)')
+      .optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetStudentBookingsResponse = zApiResponsePagedDtoBookingResponse;
 
 export const zSearchStudentsData = z.object({
   body: z.never().optional(),
@@ -12606,6 +12706,25 @@ export const zGetInstructorRatingSummaryData = z.object({
  * OK
  */
 export const zGetInstructorRatingSummaryResponse = zApiResponseInstructorRatingSummary;
+
+export const zGetInstructorBookingsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('Instructor UUID'),
+  }),
+  query: z.object({
+    status: z
+      .string()
+      .describe('Optional booking status filter (e.g., payment_required)')
+      .optional(),
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetInstructorBookingsResponse = zApiResponsePagedDtoBookingResponse;
 
 export const zCheckAvailabilityData = z.object({
   body: z.never().optional(),
