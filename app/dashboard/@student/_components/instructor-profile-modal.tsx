@@ -256,8 +256,8 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
             </CardFooter>
           </Card>
         )}
-        {/* 
-        {showBooking && <>
+
+        {/* {showBooking && <>
           <TimetableManager
             availabilityData={availabilityData || []}
             onAvailabilityUpdate={setAvailabilityData}

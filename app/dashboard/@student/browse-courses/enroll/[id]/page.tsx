@@ -221,9 +221,9 @@ const EnrollmentPage = () => {
           </span>
         </div>
 
-        <div className='cursor-pointer' onClick={handleCompleteCart} >
+        {/* <div className='cursor-pointer' onClick={handleCompleteCart} >
           <span>Complete Cart</span>
-        </div>
+        </div> */}
       </div>
 
       {/* Date filter controls */}
