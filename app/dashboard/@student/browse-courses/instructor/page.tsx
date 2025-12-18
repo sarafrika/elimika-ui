@@ -2,12 +2,14 @@
 
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
+import { getBookingOptions, listTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { BookOpen, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
-import useSearchTrainingInstructors from '../../../../../hooks/use-search-training-instructors';
 import type { ClassData } from '../../../@instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../_components/instructor-directory';
 import { ManageBookings } from '../../../_components/manage-bookings';
@@ -104,9 +106,44 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
 
-  const bookings = exampleBookings || [];
+  // saved booking ids in local storage
+  const bookingIds: string[] = JSON.parse(
+    localStorage.getItem('student_booking_ids') || '[]'
+  );
+  const bookingQueries = useQueries({
+    queries: bookingIds.map(bookingUuid => ({
+      ...getBookingOptions({
+        path: { bookingUuid },
+      }),
+      enabled: !!bookingUuid,
+    })),
+  });
+
+  const studentsBookings = bookingQueries
+    .map(q => q.data?.data)
+    .filter(Boolean);
+  // saved booking ids in local storage
+
+  const bookings = studentsBookings || [];
   const [activeTab, setActiveTab] = useState('browse');
   const { data: trainingInstructors, loading } = useSearchTrainingInstructors();
+
+  const { data: applications } = useQuery(
+    listTrainingApplicationsOptions({
+      path: { courseUuid: courseId as string },
+      query: { pageable: {}, status: "approved" }
+    })
+  )
+
+  const approvedInstructorUuids =
+    applications?.data?.content
+      ?.filter(app => app?.applicant_type === 'instructor')
+      ?.map(app => app?.applicant_uuid) ?? [];
+
+  const filteredInstructors = trainingInstructors?.filter(instructor =>
+    approvedInstructorUuids.includes(instructor.uuid)
+  );
+
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -156,7 +193,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Available Instructors</p>
-              <p className='text-2xl'>{trainingInstructors?.length}</p>
+              <p className='text-2xl'>{filteredInstructors?.length}</p>
             </div>
           </div>
         </Card>
@@ -213,7 +250,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
         <TabsContent value='browse' className='mt-6'>
           <InstructorDirectory
-            instructors={trainingInstructors as any}
+            instructors={filteredInstructors as any}
             classes={classes}
             onBookingComplete={handleBookingComplete}
             courseId={courseId as string}
@@ -223,8 +260,9 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
         <TabsContent value='bookings' className='mt-6'>
           <ManageBookings
             bookings={bookings}
-            instructors={trainingInstructors as any}
+            instructors={filteredInstructors as any}
             onBookingUpdate={handleBookingUpdate}
+            refetchBookings={() => bookingQueries.forEach(q => q.refetch())}
           />
         </TabsContent>
       </Tabs>
@@ -234,128 +272,4 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
 export default InstructorBookingDashboard;
 
-const exampleBookings: any[] = [
-  {
-    id: 'booking-001',
-    studentId: 'student_001',
-    studentName: 'Alice Kimani',
-    instructorId: 'instructor_001',
-    instructorName: 'Mr. Otieno',
-    slots: [
-      {
-        id: 'slot-001',
-        date: new Date('2025-10-15'),
-        startTime: '10:00',
-        endTime: '11:00',
-        duration: 1,
-        mode: 'online',
-      },
-    ],
-    totalSessions: 1,
-    totalDuration: 1,
-    totalFee: 1500,
-    currency: 'KES',
-    paymentMethod: 'm-pesa',
-    paymentStatus: 'completed',
-    status: 'confirmed',
-    createdAt: new Date('2025-10-10T12:00:00'),
-    confirmedAt: new Date('2025-10-11T09:00:00'),
-    notes: 'First session on Zoom. Join link to be sent 1 day before.',
-  },
 
-  {
-    id: 'booking-002',
-    studentId: 'student_002',
-    studentName: 'Brian Mwangi',
-    instructorId: 'instructor_002',
-    instructorName: 'Ms. Achieng',
-    slots: [
-      {
-        id: 'slot-002a',
-        date: new Date('2025-10-17'),
-        startTime: '14:00',
-        endTime: '15:30',
-        duration: 1.5,
-        venue: 'Nairobi Learning Center',
-        mode: 'onsite',
-      },
-      {
-        id: 'slot-002b',
-        date: new Date('2025-10-24'),
-        startTime: '14:00',
-        endTime: '15:30',
-        duration: 1.5,
-        venue: 'Nairobi Learning Center',
-        mode: 'onsite',
-      },
-    ],
-    recurring: {
-      frequency: 'weekly',
-      endDate: new Date('2025-11-14'),
-    },
-    totalSessions: 2,
-    totalDuration: 3,
-    totalFee: 3000,
-    currency: 'KES',
-    paymentMethod: 'skill-fund',
-    paymentStatus: 'pending',
-    status: 'pending',
-    createdAt: new Date('2025-10-12T10:30:00'),
-    notes: 'Weekly computer science tutoring.',
-  },
-
-  {
-    id: 'booking-003',
-    studentId: 'student_003',
-    studentName: 'Carol Wanjiru',
-    instructorId: 'instructor_003',
-    instructorName: 'Dr. Njuguna',
-    slots: [
-      {
-        id: 'slot-003',
-        date: new Date('2025-10-20'),
-        startTime: '09:00',
-        endTime: '10:30',
-        duration: 1.5,
-        mode: 'online',
-      },
-    ],
-    totalSessions: 1,
-    totalDuration: 1.5,
-    totalFee: 2000,
-    currency: 'KES',
-    paymentMethod: 'card',
-    paymentStatus: 'completed',
-    status: 'completed',
-    createdAt: new Date('2025-10-01T14:20:00'),
-    confirmedAt: new Date('2025-10-02T10:00:00'),
-    notes: 'Session completed successfully. Student wants follow-up in November.',
-  },
-
-  {
-    id: 'booking-004',
-    studentId: 'student_004',
-    studentName: 'David Otieno',
-    instructorId: 'instructor_004',
-    instructorName: 'Mr. Kiptoo',
-    slots: [
-      {
-        id: 'slot-004',
-        date: new Date('2025-10-19'),
-        startTime: '16:00',
-        endTime: '17:00',
-        duration: 1,
-        venue: 'Kisumu Tech Hub',
-        mode: 'onsite',
-      },
-    ],
-    totalSessions: 1,
-    totalDuration: 1,
-    totalFee: 1000,
-    currency: 'KES',
-    paymentStatus: 'failed',
-    status: 'cancelled',
-    createdAt: new Date('2025-10-05T08:15:00'),
-    notes: 'Student missed the session and payment failed.',
-  },
-];

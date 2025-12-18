@@ -96,7 +96,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
     course => course.course_uuid === courseId
   );
 
-
   const bookInstructor = useMutation(createBookingMutation());
   const handleBooking = () => {
     if (!instructor?.uuid || !student?.uuid || !startTime || !endTime) return;
@@ -119,10 +118,26 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
       },
       {
         onSuccess: (data: any) => {
-          // onBookingComplete(data?.);
+          const bookingId = data?.data?.uuid;
+
+          if (typeof bookingId === 'string') {
+            const STORAGE_KEY = 'student_booking_ids';
+
+            const existing: string[] = JSON.parse(
+              localStorage.getItem(STORAGE_KEY) || '[]'
+            );
+
+            if (!existing.includes(bookingId)) {
+              existing.push(bookingId);
+            }
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+          }
+
           setShowBooking(false);
         },
       }
+
     );
   };
 
@@ -172,7 +187,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
               {instructor?.has_location_coordinates && (
                 <div className='text-muted-foreground flex items-center gap-1'>
                   <MapPin className='h-4 w-4' />
-                  <span>City, Country</span>
+                  <span>{instructor?.formatted_location}</span>
                 </div>
               )}
             </div>
@@ -273,21 +288,41 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
               <Card className='p-6'>
                 <h3 className='mb-3'>Skills & Expertise</h3>
                 <div className='flex flex-wrap gap-2'>
-                  {skills.map(skill => (
-                    <Badge key={skill} variant='secondary'>{skill}</Badge>
-                  ))}
+                  {skills?.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {skills?.map((skill: any, index: any) => (
+                        <Badge key={skill.uuid} variant="outline">
+                          {skill.skill_name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No specializations added
+                    </p>
+                  )}
                 </div>
               </Card>
 
               {/* Specializations */}
-              <Card className='p-6'>
-                <h3 className='mb-3'>Specializations</h3>
-                <div className='flex flex-wrap gap-2'>
-                  {specializations.map(spec => (
-                    <Badge key={spec} variant='outline'>{spec}</Badge>
-                  ))}
-                </div>
+              <Card className="p-6">
+                <h3 className="mb-3">Specializations</h3>
+
+                {instructor?.specializations?.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {instructor?.specializations?.map((spec: any, index: any) => (
+                      <Badge key={spec.uuid} variant="outline">
+                        {spec.skill_name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No specializations added
+                  </p>
+                )}
               </Card>
+
 
               {/* Classes */}
               <Card className="mb-6 p-6">
@@ -502,20 +537,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
 };
 
 const skills = ['Python', 'TensorFlow', 'Pandas', 'Scikit-learn', 'SQL', 'Statistics'];
-const specializations = ['Data Science', 'Machine Learning', 'Python', 'AI'];
 const certifications = [
   { id: 'cert-3', name: 'Deep Learning Specialization', issuer: 'DeepLearning.AI', year: 2020 },
   { id: 'cert-4', name: 'Google Cloud Professional Data Engineer', issuer: 'Google', year: 2021 },
-];
-const reviews = [
-  {
-    id: 'review-3',
-    studentName: 'Emily Wang',
-    studentImage:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
-    rating: 5,
-    comment: 'Incredibly knowledgeable and explains complex concepts clearly.',
-    date: new Date(2024, 8, 10),
-    course: 'Data Science',
-  },
 ];

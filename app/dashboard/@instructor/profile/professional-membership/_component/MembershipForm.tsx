@@ -25,8 +25,8 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useProfileFormMode } from '@/context/profile-form-mode-context';
 import useMultiMutations from '@/hooks/use-multi-mutations';
 import { cn } from '@/lib/utils';
 import { useMutation } from '@tanstack/react-query';
@@ -106,8 +106,8 @@ export default function ProfessionalBodySettings() {
     resolver: zodResolver(professionalMembershipSchema),
     defaultValues: {
       professional_bodies:
-        instructorMembership.length > 0
-          ? instructorMembership.map(passMember)
+        instructorMembership?.length > 0
+          ? instructorMembership?.map(passMember)
           : [defaultMemebership],
     },
     mode: 'onChange',

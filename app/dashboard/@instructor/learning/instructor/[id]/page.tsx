@@ -2,8 +2,8 @@
 
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getAllInstructorsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { getAllInstructorsOptions, getBookingOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { BookOpen, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import type React from 'react';
@@ -106,7 +106,25 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
   const courseId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
 
-  const bookings = exampleBookings || [];
+  // saved booking ids in local storage
+  const bookingIds: string[] = JSON.parse(
+    localStorage.getItem('student_booking_ids') || '[]'
+  );
+  const bookingQueries = useQueries({
+    queries: bookingIds.map(bookingUuid => ({
+      ...getBookingOptions({
+        path: { bookingUuid },
+      }),
+      enabled: !!bookingUuid,
+    })),
+  });
+
+  const studentsBookings = bookingQueries
+    .map(q => q.data?.data)
+    .filter(Boolean);
+  // saved booking ids in local storage
+
+  const bookings = studentsBookings || [];
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [activeTab, setActiveTab] = useState('browse');
   const { data } = useQuery(
@@ -546,6 +564,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
             instructors={data?.data?.content as any}
             classes={classes}
             onBookingComplete={handleBookingComplete}
+            courseId={courseId as string}
           />
         </TabsContent>
 
@@ -554,6 +573,7 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
             bookings={bookings}
             instructors={data?.data?.content as any}
             onBookingUpdate={handleBookingUpdate}
+            refetchBookings={() => bookingQueries.forEach(q => q.refetch())}
           />
         </TabsContent>
       </Tabs>
