@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -21,7 +21,27 @@ import { Calendar, Clock, Eye, Star, X } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { cancelBookingMutation } from '../../../services/client/@tanstack/react-query.gen';
+import { cancelBookingMutation, requestPaymentMutation } from '../../../services/client/@tanstack/react-query.gen';
+import { BookingDetailsModal } from './booking-details-modal';
+
+
+// "cancelled" | "expired" | "confirmed" | "payment_required" | "payment_failed"
+export const getStatusColor = (status?: any): string => {
+  switch (status) {
+    case "confirmed":
+      return "bg-success";
+    case "payment_required":
+      return "bg-primary";
+    case "payment_failed":
+      return "bg-destructive";
+    case "expired":
+      return "bg-muted-foreground";
+    case "cancelled":
+      return "bg-destructive";
+    default:
+      return "bg-muted-foreground";
+  }
+};
 
 type Props = {
   bookings: any[];
@@ -38,28 +58,9 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
   const [feedbackRating, setFeedbackRating] = useState(5);
   const [feedbackComment, setFeedbackComment] = useState('');
 
-
   const getInstructor = (instructorId: string) => {
     return instructors.find(i => i.uuid === instructorId);
   };
-
-  const getStatusColor = (status: any['status']) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-600';
-      case 'pending':
-        return 'bg-yellow-600';
-      case 'declined':
-        return 'bg-red-600';
-      case 'cancelled':
-        return 'bg-gray-600';
-      case 'completed':
-        return 'bg-blue-600';
-      default:
-        return 'bg-gray-600';
-    }
-  };
-
 
   const cancelBooking = useMutation(cancelBookingMutation())
   const handleCancelBooking = () => {
@@ -70,14 +71,6 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
         toast.success('Booking cancelled successfully');
 
         refetchBookings();
-
-        const updatedBooking: any = {
-          ...selectedBooking,
-          status: 'cancelled',
-          notes: cancelReason,
-        };
-
-        onBookingUpdate(updatedBooking);
         setShowCancelDialog(false);
         setSelectedBooking(null);
         setCancelReason('');
@@ -87,6 +80,22 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
       }
     });
   };
+
+  const payBooking = useMutation(requestPaymentMutation())
+  const handlePayBooking = (booking: any) => {
+    payBooking.mutate({ path: { bookingUuid: booking.uuid } }, {
+      onSuccess: (data) => {
+        if (data?.data?.payment_url) {
+          window.location.href = data.data.payment_url;
+        } else {
+          toast.error('Payment URL not found');
+        }
+      },
+      onError: (error: any) => {
+        toast.error(`Failed to initiate payment: ${error.message}`);
+      }
+    });
+  }
 
   const handleSubmitFeedback = () => {
     if (!selectedBooking) return;
@@ -112,9 +121,6 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
 
     return isFutureDate && notCancelled;
   });
-
-
-  // "cancelled" | "expired" | "confirmed" | "payment_required" | "payment_failed"
 
   const renderBookingCard = (booking: any) => {
     const instructor = instructors.find(
@@ -196,6 +202,12 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
                 {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
+
+            <div className="flex items-center gap-2">
+              <span>
+                Note: {booking?.purpose}
+              </span>
+            </div>
           </div>
 
           {/* Payment Info */}
@@ -244,7 +256,7 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
           {!isPastBooking && !booking?.payment_reference && (
             <Button
               className="w-full sm:w-auto gap-2"
-              onClick={() => toast.success('Activate payment')}
+              onClick={() => handlePayBooking(booking)}
             >
               Pay {booking.currency} {booking.price_amount}
             </Button>
@@ -313,114 +325,11 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
 
       {/* Booking Details Dialog */}
       {selectedBooking && !showCancelDialog && !showFeedbackDialog && (
-        <Dialog open={true} onOpenChange={() => setSelectedBooking(null)}>
-          <DialogContent className='max-w-2xl'>
-            <DialogHeader>
-              <DialogTitle>Booking Details</DialogTitle>
-              <DialogDescription>Booking ID: {selectedBooking?.uuid}</DialogDescription>
-            </DialogHeader>
-
-            <div className='space-y-4'>
-              {/* Instructor Info */}
-              <Card className='p-4'>
-                {(() => {
-                  const instructor = getInstructor(selectedBooking?.instructor_uuid);
-
-                  return instructor ? (
-                    <div className='flex items-center gap-4'>
-                      <Avatar className='h-12 w-12'>
-                        <AvatarImage
-                          // src={instructor?.profileImage}
-                          alt={instructor?.full_name}
-                        />
-                        <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p>{instructor?.full_name}</p>
-                        <p className='text-muted-foreground text-sm'>
-                          {instructor?.professional_headline}
-                        </p>
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
-              </Card>
-
-              {/* All Sessions */}
-              <div>
-                <Label className="mb-3 block">Session</Label>
-
-                {selectedBooking && (
-                  <Card className="bg-muted p-4">
-                    <div className="space-y-2">
-                      {/* Date */}
-                      <div className="flex items-center gap-2">
-                        <Calendar className="text-muted-foreground h-4 w-4" />
-                        <p>
-                          {new Date(selectedBooking.start_time).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </p>
-                      </div>
-
-                      {/* Time */}
-                      <div className="flex items-center gap-2">
-                        <Clock className="text-muted-foreground h-4 w-4" />
-                        <p className="text-muted-foreground text-sm">
-                          {new Date(selectedBooking.start_time).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                          {' - '}
-                          {new Date(selectedBooking.end_time).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-              </div>
-
-
-              {/* Payment Info */}
-              <Card className='p-4'>
-                <div className='space-y-2'>
-                  <div className='flex justify-between text-sm'>
-                    <span className='text-muted-foreground'>Payment Method</span>
-                    <span className='capitalize'>
-                      {selectedBooking.payment_engine?.replace('-', ' ')}
-                    </span>
-                  </div>
-                  <div className='flex justify-between text-sm'>
-                    <span className='text-muted-foreground'>Payment Status</span>
-                    <Badge
-                      variant={
-                        selectedBooking.paymentStatus === 'completed' ? 'default' : 'secondary'
-                      }
-                    >
-                      {selectedBooking.payment_session_id}
-                    </Badge>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span>Total Amount</span>
-                    <span className='text-xl'>
-                      {selectedBooking.currency} ${selectedBooking.price_amount}
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            <DialogFooter>
-              <Button onClick={() => setSelectedBooking(null)}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <BookingDetailsModal
+          booking={selectedBooking}
+          open={!!selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+          instructors={instructors} />
       )}
 
       {/* Cancel Dialog */}
@@ -455,7 +364,8 @@ export const ManageBookings: React.FC<Props> = ({ bookings, instructors, onBooki
               Keep Booking
             </Button>
             <Button variant='destructive' onClick={handleCancelBooking}>
-              Cancel Booking
+              {cancelBooking.isPending ? 'Cancelling...' : "Cancel Booking"}
+
             </Button>
           </DialogFooter>
         </DialogContent>

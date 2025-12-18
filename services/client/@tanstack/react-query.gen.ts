@@ -242,6 +242,7 @@ import {
   generateProgramCertificate,
   generateCourseCertificate,
   createBooking,
+  requestPayment,
   paymentCallback,
   cancelBooking,
   getAllAssignments,
@@ -278,6 +279,7 @@ import {
   cancelScheduledClass,
   getScheduledInstance,
   getInstructorSchedule,
+  getStudentBookings,
   searchStudents,
   validateMatrix,
   getPassingScoringLevels,
@@ -323,6 +325,7 @@ import {
   getBranchUsersByDomain,
   search2,
   getInstructorRatingSummary,
+  getInstructorBookings,
   checkAvailability,
   getInstructorCalendar,
   searchSkills,
@@ -1058,6 +1061,9 @@ import type {
   CreateBookingData,
   CreateBookingError,
   CreateBookingResponse,
+  RequestPaymentData,
+  RequestPaymentError,
+  RequestPaymentResponse,
   PaymentCallbackData,
   PaymentCallbackError,
   PaymentCallbackResponse,
@@ -1156,6 +1162,9 @@ import type {
   GetInstructorScheduleData,
   GetInstructorScheduleError,
   GetInstructorScheduleResponse,
+  GetStudentBookingsData,
+  GetStudentBookingsError,
+  GetStudentBookingsResponse,
   SearchStudentsData,
   SearchStudentsError,
   SearchStudentsResponse,
@@ -1255,6 +1264,9 @@ import type {
   Search2Error,
   Search2Response,
   GetInstructorRatingSummaryData,
+  GetInstructorBookingsData,
+  GetInstructorBookingsError,
+  GetInstructorBookingsResponse,
   CheckAvailabilityData,
   CheckAvailabilityError,
   CheckAvailabilityResponse,
@@ -11564,6 +11576,50 @@ export const createBookingMutation = (
   return mutationOptions;
 };
 
+export const requestPaymentQueryKey = (options: Options<RequestPaymentData>) =>
+  createQueryKey('requestPayment', options);
+
+/**
+ * Request payment for a booking
+ */
+export const requestPaymentOptions = (options: Options<RequestPaymentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await requestPayment({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: requestPaymentQueryKey(options),
+  });
+};
+
+/**
+ * Request payment for a booking
+ */
+export const requestPaymentMutation = (
+  options?: Partial<Options<RequestPaymentData>>
+): UseMutationOptions<RequestPaymentResponse, RequestPaymentError, Options<RequestPaymentData>> => {
+  const mutationOptions: UseMutationOptions<
+    RequestPaymentResponse,
+    RequestPaymentError,
+    Options<RequestPaymentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await requestPayment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const paymentCallbackQueryKey = (options: Options<PaymentCallbackData>) =>
   createQueryKey('paymentCallback', options);
 
@@ -13119,6 +13175,72 @@ export const getInstructorScheduleInfiniteOptions = (
         return data;
       },
       queryKey: getInstructorScheduleInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getStudentBookingsQueryKey = (options: Options<GetStudentBookingsData>) =>
+  createQueryKey('getStudentBookings', options);
+
+/**
+ * Get student bookings
+ */
+export const getStudentBookingsOptions = (options: Options<GetStudentBookingsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentBookings({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentBookingsQueryKey(options),
+  });
+};
+
+export const getStudentBookingsInfiniteQueryKey = (
+  options: Options<GetStudentBookingsData>
+): QueryKey<Options<GetStudentBookingsData>> => createQueryKey('getStudentBookings', options, true);
+
+/**
+ * Get student bookings
+ */
+export const getStudentBookingsInfiniteOptions = (options: Options<GetStudentBookingsData>) => {
+  return infiniteQueryOptions<
+    GetStudentBookingsResponse,
+    GetStudentBookingsError,
+    InfiniteData<GetStudentBookingsResponse>,
+    QueryKey<Options<GetStudentBookingsData>>,
+    | number
+    | Pick<QueryKey<Options<GetStudentBookingsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetStudentBookingsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getStudentBookings({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getStudentBookingsInfiniteQueryKey(options),
     }
   );
 };
@@ -15553,6 +15675,75 @@ export const getInstructorRatingSummaryOptions = (
     },
     queryKey: getInstructorRatingSummaryQueryKey(options),
   });
+};
+
+export const getInstructorBookingsQueryKey = (options: Options<GetInstructorBookingsData>) =>
+  createQueryKey('getInstructorBookings', options);
+
+/**
+ * Get instructor bookings
+ */
+export const getInstructorBookingsOptions = (options: Options<GetInstructorBookingsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorBookings({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorBookingsQueryKey(options),
+  });
+};
+
+export const getInstructorBookingsInfiniteQueryKey = (
+  options: Options<GetInstructorBookingsData>
+): QueryKey<Options<GetInstructorBookingsData>> =>
+  createQueryKey('getInstructorBookings', options, true);
+
+/**
+ * Get instructor bookings
+ */
+export const getInstructorBookingsInfiniteOptions = (
+  options: Options<GetInstructorBookingsData>
+) => {
+  return infiniteQueryOptions<
+    GetInstructorBookingsResponse,
+    GetInstructorBookingsError,
+    InfiniteData<GetInstructorBookingsResponse>,
+    QueryKey<Options<GetInstructorBookingsData>>,
+    | number
+    | Pick<QueryKey<Options<GetInstructorBookingsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<GetInstructorBookingsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  'pageable.page': pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getInstructorBookings({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getInstructorBookingsInfiniteQueryKey(options),
+    }
+  );
 };
 
 export const checkAvailabilityQueryKey = (options: Options<CheckAvailabilityData>) =>

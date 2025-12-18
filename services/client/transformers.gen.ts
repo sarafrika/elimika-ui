@@ -189,6 +189,7 @@ import type {
   GenerateProgramCertificateResponse,
   GenerateCourseCertificateResponse,
   CreateBookingResponse,
+  RequestPaymentResponse,
   PaymentCallbackResponse,
   CancelBookingResponse,
   GetAllAssignmentsResponse,
@@ -213,6 +214,7 @@ import type {
   GetTrainingBranchesByOrganisation1Response,
   GetScheduledInstanceResponse,
   GetInstructorScheduleResponse,
+  GetStudentBookingsResponse,
   SearchStudentsResponse,
   GetPassingScoringLevelsResponse,
   GetHighestScoringLevelResponse,
@@ -249,6 +251,7 @@ import type {
   GetBranchUsersByDomainResponse,
   Search2Response,
   GetInstructorRatingSummaryResponse,
+  GetInstructorBookingsResponse,
   GetInstructorCalendarResponse,
   SearchSkillsResponse,
   SearchInstructorsResponse,
@@ -3449,6 +3452,27 @@ export const createBookingResponseTransformer = async (
   return data;
 };
 
+const bookingPaymentSessionSchemaResponseTransformer = (data: any) => {
+  if (data.hold_expires_at) {
+    data.hold_expires_at = new Date(data.hold_expires_at);
+  }
+  return data;
+};
+
+const apiResponseBookingPaymentSessionSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = bookingPaymentSessionSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const requestPaymentResponseTransformer = async (
+  data: any
+): Promise<RequestPaymentResponse> => {
+  data = apiResponseBookingPaymentSessionSchemaResponseTransformer(data);
+  return data;
+};
+
 export const paymentCallbackResponseTransformer = async (
   data: any
 ): Promise<PaymentCallbackResponse> => {
@@ -3681,6 +3705,32 @@ export const getInstructorScheduleResponseTransformer = async (
   data: any
 ): Promise<GetInstructorScheduleResponse> => {
   data = apiResponseListScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
+const pagedDtoBookingResponseSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return bookingResponseSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoBookingResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoBookingResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getStudentBookingsResponseTransformer = async (
+  data: any
+): Promise<GetStudentBookingsResponse> => {
+  data = apiResponsePagedDtoBookingResponseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -4079,6 +4129,13 @@ export const getInstructorRatingSummaryResponseTransformer = async (
   data: any
 ): Promise<GetInstructorRatingSummaryResponse> => {
   data = apiResponseInstructorRatingSummarySchemaResponseTransformer(data);
+  return data;
+};
+
+export const getInstructorBookingsResponseTransformer = async (
+  data: any
+): Promise<GetInstructorBookingsResponse> => {
+  data = apiResponsePagedDtoBookingResponseSchemaResponseTransformer(data);
   return data;
 };
 
