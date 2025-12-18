@@ -31,6 +31,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
     enabled: !!instructor.uuid,
   })
   const instructorSkills = skills?.data?.content || [];
+  const skillNames = instructorSkills.map(skill => skill.skill_name);
 
   const { data: reviews } = useQuery({
     ...getInstructorRatingSummaryOptions({ path: { instructorUuid: instructor?.uuid as string } }),
@@ -91,7 +92,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
         <div className='grid grid-cols-2 gap-3 text-sm'>
           <div className='text-muted-foreground flex items-center gap-2'>
             <Users className='h-4 w-4' />
-            <span>{'xx'} students</span>
+            <span>N/A students</span>
             {/* <span>{instructor.totalStudents} students</span> */}
           </div>
           <div className='text-muted-foreground flex items-center gap-2'>
@@ -122,34 +123,48 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
         </div>
 
         {/* Specializations */}
-        <div className='flex w-full flex-wrap gap-2'>
-          {specializations?.slice(0, 3)?.map((spec: any, index: any) => (
-            <Badge key={index} variant='outline' className='text-xs'>
-              {spec}
-            </Badge>
-          ))}
+        <div className="flex w-full flex-wrap gap-2 min-h-6">
+          {skillNames?.length > 0 ? (
+            <>
+              {skillNames.slice(0, 3).map((spec, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {spec}
+                </Badge>
+              ))}
 
-          {specializations?.length > 3 && (
-            <Badge variant='outline' className='text-xs'>
-              +{specializations?.length - 3} more
-            </Badge>
+              {skillNames.length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{skillNames.length - 3} more
+                </Badge>
+              )}
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              No skills added
+            </span>
           )}
 
-          <div className='flex w-full justify-end'>
-            <Dialog>
-              <DialogTrigger asChild>
-                <div className='flex cursor-pointer items-center gap-2 self-end text-end text-sm text-primary'>
-                  View Instructor Skill Card
-                </div>
-              </DialogTrigger>
+          {skillNames?.length > 0 && (
+            <div className="flex w-full mt-1 justify-end">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className="flex cursor-pointer items-center gap-2 text-sm text-primary underline">
+                    View Instructor Skill Card
+                  </div>
+                </DialogTrigger>
 
-              <DialogContent className='max-h-[85vh] max-w-2xl overflow-y-auto'>
-                <DialogHeader />
-                <InstructorSkillCard instructor={instructor} skills={instructorSkills} />
-              </DialogContent>
-            </Dialog>
-          </div>
+                <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+                  <DialogHeader />
+                  <InstructorSkillCard
+                    instructor={instructor}
+                    skills={instructorSkills}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
         </div>
+
 
         {/* Rate */}
         <div className='border-border border-t pt-3'>
@@ -178,4 +193,3 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
   );
 };
 
-const specializations = ['UI/UX Design', 'Product Design', 'Figma', 'Design Systems'];

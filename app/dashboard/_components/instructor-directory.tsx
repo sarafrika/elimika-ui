@@ -14,9 +14,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { useQuery } from '@tanstack/react-query';
 import { DollarSign, Filter, MapPin, Search, Star, X } from 'lucide-react';
 import type React from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { searchSkillsOptions } from '../../../services/client/@tanstack/react-query.gen';
 import { InstructorCard } from '../@student/_components/instructor-card';
 import { InstructorProfileComponent } from '../@student/_components/instructor-profile-modal';
 import type { Booking } from '../@student/browse-courses/instructor/page';
@@ -64,14 +66,24 @@ export const InstructorDirectory: React.FC<Props> = ({
     location: '',
   });
 
-  // Get unique values for filter options
-  const allSpecializations = [
-    'specialization1',
-    'specialization2',
-    'specialization3',
-    'specialization4',
-    'specialization5',
-  ] as any;
+  // specializations and skils
+  const { data: newSkllll } = useQuery(
+    searchSkillsOptions({ query: { pageable: {}, searchParams: {} } })
+  )
+
+  const allSpecializations = useMemo(() => {
+    return [
+      ...new Set(
+        newSkllll?.data?.content
+          ?.map((skill: any) => skill?.skill_name)
+          ?.filter(
+            (name: any): name is string =>
+              typeof name === 'string' && name.trim().length > 0
+          )
+      ),
+    ];
+  }, [newSkllll]);
+
   const _allCourses = [...new Set(instructors?.flatMap(i => i.courses))] as any;
 
   // Filter instructors based on criteria
@@ -115,12 +127,22 @@ export const InstructorDirectory: React.FC<Props> = ({
     }
 
     // Specializations
-    if (
-      filters.specializations.length > 0 &&
-      !filters.specializations.some(spec => instructor.specializations.includes(spec))
-    ) {
-      return false;
+    // Specializations
+    if (filters.specializations.length > 0) {
+      const instructorSkillNames =
+        instructor.specializations?.map((s: any) =>
+          s.skill_name.toLowerCase()
+        ) ?? [];
+
+      const hasMatch = filters.specializations.some(spec =>
+        instructorSkillNames.includes(spec.toLowerCase())
+      );
+
+      if (!hasMatch) {
+        return false;
+      }
     }
+
 
     // Fee range
     // if (
@@ -287,9 +309,9 @@ export const InstructorDirectory: React.FC<Props> = ({
             {/* Specializations */}
             <div>
               <Label>Specializations</Label>
-              <div className='mt-2 space-y-2'>
+              <div className='mt-3 space-y-2'>
                 {allSpecializations.slice(0, 5).map((spec: any) => (
-                  <div key={spec} className='flex items-center gap-2'>
+                  <div key={spec} className='flex items-center gap-2.5'>
                     <Checkbox
                       id={`spec-${spec}`}
                       checked={filters.specializations.includes(spec)}
