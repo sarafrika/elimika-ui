@@ -238,7 +238,7 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
             courseRubrics.map((assessment: any) => (
               <div key={assessment.uuid} className='border-b pt-2 pb-4 last:border-0'>
                 <div className='flex items-center gap-2'>
-                  <BookOpenCheck className='h-4 w-4 text-blue-500' />
+                  <BookOpenCheck className='h-4 w-4 text-primary' />
                   <h3 className='font-semibold'>{assessment.rubric.title}</h3>
                 </div>
                 <RichTextRenderer htmlString={assessment.rubric.description ?? 'No description.'} />
